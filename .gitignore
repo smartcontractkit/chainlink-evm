@@ -4,6 +4,7 @@ tmp/
 .pnp
 .pnp.js
 tools/bin/abigen
+tools/bin/forge_zksync
 
 /chainlink
 core/chainlink

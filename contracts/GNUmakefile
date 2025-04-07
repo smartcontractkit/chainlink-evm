@@ -45,6 +45,9 @@ mockery: $(mockery) ## Install mockery.
 foundry: ## Install foundry.
 	foundryup --install v1.0.0
 
+../tools/bin/forge_zksync:
+	../tools/bin/install_forge_zksync
+
 .PHONY: foundry-refresh
 foundry-refresh: foundry
 	git submodule deinit -f .
@@ -96,6 +99,11 @@ wrappers: pnpmdep mockery abigen ## Recompiles solidity contracts and their go w
 wrappers-all: pnpmdep mockery abigen ## Recompiles solidity contracts and their go wrappers.
 	# go_generate contains a call to  compile all contracts before generating wrappers
 	go generate ../gethwrappers/go_generate.go
+
+.PHONY: wrappers-zksync
+wrappers-zksync: pnpmdep ../tools/bin/forge_zksync
+	# only compilation now. go wrappers to be added
+	./scripts/zksync_compile_all
 
 # Use this to generate compiled JSON artifacts for gauntlet-plus-plus.
 # This is currently only used for CCIP.

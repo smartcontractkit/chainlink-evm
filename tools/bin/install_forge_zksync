@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -e
+
+VERSION="0.0.12"
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    OS="linux"
+    ARCH="x86_64"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    OS="darwin"
+    ARCH=$(uname -m)
+else
+    echo "Unsupported OS: $OSTYPE"
+    exit 1
+fi
+
+ARTIFACT_URL="https://github.com/matter-labs/foundry-zksync/releases/download/foundry-zksync-v${VERSION}/foundry_zksync_v${VERSION}_${OS}_${ARCH}.tar.gz"
+THIS_DIR="$(realpath "$(dirname $0)")"
+echo $ARTIFACT_URL
+curl $ARTIFACT_URL -L -o- | tar -xv -C $THIS_DIR
+rm $THIS_DIR/cast
+mv $THIS_DIR/forge $THIS_DIR/forge_zksync
