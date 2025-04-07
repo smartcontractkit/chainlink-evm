@@ -14,14 +14,12 @@ compileContract() {
   contract=$(basename "$1")
   echo "Compiling" "$contract"
 
-  export FOUNDRY_PROFILE="$PROJECT"$FOUNDRY_PROJECT_SUFFIX
   PROJECT=$2
+  export FOUNDRY_PROFILE="$PROJECT"$FOUNDRY_PROJECT_SUFFIX
 
   ${CONTRACTS_DIR}/../tools/bin/forge_zksync build $CONTRACTS_DIR/src/v0.8/$PROJECT/"$1.sol" --zksync \
    --root $CONTRACTS_DIR \
-   -o $CONTRACTS_DIR/solc/$PROJECT/$contract \
    $3
-
 }
 
 compileContract token/ERC677/LinkToken shared "--use 0.8.19"
