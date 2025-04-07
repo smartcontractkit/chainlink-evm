@@ -10,6 +10,8 @@ package ccip
 //go:generate go run ../generation/wrap.go ccip NonceManager nonce_manager latest
 //go:generate go run ../generation/wrap.go ccip MultiAggregateRateLimiter multi_aggregate_rate_limiter latest
 //go:generate go run ../generation/wrap.go ccip TokenAdminRegistry token_admin_registry latest
+//go:generate go run ../generation/wrap.go ccip TokenPoolFactory token_pool_factory latest
+//go:generate go run ../generation/wrap.go ccip FactoryBurnMintERC20 factory_burn_mint_erc20 latest
 //go:generate go run ../generation/wrap.go ccip RegistryModuleOwnerCustom registry_module_owner_custom latest
 //go:generate go run ../generation/wrap.go ccip RMNProxy rmn_proxy_contract latest
 //go:generate go run ../generation/wrap.go ccip RMNRemote rmn_remote latest
