@@ -6,9 +6,14 @@ mockery: ## Install mockery.
 codecgen: ## Install codecgen
 	go install github.com/ugorji/go/codec/codecgen@v1.2.10
 
+.PHONY: protoc
+protoc: ## Install protoc
+	../tools/bin/install-protoc.sh 29.3 /
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@`go list -m -json google.golang.org/protobuf | jq -r .Version`
+
 .PHONY: generate
-generate: codecgen mockery
-	go generate ./...
+generate: codecgen mockery protoc
+	export PATH="$(HOME)/.local/bin:$(PATH)"; go generate ./...
 	mockery
 
 .PHONY: rm-mocked
