@@ -102,8 +102,7 @@ wrappers-all: pnpmdep mockery abigen ## Recompiles solidity contracts and their 
 
 .PHONY: wrappers-zksync
 wrappers-zksync: pnpmdep ../tools/bin/forge_zksync
-	# only compilation now. go wrappers to be added
-	./scripts/zksync_compile_all
+	go generate ../gethwrappers/zksync/go_generate.go
 
 # Use this to generate compiled JSON artifacts for gauntlet-plus-plus.
 # This is currently only used for CCIP.
