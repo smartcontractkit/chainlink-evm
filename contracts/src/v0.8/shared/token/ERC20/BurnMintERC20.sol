@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {IGetCCIPAdmin} from "../../../ccip/interfaces/IGetCCIPAdmin.sol";
+import {IGetCCIPAdmin} from "../../../shared/interfaces/IGetCCIPAdmin.sol";
 import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
 
 import {AccessControl} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/access/AccessControl.sol";

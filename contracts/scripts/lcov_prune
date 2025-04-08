@@ -11,26 +11,6 @@ product_name=$1
 input_coverage_file=$2
 output_coverage_file=$3
 
-# src/v0.8/ccip/libraries/Internal.sol
-# src/v0.8/ccip/libraries/RateLimiter.sol
-# src/v0.8/ccip/libraries/USDPriceWith18Decimals.sol
-# src/v0.8/ccip/libraries/MerkleMultiProof.sol
-# src/v0.8/ccip/libraries/Pool.sol
-# excluded because Foundry doesn't support coverage on library files
-
-# BurnWithFromMintTokenPool is excluded because Forge doesn't seem to
-# register coverage, even though it is 100% covered.
-exclusion_list_ccip=(
-  "src/v0.8/ccip/ocr/OCR2Abstract.sol"
-  "src/v0.8/ccip/libraries/Internal.sol"
-  "src/v0.8/ccip/libraries/RateLimiter.sol"
-  "src/v0.8/ccip/libraries/USDPriceWith18Decimals.sol"
-  "src/v0.8/ccip/libraries/MerkleMultiProof.sol"
-  "src/v0.8/ccip/libraries/Pool.sol"
-  "src/v0.8/ccip/applications/CCIPClientExample.sol"
-  "src/v0.8/keystone/*"
-)
-
 exclusion_list_shared=(
    "*/shared/*"
 )
@@ -40,20 +20,7 @@ exclusion_list_common=(
   "*/vendor/*"
 )
 
-all_exclusions=()
-
-case "$product_name" in
-  "ccip")
-    all_exclusions+=("${exclusion_list_ccip[@]}")
-    ;;
-  "shared")
-  # No product-specific exclusions for shared
-  ;;
-  *)
-  ;;
-esac
-
-all_exclusions+=("${exclusion_list_common[@]}")
+all_exclusions=("${exclusion_list_common[@]}")
 
 if [ "$product_name" != "shared" ]; then
   all_exclusions+=("${exclusion_list_shared[@]}")
