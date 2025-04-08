@@ -67,6 +67,7 @@ compileContract NonceManager
 compileContract rmn/RMNRemote
 compileContract rmn/RMNHome
 compileContract rmn/RMNProxy
+compileContract DonIDClaimer
 
 # Pools
 compileContract pools/LockReleaseTokenPool
