@@ -40,7 +40,7 @@ func TestNewWriteTargetID(t *testing.T) {
 			networkName:     "ethereum-mainnet",
 			chainID:         "1",
 			version:         "1.0.0",
-			expected:        "write-ethereum-mainnet@1.0.0",
+			expected:        "write_ethereum-mainnet@1.0.0",
 			expectError:     false,
 		},
 		{

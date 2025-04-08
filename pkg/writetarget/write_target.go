@@ -135,7 +135,7 @@ func NewWriteTargetID(chainFamilyName, networkName, chainID, version string) (st
 
 	// allow for chain family to be empty
 	if chainFamilyName == "" {
-		return fmt.Sprintf("%s-%s@%s", CapabilityName, networkID, version), nil
+		return fmt.Sprintf("%s_%s@%s", CapabilityName, networkID, version), nil
 	}
 
 	return fmt.Sprintf("%s_%s-%s@%s", CapabilityName, chainFamilyName, networkID, version), nil
