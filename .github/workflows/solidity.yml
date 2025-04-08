@@ -82,7 +82,7 @@ jobs:
     needs: [changes, tag-check]
     if: needs.changes.outputs.changes == 'true' || needs.tag-check.outputs.is-release-core == 'true' || needs.tag-check.outputs.is-pre-release-core == 'true'
     name: Native Compilation
-    runs-on: ubuntu22.04-8cores-32GB
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
@@ -124,6 +124,7 @@ jobs:
       - name: Run zksync compile and generate wrappers
         working-directory: ./chainlink/contracts
         run: make wrappers-zksync
+        working-directory: ./contracts
 
       - name: Check if Go solidity wrappers are updated
         if: ${{ needs.changes.outputs.changes == 'true' }}

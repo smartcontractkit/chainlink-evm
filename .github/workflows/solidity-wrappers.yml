@@ -39,7 +39,7 @@ jobs:
       actions: read
       id-token: write
       contents: read
-    runs-on: ubuntu22.04-8cores-32GB
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
