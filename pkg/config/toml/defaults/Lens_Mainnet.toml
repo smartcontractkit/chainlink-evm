@@ -1,0 +1,22 @@
+ChainID = "232"
+ChainType = "zksync"
+FinalityTagEnabled = true
+LinkContractAddress = '0x2Ea38D6cDb6774992d4A62fe622f4405663729Dd'
+# block rate is dynamic
+LogPollInterval = "5s"
+# traffic is too low & block rate is dynamic, so disabling liveness check temporarily
+NoNewHeadsThreshold = "0"
+
+[GasEstimator]
+Mode = 'FeeHistory'
+BumpThreshold = 1
+BumpPercent = 40
+
+[GasEstimator.FeeHistory]
+CacheTimeout = '5s'
+
+[GasEstimator.DAOracle]
+OracleType = 'zksync'
+
+[Transactions]
+ResendAfterThreshold = '7m0s'

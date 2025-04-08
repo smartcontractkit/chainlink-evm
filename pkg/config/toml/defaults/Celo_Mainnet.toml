@@ -1,0 +1,31 @@
+ChainID = '42220'
+ChainType = 'celo'
+FinalityDepth = 2750
+FinalityTagEnabled = true
+LinkContractAddress = '0xd07294e6E917e07dfDcee882dd1e2565085C2ae0'
+LogPollInterval = '1s'
+MinIncomingConfirmations = 1
+NoNewHeadsThreshold = '1m'
+NoNewFinalizedHeadsThreshold = '45m'
+
+[GasEstimator]
+EIP1559DynamicFees = true
+PriceDefault = '5 gwei'
+PriceMax = '500 gwei'
+PriceMin = '5 gwei'
+BumpMin = '2 gwei'
+
+[GasEstimator.BlockHistory]
+BlockHistorySize = 50
+
+[Transactions]
+ResendAfterThreshold = '30s'
+
+[HeadTracker]
+HistoryDepth = 300
+
+[NodePool]
+SyncThreshold = 10 # recommended for OP stack chains
+
+[OCR]
+ContractConfirmations = 1 # recommended for OP stack chains

@@ -1,0 +1,16 @@
+ChainID = '228'
+ChainType = 'arbitrum'
+FinalityTagEnabled = true
+LogPollInterval = '2s' # max 4 blocks per second, adding slight buffer
+
+[GasEstimator]
+EIP1559DynamicFees = false
+Mode = 'Arbitrum'
+PriceDefault = '0.005 gwei' # fixed to 0.005 gwei
+PriceMin = '0' # Arbitrum uses the suggested gas price, so we don't want to place any limits on the minimum            
+
+[GasEstimator.DAOracle]
+OracleType = 'arbitrum'
+
+[NodePool]
+SyncThreshold = 10
