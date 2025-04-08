@@ -1,6 +1,6 @@
 # ALL_FOUNDRY_PRODUCTS contains a list of all products that have a foundry
 # profile defined and use the Foundry snapshots.
-ALL_FOUNDRY_PRODUCTS = ccip functions keystone l2ep llo-feeds operatorforwarder shared workflow data-feeds
+ALL_FOUNDRY_PRODUCTS = functions keystone l2ep llo-feeds operatorforwarder shared workflow data-feeds
 
 # To make a snapshot for a specific product, either set the `FOUNDRY_PROFILE` env var
 # or call the target with `FOUNDRY_PROFILE=product`
@@ -50,21 +50,6 @@ foundry-refresh: foundry
 	git submodule deinit -f .
 	git submodule update --init --recursive
 
-ccip-precommit: export FOUNDRY_PROFILE=ccip
-.PHONY: ccip-precommit
-ccip-precommit:
-	forge test
-	make snapshot
-	forge fmt
-	pnpm solhint
-
-ccip-lcov: export FOUNDRY_PROFILE=ccip
-.PHONY: ccip-lcov
-ccip-lcov:
-	forge coverage --report lcov
-	../tools/ci/ccip_lcov_prune ./lcov.info ./lcov.info.pruned
-	genhtml -o report lcov.info.pruned --branch-coverage
-
 data-feeds-precommit: export FOUNDRY_PROFILE=data-feeds
 .PHONY: data-feeds-precommit
 data-feeds-precommit:
@@ -96,16 +81,6 @@ wrappers: pnpmdep mockery abigen ## Recompiles solidity contracts and their go w
 wrappers-all: pnpmdep mockery abigen ## Recompiles solidity contracts and their go wrappers.
 	# go_generate contains a call to  compile all contracts before generating wrappers
 	go generate ../gethwrappers/go_generate.go
-
-# Use this to generate compiled JSON artifacts for gauntlet-plus-plus.
-# This is currently only used for CCIP.
-# example: make artifact-generate contract=LockReleaseTokenPoolAndProxy solcversion=0.8.24 artifactpath=../../gauntlet-plus-plus/packages-ethereum/operations-ccip/src/artifacts/1.5.0/lock-release-token-pool-and-proxy.json
-artifact-generate: export FOUNDRY_PROFILE=ccip
-.PHONY: artifact-generate
-artifact-generate:
-	chmod +x ./scripts/generate_compiled_json_ccip.sh
-	./scripts/generate_compiled_json_ccip.sh $(contract) $(solcversion) $(artifactpath)
-
 
 help:
 	@echo ""

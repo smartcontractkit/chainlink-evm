@@ -21,7 +21,6 @@ solc
 LinkToken.json
 typechain
 **/vendor
-src/v0.8/ccip/**
 src/v0.8/workflow/**
 src/v0.8/data-feeds/**
 

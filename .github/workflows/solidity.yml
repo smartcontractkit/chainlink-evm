@@ -46,10 +46,6 @@ jobs:
       is-pre-release-core: ${{ steps.release-tag-check-core.outputs.is-pre-release }}
       release-version-core: ${{ steps.release-tag-check-core.outputs.release-version }}
       pre-release-version-core: ${{ steps.release-tag-check-core.outputs.pre-release-version }}
-      is-release-ccip: ${{ steps.release-tag-check-ccip.outputs.is-release }}
-      is-pre-release-ccip: ${{ steps.release-tag-check-ccip.outputs.is-pre-release }}
-      release-version-ccip: ${{ steps.release-tag-check-ccip.outputs.release-version }}
-      pre-release-version-ccip: ${{ steps.release-tag-check-ccip.outputs.pre-release-version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,36 +59,10 @@ jobs:
           PRE_RELEASE_REGEX: '^contracts-v[0-9]+\.[0-9]+\.[0-9]+-(.+)$'
           # Get the version by stripping the "contracts-v" prefix.
           VERSION_PREFIX: "contracts-v"
-      - name: Check release tag (ccip)
-        id: release-tag-check-ccip
-        uses: smartcontractkit/.github/actions/release-tag-check@c5c4a8186da4218cff6cac8184e47dd3dec69ba3 # release-tag-check@0.1.0
-        env:
-          # Match semver git tags with a "contracts-ccip/" prefix.
-          RELEASE_REGEX: '^contracts-ccip/v[0-9]+\.[0-9]+\.[0-9]+$'
-          PRE_RELEASE_REGEX: '^contracts-ccip/v[0-9]+\.[0-9]+\.[0-9]+-(.+)$'
-          # Get the version by stripping the "contracts-v" prefix.
-          VERSION_PREFIX: "contracts-ccip/v"
-      # CCIP release detected but:
-      # - contracts/package.json needs to be copied from: contracts/release/ccip/package.json
-      # - contracts/README.md needs to be copied from: contracts/release/ccip/README.md
-      # This should all happen before a CCIP contracts tag is published.
-      - name: Fail if CCIP files not updated
-        if: ${{ steps.release-tag-check-ccip.outputs.is-release == 'true' }}
-        shell: bash
-        run: |
-          error_msg="CCIP release detected but contracts/package.json or contracts/README.md is not up to date. Copy contracts/release/ccip/package.json and contracts/release/ccip/README.md to contracts/ and re-trigger workflow."
-          shasum_package_1=$(sha256sum contracts/package.json | awk '{print $1}')
-          shasum_package_2=$(sha256sum contracts/release/ccip/package.json | awk '{print $1}')
-          shasum_readme_1=$(sha256sum contracts/README.md | awk '{print $1}')
-          shasum_readme_2=$(sha256sum contracts/release/ccip/README.md | awk '{print $1}')
-          if [[ $shasum_package_1 != $shasum_package_2 || $shasum_readme_1 != $shasum_readme_2 ]]; then
-            echo "::error::${error_msg}"
-            exit 1
-          fi
 
   prepublish-test:
     needs: [changes, tag-check]
-    if: needs.changes.outputs.changes == 'true' || (needs.tag-check.outputs.is-pre-release-core == 'true' || needs.tag-check.outputs.is-pre-release-ccip == 'true')
+    if: needs.changes.outputs.changes == 'true' || (needs.tag-check.outputs.is-pre-release-core == 'true')
     name: Prepublish Test
     runs-on: ubuntu-latest
     steps:
@@ -204,7 +174,7 @@ jobs:
     name: Publish Beta NPM
     environment: publish-contracts
     needs: [tag-check, changes, lint, prettier, native-compile, prepublish-test]
-    if: needs.tag-check.outputs.is-pre-release-core == 'true' ||  needs.tag-check.outputs.is-pre-release-ccip == 'true'
+    if: needs.tag-check.outputs.is-pre-release-core == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
@@ -223,15 +193,11 @@ jobs:
         shell: bash
         env:
           IS_PRE_RELEASE_CORE: ${{ needs.tag-check.outputs.is-pre-release-core }}
-          IS_PRE_RELEASE_CCIP: ${{ needs.tag-check.outputs.is-pre-release-ccip }}
           PRE_RELEASE_VERSION_CORE: ${{ needs.tag-check.outputs.pre-release-version-core }}
-          PRE_RELEASE_VERSION_CCIP: ${{ needs.tag-check.outputs.pre-release-version-ccip }}
         run: |
           version=""
           if [[ $IS_PRE_RELEASE_CORE == 'true' ]]; then
             version="${PRE_RELEASE_VERSION_CORE}"
-          elif [[ $IS_PRE_RELEASE_CCIP == 'true' ]]; then
-            version="${PRE_RELEASE_VERSION_CCIP}"
           else
             echo "::error::No pre-release version found."
             exit 1
@@ -251,7 +217,7 @@ jobs:
     name: Publish Prod NPM
     environment: publish-contracts
     needs: [tag-check, changes, lint, prettier, native-compile, prepublish-test]
-    if: needs.tag-check.outputs.is-release-core == 'true' || needs.tag-check.outputs.is-release-ccip == 'true'
+    if: needs.tag-check.outputs.is-release-core == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -272,15 +238,11 @@ jobs:
         shell: bash
         env:
           IS_RELEASE_CORE: ${{ needs.tag-check.outputs.is-release-core }}
-          IS_RELEASE_CCIP: ${{ needs.tag-check.outputs.is-release-ccip }}
           RELEASE_VERSION_CORE: ${{ needs.tag-check.outputs.release-version-core }}
-          RELEASE_VERSION_CCIP: ${{ needs.tag-check.outputs.release-version-ccip }}
         run: |
           version=""
           if [[ $IS_RELEASE_CORE == 'true' ]]; then
             version="${RELEASE_VERSION_CORE}"
-          elif [[ $IS_RELEASE_CCIP == 'true' ]]; then
-            version="${RELEASE_VERSION_CCIP}"
           else
             echo "::error::No release version found."
             exit 1

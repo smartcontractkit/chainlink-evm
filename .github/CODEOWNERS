@@ -7,7 +7,7 @@
 # Please put the CODEOWNERS file in .github
 
 # Root
-* @smartcontractkit/foundations @smartcontractkit/core @smartcontractkit/bix-framework
+* @smartcontractkit/foundations @smartcontractkit/core @smartcontractkit/bix-framework @smartcontractkit/core-solidity
 
 # Contracts catch all, for files not matched by the more specific patterns below
 /contracts/ @smartcontractkit/core-solidity
@@ -19,7 +19,6 @@
 /contracts/**/*keeper* @smartcontractkit/dev-services
 /contracts/**/*upkeep* @smartcontractkit/dev-services
 /contracts/**/*automation* @smartcontractkit/dev-services
-/contracts/**/*ccip* @smartcontractkit/ccip-onchain
 /contracts/**/*functions* @smartcontractkit/dev-services
 /contracts/**/*l2ep* @smartcontractkit/bix-ship
 /contracts/**/*llo-feeds* @smartcontractkit/data-streams-engineers
@@ -29,7 +28,6 @@
 /contracts/**/*keystone* @smartcontractkit/keystone
 
 /contracts/src/v0.8/automation @smartcontractkit/dev-services
-/contracts/src/v0.8/ccip @smartcontractkit/ccip-onchain
 /contracts/src/v0.8/functions @smartcontractkit/dev-services
 /contracts/src/v0.8/l2ep @smartcontractkit/bix-build
 /contracts/src/v0.8/llo-feeds @smartcontractkit/data-streams-engineers
@@ -41,7 +39,6 @@
 /contracts/src/v0.8/keystone @smartcontractkit/keystone
 /contracts/src/v0.8/workflow @smartcontractkit/dev-services
 
-/gethwrappers/ccip @smartcontractkit/ccip-onchain
 /gethwrappers/functions @smartcontractkit/dev-services
 /gethwrappers/keystone @smartcontractkit/keystone
 /gethwrappers/llo-feeds @smartcontractkit/data-streams-engineers
@@ -67,13 +64,13 @@
 /contracts/scripts/native_solc_compile_all_events_mock @smartcontractkit/dev-services
 
 # CI/CD
-/.github/** @smartcontractkit/devex-cicd @smartcontractkit/devex-tooling @smartcontractkit/core
-/.github/CODEOWNERS @smartcontractkit/core @smartcontractkit/foundations
+/.github/** @smartcontractkit/devex-cicd @smartcontractkit/devex-tooling @smartcontractkit/core @smartcontractkit/core-solidity
+/.github/CODEOWNERS @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity
 /.github/workflows/*solidity* @smartcontractkit/devex-cicd @smartcontractkit/devex-tooling @smartcontractkit/core-solidity
 
 # Dependencies
-contracts/scripts/requirements.txt @smartcontractkit/core
-contracts/package.json @smartcontractkit/foundations @smartcontractkit/core
-contracts/pnpm.lock @smartcontractkit/core
-go.mod @smartcontractkit/core @smartcontractkit/foundations
-go.sum @smartcontractkit/core @smartcontractkit/foundations
+contracts/scripts/requirements.txt @smartcontractkit/core @smartcontractkit/core-solidity
+contracts/package.json @smartcontractkit/foundations @smartcontractkit/core @smartcontractkit/core-solidity
+contracts/pnpm.lock @smartcontractkit/core @smartcontractkit/core-solidity
+go.mod @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity
+go.sum @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity

@@ -15,5 +15,4 @@ package gethwrappers
 //go:generate go generate ./llo-feeds
 //go:generate go generate ./operatorforwarder
 //go:generate go generate ./shared
-//go:generate go generate ./ccip
 //go:generate go generate ./workflow
