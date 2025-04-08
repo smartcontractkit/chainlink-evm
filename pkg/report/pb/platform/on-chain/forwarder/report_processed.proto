@@ -1,0 +1,52 @@
+syntax="proto3";
+
+package platform.on_chain.forwarder;
+option go_package = ".;forwarder";
+
+// The on-chain ReportProcessed event which is extracted from the tx/event data or
+// the write-target WriteConfirmed event, after a write was confirmed (@see message: platform.write-target.WriteConfirmed).
+message ReportProcessed {
+  // Event data
+  string receiver = 1;
+  string workflow_execution_id = 2; // bytes as hex string for readability
+  uint32 report_id = 3;
+  bool success = 4;
+
+  // Head data - when was the event produced on-chain
+  string block_hash = 5;
+  string block_height = 6;
+  uint64 block_timestamp = 7;
+
+  // Transaction data - info about the tx that mained the event (optional)
+  string tx_id = 10; // TXM ref
+  string tx_hash = 11;
+  string tx_sender = 12;
+  string tx_receiver = 13;
+  string tx_status = 14;
+
+  // [Execution Context]
+  // TODO: replace with a proto reference once supported
+  // Execution Context - Source
+  string meta_source_id = 20;
+
+  // Execution Context - Chain
+  string meta_chain_family_name = 21;
+  string meta_chain_id = 22;
+  string meta_network_name = 23;
+  string meta_network_name_full = 24;
+
+  // Execution Context - Workflow (capabilities.RequestMetadata)
+  string meta_workflow_id = 25;
+  string meta_workflow_owner = 26;
+  string meta_workflow_execution_id = 27;
+  string meta_workflow_name = 28;
+  uint32 meta_workflow_don_id = 29;
+  uint32 meta_workflow_don_config_version = 30;
+  string meta_reference_id = 31;
+
+  // Execution Context - Capability
+  string meta_capability_type = 32;
+  string meta_capability_id = 33;
+  uint64 meta_capability_timestamp_start = 34;
+  uint64 meta_capability_timestamp_emit = 35;
+}
