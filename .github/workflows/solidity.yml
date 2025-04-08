@@ -122,8 +122,8 @@ jobs:
         run: make wrappers-all
 
       - name: Run zksync compile and generate wrappers
+        working-directory: ./chainlink/contracts
         run: make wrappers-zksync
-        working-directory: ./contracts
 
       - name: Check if Go solidity wrappers are updated
         if: ${{ needs.changes.outputs.changes == 'true' }}
