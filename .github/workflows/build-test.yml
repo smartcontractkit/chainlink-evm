@@ -18,6 +18,8 @@ jobs:
 
       - name: Set up Go
         uses: actions/setup-go@v5
+        cache-dependency-path: go.sum
+        go-version-file: go.mod
 
       - name: Build
         run: go build ./...
@@ -63,6 +65,8 @@ jobs:
 
       - name: Set up Go
         uses: actions/setup-go@v5
+        cache-dependency-path: go.sum
+        go-version-file: go.mod
 
       - name: Ensure gomodtidy has been run
         run: |
