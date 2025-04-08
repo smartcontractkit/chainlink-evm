@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// this are mocks for the placeholders used in the template
+// these are mocks for the placeholders used in the template
 type PlaceholderContractName struct{}
 
 type IPlaceholderContractNameMetaData struct {
