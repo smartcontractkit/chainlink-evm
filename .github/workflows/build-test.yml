@@ -23,7 +23,7 @@ jobs:
         run: go build ./...
 
       - name: Setup Postgres
-        uses: smartcontractkit/.github/actions/setup-postgres@f0f01123a75161f4e1119541c37b8dc19820c15c
+        uses: smartcontractkit/.github/actions/setup-postgres@7aa7ce23687ba493e9ba9c6ad47a063e60ae3433 # setup-postgres@0.1.0
 
       - name: Setup DB
         run: make testdb
