@@ -61,20 +61,19 @@ func declareImports() ast.Decl {
 func declareDeployFunction(contractName string) ast.Decl {
 	template := zksyncDeployTemplate
 
-	// this is not ideal. use ast to read the function
-	// remove imports, function name, first indent and closing bracket
-	var (
-		count = 0
-		index = 0
-	)
-	for count < len(importValues)+8 { // lines to skip
-		if template[index] == '\n' {
-			count++
+	sep := "\n"
+	lines := strings.Split(template, sep)
+	from := 0
+	to := 0
+	// get the func body as string
+	for !strings.Contains(lines[to], "return address, receipt, contract, nil") {
+		if strings.Contains(lines[to], "DeployPlaceholderContractNameZk") {
+			from = to
 		}
-		index++
+		to++
 	}
-	template = template[index+1 : len(template)-3]
-
+	template = strings.Join(lines[from+1:to+1], sep)
+	template = template[1:] // remove the first space
 	template = strings.Replace(template, "PlaceholderContractName", contractName, 2)
 
 	return &ast.FuncDecl{
