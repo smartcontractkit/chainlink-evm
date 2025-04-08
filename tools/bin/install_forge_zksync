@@ -3,6 +3,11 @@
 set -e
 
 VERSION="0.0.12"
+if [ -f "$(dirname $0)/forge_zksync" ] && "$(dirname $0)/forge_zksync" -V | grep -q "1.0.0-foundry-zksync-v${VERSION}"; then
+    echo "Correct forge_zksync version already installed."
+    exit 0
+fi
+
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     OS="linux"
     ARCH="amd64"
