@@ -219,6 +219,7 @@ Check out the official [Foundry best practices section](https://book.getfoundry.
 - Use `make snapshot` to generate the correct snapshot for the selected Foundry profile.
   - Use `make snapshot-diff` to see the diff between the local snapshot and your latest changes.
 - use `make wrappers` to generate the gethwrappers for the selected Foundry profile.
+- use `make wrappers-zksync` to generate the gethwrappers for ZK Sync deployments.  
 - Use `vm.recordLogs();` to record all logs emitted
   - Use `vm.getRecordedLogs()` to get the logs emitted. 
   - This way you can assert that a log was *not* emitted.
