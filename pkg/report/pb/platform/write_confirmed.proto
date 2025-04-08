@@ -1,0 +1,55 @@
+syntax="proto3";
+
+package platform.write_target;
+option go_package = ".;writetarget";
+
+// WT confirmed the report was successfully written on-chain
+message WriteConfirmed {
+  string node = 1;
+  string forwarder = 2;
+  string receiver = 3;
+
+  // Report Info
+  uint32 report_id = 4;
+  bytes report_context = 5;
+  bytes report = 6;
+  uint32 signers_num = 7;
+
+  // TODO: Is the report confirmed finalized on-chain, or just observed?
+
+  // When was the report confirmed on-chain
+  string block_hash = 9;
+  string block_height = 10;
+  uint64 block_timestamp = 11;
+
+  // Transmission Info
+  string transmitter = 12;
+  bool success = 13;
+  // TODO: what about EVM's TransmissionInfo parity?
+
+  // [Execution Context]
+  // TODO: replace with a proto reference once supported
+  // Execution Context - Source
+  string meta_source_id = 20;
+
+  // Execution Context - Chain
+  string meta_chain_family_name = 21;
+  string meta_chain_id = 22;
+  string meta_network_name = 23;
+  string meta_network_name_full = 24;
+
+  // Execution Context - Workflow (capabilities.RequestMetadata)
+  string meta_workflow_id = 25;
+  string meta_workflow_owner = 26;
+  string meta_workflow_execution_id = 27;
+  string meta_workflow_name = 28;
+  uint32 meta_workflow_don_id = 29;
+  uint32 meta_workflow_don_config_version = 30;
+  string meta_reference_id = 31;
+
+  // Execution Context - Capability
+  string meta_capability_type = 32;
+  string meta_capability_id = 33;
+  uint64 meta_capability_timestamp_start = 34;
+  uint64 meta_capability_timestamp_emit = 35;
+}
