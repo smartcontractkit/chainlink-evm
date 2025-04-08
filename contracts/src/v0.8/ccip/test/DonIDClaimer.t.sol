@@ -62,6 +62,15 @@ contract DonIDClaimerTest is Test {
     assertTrue(s_donIDClaimer.isAuthorizedDeployer(s_unauthorized), "Address should be authorized");
   }
 
+  function test_SetAuthorizedDeployerRevoked() public {
+    vm.expectEmit();
+    emit DonIDClaimer.AuthorizedDeployerSet(s_deployer, false);
+
+    vm.prank(s_owner);
+    s_donIDClaimer.setAuthorizedDeployer(s_deployer, false);
+    assertFalse(s_donIDClaimer.isAuthorizedDeployer(s_deployer), "Deployer should be deauthorized");
+  }
+
   // Reverts
   function test_RevertWhen_UnauthorizedSenderClaimReverts() public {
     vm.expectRevert(abi.encodeWithSelector(DonIDClaimer.AccessForbidden.selector, s_unauthorized));
@@ -73,5 +82,10 @@ contract DonIDClaimerTest is Test {
     vm.expectRevert(Ownable2Step.OnlyCallableByOwner.selector);
     vm.prank(s_unauthorized);
     s_donIDClaimer.setAuthorizedDeployer(s_unauthorized, true);
+  }
+
+  function test_RevertWhen_ConstructorWithZeroAddress() public {
+    vm.expectRevert(abi.encodeWithSelector(DonIDClaimer.ZeroAddressNotAllowed.selector));
+    new DonIDClaimer(address(0));
   }
 }
