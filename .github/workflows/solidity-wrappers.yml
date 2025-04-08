@@ -61,20 +61,26 @@ jobs:
         run: make wrappers-all
         working-directory: ./contracts
 
-      - name: Assume role capable of dispatching action
-        uses: smartcontractkit/.github/actions/setup-github-token@ef78fa97bf3c77de6563db1175422703e9e6674f # setup-github-token@0.2.1
-        id: get-gh-token
-        with:
-          aws-role-arn:  ${{ secrets.AWS_OIDC_CHAINLINK_CI_AUTO_PR_TOKEN_ISSUER_ROLE_ARN }}
-          aws-lambda-url: ${{ secrets.AWS_INFRA_RELENG_TOKEN_ISSUER_LAMBDA_URL }}
-          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Ensure clean after generation
+        run: |
+          git add --all
+          git diff --minimal --cached --exit-code
 
-      - name: Commit any wrapper changes
-        uses: planetscale/ghcommit-action@21a8cda29f55e5cc2cdae0cdbdd08e38dd148c25 # v0.1.37
-        with:
-          commit_message: "Update gethwrappers"
-          repo: ${{ github.repository }}
-          branch: ${{ github.head_ref }}
-          file_pattern: "core/gethwrappers/**/generated/*.go core/gethwrappers/**/generated-wrapper-dependency-versions-do-not-edit.txt"
-        env:
-          GITHUB_TOKEN: ${{ steps.get-gh-token.outputs.access-token }}
+#      While we are waiting for secrets we just check the diff for now.
+#      - name: Assume role capable of dispatching action
+#        uses: smartcontractkit/.github/actions/setup-github-token@ef78fa97bf3c77de6563db1175422703e9e6674f # setup-github-token@0.2.1
+#        id: get-gh-token
+#        with:
+#          aws-role-arn:  ${{ secrets.AWS_OIDC_CHAINLINK_CI_AUTO_PR_TOKEN_ISSUER_ROLE_ARN }}
+#          aws-lambda-url: ${{ secrets.AWS_INFRA_RELENG_TOKEN_ISSUER_LAMBDA_URL }}
+#          aws-region: ${{ secrets.AWS_REGION }}
+#
+#      - name: Commit any wrapper changes
+#        uses: planetscale/ghcommit-action@21a8cda29f55e5cc2cdae0cdbdd08e38dd148c25 # v0.1.37
+#        with:
+#          commit_message: "Update gethwrappers"
+#          repo: ${{ github.repository }}
+#          branch: ${{ github.head_ref }}
+#          file_pattern: "gethwrappers/**/generated/*.go gethwrappers/**/generated-wrapper-dependency-versions-do-not-edit.txt"
+#        env:
+#          GITHUB_TOKEN: ${{ steps.get-gh-token.outputs.access-token }}
