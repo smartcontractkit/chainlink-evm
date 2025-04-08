@@ -4,7 +4,7 @@
 ChainID = '97'
 FinalityTagEnabled = true
 LinkContractAddress = '0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06'
-LogPollInterval = '3s'
+LogPollInterval = '1.5s'
 NoNewHeadsThreshold = '30s'
 RPCBlockQueryDelay = 2
 FinalizedBlockOffset = 2
