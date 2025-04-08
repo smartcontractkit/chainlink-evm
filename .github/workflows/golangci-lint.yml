@@ -21,8 +21,9 @@ jobs:
 
       - name: Set up Go
         uses: actions/setup-go@v5
-        cache-dependency-path: go.sum
-        go-version-file: go.mod
+        with:
+          cache-dependency-path: go.sum
+          go-version-file: go.mod
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@38e1018663fa5173f3968ea0777460d3de38f256 # v5.3.0
