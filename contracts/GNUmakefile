@@ -45,7 +45,8 @@ mockery: $(mockery) ## Install mockery.
 foundry: ## Install foundry.
 	foundryup --install v1.0.0
 
-../tools/bin/forge_zksync:
+.PHONY: forge-zksync
+forge-zksync:
 	../tools/bin/install_forge_zksync
 
 .PHONY: foundry-refresh
@@ -86,7 +87,7 @@ wrappers-all: pnpmdep mockery abigen ## Recompiles solidity contracts and their 
 	go generate ../gethwrappers/go_generate.go
 
 .PHONY: wrappers-zksync
-wrappers-zksync: pnpmdep ../tools/bin/forge_zksync
+wrappers-zksync: pnpmdep forge-zksync
 	go generate ../gethwrappers/zksync/go_generate.go
 
 help:
