@@ -1,0 +1,83 @@
+name: Build and Test
+
+on: [pull_request]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pkg # applied only for "run" steps
+    env:
+      # We explicitly have this env var not be "CL_DATABASE_URL" to avoid having it be used by core related tests
+      # when they should not be using it, while still allowing us to DRY up the setup
+      DB_URL: postgresql://postgres:postgres@localhost:5432/chainlink_test?sslmode=disable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          cache-dependency-path: go.sum
+          go-version-file: go.mod
+
+      - name: Build
+        run: go build ./...
+
+      - name: Setup Postgres
+        uses: smartcontractkit/.github/actions/setup-postgres@7aa7ce23687ba493e9ba9c6ad47a063e60ae3433 # setup-postgres@0.1.0
+
+      - name: Setup DB
+        run: make testdb
+        env:
+          CL_DATABASE_URL: ${{ env.DB_URL }}
+
+      - name: Unit Tests
+        run: GORACE="log_path=$PWD/race" go test -race ./... -coverpkg=./... -coverprofile=coverage.txt
+        env:
+          CL_DATABASE_URL: ${{ env.DB_URL }}
+
+      - name: Print Races
+        if: failure()
+        run: |
+          find race.* | xargs cat > race.txt
+          if [[ -s race.txt ]]; then
+            cat race.txt
+          fi
+
+      - name: Upload Go test results
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: go-test-results
+          path: |
+            pkg/coverage.txt
+            pkg/race.*
+
+  check-tidy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pkg # applied only for "run" steps
+    steps:
+      - name: Checkout
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          cache-dependency-path: go.sum
+          go-version-file: go.mod
+
+      - name: Ensure gomodtidy has been run
+        run: |
+          go mod tidy
+          git add --all
+          git diff --minimal --cached --exit-code
+
+      - name: Ensure "make generate" has been run
+        run: |
+          make rm-mocked && make generate
+          git add --all
+          git diff --stat --cached --exit-code

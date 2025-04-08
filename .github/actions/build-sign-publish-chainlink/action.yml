@@ -46,7 +46,7 @@ inputs:
     description: The AWS region the ECR repository is located in, should only be needed for public ECR repositories, used in configuring docker/login-action
     required: false
   git-tag-type:
-    description: The type of git tag (core or ccip)
+    description: The type of git tag core
     default: core
     required: false
 
@@ -89,18 +89,10 @@ runs:
         EOF
         )
 
-        if [[ "${GIT_TAG_TYPE}" = "ccip" ]]; then
-          SHARED_BUILD_ARGS=$(cat << EOF
-        COMMIT_SHA=${GIT_COMMIT_SHA}
-        CL_CHAIN_DEFAULTS=/ccip-config
-        EOF
-        )
-        else
-          SHARED_BUILD_ARGS=$(cat << EOF
+        SHARED_BUILD_ARGS=$(cat << EOF
         COMMIT_SHA=${GIT_COMMIT_SHA}
         EOF
         )
-        fi
 
         echo "shared-images<<EOF" >> $GITHUB_ENV
         echo "$SHARED_IMAGES" >> $GITHUB_ENV

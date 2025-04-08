@@ -1,0 +1,21 @@
+ChainID = 98866
+FinalityTagEnabled = true
+
+# block_time is dynamic
+LogPollInterval = "5s"
+# posting to L1 every ~12 hours
+NoNewFinalizedHeadsThreshold = '13h'
+# Seen gaps of 4 mins between blocks, n x 2 + extra buffer
+NoNewHeadsThreshold = '10m'
+
+[GasEstimator]
+Mode = 'FeeHistory'
+EIP1559DynamicFees = false
+PriceMin = "0"
+BumpMin = "5 mwei"
+# recommended by ds&a
+PriceMax = '1000 gwei'
+
+[GasEstimator.FeeHistory]
+# block_time is dynamic
+CacheTimeout = '4s'
