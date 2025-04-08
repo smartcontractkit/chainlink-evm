@@ -3,7 +3,7 @@ module github.com/smartcontractkit/chainlink-evm/capabilities
 go 1.24.1
 
 require (
-	github.com/ethereum/go-ethereum v1.15.7
+	github.com/ethereum/go-ethereum v1.15.3
 	github.com/smartcontractkit/chainlink-common v0.6.0
 	github.com/stretchr/testify v1.10.0
 )
