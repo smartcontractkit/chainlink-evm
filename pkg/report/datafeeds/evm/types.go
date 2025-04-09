@@ -1,17 +1,16 @@
 package evm
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
 )
 
 type Report struct {
 	// TODO: replace with common type
-	ReportV1Metadata
+	types.Metadata
 	Data []byte
 }
 
@@ -64,49 +63,12 @@ func Decode(data []byte) (*Reports, error) {
 	return &decoded, nil
 }
 
-func decodeReportMetadata(data []byte) (metadata ReportV1Metadata, err error) {
-	if len(data) < metadata.Length() {
-		return metadata, fmt.Errorf("data too short: %d bytes", len(data))
-	}
-	return metadata, binary.Read(bytes.NewReader(data[:metadata.Length()]), binary.BigEndian, &metadata)
-}
-
-func (rm ReportV1Metadata) Encode() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.BigEndian, rm)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-func (rm ReportV1Metadata) Length() int {
-	bytes, err := rm.Encode()
-	if err != nil {
-		return 0
-	}
-	return len(bytes)
-}
-
 func (r Report) Encode() ([]byte, error) {
 	// Encode the metadata
-	metadataBytes, err := r.ReportV1Metadata.Encode()
+	metadataBytes, err := r.Metadata.Encode()
 	if err != nil {
 		return nil, err
 	}
 
 	return append(metadataBytes, r.Data...), nil
-}
-
-// TODO: replace with https://github.com/smartcontractkit/chainlink-common/blob/39bc061d09ded8c6b87ff95ffaea53110a742f87/pkg/capabilities/consensus/ocr3/types/aggregator.go#L14-L24
-type ReportV1Metadata struct {
-	Version             uint8
-	WorkflowExecutionID [32]byte
-	Timestamp           uint32
-	DonID               uint32
-	DonConfigVersion    uint32
-	WorkflowCID         [32]byte
-	WorkflowName        [10]byte
-	WorkflowOwner       [20]byte
-	ReportID            [2]byte
 }

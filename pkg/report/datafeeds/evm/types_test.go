@@ -7,7 +7,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds/evm"
 )
 
-func TestRoundTripEncodeDecode(t *testing.T) {
+func TestDecodeFeedReport(t *testing.T) {
 	// Create some sample records.
 	original := []evm.FeedReport{
 		{
