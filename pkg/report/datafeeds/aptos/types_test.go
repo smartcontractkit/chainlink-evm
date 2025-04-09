@@ -1,4 +1,4 @@
-package datafeeds
+package aptos
 
 import (
 	"encoding/base64"

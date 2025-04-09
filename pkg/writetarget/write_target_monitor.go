@@ -30,7 +30,7 @@ const (
 // includes decoding messages as specific types and deriving metrics based on the decoded messages.
 // TODO: Report decoding uses the same ABI for EVM and Aptos, however, future chains may need a different
 // decoding scheme. Generalize this in the future to support different chains and decoding schemes.
-func NewMonitor(ctx context.Context, lggr logger.Logger) (*monitor.BeholderClient, error) {
+func NewMonitor(ctx context.Context, lggr logger.Logger, decodeFn func(m *wt.WriteConfirmed) ([]*registry.FeedUpdated, error)) (*monitor.BeholderClient, error) {
 	// Initialize the Beholder client with a local logger a custom Emitter
 	client := beholder.GetClient().ForPackage("write_target")
 
@@ -59,7 +59,7 @@ func NewMonitor(ctx context.Context, lggr logger.Logger) (*monitor.BeholderClien
 		processors: []monitor.ProtoProcessor{
 			&wtProcessor{wtMetrics},
 			&keystoneProcessor{emitter, forwarderMetrics},
-			&dataFeedsProcessor{emitter, registryMetrics},
+			&dataFeedsProcessor{emitter, registryMetrics, decodeFn},
 		},
 	}
 	return &monitor.BeholderClient{Client: &client, ProtoEmitter: &protoEmitterProxy}, nil
@@ -185,8 +185,9 @@ func (p *keystoneProcessor) Process(ctx context.Context, m proto.Message, attrKV
 
 // Data-Feeds specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
 type dataFeedsProcessor struct {
-	emitter monitor.ProtoEmitter
-	metrics *registry.Metrics
+	emitter  monitor.ProtoEmitter
+	metrics  *registry.Metrics
+	decodeFn func(m *wt.WriteConfirmed) ([]*registry.FeedUpdated, error)
 }
 
 func (p *dataFeedsProcessor) Process(ctx context.Context, m proto.Message, attrKVs ...any) error {
@@ -198,7 +199,7 @@ func (p *dataFeedsProcessor) Process(ctx context.Context, m proto.Message, attrK
 		// Notice: we assume all writes are Data-Feeds (static schema) writes for now
 
 		// Decode as an array of 'data-feeds.registry.FeedUpdated' messages
-		updates, err := registry.DecodeAsFeedUpdated(msg)
+		updates, err := p.decodeFn(msg)
 		if err != nil {
 			return fmt.Errorf("failed to decode as 'data-feeds.registry.FeedUpdated': %w", err)
 		}

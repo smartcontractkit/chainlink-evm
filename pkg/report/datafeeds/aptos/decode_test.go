@@ -1,5 +1,5 @@
 //nolint:govet, testifylint // disable govet, testifylint
-package registry
+package aptos
 
 import (
 	"encoding/base64"
@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/pb/data-feeds/on-chain/registry"
 	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
 )
 
@@ -26,7 +27,7 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    wt_msg.WriteConfirmed
-		expected []FeedUpdated
+		expected []registry.FeedUpdated
 		wantErr  bool
 	}{
 		{
@@ -51,7 +52,7 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 				BlockHeight:    "17",
 				BlockTimestamp: 0x66f5bf69,
 			},
-			expected: []FeedUpdated{
+			expected: []registry.FeedUpdated{
 				{
 					FeedId:                "0x0003111111111111111100000000000000000000000000000000000000000000",
 					ObservationsTimestamp: 0x66f5bf69,
@@ -102,7 +103,7 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 				Transmitter: "example-transmitter",
 				Success:     true,
 			},
-			expected: []FeedUpdated{},
+			expected: []registry.FeedUpdated{},
 			wantErr:  true,
 		},
 		// Add more test cases as needed
@@ -226,7 +227,7 @@ func TestToBenchmarkVal(t *testing.T) {
 
 			decimals, isNumber := datafeeds.GetDecimals(feedID.GetDataType())
 
-			result := toBenchmarkVal(feedID, tt.val)
+			result := registry.ToBenchmarkVal(feedID, tt.val)
 			if math.IsNaN(tt.expected) {
 				require.False(t, isNumber)
 				require.True(t, math.IsNaN(result))

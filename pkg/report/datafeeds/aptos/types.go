@@ -1,4 +1,6 @@
-package datafeeds
+package aptos
+
+// TODO: move this whole thing to aptos repo, this is just POC
 
 import (
 	"fmt"
