@@ -26,8 +26,9 @@ func NewNullClient(cid *big.Int, lggr logger.Logger) *NullClient {
 }
 
 // NullClientChainID the ChainID that nullclient will return
-// 0 is never used as a real chain ID so makes sense as a dummy value here
-const NullClientChainID = 0
+// hardcoded chainId is never used as a real chain ID so makes sense as a dummy value here
+// can't use 0 because of introduced in geth 1.15.7 contraint 0 for chain id
+const NullClientChainID = evmtypes.NullClientChainID
 
 //
 // Client methods

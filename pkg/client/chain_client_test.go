@@ -786,7 +786,7 @@ func TestEthClient_ErroringClient(t *testing.T) {
 	require.Equal(t, multinode.ErrNodeError, err)
 
 	id := erroringClient.ConfiguredChainID()
-	require.Equal(t, id, big.NewInt(0))
+	require.Equal(t, id, big.NewInt(evmtypes.NullClientChainID))
 
 	_, err = erroringClient.CodeAt(ctx, common.Address{}, nil)
 	require.Equal(t, multinode.ErrNodeError, err)
