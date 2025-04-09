@@ -56,8 +56,7 @@ func ToBackwardCompatibleCallArg(msg ethereum.CallMsg) interface{} {
 	}
 	return arg
 }
-
-func toBackwardCompatibleCallArgWithTronSupport(msg ethereum.CallMsg, chainType chaintype.ChainType) interface{} {
+func ToBackwardCompatibleCallArgWithChainTypeSupport(msg ethereum.CallMsg, chainType chaintype.ChainType) interface{} {
 	backwardsCompatibleCallArg := ToBackwardCompatibleCallArg(msg)
 	callArgs, ok := backwardsCompatibleCallArg.(map[string]interface{})
 	if !ok {

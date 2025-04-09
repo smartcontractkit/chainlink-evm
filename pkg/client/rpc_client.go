@@ -885,7 +885,7 @@ func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64,
 	start := time.Now()
 
 	if r.isChainType(chaintype.ChainTron) {
-		err = r.wrapHTTP(http.rpc.CallContext(ctx, &gas, "eth_estimateGas", toBackwardCompatibleCallArgWithTronSupport(call, r.chainType)))
+		err = r.wrapHTTP(http.rpc.CallContext(ctx, &gas, "eth_estimateGas", ToBackwardCompatibleCallArgWithChainTypeSupport(call, r.chainType)))
 		return
 	}
 
@@ -938,10 +938,10 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 	start := time.Now()
 	var hex hexutil.Bytes
 	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", toBackwardCompatibleCallArgWithTronSupport(message, r.chainType), ToBackwardCompatibleBlockNumArg(blockNumber))
+		err = http.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArgWithChainTypeSupport(message, r.chainType), ToBackwardCompatibleBlockNumArg(blockNumber))
 		err = r.wrapHTTP(err)
 	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", toBackwardCompatibleCallArgWithTronSupport(message, r.chainType), ToBackwardCompatibleBlockNumArg(blockNumber))
+		err = ws.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArgWithChainTypeSupport(message, r.chainType), ToBackwardCompatibleBlockNumArg(blockNumber))
 		err = r.wrapWS(err)
 	}
 	if err == nil {
@@ -966,10 +966,10 @@ func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (v
 	start := time.Now()
 	var hex hexutil.Bytes
 	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", toBackwardCompatibleCallArgWithTronSupport(message, r.chainType), "pending")
+		err = http.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArgWithChainTypeSupport(message, r.chainType), "pending")
 		err = r.wrapHTTP(err)
 	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", toBackwardCompatibleCallArgWithTronSupport(message, r.chainType), "pending")
+		err = ws.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArgWithChainTypeSupport(message, r.chainType), "pending")
 		err = r.wrapWS(err)
 	}
 	if err == nil {
