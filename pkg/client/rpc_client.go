@@ -208,13 +208,12 @@ func (r *RPCClient) DialHTTP() error {
 	lggr.Debugw("RPC dial: evmclient.Client#dial")
 
 	var httprpc *rpc.Client
-	rpc, err := rpc.DialHTTP(http.uri.String())
+	httprpc, err := rpc.DialHTTP(http.uri.String())
 	if err != nil {
 		promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
 		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", http.uri.Redacted()))
 	}
 
-	httprpc = rpc
 	http.rpc = httprpc
 	http.geth = ethclient.NewClient(httprpc)
 
