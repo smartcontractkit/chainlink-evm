@@ -1,0 +1,17 @@
+ChainID = 999
+LogBroadcasterEnabled = false
+# block_time is 2s
+LogPollInterval = "2s"
+
+[GasEstimator]
+Mode = 'FeeHistory'
+EIP1559DynamicFees = true
+# recommended by ds&a
+PriceMax = '1000 gwei'
+
+[GasEstimator.FeeHistory]
+# block_time is 2s
+CacheTimeout = '4s'
+
+[NodePool]
+NewHeadsPollInterval = '2s'
