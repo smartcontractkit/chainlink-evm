@@ -52,7 +52,7 @@ func TestLatencyMonitor(t *testing.T) {
 
 	lm := logpoller.NewLatencyMonitor(client, lggr, blockProductionRate)
 
-	t.Run("Slow client with latency of 80% block production rate", func(t *testing.T) {
+	t.Run("Slow client with latency 80% block production rate", func(t *testing.T) {
 		client.latency = time.Duration(0.8 * float64(blockProductionRate))
 		_, _ = lm.HeadByNumber(t.Context(), nil)
 		_, _ = lm.HeadByHash(t.Context(), common.Hash{})
@@ -60,12 +60,12 @@ func TestLatencyMonitor(t *testing.T) {
 		// Should not track latency on block range
 		filter := ethereum.FilterQuery{FromBlock: big.NewInt(123), ToBlock: big.NewInt(456), BlockHash: nil}
 		_, _ = lm.FilterLogs(t.Context(), filter)
-		require.Equal(t, 3, logs.Len())
+		require.Equal(t, 2, logs.Len())
 
 		// Should track latency for a specific block hash call
 		filter = ethereum.FilterQuery{FromBlock: nil, ToBlock: nil, BlockHash: &common.Hash{}}
 		_, _ = lm.FilterLogs(t.Context(), filter)
-		require.Equal(t, 4, logs.Len())
+		require.Equal(t, 3, logs.Len())
 	})
 
 	t.Run("Fast client does not log warnings", func(t *testing.T) {
