@@ -24,7 +24,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
-	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
@@ -100,9 +99,8 @@ type RPCClient struct {
 	chainType                  chaintype.ChainType
 	clientErrors               config.ClientErrors
 
-	ws                             atomic.Pointer[rawclient]
-	http                           atomic.Pointer[rawclient]
-	externallyUsedChainSpecificURL *commonconfig.URL
+	ws   atomic.Pointer[rawclient]
+	http atomic.Pointer[rawclient]
 
 	*multinode.RPCClientBase[*evmtypes.Head]
 }
@@ -287,15 +285,6 @@ func (r *RPCClient) getRPCDomain() string {
 
 func (r *RPCClient) isChainType(chainType chaintype.ChainType) bool {
 	return r.chainType == chainType
-}
-
-func (r *RPCClient) withExternallyUsedChainSpecificURL(url *commonconfig.URL) *RPCClient {
-	r.externallyUsedChainSpecificURL = url
-	return r
-}
-
-func (r *RPCClient) getExternallyUsedChainSpecificURL() *commonconfig.URL {
-	return r.externallyUsedChainSpecificURL
 }
 
 // RPC wrappers

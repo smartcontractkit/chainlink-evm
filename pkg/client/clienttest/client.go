@@ -11,8 +11,6 @@ import (
 
 	common "github.com/ethereum/go-ethereum/common"
 
-	config "github.com/smartcontractkit/chainlink-common/pkg/config"
-
 	context "context"
 
 	ethereum "github.com/ethereum/go-ethereum"
@@ -841,64 +839,6 @@ func (_c *Client_FilterLogs_Call) Return(_a0 []types.Log, _a1 error) *Client_Fil
 }
 
 func (_c *Client_FilterLogs_Call) RunAndReturn(run func(context.Context, ethereum.FilterQuery) ([]types.Log, error)) *Client_FilterLogs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetExternallyUsedChainSpecificURL provides a mock function with given fields: ctx
-func (_m *Client) GetExternallyUsedChainSpecificURL(ctx context.Context) (*config.URL, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetExternallyUsedChainSpecificURL")
-	}
-
-	var r0 *config.URL
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*config.URL, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) *config.URL); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*config.URL)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Client_GetExternallyUsedChainSpecificURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExternallyUsedChainSpecificURL'
-type Client_GetExternallyUsedChainSpecificURL_Call struct {
-	*mock.Call
-}
-
-// GetExternallyUsedChainSpecificURL is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Client_Expecter) GetExternallyUsedChainSpecificURL(ctx interface{}) *Client_GetExternallyUsedChainSpecificURL_Call {
-	return &Client_GetExternallyUsedChainSpecificURL_Call{Call: _e.mock.On("GetExternallyUsedChainSpecificURL", ctx)}
-}
-
-func (_c *Client_GetExternallyUsedChainSpecificURL_Call) Run(run func(ctx context.Context)) *Client_GetExternallyUsedChainSpecificURL_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *Client_GetExternallyUsedChainSpecificURL_Call) Return(_a0 *config.URL, _a1 error) *Client_GetExternallyUsedChainSpecificURL_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *Client_GetExternallyUsedChainSpecificURL_Call) RunAndReturn(run func(context.Context) (*config.URL, error)) *Client_GetExternallyUsedChainSpecificURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

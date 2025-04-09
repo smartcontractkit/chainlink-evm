@@ -46,6 +46,9 @@ type AddressLister interface {
 	EnabledAddresses(ctx context.Context) (addresses []common.Address, err error)
 }
 
+// RawUnhashedSigner is an interface for signing raw bytes without hashing them first.
+// This is useful for signing transactions or other data that needs to be signed as-is (required for TRON).
+// The interface effectively exposes the Sign method from the keystore
 type RawUnhashedSigner interface {
 	SignRawUnhashedBytes(ctx context.Context, address common.Address, bytes []byte) ([]byte, error)
 }

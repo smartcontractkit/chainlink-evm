@@ -1145,12 +1145,15 @@ func (o *OCR) setFrom(f *OCR) {
 }
 
 type Node struct {
-	Name             *string
-	WSURL            *commonconfig.URL
-	HTTPURL          *commonconfig.URL
-	ChainSpecificURL *commonconfig.URL
-	SendOnly         *bool
-	Order            *int32
+	Name    *string
+	WSURL   *commonconfig.URL
+	HTTPURL *commonconfig.URL
+	// The HTTPURLExtraWrite is an undocumented config option used only for chains that require
+	// an additional URL in conjunction to the standard JSON-RPC URL
+	// Supports TRON (different write path)
+	HTTPURLExtraWrite *commonconfig.URL
+	SendOnly          *bool
+	Order             *int32
 }
 
 func (n *Node) ValidateConfig() (err error) {
@@ -1181,20 +1184,19 @@ func (n *Node) ValidateConfig() (err error) {
 		}
 	}
 
+	if n.HTTPURLExtraWrite != nil {
+		switch n.HTTPURLExtraWrite.Scheme {
+		case "http", "https":
+		default:
+			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "HTTPURLExtraWrite", Value: n.HTTPURLExtraWrite.Scheme, Msg: "must be http or https"})
+		}
+	}
+
 	if n.Order != nil && (*n.Order < 1 || *n.Order > 100) {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "Order", Value: *n.Order, Msg: "must be between 1 and 100"})
 	} else if n.Order == nil {
 		z := int32(100)
 		n.Order = &z
-	}
-
-	// The ChainSpecificURL is an undocumented config option used only for chains that require an additional URL in conjunction to the standard JSON-RPC URL
-	if n.ChainSpecificURL != nil {
-		switch n.ChainSpecificURL.Scheme {
-		case "http", "https":
-		default:
-			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "ChainSpecificURL", Value: n.ChainSpecificURL.Scheme, Msg: "must be http or https"})
-		}
 	}
 
 	return
@@ -1210,14 +1212,14 @@ func (n *Node) SetFrom(f *Node) {
 	if f.HTTPURL != nil {
 		n.HTTPURL = f.HTTPURL
 	}
+	if f.HTTPURLExtraWrite != nil {
+		n.HTTPURLExtraWrite = f.HTTPURLExtraWrite
+	}
 	if f.SendOnly != nil {
 		n.SendOnly = f.SendOnly
 	}
 	if f.Order != nil {
 		n.Order = f.Order
-	}
-	if f.ChainSpecificURL != nil {
-		n.ChainSpecificURL = f.ChainSpecificURL
 	}
 }
 
