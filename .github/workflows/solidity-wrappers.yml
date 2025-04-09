@@ -1,5 +1,6 @@
 # This workflow is not active and will be removed on July 1st, 2025
-# If you still needed, please add the necessary GH secrets and update it.
+# If you still need it, please add the necessary GH secrets and update it.
+
 #name: Solidity Wrappers
 ## This is its own workflow file rather than being merged into "solidity.yml" to avoid over complicating the conditionals
 ## used for job execution. The jobs in "solidity.yml" are configured around push events, whereas
