@@ -1145,11 +1145,12 @@ func (o *OCR) setFrom(f *OCR) {
 }
 
 type Node struct {
-	Name     *string
-	WSURL    *commonconfig.URL
-	HTTPURL  *commonconfig.URL
-	SendOnly *bool
-	Order    *int32
+	Name             *string
+	WSURL            *commonconfig.URL
+	HTTPURL          *commonconfig.URL
+	ChainSpecificURL *commonconfig.URL
+	SendOnly         *bool
+	Order            *int32
 }
 
 func (n *Node) ValidateConfig() (err error) {
@@ -1187,6 +1188,15 @@ func (n *Node) ValidateConfig() (err error) {
 		n.Order = &z
 	}
 
+	// The ChainSpecificURL is an undocumented config option used only for chains that require an additional URL in conjunction to the standard JSON-RPC URL
+	if n.ChainSpecificURL != nil {
+		switch n.ChainSpecificURL.Scheme {
+		case "http", "https":
+		default:
+			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "ChainSpecificURL", Value: n.ChainSpecificURL.Scheme, Msg: "must be http or https"})
+		}
+	}
+
 	return
 }
 
@@ -1205,6 +1215,9 @@ func (n *Node) SetFrom(f *Node) {
 	}
 	if f.Order != nil {
 		n.Order = f.Order
+	}
+	if f.ChainSpecificURL != nil {
+		n.ChainSpecificURL = f.ChainSpecificURL
 	}
 }
 

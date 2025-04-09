@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
+	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
@@ -91,6 +92,7 @@ type Client interface {
 	PendingCallContract(ctx context.Context, msg ethereum.CallMsg) ([]byte, error)
 
 	IsL2() bool
+	GetExternallyUsedChainSpecificURL(ctx context.Context) (*commonconfig.URL, error)
 
 	// Simulate the transaction prior to sending to catch zk out-of-counters errors ahead of time
 	CheckTxValidity(ctx context.Context, from common.Address, to common.Address, data []byte) *SendError
@@ -332,6 +334,15 @@ func (c *chainClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.H
 
 func (c *chainClient) IsL2() bool {
 	return c.chainType.IsL2()
+}
+
+// GetExternallyUsedChainSpecificURL returns the additional URL that a chain may require to be used in conjunction with the standard JSON-RPC URL
+func (c *chainClient) GetExternallyUsedChainSpecificURL(ctx context.Context) (*commonconfig.URL, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.getExternallyUsedChainSpecificURL(), nil
 }
 
 func (c *chainClient) LINKBalance(ctx context.Context, address common.Address, linkAddress common.Address) (*commonassets.Link, error) {

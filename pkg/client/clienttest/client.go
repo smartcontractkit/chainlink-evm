@@ -11,15 +11,17 @@ import (
 
 	common "github.com/ethereum/go-ethereum/common"
 
+	config "github.com/smartcontractkit/chainlink-common/pkg/config"
+
 	context "context"
 
 	ethereum "github.com/ethereum/go-ethereum"
 
+	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
+
 	mock "github.com/stretchr/testify/mock"
 
 	multinode "github.com/smartcontractkit/chainlink-framework/multinode"
-
-	pkgtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 
 	rpc "github.com/ethereum/go-ethereum/rpc"
 
@@ -843,24 +845,82 @@ func (_c *Client_FilterLogs_Call) RunAndReturn(run func(context.Context, ethereu
 	return _c
 }
 
+// GetExternallyUsedChainSpecificURL provides a mock function with given fields: ctx
+func (_m *Client) GetExternallyUsedChainSpecificURL(ctx context.Context) (*config.URL, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetExternallyUsedChainSpecificURL")
+	}
+
+	var r0 *config.URL
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*config.URL, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *config.URL); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*config.URL)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_GetExternallyUsedChainSpecificURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExternallyUsedChainSpecificURL'
+type Client_GetExternallyUsedChainSpecificURL_Call struct {
+	*mock.Call
+}
+
+// GetExternallyUsedChainSpecificURL is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Client_Expecter) GetExternallyUsedChainSpecificURL(ctx interface{}) *Client_GetExternallyUsedChainSpecificURL_Call {
+	return &Client_GetExternallyUsedChainSpecificURL_Call{Call: _e.mock.On("GetExternallyUsedChainSpecificURL", ctx)}
+}
+
+func (_c *Client_GetExternallyUsedChainSpecificURL_Call) Run(run func(ctx context.Context)) *Client_GetExternallyUsedChainSpecificURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Client_GetExternallyUsedChainSpecificURL_Call) Return(_a0 *config.URL, _a1 error) *Client_GetExternallyUsedChainSpecificURL_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_GetExternallyUsedChainSpecificURL_Call) RunAndReturn(run func(context.Context) (*config.URL, error)) *Client_GetExternallyUsedChainSpecificURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HeadByHash provides a mock function with given fields: ctx, n
-func (_m *Client) HeadByHash(ctx context.Context, n common.Hash) (*pkgtypes.Head, error) {
+func (_m *Client) HeadByHash(ctx context.Context, n common.Hash) (*evmtypes.Head, error) {
 	ret := _m.Called(ctx, n)
 
 	if len(ret) == 0 {
 		panic("no return value specified for HeadByHash")
 	}
 
-	var r0 *pkgtypes.Head
+	var r0 *evmtypes.Head
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) (*pkgtypes.Head, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) (*evmtypes.Head, error)); ok {
 		return rf(ctx, n)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) *pkgtypes.Head); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) *evmtypes.Head); ok {
 		r0 = rf(ctx, n)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkgtypes.Head)
+			r0 = ret.Get(0).(*evmtypes.Head)
 		}
 	}
 
@@ -892,34 +952,34 @@ func (_c *Client_HeadByHash_Call) Run(run func(ctx context.Context, n common.Has
 	return _c
 }
 
-func (_c *Client_HeadByHash_Call) Return(_a0 *pkgtypes.Head, _a1 error) *Client_HeadByHash_Call {
+func (_c *Client_HeadByHash_Call) Return(_a0 *evmtypes.Head, _a1 error) *Client_HeadByHash_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Client_HeadByHash_Call) RunAndReturn(run func(context.Context, common.Hash) (*pkgtypes.Head, error)) *Client_HeadByHash_Call {
+func (_c *Client_HeadByHash_Call) RunAndReturn(run func(context.Context, common.Hash) (*evmtypes.Head, error)) *Client_HeadByHash_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // HeadByNumber provides a mock function with given fields: ctx, n
-func (_m *Client) HeadByNumber(ctx context.Context, n *big.Int) (*pkgtypes.Head, error) {
+func (_m *Client) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error) {
 	ret := _m.Called(ctx, n)
 
 	if len(ret) == 0 {
 		panic("no return value specified for HeadByNumber")
 	}
 
-	var r0 *pkgtypes.Head
+	var r0 *evmtypes.Head
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *big.Int) (*pkgtypes.Head, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *big.Int) (*evmtypes.Head, error)); ok {
 		return rf(ctx, n)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *big.Int) *pkgtypes.Head); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *big.Int) *evmtypes.Head); ok {
 		r0 = rf(ctx, n)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkgtypes.Head)
+			r0 = ret.Get(0).(*evmtypes.Head)
 		}
 	}
 
@@ -951,12 +1011,12 @@ func (_c *Client_HeadByNumber_Call) Run(run func(ctx context.Context, n *big.Int
 	return _c
 }
 
-func (_c *Client_HeadByNumber_Call) Return(_a0 *pkgtypes.Head, _a1 error) *Client_HeadByNumber_Call {
+func (_c *Client_HeadByNumber_Call) Return(_a0 *evmtypes.Head, _a1 error) *Client_HeadByNumber_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Client_HeadByNumber_Call) RunAndReturn(run func(context.Context, *big.Int) (*pkgtypes.Head, error)) *Client_HeadByNumber_Call {
+func (_c *Client_HeadByNumber_Call) RunAndReturn(run func(context.Context, *big.Int) (*evmtypes.Head, error)) *Client_HeadByNumber_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1243,23 +1303,23 @@ func (_c *Client_LatestBlockHeight_Call) RunAndReturn(run func(context.Context) 
 }
 
 // LatestFinalizedBlock provides a mock function with given fields: ctx
-func (_m *Client) LatestFinalizedBlock(ctx context.Context) (*pkgtypes.Head, error) {
+func (_m *Client) LatestFinalizedBlock(ctx context.Context) (*evmtypes.Head, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for LatestFinalizedBlock")
 	}
 
-	var r0 *pkgtypes.Head
+	var r0 *evmtypes.Head
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*pkgtypes.Head, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*evmtypes.Head, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *pkgtypes.Head); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *evmtypes.Head); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkgtypes.Head)
+			r0 = ret.Get(0).(*evmtypes.Head)
 		}
 	}
 
@@ -1290,12 +1350,12 @@ func (_c *Client_LatestFinalizedBlock_Call) Run(run func(ctx context.Context)) *
 	return _c
 }
 
-func (_c *Client_LatestFinalizedBlock_Call) Return(head *pkgtypes.Head, err error) *Client_LatestFinalizedBlock_Call {
+func (_c *Client_LatestFinalizedBlock_Call) Return(head *evmtypes.Head, err error) *Client_LatestFinalizedBlock_Call {
 	_c.Call.Return(head, err)
 	return _c
 }
 
-func (_c *Client_LatestFinalizedBlock_Call) RunAndReturn(run func(context.Context) (*pkgtypes.Head, error)) *Client_LatestFinalizedBlock_Call {
+func (_c *Client_LatestFinalizedBlock_Call) RunAndReturn(run func(context.Context) (*evmtypes.Head, error)) *Client_LatestFinalizedBlock_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1746,24 +1806,24 @@ func (_c *Client_SubscribeFilterLogs_Call) RunAndReturn(run func(context.Context
 }
 
 // SubscribeToHeads provides a mock function with given fields: ctx
-func (_m *Client) SubscribeToHeads(ctx context.Context) (<-chan *pkgtypes.Head, ethereum.Subscription, error) {
+func (_m *Client) SubscribeToHeads(ctx context.Context) (<-chan *evmtypes.Head, ethereum.Subscription, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SubscribeToHeads")
 	}
 
-	var r0 <-chan *pkgtypes.Head
+	var r0 <-chan *evmtypes.Head
 	var r1 ethereum.Subscription
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context) (<-chan *pkgtypes.Head, ethereum.Subscription, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (<-chan *evmtypes.Head, ethereum.Subscription, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) <-chan *pkgtypes.Head); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) <-chan *evmtypes.Head); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(<-chan *pkgtypes.Head)
+			r0 = ret.Get(0).(<-chan *evmtypes.Head)
 		}
 	}
 
@@ -1802,12 +1862,12 @@ func (_c *Client_SubscribeToHeads_Call) Run(run func(ctx context.Context)) *Clie
 	return _c
 }
 
-func (_c *Client_SubscribeToHeads_Call) Return(_a0 <-chan *pkgtypes.Head, _a1 ethereum.Subscription, _a2 error) *Client_SubscribeToHeads_Call {
+func (_c *Client_SubscribeToHeads_Call) Return(_a0 <-chan *evmtypes.Head, _a1 ethereum.Subscription, _a2 error) *Client_SubscribeToHeads_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Client_SubscribeToHeads_Call) RunAndReturn(run func(context.Context) (<-chan *pkgtypes.Head, ethereum.Subscription, error)) *Client_SubscribeToHeads_Call {
+func (_c *Client_SubscribeToHeads_Call) RunAndReturn(run func(context.Context) (<-chan *evmtypes.Head, ethereum.Subscription, error)) *Client_SubscribeToHeads_Call {
 	_c.Call.Return(run)
 	return _c
 }

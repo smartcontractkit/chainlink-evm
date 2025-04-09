@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/assets"
+	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
@@ -225,6 +226,11 @@ func (nc *NullClient) NodeStates() map[string]string { return nil }
 func (nc *NullClient) IsL2() bool {
 	nc.lggr.Debug("IsL2")
 	return false
+}
+
+func (nc *NullClient) GetExternallyUsedChainSpecificURL(ctx context.Context) (*commonconfig.URL, error) {
+	nc.lggr.Debug("GetExternallyUsedChainSpecificURL")
+	return nil, nil
 }
 
 func (nc *NullClient) LatestFinalizedBlock(_ context.Context) (*evmtypes.Head, error) {

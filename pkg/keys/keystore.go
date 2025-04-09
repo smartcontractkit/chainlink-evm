@@ -24,6 +24,7 @@ type Store interface {
 	RoundRobin
 	MessageSigner
 	Locker
+	RawUnhashedSigner
 }
 
 // ChainStore extends Store with methods that require a chain ID.
@@ -43,6 +44,10 @@ type AddressChecker interface {
 
 type AddressLister interface {
 	EnabledAddresses(ctx context.Context) (addresses []common.Address, err error)
+}
+
+type RawUnhashedSigner interface {
+	SignRawUnhashedBytes(ctx context.Context, address common.Address, bytes []byte) ([]byte, error)
 }
 
 type MessageSigner interface {
@@ -108,6 +113,10 @@ func (s *store) EnabledAddresses(ctx context.Context) ([]common.Address, error) 
 
 func (s *store) SignMessage(ctx context.Context, address common.Address, message []byte) ([]byte, error) {
 	return s.ks.Sign(ctx, address.String(), accounts.TextHash(message))
+}
+
+func (s *store) SignRawUnhashedBytes(ctx context.Context, address common.Address, bytes []byte) ([]byte, error) {
+	return s.ks.Sign(ctx, address.String(), bytes)
 }
 
 func (s *store) GetNextAddress(ctx context.Context, whitelist ...common.Address) (next common.Address, err error) {

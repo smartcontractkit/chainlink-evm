@@ -30,6 +30,12 @@ func NewEvmClient(cfg evmconfig.NodePool, chainCfg multinode.ChainConfig, client
 		} else {
 			rpc := NewRPCClient(cfg, lggr, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i,
 				chainID, multinode.Primary, largePayloadRPCTimeout, defaultRPCTimeout, chainType)
+
+			// Some chains require an additional URL to be used in conjunction with the standard JSON-RPC URL
+			if node.ChainSpecificURL != nil {
+				rpc.withExternallyUsedChainSpecificURL(node.ChainSpecificURL)
+			}
+
 			primaryNode := multinode.NewNode(cfg, chainCfg,
 				lggr, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i, chainID, *node.Order,
 				rpc, "EVM")

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -254,17 +255,45 @@ func (h *Head) AsSlice(k int) (heads []*Head) {
 	return
 }
 
+// Hash represents the 32 byte Keccak256 hash of arbitrary data.
+// Mainly to add compatibility with Tron as some hashes are returned as 0x00 or 0x
+type LessStrictHash [32]byte
+
+// UnmarshalJSON parses a hash in hex syntax.
+func (h *LessStrictHash) UnmarshalJSON(input []byte) error {
+	// "0x00" or "0x" or []byte{}
+	if len(input) == 6 || len(input) == 4 || len(input) == 0 {
+		h.SetBytes(utils.ZeroAddress.Bytes())
+		return nil
+	}
+
+	// If the input is not 6, 4 or 0 bytes, we'll assume it's a full hash if it fails here we'll catch it
+	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(LessStrictHash{}), input, h[:])
+}
+
+// SetBytes sets the hash to the value of b.
+// If b is larger than len(h), b will be cropped from the left.
+func (h *LessStrictHash) SetBytes(b []byte) {
+	if len(b) > len(h) {
+		b = b[len(b)-32:]
+	}
+
+	copy(h[32-len(b):], b)
+}
+
+func (h LessStrictHash) Bytes() []byte { return h[:] }
+
 func (h *Head) UnmarshalJSON(bs []byte) error {
 	type head struct {
-		Hash             common.Hash    `json:"hash"`
+		Hash             LessStrictHash `json:"hash"`
 		Number           *hexutil.Big   `json:"number"`
-		ParentHash       common.Hash    `json:"parentHash"`
+		ParentHash       LessStrictHash `json:"parentHash"`
 		Timestamp        hexutil.Uint64 `json:"timestamp"`
 		L1BlockNumber    *hexutil.Big   `json:"l1BlockNumber"`
 		BaseFeePerGas    *hexutil.Big   `json:"baseFeePerGas"`
-		ReceiptsRoot     common.Hash    `json:"receiptsRoot"`
-		TransactionsRoot common.Hash    `json:"transactionsRoot"`
-		StateRoot        common.Hash    `json:"stateRoot"`
+		ReceiptsRoot     LessStrictHash `json:"receiptsRoot"`
+		TransactionsRoot LessStrictHash `json:"transactionsRoot"`
+		StateRoot        LessStrictHash `json:"stateRoot"`
 		Difficulty       *hexutil.Big   `json:"difficulty"`
 		TotalDifficulty  *hexutil.Big   `json:"totalDifficulty"`
 	}
@@ -280,17 +309,17 @@ func (h *Head) UnmarshalJSON(bs []byte) error {
 		return nil
 	}
 
-	h.Hash = jsonHead.Hash
+	h.Hash = common.BytesToHash(jsonHead.Hash.Bytes())
 	h.Number = (*big.Int)(jsonHead.Number).Int64()
-	h.ParentHash = jsonHead.ParentHash
+	h.ParentHash = common.BytesToHash(jsonHead.ParentHash.Bytes())
 	h.Timestamp = time.Unix(int64(jsonHead.Timestamp), 0).UTC()
 	h.BaseFeePerGas = assets.NewWei((*big.Int)(jsonHead.BaseFeePerGas))
 	if jsonHead.L1BlockNumber != nil {
 		h.L1BlockNumber = sql.NullInt64{Int64: (*big.Int)(jsonHead.L1BlockNumber).Int64(), Valid: true}
 	}
-	h.ReceiptsRoot = jsonHead.ReceiptsRoot
-	h.TransactionsRoot = jsonHead.TransactionsRoot
-	h.StateRoot = jsonHead.StateRoot
+	h.ReceiptsRoot = common.BytesToHash(jsonHead.ReceiptsRoot.Bytes())
+	h.TransactionsRoot = common.BytesToHash(jsonHead.TransactionsRoot.Bytes())
+	h.StateRoot = common.BytesToHash(jsonHead.StateRoot.Bytes())
 	h.Difficulty = jsonHead.Difficulty.ToInt()
 	h.TotalDifficulty = jsonHead.TotalDifficulty.ToInt()
 	return nil

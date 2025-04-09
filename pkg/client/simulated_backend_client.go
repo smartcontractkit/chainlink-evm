@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/assets"
+	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/hex"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
@@ -576,6 +577,10 @@ func (c *SimulatedBackendClient) Commit() common.Hash {
 
 func (c *SimulatedBackendClient) IsL2() bool {
 	return false
+}
+
+func (c *SimulatedBackendClient) GetExternallyUsedChainSpecificURL(ctx context.Context) (*commonconfig.URL, error) {
+	return nil, nil
 }
 
 func (c *SimulatedBackendClient) fetchHeader(ctx context.Context, blockNumOrTag string) (*types.Header, error) {

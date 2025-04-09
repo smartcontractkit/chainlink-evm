@@ -24,6 +24,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
+	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
@@ -99,8 +100,9 @@ type RPCClient struct {
 	chainType                  chaintype.ChainType
 	clientErrors               config.ClientErrors
 
-	ws   atomic.Pointer[rawclient]
-	http atomic.Pointer[rawclient]
+	ws                             atomic.Pointer[rawclient]
+	http                           atomic.Pointer[rawclient]
+	externallyUsedChainSpecificURL *commonconfig.URL
 
 	*multinode.RPCClientBase[*evmtypes.Head]
 }
@@ -206,12 +208,13 @@ func (r *RPCClient) DialHTTP() error {
 	lggr.Debugw("RPC dial: evmclient.Client#dial")
 
 	var httprpc *rpc.Client
-	httprpc, err := rpc.DialHTTP(http.uri.String())
+	rpc, err := rpc.DialHTTP(http.uri.String())
 	if err != nil {
 		promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
 		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", http.uri.Redacted()))
 	}
 
+	httprpc = rpc
 	http.rpc = httprpc
 	http.geth = ethclient.NewClient(httprpc)
 
@@ -283,6 +286,19 @@ func (r *RPCClient) getRPCDomain() string {
 	return r.ws.Load().uri.Host
 }
 
+func (r *RPCClient) isChainType(chainType chaintype.ChainType) bool {
+	return r.chainType == chainType
+}
+
+func (r *RPCClient) withExternallyUsedChainSpecificURL(url *commonconfig.URL) *RPCClient {
+	r.externallyUsedChainSpecificURL = url
+	return r
+}
+
+func (r *RPCClient) getExternallyUsedChainSpecificURL() *commonconfig.URL {
+	return r.externallyUsedChainSpecificURL
+}
+
 // RPC wrappers
 
 // CallContext implementation
@@ -297,6 +313,7 @@ func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method 
 	lggr.Debug("RPC call: evmclient.Client#CallContext")
 	start := time.Now()
 	var err error
+
 	if http != nil {
 		err = r.wrapHTTP(http.rpc.CallContext(ctx, result, method, args...))
 	} else {
@@ -341,6 +358,7 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 	lggr.Trace("RPC call: evmclient.Client#BatchCallContext")
 	start := time.Now()
 	var err error
+
 	if http != nil {
 		err = r.wrapHTTP(http.rpc.BatchCallContext(ctx, b))
 	} else {
@@ -709,6 +727,12 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 	lggr.Debug("RPC call: evmclient.Client#SendTransaction")
 	start := time.Now()
 	var err error
+
+	if r.isChainType(chaintype.ChainTron) {
+		err = errors.New("SendTransaction not implemented for Tron, this should never be called")
+		return struct{}{}, ClassifySendError(err, r.clientErrors, logger.Sugared(logger.Nop()), tx, common.Address{}, r.chainType.IsL2()), err
+	}
+
 	if http != nil {
 		err = r.wrapHTTP(http.geth.SendTransaction(ctx, tx))
 	} else {
@@ -747,6 +771,13 @@ func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Addres
 	lggr.Debug("RPC call: evmclient.Client#PendingNonceAt")
 	start := time.Now()
 	var n uint64
+
+	if r.isChainType(chaintype.ChainTron) {
+		// Tron doesn't support eth_getTransactionCount, lets return 0. We might need to do some logic within the txm to handle this for tron
+		nonce = evmtypes.Nonce(0)
+		return
+	}
+
 	if http != nil {
 		n, err = http.geth.PendingNonceAt(ctx, account)
 		nonce = evmtypes.Nonce(int64(n))
@@ -775,6 +806,13 @@ func (r *RPCClient) NonceAt(ctx context.Context, account common.Address, blockNu
 
 	lggr.Debug("RPC call: evmclient.Client#NonceAt")
 	start := time.Now()
+
+	if r.isChainType(chaintype.ChainTron) {
+		// Tron doesn't support eth_getTransactionCount, lets return 0. We might need to do some logic within the txm to handle this for tron
+		nonce = 0
+		return
+	}
+
 	if http != nil {
 		nonce, err = http.geth.NonceAt(ctx, account, blockNumber)
 		err = r.wrapHTTP(err)
@@ -845,6 +883,12 @@ func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64,
 
 	lggr.Debug("RPC call: evmclient.Client#EstimateGas")
 	start := time.Now()
+
+	if r.isChainType(chaintype.ChainTron) {
+		err = r.wrapHTTP(http.rpc.CallContext(ctx, &gas, "eth_estimateGas", toBackwardCompatibleCallArgWithTronSupport(call, r.chainType)))
+		return
+	}
+
 	if http != nil {
 		gas, err = http.geth.EstimateGas(ctx, call)
 		err = r.wrapHTTP(err)
@@ -894,10 +938,10 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 	start := time.Now()
 	var hex hexutil.Bytes
 	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArg(message), ToBackwardCompatibleBlockNumArg(blockNumber))
+		err = http.rpc.CallContext(ctx, &hex, "eth_call", toBackwardCompatibleCallArgWithTronSupport(message, r.chainType), ToBackwardCompatibleBlockNumArg(blockNumber))
 		err = r.wrapHTTP(err)
 	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArg(message), ToBackwardCompatibleBlockNumArg(blockNumber))
+		err = ws.rpc.CallContext(ctx, &hex, "eth_call", toBackwardCompatibleCallArgWithTronSupport(message, r.chainType), ToBackwardCompatibleBlockNumArg(blockNumber))
 		err = r.wrapWS(err)
 	}
 	if err == nil {
@@ -922,10 +966,10 @@ func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (v
 	start := time.Now()
 	var hex hexutil.Bytes
 	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArg(message), "pending")
+		err = http.rpc.CallContext(ctx, &hex, "eth_call", toBackwardCompatibleCallArgWithTronSupport(message, r.chainType), "pending")
 		err = r.wrapHTTP(err)
 	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArg(message), "pending")
+		err = ws.rpc.CallContext(ctx, &hex, "eth_call", toBackwardCompatibleCallArgWithTronSupport(message, r.chainType), "pending")
 		err = r.wrapWS(err)
 	}
 	if err == nil {
@@ -1144,7 +1188,6 @@ func (r *RPCClient) SuggestGasTipCap(ctx context.Context) (tipCap *big.Int, err 
 // the common node.
 func (r *RPCClient) ChainID(ctx context.Context) (chainID *big.Int, err error) {
 	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
-
 	defer cancel()
 
 	if http != nil {
@@ -1227,6 +1270,7 @@ func (r *RPCClient) IsSyncing(ctx context.Context) (bool, error) {
 	var syncProgress *ethereum.SyncProgress
 	start := time.Now()
 	var err error
+
 	if http != nil {
 		syncProgress, err = http.geth.SyncProgress(ctx)
 		err = r.wrapHTTP(err)
