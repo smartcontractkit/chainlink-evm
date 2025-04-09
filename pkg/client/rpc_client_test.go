@@ -714,7 +714,7 @@ func TestRpcClientLargePayloadTimeout(t *testing.T) {
 
 func TestRPCClient_SendTransaction_Tron(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
+	ctx, cancel := context.WithTimeout(t.Context(), tests.WaitTimeout(t))
 	defer cancel()
 
 	nodePoolCfg := client.TestNodePoolConfig{
@@ -757,7 +757,7 @@ func TestRPCClient_SendTransaction_Tron(t *testing.T) {
 
 func TestRPCClient_NonceAt_Tron(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
+	ctx, cancel := context.WithTimeout(t.Context(), tests.WaitTimeout(t))
 	defer cancel()
 
 	nodePoolCfg := client.TestNodePoolConfig{
@@ -791,7 +791,7 @@ func TestRPCClient_NonceAt_Tron(t *testing.T) {
 
 func TestRPCClient_PendingSequenceAt_Tron(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
+	ctx, cancel := context.WithTimeout(t.Context(), tests.WaitTimeout(t))
 	defer cancel()
 
 	nodePoolCfg := client.TestNodePoolConfig{
