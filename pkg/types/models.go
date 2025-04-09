@@ -263,7 +263,7 @@ type LessStrictHash [32]byte
 func (h *LessStrictHash) UnmarshalJSON(input []byte) error {
 	// "0x00" or "0x" or []byte{}
 	if len(input) == 6 || len(input) == 4 || len(input) == 0 {
-		h.SetBytes(utils.ZeroAddress.Bytes())
+		h.SetBytes(common.Hash{}.Bytes())
 		return nil
 	}
 
