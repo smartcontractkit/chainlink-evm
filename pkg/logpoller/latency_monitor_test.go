@@ -36,15 +36,6 @@ func (c *mockClient) FilterLogs(_ context.Context, q ethereum.FilterQuery) ([]et
 	return nil, nil
 }
 
-type mockTracker struct {
-	latency time.Duration
-}
-
-func (t *mockTracker) LatestAndFinalizedBlock(_ context.Context) (*types.Head, *types.Head, error) {
-	time.Sleep(t.latency)
-	return nil, nil, nil
-}
-
 func TestLatencyMonitor(t *testing.T) {
 	lggr, logs := logger.TestObserved(t, zapcore.DebugLevel)
 	blockProductionRate := 250 * time.Millisecond
