@@ -722,18 +722,18 @@ func TestRPCClient_SendTransaction_Tron(t *testing.T) {
 		NodeFinalizedBlockPollInterval: 1 * time.Second,
 	}
 
-	chainId := big.NewInt(123456)
+	chainID := big.NewInt(123456)
 	lggr := logger.Test(t)
 
 	// Create a server - though it should never be called for Tron
-	server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+	server := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 		assert.Fail(t, "Server should not be called for Tron SendTransaction")
 		return resp
 	})
 	wsURL := server.WSURL()
 
 	// Create the RPC client with Tron chain type
-	rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainId, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainTron)
+	rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainTron)
 	defer rpc.Close()
 	require.NoError(t, rpc.Dial(ctx))
 
@@ -765,18 +765,18 @@ func TestRPCClient_NonceAt_Tron(t *testing.T) {
 		NodeFinalizedBlockPollInterval: 1 * time.Second,
 	}
 
-	chainId := big.NewInt(123456)
+	chainID := big.NewInt(123456)
 	lggr := logger.Test(t)
 
 	// Create a server - which should never be called for Tron
-	server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+	server := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 		assert.Fail(t, "Server should not be called for Tron NonceAt")
 		return resp
 	})
 	wsURL := server.WSURL()
 
 	// Create the RPC client with Tron chain type
-	rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainId, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainTron)
+	rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainTron)
 	defer rpc.Close()
 	require.NoError(t, rpc.Dial(ctx))
 
@@ -799,18 +799,18 @@ func TestRPCClient_PendingSequenceAt_Tron(t *testing.T) {
 		NodeFinalizedBlockPollInterval: 1 * time.Second,
 	}
 
-	chainId := big.NewInt(123456)
+	chainID := big.NewInt(123456)
 	lggr := logger.Test(t)
 
 	// Create a server - which should never be called for Tron
-	server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+	server := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 		assert.Fail(t, "Server should not be called for Tron PendingSequenceAt")
 		return resp
 	})
 	wsURL := server.WSURL()
 
 	// Create the RPC client with Tron chain type
-	rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainId, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainTron)
+	rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainTron)
 	defer rpc.Close()
 	require.NoError(t, rpc.Dial(ctx))
 
