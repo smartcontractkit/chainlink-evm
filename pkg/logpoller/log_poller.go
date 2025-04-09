@@ -168,7 +168,7 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 		ec:                       ec,
 		orm:                      orm,
 		headTracker:              headTracker,
-		latencyMonitor:           NewLatencyMonitor(ec, headTracker, lggr, opts.PollPeriod),
+		latencyMonitor:           NewLatencyMonitor(ec, lggr, opts.PollPeriod),
 		lggr:                     logger.Sugared(logger.Named(lggr, "LogPoller")),
 		replayStart:              make(chan int64),
 		replayComplete:           make(chan error),
@@ -1127,7 +1127,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 
 // Returns information about latestBlock, latestFinalizedBlockNumber provided by HeadTracker
 func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, error) {
-	latest, finalized, err := lp.latencyMonitor.LatestAndFinalizedBlock(ctx)
+	latest, finalized, err := lp.headTracker.LatestAndFinalizedBlock(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get latest and latest finalized block from HeadTracker: %w", err)
 	}

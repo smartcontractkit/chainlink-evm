@@ -24,22 +24,16 @@ type LatencyMonitorClient interface {
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]ethTypes.Log, error)
 }
 
-type LatencyMonitorTracker interface {
-	LatestAndFinalizedBlock(ctx context.Context) (latest *types.Head, finalized *types.Head, err error)
-}
-
 // LatencyMonitor wraps RPC calls with a warning if the latency exceeds the set threshold of block production rate
 type LatencyMonitor struct {
 	c                   LatencyMonitorClient
-	t                   LatencyMonitorTracker
 	lggr                logger.Logger
 	blockProductionRate time.Duration
 }
 
-func NewLatencyMonitor(c LatencyMonitorClient, t LatencyMonitorTracker, lggr logger.Logger, blockProductionRate time.Duration) LatencyMonitor {
+func NewLatencyMonitor(c LatencyMonitorClient, lggr logger.Logger, blockProductionRate time.Duration) LatencyMonitor {
 	return LatencyMonitor{
 		c:                   c,
-		t:                   t,
 		lggr:                lggr,
 		blockProductionRate: blockProductionRate,
 	}
@@ -82,16 +76,4 @@ func (lm *LatencyMonitor) FilterLogs(ctx context.Context, q ethereum.FilterQuery
 		})
 	}
 	return lm.c.FilterLogs(ctx, q)
-}
-
-func (lm *LatencyMonitor) LatestAndFinalizedBlock(ctx context.Context) (*types.Head, *types.Head, error) {
-	type HeadPair struct {
-		Latest    *types.Head
-		Finalized *types.Head
-	}
-	pair, err := latencyMonitoredCall(lm, "LatestAndFinalizedBlock", func() (HeadPair, error) {
-		latest, finalized, err := lm.t.LatestAndFinalizedBlock(ctx)
-		return HeadPair{latest, finalized}, err
-	})
-	return pair.Latest, pair.Finalized, err
 }

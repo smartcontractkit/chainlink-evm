@@ -49,33 +49,32 @@ func TestLatencyMonitor(t *testing.T) {
 	lggr, logs := logger.TestObserved(t, zapcore.DebugLevel)
 	blockProductionRate := 250 * time.Millisecond
 	client := &mockClient{}
-	tracker := &mockTracker{}
 
-	lm := logpoller.NewLatencyMonitor(client, tracker, lggr, blockProductionRate)
+	lm := logpoller.NewLatencyMonitor(client, lggr, blockProductionRate)
 
-	// Slow client with latency 80% of block production rate
-	client.latency = time.Duration(0.8 * float64(blockProductionRate))
-	tracker.latency = time.Duration(0.8 * float64(blockProductionRate))
-	_, _ = lm.HeadByNumber(t.Context(), nil)
-	_, _ = lm.HeadByHash(t.Context(), common.Hash{})
-	_, _, _ = lm.LatestAndFinalizedBlock(t.Context())
+	t.Run("Slow client with latency of 80% block production rate", func(t *testing.T) {
+		client.latency = time.Duration(0.8 * float64(blockProductionRate))
+		_, _ = lm.HeadByNumber(t.Context(), nil)
+		_, _ = lm.HeadByHash(t.Context(), common.Hash{})
 
-	// Should not track latency on block range
-	filter := ethereum.FilterQuery{FromBlock: big.NewInt(123), ToBlock: big.NewInt(456), BlockHash: nil}
-	_, _ = lm.FilterLogs(t.Context(), filter)
-	require.Equal(t, 3, logs.Len())
+		// Should not track latency on block range
+		filter := ethereum.FilterQuery{FromBlock: big.NewInt(123), ToBlock: big.NewInt(456), BlockHash: nil}
+		_, _ = lm.FilterLogs(t.Context(), filter)
+		require.Equal(t, 3, logs.Len())
 
-	// Should track latency for a specific block hash call
-	filter = ethereum.FilterQuery{FromBlock: nil, ToBlock: nil, BlockHash: &common.Hash{}}
-	_, _ = lm.FilterLogs(t.Context(), filter)
-	require.Equal(t, 4, logs.Len())
-	_ = logs.TakeAll()
+		// Should track latency for a specific block hash call
+		filter = ethereum.FilterQuery{FromBlock: nil, ToBlock: nil, BlockHash: &common.Hash{}}
+		_, _ = lm.FilterLogs(t.Context(), filter)
+		require.Equal(t, 4, logs.Len())
+	})
 
-	// fast client should not log warnings
-	client.latency = 0
-	tracker.latency = 0
-	_, _ = lm.HeadByNumber(t.Context(), nil)
-	_, _ = lm.HeadByHash(t.Context(), common.Hash{})
-	_, _, _ = lm.LatestAndFinalizedBlock(t.Context())
-	require.Equal(t, 0, logs.Len())
+	t.Run("Fast client does not log warnings", func(t *testing.T) {
+		client.latency = 0
+		_ = logs.TakeAll()
+		_, _ = lm.HeadByNumber(t.Context(), nil)
+		_, _ = lm.HeadByHash(t.Context(), common.Hash{})
+		filter := ethereum.FilterQuery{FromBlock: nil, ToBlock: nil, BlockHash: &common.Hash{}}
+		_, _ = lm.FilterLogs(t.Context(), filter)
+		require.Equal(t, 0, logs.Len())
+	})
 }
