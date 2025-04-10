@@ -22,8 +22,6 @@ const (
 	schemaBasePath     = repoCLLCommon + "/" + versionRefsDevelop + "/pkg/capabilities/writetarget/pb"
 )
 
-// TODO: unsure if this is the right way to do this, but I believe all processors need to share the same emitter
-// so it may be correct.
 type emitterAwareProcessor interface {
 	SetEmitter(e monitor.ProtoEmitter)
 }
