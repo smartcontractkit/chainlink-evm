@@ -15,7 +15,7 @@ import (
 
 // ns returns a namespaced metric name
 func ns(name string) string {
-	return fmt.Sprintf("datafeeds_on_chain_registry_%s", name)
+	return fmt.Sprintf("data_feeds_on_chain_registry_%s", name)
 }
 
 // Define metrics configuration
