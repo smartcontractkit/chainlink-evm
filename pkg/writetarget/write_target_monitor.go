@@ -11,7 +11,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/monitor"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/pb/data-feeds/on-chain/registry"
 	wt "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform/on-chain/forwarder"
 )
@@ -22,6 +21,12 @@ const (
 	versionRefsDevelop = "refs/heads/generalized-monitoring-extraction"
 	schemaBasePath     = repoCLLCommon + "/" + versionRefsDevelop + "/pkg/capabilities/writetarget/pb"
 )
+
+// TODO: unsure if this is the right way to do this, but I believe all processors need to share the same emitter
+// so it may be correct.
+type emitterAwareProcessor interface {
+	SetEmitter(e monitor.ProtoEmitter)
+}
 
 // NewMonitor initializes a Beholder client for the Write Target
 //
@@ -46,6 +51,14 @@ func NewMonitor(lggr logger.Logger, chainSpecificProcessors []monitor.ProtoProce
 
 	// Underlying ProtoEmitter
 	emitter := monitor.NewProtoEmitter(lggr, &client, schemaBasePath)
+
+	for _, p := range chainSpecificProcessors {
+		p, ok := p.(emitterAwareProcessor)
+		if !ok {
+			return nil, fmt.Errorf("processor %T does not implement emitterAwareProcessor", p)
+		}
+		p.SetEmitter(emitter)
+	}
 
 	// Proxy ProtoEmitter with additional processing
 	protoEmitterProxy := protoEmitter{
@@ -167,44 +180,6 @@ func (p *keystoneProcessor) Process(ctx context.Context, m proto.Message, attrKV
 		err = p.metrics.OnReportProcessed(ctx, reportProcessed, attrKVs...)
 		if err != nil {
 			return fmt.Errorf("failed to publish report processed metrics: %w", err)
-		}
-		return nil
-	default:
-		return nil // fallthrough
-	}
-}
-
-// Data-Feeds specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
-type dataFeedsProcessor struct {
-	emitter  monitor.ProtoEmitter
-	metrics  *registry.Metrics
-	decodeFn func(m *wt.WriteConfirmed) ([]*registry.FeedUpdated, error)
-}
-
-func (p *dataFeedsProcessor) Process(ctx context.Context, m proto.Message, attrKVs ...any) error {
-	// Switch on the type of the proto.Message
-	switch msg := m.(type) {
-	case *wt.WriteConfirmed:
-		// TODO: fallthrough if not a write containing a DF report
-		// https://smartcontract-it.atlassian.net/browse/NONEVM-818
-		// Notice: we assume all writes are Data-Feeds (static schema) writes for now
-
-		// Decode as an array of 'data-feeds.registry.FeedUpdated' messages
-		updates, err := p.decodeFn(msg)
-		if err != nil {
-			return fmt.Errorf("failed to decode as 'data-feeds.registry.FeedUpdated': %w", err)
-		}
-		// Emit the 'data-feeds.registry.FeedUpdated' messages
-		for _, update := range updates {
-			err = p.emitter.EmitWithLog(ctx, update, attrKVs...)
-			if err != nil {
-				return fmt.Errorf("failed to emit with log: %w", err)
-			}
-			// Process emit and derive metrics
-			err = p.metrics.OnFeedUpdated(ctx, update, attrKVs...)
-			if err != nil {
-				return fmt.Errorf("failed to publish feed updated metrics: %w", err)
-			}
 		}
 		return nil
 	default:
