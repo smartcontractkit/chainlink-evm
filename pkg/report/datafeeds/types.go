@@ -7,16 +7,17 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-// FeedPrice represents a decoded data record with the new types.
+// This is ABI encoding - abi: "(bytes32 FeedID, bytes RawReport)[] Reports" (set in workflow)
+// Encoded with: https://github.com/smartcontractkit/chainlink/blob/develop/core/services/relay/evm/cap_encoder.go
 type FeedReport struct {
 	FeedID    [32]byte
-	Price     *big.Int // *big.Int is used because go-ethereum converts large uints to *big.Int.
 	Timestamp uint32
+	Price     *big.Int // *big.Int is used because go-ethereum converts large uints to *big.Int.
 }
 
 type Reports = []FeedReport
 
-// Define the ABI schema for our tuple: (bytes32, uint224, uint32)[].
+// Define the ABI schema
 var schema = GetSchema()
 
 func GetSchema() abi.Arguments {
@@ -34,8 +35,8 @@ func GetSchema() abi.Arguments {
 			// This defines the array of tuple records.
 			Type: mustNewType("tuple(bytes32,uint224,uint32)[]", "", []abi.ArgumentMarshaling{
 				{Name: "feedID", Type: "bytes32"},
-				{Name: "price", Type: "uint224"},
 				{Name: "timestamp", Type: "uint32"},
+				{Name: "price", Type: "uint224"},
 			}),
 		},
 	})

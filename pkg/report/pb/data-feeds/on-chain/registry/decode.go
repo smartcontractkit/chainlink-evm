@@ -32,7 +32,7 @@ func DecodeAsFeedUpdated(m *wt_msg.WriteConfirmed) ([]*FeedUpdated, error) {
 		feedID := datafeeds.FeedID(rf.FeedID)
 
 		// TODO: unsure if r.Data is correct for Report
-		msgs = append(msgs, NewFeedUpdated(m, feedID, rf.Timestamp, rf.Price, r.Data, false))
+		msgs = append(msgs, NewFeedUpdated(m, feedID, rf.Timestamp, rf.Price, []byte{}, false))
 	}
 
 	return msgs, nil

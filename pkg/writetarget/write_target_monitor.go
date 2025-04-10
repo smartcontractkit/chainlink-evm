@@ -22,7 +22,7 @@ const (
 	schemaBasePath     = repoCLLCommon + "/" + versionRefsDevelop + "/pkg/capabilities/writetarget/pb"
 )
 
-type emitterAwareProcessor interface {
+type EmitterAwareProcessor interface {
 	SetEmitter(e monitor.ProtoEmitter)
 }
 
@@ -51,9 +51,9 @@ func NewMonitor(lggr logger.Logger, chainSpecificProcessors []monitor.ProtoProce
 	emitter := monitor.NewProtoEmitter(lggr, &client, schemaBasePath)
 
 	for _, p := range chainSpecificProcessors {
-		p, ok := p.(emitterAwareProcessor)
+		p, ok := p.(EmitterAwareProcessor)
 		if !ok {
-			return nil, fmt.Errorf("processor %T does not implement emitterAwareProcessor", p)
+			return nil, fmt.Errorf("processor %T does not implement EmitterAwareProcessor", p)
 		}
 		p.SetEmitter(emitter)
 	}

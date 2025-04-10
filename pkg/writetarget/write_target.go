@@ -390,7 +390,7 @@ func (c *writeTarget) acceptAndConfirmWrite(ctx context.Context, info requestInf
 		// Check if the transaction was accepted (included in a chain block, not required to be finalized)
 		// Notice: 'Unconfirmed' is used by TXM to indicate the transaction is not yet included in a block,
 		// while 'Included' (N/A yet) could be used to indicate the transaction is included in a block but not yet finalized.
-		if /* status == commontypes.Included || */ status == commontypes.Finalized {
+		if status == commontypes.Unconfirmed || status == commontypes.Finalized {
 			return status, true, nil
 		}
 

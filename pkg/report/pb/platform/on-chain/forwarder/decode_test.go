@@ -2,21 +2,46 @@
 package forwarder
 
 import (
-	"encoding/base64"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
 )
 
 func TestDecodeAsReportProcessed(t *testing.T) {
-	// Base64-encoded report data (example)
-	// version | workflow_execution_id | timestamp | don_id | config_version | ... | data
-	encoded := "AYFtgPpLuLNQysw6LjlSNrzGuBOwVoth7qC9PmunIY3TZvW/cAAAAAEAAAABvAbzAOeX1ahXVjehSq4T4/hQgAjR/FT0xGEf/xemjLAwMDAwRk9PQkFSAAAAAAAAAAAAAAAAAAAAAAAAAKoAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHAAAMREREREREREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEgAAMREREREREREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZvW/aQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABm9b9pAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAElCUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASUJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABnBQGpAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAElCUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASUJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABJQlAAMiIiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEgAAMiIiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZvW/aQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABm9b9pAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAElCUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASUJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABnBQGpAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAElCUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASUJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABJQl"
+	feedReport := datafeeds.FeedReport{
+		FeedID:    [32]byte{0x01},
+		Price:     big.NewInt(1234567890123456789),
+		Timestamp: 1620000000,
+	}
 
-	// Decode the base64 data
-	rawReport, err := base64.StdEncoding.DecodeString(encoded)
+	reports := &datafeeds.Reports{
+		feedReport,
+	}
+
+	data, err := datafeeds.GetSchema().Pack(reports)
+	require.NoError(t, err)
+
+	report := platform.Report{
+		Metadata: datafeeds.Metadata{
+			Version:             1,
+			WorkflowExecutionID: [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
+			Timestamp:           1620000000,
+			DonID:               1,
+			DonConfigVersion:    1,
+			WorkflowCID:         [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
+			WorkflowName:        [10]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a},
+			WorkflowOwner:       [20]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
+			ReportID:            [2]byte{0x01},
+		},
+		Data: data,
+	}
+
+	encoded, err := report.Encode()
 	require.NoError(t, err)
 
 	// Define test cases
@@ -36,7 +61,7 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 				// Report Info
 				ReportId:      123,
 				ReportContext: []byte{},
-				Report:        rawReport, // Example valid byte slice
+				Report:        encoded, // Example valid byte slice
 				SignersNum:    2,
 
 				// Transmission Info
@@ -50,7 +75,7 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 			},
 			expected: ReportProcessed{
 				Receiver:            "example-receiver",
-				WorkflowExecutionId: "816d80fa4bb8b350cacc3a2e395236bcc6b813b0568b61eea0bd3e6ba7218dd3",
+				WorkflowExecutionId: "0102030405060708090a0b0c0d0e0f1000000000000000000000000000000000",
 				ReportId:            123,
 				Success:             true,
 
