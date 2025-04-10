@@ -760,9 +760,9 @@ func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Addres
 	start := time.Now()
 	var n uint64
 
+	// Tron doesn't have the concept of nonces, this shouldn't be called but just in case we'll return an error
 	if r.isChainType(chaintype.ChainTron) {
-		// Tron doesn't support eth_getTransactionCount, lets return 0. We might need to do some logic within the txm to handle this for tron
-		nonce = evmtypes.Nonce(0)
+		err = errors.New("tron does not support eth_getTransactionCount")
 		return
 	}
 
