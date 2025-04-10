@@ -3,16 +3,15 @@ package platform
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 )
 
 // Report represents an OCR3 report with metadata and data
 // version | workflow_execution_id | timestamp | don_id | config_version | ... | data
 type Report struct {
-	types.Metadata
+	datafeeds.Metadata
 	Data []byte
 }
 
@@ -30,7 +29,7 @@ func Decode(rawReport []byte) (*Report, error) {
 	if err := binary.Read(buf, binary.BigEndian, &versionByte); err != nil {
 		return nil, err
 	}
-	report.Version = uint32(versionByte)
+	report.Version = versionByte
 
 	// Notice: we only support version 1 currently
 	if report.Version != 1 {
@@ -43,7 +42,7 @@ func Decode(rawReport []byte) (*Report, error) {
 		return nil, err
 	}
 	// TODO: should we prefix with 0x?
-	report.ExecutionID = hex.EncodeToString(workflowExecutionIDBytes[:])
+	report.WorkflowExecutionID = workflowExecutionIDBytes
 
 	// Decode timestamp
 	var timestampBytes [4]byte
@@ -57,14 +56,14 @@ func Decode(rawReport []byte) (*Report, error) {
 	if _, err := buf.Read(donIDBytes[:]); err != nil {
 		return nil, err
 	}
-	report.DONID = binary.BigEndian.Uint32(donIDBytes[:])
+	report.DonID = binary.BigEndian.Uint32(donIDBytes[:])
 
 	// Decode config_version
 	var configVersionBytes [4]byte
 	if _, err := buf.Read(configVersionBytes[:]); err != nil {
 		return nil, err
 	}
-	report.DONConfigVersion = binary.BigEndian.Uint32(configVersionBytes[:])
+	report.DonConfigVersion = binary.BigEndian.Uint32(configVersionBytes[:])
 
 	// Decode workflow_id
 	var workflowIDBytes [32]byte
@@ -72,14 +71,14 @@ func Decode(rawReport []byte) (*Report, error) {
 		return nil, err
 	}
 	// TODO: should we prefix with 0x?
-	report.WorkflowID = hex.EncodeToString(workflowIDBytes[:])
+	report.WorkflowCID = workflowIDBytes
 
 	// Decode workflow_name (UTF-8)
 	var workflowNameBytes [10]byte
 	if _, err := buf.Read(workflowNameBytes[:]); err != nil {
 		return nil, err
 	}
-	report.WorkflowName = hex.EncodeToString(workflowNameBytes[:])
+	report.WorkflowName = workflowNameBytes
 
 	// Decode workflow_owner
 	var workflowOwnerBytes [20]byte
@@ -87,7 +86,7 @@ func Decode(rawReport []byte) (*Report, error) {
 		return nil, err
 	}
 	// TODO: should we prefix with 0x?
-	report.WorkflowOwner = hex.EncodeToString(workflowOwnerBytes[:])
+	report.WorkflowOwner = workflowOwnerBytes
 
 	// Decode report_id
 	var reportIDBytes [2]byte
@@ -95,7 +94,7 @@ func Decode(rawReport []byte) (*Report, error) {
 		return nil, err
 	}
 	// TODO: should we prefix with 0x?
-	report.ReportID = hex.EncodeToString(reportIDBytes[:])
+	report.ReportID = reportIDBytes
 
 	// Decode data
 	report.Data = make([]byte, buf.Len())

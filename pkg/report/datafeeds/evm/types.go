@@ -5,12 +5,11 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 )
 
 type Report struct {
-	// TODO: replace with common type
-	types.Metadata
+	datafeeds.Metadata
 	Data []byte
 }
 

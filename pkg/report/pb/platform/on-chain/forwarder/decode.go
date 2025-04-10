@@ -1,6 +1,7 @@
 package forwarder
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
@@ -20,7 +21,7 @@ func DecodeAsReportProcessed(m *wt_msg.WriteConfirmed) (*ReportProcessed, error)
 	return &ReportProcessed{
 		// Event data
 		Receiver:            m.Receiver,
-		WorkflowExecutionId: r.ExecutionID,
+		WorkflowExecutionId: hex.EncodeToString(r.WorkflowExecutionID[:]),
 		ReportId:            m.ReportId,
 		Success:             m.Success,
 

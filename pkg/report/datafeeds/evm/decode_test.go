@@ -8,21 +8,18 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	// Import the evm package under test.
-	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds/evm"
 
-	// These packages are used by the DecodeAsFeedUpdated function.
 	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
-	// platform.Decode is used within DecodeAsFeedUpdated.
 )
 
 func TestDecodeAsFeedUpdated(t *testing.T) {
 	feedReports := evm.Reports{
 		{
 			FeedID:    [32]byte{0x01},
-			Price:     big.NewInt(1234567890), // example price value
-			Timestamp: 1000,                   // example timestamp
+			Price:     big.NewInt(1234567890),
+			Timestamp: 1000,
 		},
 	}
 
@@ -30,17 +27,16 @@ func TestDecodeAsFeedUpdated(t *testing.T) {
 	feedReportsEncoded, err := evm.GetSchema().Pack(feedReports)
 	require.NoError(t, err)
 
-	// Create a Report metadata with dummy values.
-	metadata := types.Metadata{
-		Version:          1,
-		ExecutionID:      "2",
-		Timestamp:        2000,
-		DONID:            0,
-		DONConfigVersion: 0,
-		WorkflowID:       "3",
-		WorkflowName:     "4",
-		WorkflowOwner:    "5",
-		ReportID:         "6",
+	metadata := datafeeds.Metadata{
+		Version:             1,
+		WorkflowExecutionID: [32]byte{0x02},
+		Timestamp:           2000,
+		DonID:               0,
+		DonConfigVersion:    0,
+		WorkflowCID:         [32]byte{0x03},
+		WorkflowName:        [10]byte{0x04},
+		WorkflowOwner:       [20]byte{0x05},
+		ReportID:            [2]byte{0x06, 0x07},
 	}
 
 	// Build the full Report with the metadata and the already ABI‑encoded feed reports.
