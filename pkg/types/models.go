@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -257,23 +256,29 @@ func (h *Head) AsSlice(k int) (heads []*Head) {
 
 // Hash represents the 32 byte Keccak256 hash of arbitrary data.
 // Mainly to add compatibility with Tron as some hashes are returned as 0x00 or 0x
-type LessStrictHash [32]byte
+type Hash [32]byte
 
 // UnmarshalJSON parses a hash in hex syntax.
-func (h *LessStrictHash) UnmarshalJSON(input []byte) error {
-	// "0x00" or "0x" or []byte{}
-	if len(input) == 6 || len(input) == 4 || len(input) == 0 {
-		h.SetBytes(common.Hash{}.Bytes())
-		return nil
+func (h *Hash) UnmarshalJSON(input []byte) error {
+	bytes := hexutil.Bytes{}
+	err := bytes.UnmarshalJSON(input)
+	if err != nil {
+		return err
 	}
 
-	// If the input is not 6, 4 or 0 bytes, we'll assume it's a full hash if it fails here we'll catch it
-	return hexutil.UnmarshalFixedJSON(reflect.TypeOf(LessStrictHash{}), input, h[:])
+	// Left pad the bytes to 32 bytes
+	if len(bytes) < 32 {
+		bytes = append(make([]byte, 32-len(bytes)), bytes...)
+	}
+
+	h.SetBytes(bytes)
+
+	return nil
 }
 
 // SetBytes sets the hash to the value of b.
 // If b is larger than len(h), b will be cropped from the left.
-func (h *LessStrictHash) SetBytes(b []byte) {
+func (h *Hash) SetBytes(b []byte) {
 	if len(b) > len(h) {
 		b = b[len(b)-32:]
 	}
@@ -281,19 +286,19 @@ func (h *LessStrictHash) SetBytes(b []byte) {
 	copy(h[32-len(b):], b)
 }
 
-func (h LessStrictHash) Bytes() []byte { return h[:] }
+func (h Hash) Bytes() []byte { return h[:] }
 
 func (h *Head) UnmarshalJSON(bs []byte) error {
 	type head struct {
-		Hash             LessStrictHash `json:"hash"`
+		Hash             Hash           `json:"hash"`
 		Number           *hexutil.Big   `json:"number"`
-		ParentHash       LessStrictHash `json:"parentHash"`
+		ParentHash       Hash           `json:"parentHash"`
 		Timestamp        hexutil.Uint64 `json:"timestamp"`
 		L1BlockNumber    *hexutil.Big   `json:"l1BlockNumber"`
 		BaseFeePerGas    *hexutil.Big   `json:"baseFeePerGas"`
-		ReceiptsRoot     LessStrictHash `json:"receiptsRoot"`
-		TransactionsRoot LessStrictHash `json:"transactionsRoot"`
-		StateRoot        LessStrictHash `json:"stateRoot"`
+		ReceiptsRoot     Hash           `json:"receiptsRoot"`
+		TransactionsRoot Hash           `json:"transactionsRoot"`
+		StateRoot        Hash           `json:"stateRoot"`
 		Difficulty       *hexutil.Big   `json:"difficulty"`
 		TotalDifficulty  *hexutil.Big   `json:"totalDifficulty"`
 	}

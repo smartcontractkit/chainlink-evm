@@ -1191,7 +1191,7 @@ func testHead(t int) *Head {
 	return &h
 }
 
-func TestLessStrictHash_UnmarshalJSON(t *testing.T) {
+func TestHash_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	zeroHash := common.Hash{}
@@ -1202,27 +1202,28 @@ func TestLessStrictHash_UnmarshalJSON(t *testing.T) {
 		expectedHash := utils.NewHash()
 		jsonData := []byte(fmt.Sprintf(`"%s"`, expectedHash.Hex()))
 
-		var hash LessStrictHash
+		var hash Hash
 		err := json.Unmarshal(jsonData, &hash)
 		require.NoError(t, err)
 
 		assert.Equal(t, expectedHash.Bytes(), hash.Bytes())
 	})
 
-	t.Run("empty string should fail", func(t *testing.T) {
+	t.Run("empty string should return zero hash", func(t *testing.T) {
 		t.Parallel()
 
 		jsonData := []byte(`""`)
-		var hash LessStrictHash
+		var hash Hash
 		err := json.Unmarshal(jsonData, &hash)
-		require.Error(t, err)
+		require.NoError(t, err)
+		assert.Equal(t, zeroHash.Bytes(), hash.Bytes())
 	})
 
 	t.Run("0x00", func(t *testing.T) {
 		t.Parallel()
 
 		jsonData := []byte(`"0x00"`)
-		var hash LessStrictHash
+		var hash Hash
 		err := json.Unmarshal(jsonData, &hash)
 		require.NoError(t, err)
 
@@ -1233,18 +1234,28 @@ func TestLessStrictHash_UnmarshalJSON(t *testing.T) {
 		t.Parallel()
 
 		jsonData := []byte(`"0x"`)
-		var hash LessStrictHash
+		var hash Hash
 		err := json.Unmarshal(jsonData, &hash)
 		require.NoError(t, err)
 
 		assert.Equal(t, zeroHash.Bytes(), hash.Bytes())
 	})
 
+	t.Run("odd length hex string should fail", func(t *testing.T) {
+		t.Parallel()
+
+		jsonData := []byte(`"0x1"`)
+		var hash Hash
+		err := json.Unmarshal(jsonData, &hash)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "hex string")
+	})
+
 	t.Run("invalid format", func(t *testing.T) {
 		t.Parallel()
 
 		jsonData := []byte(`"not-a-hash"`)
-		var hash LessStrictHash
+		var hash Hash
 		err := json.Unmarshal(jsonData, &hash)
 
 		require.Error(t, err)
