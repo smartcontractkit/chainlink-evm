@@ -718,7 +718,7 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 
 	if r.isChainType(chaintype.ChainTron) {
 		err = errors.New("SendTransaction not implemented for Tron, this should never be called")
-		return struct{}{}, ClassifySendError(err, r.clientErrors, logger.Sugared(logger.Nop()), tx, common.Address{}, r.chainType.IsL2()), err
+		return struct{}{}, multinode.Fatal, err
 	}
 
 	if http != nil {
@@ -795,9 +795,9 @@ func (r *RPCClient) NonceAt(ctx context.Context, account common.Address, blockNu
 	lggr.Debug("RPC call: evmclient.Client#NonceAt")
 	start := time.Now()
 
+	// Tron doesn't have the concept of nonces, this shouldn't be called but just in case we'll return an error
 	if r.isChainType(chaintype.ChainTron) {
-		// Tron doesn't support eth_getTransactionCount, lets return 0. We might need to do some logic within the txm to handle this for tron
-		nonce = 0
+		err = errors.New("tron does not support eth_getTransactionCount")
 		return
 	}
 
@@ -873,7 +873,7 @@ func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64,
 	start := time.Now()
 
 	if r.isChainType(chaintype.ChainTron) {
-		err = r.wrapHTTP(http.rpc.CallContext(ctx, &gas, "eth_estimateGas", ToBackwardCompatibleCallArgWithChainTypeSupport(call, r.chainType)))
+		err = r.wrapHTTP(http.rpc.CallContext(ctx, &gas, "eth_estimateGas", r.prepareCallArgs(call)))
 		return
 	}
 
@@ -926,10 +926,10 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 	start := time.Now()
 	var hex hexutil.Bytes
 	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArgWithChainTypeSupport(message, r.chainType), ToBackwardCompatibleBlockNumArg(blockNumber))
+		err = http.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), ToBackwardCompatibleBlockNumArg(blockNumber))
 		err = r.wrapHTTP(err)
 	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArgWithChainTypeSupport(message, r.chainType), ToBackwardCompatibleBlockNumArg(blockNumber))
+		err = ws.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), ToBackwardCompatibleBlockNumArg(blockNumber))
 		err = r.wrapWS(err)
 	}
 	if err == nil {
@@ -954,10 +954,10 @@ func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (v
 	start := time.Now()
 	var hex hexutil.Bytes
 	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArgWithChainTypeSupport(message, r.chainType), "pending")
+		err = http.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), "pending")
 		err = r.wrapHTTP(err)
 	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArgWithChainTypeSupport(message, r.chainType), "pending")
+		err = ws.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), "pending")
 		err = r.wrapWS(err)
 	}
 	if err == nil {
@@ -1200,6 +1200,11 @@ func (r *RPCClient) wrapRPCClientError(err error) error {
 
 func (r *RPCClient) rpcClientErrorPrefix() string {
 	return fmt.Sprintf("RPCClient returned error (%s)", r.name)
+}
+
+// PrepareCallArgs prepares the call arguments for RPC calls with chain-specific handling
+func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
+	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
 func wrapCallError(err error, tp string) error {
