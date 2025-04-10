@@ -30,14 +30,9 @@ const (
 // includes decoding messages as specific types and deriving metrics based on the decoded messages.
 // TODO: Report decoding uses the same ABI for EVM and Aptos, however, future chains may need a different
 // decoding scheme. Generalize this in the future to support different chains and decoding schemes.
-func NewMonitor(ctx context.Context, lggr logger.Logger, decodeFn func(m *wt.WriteConfirmed) ([]*registry.FeedUpdated, error)) (*monitor.BeholderClient, error) {
+func NewMonitor(lggr logger.Logger, chainSpecificProcessors []monitor.ProtoProcessor) (*monitor.BeholderClient, error) {
 	// Initialize the Beholder client with a local logger a custom Emitter
 	client := beholder.GetClient().ForPackage("write_target")
-
-	registryMetrics, err := registry.NewMetrics()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new registry metrics: %w", err)
-	}
 
 	forwarderMetrics, err := forwarder.NewMetrics()
 	if err != nil {
@@ -54,13 +49,9 @@ func NewMonitor(ctx context.Context, lggr logger.Logger, decodeFn func(m *wt.Wri
 
 	// Proxy ProtoEmitter with additional processing
 	protoEmitterProxy := protoEmitter{
-		lggr:    lggr,
-		emitter: emitter,
-		processors: []monitor.ProtoProcessor{
-			&wtProcessor{wtMetrics},
-			&keystoneProcessor{emitter, forwarderMetrics},
-			&dataFeedsProcessor{emitter, registryMetrics, decodeFn},
-		},
+		lggr:       lggr,
+		emitter:    emitter,
+		processors: append(chainSpecificProcessors, &wtProcessor{wtMetrics}, &keystoneProcessor{emitter, forwarderMetrics}),
 	}
 	return &monitor.BeholderClient{Client: &client, ProtoEmitter: &protoEmitterProxy}, nil
 }

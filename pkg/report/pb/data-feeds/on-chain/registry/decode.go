@@ -1,13 +1,42 @@
 package registry
 
 import (
+	"fmt"
 	"math"
 	"math/big"
 
 	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 )
+
+func DecodeAsFeedUpdated(m *wt_msg.WriteConfirmed) ([]*FeedUpdated, error) {
+	// Decode the confirmed report (WT -> DF contract event)
+	r, err := platform.Decode(m.Report)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode report: %w", err)
+	}
+
+	// Decode the underlying Data Feeds reports
+	reports, err := datafeeds.Decode(r.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode Data Feeds report: %w", err)
+	}
+
+	// Allocate space for the messages (event per updated feed)
+	msgs := make([]*FeedUpdated, 0, len(*reports))
+
+	// Iterate over the underlying Mercury reports
+	for _, rf := range *reports {
+		feedID := datafeeds.FeedID(rf.FeedID)
+
+		// TODO: unsure if r.Data is correct for Report
+		msgs = append(msgs, NewFeedUpdated(m, feedID, rf.Timestamp, rf.Price, r.Data, false))
+	}
+
+	return msgs, nil
+}
 
 // newFeedUpdated creates a FeedUpdated from the given common parameters.
 // If includeTxInfo is true, TxSender and TxReceiver are set.
@@ -24,7 +53,7 @@ func NewFeedUpdated(
 		ObservationsTimestamp: observationsTimestamp,
 		Benchmark:             benchmarkPrice.Bytes(),
 		Report:                report,
-		BenchmarkVal:          ToBenchmarkVal(feedID, benchmarkPrice),
+		BenchmarkVal:          toBenchmarkVal(feedID, benchmarkPrice),
 
 		// Head data - when was the event produced on-chain
 		BlockHash:      m.BlockHash,
@@ -71,7 +100,7 @@ func NewFeedUpdated(
 // for most use-cases. For big numbers, benchmark bytes should be used instead.
 //
 // Returns `math.NaN()` if report data type not a number, or `+/-Inf` if number doesn't fit in double.
-func ToBenchmarkVal(feedID datafeeds.FeedID, val *big.Int) float64 {
+func toBenchmarkVal(feedID datafeeds.FeedID, val *big.Int) float64 {
 	// Return NaN if the value is nil
 	if val == nil {
 		return math.NaN()

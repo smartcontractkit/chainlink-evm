@@ -1,15 +1,15 @@
-package evm_test
+package datafeeds_test
 
 import (
 	"math/big"
 	"testing"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds/evm"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 )
 
 func TestDecodeFeedReport(t *testing.T) {
 	// Create some sample records.
-	original := []evm.FeedReport{
+	original := []datafeeds.FeedReport{
 		{
 			// Example feedID: the first byte is 0x01 and the remainder are zeros.
 			FeedID:    [32]byte{0x01},
@@ -24,7 +24,7 @@ func TestDecodeFeedReport(t *testing.T) {
 	}
 
 	// Get the ABI schema from our constructor.
-	schema := evm.GetSchema()
+	schema := datafeeds.GetSchema()
 
 	// Pack the original data using the ABI schema.
 	encoded, err := schema.Pack(original)
@@ -33,7 +33,7 @@ func TestDecodeFeedReport(t *testing.T) {
 	}
 
 	// Decode the data using our Decode function.
-	decoded, err := evm.Decode(encoded)
+	decoded, err := datafeeds.Decode(encoded)
 	if err != nil {
 		t.Fatalf("failed to decode data: %v", err)
 	}

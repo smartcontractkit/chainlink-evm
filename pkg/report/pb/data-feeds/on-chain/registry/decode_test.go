@@ -1,5 +1,5 @@
 // evm_feedupdated_test.go
-package evm_test
+package registry_test
 
 import (
 	"encoding/hex"
@@ -9,13 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds/evm"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
 
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/pb/data-feeds/on-chain/registry"
 	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
 )
 
 func TestDecodeAsFeedUpdated(t *testing.T) {
-	feedReports := evm.Reports{
+	feedReports := datafeeds.Reports{
 		{
 			FeedID:    [32]byte{0x01},
 			Price:     big.NewInt(1234567890),
@@ -24,7 +25,7 @@ func TestDecodeAsFeedUpdated(t *testing.T) {
 	}
 
 	// ABI‑encode the feed reports using the global schema.
-	feedReportsEncoded, err := evm.GetSchema().Pack(feedReports)
+	feedReportsEncoded, err := datafeeds.GetSchema().Pack(feedReports)
 	require.NoError(t, err)
 
 	metadata := datafeeds.Metadata{
@@ -40,7 +41,7 @@ func TestDecodeAsFeedUpdated(t *testing.T) {
 	}
 
 	// Build the full Report with the metadata and the already ABI‑encoded feed reports.
-	report := evm.Report{
+	report := platform.Report{
 		Metadata: metadata,
 		Data:     feedReportsEncoded,
 	}
@@ -66,7 +67,7 @@ func TestDecodeAsFeedUpdated(t *testing.T) {
 	}
 
 	// Decode the WriteConfirmed message.
-	feedUpdates, err := evm.DecodeAsFeedUpdated(&validMsg)
+	feedUpdates, err := registry.DecodeAsFeedUpdated(&validMsg)
 	require.NoError(t, err)
 
 	require.Len(t, feedUpdates, len(feedReports))
@@ -85,6 +86,6 @@ func TestDecodeAsFeedUpdated(t *testing.T) {
 	invalidMsg := wt_msg.WriteConfirmed{
 		Report: []byte{0x01, 0x02, 0x03, 0x04},
 	}
-	_, err = evm.DecodeAsFeedUpdated(&invalidMsg)
+	_, err = registry.DecodeAsFeedUpdated(&invalidMsg)
 	require.Error(t, err)
 }

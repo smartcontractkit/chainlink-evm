@@ -1,17 +1,11 @@
-package evm
+package datafeeds
 
 import (
 	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 )
-
-type Report struct {
-	datafeeds.Metadata
-	Data []byte
-}
 
 // FeedPrice represents a decoded data record with the new types.
 type FeedReport struct {
@@ -60,14 +54,4 @@ func Decode(data []byte) (*Reports, error) {
 	}
 
 	return &decoded, nil
-}
-
-func (r Report) Encode() ([]byte, error) {
-	// Encode the metadata
-	metadataBytes, err := r.Metadata.Encode()
-	if err != nil {
-		return nil, err
-	}
-
-	return append(metadataBytes, r.Data...), nil
 }

@@ -105,3 +105,13 @@ func Decode(rawReport []byte) (*Report, error) {
 
 	return report, nil
 }
+
+func (r Report) Encode() ([]byte, error) {
+	// Encode the metadata
+	metadataBytes, err := r.Metadata.Encode()
+	if err != nil {
+		return nil, err
+	}
+
+	return append(metadataBytes, r.Data...), nil
+}
