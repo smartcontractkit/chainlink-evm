@@ -56,6 +56,7 @@ var (
 		BlockHash:         common.HexToHash("0x11111111111111"),
 		BlockNumber:       big.NewInt(555),
 		TransactionIndex:  777,
+		EffectiveGasPrice: big.NewInt(222),
 		Logs: []*gethTypes.Log{
 			testGethLog1,
 			testGethLog2,
@@ -79,6 +80,7 @@ func TestFromGethReceipt(t *testing.T) {
 	assert.Equal(t, testGethReceipt.BlockHash, receipt.BlockHash)
 	assert.Equal(t, testGethReceipt.BlockNumber, receipt.BlockNumber)
 	assert.Equal(t, testGethReceipt.TransactionIndex, receipt.TransactionIndex)
+	assert.Equal(t, testGethReceipt.EffectiveGasPrice, receipt.EffectiveGasPrice)
 	assert.Len(t, receipt.Logs, len(testGethReceipt.Logs))
 
 	for i, log := range receipt.Logs {
