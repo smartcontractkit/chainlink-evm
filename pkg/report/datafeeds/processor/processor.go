@@ -6,9 +6,9 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/monitor"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/pb/data-feeds/on-chain/registry"
-	wt "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
+	monitor "github.com/smartcontractkit/chainlink-evm/pkg/monitor/beholder"
+	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/data-feeds/on-chain/registry"
+	wt "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
 )
 
 // EVM Data-Feeds specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics

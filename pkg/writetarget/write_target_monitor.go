@@ -9,10 +9,10 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/monitor"
+	monitor "github.com/smartcontractkit/chainlink-evm/pkg/monitor/beholder"
 
-	wt "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform/on-chain/forwarder"
+	wt "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
+	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform/on-chain/forwarder"
 )
 
 const (

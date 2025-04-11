@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
-	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
 )
 

@@ -7,9 +7,9 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/capabilities"
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/monitor"
+	monitor "github.com/smartcontractkit/chainlink-evm/pkg/monitor/beholder"
 
-	wt "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
+	wt "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
 )
 
 // messageBuilder is a helper component to build monitoring messages

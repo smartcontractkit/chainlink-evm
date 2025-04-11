@@ -6,7 +6,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
 
-	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
+	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
 )
 
 // DecodeAsReportProcessed decodes a 'platform.write-target.WriteConfirmed' message

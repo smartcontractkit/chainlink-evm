@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/big"
 
-	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
+	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
@@ -31,7 +31,7 @@ func DecodeAsFeedUpdated(m *wt_msg.WriteConfirmed) ([]*FeedUpdated, error) {
 	for _, rf := range *reports {
 		feedID := datafeeds.FeedID(rf.FeedID)
 
-		// TODO: unsure if r.Data is correct for Report
+		// Notice: this encoding of a DF report doesn't provide a raw underlying report
 		msgs = append(msgs, NewFeedUpdated(m, feedID, rf.Timestamp, rf.Price, []byte{}, true))
 	}
 

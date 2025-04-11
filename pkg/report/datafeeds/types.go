@@ -33,7 +33,7 @@ func GetSchema() abi.Arguments {
 	return abi.Arguments([]abi.Argument{
 		{
 			// This defines the array of tuple records.
-			Type: mustNewType("tuple(bytes32,uint224,uint32)[]", "", []abi.ArgumentMarshaling{
+			Type: mustNewType("tuple(bytes32,uint32,uint224)[]", "", []abi.ArgumentMarshaling{
 				{Name: "feedID", Type: "bytes32"},
 				{Name: "timestamp", Type: "uint32"},
 				{Name: "price", Type: "uint224"},

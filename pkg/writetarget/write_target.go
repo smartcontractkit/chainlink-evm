@@ -18,11 +18,11 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/monitor"
+	monitor "github.com/smartcontractkit/chainlink-evm/pkg/monitor/beholder"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/retry"
 
-	wt "github.com/smartcontractkit/chainlink-evm/pkg/report/pb/platform"
+	wt "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
 )
 
 var (
