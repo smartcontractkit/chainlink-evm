@@ -314,17 +314,17 @@ func (h *Head) UnmarshalJSON(bs []byte) error {
 		return nil
 	}
 
-	h.Hash = common.BytesToHash(jsonHead.Hash.Bytes())
+	h.Hash = common.Hash(jsonHead.Hash)
 	h.Number = (*big.Int)(jsonHead.Number).Int64()
-	h.ParentHash = common.BytesToHash(jsonHead.ParentHash.Bytes())
+	h.ParentHash = common.Hash(jsonHead.ParentHash)
 	h.Timestamp = time.Unix(int64(jsonHead.Timestamp), 0).UTC()
 	h.BaseFeePerGas = assets.NewWei((*big.Int)(jsonHead.BaseFeePerGas))
 	if jsonHead.L1BlockNumber != nil {
 		h.L1BlockNumber = sql.NullInt64{Int64: (*big.Int)(jsonHead.L1BlockNumber).Int64(), Valid: true}
 	}
-	h.ReceiptsRoot = common.BytesToHash(jsonHead.ReceiptsRoot.Bytes())
-	h.TransactionsRoot = common.BytesToHash(jsonHead.TransactionsRoot.Bytes())
-	h.StateRoot = common.BytesToHash(jsonHead.StateRoot.Bytes())
+	h.ReceiptsRoot = common.Hash(jsonHead.ReceiptsRoot)
+	h.TransactionsRoot = common.Hash(jsonHead.TransactionsRoot)
+	h.StateRoot = common.Hash(jsonHead.StateRoot)
 	h.Difficulty = jsonHead.Difficulty.ToInt()
 	h.TotalDifficulty = jsonHead.TotalDifficulty.ToInt()
 	return nil
