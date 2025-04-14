@@ -200,7 +200,7 @@ Focus on unit tests before exploring more advanced testing.
 
 ## Best practices
 
-Check out the official [Foundry best practices section](https://book.getfoundry.sh/tutorials/best-practices).
+Check out the official [Foundry best practices section](https://book.getfoundry.sh/guides/best-practices).
 
 - There should be no code between `vm.expectEmit`/`vm.expectRevert` and the function call.
   - Test setup should be done before the `vm.expect` call.
