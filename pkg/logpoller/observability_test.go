@@ -58,7 +58,7 @@ func TestShouldPublishDurationInCaseOfError(t *testing.T) {
 	require.Error(t, err)
 
 	require.Equal(t, 1, testutil.CollectAndCount(orm.queryDuration))
-	require.Equal(t, 1, counterFromHistogramByLabels(t, orm.queryDuration, "200", "SelectLatestLogByEventSigWithConfs", "read"))
+	require.Equal(t, 1, counterFromHistogramByLabels(t, orm.queryDuration, chainFamily, "200", "SelectLatestLogByEventSigWithConfs", "read"))
 }
 
 func TestMetricsAreProperlyPopulatedWithLabels(t *testing.T) {
@@ -72,14 +72,14 @@ func TestMetricsAreProperlyPopulatedWithLabels(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	require.Equal(t, expectedCount, counterFromHistogramByLabels(t, orm.queryDuration, "420", "query", "read"))
-	require.Equal(t, expectedSize, counterFromGaugeByLabels(orm.datasetSize, "420", "query", "read"))
+	require.Equal(t, expectedCount, counterFromHistogramByLabels(t, orm.queryDuration, chainFamily, "420", "query", "read"))
+	require.Equal(t, expectedSize, counterFromGaugeByLabels(orm.datasetSize, chainFamily, "420", "query", "read"))
 
-	require.Equal(t, 0, counterFromHistogramByLabels(t, orm.queryDuration, "420", "other_query", "read"))
-	require.Equal(t, 0, counterFromHistogramByLabels(t, orm.queryDuration, "5", "query", "read"))
+	require.Equal(t, 0, counterFromHistogramByLabels(t, orm.queryDuration, chainFamily, "420", "other_query", "read"))
+	require.Equal(t, 0, counterFromHistogramByLabels(t, orm.queryDuration, chainFamily, "5", "query", "read"))
 
-	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, "420", "other_query", "read"))
-	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, "5", "query", "read"))
+	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, chainFamily, "420", "other_query", "read"))
+	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, chainFamily, "5", "query", "read"))
 }
 
 func TestNotPublishingDatasetSizeInCaseOfError(t *testing.T) {
@@ -88,8 +88,8 @@ func TestNotPublishingDatasetSizeInCaseOfError(t *testing.T) {
 	_, err := withObservedQueryAndResults(orm, "errorQuery", func() ([]string, error) { return nil, errors.New("error") })
 	require.Error(t, err)
 
-	require.Equal(t, 1, counterFromHistogramByLabels(t, orm.queryDuration, "420", "errorQuery", "read"))
-	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, "420", "errorQuery", "read"))
+	require.Equal(t, 1, counterFromHistogramByLabels(t, orm.queryDuration, chainFamily, "420", "errorQuery", "read"))
+	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, chainFamily, "420", "errorQuery", "read"))
 }
 
 func TestMetricsAreProperlyPopulatedForWrites(t *testing.T) {
@@ -97,7 +97,7 @@ func TestMetricsAreProperlyPopulatedForWrites(t *testing.T) {
 	require.NoError(t, withObservedExec(orm, "execQuery", metrics.Create, func() error { return nil }))
 	require.Error(t, withObservedExec(orm, "execQuery", metrics.Create, func() error { return errors.New("error") }))
 
-	require.Equal(t, 2, counterFromHistogramByLabels(t, orm.queryDuration, "420", "execQuery", "create"))
+	require.Equal(t, 2, counterFromHistogramByLabels(t, orm.queryDuration, chainFamily, "420", "execQuery", "create"))
 }
 
 func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
@@ -116,7 +116,7 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		BlockTimestamp:       time.Now(),
 		FinalizedBlockNumber: 5,
 	}))
-	assert.Equal(t, float64(15), testutil.ToFloat64(orm.logsInserted.WithLabelValues("420")))
+	assert.Equal(t, float64(15), testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420")))
 	assert.Equal(t, float64(1), testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420")))
 
 	// Insert 5 more logs with block
@@ -126,25 +126,25 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		BlockTimestamp:       time.Now(),
 		FinalizedBlockNumber: 5,
 	}))
-	assert.Equal(t, float64(20), testutil.ToFloat64(orm.logsInserted.WithLabelValues("420")))
+	assert.Equal(t, float64(20), testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420")))
 	assert.Equal(t, float64(2), testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420")))
 
 	rowsAffected, err := orm.DeleteExpiredLogs(ctx, 3)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), rowsAffected)
-	assert.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, "420", "DeleteExpiredLogs", "delete"))
+	assert.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, chainFamily, "420", "DeleteExpiredLogs", "delete"))
 
 	rowsAffected, err = orm.DeleteBlocksBefore(ctx, 30, 0)
 	require.NoError(t, err)
 	require.Equal(t, int64(2), rowsAffected)
-	assert.Equal(t, 2, counterFromGaugeByLabels(orm.datasetSize, "420", "DeleteBlocksBefore", "delete"))
+	assert.Equal(t, 2, counterFromGaugeByLabels(orm.datasetSize, chainFamily, "420", "DeleteBlocksBefore", "delete"))
 
 	// Don't update counters in case of an error
 	require.Error(t, orm.InsertLogsWithBlock(ctx, logs, Block{
 		BlockHash:      utils.RandomBytes32(),
 		BlockTimestamp: time.Now(),
 	}))
-	assert.Equal(t, float64(20), testutil.ToFloat64(orm.logsInserted.WithLabelValues("420")))
+	assert.Equal(t, float64(20), testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420")))
 	assert.Equal(t, float64(2), testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420")))
 }
 
