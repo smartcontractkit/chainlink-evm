@@ -107,7 +107,7 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 
 	// First insert 10 logs
 	require.NoError(t, orm.InsertLogs(ctx, logs[:10]))
-	assert.Equal(t, float64(10), testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420")))
+	assert.Equal(t, 10, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420"))))
 
 	// Insert 5 more logs with block
 	require.NoError(t, orm.InsertLogsWithBlock(ctx, logs[10:15], Block{
@@ -116,8 +116,8 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		BlockTimestamp:       time.Now(),
 		FinalizedBlockNumber: 5,
 	}))
-	assert.Equal(t, float64(15), testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420")))
-	assert.Equal(t, float64(1), testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420")))
+	assert.Equal(t, 15, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420"))))
+	assert.Equal(t, 1, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420"))))
 
 	// Insert 5 more logs with block
 	require.NoError(t, orm.InsertLogsWithBlock(ctx, logs[15:], Block{
@@ -126,8 +126,8 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		BlockTimestamp:       time.Now(),
 		FinalizedBlockNumber: 5,
 	}))
-	assert.Equal(t, float64(20), testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420")))
-	assert.Equal(t, float64(2), testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420")))
+	assert.Equal(t, 20, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420"))))
+	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420"))))
 
 	rowsAffected, err := orm.DeleteExpiredLogs(ctx, 3)
 	require.NoError(t, err)
@@ -144,8 +144,8 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		BlockHash:      utils.RandomBytes32(),
 		BlockTimestamp: time.Now(),
 	}))
-	assert.Equal(t, float64(20), testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420")))
-	assert.Equal(t, float64(2), testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420")))
+	assert.Equal(t, 20, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(chainFamily, "420"))))
+	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420"))))
 }
 
 func generateRandomLogs(chainID, count int) []Log {
