@@ -18,6 +18,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 )
 
 func TestMultipleMetricsArePublished(t *testing.T) {
@@ -93,8 +94,8 @@ func TestNotPublishingDatasetSizeInCaseOfError(t *testing.T) {
 
 func TestMetricsAreProperlyPopulatedForWrites(t *testing.T) {
 	orm := createObservedORM(t, 420)
-	require.NoError(t, withObservedExec(orm, "execQuery", create, func() error { return nil }))
-	require.Error(t, withObservedExec(orm, "execQuery", create, func() error { return errors.New("error") }))
+	require.NoError(t, withObservedExec(orm, "execQuery", metrics.Create, func() error { return nil }))
+	require.Error(t, withObservedExec(orm, "execQuery", metrics.Create, func() error { return errors.New("error") }))
 
 	require.Equal(t, 2, counterFromHistogramByLabels(t, orm.queryDuration, "420", "execQuery", "create"))
 }
