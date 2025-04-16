@@ -117,7 +117,7 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		FinalizedBlockNumber: 5,
 	}))
 	assert.Equal(t, 15, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(metrics.EVM, "420"))))
-	assert.Equal(t, 1, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420"))))
+	assert.Equal(t, 1, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(metrics.EVM, "420"))))
 
 	// Insert 5 more logs with block
 	require.NoError(t, orm.InsertLogsWithBlock(ctx, logs[15:], Block{
@@ -127,7 +127,7 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		FinalizedBlockNumber: 5,
 	}))
 	assert.Equal(t, 20, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(metrics.EVM, "420"))))
-	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420"))))
+	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(metrics.EVM, "420"))))
 
 	rowsAffected, err := orm.DeleteExpiredLogs(ctx, 3)
 	require.NoError(t, err)
@@ -145,7 +145,7 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		BlockTimestamp: time.Now(),
 	}))
 	assert.Equal(t, 20, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(metrics.EVM, "420"))))
-	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues("420"))))
+	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(metrics.EVM, "420"))))
 }
 
 func generateRandomLogs(chainID, count int) []Log {
