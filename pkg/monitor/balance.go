@@ -136,6 +136,7 @@ func (bm *balanceMonitor) promUpdateEthBalance(balance *assets.Eth, from common.
 	}
 
 	metrics.NodeBalance.WithLabelValues(from.Hex(), bm.chainIDStr, metrics.EVM).Set(balanceFloat)
+	// TODO: Remove deprecated metric
 	promETHBalance.WithLabelValues(from.Hex(), bm.chainIDStr).Set(balanceFloat)
 }
 
