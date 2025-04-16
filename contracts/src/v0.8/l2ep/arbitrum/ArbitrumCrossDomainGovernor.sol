@@ -9,7 +9,7 @@ import {IDelegateForwarder} from "../interfaces/IDelegateForwarder.sol";
 
 import {ArbitrumCrossDomainForwarder} from "./ArbitrumCrossDomainForwarder.sol";
 
-import {Address} from "../../vendor/openzeppelin-solidity/v4.7.3/contracts/utils/Address.sol";
+import {Address} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/Address.sol";
 
 /**
  * @title ArbitrumCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Arbitrum
