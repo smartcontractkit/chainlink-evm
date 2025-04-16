@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import {ERC20Mock} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
+import {ERC20Mock} from "../../shared/test/mocks/ERC20Mock.sol";
 
 // mock ERC20 with 6 decimals
 contract ERC20Mock6Decimals is ERC20Mock {

@@ -11,7 +11,7 @@ import {Strings} from "@openzeppelin@4/contracts/utils/Strings.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {DestinationFeeManager} from "../../DestinationFeeManager.sol";
 import {Common} from "../../../libraries/Common.sol";
-import {ERC20Mock} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
+import {ERC20Mock} from "../../../../shared/test/mocks/ERC20Mock.sol";
 import {WERC20Mock} from "../../../../shared/mocks/WERC20Mock.sol";
 import {DestinationRewardManager} from "../../DestinationRewardManager.sol";
 import {IDestinationRewardManager} from "../../interfaces/IDestinationRewardManager.sol";
