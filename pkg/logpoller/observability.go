@@ -291,7 +291,7 @@ func trackInsertedLogsAndBlock(o *ObservedORM, logs []Log, block *Block, err err
 
 	if block != nil {
 		o.blocksInserted.
-			WithLabelValues(o.chainID).
+			WithLabelValues(metrics.EVM, o.chainID).
 			Inc()
 	}
 }
