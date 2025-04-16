@@ -5,8 +5,8 @@ import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
 
 import {Ownable2StepMsgSender} from "../shared/access/Ownable2StepMsgSender.sol";
 
-import {Strings} from "../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/Strings.sol";
-import {EnumerableSet} from "../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/structs/EnumerableSet.sol";
+import {Strings} from "@openzeppelin@5/contracts/utils/Strings.sol";
+import {EnumerableSet} from "@openzeppelin@5/contracts/utils/structs/EnumerableSet.sol";
 
 contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   using EnumerableSet for EnumerableSet.Bytes32Set;
