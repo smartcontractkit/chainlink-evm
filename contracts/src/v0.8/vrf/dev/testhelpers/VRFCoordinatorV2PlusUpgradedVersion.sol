@@ -11,7 +11,7 @@ import {ChainSpecificUtil} from "../../../shared/util/ChainSpecificUtil.sol";
 import {SubscriptionAPI} from "../SubscriptionAPI.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 import {IVRFCoordinatorV2PlusMigration} from "../interfaces/IVRFCoordinatorV2PlusMigration.sol";
-import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract VRFCoordinatorV2PlusUpgradedVersion is
   VRF,
