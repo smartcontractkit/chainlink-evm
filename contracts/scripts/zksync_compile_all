@@ -6,7 +6,6 @@ echo " ┌───────────────────────�
 echo " │          Compiling ZKSync contracts...       │"
 echo " └──────────────────────────────────────────────┘"
 
-FOUNDRY_PROJECT_SUFFIX=""
 CONTRACTS_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../ && pwd -P )"
 
 compileContract() {
@@ -15,7 +14,7 @@ compileContract() {
   echo "Compiling" "$contract"
 
   PROJECT=$2
-  export FOUNDRY_PROFILE="$PROJECT"$FOUNDRY_PROJECT_SUFFIX
+  export FOUNDRY_PROFILE="$PROJECT"
 
   ${CONTRACTS_DIR}/../tools/bin/forge_zksync build $CONTRACTS_DIR/src/v0.8/$PROJECT/"$1.sol" --zksync \
    --root $CONTRACTS_DIR \
