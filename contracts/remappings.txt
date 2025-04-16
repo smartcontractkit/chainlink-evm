@@ -1,6 +1,6 @@
 forge-std/=src/v0.8/vendor/forge-std/src/
 
-@openzeppelin/=node_modules/@openzeppelin/
+@openzeppelin@4/=node_modules/@openzeppelin/
 @arbitrum/=node_modules/@arbitrum/
 hardhat/=node_modules/hardhat/
 @eth-optimism/=node_modules/@eth-optimism/
