@@ -268,7 +268,7 @@ func (r *RPCClient) logResult(
 
 	metrics.RPCCallLatency.
 		WithLabelValues(
-			"evm",                          // chain family
+			metrics.EVM,                    // chain family
 			r.chainID.String(),             // chain id
 			rpcDomain,                      // rpc url
 			"false",                        // is send only

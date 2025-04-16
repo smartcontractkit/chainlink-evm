@@ -7,23 +7,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
-)
-
-const chainFamily = "evm"
-
-var (
-	lpBlockInserted = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "log_poller_blocks_inserted",
-		Help: "Counter to track number of blocks inserted by Log Poller",
-	}, []string{"evmChainID"})
 )
 
 // ObservedORM is a decorator layer for ORM used by LogPoller, responsible for pushing Prometheus metrics reporting duration and size of result set for the queries.
@@ -45,7 +34,7 @@ func NewObservedORM(chainID *big.Int, ds sqlutil.DataSource, lggr logger.Logger)
 		queryDuration:  metrics.LpQueryDuration,
 		datasetSize:    metrics.LpQueryDataSets,
 		logsInserted:   metrics.LpLogsInserted,
-		blocksInserted: lpBlockInserted,
+		blocksInserted: metrics.LpBlocksInserted,
 		chainID:        chainID.String(),
 	}
 }
@@ -250,7 +239,7 @@ func withObservedQueryAndResults[T any](o *ObservedORM, queryName string, query 
 	results, err := withObservedQuery(o, queryName, query)
 	if err == nil {
 		o.datasetSize.
-			WithLabelValues(chainFamily, o.chainID, queryName, string(metrics.Read)).
+			WithLabelValues(metrics.EVM, o.chainID, queryName, string(metrics.Read)).
 			Set(float64(len(results)))
 	}
 	return results, err
@@ -260,12 +249,12 @@ func withObservedExecAndRowsAffected(o *ObservedORM, queryName string, queryType
 	queryStarted := time.Now()
 	rowsAffected, err := exec()
 	o.queryDuration.
-		WithLabelValues(chainFamily, o.chainID, queryName, string(queryType)).
+		WithLabelValues(metrics.EVM, o.chainID, queryName, string(queryType)).
 		Observe(float64(time.Since(queryStarted)))
 
 	if err == nil {
 		o.datasetSize.
-			WithLabelValues(chainFamily, o.chainID, queryName, string(queryType)).
+			WithLabelValues(metrics.EVM, o.chainID, queryName, string(queryType)).
 			Set(float64(rowsAffected))
 	}
 
@@ -276,7 +265,7 @@ func withObservedQuery[T any](o *ObservedORM, queryName string, query func() (T,
 	queryStarted := time.Now()
 	defer func() {
 		o.queryDuration.
-			WithLabelValues(chainFamily, o.chainID, queryName, string(metrics.Read)).
+			WithLabelValues(metrics.EVM, o.chainID, queryName, string(metrics.Read)).
 			Observe(float64(time.Since(queryStarted)))
 	}()
 	return query()
@@ -286,7 +275,7 @@ func withObservedExec(o *ObservedORM, query string, queryType metrics.QueryType,
 	queryStarted := time.Now()
 	defer func() {
 		o.queryDuration.
-			WithLabelValues(chainFamily, o.chainID, query, string(queryType)).
+			WithLabelValues(metrics.EVM, o.chainID, query, string(queryType)).
 			Observe(float64(time.Since(queryStarted)))
 	}()
 	return exec()
@@ -297,7 +286,7 @@ func trackInsertedLogsAndBlock(o *ObservedORM, logs []Log, block *Block, err err
 		return
 	}
 	o.logsInserted.
-		WithLabelValues(chainFamily, o.chainID).
+		WithLabelValues(metrics.EVM, o.chainID).
 		Add(float64(len(logs)))
 
 	if block != nil {

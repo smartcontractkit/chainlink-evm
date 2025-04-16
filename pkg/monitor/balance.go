@@ -135,7 +135,7 @@ func (bm *balanceMonitor) promUpdateEthBalance(balance *assets.Eth, from common.
 		return
 	}
 
-	metrics.NodeBalance.WithLabelValues(from.Hex(), bm.chainIDStr, "evm").Set(balanceFloat)
+	metrics.NodeBalance.WithLabelValues(from.Hex(), bm.chainIDStr, metrics.EVM).Set(balanceFloat)
 	promETHBalance.WithLabelValues(from.Hex(), bm.chainIDStr).Set(balanceFloat)
 }
 
