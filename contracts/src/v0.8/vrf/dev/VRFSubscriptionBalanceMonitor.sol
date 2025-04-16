@@ -6,7 +6,7 @@ import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {AutomationCompatibleInterface as KeeperCompatibleInterface} from "../../automation/interfaces/AutomationCompatibleInterface.sol";
 import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {Pausable} from "@openzeppelin/contracts@4/security/Pausable.sol";
 
 /**
  * @title The VRFSubscriptionBalanceMonitor contract.

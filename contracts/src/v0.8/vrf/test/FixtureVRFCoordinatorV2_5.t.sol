@@ -1,7 +1,7 @@
 pragma solidity ^0.8.19;
 
 import {console} from "forge-std/console.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts@4/utils/Strings.sol";
 import {VRF} from "../VRF.sol";
 import {VRFTypes} from "../VRFTypes.sol";
 import {BlockhashStore} from "../dev/BlockhashStore.sol";

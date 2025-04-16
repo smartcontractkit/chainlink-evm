@@ -1,6 +1,8 @@
 forge-std/=src/v0.8/vendor/forge-std/src/
 
-@openzeppelin/=node_modules/@openzeppelin/
+@openzeppelin/contracts@4=node_modules/@openzeppelin/contracts@4
+@openzeppelin/contracts-upgradeable@4=node_modules/@openzeppelin/contracts-upgradeable@4
+@openzeppelin/contracts@5=node_modules/@openzeppelin/contracts@5
 @arbitrum/=node_modules/@arbitrum/
 hardhat/=node_modules/hardhat/
 @eth-optimism/=node_modules/@eth-optimism/

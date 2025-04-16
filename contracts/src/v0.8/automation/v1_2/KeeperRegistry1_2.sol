@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts@4/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts@4/utils/Address.sol";
+import "@openzeppelin/contracts@4/security/Pausable.sol";
+import "@openzeppelin/contracts@4/security/ReentrancyGuard.sol";
 import "../KeeperBase.sol";
 import "../../shared/interfaces/ITypeAndVersion.sol";
 import "../../shared/interfaces/AggregatorV3Interface.sol";

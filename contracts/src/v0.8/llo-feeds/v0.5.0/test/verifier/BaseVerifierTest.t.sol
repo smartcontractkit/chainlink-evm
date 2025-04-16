@@ -7,7 +7,7 @@ import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts
 import {IVerifier} from "../../interfaces/IVerifier.sol";
 import {ErroredVerifier} from "../mocks/ErroredVerifier.sol";
 import {Verifier} from "../../Verifier.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts@4/utils/Strings.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {FeeManager} from "../../FeeManager.sol";
 import {Common} from "../../../libraries/Common.sol";

@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import {ERC20Mock} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
 import {IERC20Metadata as IERC20} from
-  "../../vendor/openzeppelin-solidity/v5.0.2/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+  "@openzeppelin/contracts@5/token/ERC20/extensions/IERC20Metadata.sol";
 import {BundleAggregatorProxy} from "../BundleAggregatorProxy.sol";
 
 import {DataFeedsCache} from "../DataFeedsCache.sol";

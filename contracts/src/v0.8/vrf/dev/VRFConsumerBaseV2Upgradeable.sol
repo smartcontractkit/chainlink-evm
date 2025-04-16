@@ -30,7 +30,7 @@ pragma solidity ^0.8.4;
  * @dev initialize VRFConsumerBase's attributes in their respective initializer as
  * @dev shown:
  *
- * @dev   import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+ * @dev   import "@openzeppelin/contracts-upgradeable@4/proxy/utils/Initializable.sol";
  * @dev   contract VRFConsumer is Initializable, VRFConsumerBaseV2Upgradeable {
  * @dev     initialize(<other arguments>, address _vrfCoordinator) public initializer {
  * @dev         __VRFConsumerBaseV2_init(_vrfCoordinator);
@@ -96,7 +96,7 @@ pragma solidity ^0.8.4;
  * @dev and so remains effective only in the case of unmodified oracle software).
  */
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable@4/proxy/utils/Initializable.sol";
 
 /**
  * @dev The VRFConsumerBaseV2Upgradable is an upgradable variant of VRFConsumerBaseV2
