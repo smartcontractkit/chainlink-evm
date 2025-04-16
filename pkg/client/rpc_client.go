@@ -283,6 +283,10 @@ func (r *RPCClient) getRPCDomain() string {
 	return r.ws.Load().uri.Host
 }
 
+func (r *RPCClient) isChainType(chainType chaintype.ChainType) bool {
+	return r.chainType == chainType
+}
+
 // RPC wrappers
 
 // CallContext implementation
@@ -297,6 +301,7 @@ func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method 
 	lggr.Debug("RPC call: evmclient.Client#CallContext")
 	start := time.Now()
 	var err error
+
 	if http != nil {
 		err = r.wrapHTTP(http.rpc.CallContext(ctx, result, method, args...))
 	} else {
@@ -341,6 +346,7 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 	lggr.Trace("RPC call: evmclient.Client#BatchCallContext")
 	start := time.Now()
 	var err error
+
 	if http != nil {
 		err = r.wrapHTTP(http.rpc.BatchCallContext(ctx, b))
 	} else {
@@ -709,6 +715,12 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 	lggr.Debug("RPC call: evmclient.Client#SendTransaction")
 	start := time.Now()
 	var err error
+
+	if r.isChainType(chaintype.ChainTron) {
+		err = errors.New("SendTransaction not implemented for Tron, this should never be called")
+		return struct{}{}, multinode.Fatal, err
+	}
+
 	if http != nil {
 		err = r.wrapHTTP(http.geth.SendTransaction(ctx, tx))
 	} else {
@@ -747,6 +759,13 @@ func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Addres
 	lggr.Debug("RPC call: evmclient.Client#PendingNonceAt")
 	start := time.Now()
 	var n uint64
+
+	// Tron doesn't have the concept of nonces, this shouldn't be called but just in case we'll return an error
+	if r.isChainType(chaintype.ChainTron) {
+		err = errors.New("tron does not support eth_getTransactionCount")
+		return
+	}
+
 	if http != nil {
 		n, err = http.geth.PendingNonceAt(ctx, account)
 		nonce = evmtypes.Nonce(int64(n))
@@ -775,6 +794,13 @@ func (r *RPCClient) NonceAt(ctx context.Context, account common.Address, blockNu
 
 	lggr.Debug("RPC call: evmclient.Client#NonceAt")
 	start := time.Now()
+
+	// Tron doesn't have the concept of nonces, this shouldn't be called but just in case we'll return an error
+	if r.isChainType(chaintype.ChainTron) {
+		err = errors.New("tron does not support eth_getTransactionCount")
+		return
+	}
+
 	if http != nil {
 		nonce, err = http.geth.NonceAt(ctx, account, blockNumber)
 		err = r.wrapHTTP(err)
@@ -845,6 +871,12 @@ func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64,
 
 	lggr.Debug("RPC call: evmclient.Client#EstimateGas")
 	start := time.Now()
+
+	if r.isChainType(chaintype.ChainTron) {
+		err = r.wrapHTTP(http.rpc.CallContext(ctx, &gas, "eth_estimateGas", r.prepareCallArgs(call)))
+		return
+	}
+
 	if http != nil {
 		gas, err = http.geth.EstimateGas(ctx, call)
 		err = r.wrapHTTP(err)
@@ -894,10 +926,10 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 	start := time.Now()
 	var hex hexutil.Bytes
 	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArg(message), ToBackwardCompatibleBlockNumArg(blockNumber))
+		err = http.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), ToBackwardCompatibleBlockNumArg(blockNumber))
 		err = r.wrapHTTP(err)
 	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArg(message), ToBackwardCompatibleBlockNumArg(blockNumber))
+		err = ws.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), ToBackwardCompatibleBlockNumArg(blockNumber))
 		err = r.wrapWS(err)
 	}
 	if err == nil {
@@ -922,10 +954,10 @@ func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (v
 	start := time.Now()
 	var hex hexutil.Bytes
 	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArg(message), "pending")
+		err = http.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), "pending")
 		err = r.wrapHTTP(err)
 	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", ToBackwardCompatibleCallArg(message), "pending")
+		err = ws.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), "pending")
 		err = r.wrapWS(err)
 	}
 	if err == nil {
@@ -1144,7 +1176,6 @@ func (r *RPCClient) SuggestGasTipCap(ctx context.Context) (tipCap *big.Int, err 
 // the common node.
 func (r *RPCClient) ChainID(ctx context.Context) (chainID *big.Int, err error) {
 	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
-
 	defer cancel()
 
 	if http != nil {
@@ -1169,6 +1200,11 @@ func (r *RPCClient) wrapRPCClientError(err error) error {
 
 func (r *RPCClient) rpcClientErrorPrefix() string {
 	return fmt.Sprintf("RPCClient returned error (%s)", r.name)
+}
+
+// PrepareCallArgs prepares the call arguments for RPC calls with chain-specific handling
+func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
+	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
 func wrapCallError(err error, tp string) error {
@@ -1227,6 +1263,7 @@ func (r *RPCClient) IsSyncing(ctx context.Context) (bool, error) {
 	var syncProgress *ethereum.SyncProgress
 	start := time.Now()
 	var err error
+
 	if http != nil {
 		syncProgress, err = http.geth.SyncProgress(ctx)
 		err = r.wrapHTTP(err)

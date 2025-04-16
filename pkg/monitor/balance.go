@@ -6,7 +6,6 @@ import (
 	"math"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
@@ -162,13 +161,7 @@ func (w *worker) Work(ctx context.Context) {
 	wg.Wait()
 }
 
-// Approximately ETH block time
-const ethFetchTimeout = 15 * time.Second
-
 func (w *worker) checkAccountBalance(ctx context.Context, address common.Address) {
-	ctx, cancel := context.WithTimeout(ctx, ethFetchTimeout)
-	defer cancel()
-
 	bal, err := w.bm.ethClient.BalanceAt(ctx, address, nil)
 	if err != nil {
 		w.bm.eng.Errorw("BalanceMonitor: error getting balance for key "+address.Hex(),

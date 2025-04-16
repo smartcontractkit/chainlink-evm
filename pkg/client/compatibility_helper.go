@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 )
 
 // Needed to support Geth servers < v1.11.0
@@ -54,4 +55,19 @@ func ToBackwardCompatibleCallArg(msg ethereum.CallMsg) interface{} {
 		arg["maxPriorityFeePerGas"] = (*hexutil.Big)(msg.GasTipCap)
 	}
 	return arg
+}
+
+// Helper function that adds support for explicit modifications of call args for a given chain type
+func toBackwardCompatibleCallArgWithChainTypeSupport(msg ethereum.CallMsg, chainType chaintype.ChainType) interface{} {
+	backwardsCompatibleCallArg := ToBackwardCompatibleCallArg(msg)
+	callArgs, ok := backwardsCompatibleCallArg.(map[string]interface{})
+	if !ok {
+		return backwardsCompatibleCallArg
+	}
+
+	if chainType == chaintype.ChainTron {
+		delete(callArgs, "input")
+	}
+
+	return callArgs
 }

@@ -254,17 +254,51 @@ func (h *Head) AsSlice(k int) (heads []*Head) {
 	return
 }
 
+// Hash represents the 32 byte Keccak256 hash of arbitrary data.
+// Mainly to add compatibility with Tron as some hashes are returned as 0x00 or 0x
+type Hash [32]byte
+
+// UnmarshalJSON parses a hash in hex syntax.
+func (h *Hash) UnmarshalJSON(input []byte) error {
+	bytes := hexutil.Bytes{}
+	err := bytes.UnmarshalJSON(input)
+	if err != nil {
+		return err
+	}
+
+	// Left pad the bytes to 32 bytes
+	if len(bytes) < 32 {
+		bytes = append(make([]byte, 32-len(bytes)), bytes...)
+	}
+
+	h.SetBytes(bytes)
+
+	return nil
+}
+
+// SetBytes sets the hash to the value of b.
+// If b is larger than len(h), b will be cropped from the left.
+func (h *Hash) SetBytes(b []byte) {
+	if len(b) > len(h) {
+		b = b[len(b)-32:]
+	}
+
+	copy(h[32-len(b):], b)
+}
+
+func (h Hash) Bytes() []byte { return h[:] }
+
 func (h *Head) UnmarshalJSON(bs []byte) error {
 	type head struct {
-		Hash             common.Hash    `json:"hash"`
+		Hash             Hash           `json:"hash"`
 		Number           *hexutil.Big   `json:"number"`
-		ParentHash       common.Hash    `json:"parentHash"`
+		ParentHash       Hash           `json:"parentHash"`
 		Timestamp        hexutil.Uint64 `json:"timestamp"`
 		L1BlockNumber    *hexutil.Big   `json:"l1BlockNumber"`
 		BaseFeePerGas    *hexutil.Big   `json:"baseFeePerGas"`
-		ReceiptsRoot     common.Hash    `json:"receiptsRoot"`
-		TransactionsRoot common.Hash    `json:"transactionsRoot"`
-		StateRoot        common.Hash    `json:"stateRoot"`
+		ReceiptsRoot     Hash           `json:"receiptsRoot"`
+		TransactionsRoot Hash           `json:"transactionsRoot"`
+		StateRoot        Hash           `json:"stateRoot"`
 		Difficulty       *hexutil.Big   `json:"difficulty"`
 		TotalDifficulty  *hexutil.Big   `json:"totalDifficulty"`
 	}
@@ -280,17 +314,17 @@ func (h *Head) UnmarshalJSON(bs []byte) error {
 		return nil
 	}
 
-	h.Hash = jsonHead.Hash
+	h.Hash = common.Hash(jsonHead.Hash)
 	h.Number = (*big.Int)(jsonHead.Number).Int64()
-	h.ParentHash = jsonHead.ParentHash
+	h.ParentHash = common.Hash(jsonHead.ParentHash)
 	h.Timestamp = time.Unix(int64(jsonHead.Timestamp), 0).UTC()
 	h.BaseFeePerGas = assets.NewWei((*big.Int)(jsonHead.BaseFeePerGas))
 	if jsonHead.L1BlockNumber != nil {
 		h.L1BlockNumber = sql.NullInt64{Int64: (*big.Int)(jsonHead.L1BlockNumber).Int64(), Valid: true}
 	}
-	h.ReceiptsRoot = jsonHead.ReceiptsRoot
-	h.TransactionsRoot = jsonHead.TransactionsRoot
-	h.StateRoot = jsonHead.StateRoot
+	h.ReceiptsRoot = common.Hash(jsonHead.ReceiptsRoot)
+	h.TransactionsRoot = common.Hash(jsonHead.TransactionsRoot)
+	h.StateRoot = common.Hash(jsonHead.StateRoot)
 	h.Difficulty = jsonHead.Difficulty.ToInt()
 	h.TotalDifficulty = jsonHead.TotalDifficulty.ToInt()
 	return nil
