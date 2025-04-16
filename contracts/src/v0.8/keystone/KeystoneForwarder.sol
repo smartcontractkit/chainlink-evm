@@ -7,7 +7,7 @@ import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
 
 import {OwnerIsCreator} from "../shared/access/OwnerIsCreator.sol";
 
-import {ERC165Checker} from "../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
+import {ERC165Checker} from "@openzeppelin@4/contracts/utils/introspection/ERC165Checker.sol";
 
 /// @notice This is an entry point for `write_${chain}` Target capability. It allows nodes to
 /// determine if reports have been processed (successfully or not) in a decentralized and

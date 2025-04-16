@@ -6,8 +6,8 @@ import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.so
 
 import {OwnerIsCreator} from "../shared/access/OwnerIsCreator.sol";
 
-import {EnumerableSet} from "../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
-import {ERC165Checker} from "../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
+import {EnumerableSet} from "@openzeppelin@4/contracts/utils/structs/EnumerableSet.sol";
+import {ERC165Checker} from "@openzeppelin@4/contracts/utils/introspection/ERC165Checker.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 

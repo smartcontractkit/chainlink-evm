@@ -26,7 +26,7 @@ contract BurnMintERC20_mint is BurnMintERC20Setup {
   function test_mint_RevertWhen_SenderNotMinter() public {
     vm.startPrank(STRANGER);
 
-    // OZ Access Control v4.8.3 inherited by BurnMintERC20 does not use custom errors, but the revert message is still useful
+    // OZ Access Control v4.x inherited by BurnMintERC20 does not use custom errors, but the revert message is still useful
     // and should be checked
     vm.expectRevert(
       abi.encodePacked(

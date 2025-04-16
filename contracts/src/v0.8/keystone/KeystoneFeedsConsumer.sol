@@ -5,7 +5,7 @@ import {IReceiver} from "./interfaces/IReceiver.sol";
 
 import {OwnerIsCreator} from "../shared/access/OwnerIsCreator.sol";
 
-import {IERC165} from "../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin@4/contracts/interfaces/IERC165.sol";
 
 contract KeystoneFeedsConsumer is IReceiver, OwnerIsCreator {
   event FeedReceived(bytes32 indexed feedId, uint224 price, uint32 timestamp);
