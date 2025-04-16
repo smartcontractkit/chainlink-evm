@@ -5,7 +5,7 @@ import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilityConfigurationContract} from "./mocks/CapabilityConfigurationContract.sol";
 import {ICapabilityConfiguration} from "../interfaces/ICapabilityConfiguration.sol";
 import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
-import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin@4/contracts/interfaces/IERC165.sol";
 
 contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
   function test_RevertWhen_CalledByNonAdmin() public {

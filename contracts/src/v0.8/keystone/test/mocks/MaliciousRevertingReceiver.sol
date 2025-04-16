@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin@4/contracts/interfaces/IERC165.sol";
 import {IReceiver} from "../../interfaces/IReceiver.sol";
 
 /// A malicious receiver that uses max allowed for ERC165 checks and consumes all gas in `onReport()`

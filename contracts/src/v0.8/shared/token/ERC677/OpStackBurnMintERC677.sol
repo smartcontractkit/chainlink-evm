@@ -5,7 +5,7 @@ import {IOptimismMintableERC20Minimal, IOptimismMintableERC20} from "../ERC20/IO
 
 import {BurnMintERC677} from "./BurnMintERC677.sol";
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin@4/contracts/utils/introspection/IERC165.sol";
 
 /// @notice A basic ERC677 compatible token contract with burn and minting roles that supports
 /// the native L2 bridging requirements of the Optimism Stack.

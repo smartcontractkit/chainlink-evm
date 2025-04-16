@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
 import {VRFTypes} from "../../VRFTypes.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin@4/contracts/utils/structs/EnumerableSet.sol";
 
 contract ExposedVRFCoordinatorV2_5 is VRFCoordinatorV2_5 {
   using EnumerableSet for EnumerableSet.UintSet;

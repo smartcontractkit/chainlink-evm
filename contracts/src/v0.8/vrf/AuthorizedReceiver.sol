@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin@4/contracts/utils/structs/EnumerableSet.sol";
 import {IAuthorizedReceiver} from "./interfaces/IAuthorizedReceiver.sol";
 
 abstract contract AuthorizedReceiver is IAuthorizedReceiver {

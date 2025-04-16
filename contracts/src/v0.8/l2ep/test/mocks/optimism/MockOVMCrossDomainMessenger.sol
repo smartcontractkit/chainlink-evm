@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {iOVM_CrossDomainMessenger} from "../../../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin@4/contracts/utils/Address.sol";
 
 contract MockOVMCrossDomainMessenger is iOVM_CrossDomainMessenger {
   address internal s_mockMessageSender;

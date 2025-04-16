@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
-import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin@4/contracts/interfaces/IERC165.sol";
 import {Constants} from "../Constants.t.sol";
 
 contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Constants {

@@ -6,7 +6,7 @@ import {VRFV2PlusLoadTestWithMetrics} from "../dev/testhelpers/VRFV2PlusLoadTest
 import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import "@openzeppelin/contracts/utils/Strings.sol"; // for Strings.toString
+import "@openzeppelin@4/contracts/utils/Strings.sol"; // for Strings.toString
 import {VmSafe} from "forge-std/Vm.sol";
 
 contract VRFV2PlusSubscriptionAPITest is BaseTest {

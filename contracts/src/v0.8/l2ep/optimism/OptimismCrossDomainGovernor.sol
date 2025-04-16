@@ -8,7 +8,7 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 import {OptimismCrossDomainForwarder} from "./OptimismCrossDomainForwarder.sol";
 
 import {iOVM_CrossDomainMessenger} from "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin@4/contracts/utils/Address.sol";
 
 /**
  * @title OptimismCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Optimism
