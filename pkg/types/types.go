@@ -65,8 +65,8 @@ type Receipt struct {
 	BlockHash         common.Hash     `json:"blockHash,omitempty"`
 	BlockNumber       *big.Int        `json:"blockNumber,omitempty"`
 	TransactionIndex  uint            `json:"transactionIndex"`
-	EffectiveGasPrice *big.Int        `json:"effectiveGasPrice"`
-	RevertReason      []byte          `json:"revertReason,omitempty"` // Only provided by Hedera
+	EffectiveGasPrice *big.Int        `json:"effectiveGasPrice,omitempty"` // For compatibility with old blocks
+	RevertReason      []byte          `json:"revertReason,omitempty"`      // Only provided by Hedera
 }
 
 // FromGethReceipt converts a gethTypes.Receipt to a Receipt
