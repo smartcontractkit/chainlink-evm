@@ -22,8 +22,10 @@ const (
 	schemaBasePath     = repoCLLCommon + "/" + versionRefsDevelop + "/pkg/capabilities/writetarget/pb"
 )
 
-type EmitterAwareProcessor interface {
+type ProductSpecificProcessor interface {
+	monitor.ProtoProcessor
 	SetEmitter(e monitor.ProtoEmitter)
+	GetName() string
 }
 
 // NewMonitor initializes a Beholder client for the Write Target
@@ -33,7 +35,7 @@ type EmitterAwareProcessor interface {
 // includes decoding messages as specific types and deriving metrics based on the decoded messages.
 // TODO: Report decoding uses the same ABI for EVM and Aptos, however, future chains may need a different
 // decoding scheme. Generalize this in the future to support different chains and decoding schemes.
-func NewMonitor(lggr logger.Logger, chainSpecificProcessors []monitor.ProtoProcessor) (*monitor.BeholderClient, error) {
+func NewMonitor(lggr logger.Logger, productSpecificProcessors []ProductSpecificProcessor) (*monitor.BeholderClient, error) {
 	// Initialize the Beholder client with a local logger a custom Emitter
 	client := beholder.GetClient().ForPackage("write_target")
 
@@ -50,28 +52,26 @@ func NewMonitor(lggr logger.Logger, chainSpecificProcessors []monitor.ProtoProce
 	// Underlying ProtoEmitter
 	emitter := monitor.NewProtoEmitter(lggr, &client, schemaBasePath)
 
-	for _, p := range chainSpecificProcessors {
-		p, ok := p.(EmitterAwareProcessor)
-		if !ok {
-			return nil, fmt.Errorf("processor %T does not implement EmitterAwareProcessor", p)
-		}
+	for _, p := range productSpecificProcessors {
 		p.SetEmitter(emitter)
 	}
 
 	// Proxy ProtoEmitter with additional processing
 	protoEmitterProxy := protoEmitter{
-		lggr:       lggr,
-		emitter:    emitter,
-		processors: append(chainSpecificProcessors, &wtProcessor{wtMetrics}, &keystoneProcessor{emitter, forwarderMetrics}),
+		lggr:                      lggr,
+		emitter:                   emitter,
+		processors:                []monitor.ProtoProcessor{&wtProcessor{wtMetrics}, &keystoneProcessor{emitter, forwarderMetrics}},
+		productSpecificProcessors: productSpecificProcessors,
 	}
 	return &monitor.BeholderClient{Client: &client, ProtoEmitter: &protoEmitterProxy}, nil
 }
 
 // ProtoEmitter proxy specific to the WT
 type protoEmitter struct {
-	lggr       logger.Logger
-	emitter    monitor.ProtoEmitter
-	processors []monitor.ProtoProcessor
+	lggr                      logger.Logger
+	emitter                   monitor.ProtoEmitter
+	processors                []monitor.ProtoProcessor
+	productSpecificProcessors []ProductSpecificProcessor
 }
 
 // Emit emits a proto.Message and runs additional processing
@@ -109,6 +109,31 @@ func (e *protoEmitter) Process(ctx context.Context, m proto.Message, attrKVs ...
 			return nil
 		}
 	}
+	// Product specific processing only for write confirmed
+	if msg, ok := m.(*wt.WriteConfirmed); ok {
+		if msg.MetaCapabilityProcessor == "" {
+			e.lggr.Debugw("No product specific processor specified; skipping.")
+			return nil
+		}
+
+		found := false
+		for _, p := range e.productSpecificProcessors {
+			if p.GetName() == msg.MetaCapabilityProcessor {
+				if err := p.Process(ctx, msg, attrKVs...); err != nil {
+					e.lggr.Errorw("failed to process emitted message", "err", err)
+				}
+				found = true
+				break
+			}
+			e.lggr.Debugw("skipping processor", "processor", p.GetName())
+		}
+
+		// no processor matching configured one, return error
+		if !found {
+			return fmt.Errorf("no matching processor for MetaCapabilityProcessor=%s", msg.MetaCapabilityProcessor)
+		}
+	}
+
 	return nil
 }
 

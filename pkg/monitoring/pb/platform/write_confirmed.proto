@@ -52,4 +52,9 @@ message WriteConfirmed {
   string meta_capability_id = 33;
   uint64 meta_capability_timestamp_start = 34;
   uint64 meta_capability_timestamp_emit = 35;
+
+  // encoder processor info
+  string meta_capability_encoder_config = 36;
+  string meta_capability_encoder = 37;
+  string meta_capability_processor = 38;
 }

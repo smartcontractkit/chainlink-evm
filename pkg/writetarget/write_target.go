@@ -228,7 +228,6 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 	// Source the report ID from the input
 	info.reportInfo.reportID = binary.BigEndian.Uint16(inputs.ID)
 
-	// TODO: Not sure if I should be returning the error here or just logging it as I am now.
 	err = c.beholder.ProtoEmitter.EmitWithLog(ctx, builder.buildWriteInitiated(info))
 	if err != nil {
 		c.lggr.Errorw("failed to emit write initiated", "err", err)

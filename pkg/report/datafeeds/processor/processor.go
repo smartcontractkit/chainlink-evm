@@ -57,3 +57,7 @@ func (p *dataFeedsProcessor) Process(ctx context.Context, m proto.Message, attrK
 func (p *dataFeedsProcessor) SetEmitter(e monitor.ProtoEmitter) {
 	p.emitter = e
 }
+
+func (p *dataFeedsProcessor) GetName() string {
+	return "datafeeds"
+}

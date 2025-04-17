@@ -61,8 +61,12 @@ type WriteConfirmed struct {
 	MetaCapabilityId             string `protobuf:"bytes,33,opt,name=meta_capability_id,json=metaCapabilityId,proto3" json:"meta_capability_id,omitempty"`
 	MetaCapabilityTimestampStart uint64 `protobuf:"varint,34,opt,name=meta_capability_timestamp_start,json=metaCapabilityTimestampStart,proto3" json:"meta_capability_timestamp_start,omitempty"`
 	MetaCapabilityTimestampEmit  uint64 `protobuf:"varint,35,opt,name=meta_capability_timestamp_emit,json=metaCapabilityTimestampEmit,proto3" json:"meta_capability_timestamp_emit,omitempty"`
-	unknownFields                protoimpl.UnknownFields
-	sizeCache                    protoimpl.SizeCache
+	// encoder processor info
+	MetaCapabilityEncoderConfig string `protobuf:"bytes,36,opt,name=meta_capability_encoder_config,json=metaCapabilityEncoderConfig,proto3" json:"meta_capability_encoder_config,omitempty"`
+	MetaCapabilityEncoder       string `protobuf:"bytes,37,opt,name=meta_capability_encoder,json=metaCapabilityEncoder,proto3" json:"meta_capability_encoder,omitempty"`
+	MetaCapabilityProcessor     string `protobuf:"bytes,38,opt,name=meta_capability_processor,json=metaCapabilityProcessor,proto3" json:"meta_capability_processor,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *WriteConfirmed) Reset() {
@@ -291,11 +295,33 @@ func (x *WriteConfirmed) GetMetaCapabilityTimestampEmit() uint64 {
 	return 0
 }
 
+func (x *WriteConfirmed) GetMetaCapabilityEncoderConfig() string {
+	if x != nil {
+		return x.MetaCapabilityEncoderConfig
+	}
+	return ""
+}
+
+func (x *WriteConfirmed) GetMetaCapabilityEncoder() string {
+	if x != nil {
+		return x.MetaCapabilityEncoder
+	}
+	return ""
+}
+
+func (x *WriteConfirmed) GetMetaCapabilityProcessor() string {
+	if x != nil {
+		return x.MetaCapabilityProcessor
+	}
+	return ""
+}
+
 var File_write_confirmed_proto protoreflect.FileDescriptor
 
 const file_write_confirmed_proto_rawDesc = "" +
 	"\n" +
-	"\x15write_confirmed.proto\x12\x15platform.write_target\"\xb8\t\n" +
+	"\x15write_confirmed.proto\x12\x15platform.write_target\"\xf1\n" +
+	"\n" +
 	"\x0eWriteConfirmed\x12\x12\n" +
 	"\x04node\x18\x01 \x01(\tR\x04node\x12\x1c\n" +
 	"\tforwarder\x18\x02 \x01(\tR\tforwarder\x12\x1a\n" +
@@ -327,7 +353,10 @@ const file_write_confirmed_proto_rawDesc = "" +
 	"\x14meta_capability_type\x18  \x01(\tR\x12metaCapabilityType\x12,\n" +
 	"\x12meta_capability_id\x18! \x01(\tR\x10metaCapabilityId\x12E\n" +
 	"\x1fmeta_capability_timestamp_start\x18\" \x01(\x04R\x1cmetaCapabilityTimestampStart\x12C\n" +
-	"\x1emeta_capability_timestamp_emit\x18# \x01(\x04R\x1bmetaCapabilityTimestampEmitB\x0fZ\r.;writetargetb\x06proto3"
+	"\x1emeta_capability_timestamp_emit\x18# \x01(\x04R\x1bmetaCapabilityTimestampEmit\x12C\n" +
+	"\x1emeta_capability_encoder_config\x18$ \x01(\tR\x1bmetaCapabilityEncoderConfig\x126\n" +
+	"\x17meta_capability_encoder\x18% \x01(\tR\x15metaCapabilityEncoder\x12:\n" +
+	"\x19meta_capability_processor\x18& \x01(\tR\x17metaCapabilityProcessorB\x0fZ\r.;writetargetb\x06proto3"
 
 var (
 	file_write_confirmed_proto_rawDescOnce sync.Once
