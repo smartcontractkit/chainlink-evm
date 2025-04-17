@@ -160,7 +160,7 @@ func (r *Receipt) UnmarshalJSON(input []byte) error {
 		BlockNumber       *hexutil.Big     `json:"blockNumber,omitempty"`
 		TransactionIndex  *hexutil.Uint    `json:"transactionIndex"`
 		RevertReason      *hexutil.Bytes   `json:"revertReason,omitempty"` // Only provided by Hedera
-		EffectiveGasPrice *hexutil.Big     `json:"effectiveGasPrice"`
+		EffectiveGasPrice *hexutil.Big     `json:"effectiveGasPrice,omitempty"`
 	}
 	var dec Receipt
 	if err := json.Unmarshal(input, &dec); err != nil {
