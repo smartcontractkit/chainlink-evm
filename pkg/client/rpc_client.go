@@ -25,6 +25,7 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
@@ -61,6 +62,7 @@ var (
 		Name: "evm_pool_rpc_node_calls_success",
 		Help: "The approximate total number of successful RPC calls for the given RPC node",
 	}, []string{"evmChainID", "nodeName"})
+	// Deprecated: Use github.com/smartcontractkit/chainlink-framework/metrics.RPCCallLatency instead.
 	promEVMPoolRPCCallTiming = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "evm_pool_rpc_node_rpc_call_time",
 		Help: "The duration of an RPC call in nanoseconds",
@@ -263,6 +265,19 @@ func (r *RPCClient) logResult(
 			append(results, "err", err)...,
 		)
 	}
+
+	metrics.RPCCallLatency.
+		WithLabelValues(
+			metrics.EVM,                    // chain family
+			r.chainID.String(),             // chain id
+			rpcDomain,                      // rpc url
+			"false",                        // is send only
+			strconv.FormatBool(err == nil), // is successful
+			callName,                       // rpc call name
+		).
+		Observe(float64(callDuration))
+
+	// TODO: Remove deprecated metric
 	promEVMPoolRPCCallTiming.
 		WithLabelValues(
 			r.chainID.String(),             // chain id

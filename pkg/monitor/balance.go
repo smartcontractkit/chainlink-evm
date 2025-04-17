@@ -17,6 +17,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-framework/chains/heads"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
@@ -116,6 +117,7 @@ func (bm *balanceMonitor) GetEthBalance(address common.Address) *assets.Eth {
 	return bm.ethBalances[address]
 }
 
+// Deprecated: use github.com/smartcontractkit/chainlink-framework/metrics.AccountBalance instead.
 var promETHBalance = promauto.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Name: "eth_balance",
@@ -132,6 +134,8 @@ func (bm *balanceMonitor) promUpdateEthBalance(balance *assets.Eth, from common.
 		return
 	}
 
+	metrics.NodeBalance.WithLabelValues(from.Hex(), bm.chainIDStr, metrics.EVM).Set(balanceFloat)
+	// TODO: Remove deprecated metric
 	promETHBalance.WithLabelValues(from.Hex(), bm.chainIDStr).Set(balanceFloat)
 }
 
