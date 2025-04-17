@@ -3,7 +3,7 @@
   "changelog": [
     "../../.changeset/changelog-generator.js",
     {
-      "repo": "smartcontractkit/chainlink"
+      "repo": "smartcontractkit/chainlink-evm"
     }
   ],
   "commit": false,
