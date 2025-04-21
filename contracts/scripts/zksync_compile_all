@@ -16,12 +16,12 @@ compileContract() {
   PROJECT=$2
   export FOUNDRY_PROFILE="$PROJECT"
 
-  ${CONTRACTS_DIR}/../tools/bin/forge_zksync build $CONTRACTS_DIR/src/v0.8/$PROJECT/"$1.sol" --zksync \
+  ${CONTRACTS_DIR}/../tools/bin/forge_zksync build $CONTRACTS_DIR/src/v0.8/"$1.sol" --zksync \
    --root $CONTRACTS_DIR \
    $3
 }
 
-compileContract token/ERC677/LinkToken shared "--use 0.8.19"
-compileContract token/ERC677/BurnMintERC677 shared "--use 0.8.19"
-compileContract multicall/ebd8b64/src/Multicall3 vendor "--use 0.8.19"
-compileContract CapabilitiesRegistry keystone
+compileContract shared/token/ERC677/LinkToken shared "--use 0.8.19"
+compileContract shared/token/ERC677/BurnMintERC677 shared "--use 0.8.19"
+compileContract vendor/multicall/ebd8b64/src/Multicall3 shared "--use 0.8.19"
+compileContract keystone/CapabilitiesRegistry keystone
