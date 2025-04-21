@@ -13,8 +13,7 @@ compileContract() {
   contract=$(basename "$1")
   echo "Compiling" "$contract"
 
-  PROJECT=$2
-  export FOUNDRY_PROFILE="$PROJECT"
+  export FOUNDRY_PROFILE="$2"
 
   ${CONTRACTS_DIR}/../tools/bin/forge_zksync build $CONTRACTS_DIR/src/v0.8/"$1.sol" --zksync \
    --root $CONTRACTS_DIR \
