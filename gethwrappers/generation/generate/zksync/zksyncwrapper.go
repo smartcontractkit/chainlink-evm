@@ -3,7 +3,6 @@ package zksyncwrapper
 import (
 	"bytes"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -15,7 +14,7 @@ import (
 //go:embed template.go
 var zksyncDeployTemplate string
 
-func WrapZksyncDeploy(zksyncBytecodePath, className, pkgName, outPath string) {
+func WrapZksyncDeploy(bytecode, className, pkgName, outPath string) {
 	fmt.Printf("Generating zk bytecode binding for %s\n", pkgName)
 
 	fileNode := &ast.File{
@@ -23,7 +22,7 @@ func WrapZksyncDeploy(zksyncBytecodePath, className, pkgName, outPath string) {
 		Decls: []ast.Decl{
 			declareImports(),
 			declareDeployFunction(className),
-			declareBytecodeVar(zksyncBytecodePath)}}
+			declareBytecodeVar(bytecode)}}
 
 	writeFile(fileNode, outPath)
 }
@@ -105,21 +104,7 @@ func declareDeployFunction(contractName string) ast.Decl {
 						Value: template}}}}}
 }
 
-func declareBytecodeVar(srcFile string) ast.Decl {
-	jsonData, err := os.ReadFile(srcFile)
-	if err != nil {
-		panic(err)
-	}
-
-	var bytecodeData struct {
-		Bytecode struct {
-			Object string `json:"object"`
-		} `json:"bytecode"`
-	}
-	if err := json.Unmarshal(jsonData, &bytecodeData); err != nil {
-		panic(err)
-	}
-
+func declareBytecodeVar(bytecode string) ast.Decl {
 	return &ast.GenDecl{
 		Tok: token.VAR,
 		Specs: []ast.Spec{
@@ -133,7 +118,7 @@ func declareBytecodeVar(srcFile string) ast.Decl {
 						Args: []ast.Expr{
 							&ast.BasicLit{
 								Kind:  token.STRING,
-								Value: fmt.Sprintf(`"%s"`, bytecodeData.Bytecode.Object)}}}}}}}
+								Value: fmt.Sprintf(`"%s"`, bytecode)}}}}}}}
 }
 
 func writeFile(fileNode *ast.File, dstFile string) {

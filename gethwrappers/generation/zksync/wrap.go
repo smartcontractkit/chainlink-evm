@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,8 +22,23 @@ func main() {
 		gethwrappers.Exit("could not get working directory", err)
 	}
 
-	zksyncBytecodePath := filepath.Join(cwd, "..", "..", "contracts", "zkout", contractName+".sol", contractName+".json")
+	srcFile := filepath.Join(cwd, "..", "..", "contracts", "zkout", contractName+".sol", contractName+".json")
+	jsonData, err := os.ReadFile(srcFile)
+	if err != nil {
+		panic(err)
+	}
+
+	var bytecodeData struct {
+		Bytecode struct {
+			Object string `json:"object"`
+		} `json:"bytecode"`
+	}
+	if err := json.Unmarshal(jsonData, &bytecodeData); err != nil {
+		panic(err)
+	}
+	bytecode := bytecodeData.Bytecode.Object
+
 	outPath := filepath.Join(cwd, "..", project, "generated", packageName, packageName+"_zksync.go")
 
-	zksyncwrapper.WrapZksyncDeploy(zksyncBytecodePath, contractName, packageName, outPath)
+	zksyncwrapper.WrapZksyncDeploy(bytecode, contractName, packageName, outPath)
 }
