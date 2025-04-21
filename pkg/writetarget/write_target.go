@@ -82,6 +82,7 @@ type writeTarget struct {
 	cs               commontypes.ChainService
 	cr               commontypes.ContractReader
 	cw               commontypes.ContractWriter
+	evm              commontypes.EVMChain
 	configValidateFn func(request capabilities.CapabilityRequest) (string, error)
 
 	nodeAddress      string
@@ -104,6 +105,7 @@ type WriteTargetOpts struct {
 	ChainService     commontypes.ChainService
 	ContractReader   commontypes.ContractReader
 	ChainWriter      commontypes.ContractWriter
+	EVMChain         commontypes.EVMChain
 	ConfigValidateFn func(request capabilities.CapabilityRequest) (string, error)
 
 	NodeAddress      string
@@ -154,6 +156,7 @@ func NewWriteTarget(opts WriteTargetOpts) capabilities.TargetCapability {
 		opts.ChainService,
 		opts.ContractReader,
 		opts.ChainWriter,
+		opts.EVMChain,
 		opts.ConfigValidateFn,
 		opts.NodeAddress,
 		opts.ForwarderAddress,
