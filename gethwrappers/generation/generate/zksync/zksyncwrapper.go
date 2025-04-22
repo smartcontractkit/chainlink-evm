@@ -3,6 +3,7 @@ package zksyncwrapper
 import (
 	"bytes"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -10,6 +11,24 @@ import (
 	"os"
 	"strings"
 )
+
+func ReadBytecodeFromForgeJson(srcFile string) string {
+	jsonData, err := os.ReadFile(srcFile)
+	if err != nil {
+		panic(err)
+	}
+
+	var bytecodeData struct {
+		Bytecode struct {
+			Object string `json:"object"`
+		} `json:"bytecode"`
+	}
+	if err := json.Unmarshal(jsonData, &bytecodeData); err != nil {
+		panic(err)
+	}
+
+	return bytecodeData.Bytecode.Object
+}
 
 //go:embed template.go
 var zksyncDeployTemplate string

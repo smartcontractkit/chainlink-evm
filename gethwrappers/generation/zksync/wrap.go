@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,20 +22,7 @@ func main() {
 	}
 
 	srcFile := filepath.Join(cwd, "..", "..", "contracts", "zkout", contractName+".sol", contractName+".json")
-	jsonData, err := os.ReadFile(srcFile)
-	if err != nil {
-		panic(err)
-	}
-
-	var bytecodeData struct {
-		Bytecode struct {
-			Object string `json:"object"`
-		} `json:"bytecode"`
-	}
-	if err := json.Unmarshal(jsonData, &bytecodeData); err != nil {
-		panic(err)
-	}
-	bytecode := bytecodeData.Bytecode.Object
+	bytecode := zksyncwrapper.ReadBytecodeFromForgeJson(srcFile)
 
 	outPath := filepath.Join(cwd, "..", project, "generated", packageName, packageName+"_zksync.go")
 
