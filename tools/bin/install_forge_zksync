@@ -21,7 +21,7 @@ fi
 
 ARTIFACT_URL="https://github.com/matter-labs/foundry-zksync/releases/download/foundry-zksync-v${VERSION}/foundry_zksync_v${VERSION}_${OS}_${ARCH}.tar.gz"
 THIS_DIR="$(realpath "$(dirname $0)")"
-echo $ARTIFACT_URL
+
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     wget -qc $ARTIFACT_URL -O -
 elif [[ "$OSTYPE" == "darwin"* ]]; then
