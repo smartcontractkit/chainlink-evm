@@ -65,7 +65,8 @@ type Receipt struct {
 	BlockHash         common.Hash     `json:"blockHash,omitempty"`
 	BlockNumber       *big.Int        `json:"blockNumber,omitempty"`
 	TransactionIndex  uint            `json:"transactionIndex"`
-	RevertReason      []byte          `json:"revertReason,omitempty"` // Only provided by Hedera
+	EffectiveGasPrice *big.Int        `json:"effectiveGasPrice,omitempty"` // For compatibility with old blocks
+	RevertReason      []byte          `json:"revertReason,omitempty"`      // Only provided by Hedera
 }
 
 // FromGethReceipt converts a gethTypes.Receipt to a Receipt
@@ -89,6 +90,7 @@ func FromGethReceipt(gr *gethTypes.Receipt) *Receipt {
 		gr.BlockHash,
 		gr.BlockNumber,
 		gr.TransactionIndex,
+		gr.EffectiveGasPrice,
 		nil,
 	}
 }
@@ -124,6 +126,7 @@ func (r Receipt) MarshalJSON() ([]byte, error) {
 		BlockNumber       *hexutil.Big    `json:"blockNumber,omitempty"`
 		TransactionIndex  hexutil.Uint    `json:"transactionIndex"`
 		RevertReason      hexutil.Bytes   `json:"revertReason,omitempty"` // Only provided by Hedera
+		EffectiveGasPrice *hexutil.Big    `json:"effectiveGasPrice"`
 	}
 	var enc Receipt
 	enc.PostState = r.PostState
@@ -138,6 +141,7 @@ func (r Receipt) MarshalJSON() ([]byte, error) {
 	enc.BlockNumber = (*hexutil.Big)(r.BlockNumber)
 	enc.TransactionIndex = hexutil.Uint(r.TransactionIndex)
 	enc.RevertReason = r.RevertReason
+	enc.EffectiveGasPrice = (*hexutil.Big)(r.EffectiveGasPrice)
 	return json.Marshal(&enc)
 }
 
@@ -156,6 +160,7 @@ func (r *Receipt) UnmarshalJSON(input []byte) error {
 		BlockNumber       *hexutil.Big     `json:"blockNumber,omitempty"`
 		TransactionIndex  *hexutil.Uint    `json:"transactionIndex"`
 		RevertReason      *hexutil.Bytes   `json:"revertReason,omitempty"` // Only provided by Hedera
+		EffectiveGasPrice *hexutil.Big     `json:"effectiveGasPrice,omitempty"`
 	}
 	var dec Receipt
 	if err := json.Unmarshal(input, &dec); err != nil {
@@ -188,6 +193,9 @@ func (r *Receipt) UnmarshalJSON(input []byte) error {
 	}
 	if dec.BlockNumber != nil {
 		r.BlockNumber = (*big.Int)(dec.BlockNumber)
+	}
+	if dec.EffectiveGasPrice != nil {
+		r.EffectiveGasPrice = (*big.Int)(dec.EffectiveGasPrice)
 	}
 	if dec.TransactionIndex != nil {
 		r.TransactionIndex = uint(*dec.TransactionIndex)
@@ -225,6 +233,10 @@ func (r *Receipt) GetBlockNumber() *big.Int {
 
 func (r *Receipt) GetFeeUsed() uint64 {
 	return r.GasUsed
+}
+
+func (r *Receipt) GetEffectiveGasPrice() *big.Int {
+	return r.EffectiveGasPrice
 }
 
 func (r *Receipt) GetTransactionIndex() uint {

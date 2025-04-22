@@ -1190,3 +1190,75 @@ func testHead(t int) *Head {
 	h := NewHead(big.NewInt(int64(t)), utils.NewHash(), utils.NewHash(), ubig.NewI(0))
 	return &h
 }
+
+func TestHash_UnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	zeroHash := common.Hash{}
+
+	t.Run("normal hash", func(t *testing.T) {
+		t.Parallel()
+
+		expectedHash := utils.NewHash()
+		jsonData := []byte(fmt.Sprintf(`"%s"`, expectedHash.Hex()))
+
+		var hash Hash
+		err := json.Unmarshal(jsonData, &hash)
+		require.NoError(t, err)
+
+		assert.Equal(t, expectedHash.Bytes(), hash.Bytes())
+	})
+
+	t.Run("empty string should return zero hash", func(t *testing.T) {
+		t.Parallel()
+
+		jsonData := []byte(`""`)
+		var hash Hash
+		err := json.Unmarshal(jsonData, &hash)
+		require.NoError(t, err)
+		assert.Equal(t, zeroHash.Bytes(), hash.Bytes())
+	})
+
+	t.Run("0x00", func(t *testing.T) {
+		t.Parallel()
+
+		jsonData := []byte(`"0x00"`)
+		var hash Hash
+		err := json.Unmarshal(jsonData, &hash)
+		require.NoError(t, err)
+
+		assert.Equal(t, zeroHash.Bytes(), hash.Bytes())
+	})
+
+	t.Run("0x", func(t *testing.T) {
+		t.Parallel()
+
+		jsonData := []byte(`"0x"`)
+		var hash Hash
+		err := json.Unmarshal(jsonData, &hash)
+		require.NoError(t, err)
+
+		assert.Equal(t, zeroHash.Bytes(), hash.Bytes())
+	})
+
+	t.Run("odd length hex string should fail", func(t *testing.T) {
+		t.Parallel()
+
+		jsonData := []byte(`"0x1"`)
+		var hash Hash
+		err := json.Unmarshal(jsonData, &hash)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "hex string")
+	})
+
+	t.Run("invalid format", func(t *testing.T) {
+		t.Parallel()
+
+		jsonData := []byte(`"not-a-hash"`)
+		var hash Hash
+		err := json.Unmarshal(jsonData, &hash)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "hex string")
+	})
+}

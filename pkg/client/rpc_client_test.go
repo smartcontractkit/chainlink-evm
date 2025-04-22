@@ -712,6 +712,69 @@ func TestRpcClientLargePayloadTimeout(t *testing.T) {
 	}
 }
 
+func TestRPCClient_Tron(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(t.Context(), tests.WaitTimeout(t))
+	defer cancel()
+
+	nodePoolCfg := client.TestNodePoolConfig{
+		NodeNewHeadsPollInterval:       1 * time.Second,
+		NodeFinalizedBlockPollInterval: 1 * time.Second,
+	}
+
+	chainID := big.NewInt(123456)
+	lggr := logger.Test(t)
+
+	// Create a server - though it should never be called for Tron
+	server := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+		assert.Fail(t, "Server should not be called for Tron methods")
+		return resp
+	})
+	wsURL := server.WSURL()
+
+	// Create the RPC client with Tron chain type
+	rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainTron)
+	defer rpc.Close()
+	require.NoError(t, rpc.Dial(ctx))
+
+	testAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	t.Run("SendTransaction", func(t *testing.T) {
+		// Create a simple transaction
+		tx := types.NewTx(&types.LegacyTx{
+			Nonce:    0,
+			GasPrice: big.NewInt(1000000000),
+			Gas:      21000,
+			To:       &common.Address{},
+			Value:    big.NewInt(1),
+			Data:     nil,
+		})
+
+		// Call SendTransaction
+		_, _, err := rpc.SendTransaction(ctx, tx)
+
+		// Verify it returns the expected error for Tron
+		require.Error(t, err)
+		assert.Equal(t, "SendTransaction not implemented for Tron, this should never be called", err.Error())
+	})
+
+	t.Run("NonceAt", func(t *testing.T) {
+		// Call NonceAt with a test address
+		_, err := rpc.NonceAt(ctx, testAddr, nil)
+
+		// Verify it returns an error
+		require.Error(t, err, "tron does not support eth_getTransactionCount")
+	})
+
+	t.Run("PendingSequenceAt", func(t *testing.T) {
+		// Call PendingSequenceAt with a test address
+		_, err := rpc.PendingSequenceAt(ctx, testAddr)
+
+		// Verify it returns an error
+		require.Error(t, err, "tron does not support eth_getTransactionCount")
+	})
+}
+
 func TestAstarCustomFinality(t *testing.T) {
 	t.Parallel()
 

@@ -108,6 +108,7 @@ type logPoller struct {
 	ec                       Client
 	orm                      ORM
 	headTracker              HeadTracker
+	latencyMonitor           LatencyMonitor
 	lggr                     logger.SugaredLogger
 	pollPeriod               time.Duration // poll period set by block production rate
 	useFinalityTag           bool          // indicates whether logPoller should use chain's finality or pick a fixed depth for finality
@@ -167,6 +168,7 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 		ec:                       ec,
 		orm:                      orm,
 		headTracker:              headTracker,
+		latencyMonitor:           NewLatencyMonitor(ec, lggr, opts.PollPeriod),
 		lggr:                     logger.Sugared(logger.Named(lggr, "LogPoller")),
 		replayStart:              make(chan int64),
 		replayComplete:           make(chan error),
@@ -428,7 +430,7 @@ func (lp *logPoller) Replay(ctx context.Context, fromBlock int64) (err error) {
 	}()
 
 	lp.lggr.Debugf("Replaying from block %d", fromBlock)
-	latest, err := lp.ec.HeadByNumber(ctx, nil)
+	latest, err := lp.latencyMonitor.HeadByNumber(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -897,7 +899,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 	for from := start; from <= end; from += batchSize {
 		to := mathutil.Min(from+batchSize-1, end)
 
-		gethLogs, err := lp.ec.FilterLogs(ctx, lp.Filter(big.NewInt(from), big.NewInt(to), nil))
+		gethLogs, err := lp.latencyMonitor.FilterLogs(ctx, lp.Filter(big.NewInt(from), big.NewInt(to), nil))
 		if err != nil {
 			if !client.IsTooManyResults(err, lp.clientErrors) {
 				lp.lggr.Errorw("Unable to query for logs", "err", err, "from", from, "to", to)
@@ -949,7 +951,7 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 	var err1 error
 	if currentBlock == nil {
 		// If we don't have the current block already, lets get it.
-		currentBlock, err1 = lp.ec.HeadByNumber(ctx, big.NewInt(currentBlockNumber))
+		currentBlock, err1 = lp.latencyMonitor.HeadByNumber(ctx, big.NewInt(currentBlockNumber))
 		if err1 != nil {
 			lp.lggr.Warnw("Unable to get currentBlock", "err", err1, "currentBlockNumber", currentBlockNumber)
 			return nil, err1
@@ -1091,7 +1093,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 
 		h := currentBlock.Hash
 		var logs []types.Log
-		logs, err = lp.ec.FilterLogs(ctx, lp.Filter(nil, nil, &h))
+		logs, err = lp.latencyMonitor.FilterLogs(ctx, lp.Filter(nil, nil, &h))
 		if err != nil {
 			lp.lggr.Warnw("Unable to query for logs, retrying", "err", err, "block", currentBlockNumber)
 			return nil
@@ -1147,7 +1149,7 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, e
 func (lp *logPoller) findBlockAfterLCA(ctx context.Context, current *evmtypes.Head, latestFinalizedBlockNumber int64) (*evmtypes.Head, error) {
 	// Current is where the mismatch starts.
 	// Check its parent to see if its the same as ours saved.
-	parent, err := lp.ec.HeadByHash(ctx, current.ParentHash)
+	parent, err := lp.latencyMonitor.HeadByHash(ctx, current.ParentHash)
 	if err != nil {
 		return nil, err
 	}
@@ -1169,7 +1171,7 @@ func (lp *logPoller) findBlockAfterLCA(ctx context.Context, current *evmtypes.He
 		}
 		// Otherwise get a new parent and update blockAfterLCA.
 		blockAfterLCA = parent
-		parent, err = lp.ec.HeadByHash(ctx, parent.ParentHash)
+		parent, err = lp.latencyMonitor.HeadByHash(ctx, parent.ParentHash)
 		if err != nil {
 			return nil, err
 		}
@@ -1668,7 +1670,7 @@ func (lp *logPoller) FindLCA(ctx context.Context) (*Block, error) {
 		lp.lggr.Debugf("Looking for matching block on chain blockNumber: %d blockHash: %s",
 			dbBlock.BlockNumber, dbBlock.BlockHash)
 		var chainBlock *evmtypes.Head
-		chainBlock, err = lp.ec.HeadByHash(ctx, dbBlock.BlockHash)
+		chainBlock, err = lp.latencyMonitor.HeadByHash(ctx, dbBlock.BlockHash)
 		// our block in DB does not exist on chain
 		if (chainBlock == nil && err == nil) || errors.Is(err, ethereum.NotFound) {
 			err = nil

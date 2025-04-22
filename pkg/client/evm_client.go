@@ -30,6 +30,7 @@ func NewEvmClient(cfg evmconfig.NodePool, chainCfg multinode.ChainConfig, client
 		} else {
 			rpc := NewRPCClient(cfg, lggr, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i,
 				chainID, multinode.Primary, largePayloadRPCTimeout, defaultRPCTimeout, chainType)
+
 			primaryNode := multinode.NewNode(cfg, chainCfg,
 				lggr, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i, chainID, *node.Order,
 				rpc, "EVM")

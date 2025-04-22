@@ -6,7 +6,6 @@ import (
 	"math"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
@@ -18,6 +17,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-framework/chains/heads"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
@@ -117,6 +117,7 @@ func (bm *balanceMonitor) GetEthBalance(address common.Address) *assets.Eth {
 	return bm.ethBalances[address]
 }
 
+// Deprecated: use github.com/smartcontractkit/chainlink-framework/metrics.AccountBalance instead.
 var promETHBalance = promauto.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Name: "eth_balance",
@@ -133,6 +134,8 @@ func (bm *balanceMonitor) promUpdateEthBalance(balance *assets.Eth, from common.
 		return
 	}
 
+	metrics.NodeBalance.WithLabelValues(from.Hex(), bm.chainIDStr, metrics.EVM).Set(balanceFloat)
+	// TODO: Remove deprecated metric
 	promETHBalance.WithLabelValues(from.Hex(), bm.chainIDStr).Set(balanceFloat)
 }
 
@@ -162,13 +165,7 @@ func (w *worker) Work(ctx context.Context) {
 	wg.Wait()
 }
 
-// Approximately ETH block time
-const ethFetchTimeout = 15 * time.Second
-
 func (w *worker) checkAccountBalance(ctx context.Context, address common.Address) {
-	ctx, cancel := context.WithTimeout(ctx, ethFetchTimeout)
-	defer cancel()
-
 	bal, err := w.bm.ethClient.BalanceAt(ctx, address, nil)
 	if err != nil {
 		w.bm.eng.Errorw("BalanceMonitor: error getting balance for key "+address.Hex(),
