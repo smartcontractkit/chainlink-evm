@@ -2,6 +2,7 @@ artifacts
 cache
 node_modules
 solc
+zkout
 abi
 coverage
 coverage.json

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo " ┌──────────────────────────────────────────────┐"
+echo " │          Compiling ZKSync contracts...       │"
+echo " └──────────────────────────────────────────────┘"
+
+CONTRACTS_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../ && pwd -P )"
+
+compileContract() {
+  local contract
+  contract=$(basename "$1")
+  echo "Compiling" "$contract"
+
+  export FOUNDRY_PROFILE="$2"
+
+  ${CONTRACTS_DIR}/../tools/bin/forge_zksync build $CONTRACTS_DIR/src/v0.8/"$1.sol" --zksync \
+   --root $CONTRACTS_DIR \
+   $3
+}
+
+compileContract shared/token/ERC677/LinkToken shared "--use 0.8.19"
+compileContract shared/token/ERC677/BurnMintERC677 shared "--use 0.8.19"
+compileContract vendor/multicall/ebd8b64/src/Multicall3 shared "--use 0.8.19"
+compileContract keystone/CapabilitiesRegistry keystone
