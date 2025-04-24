@@ -1,0 +1,35 @@
+ChainID = 30
+FinalityDepth = 20
+FinalityTagEnabled = false
+NoNewHeadsThreshold = '6m'
+LogPollInterval = '5s'
+MinIncomingConfirmations = 1
+
+[OCR]
+ContractConfirmations = 1
+ContractTransmitterTransmitTimeout = '30s'
+
+[Transactions]
+ResendAfterThreshold = '3m'
+
+[GasEstimator]
+Mode = 'FeeHistory'
+# RSK needs 40% bump atleast to accept the replacement transaction https://github.com/rsksmart/rskj/blob/dd1e79bcfaaba366e824ffd4630d255e5c54b7cd/rskj-core/src/main/resources/reference.conf#L291
+BumpPercent = 40
+LimitDefault = 6000000
+BumpThreshold = 3
+
+[GasEstimator.FeeHistory]
+# Refresh the suggested price every 4 seconds, to stay slightly below their polling rate of 5s
+CacheTimeout = '4s'
+
+[NodePool]
+PollInterval = '5s'
+
+[NodePool.Errors]
+NonceTooLow = '(: |^)transaction nonce too low'
+NonceTooHigh = '(: |^)transaction nonce too high'
+ReplacementTransactionUnderpriced = '(: |^)gas price not enough to bump transaction'
+TransactionAlreadyInMempool = '(: |^)(pending transaction with same hash already exists|queued transaction with same hash already exists)'
+InsufficientEth = '(: |^)insufficient funds to pay for pending and new transactions'
+Fatal = '(: |^)account exceeds quota'
