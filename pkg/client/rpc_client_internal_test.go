@@ -16,6 +16,15 @@ import (
 )
 
 func TestRPCClient_MakeLogsValid(t *testing.T) {
+	chainTypes := []struct {
+		Name      string
+		ChainType chaintype.ChainType
+	}{
+		{Name: "Sei", ChainType: chaintype.ChainSei},
+		{Name: "Hedera", ChainType: chaintype.ChainHedera},
+		{Name: "Rootstock", ChainType: chaintype.ChainRootstock},
+	}
+
 	testCases := []struct {
 		Name             string
 		TxIndex          uint
@@ -73,23 +82,34 @@ func TestRPCClient_MakeLogsValid(t *testing.T) {
 			ExpectedError:    errors.New("TxIndex of tx 0x0000000000000000000000000000000000000000000000000000000000000000 exceeds max supported value of 4294967295"),
 		},
 	}
-	for _, tc := range testCases {
-		t.Run(tc.Name, func(t *testing.T) {
-			rpc := NewRPCClient(TestNodePoolConfig{}, logger.Test(t), nil, nil, "eth-primary-rpc-0", 0, nil, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
-			log, err := rpc.makeLogValid(ethtypes.Log{TxIndex: tc.TxIndex, Index: tc.LogIndex})
-			// non sei should return as is
-			require.NoError(t, err)
-			require.Equal(t, tc.TxIndex, log.TxIndex)
-			require.Equal(t, tc.LogIndex, log.Index)
-			seiRPC := NewRPCClient(TestNodePoolConfig{}, logger.Test(t), nil, nil, "eth-primary-rpc-0", 0, nil, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainSei)
-			log, err = seiRPC.makeLogValid(ethtypes.Log{TxIndex: tc.TxIndex, Index: tc.LogIndex})
-			if tc.ExpectedError != nil {
-				require.EqualError(t, err, tc.ExpectedError.Error())
-				return
-			}
 
-			require.Equal(t, tc.ExpectedLogIndex, log.Index)
-			require.Equal(t, tc.TxIndex, log.TxIndex)
+	for _, ct := range chainTypes {
+		t.Run(ct.Name, func(t *testing.T) {
+			for _, tc := range testCases {
+				t.Run(tc.Name, func(t *testing.T) {
+					rpc := NewRPCClient(TestNodePoolConfig{}, logger.Test(t), nil, nil, "eth-primary-rpc-0", 0, nil, multinode.Primary, client.QueryTimeout, client.QueryTimeout, ct.ChainType)
+					log, err := rpc.makeLogValid(ethtypes.Log{TxIndex: tc.TxIndex, Index: tc.LogIndex})
+					if tc.ExpectedError != nil {
+						require.EqualError(t, err, tc.ExpectedError.Error())
+						return
+					}
+					require.Equal(t, tc.ExpectedLogIndex, log.Index)
+					require.Equal(t, tc.TxIndex, log.TxIndex)
+				})
+			}
 		})
 	}
+
+	t.Run("Other chains", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.Name, func(t *testing.T) {
+				rpc := NewRPCClient(TestNodePoolConfig{}, logger.Test(t), nil, nil, "eth-primary-rpc-0", 0, nil, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
+				log, err := rpc.makeLogValid(ethtypes.Log{TxIndex: tc.TxIndex, Index: tc.LogIndex})
+				// other chains should return as is
+				require.NoError(t, err)
+				require.Equal(t, tc.TxIndex, log.TxIndex)
+				require.Equal(t, tc.LogIndex, log.Index)
+			})
+		}
+	})
 }
