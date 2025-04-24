@@ -23,4 +23,5 @@ compileContract() {
 compileContract shared/token/ERC677/LinkToken shared "--use 0.8.19"
 compileContract shared/token/ERC677/BurnMintERC677 shared "--use 0.8.19"
 compileContract vendor/multicall/ebd8b64/src/Multicall3 shared "--use 0.8.19"
+compileContract vendor/canonical-weth-zk/WETH9 shared "--use 0.8.19"
 compileContract keystone/CapabilitiesRegistry keystone
