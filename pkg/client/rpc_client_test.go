@@ -476,7 +476,16 @@ func TestRPCClientFilterLogs(t *testing.T) {
 	lggr := logger.Test(t)
 	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
 	defer cancel()
-	t.Run("Log's index is properly set for Sei/Rootstock/Hedera chain type", func(t *testing.T) {
+	t.Run("Log's index is properly set for special chain types", func(t *testing.T) {
+		chainTypes := []struct {
+			Name      string
+			ChainType chaintype.ChainType
+		}{
+			{Name: "Sei", ChainType: chaintype.ChainSei},
+			{Name: "Hedera", ChainType: chaintype.ChainHedera},
+			{Name: "Rootstock", ChainType: chaintype.ChainRootstock},
+		}
+
 		testCases := []struct {
 			TxIndex       uint
 			Index         uint
@@ -512,43 +521,32 @@ func TestRPCClientFilterLogs(t *testing.T) {
 			return
 		})
 		wsURL := server.WSURL()
-		seiRPC := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainSei)
-		defer seiRPC.Close()
-		require.NoError(t, seiRPC.Dial(ctx))
-		logs, err := seiRPC.FilterLogs(ctx, ethereum.FilterQuery{})
-		require.NoError(t, err)
-		for i, testCase := range testCases {
-			require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
+		for _, ct := range chainTypes {
+			t.Run(ct.Name, func(t *testing.T) {
+				rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, ct.ChainType)
+				defer rpc.Close()
+				require.NoError(t, rpc.Dial(ctx))
+				logs, err := rpc.FilterLogs(ctx, ethereum.FilterQuery{})
+				require.NoError(t, err)
+				for i, testCase := range testCases {
+					require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
+				}
+			})
 		}
 
-		rootstockRPC := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainRootstock)
-		defer rootstockRPC.Close()
-		require.NoError(t, rootstockRPC.Dial(ctx))
-		logs, err = rootstockRPC.FilterLogs(ctx, ethereum.FilterQuery{})
-		require.NoError(t, err)
-		for i, testCase := range testCases {
-			require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
-		}
+		t.Run("Other chains", func(t *testing.T) {
+			// other networks should return index as is
+			rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
+			defer rpc.Close()
+			require.NoError(t, rpc.Dial(ctx))
+			logs, err := rpc.FilterLogs(ctx, ethereum.FilterQuery{})
+			require.NoError(t, err)
+			for i, testCase := range testCases {
+				require.Equal(t, testCase.Index, logs[i].Index, "Expected other chains log to be returned as is")
+				require.Equal(t, testCase.TxIndex, logs[i].TxIndex, "Expected other chains log to be returned as is")
+			}
+		})
 
-		hederaRPC := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainHedera)
-		defer hederaRPC.Close()
-		require.NoError(t, hederaRPC.Dial(ctx))
-		logs, err = hederaRPC.FilterLogs(ctx, ethereum.FilterQuery{})
-		require.NoError(t, err)
-		for i, testCase := range testCases {
-			require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
-		}
-
-		// other networks should return index as is
-		rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
-		defer rpc.Close()
-		require.NoError(t, rpc.Dial(ctx))
-		logs, err = rpc.FilterLogs(ctx, ethereum.FilterQuery{})
-		require.NoError(t, err)
-		for i, testCase := range testCases {
-			require.Equal(t, testCase.Index, logs[i].Index, "Expected other chains log to be returned as is")
-			require.Equal(t, testCase.TxIndex, logs[i].TxIndex, "Expected other chains log to be returned as is")
-		}
 	})
 }
 
