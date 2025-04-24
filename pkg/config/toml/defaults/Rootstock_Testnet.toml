@@ -1,4 +1,5 @@
 ChainID = 31
+# Suggested by the chain team as the safe value
 FinalityDepth = 20
 FinalityTagEnabled = false
 NoNewHeadsThreshold = '6m'
