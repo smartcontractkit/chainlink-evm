@@ -447,6 +447,66 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("Log's index is properly set for Hedera chain type", func(t *testing.T) {
+		server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			if method == "eth_unsubscribe" {
+				resp.Result = "true"
+				return
+			} else if method == "eth_subscribe" {
+				if assert.True(t, params.IsArray()) && assert.Equal(t, "logs", params.Array()[0].String()) {
+					resp.Result = `"0x00"`
+				}
+				return
+			}
+			return
+		})
+		wsURL := server.WSURL()
+		rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainId, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainHedera)
+		defer rpc.Close()
+		require.NoError(t, rpc.Dial(ctx))
+		ch := make(chan types.Log)
+		sub, err := rpc.SubscribeFilterLogs(ctx, ethereum.FilterQuery{}, ch)
+		require.NoError(t, err)
+		testCases := []struct {
+			TxIndex       uint
+			Index         uint
+			ExpectedIndex uint
+		}{
+			{
+				TxIndex:       0,
+				Index:         0,
+				ExpectedIndex: 0,
+			},
+			{
+				TxIndex:       0,
+				Index:         1,
+				ExpectedIndex: 1,
+			},
+			{
+				TxIndex:       1,
+				Index:         0,
+				ExpectedIndex: math.MaxUint32 + 1,
+			},
+		}
+		go func() {
+			for _, testCase := range testCases {
+				server.MustWriteBinaryMessageSync(t, makeNewWSMessage(types.Log{TxIndex: testCase.TxIndex, Index: testCase.Index, Topics: []common.Hash{{}}}))
+			}
+		}()
+		defer sub.Unsubscribe()
+		for _, testCase := range testCases {
+			select {
+			case <-tests.Context(t).Done():
+				require.Fail(t, "context timed out")
+			case err := <-sub.Err():
+				require.NoError(t, err)
+				require.Fail(t, "Did not expect error channel to be closed or return error before all testcases were consumed")
+			case log := <-ch:
+				require.Equal(t, testCase.ExpectedIndex, log.Index, "Unexpected log index %d for test case %v", log.Index, testCase)
+			}
+		}
+	})
 }
 
 func TestRPCClientFilterLogs(t *testing.T) {
@@ -461,7 +521,7 @@ func TestRPCClientFilterLogs(t *testing.T) {
 	lggr := logger.Test(t)
 	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
 	defer cancel()
-	t.Run("Log's index is properly set for Sei chain type", func(t *testing.T) {
+	t.Run("Log's index is properly set for Sei/Rootstock/Hedera chain type", func(t *testing.T) {
 		testCases := []struct {
 			TxIndex       uint
 			Index         uint
@@ -506,15 +566,33 @@ func TestRPCClientFilterLogs(t *testing.T) {
 			require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
 		}
 
-		// non sei should return index as is
+		rootstockRPC := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainRootstock)
+		defer rootstockRPC.Close()
+		require.NoError(t, rootstockRPC.Dial(ctx))
+		logs, err = rootstockRPC.FilterLogs(ctx, ethereum.FilterQuery{})
+		require.NoError(t, err)
+		for i, testCase := range testCases {
+			require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
+		}
+
+		hederaRPC := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainHedera)
+		defer hederaRPC.Close()
+		require.NoError(t, hederaRPC.Dial(ctx))
+		logs, err = hederaRPC.FilterLogs(ctx, ethereum.FilterQuery{})
+		require.NoError(t, err)
+		for i, testCase := range testCases {
+			require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
+		}
+
+		// other networks should return index as is
 		rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
 		defer rpc.Close()
 		require.NoError(t, rpc.Dial(ctx))
 		logs, err = rpc.FilterLogs(ctx, ethereum.FilterQuery{})
 		require.NoError(t, err)
 		for i, testCase := range testCases {
-			require.Equal(t, testCase.Index, logs[i].Index, "Expected non sei log to be returned as is")
-			require.Equal(t, testCase.TxIndex, logs[i].TxIndex, "Expected non sei log to be returned as is")
+			require.Equal(t, testCase.Index, logs[i].Index, "Expected other chains log to be returned as is")
+			require.Equal(t, testCase.TxIndex, logs[i].TxIndex, "Expected other chains log to be returned as is")
 		}
 	})
 }

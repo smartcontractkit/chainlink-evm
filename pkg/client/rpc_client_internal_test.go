@@ -90,6 +90,16 @@ func TestRPCClient_MakeLogsValid(t *testing.T) {
 
 			require.Equal(t, tc.ExpectedLogIndex, log.Index)
 			require.Equal(t, tc.TxIndex, log.TxIndex)
+
+			rootstockRPC := NewRPCClient(TestNodePoolConfig{}, logger.Test(t), nil, nil, "eth-primary-rpc-0", 0, nil, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainRootstock)
+			log, err = rootstockRPC.makeLogValid(ethtypes.Log{TxIndex: tc.TxIndex, Index: tc.LogIndex})
+			if tc.ExpectedError != nil {
+				require.EqualError(t, err, tc.ExpectedError.Error())
+				return
+			}
+
+			require.Equal(t, tc.ExpectedLogIndex, log.Index)
+			require.Equal(t, tc.TxIndex, log.TxIndex)
 		})
 	}
 }
