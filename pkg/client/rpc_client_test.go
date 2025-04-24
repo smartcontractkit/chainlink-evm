@@ -497,6 +497,7 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 		defer sub.Unsubscribe()
 		for _, testCase := range testCases {
 			select {
+			//nolint:staticcheck //SA1019 ignoring deprecated
 			case <-tests.Context(t).Done():
 				require.Fail(t, "context timed out")
 			case err := <-sub.Err():
