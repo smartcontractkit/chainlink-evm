@@ -5,7 +5,7 @@ import {ISequencerUptimeFeed} from "../../../interfaces/ISequencerUptimeFeed.sol
 
 import {MockScrollL1CrossDomainMessenger} from "../../mocks/scroll/MockScrollL1CrossDomainMessenger.sol";
 import {MockScrollL2CrossDomainMessenger} from "../../mocks/scroll/MockScrollL2CrossDomainMessenger.sol";
-import {MockScrollL1MessageQueue} from "../../mocks/scroll/MockScrollL1MessageQueue.sol";
+import {MockScrollL1MessageQueueV2} from "../../mocks/scroll/MockScrollL1MessageQueueV2.sol";
 import {ScrollSequencerUptimeFeed} from "../../../scroll/ScrollSequencerUptimeFeed.sol";
 import {ScrollValidator} from "../../../scroll/ScrollValidator.sol";
 import {BaseValidator} from "../../../base/BaseValidator.sol";
@@ -19,7 +19,7 @@ contract ScrollValidator_Setup is L2EPTest {
   /// L2EP contracts
   MockScrollL1CrossDomainMessenger internal s_mockScrollL1CrossDomainMessenger;
   MockScrollL2CrossDomainMessenger internal s_mockScrollL2CrossDomainMessenger;
-  MockScrollL1MessageQueue internal s_mockScrollL1MessageQueue;
+  MockScrollL1MessageQueueV2 internal s_mockScrollL1MessageQueue;
   ScrollSequencerUptimeFeed internal s_scrollSequencerUptimeFeed;
   ScrollValidator internal s_scrollValidator;
 
@@ -37,7 +37,7 @@ contract ScrollValidator_Setup is L2EPTest {
   function setUp() public {
     s_mockScrollL1CrossDomainMessenger = new MockScrollL1CrossDomainMessenger();
     s_mockScrollL2CrossDomainMessenger = new MockScrollL2CrossDomainMessenger();
-    s_mockScrollL1MessageQueue = new MockScrollL1MessageQueue();
+    s_mockScrollL1MessageQueue = new MockScrollL1MessageQueueV2();
 
     s_scrollSequencerUptimeFeed = new ScrollSequencerUptimeFeed(
       address(s_mockScrollL1CrossDomainMessenger),

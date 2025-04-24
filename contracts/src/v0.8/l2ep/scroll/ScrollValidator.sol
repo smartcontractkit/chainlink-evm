@@ -5,12 +5,12 @@ import {ISequencerUptimeFeed} from "../interfaces/ISequencerUptimeFeed.sol";
 
 import {BaseValidator} from "../base/BaseValidator.sol";
 
-import {IL1MessageQueue} from "@scroll-tech/contracts/L1/rollup/IL1MessageQueue.sol";
+import {IL1MessageQueueV2} from "@scroll-tech/contracts/L1/rollup/IL1MessageQueueV2.sol";
 import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
 
 /// @title ScrollValidator - makes cross chain call to update the Sequencer Uptime Feed on L2
 contract ScrollValidator is BaseValidator {
-  string public constant override typeAndVersion = "ScrollValidator 1.1.0-dev";
+  string public constant override typeAndVersion = "ScrollValidator 1.1.0";
 
   // solhint-disable-next-line chainlink-solidity/prefix-immutable-variables-with-i
   address public immutable L1_MSG_QUEUE_ADDR;
@@ -37,7 +37,7 @@ contract ScrollValidator is BaseValidator {
   ) external override checkAccess returns (bool) {
     // Make the xDomain call
     IL1ScrollMessenger(L1_CROSS_DOMAIN_MESSENGER_ADDRESS).sendMessage{
-      value: IL1MessageQueue(L1_MSG_QUEUE_ADDR).estimateCrossDomainMessageFee(s_gasLimit)
+      value: IL1MessageQueueV2(L1_MSG_QUEUE_ADDR).estimateCrossDomainMessageFee(s_gasLimit)
     }(
       L2_UPTIME_FEED_ADDR,
       0,

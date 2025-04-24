@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IL1MessageQueue} from "@scroll-tech/contracts/L1/rollup/IL1MessageQueue.sol";
+import {IL1MessageQueueV2} from "@scroll-tech/contracts/L1/rollup/IL1MessageQueueV2.sol";
 
-contract MockScrollL1MessageQueue is IL1MessageQueue {
+contract MockScrollL1MessageQueueV2 is IL1MessageQueueV2 {
   /// @notice The start index of all pending inclusion messages.
   function pendingQueueIndex() external pure returns (uint256) {
     return 0;
@@ -21,6 +21,36 @@ contract MockScrollL1MessageQueue is IL1MessageQueue {
 
   /// @notice Return the amount of ETH should pay for cross domain message.
   function estimateCrossDomainMessageFee(uint256 /* gasLimit */) external pure returns (uint256) {
+    return 0;
+  }
+
+  /// @notice Return the estimated base fee on L2.
+  function estimateL2BaseFee() external pure returns (uint256) {
+    return 0;
+  }
+
+  /// @notice Return the start index of all messages in this contract.
+  function firstCrossDomainMessageIndex() external pure returns (uint256) {
+    return 0;
+  }
+
+  /// @notice Return the message rolling hash of `queueIndex`.
+  function getMessageRollingHash(uint256 /* queueIndex */) external pure returns (bytes32) {
+    return "";
+  }
+
+  /// @notice Return the message enqueue timestamp of `queueIndex`.
+  function getMessageEnqueueTimestamp(uint256 /*queueIndex*/) external pure returns (uint256) {
+    return 0;
+  }
+
+  /// @notice Return the first unfinalized message enqueue timestamp.
+  function getFirstUnfinalizedMessageEnqueueTime() external pure returns (uint256) {
+    return 0;
+  }
+
+  /// @notice Return the start index of all unfinalized messages.
+  function nextUnfinalizedQueueIndex() external pure returns (uint256) {
     return 0;
   }
 
@@ -74,4 +104,8 @@ contract MockScrollL1MessageQueue is IL1MessageQueue {
 
   /// @notice Drop a skipped message from the queue.
   function dropCrossDomainMessage(uint256 index) external {}
+
+  /// @notice Mark cross-domain messages as finalized.
+  /// @dev This function can only be called by `ScrollChain`.
+  function finalizePoppedCrossDomainMessage(uint256 /* nextUnfinalizedQueueIndex */) external {}
 }

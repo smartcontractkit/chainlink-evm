@@ -34,8 +34,8 @@ importers:
         specifier: 4.9.6
         version: 4.9.6
       '@scroll-tech/contracts':
-        specifier: 0.1.0
-        version: 0.1.0
+        specifier: 2.0.0
+        version: 2.0.0
       '@zksync/contracts':
         specifier: github:matter-labs/era-contracts#446d391d34bdb48255d5f8fef8a8248925fc98b9
         version: era-contracts@https://codeload.github.com/matter-labs/era-contracts/tar.gz/446d391d34bdb48255d5f8fef8a8248925fc98b9
@@ -580,8 +580,8 @@ packages:
     peerDependencies:
       prettier: ^3.0.0
 
-  '@scroll-tech/contracts@0.1.0':
-    resolution: {integrity: sha512-aBbDOc3WB/WveZdpJYcrfvMYMz7ZTEiW8M9XMJLba8p9FAR5KGYB/cV+8+EUsq3MKt7C1BfR+WnXoTVdvwIY6w==}
+  '@scroll-tech/contracts@2.0.0':
+    resolution: {integrity: sha512-O8sVaA/bVKH/mp+bBfUjZ/vYr5mdBExCpKRLre4r9TbXTtiaY9Uo5xU8dcG3weLxyK0BZqDTP2aCNp4Q0f7SeA==}
 
   '@scure/base@1.1.9':
     resolution: {integrity: sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==}
@@ -3563,7 +3563,7 @@ snapshots:
     dependencies:
       prettier: 3.5.3
 
-  '@scroll-tech/contracts@0.1.0': {}
+  '@scroll-tech/contracts@2.0.0': {}
 
   '@scure/base@1.1.9': {}
 
