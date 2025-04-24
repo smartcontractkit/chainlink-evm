@@ -388,86 +388,16 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 			t.Errorf("Expected subscription to return an error, but test timeout instead")
 		}
 	})
-	t.Run("Log's index is properly set for Sei chain type", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
-			if method == "eth_unsubscribe" {
-				resp.Result = "true"
-				return
-			} else if method == "eth_subscribe" {
-				if assert.True(t, params.IsArray()) && assert.Equal(t, "logs", params.Array()[0].String()) {
-					resp.Result = `"0x00"`
-				}
-				return
-			}
-			return
-		})
-		wsURL := server.WSURL()
-		rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainId, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainSei)
-		defer rpc.Close()
-		require.NoError(t, rpc.Dial(ctx))
-		ch := make(chan types.Log)
-		sub, err := rpc.SubscribeFilterLogs(ctx, ethereum.FilterQuery{}, ch)
-		require.NoError(t, err)
-		testCases := []struct {
-			TxIndex       uint
-			Index         uint
-			ExpectedIndex uint
+	t.Run("Log's index is properly set for special chain types", func(t *testing.T) {
+		chainTypes := []struct {
+			Name      string
+			ChainType chaintype.ChainType
 		}{
-			{
-				TxIndex:       0,
-				Index:         0,
-				ExpectedIndex: 0,
-			},
-			{
-				TxIndex:       0,
-				Index:         1,
-				ExpectedIndex: 1,
-			},
-			{
-				TxIndex:       1,
-				Index:         0,
-				ExpectedIndex: math.MaxUint32 + 1,
-			},
+			{Name: "Sei", ChainType: chaintype.ChainSei},
+			{Name: "Hedera", ChainType: chaintype.ChainHedera},
+			{Name: "Rootstock", ChainType: chaintype.ChainRootstock},
 		}
-		go func() {
-			for _, testCase := range testCases {
-				server.MustWriteBinaryMessageSync(t, makeNewWSMessage(types.Log{TxIndex: testCase.TxIndex, Index: testCase.Index, Topics: []common.Hash{{}}}))
-			}
-		}()
-		defer sub.Unsubscribe()
-		for _, testCase := range testCases {
-			select {
-			case <-tests.Context(t).Done():
-				require.Fail(t, "context timed out")
-			case err := <-sub.Err():
-				require.NoError(t, err)
-				require.Fail(t, "Did not expect error channel to be closed or return error before all testcases were consumed")
-			case log := <-ch:
-				require.Equal(t, testCase.ExpectedIndex, log.Index, "Unexpected log index %d for test case %v", log.Index, testCase)
-			}
-		}
-	})
 
-	t.Run("Log's index is properly set for Hedera chain type", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
-			if method == "eth_unsubscribe" {
-				resp.Result = "true"
-				return
-			} else if method == "eth_subscribe" {
-				if assert.True(t, params.IsArray()) && assert.Equal(t, "logs", params.Array()[0].String()) {
-					resp.Result = `"0x00"`
-				}
-				return
-			}
-			return
-		})
-		wsURL := server.WSURL()
-		rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainId, multinode.Primary, client.QueryTimeout, client.QueryTimeout, chaintype.ChainHedera)
-		defer rpc.Close()
-		require.NoError(t, rpc.Dial(ctx))
-		ch := make(chan types.Log)
-		sub, err := rpc.SubscribeFilterLogs(ctx, ethereum.FilterQuery{}, ch)
-		require.NoError(t, err)
 		testCases := []struct {
 			TxIndex       uint
 			Index         uint
@@ -489,23 +419,47 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 				ExpectedIndex: math.MaxUint32 + 1,
 			},
 		}
-		go func() {
-			for _, testCase := range testCases {
-				server.MustWriteBinaryMessageSync(t, makeNewWSMessage(types.Log{TxIndex: testCase.TxIndex, Index: testCase.Index, Topics: []common.Hash{{}}}))
-			}
-		}()
-		defer sub.Unsubscribe()
-		for _, testCase := range testCases {
-			select {
-			//nolint:staticcheck //SA1019 ignoring deprecated
-			case <-tests.Context(t).Done():
-				require.Fail(t, "context timed out")
-			case err := <-sub.Err():
+
+		for _, ct := range chainTypes {
+			t.Run(ct.Name, func(t *testing.T) {
+				server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+					if method == "eth_unsubscribe" {
+						resp.Result = "true"
+						return
+					} else if method == "eth_subscribe" {
+						if assert.True(t, params.IsArray()) && assert.Equal(t, "logs", params.Array()[0].String()) {
+							resp.Result = `"0x00"`
+						}
+						return
+					}
+					return
+				})
+				wsURL := server.WSURL()
+				rpc := client.NewRPCClient(nodePoolCfg, lggr, wsURL, nil, "rpc", 1, chainId, multinode.Primary, client.QueryTimeout, client.QueryTimeout, ct.ChainType)
+				defer rpc.Close()
+				require.NoError(t, rpc.Dial(ctx))
+				ch := make(chan types.Log)
+				sub, err := rpc.SubscribeFilterLogs(ctx, ethereum.FilterQuery{}, ch)
 				require.NoError(t, err)
-				require.Fail(t, "Did not expect error channel to be closed or return error before all testcases were consumed")
-			case log := <-ch:
-				require.Equal(t, testCase.ExpectedIndex, log.Index, "Unexpected log index %d for test case %v", log.Index, testCase)
-			}
+				go func() {
+					for _, testCase := range testCases {
+						server.MustWriteBinaryMessageSync(t, makeNewWSMessage(types.Log{TxIndex: testCase.TxIndex, Index: testCase.Index, Topics: []common.Hash{{}}}))
+					}
+				}()
+				defer sub.Unsubscribe()
+				for _, testCase := range testCases {
+					select {
+					//nolint:staticcheck //SA1019 ignoring deprecated
+					case <-tests.Context(t).Done():
+						require.Fail(t, "context timed out")
+					case err := <-sub.Err():
+						require.NoError(t, err)
+						require.Fail(t, "Did not expect error channel to be closed or return error before all testcases were consumed")
+					case log := <-ch:
+						require.Equal(t, testCase.ExpectedIndex, log.Index, "[%s] Unexpected log index %d for test case %v", ct.Name, log.Index, testCase)
+					}
+				}
+			})
 		}
 	})
 }
