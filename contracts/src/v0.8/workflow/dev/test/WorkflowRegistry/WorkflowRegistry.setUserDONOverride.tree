@@ -1,0 +1,31 @@
+WorkflowRegistry.setUserDONOverride
+├── when caller is NOT the owner  
+│   └── it reverts with OnlyCallableByOwner 
+└── when caller IS the owner  
+    ├── when there are no overrides yet
+    │   └── it is the default value 
+    │       └── getMaxWorkflowsPerUserDon(user, donLabel) returns the default (e.g. 200)  
+    ├── when limit is set to 0
+    │   └── it correctly sets the limit to 0
+    │       ├── call setUserDONOverride(user, donLabel, 0)  
+    │       └── getMaxWorkflowsPerUserDon(user, donLabel) returns default (override cleared)  
+    ├── when limit is set to a normal positive value
+    │   └── it correctly sets the limit
+    │       ├── call setUserDONOverride(user, donLabel, 42)  
+    │       └── getMaxWorkflowsPerUserDon(user, donLabel) returns 42  
+    ├── when limit is uint32 max 4294967295
+    │   └── it correctly sets the limit 
+    │       ├── call setUserDONOverride(user, donLabel, 4294967295)  
+    │       └── getMaxWorkflowsPerUserDon(user, donLabel) returns 4294967295  
+    ├── when it is called multiple times
+    │   └── it correctly sets the latest value 
+    │       ├── call setUserDONOverride(user, donLabel, 10)  
+    │       ├── getMaxWorkflowsPerUserDon(user, donLabel) returns 10  
+    │       ├── call setUserDONOverride(user, donLabel, 20)  
+    │       └── getMaxWorkflowsPerUserDon(user, donLabel) returns 20 (updated)  
+    └── when there are multiple users and multiple DONs
+        └── it correctly sets the limit for the specific user and DON 
+            ├── setUserDONOverride(userA, donLabelA, 33)  
+            ├── getMaxWorkflowsPerUserDon(userA, donLabelA) returns 33  
+            ├── getMaxWorkflowsPerUserDon(userA, donLabelB) returns default (200)  
+            └── getMaxWorkflowsPerUserDon(userB, donLabelA) returns default (200)  
