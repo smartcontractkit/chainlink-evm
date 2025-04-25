@@ -4,6 +4,8 @@ import (
 	"math/big"
 	"testing"
 
+	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
 	"github.com/test-go/testify/require"
@@ -24,16 +26,16 @@ func NewTestReport(t *testing.T) []byte {
 	require.NoError(t, err)
 
 	report := platform.Report{
-		Metadata: datafeeds.Metadata{
-			Version:             1,
-			WorkflowExecutionID: [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
-			Timestamp:           1620000000,
-			DonID:               1,
-			DonConfigVersion:    1,
-			WorkflowCID:         [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
-			WorkflowName:        [10]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a},
-			WorkflowOwner:       [20]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
-			ReportID:            [2]byte{0x01},
+		Metadata: ocr3types.Metadata{
+			Version:          1,
+			ExecutionID:      "0102030405060708090a0b0c0d0e0f1000000000000000000000000000000000",
+			Timestamp:        1620000000,
+			DONID:            1,
+			DONConfigVersion: 1,
+			WorkflowID:       "1234567890123456789012345678901234567890123456789012345678901234",
+			WorkflowName:     "12",
+			WorkflowOwner:    "1234567890123456789012345678901234567890",
+			ReportID:         "1234",
 		},
 		Data: data,
 	}

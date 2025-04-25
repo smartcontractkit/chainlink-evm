@@ -259,10 +259,10 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 	}
 
 	// Validate encoded report is prefixed with workflowID and executionID that match the request meta
-	if hex.EncodeToString(reportDecoded.WorkflowExecutionID[:]) != request.Metadata.WorkflowExecutionID {
+	if reportDecoded.ExecutionID != request.Metadata.WorkflowExecutionID {
 		msg := builder.buildWriteError(info, 0, "decoded report execution ID does not match the request", "")
 		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
-	} else if hex.EncodeToString(reportDecoded.WorkflowCID[:]) != request.Metadata.WorkflowID {
+	} else if reportDecoded.WorkflowID != request.Metadata.WorkflowID {
 		msg := builder.buildWriteError(info, 0, "decoded report workflow ID does not match the request", "")
 		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}

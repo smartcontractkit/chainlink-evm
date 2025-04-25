@@ -19,16 +19,20 @@ func TestDecodeReport(t *testing.T) {
 
 	r, err := Decode(rawReport)
 	require.NoError(t, err)
-	require.Equal(t, uint8(1), r.Version)
-	require.Equal(t, "816d80fa4bb8b350cacc3a2e395236bcc6b813b0568b61eea0bd3e6ba7218dd3", hex.EncodeToString(r.WorkflowExecutionID[:]))
+	require.Equal(t, uint32(1), r.Version)
+	require.Equal(t, "816d80fa4bb8b350cacc3a2e395236bcc6b813b0568b61eea0bd3e6ba7218dd3", r.ExecutionID)
 	require.Equal(t, uint32(1727381360), r.Timestamp)
-	require.Equal(t, uint32(0x01), r.DonID)
-	require.Equal(t, uint32(0x01), r.DonConfigVersion)
+	require.Equal(t, uint32(0x01), r.DONID)
+	require.Equal(t, uint32(0x01), r.DONConfigVersion)
 
-	require.Equal(t, "bc06f300e797d5a8575637a14aae13e3f8508008d1fc54f4c4611fff17a68cb0", hex.EncodeToString(r.WorkflowCID[:]))
-	require.Equal(t, "30303030464f4f424152", hex.EncodeToString(r.WorkflowName[:]))
+	require.Equal(t, "bc06f300e797d5a8575637a14aae13e3f8508008d1fc54f4c4611fff17a68cb0", r.WorkflowID)
+	require.Equal(t, "30303030464f4f424152", r.WorkflowName)
 
-	require.Equal(t, "0000FOOBAR", string(r.WorkflowName[:]))
-	require.Equal(t, "00000000000000000000000000000000000000aa", hex.EncodeToString(r.WorkflowOwner[:]))
-	require.Equal(t, "0001", hex.EncodeToString(r.ReportID[:]))
+	workflowName, err := hex.DecodeString(r.WorkflowName)
+	require.NoError(t, err)
+
+	require.Equal(t, "0000FOOBAR", string(workflowName))
+
+	require.Equal(t, "00000000000000000000000000000000000000aa", r.WorkflowOwner)
+	require.Equal(t, "0001", r.ReportID)
 }
