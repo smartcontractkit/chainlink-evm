@@ -171,7 +171,9 @@ func generateRandomLogs(chainID, count int) []Log {
 func createObservedORM(t *testing.T, chainId int64) *ObservedORM {
 	lggr := logger.Test(t)
 	db := testutils.NewSqlxDB(t)
-	return NewObservedORM(big.NewInt(chainId), db, lggr)
+	observed, err := NewObservedORM(big.NewInt(chainId), db, lggr)
+	require.NoError(t, err)
+	return observed
 }
 
 func resetMetrics(lp ObservedORM) {

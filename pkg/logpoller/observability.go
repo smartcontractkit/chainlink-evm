@@ -7,11 +7,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
-	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
+	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
 )
 
@@ -19,6 +20,7 @@ import (
 // It doesn't change internal logic, because all calls are delegated to the origin ORM
 type ObservedORM struct {
 	ORM
+	metrics        metrics.GenericLogPollerMetrics
 	queryDuration  *prometheus.HistogramVec
 	datasetSize    *prometheus.GaugeVec
 	logsInserted   *prometheus.CounterVec
@@ -28,15 +30,20 @@ type ObservedORM struct {
 
 // NewObservedORM creates an observed version of log poller's ORM created by NewORM
 // Please see ObservedLogPoller for more details on how latencies are measured
-func NewObservedORM(chainID *big.Int, ds sqlutil.DataSource, lggr logger.Logger) *ObservedORM {
+func NewObservedORM(chainID *big.Int, ds sqlutil.DataSource, lggr logger.Logger) (*ObservedORM, error) {
+	lpMetrics, err := metrics.NewGenericLogPollerMetrics(chainID.String(), metrics.EVM)
+	if err != nil {
+		return nil, err
+	}
 	return &ObservedORM{
 		ORM:            NewORM(chainID, ds, lggr),
-		queryDuration:  metrics.LpQueryDuration,
-		datasetSize:    metrics.LpQueryDataSets,
-		logsInserted:   metrics.LpLogsInserted,
-		blocksInserted: metrics.LpBlocksInserted,
+		metrics:        lpMetrics,
+		queryDuration:  metrics.PromLpQueryDuration,
+		datasetSize:    metrics.PromLpQueryDataSets,
+		logsInserted:   metrics.PromLpLogsInserted,
+		blocksInserted: metrics.PromLpBlocksInserted,
 		chainID:        chainID.String(),
-	}
+	}, nil
 }
 
 func (o *ObservedORM) InsertLogs(ctx context.Context, logs []Log) error {
@@ -238,9 +245,9 @@ func (o *ObservedORM) FilteredLogs(ctx context.Context, filter []query.Expressio
 func withObservedQueryAndResults[T any](o *ObservedORM, queryName string, query func() ([]T, error)) ([]T, error) {
 	results, err := withObservedQuery(o, queryName, query)
 	if err == nil {
-		o.datasetSize.
-			WithLabelValues(metrics.EVM, o.chainID, queryName, string(metrics.Read)).
-			Set(float64(len(results)))
+		ctx, cancel := context.WithTimeout(context.Background(), client.QueryTimeout)
+		defer cancel()
+		o.metrics.RecordQueryDatasetSize(ctx, queryName, metrics.Read, int64(len(results)))
 	}
 	return results, err
 }
@@ -248,14 +255,12 @@ func withObservedQueryAndResults[T any](o *ObservedORM, queryName string, query 
 func withObservedExecAndRowsAffected(o *ObservedORM, queryName string, queryType metrics.QueryType, exec func() (int64, error)) (int64, error) {
 	queryStarted := time.Now()
 	rowsAffected, err := exec()
-	o.queryDuration.
-		WithLabelValues(metrics.EVM, o.chainID, queryName, string(queryType)).
-		Observe(float64(time.Since(queryStarted)))
-
+	ctx, cancel := context.WithTimeout(context.Background(), client.QueryTimeout)
+	defer cancel()
+	duration := float64(time.Since(queryStarted))
+	o.metrics.RecordQueryDuration(ctx, queryName, queryType, duration)
 	if err == nil {
-		o.datasetSize.
-			WithLabelValues(metrics.EVM, o.chainID, queryName, string(queryType)).
-			Set(float64(rowsAffected))
+		o.metrics.RecordQueryDatasetSize(ctx, queryName, queryType, rowsAffected)
 	}
 
 	return rowsAffected, err
@@ -264,9 +269,9 @@ func withObservedExecAndRowsAffected(o *ObservedORM, queryName string, queryType
 func withObservedQuery[T any](o *ObservedORM, queryName string, query func() (T, error)) (T, error) {
 	queryStarted := time.Now()
 	defer func() {
-		o.queryDuration.
-			WithLabelValues(metrics.EVM, o.chainID, queryName, string(metrics.Read)).
-			Observe(float64(time.Since(queryStarted)))
+		ctx, cancel := context.WithTimeout(context.Background(), client.QueryTimeout)
+		defer cancel()
+		o.metrics.RecordQueryDuration(ctx, queryName, metrics.Read, float64(time.Since(queryStarted)))
 	}()
 	return query()
 }
@@ -274,9 +279,9 @@ func withObservedQuery[T any](o *ObservedORM, queryName string, query func() (T,
 func withObservedExec(o *ObservedORM, query string, queryType metrics.QueryType, exec func() error) error {
 	queryStarted := time.Now()
 	defer func() {
-		o.queryDuration.
-			WithLabelValues(metrics.EVM, o.chainID, query, string(queryType)).
-			Observe(float64(time.Since(queryStarted)))
+		ctx, cancel := context.WithTimeout(context.Background(), client.QueryTimeout)
+		defer cancel()
+		o.metrics.RecordQueryDuration(ctx, query, queryType, float64(time.Since(queryStarted)))
 	}()
 	return exec()
 }
@@ -285,13 +290,10 @@ func trackInsertedLogsAndBlock(o *ObservedORM, logs []Log, block *Block, err err
 	if err != nil {
 		return
 	}
-	o.logsInserted.
-		WithLabelValues(metrics.EVM, o.chainID).
-		Add(float64(len(logs)))
-
+	ctx, cancel := context.WithTimeout(context.Background(), client.QueryTimeout)
+	defer cancel()
+	o.metrics.IncrementLogsInserted(ctx, int64(len(logs)))
 	if block != nil {
-		o.blocksInserted.
-			WithLabelValues(metrics.EVM, o.chainID).
-			Inc()
+		o.metrics.IncrementBlocksInserted(ctx, 1)
 	}
 }
