@@ -193,19 +193,13 @@ func (m *messageBuilder) buildWriteSent(i *requestInfo, head types.Head, txID st
 }
 
 func (m *messageBuilder) buildWriteConfirmed(i *requestInfo, head types.Head) *wt.WriteConfirmed {
-	encoderConfig, encoder, processor := "", "", ""
+	rcfg := ReqConfig{}
+	processor := ""
 	reqConfig := i.request.Config
 	if reqConfig != nil {
 		// ignore errors and use default values
-		if encoderConfigVal, ok := reqConfig.Underlying["encoder_config"]; ok {
-			encoderConfigVal.UnwrapTo(encoderConfig)
-		}
-		if encoderVal, ok := reqConfig.Underlying["encoder"]; ok {
-			encoderVal.UnwrapTo(encoder)
-		}
-		if processorVal, ok := reqConfig.Underlying["processor"]; ok {
-			processorVal.UnwrapTo(processor)
-		}
+		reqConfig.UnwrapTo(&rcfg)
+		processor = rcfg.Processor
 	}
 
 	return &wt.WriteConfirmed{
@@ -250,8 +244,6 @@ func (m *messageBuilder) buildWriteConfirmed(i *requestInfo, head types.Head) *w
 		MetaCapabilityTimestampStart: uint64(i.tsStart),
 		MetaCapabilityTimestampEmit:  uint64(time.Now().UnixMilli()),
 
-		MetaCapabilityEncoderConfig: encoderConfig,
-		MetaCapabilityEncoder:       encoder,
-		MetaCapabilityProcessor:     processor,
+		MetaCapabilityProcessor: processor,
 	}
 }

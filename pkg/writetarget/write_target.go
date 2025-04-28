@@ -116,7 +116,8 @@ type WriteTargetOpts struct {
 
 // Capability-specific configuration
 type ReqConfig struct {
-	Address string
+	Address   string
+	Processor string
 }
 
 // NewWriteTargetID returns the capability ID for the write target

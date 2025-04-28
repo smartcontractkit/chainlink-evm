@@ -59,5 +59,5 @@ func (p *dataFeedsProcessor) SetEmitter(e monitor.ProtoEmitter) {
 }
 
 func (p *dataFeedsProcessor) GetName() string {
-	return "datafeeds"
+	return "EVMDF"
 }
