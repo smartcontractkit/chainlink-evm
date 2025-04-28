@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
@@ -168,10 +169,26 @@ func generateRandomLogs(chainID, count int) []Log {
 	return logs
 }
 
+func NewTestObservedORM(chainID *big.Int, ds sqlutil.DataSource, lggr logger.Logger) (*ObservedORM, error) {
+	lpMetrics, err := metrics.NewGenericLogPollerMetrics(chainID.String(), "evm test")
+	if err != nil {
+		return nil, err
+	}
+	return &ObservedORM{
+		ORM:            NewORM(chainID, ds, lggr),
+		metrics:        lpMetrics,
+		queryDuration:  metrics.PromLpQueryDuration,
+		datasetSize:    metrics.PromLpQueryDataSets,
+		logsInserted:   metrics.PromLpLogsInserted,
+		blocksInserted: metrics.PromLpBlocksInserted,
+		chainID:        chainID.String(),
+	}, nil
+}
+
 func createObservedORM(t *testing.T, chainId int64) *ObservedORM {
 	lggr := logger.Test(t)
 	db := testutils.NewSqlxDB(t)
-	observed, err := NewObservedORM(big.NewInt(chainId), db, lggr)
+	observed, err := NewTestObservedORM(big.NewInt(chainId), db, lggr)
 	require.NoError(t, err)
 	return observed
 }
