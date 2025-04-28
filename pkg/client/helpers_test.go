@@ -160,7 +160,7 @@ func NewChainClientWithTestNode(
 	}
 	rpc := NewRPCClient(nodePoolCfg, lggr, parsed, rpcHTTPURL, "eth-primary-rpc-0", id, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
 
-	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("evm test", chainID.String())
+	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
 	require.NoError(t, err)
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
@@ -193,7 +193,7 @@ func NewChainClientWithEmptyNode(
 ) Client {
 	lggr := logger.Test(t)
 
-	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("evm test", chainID.String())
+	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
 	require.NoError(t, err)
 
 	c := NewChainClient(lggr, multiNodeMetrics, selectionMode, leaseDuration, nil, nil, chainID, nil, 0, "")
@@ -216,7 +216,7 @@ func NewChainClientWithMockedRpc(
 	}
 	parsed, _ := url.ParseRequestURI("ws://test")
 
-	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("evm test", chainID.String())
+	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
 	require.NoError(t, err)
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
