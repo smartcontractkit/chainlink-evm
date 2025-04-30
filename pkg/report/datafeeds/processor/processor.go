@@ -6,9 +6,9 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	monitor "github.com/smartcontractkit/chainlink-evm/pkg/monitor/beholder"
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/data-feeds/on-chain/registry"
-	wt "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
+	monitor "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/beholder/monitor"
+	wt "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 )
 
 // EVM Data-Feeds specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
@@ -17,9 +17,10 @@ type dataFeedsProcessor struct {
 	metrics *registry.Metrics
 }
 
-func NewDataFeedsProcessor(metrics *registry.Metrics) *dataFeedsProcessor {
+func NewDataFeedsProcessor(metrics *registry.Metrics, emitter monitor.ProtoEmitter) *dataFeedsProcessor {
 	return &dataFeedsProcessor{
 		metrics: metrics,
+		emitter: emitter,
 	}
 }
 
@@ -58,6 +59,6 @@ func (p *dataFeedsProcessor) SetEmitter(e monitor.ProtoEmitter) {
 	p.emitter = e
 }
 
-func (p *dataFeedsProcessor) GetName() string {
+func (p *dataFeedsProcessor) Name() string {
 	return "EVMDF"
 }

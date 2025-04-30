@@ -5,8 +5,8 @@ import (
 	"math"
 	"math/big"
 
-	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
+	wt_msg "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
+	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 )

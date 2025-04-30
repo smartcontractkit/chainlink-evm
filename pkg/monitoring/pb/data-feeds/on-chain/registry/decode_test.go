@@ -10,9 +10,9 @@ import (
 
 	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
 
-	wt_msg "github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/platform"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/platform"
+	wt_msg "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
+	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
 )
 
 func TestDecodeAsReportProcessed(t *testing.T) {

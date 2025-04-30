@@ -20,13 +20,11 @@ require (
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.62.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250425164544-3e73f118c5e0
-	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250408161305-721208f43882
-	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250509160340-4f4a9265e657
-	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250502210357-2df484128afa
-	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250502210357-2df484128afa
-	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
-	github.com/smartcontractkit/libocr v0.0.0-20250328171017-609ec10a5510
+	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250430150952-0b88e247bc51
+	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250430193647-408283b588a5
+	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250421203809-e0f5602c126c
+	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250421203809-e0f5602c126c
+	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250402142713-6529d36f91f3
 	github.com/stretchr/testify v1.10.0
 	github.com/test-go/testify v1.1.4
 	github.com/tidwall/gjson v1.18.0
@@ -34,7 +32,6 @@ require (
 	github.com/zksync-sdk/zksync2-go v1.0.0
 	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/metric v1.35.0
-	go.opentelemetry.io/otel/trace v1.35.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.36.0
@@ -172,6 +169,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.35.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.10.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.35.0 // indirect
+	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
