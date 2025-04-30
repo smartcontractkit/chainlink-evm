@@ -47,3 +47,13 @@ packages:
       outpkg: clienttest
     interfaces:
       Subscription:
+  github.com/smartcontractkit/chainlink-evm/pkg/txm:
+    config:
+      dir: txm
+      outpkg: txm
+      mockname: "mock{{ .InterfaceName }}"
+      filename: "mock_{{ .InterfaceName | snakecase }}_test.go"
+    interfaces:
+      Client:
+      TxStore:
+      AttemptBuilder:
