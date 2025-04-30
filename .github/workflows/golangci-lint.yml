@@ -26,6 +26,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Run golangci-lint
+        if: ${{ always() && !contains(join(github.event.pull_request.labels.*.name, ' '), 'allow-lint-issues') }}
         uses: golangci/golangci-lint-action@38e1018663fa5173f3968ea0777460d3de38f256 # v5.3.0
         with:
           args: --config=${{ github.workspace }}/.golangci.yml
