@@ -12,7 +12,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
-	
+	"github.com/smartcontractkit/chainlink-framework/chains/txmgr"
 )
 
 const (
