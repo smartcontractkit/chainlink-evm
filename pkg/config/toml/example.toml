@@ -1,0 +1,6 @@
+ChainID = '1' # Required
+
+[[Nodes]]
+Name = 'fake' # Required
+WSURL = 'wss://foo.bar/ws'
+HTTPURL = 'https://foo.bar' # Required
