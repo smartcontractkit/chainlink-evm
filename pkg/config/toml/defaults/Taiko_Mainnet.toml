@@ -1,0 +1,26 @@
+ChainID = '167000'
+FinalityTagEnabled = true
+NoNewHeadsThreshold = '6m'
+LogPollInterval = '10s'
+MinIncomingConfirmations = 1
+
+[OCR]
+ContractConfirmations = 1
+ContractTransmitterTransmitTimeout = '1m'
+
+[Transactions]
+ResendAfterThreshold = '3m'
+
+[GasEstimator]
+EIP1559DynamicFees = true
+Mode = 'FeeHistory'      
+BumpPercent = 10      
+BumpThreshold = 2
+PriceMax = '1000 gwei'
+
+[GasEstimator.FeeHistory]
+# Refresh the suggested price every 5 seconds, to stay slightly below their polling rate of 10s
+CacheTimeout = '5s'
+
+[NodePool]
+PollInterval = '5s'
