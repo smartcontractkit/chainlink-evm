@@ -24,4 +24,4 @@ PriceMax = '50 gwei'
 CacheTimeout = '5s'
 
 [NodePool]
-PollInterval = '5s
+PollInterval = '5s'
