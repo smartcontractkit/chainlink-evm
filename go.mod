@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/chainlink-evm
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/ethereum/go-ethereum v1.15.3

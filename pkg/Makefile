@@ -1,15 +1,18 @@
 .PHONY: mockery
 mockery: ## Install mockery.
-	go install github.com/vektra/mockery/v2@v2.53.3
+	go install github.com/vektra/mockery/v2@v2.53.3 \
+	asdf reshim golang
 
 .PHONY: codecgen
 codecgen: ## Install codecgen
-	go install github.com/ugorji/go/codec/codecgen@v1.2.10
+	go install github.com/ugorji/go/codec/codecgen@v1.2.10 \
+	asdf reshim golang
 
 .PHONY: protoc
 protoc: ## Install protoc
 	../tools/bin/install-protoc.sh 29.3 /
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@`go list -m -json google.golang.org/protobuf | jq -r .Version`
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@`go list -m -json google.golang.org/protobuf | jq -r .Version` \
+	asdf reshim golang
 
 .PHONY: generate
 generate: codecgen mockery protoc
