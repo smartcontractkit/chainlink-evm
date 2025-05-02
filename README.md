@@ -1,9 +1,10 @@
 <div align="center">
-  <h1>Chainlink EVM</h1>
   <a><img src="https://raw.githubusercontent.com/smartcontractkit/chainlink/develop/docs/logo-chainlink-blue.svg" /></a>
   <br/>
   <br/>
 </div>
+
+# Chainlink EVM
 
 This repository contains EVM related services and contracts relating to Chainlink services.
 
