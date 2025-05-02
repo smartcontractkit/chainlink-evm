@@ -32,6 +32,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
+	"github.com/smartcontractkit/chainlink-framework/multinode"
 )
 
 var (
@@ -1125,11 +1126,6 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 		"log", l,
 	)
 
-	return
-}
-
-func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err error) {
-	err = r.CallContext(ctx, &version, "web3_clientVersion")
 	return
 }
 
