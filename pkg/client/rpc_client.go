@@ -155,13 +155,13 @@ func NewRPCClient(
 	return r
 }
 
-func (r *RPCClient) Ping(ctx context.Context) error {
+func (r *RPCClient) PingClientVersion(ctx context.Context) (string, error) {
 	version, err := r.ClientVersion(ctx)
 	if err != nil {
-		return fmt.Errorf("ping failed: %w", err)
+		return "", fmt.Errorf("ping failed: %w", err)
 	}
 	r.rpcLog.Debugf("ping client version: %s", version)
-	return err
+	return version, err
 }
 
 func (r *RPCClient) Dial(callerCtx context.Context) error {

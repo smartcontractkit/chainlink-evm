@@ -21,9 +21,9 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250429205337-7ee5f91ed065
 	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250408161305-721208f43882
-	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250501141303-e13c3bbc8666
-	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250501141303-e13c3bbc8666
-	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250501141303-e13c3bbc8666
+	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250502190758-81b76f7a531e
+	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250502190758-81b76f7a531e
+	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250502190758-81b76f7a531e
 	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
 	github.com/smartcontractkit/libocr v0.0.0-20250328171017-609ec10a5510
 	github.com/stretchr/testify v1.10.0

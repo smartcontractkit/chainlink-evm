@@ -154,14 +154,14 @@ func NewChainClientWithTestNode(
 		return nil, pkgerrors.Errorf("ethereum url scheme must be websocket: %s", parsed.String())
 	}
 
+	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
+	require.NoError(t, err)
+
 	lggr := logger.Test(t)
 	nodePoolCfg := TestNodePoolConfig{
 		NodeFinalizedBlockPollInterval: 1 * time.Second,
 	}
 	rpc := NewRPCClient(nodePoolCfg, lggr, parsed, rpcHTTPURL, "eth-primary-rpc-0", id, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
-
-	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
-	require.NoError(t, err)
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
 		nodeCfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, lggr, multiNodeMetrics, parsed, rpcHTTPURL, "eth-primary-node-0", id, chainID, 1, rpc, "EVM")
