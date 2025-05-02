@@ -25,15 +25,13 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-framework/metrics"
-	"github.com/smartcontractkit/chainlink-framework/multinode"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 )
 
 var (
@@ -155,7 +153,7 @@ func NewRPCClient(
 	return r
 }
 
-func (r *RPCClient) PingClientVersion(ctx context.Context) (string, error) {
+func (r *RPCClient) ClientVersion(ctx context.Context) (string, error) {
 	version, err := r.ClientVersion(ctx)
 	if err != nil {
 		return "", fmt.Errorf("ping failed: %w", err)
