@@ -5,6 +5,7 @@ LinkContractAddress = '0xb1D4538B4571d411F07960EF2838Ce337FE1E80E'
 NoNewHeadsThreshold = '0'
 OCR.ContractConfirmations = 1
 LogPollInterval = '1s'
+LogBroadcasterEnabled = false
 
 [GasEstimator]
 Mode = 'Arbitrum'
@@ -25,6 +26,7 @@ OracleType = 'arbitrum'
 
 [NodePool]
 SyncThreshold = 10
+NewHeadsPollInterval = '6s'
 
 [OCR2.Automation]
 GasLimit = 14500000
