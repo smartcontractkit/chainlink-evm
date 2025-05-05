@@ -17,6 +17,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/chains/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/forwarders"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
@@ -347,7 +348,7 @@ func (o *Orchestrator[BLOCK_HASH, HEAD]) GetTransactionStatus(ctx context.Contex
 	}
 }
 
-func (o *Orchestrator[BLOCK_HASH, HEAD]) GetTransactionFee(ctx context.Context, transactionID string) (fee *commontypes.TransactionFee, err error) {
+func (o *Orchestrator[BLOCK_HASH, HEAD]) GetTransactionFee(ctx context.Context, transactionID string) (fee *evm.TransactionFee, err error) {
 	return nil, errors.New("unimplemented")
 }
 
