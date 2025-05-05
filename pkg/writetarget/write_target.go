@@ -168,19 +168,14 @@ func NewWriteTarget(opts WriteTargetOpts) capabilities.TargetCapability {
 	}
 }
 
-func failure() capabilities.CapabilityResponse {
-	return capabilities.CapabilityResponse{}
-}
-
-func success(p2pID string, transactionFee *big.Int) capabilities.CapabilityResponse {
+func success(transactionFee *big.Int) capabilities.CapabilityResponse {
 	var detail []capabilities.MeteringNodeDetail
 
 	if transactionFee != nil {
 		detail = []capabilities.MeteringNodeDetail{
 			{
-				Peer2PeerID: p2pID,
-				SpendUnit:   "ETH",
-				SpendValue:  assets.Format(transactionFee, 18), // convert wei to ETH
+				SpendUnit:  "ETH",
+				SpendValue: assets.Format(transactionFee, 18), // convert wei to ETH
 			},
 		}
 	}
@@ -228,7 +223,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 	receiver, err := c.configValidateFn(request)
 	if err != nil {
 		msg := builder.buildWriteError(info, 0, "failed to validate config", err.Error())
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}
 
 	// Source the receiver address from the config
@@ -239,14 +234,14 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 	if !ok {
 		cause := fmt.Sprintf("input missing required field: '%s'", KeySignedReport)
 		msg := builder.buildWriteError(info, 0, "failed to source the signed report", cause)
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}
 
 	// Decode the signed report
 	inputs := types.SignedReport{}
 	if err = signedReport.UnwrapTo(&inputs); err != nil {
 		msg := builder.buildWriteError(info, 0, "failed to parse signed report", err.Error())
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}
 
 	// Source the report ID from the input
@@ -265,7 +260,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 		if err != nil {
 			c.lggr.Errorw("failed to emit write skipped", "err", err)
 		}
-		return success("", nil), nil
+		return capabilities.CapabilityResponse{}, nil
 	}
 
 	// Update the info with the report info
@@ -280,16 +275,16 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 	reportDecoded, err := platform.Decode(inputs.Report)
 	if err != nil {
 		msg := builder.buildWriteError(info, 0, "failed to decode the report", err.Error())
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}
 
 	// Validate encoded report is prefixed with workflowID and executionID that match the request meta
 	if reportDecoded.ExecutionID != request.Metadata.WorkflowExecutionID {
 		msg := builder.buildWriteError(info, 0, "decoded report execution ID does not match the request", "")
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	} else if reportDecoded.WorkflowID != request.Metadata.WorkflowID {
 		msg := builder.buildWriteError(info, 0, "decoded report workflow ID does not match the request", "")
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}
 
 	// Fetch the latest head from the chain (timestamp), retry with a default backoff strategy
@@ -297,7 +292,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 	head, err := retry.With(ctx, c.lggr, c.cs.LatestHead)
 	if err != nil {
 		msg := builder.buildWriteError(info, 0, "failed to fetch the latest head", err.Error())
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}
 
 	c.lggr.Debugw("non-empty valid report",
@@ -315,7 +310,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 
 	if err != nil {
 		msg := builder.buildWriteError(info, 0, "failed to fetch [TransmissionState]", err.Error())
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}
 
 	switch state.Status {
@@ -325,7 +320,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 		c.lggr.Debugw("Tranmissions previously failed, retrying", "reportID", info.reportInfo.reportID)
 	case TransmissionStateFatal:
 		msg := builder.buildWriteError(info, 0, "Transmission attempt fatal", state.Err.Error())
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	case TransmissionStateSucceeded:
 		// Source the transmitter address from the on-chain state
 		info.reportTransmissionState = state
@@ -334,7 +329,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 		if err != nil {
 			c.lggr.Errorw("failed to emit write confirmed", "err", err)
 		}
-		return success("", nil), nil
+		return capabilities.CapabilityResponse{}, nil
 	}
 
 	c.lggr.Infow("on-chain report check done - attempting to push to txmgr",
@@ -349,7 +344,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 	c.lggr.Debugw("Transaction submitted", "request", request, "transaction-id", txID)
 	if err != nil {
 		msg := builder.buildWriteError(info, 0, "failed to transmit the report", err.Error())
-		return failure(), c.asEmittedError(ctx, msg)
+		return capabilities.CapabilityResponse{}, c.asEmittedError(ctx, msg)
 	}
 	err = c.beholder.ProtoEmitter.EmitWithLog(ctx, builder.buildWriteSent(info, head, txID))
 	if err != nil {
@@ -366,7 +361,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 		c.lggr.Errorw("failed to get transaction fee for transaction id", "err", err, "txid", txID)
 	}
 
-	return success(c.p2pID, fee.TransactionFee), nil
+	return success(fee.TransactionFee), nil
 }
 
 func (c *writeTarget) RegisterToWorkflow(ctx context.Context, request capabilities.RegisterToWorkflowRequest) error {
