@@ -358,6 +358,7 @@ func (c *writeTarget) Execute(ctx context.Context, request capabilities.Capabili
 
 	fee, err := c.evm.GetTransactionFee(ctx, txID)
 	if err != nil {
+		fee = &commontypes.TransactionFee{TransactionFee: new(big.Int)}
 		c.lggr.Errorw("failed to get transaction fee for transaction id", "err", err, "txid", txID)
 	}
 
