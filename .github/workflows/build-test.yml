@@ -64,6 +64,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
+      - name: Install asdf and Plugins
+        uses: asdf-vm/actions/plugins-add@05e0d2ed97b598bfce82fd30daf324ae0c4570e6
+        with:
+          asdf_branch: v0.16.7
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
