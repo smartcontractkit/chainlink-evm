@@ -19,7 +19,7 @@ require (
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.63.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250502204350-10d475f3a9a3
+	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250506220350-7b1d024528c9
 	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250408161305-721208f43882
 	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250505015107-d03c54c7fa35
 	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250421203809-e0f5602c126c
@@ -190,5 +190,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
-
-replace github.com/smartcontractkit/chainlink-common => ../chainlink-common
