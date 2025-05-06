@@ -154,13 +154,13 @@ func NewRPCClient(
 	return r
 }
 
-func (r *RPCClient) ClientVersion(ctx context.Context) (string, error) {
-	version, err := r.ClientVersion(ctx)
+func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err error) {
+	err = r.CallContext(ctx, &version, "web3_clientVersion")
 	if err != nil {
 		return "", fmt.Errorf("fetching client version failed: %w", err)
 	}
 	r.rpcLog.Debugf("client version: %s", version)
-	return version, err
+	return version, nil
 }
 
 func (r *RPCClient) Dial(callerCtx context.Context) error {
