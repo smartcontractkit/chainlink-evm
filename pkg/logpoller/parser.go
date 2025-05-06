@@ -44,6 +44,7 @@ type pgDSLParser struct {
 }
 
 var _ primitives.Visitor = (*pgDSLParser)(nil)
+var _ evm.EVMVisitor = (*pgDSLParser)(nil)
 
 func (v *pgDSLParser) Comparator(_ primitives.Comparator) {}
 
