@@ -49,6 +49,7 @@ contract WETH9ZKSync {
     require(balanceOf[msg.sender] >= wad);
     balanceOf[msg.sender] -= wad;
     // payable(msg.sender).transfer(wad) should be avoided
+    // slither-disable-next-line low-level-calls
     (bool success, ) = msg.sender.call{value: wad}("");
     require(success, "Transfer failed");
     emit Withdrawal(msg.sender, wad);
