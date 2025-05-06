@@ -14,6 +14,11 @@ func main() {
 	contractName := os.Args[2]
 	packageName := os.Args[3]
 
+	className := contractName
+	if len(os.Args) > 4 {
+		className = os.Args[4]
+	}
+
 	fmt.Println("Generating", packageName, "contract wrapper")
 
 	cwd, err := os.Getwd() // gethwrappers/zksync directory
@@ -31,5 +36,5 @@ func main() {
 		outPath = filepath.Join(cwd, "..", "generated", packageName, packageName+"_zksync.go")
 	}
 
-	zksyncwrapper.WrapZksyncDeploy(bytecode, contractName, packageName, outPath)
+	zksyncwrapper.WrapZksyncDeploy(bytecode, className, packageName, outPath)
 }

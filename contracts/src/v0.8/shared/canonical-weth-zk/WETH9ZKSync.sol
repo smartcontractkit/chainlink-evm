@@ -17,7 +17,7 @@
 pragma solidity ^0.8.0;
 
 // solhint-disable
-contract WETH9 {
+contract WETH9ZKSync {
   string public name = "Wrapped Ether";
   string public symbol = "WETH";
   uint8 public decimals = 18;
