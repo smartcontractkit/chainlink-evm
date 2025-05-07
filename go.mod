@@ -20,11 +20,13 @@ require (
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.62.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250430150952-0b88e247bc51
-	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250430193647-408283b588a5
-	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250421203809-e0f5602c126c
-	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250421203809-e0f5602c126c
-	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250402142713-6529d36f91f3
+	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250507152431-ea228d8aa0bf
+	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250507152616-147237bdc3ea
+	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250502210357-2df484128afa
+	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250502210357-2df484128afa
+	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250502210357-2df484128afa
+	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
+	github.com/smartcontractkit/libocr v0.0.0-20250328171017-609ec10a5510
 	github.com/stretchr/testify v1.10.0
 	github.com/test-go/testify v1.1.4
 	github.com/tidwall/gjson v1.18.0
