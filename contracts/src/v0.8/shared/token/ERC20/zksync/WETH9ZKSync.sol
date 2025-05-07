@@ -16,6 +16,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 pragma solidity ^0.8.0;
 
+/*
+  This contract is a copy of WETH9 (vendor/canonical-weth) with the following change:
+  - payable(msg.sender).transfer(x) isn't compatible with zkSync Era VM. We replace
+    it with a low-level call msg.sender.call{value: x}("")
+*/
+
 // solhint-disable
 contract WETH9ZKSync {
   string public name = "Wrapped Ether";
@@ -43,9 +49,7 @@ contract WETH9ZKSync {
     _deposit();
   }
 
-  function withdraw(
-    uint256 wad
-  ) external {
+  function withdraw(uint256 wad) external {
     require(balanceOf[msg.sender] >= wad);
     balanceOf[msg.sender] -= wad;
     // payable(msg.sender).transfer(wad) should be avoided
