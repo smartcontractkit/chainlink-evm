@@ -29,7 +29,7 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 		},
 	}
 
-	data, err := datafeeds.GetSchema().Pack(reports)
+	data, err := datafeeds.GetSchema(false).Pack(reports)
 	require.NoError(t, err)
 
 	report := platform.Report{
@@ -137,7 +137,7 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := DecodeAsFeedUpdated(&tt.input)
+			result, err := DecodeAsFeedUpdated(&tt.input, false)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {

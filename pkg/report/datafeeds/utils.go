@@ -9,7 +9,7 @@ import (
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform/on-chain/forwarder"
 )
 
-func NewEVMTestReport(t *testing.T) []byte {
+func NewEVMTestReport(t *testing.T, ccip bool) []byte {
 	feedReport := FeedReport{
 		FeedID:    [32]byte{0x01},
 		Price:     big.NewInt(1234567890123456789),
@@ -20,7 +20,7 @@ func NewEVMTestReport(t *testing.T) []byte {
 		feedReport,
 	}
 
-	data, err := GetSchema().Pack(reports)
+	data, err := GetSchema(ccip).Pack(reports)
 	require.NoError(t, err)
 
 	encoded, err := forwarder.NewTestReport(t, data)

@@ -11,7 +11,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 )
 
-func DecodeAsFeedUpdated(m *wt_msg.WriteConfirmed) ([]*FeedUpdated, error) {
+func DecodeAsFeedUpdated(m *wt_msg.WriteConfirmed, ccip bool) ([]*FeedUpdated, error) {
 	// Decode the confirmed report (WT -> DF contract event)
 	r, err := platform.Decode(m.Report)
 	if err != nil {
@@ -19,7 +19,7 @@ func DecodeAsFeedUpdated(m *wt_msg.WriteConfirmed) ([]*FeedUpdated, error) {
 	}
 
 	// Decode the underlying Data Feeds reports
-	reports, err := datafeeds.Decode(r.Data)
+	reports, err := datafeeds.Decode(r.Data, ccip)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode Data Feeds report: %w", err)
 	}

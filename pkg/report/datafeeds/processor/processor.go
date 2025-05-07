@@ -15,12 +15,14 @@ import (
 type dataFeedsProcessor struct {
 	emitter monitor.ProtoEmitter
 	metrics *registry.Metrics
+	ccip    bool
 }
 
-func NewDataFeedsProcessor(metrics *registry.Metrics, emitter monitor.ProtoEmitter) *dataFeedsProcessor {
+func NewDataFeedsProcessor(metrics *registry.Metrics, emitter monitor.ProtoEmitter, ccip bool) *dataFeedsProcessor {
 	return &dataFeedsProcessor{
 		metrics: metrics,
 		emitter: emitter,
+		ccip:    ccip,
 	}
 }
 
@@ -33,7 +35,7 @@ func (p *dataFeedsProcessor) Process(ctx context.Context, m proto.Message, attrK
 		// Notice: we assume all writes are Data-Feeds (static schema) writes for now
 
 		// Decode as an array of 'data-feeds.registry.FeedUpdated' messages
-		updates, err := registry.DecodeAsFeedUpdated(msg)
+		updates, err := registry.DecodeAsFeedUpdated(msg, p.ccip)
 		if err != nil {
 			return fmt.Errorf("failed to decode as 'data-feeds.registry.FeedUpdated': %w", err)
 		}
@@ -60,5 +62,9 @@ func (p *dataFeedsProcessor) SetEmitter(e monitor.ProtoEmitter) {
 }
 
 func (p *dataFeedsProcessor) Name() string {
-	return "EVMDF"
+	name := "evm-data-feeds"
+	if p.ccip {
+		name += "-ccip"
+	}
+	return name
 }
