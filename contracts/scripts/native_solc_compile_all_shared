@@ -44,6 +44,7 @@ compileContract test/helpers/LogEmitter
 compileContract test/helpers/VRFLogEmitter
 compileContract mocks/MockV3Aggregator
 compileContract mocks/WERC20Mock
+compileContract token/ERC20/zksync/WETH9ZKSync
 
 compileContract openzeppelin-solidity/v4.8.3/contracts/token/ERC20/ERC20 vendor
 compileContract multicall/ebd8b64/src/Multicall3 vendor

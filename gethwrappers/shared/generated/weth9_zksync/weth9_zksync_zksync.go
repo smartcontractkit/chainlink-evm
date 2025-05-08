@@ -1,6 +1,6 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
-package weth9
+package weth9_zksync
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 	"github.com/zksync-sdk/zksync2-go/types"
 )
 
-func DeployWETH9Zk(deployOpts *accounts.TransactOpts, client *clients.Client, wallet *accounts.Wallet, backend bind.ContractBackend, args ...interface{}) (common.Address, *types.Receipt, *WETH9, error) {
+func DeployWETH9ZKSyncZk(deployOpts *accounts.TransactOpts, client *clients.Client, wallet *accounts.Wallet, backend bind.ContractBackend, args ...interface{}) (common.Address, *types.Receipt, *WETH9ZKSync, error) {
 	var calldata []byte
 	if len(args) > 0 {
-		abi, err := WETH9MetaData.GetAbi()
+		abi, err := WETH9ZKSyncMetaData.GetAbi()
 		if err != nil {
 			return common.Address{}, nil, nil, err
 		}
@@ -50,7 +50,7 @@ func DeployWETH9Zk(deployOpts *accounts.TransactOpts, client *clients.Client, wa
 	}
 
 	address := receipt.ContractAddress
-	contract, err := NewWETH9(address, backend)
+	contract, err := NewWETH9ZKSync(address, backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
