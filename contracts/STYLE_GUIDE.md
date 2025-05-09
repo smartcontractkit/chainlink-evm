@@ -26,7 +26,6 @@ We use `forge fmt` for all new projects, but some older ones still rely on `pret
 - Structs, events and custom errors should be defined at the top of the contract.
 - Group helper functions near the functions that use them. This is helpful when reading code because the related pieces are localized.
 - 🤔Why not follow the Solidity recommendation of grouping by visibility? Visibility is clearly defined next to the method signature, making it trivial to check. However, searching can be deceiving because of inherited methods. Given this inconsistency in grouping, we find it easier to read and more consistent to organize code around functionality. Additionally, we recommend testing the public interface for any Solidity contract to ensure it only exposes expected methods.
-- Follow the [Solidity folder structure CLIP](https://github.com/smartcontractkit/CLIPs/tree/main/clips/2023-04-13-solidity-folder-structure)
 
 ### Delineate Unaudited Code
 
@@ -187,7 +186,7 @@ The original error will not be human-readable in an off-chain explorer because i
 
 ### Call with Exact Gas
 
-- `call` accepts a gas parameter, but that parameter is a ceiling on gas usage. If a transaction does not have enough gas, `call` will simply provide as much gas as it safely can. This is unintuitive and can lead to transactions failing for unexpected reasons. We have [an implementation of `callWithExactGas`](https://github.com/smartcontractkit/chainlink/blob/075f3e2caf61b8685d2dc78714f1ee39764fda17/contracts/src/v0.8/KeeperRegistry.sol#L792) to ensure the precise gas amount requested is provided.
+- `call` accepts a gas parameter, but that parameter is a ceiling on gas usage. If a transaction does not have enough gas, `call` will simply provide as much gas as it safely can. This is unintuitive and can lead to transactions failing for unexpected reasons. We have [an implementation of `callWithExactGas`](https://github.com/smartcontractkit/chainlink-evm/blob/075f3e2caf61b8685d2dc78714f1ee39764fda17/contracts/src/v0.8/KeeperRegistry.sol#L792) to ensure the precise gas amount requested is provided.
 
 ### Sending tokens
 

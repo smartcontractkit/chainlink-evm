@@ -13,6 +13,7 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	evmconfig "github.com/smartcontractkit/chainlink-evm/pkg/config"
@@ -109,6 +110,7 @@ type chainClient struct {
 
 func NewChainClient(
 	lggr logger.Logger,
+	metrics metrics.GenericMultiNodeMetrics,
 	selectionMode string,
 	leaseDuration time.Duration,
 	nodes []multinode.Node[*big.Int, *RPCClient],
@@ -121,6 +123,7 @@ func NewChainClient(
 	chainFamily := "EVM"
 	multiNode := multinode.NewMultiNode[*big.Int, *RPCClient](
 		lggr,
+		metrics,
 		selectionMode,
 		leaseDuration,
 		nodes,
@@ -135,6 +138,7 @@ func NewChainClient(
 		chainID,
 		chainFamily,
 		multiNode,
+		metrics,
 		func(err error) multinode.SendTxReturnCode { return 0 },
 		0, // use the default value provided by the implementation
 	)

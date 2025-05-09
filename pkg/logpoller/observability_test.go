@@ -14,12 +14,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
 )
+
+const network = "EVM Test"
 
 func TestMultipleMetricsArePublished(t *testing.T) {
 	ctx := testutils.Context(t)
@@ -58,7 +61,7 @@ func TestShouldPublishDurationInCaseOfError(t *testing.T) {
 	require.Error(t, err)
 
 	require.Equal(t, 1, testutil.CollectAndCount(orm.queryDuration))
-	require.Equal(t, 1, counterFromHistogramByLabels(t, orm.queryDuration, metrics.EVM, "200", "SelectLatestLogByEventSigWithConfs", "read"))
+	require.Equal(t, 1, counterFromHistogramByLabels(t, orm.queryDuration, network, "200", "SelectLatestLogByEventSigWithConfs", "read"))
 }
 
 func TestMetricsAreProperlyPopulatedWithLabels(t *testing.T) {
@@ -72,14 +75,14 @@ func TestMetricsAreProperlyPopulatedWithLabels(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	require.Equal(t, expectedCount, counterFromHistogramByLabels(t, orm.queryDuration, metrics.EVM, "420", "query", "read"))
-	require.Equal(t, expectedSize, counterFromGaugeByLabels(orm.datasetSize, metrics.EVM, "420", "query", "read"))
+	require.Equal(t, expectedCount, counterFromHistogramByLabels(t, orm.queryDuration, network, "420", "query", "read"))
+	require.Equal(t, expectedSize, counterFromGaugeByLabels(orm.datasetSize, network, "420", "query", "read"))
 
-	require.Equal(t, 0, counterFromHistogramByLabels(t, orm.queryDuration, metrics.EVM, "420", "other_query", "read"))
-	require.Equal(t, 0, counterFromHistogramByLabels(t, orm.queryDuration, metrics.EVM, "5", "query", "read"))
+	require.Equal(t, 0, counterFromHistogramByLabels(t, orm.queryDuration, network, "420", "other_query", "read"))
+	require.Equal(t, 0, counterFromHistogramByLabels(t, orm.queryDuration, network, "5", "query", "read"))
 
-	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, metrics.EVM, "420", "other_query", "read"))
-	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, metrics.EVM, "5", "query", "read"))
+	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, network, "420", "other_query", "read"))
+	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, network, "5", "query", "read"))
 }
 
 func TestNotPublishingDatasetSizeInCaseOfError(t *testing.T) {
@@ -88,8 +91,8 @@ func TestNotPublishingDatasetSizeInCaseOfError(t *testing.T) {
 	_, err := withObservedQueryAndResults(orm, "errorQuery", func() ([]string, error) { return nil, errors.New("error") })
 	require.Error(t, err)
 
-	require.Equal(t, 1, counterFromHistogramByLabels(t, orm.queryDuration, metrics.EVM, "420", "errorQuery", "read"))
-	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, metrics.EVM, "420", "errorQuery", "read"))
+	require.Equal(t, 1, counterFromHistogramByLabels(t, orm.queryDuration, network, "420", "errorQuery", "read"))
+	require.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, network, "420", "errorQuery", "read"))
 }
 
 func TestMetricsAreProperlyPopulatedForWrites(t *testing.T) {
@@ -97,7 +100,7 @@ func TestMetricsAreProperlyPopulatedForWrites(t *testing.T) {
 	require.NoError(t, withObservedExec(orm, "execQuery", metrics.Create, func() error { return nil }))
 	require.Error(t, withObservedExec(orm, "execQuery", metrics.Create, func() error { return errors.New("error") }))
 
-	require.Equal(t, 2, counterFromHistogramByLabels(t, orm.queryDuration, metrics.EVM, "420", "execQuery", "create"))
+	require.Equal(t, 2, counterFromHistogramByLabels(t, orm.queryDuration, network, "420", "execQuery", "create"))
 }
 
 func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
@@ -107,7 +110,7 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 
 	// First insert 10 logs
 	require.NoError(t, orm.InsertLogs(ctx, logs[:10]))
-	assert.Equal(t, 10, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(metrics.EVM, "420"))))
+	assert.Equal(t, 10, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(network, "420"))))
 
 	// Insert 5 more logs with block
 	require.NoError(t, orm.InsertLogsWithBlock(ctx, logs[10:15], Block{
@@ -116,8 +119,8 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		BlockTimestamp:       time.Now(),
 		FinalizedBlockNumber: 5,
 	}))
-	assert.Equal(t, 15, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(metrics.EVM, "420"))))
-	assert.Equal(t, 1, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(metrics.EVM, "420"))))
+	assert.Equal(t, 15, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(network, "420"))))
+	assert.Equal(t, 1, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(network, "420"))))
 
 	// Insert 5 more logs with block
 	require.NoError(t, orm.InsertLogsWithBlock(ctx, logs[15:], Block{
@@ -126,26 +129,26 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 		BlockTimestamp:       time.Now(),
 		FinalizedBlockNumber: 5,
 	}))
-	assert.Equal(t, 20, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(metrics.EVM, "420"))))
-	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(metrics.EVM, "420"))))
+	assert.Equal(t, 20, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(network, "420"))))
+	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(network, "420"))))
 
 	rowsAffected, err := orm.DeleteExpiredLogs(ctx, 3)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), rowsAffected)
-	assert.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, metrics.EVM, "420", "DeleteExpiredLogs", "delete"))
+	assert.Equal(t, 0, counterFromGaugeByLabels(orm.datasetSize, network, "420", "DeleteExpiredLogs", "delete"))
 
 	rowsAffected, err = orm.DeleteBlocksBefore(ctx, 30, 0)
 	require.NoError(t, err)
 	require.Equal(t, int64(2), rowsAffected)
-	assert.Equal(t, 2, counterFromGaugeByLabels(orm.datasetSize, metrics.EVM, "420", "DeleteBlocksBefore", "delete"))
+	assert.Equal(t, 2, counterFromGaugeByLabels(orm.datasetSize, network, "420", "DeleteBlocksBefore", "delete"))
 
 	// Don't update counters in case of an error
 	require.Error(t, orm.InsertLogsWithBlock(ctx, logs, Block{
 		BlockHash:      utils.RandomBytes32(),
 		BlockTimestamp: time.Now(),
 	}))
-	assert.Equal(t, 20, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(metrics.EVM, "420"))))
-	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(metrics.EVM, "420"))))
+	assert.Equal(t, 20, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(network, "420"))))
+	assert.Equal(t, 2, int(testutil.ToFloat64(orm.blocksInserted.WithLabelValues(network, "420"))))
 }
 
 func generateRandomLogs(chainID, count int) []Log {
@@ -168,10 +171,28 @@ func generateRandomLogs(chainID, count int) []Log {
 	return logs
 }
 
+func NewTestObservedORM(chainID *big.Int, ds sqlutil.DataSource, lggr logger.Logger) (*ObservedORM, error) {
+	lpMetrics, err := metrics.NewGenericLogPollerMetrics(chainID.String(), network)
+	if err != nil {
+		return nil, err
+	}
+	return &ObservedORM{
+		ORM:            NewORM(chainID, ds, lggr),
+		metrics:        lpMetrics,
+		queryDuration:  metrics.PromLpQueryDuration,
+		datasetSize:    metrics.PromLpQueryDataSets,
+		logsInserted:   metrics.PromLpLogsInserted,
+		blocksInserted: metrics.PromLpBlocksInserted,
+		chainID:        chainID.String(),
+	}, nil
+}
+
 func createObservedORM(t *testing.T, chainId int64) *ObservedORM {
 	lggr := logger.Test(t)
 	db := testutils.NewSqlxDB(t)
-	return NewObservedORM(big.NewInt(chainId), db, lggr)
+	observed, err := NewTestObservedORM(big.NewInt(chainId), db, lggr)
+	require.NoError(t, err)
+	return observed
 }
 
 func resetMetrics(lp ObservedORM) {

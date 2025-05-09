@@ -25,15 +25,14 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-framework/metrics"
-	"github.com/smartcontractkit/chainlink-framework/multinode"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
+	"github.com/smartcontractkit/chainlink-framework/multinode"
 )
 
 var (
@@ -155,13 +154,13 @@ func NewRPCClient(
 	return r
 }
 
-func (r *RPCClient) Ping(ctx context.Context) error {
-	version, err := r.ClientVersion(ctx)
+func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err error) {
+	err = r.CallContext(ctx, &version, "web3_clientVersion")
 	if err != nil {
-		return fmt.Errorf("ping failed: %w", err)
+		return "", fmt.Errorf("fetching client version failed: %w", err)
 	}
-	r.rpcLog.Debugf("ping client version: %s", version)
-	return err
+	r.rpcLog.Debugf("client version: %s", version)
+	return version, nil
 }
 
 func (r *RPCClient) Dial(callerCtx context.Context) error {
@@ -1127,11 +1126,6 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 		"log", l,
 	)
 
-	return
-}
-
-func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err error) {
-	err = r.CallContext(ctx, &version, "web3_clientVersion")
 	return
 }
 
