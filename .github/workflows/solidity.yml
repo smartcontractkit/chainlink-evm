@@ -253,16 +253,16 @@ jobs:
           IS_RELEASE_CORE: ${{ needs.tag-check.outputs.is-release-core }}
           RELEASE_VERSION_CORE: ${{ needs.tag-check.outputs.release-version-core }}
         run: |
-          version=""
-          if [[ $IS_RELEASE_CORE == 'true' ]]; then
-            version="${RELEASE_VERSION_CORE}"
+          VERSION=""
+          if [[ "${IS_RELEASE_CORE}" == 'true' ]]; then
+            VERSION="${RELEASE_VERSION_CORE}"
           else
             echo "::error::No release version found."
             exit 1
           fi
-          package_json_version="$(jq -r '.version' package.json)"
-          if [[ "$PACKAGE_JSON_VERSION" != "${version}" ]]; then
-            echo "::error version mismatch: package.json version ($package_json_version) does not match version computed from tag ${version}"
+          PACKAGE_JSON_VERSION="$(jq -r '.version' package.json)"
+          if [[ "${PACKAGE_JSON_VERSION}" != "${VERSION}" ]]; then
+            echo "::error::Version mismatch: package.json version (${PACKAGE_JSON_VERSION}) does not match version computed from tag ${VERSION}"
             exit 1
           fi
 
