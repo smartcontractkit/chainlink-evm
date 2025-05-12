@@ -1420,7 +1420,12 @@ func (lp *logPoller) fillRemainingBlocksFromRPC(
 			"remainingBlocks", remainingBlocks)
 	}
 
-	return lp.batchFetchBlocks(ctx, remainingBlocks, lp.rpcBatchSize)
+	batchSize := lp.rpcBatchSize - 2 // subtract 2 to leave room for 2 reference requests added in lp.fetchBlocks()
+	if batchSize < 1 {
+		batchSize = 1
+	}
+
+	return lp.batchFetchBlocks(ctx, remainingBlocks, batchSize)
 }
 
 // newBlockReq constructs an eth_getBlockByNumber request for particular block number

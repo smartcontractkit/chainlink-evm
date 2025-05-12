@@ -9,8 +9,10 @@ import (
 	"time"
 
 	pkgerrors "github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 	client "github.com/smartcontractkit/chainlink-framework/multinode"
 	"github.com/smartcontractkit/chainlink-framework/multinode/mocks"
@@ -152,6 +154,9 @@ func NewChainClientWithTestNode(
 		return nil, pkgerrors.Errorf("ethereum url scheme must be websocket: %s", parsed.String())
 	}
 
+	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
+	require.NoError(t, err)
+
 	lggr := logger.Test(t)
 	nodePoolCfg := TestNodePoolConfig{
 		NodeFinalizedBlockPollInterval: 1 * time.Second,
@@ -159,7 +164,7 @@ func NewChainClientWithTestNode(
 	rpc := NewRPCClient(nodePoolCfg, lggr, parsed, rpcHTTPURL, "eth-primary-rpc-0", id, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
-		nodeCfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, lggr, parsed, rpcHTTPURL, "eth-primary-node-0", id, chainID, 1, rpc, "EVM")
+		nodeCfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, lggr, multiNodeMetrics, parsed, rpcHTTPURL, "eth-primary-node-0", id, chainID, 1, rpc, "EVM")
 	primaries := []multinode.Node[*big.Int, *RPCClient]{n}
 
 	sendonlys := make([]multinode.SendOnlyNode[*big.Int, *RPCClient], len(sendonlyRPCURLs))
@@ -169,12 +174,12 @@ func NewChainClientWithTestNode(
 		}
 		rpc := NewRPCClient(nodePoolCfg, lggr, nil, &sendonlyRPCURLs[i], fmt.Sprintf("eth-sendonly-rpc-%d", i), id, chainID, multinode.Secondary, client.QueryTimeout, client.QueryTimeout, "")
 		s := multinode.NewSendOnlyNode[*big.Int, *RPCClient](
-			lggr, u, fmt.Sprintf("eth-sendonly-%d", i), chainID, rpc)
+			lggr, multiNodeMetrics, u, fmt.Sprintf("eth-sendonly-%d", i), chainID, rpc)
 		sendonlys[i] = s
 	}
 
 	clientErrors := NewTestClientErrors()
-	c := NewChainClient(lggr, nodeCfg.SelectionMode(), leaseDuration, primaries, sendonlys, chainID, &clientErrors, 0, "")
+	c := NewChainClient(lggr, multiNodeMetrics, nodeCfg.SelectionMode(), leaseDuration, primaries, sendonlys, chainID, &clientErrors, 0, "")
 	t.Cleanup(c.Close)
 	return c, nil
 }
@@ -188,7 +193,10 @@ func NewChainClientWithEmptyNode(
 ) Client {
 	lggr := logger.Test(t)
 
-	c := NewChainClient(lggr, selectionMode, leaseDuration, nil, nil, chainID, nil, 0, "")
+	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
+	require.NoError(t, err)
+
+	c := NewChainClient(lggr, multiNodeMetrics, selectionMode, leaseDuration, nil, nil, chainID, nil, 0, "")
 	t.Cleanup(c.Close)
 	return c
 }
@@ -208,11 +216,14 @@ func NewChainClientWithMockedRpc(
 	}
 	parsed, _ := url.ParseRequestURI("ws://test")
 
+	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
+	require.NoError(t, err)
+
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
-		cfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, lggr, parsed, nil, "eth-primary-node-0", 1, chainID, 1, rpc, "EVM")
+		cfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, lggr, multiNodeMetrics, parsed, nil, "eth-primary-node-0", 1, chainID, 1, rpc, "EVM")
 	primaries := []multinode.Node[*big.Int, *RPCClient]{n}
 	clientErrors := NewTestClientErrors()
-	c := NewChainClient(lggr, selectionMode, leaseDuration, primaries, nil, chainID, &clientErrors, 0, "")
+	c := NewChainClient(lggr, multiNodeMetrics, selectionMode, leaseDuration, primaries, nil, chainID, &clientErrors, 0, "")
 	t.Cleanup(c.Close)
 	return c
 }

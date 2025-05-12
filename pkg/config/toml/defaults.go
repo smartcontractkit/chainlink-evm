@@ -11,7 +11,7 @@ import (
 	"slices"
 	"strings"
 
-	cconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
+	"github.com/smartcontractkit/chainlink-common/pkg/config"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
@@ -141,17 +141,17 @@ func readConfig(path string, reader func(name string) ([]byte, error)) (*big.Big
 		return nil, Chain{}, fmt.Errorf("error reading file: %w", err)
 	}
 
-	var config = struct {
+	var cfg = struct {
 		ChainID *big.Big
 		Chain
 	}{}
 
 	// decode from toml to a chain config
-	if err := cconfig.DecodeTOML(bytes.NewReader(bts), &config); err != nil {
+	if err := config.DecodeTOML(bytes.NewReader(bts), &cfg); err != nil {
 		return nil, Chain{}, fmt.Errorf("error in TOML decoding %s: %w", path, err)
 	}
 
-	return config.ChainID, config.Chain, nil
+	return cfg.ChainID, cfg.Chain, nil
 }
 
 // DefaultsNamed returns the default Chain values, optionally for the given chainID, as well as a name if the chainID is known.
