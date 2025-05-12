@@ -581,13 +581,13 @@ func (f *confirmationsFilter) Accept(visitor primitives.Visitor) {
 
 func toAddress(f *evm.AddressFilter) *addressFilter {
 	return &addressFilter{
-		address: common.HexToAddress(f.Address),
+		address: f.Address,
 	}
 }
 
 func toEventSig(f *evm.EventSig) *eventSigFilter {
 	return &eventSigFilter{
-		eventSig: common.HexToHash(f.EventSig),
+		eventSig: f.EventSig,
 	}
 }
 
@@ -618,10 +618,10 @@ func toHashValueComparers(cs []evm.HashedValueComparator) []HashedValueComparato
 	return ret
 }
 
-func toHashes(ss []string) []common.Hash {
+func toHashes(ss []evm.Hash) []common.Hash {
 	ret := make([]common.Hash, 0, len(ss))
 	for _, s := range ss {
-		ret = append(ret, common.HexToHash(s))
+		ret = append(ret, s)
 	}
 
 	return ret
