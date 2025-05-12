@@ -11,9 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/types/chains/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
-	"github.com/smartcontractkit/chainlink-common/pkg/types/query/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
+	evmprimitives "github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives/evm"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
@@ -44,7 +45,7 @@ type pgDSLParser struct {
 }
 
 var _ primitives.Visitor = (*pgDSLParser)(nil)
-var _ evm.Visitor = (*pgDSLParser)(nil)
+var _ evmprimitives.Visitor = (*pgDSLParser)(nil)
 
 func (v *pgDSLParser) Comparator(_ primitives.Comparator) {}
 
@@ -194,19 +195,19 @@ func (v *pgDSLParser) visitEventTopicsByValueFilter(p *eventByTopicFilter) {
 }
 
 // common/types/evm.Visitor implementation
-func (v *pgDSLParser) VisitAddressFilter(f *evm.AddressFilter) {
+func (v *pgDSLParser) VisitAddressFilter(f *evmprimitives.AddressFilter) {
 	v.visitAddressFilter(toAddress(f))
 }
 
-func (v *pgDSLParser) VisitEventSigFilter(f *evm.EventSig) {
+func (v *pgDSLParser) VisitEventSigFilter(f *evmprimitives.EventSig) {
 	v.visitEventSigFilter(toEventSig(f))
 }
 
-func (v *pgDSLParser) VisitEventTopicsByValueFilter(f *evm.EventByTopic) {
+func (v *pgDSLParser) VisitEventTopicsByValueFilter(f *evmprimitives.EventByTopic) {
 	v.visitEventTopicsByValueFilter(toEventTopicsByValue(f))
 }
 
-func (v *pgDSLParser) VisitEventByWordFilter(f *evm.EventByWord) {
+func (v *pgDSLParser) VisitEventByWordFilter(f *evmprimitives.EventByWord) {
 	v.visitEventByWordFilter(toEventByWord(f))
 }
 
@@ -579,33 +580,33 @@ func (f *confirmationsFilter) Accept(visitor primitives.Visitor) {
 	}
 }
 
-func toAddress(f *evm.AddressFilter) *addressFilter {
+func toAddress(f *evmprimitives.AddressFilter) *addressFilter {
 	return &addressFilter{
 		address: f.Address,
 	}
 }
 
-func toEventSig(f *evm.EventSig) *eventSigFilter {
+func toEventSig(f *evmprimitives.EventSig) *eventSigFilter {
 	return &eventSigFilter{
 		eventSig: f.EventSig,
 	}
 }
 
-func toEventTopicsByValue(f *evm.EventByTopic) *eventByTopicFilter {
+func toEventTopicsByValue(f *evmprimitives.EventByTopic) *eventByTopicFilter {
 	return &eventByTopicFilter{
 		Topic:          f.Topic,
 		ValueComparers: toHashValueComparers(f.HashedValueComprarers),
 	}
 }
 
-func toEventByWord(f *evm.EventByWord) *eventByWordFilter {
+func toEventByWord(f *evmprimitives.EventByWord) *eventByWordFilter {
 	return &eventByWordFilter{
 		WordIndex:            f.WordIndex,
 		HashedValueComparers: toHashValueComparers(f.HashedValueComparers),
 	}
 }
 
-func toHashValueComparers(cs []evm.HashedValueComparator) []HashedValueComparator {
+func toHashValueComparers(cs []evmprimitives.HashedValueComparator) []HashedValueComparator {
 	ret := make([]HashedValueComparator, 0, len(cs))
 
 	for _, c := range cs {
