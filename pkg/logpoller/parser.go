@@ -194,20 +194,20 @@ func (v *pgDSLParser) visitEventTopicsByValueFilter(p *eventByTopicFilter) {
 	v.expression = strings.Join(comps, " AND ")
 }
 
-// common/types/evm.Visitor implementation
-func (v *pgDSLParser) VisitAddressFilter(f *evmprimitives.AddressFilter) {
+// common/types/query/primitives/evm.Visitor implementation
+func (v *pgDSLParser) Address(f *evmprimitives.Address) {
 	v.visitAddressFilter(toAddress(f))
 }
 
-func (v *pgDSLParser) VisitEventSigFilter(f *evmprimitives.EventSig) {
+func (v *pgDSLParser) EventSig(f *evmprimitives.EventSig) {
 	v.visitEventSigFilter(toEventSig(f))
 }
 
-func (v *pgDSLParser) VisitEventTopicsByValueFilter(f *evmprimitives.EventByTopic) {
+func (v *pgDSLParser) EventTopicsByValue(f *evmprimitives.EventByTopic) {
 	v.visitEventTopicsByValueFilter(toEventTopicsByValue(f))
 }
 
-func (v *pgDSLParser) VisitEventByWordFilter(f *evmprimitives.EventByWord) {
+func (v *pgDSLParser) EventByWord(f *evmprimitives.EventByWord) {
 	v.visitEventByWordFilter(toEventByWord(f))
 }
 
@@ -580,7 +580,7 @@ func (f *confirmationsFilter) Accept(visitor primitives.Visitor) {
 	}
 }
 
-func toAddress(f *evmprimitives.AddressFilter) *addressFilter {
+func toAddress(f *evmprimitives.Address) *addressFilter {
 	return &addressFilter{
 		address: f.Address,
 	}
