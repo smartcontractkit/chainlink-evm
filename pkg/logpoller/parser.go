@@ -194,7 +194,6 @@ func (v *pgDSLParser) visitEventTopicsByValueFilter(p *eventByTopicFilter) {
 	v.expression = strings.Join(comps, " AND ")
 }
 
-// common/types/query/primitives/evm.Visitor implementation
 func (v *pgDSLParser) Address(f *evmprimitives.Address) {
 	v.visitAddressFilter(toAddress(f))
 }
