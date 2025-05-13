@@ -24,7 +24,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	evmcommontypes "github.com/smartcontractkit/chainlink-common/pkg/types/chains/evm"
 	"github.com/smartcontractkit/chainlink-framework/chains"
 	"github.com/smartcontractkit/chainlink-framework/chains/txmgr"
 	txmgrtypes "github.com/smartcontractkit/chainlink-framework/chains/txmgr/types"
