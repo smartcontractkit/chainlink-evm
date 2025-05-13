@@ -213,9 +213,8 @@ func (e evmCapability) UnregisterFromWorkflow(_ context.Context, _ capabilities.
 	panic("implement me")
 }
 
-func (e evmCapability) Execute(_ context.Context, _ capabilities.CapabilityRequest) (capabilities.CapabilityResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (e evmCapability) Initialise(_ context.Context, _ string, _ core.TelemetryService, _ core.KeyValueStore, _ core.ErrorLog, _ core.PipelineRunnerService, _ core.RelayerSet, _ core.OracleFactory) error {
+	return nil
 }
 
 func (e evmCapability) Start(_ context.Context) error {
@@ -246,18 +245,13 @@ func (e evmCapability) Ready() error {
 	return nil
 }
 
-func (e evmCapability) Initialise(_ context.Context, _ string, _ core.TelemetryService, _ core.KeyValueStore, _ core.ErrorLog, _ core.PipelineRunnerService, _ core.RelayerSet, _ core.OracleFactory) error {
-	// TODO no-op for now, figure out if we want to run this as a standard capability
-	return nil
-}
-
 type EVMCapabilityOpts struct {
 	ID string
 	types.EVMService
 	// TODO a lot of things like config are handled by the Relayer indirectly, needs another passover for these detailks
 }
 
-func NewEVMCapablity(opts EVMCapabilityOpts) capabilities.ExecutableAndTriggerCapability {
+func NewEVMCapablity(opts EVMCapabilityOpts) evmcapserver.EVMChainCapability {
 	capInfo := capabilities.MustNewCapabilityInfo(opts.ID, capabilities.CapabilityTypeTarget, CapabilityName)
 
 	return evmCapability{CapabilityInfo: capInfo, EVMService: opts.EVMService}
