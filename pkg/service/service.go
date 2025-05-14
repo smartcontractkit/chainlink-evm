@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	"math/big"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -23,10 +24,21 @@ const (
 type evmCapability struct {
 	capabilities.CapabilityInfo
 	types.EVMService
+	LP logpoller.LogPoller
 	// TODO ?
 	//evmcapserver.UnimplementedEVMCapabilityServer
 	// TODO
 	//config Config
+}
+
+func (e evmCapability) RegisterLogTrigger(ctx context.Context, metadata capabilities.RequestMetadata, input *evmcap.Config) (<-chan capabilities.TriggerAndId[*evmcap.LogEvent], error) {
+	//TODO: Lautaro implement me
+	panic("implement me")
+}
+
+func (e evmCapability) UnregisterLogTrigger(ctx context.Context, metadata capabilities.RequestMetadata, input *evmcap.Config) error {
+	//TODO: Lautaro implement me
+	panic("implement me")
 }
 
 func (e evmCapability) CallContract(ctx context.Context, _ capabilities.RequestMetadata, input *evmcap.CallContractRequest) (*evmcap.CallContractReply, error) {
@@ -254,13 +266,15 @@ func (e evmCapability) Initialise(_ context.Context, _ string, _ core.TelemetryS
 type EVMCapabilityOpts struct {
 	ID string
 	types.EVMService
+	LP logpoller.LogPoller
 	// TODO a lot of things like config are handled by the Relayer indirectly, needs another passover for these detailks
 }
 
 func NewEVMCapablity(opts EVMCapabilityOpts) capabilities.ExecutableAndTriggerCapability {
 	capInfo := capabilities.MustNewCapabilityInfo(opts.ID, capabilities.CapabilityTypeTarget, CapabilityName)
 
-	return evmCapability{CapabilityInfo: capInfo, EVMService: opts.EVMService}
+	//log poller should reach here?
+	return evmCapability{CapabilityInfo: capInfo, EVMService: opts.EVMService, LP: opts.LP}
 }
 
 var _ evmcapserver.EVMChainCapability = &evmCapability{}
