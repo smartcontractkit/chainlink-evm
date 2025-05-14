@@ -1,3 +1,4 @@
+//nolint:revive // disable revive
 package por
 
 import (

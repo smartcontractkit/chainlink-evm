@@ -2,7 +2,7 @@ package datafeeds
 
 import (
 	"encoding/hex"
-	"fmt"
+	"errors"
 )
 
 // FeedID represents a 32-byte feed ID
@@ -30,7 +30,7 @@ func hexDecodeStringAsByte32(s string) ([32]byte, error) {
 		return b, err
 	}
 	if len(decoded) != 32 {
-		return b, fmt.Errorf("decoded string is not 32 bytes long")
+		return b, errors.New("decoded string is not 32 bytes long")
 	}
 	copy(b[:], decoded)
 	return b, nil

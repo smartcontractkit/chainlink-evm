@@ -4,8 +4,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 )
 
 func TestDecodeFeedReport(t *testing.T) {
