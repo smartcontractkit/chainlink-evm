@@ -7,9 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"math/big"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -59,6 +61,20 @@ func (d *DualBroadcastClient) SendTransaction(ctx context.Context, tx *types.Tra
 	}
 
 	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable {
+		// Note: this is a best effort attempt to sync secondary transmission broadcast times with block times.
+		// It should only be used with secondary transmissions as it can significantly delay broadcast and
+		// inclusion times.
+		if header, err := d.c.HeaderByNumber(ctx, nil); err == nil {
+			if header.Time > math.MaxInt64 {
+				return fmt.Errorf("overflow for timestamp: %d", header.Time)
+			}
+			timeSinceBlock := time.Since(time.Unix(int64(header.Time), 0))
+			if timeSinceBlock > 6*time.Second {
+				paddedBlockTime := time.Millisecond * 12500
+				<-time.After(paddedBlockTime - timeSinceBlock)
+			}
+		}
+
 		data, err := attempt.SignedTransaction.MarshalBinary()
 		if err != nil {
 			return err
