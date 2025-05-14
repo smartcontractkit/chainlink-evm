@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -8,6 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 )
 
 func MustInsertPipelineRun(t *testing.T, db *sqlx.DB) (runID int64) {
@@ -19,4 +22,13 @@ func MustInsertUnfinishedPipelineTaskRun(t *testing.T, db *sqlx.DB, pipelineRunI
 	/* #nosec G404 */
 	require.NoError(t, db.Get(&trID, `INSERT INTO pipeline_task_runs (dot_id, pipeline_run_id, id, type, created_at) VALUES ($1,$2,$3, '', NOW()) RETURNING id`, strconv.Itoa(rand.Int()), pipelineRunID, uuid.New()))
 	return trID
+}
+
+func AssertCount(t testing.TB, ds sqlutil.DataSource, tableName string, expected int64) {
+	t.Helper()
+	ctx := Context(t)
+	var count int64
+	err := ds.GetContext(ctx, &count, fmt.Sprintf(`SELECT count(*) FROM %s;`, tableName))
+	require.NoError(t, err)
+	require.Equal(t, expected, count)
 }
