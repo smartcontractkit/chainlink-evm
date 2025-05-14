@@ -31,13 +31,17 @@ type evmCapability struct {
 	//config Config
 }
 
-func (e evmCapability) RegisterLogTrigger(ctx context.Context, metadata capabilities.RequestMetadata, input *evmcap.Config) (<-chan capabilities.TriggerAndId[*evmcap.LogEvent], error) {
-	//TODO: Lautaro implement me
+func (e evmCapability) RegisterLogTrigger(ctx context.Context, metadata capabilities.RequestMetadata, input *evmcap.FilterLogsRequest) (<-chan capabilities.TriggerAndId[*evmcap.FilterLogsReply], error) {
+
+	addresses := input.GetFilterQuery().GetAddresses()
+	if len(addresses) == 0 {
+		return nil, fmt.Errorf("no addresses provided")
+	}
 	panic("implement me")
 }
 
-func (e evmCapability) UnregisterLogTrigger(ctx context.Context, metadata capabilities.RequestMetadata, input *evmcap.Config) error {
-	//TODO: Lautaro implement me
+func (e evmCapability) UnregisterLogTrigger(ctx context.Context, metadata capabilities.RequestMetadata, input *evmcap.FilterLogsRequest) error {
+	//TODO implement me
 	panic("implement me")
 }
 
