@@ -74,3 +74,5 @@ contracts/package.json @smartcontractkit/foundations @smartcontractkit/core @sma
 contracts/pnpm.lock @smartcontractkit/core @smartcontractkit/core-solidity
 go.mod @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity
 go.sum @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity
+
+pkg/txm @dimriou @smartcontractkit/bix-framework @smartcontractkit/core
