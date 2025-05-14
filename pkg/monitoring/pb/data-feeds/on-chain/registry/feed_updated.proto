@@ -10,19 +10,20 @@ message FeedUpdated {
   string feed_id = 1; // bytes as hex string for readability
   uint32 observations_timestamp = 2;
   bytes benchmark = 3;
-  bytes report = 4;
+  bytes bundle = 4;
+  bytes report = 5;
 
   // Notice: benchmark_val is the benchmark i192 on-chain value decoded as an double (float64), scaled by number of decimals (e.g., 1e-18)
   // This is the largest type Prometheus supports, and this conversion can overflow but so far was sufficient
   // for most use-cases. For big numbers, benchmark bytes should be used instead.
   //
   // Set as `math.NaN()` if report data type not a number, or `+/-Inf` if number doesn't fit in double.
-  double benchmark_val = 5;
+  double benchmark_val = 6;
 
   // Head data - when was the event produced on-chain
-  string block_hash = 6;
-  string block_height = 7;
-  uint64 block_timestamp = 8;
+  string block_hash = 7;
+  string block_height = 8;
+  uint64 block_timestamp = 9;
 
   // Transaction data - info about the tx that mained the event (optional)
   string tx_id = 10; // TXM ref

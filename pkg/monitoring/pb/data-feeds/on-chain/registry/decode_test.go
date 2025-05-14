@@ -11,6 +11,7 @@ import (
 	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/por"
 	wt_msg "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
 )
@@ -32,6 +33,30 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 	data, err := datafeeds.GetSchema(false).Pack(reports)
 	require.NoError(t, err)
 
+	runTests(t, data, false)
+}
+
+func TestPORDecodeAsReportProcessed(t *testing.T) {
+	reports := &por.Reports{
+		{
+			DataId:    [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x8, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
+			Timestamp: 1620000000,
+			Bundle:    []byte{0x01, 0x02, 0x03},
+		},
+		{
+			DataId:    [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x22, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
+			Timestamp: 1620000001,
+			Bundle:    []byte{0x04, 0x94, 0x25},
+		},
+	}
+
+	data, err := por.GetSchema().Pack(reports)
+	require.NoError(t, err)
+
+	runTests(t, data, true)
+}
+
+func runTests(t *testing.T, data []byte, por bool) {
 	report := platform.Report{
 		Metadata: ocr3types.Metadata{
 			Version:          1,
@@ -49,6 +74,51 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 
 	rawReport, err := report.Encode()
 	require.NoError(t, err)
+
+	expected := []FeedUpdated{
+		{
+			FeedId:                "0x0102030405060708090a0b0c0d0e0f1000000000000000000000000000000000",
+			ObservationsTimestamp: 1620000000,
+			Benchmark:             []uint8{0x11, 0x22, 0x10, 0xf4, 0x7d, 0xe9, 0x81, 0x15},
+			Bundle:                []uint8{},
+			Report:                []uint8{},
+
+			BenchmarkVal: math.NaN(),
+
+			BlockHash:      "0xaa",
+			BlockHeight:    "17",
+			BlockTimestamp: 0x66f5bf69,
+
+			TxSender:   "example-transmitter",
+			TxReceiver: "example-forwarder",
+		},
+		{
+			FeedId:                "0x0102030405060722090a0b0c0d0e0f1000000000000000000000000000000000",
+			ObservationsTimestamp: 1620000001,
+			Benchmark:             []uint8{0x04, 0x94, 0x25},
+			Bundle:                []uint8{},
+			Report:                []uint8{},
+			BenchmarkVal:          3000.69,
+
+			BlockHash:      "0xaa",
+			BlockHeight:    "17",
+			BlockTimestamp: 0x66f5bf69,
+
+			TxSender:   "example-transmitter",
+			TxReceiver: "example-forwarder",
+		},
+	}
+
+	if por {
+		expected[0].Bundle = []uint8{0x01, 0x02, 0x03}
+		expected[1].Bundle = []uint8{0x04, 0x94, 0x25}
+
+		expected[0].Benchmark = []uint8{}
+		expected[1].Benchmark = []uint8{}
+
+		expected[0].BenchmarkVal = math.NaN()
+		expected[1].BenchmarkVal = 0
+	}
 
 	// Define test cases
 	tests := []struct {
@@ -79,38 +149,8 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 				BlockHeight:    "17",
 				BlockTimestamp: 0x66f5bf69,
 			},
-			expected: []FeedUpdated{
-				{
-					FeedId:                "0x0102030405060708090a0b0c0d0e0f1000000000000000000000000000000000",
-					ObservationsTimestamp: 1620000000,
-					Benchmark:             []uint8{0x11, 0x22, 0x10, 0xf4, 0x7d, 0xe9, 0x81, 0x15},
-					Report:                []uint8{},
-
-					BenchmarkVal: math.NaN(),
-
-					BlockHash:      "0xaa",
-					BlockHeight:    "17",
-					BlockTimestamp: 0x66f5bf69,
-
-					TxSender:   "example-transmitter",
-					TxReceiver: "example-forwarder",
-				},
-				{
-					FeedId:                "0x0102030405060722090a0b0c0d0e0f1000000000000000000000000000000000",
-					ObservationsTimestamp: 1620000001,
-					Benchmark:             []uint8{0x04, 0x94, 0x25},
-					Report:                []uint8{},
-					BenchmarkVal:          3000.69,
-
-					BlockHash:      "0xaa",
-					BlockHeight:    "17",
-					BlockTimestamp: 0x66f5bf69,
-
-					TxSender:   "example-transmitter",
-					TxReceiver: "example-forwarder",
-				},
-			},
-			wantErr: false,
+			expected: expected,
+			wantErr:  false,
 		},
 		{
 			name: "Invalid input",
@@ -137,7 +177,13 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := DecodeAsFeedUpdated(&tt.input, false)
+			var result []*FeedUpdated
+			var err error
+			if por {
+				result, err = DecodePORAsFeedUpdated(&tt.input)
+			} else {
+				result, err = DecodeAsFeedUpdated(&tt.input, false)
+			}
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {

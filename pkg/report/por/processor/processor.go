@@ -7,39 +7,32 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/data-feeds/on-chain/registry"
+
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/beholder/monitor"
 	wt "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 )
 
-// EVM Data-Feeds specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
-type dataFeedsProcessor struct {
+// EVM POR specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
+type porFeedsProcessor struct {
 	emitter monitor.ProtoEmitter
 	metrics *registry.Metrics
-	ccip    bool
 }
 
-func NewDataFeedsProcessor(metrics *registry.Metrics, emitter monitor.ProtoEmitter, ccip bool) *dataFeedsProcessor {
-	return &dataFeedsProcessor{
+func NewPORFeedsProcessor(metrics *registry.Metrics, emitter monitor.ProtoEmitter) *porFeedsProcessor {
+	return &porFeedsProcessor{
 		metrics: metrics,
 		emitter: emitter,
-		ccip:    ccip,
 	}
 }
 
-func (p *dataFeedsProcessor) Process(ctx context.Context, m proto.Message, attrKVs ...any) error {
+func (p *porFeedsProcessor) Process(ctx context.Context, m proto.Message, attrKVs ...any) error {
 	// Switch on the type of the proto.Message
 	switch msg := m.(type) {
 	case *wt.WriteConfirmed:
-		// TODO: fallthrough if not a write containing a DF report
-		// https://smartcontract-it.atlassian.net/browse/NONEVM-818
-		// Notice: we assume all writes are Data-Feeds (static schema) writes for now
-
-		// Decode as an array of 'data-feeds.registry.FeedUpdated' messages
-		updates, err := registry.DecodeAsFeedUpdated(msg, p.ccip)
+		updates, err := registry.DecodePORAsFeedUpdated(msg)
 		if err != nil {
 			return fmt.Errorf("failed to decode as 'data-feeds.registry.FeedUpdated': %w", err)
 		}
-		// Emit the 'data-feeds.registry.FeedUpdated' messages
 		for _, update := range updates {
 			err = p.emitter.EmitWithLog(ctx, update, attrKVs...)
 			if err != nil {
@@ -57,14 +50,10 @@ func (p *dataFeedsProcessor) Process(ctx context.Context, m proto.Message, attrK
 	}
 }
 
-func (p *dataFeedsProcessor) SetEmitter(e monitor.ProtoEmitter) {
+func (p *porFeedsProcessor) SetEmitter(e monitor.ProtoEmitter) {
 	p.emitter = e
 }
 
-func (p *dataFeedsProcessor) Name() string {
-	name := "evm-data-feeds"
-	if p.ccip {
-		name += "-ccip"
-	}
-	return name
+func (p *porFeedsProcessor) Name() string {
+	return "evm-por-feeds"
 }
