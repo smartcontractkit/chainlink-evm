@@ -57,3 +57,8 @@ packages:
       Client:
       TxStore:
       AttemptBuilder:
+  github.com/smartcontractkit/chainlink-framework/chains/txmgr/types:
+    config:
+      dir: txmgr/mocks
+    interfaces:
+      TxStrategy:
