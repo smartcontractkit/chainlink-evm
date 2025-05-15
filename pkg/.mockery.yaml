@@ -62,3 +62,6 @@ packages:
       dir: txmgr/mocks
     interfaces:
       TxStrategy:
+  github.com/smartcontractkit/chainlink-evm/pkg/txmgr:
+    interfaces:
+      EvmTxStore:
