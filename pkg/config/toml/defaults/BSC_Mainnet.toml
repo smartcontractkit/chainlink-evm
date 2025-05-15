@@ -11,8 +11,8 @@ FinalizedBlockOffset = 2
 NoNewFinalizedHeadsThreshold = '45s'
 
 [GasEstimator]
-PriceDefault = '1 gwei'
-PriceMin = '1 gwei'
+PriceDefault = '0.1 gwei'
+PriceMin = '0.1 gwei'
 # 15s delay since feeds update every minute in volatile situations
 BumpThreshold = 5
 
