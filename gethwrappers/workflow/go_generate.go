@@ -4,4 +4,5 @@ package gethwrappers
 
 // Workflow
 
-//go:generate go run ../generation/wrap.go workflow WorkflowRegistry workflow_registry_wrapper
+//go:generate go run ../generation/wrap.go workflow/v1 WorkflowRegistry workflow_registry_wrapper_v1
+//go:generate go run ../generation/wrap.go workflow/dev/v2 WorkflowRegistry workflow_registry_wrapper_v2
