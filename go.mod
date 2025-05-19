@@ -21,8 +21,8 @@ require (
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.63.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250519165528-6cfaac28b015
-	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250519165632-9366d78aa7de
+	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250519171602-f3ed96e42872
+	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250519172114-72d448e7b35b
 	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250514200342-5169fbe9e28d
 	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250514200342-5169fbe9e28d
 	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250514200342-5169fbe9e28d
