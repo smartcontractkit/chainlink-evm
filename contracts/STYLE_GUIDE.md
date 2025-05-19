@@ -211,17 +211,17 @@ The original error will not be human-readable in an off-chain explorer because i
 
 :warning: Proxy-based upgradability patterns that rely on `delegatecall` (e.g., Transparent, UUPS, Beacon Proxy) **are forbidden**.
 
-While these patterns offer upgrade flexibility, they also introduce significant and well-documented risks—including, but not limited to, storage collisions and improper initialization. Despite the availability of tooling (e.g., OpenZeppelin's [upgrades plugins](#https://docs.openzeppelin.com/upgrades-plugins/)), these risks remain non-trivial, especially in complex or rapidly evolving systems.
+While these patterns offer upgrade flexibility, they also introduce significant and well-documented risks—including, but not limited to, storage collisions and improper initialization. Despite the availability of tooling (e.g., OpenZeppelin's [upgrades plugins](https://docs.openzeppelin.com/upgrades-plugins/)), these risks remain non-trivial, especially in complex or rapidly evolving systems.
 
 In most cases, safer architectural patterns can and should be employed instead of proxy-based solutions. These may include:
 
-- **Router Pattern**: Use a central, non-upgradable router to direct calls to versioned contracts (e.g., CCIP [Router](#https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/evm/contracts/Router.sol)).
+- **Router Pattern**: Use a central, non-upgradable router to direct calls to versioned contracts (e.g., CCIP [Router](https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/evm/contracts/Router.sol)).
     
-- **Externalized Storage Contracts**: Separate storage concerns by outsourcing persistent data to standalone contracts, which can be accessed and modified via standard call operations (e.g., CCIP [NonceManager](#https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/evm/contracts/NonceManager.sol)).
+- **Externalized Storage Contracts**: Separate storage concerns by outsourcing persistent data to standalone contracts, which can be accessed and modified via standard call operations (e.g., CCIP [NonceManager](https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/evm/contracts/NonceManager.sol)).
 
 These approaches retain flexibility and upgradeability without relying on `delegatecall`, significantly reducing the risk of implementation errors or upgrade-related vulnerabilities.
 
-Exceptions to this policy may be granted on a case-by-case basis, subject to review and approval by the [@core-solidity](#https://github.com/orgs/smartcontractkit/teams/core-solidity) team.
+Exceptions to this policy may be granted on a case-by-case basis, subject to review and approval by the [@core-solidity](https://github.com/orgs/smartcontractkit/teams/core-solidity) team.
 
 ## Testing
 
