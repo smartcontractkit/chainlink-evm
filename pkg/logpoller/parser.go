@@ -11,8 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/types/chains/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
+	evmprimitives "github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives/evm"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
@@ -43,6 +45,7 @@ type pgDSLParser struct {
 }
 
 var _ primitives.Visitor = (*pgDSLParser)(nil)
+var _ evmprimitives.Visitor = (*pgDSLParser)(nil)
 
 func (v *pgDSLParser) Comparator(_ primitives.Comparator) {}
 
@@ -113,11 +116,11 @@ func (v *pgDSLParser) TxHash(p primitives.TxHash) {
 	)
 }
 
-func (v *pgDSLParser) VisitAddressFilter(p *addressFilter) {
+func (v *pgDSLParser) visitAddressFilter(p *addressFilter) {
 	v.expression = "address = :" + v.args.withIndexedField("address", p.address)
 }
 
-func (v *pgDSLParser) VisitEventSigFilter(p *eventSigFilter) {
+func (v *pgDSLParser) visitEventSigFilter(p *eventSigFilter) {
 	v.expression = fmt.Sprintf(
 		"%s = :%s",
 		eventSigFieldName,
@@ -151,7 +154,7 @@ func (v *pgDSLParser) nestedConfQuery(finalized bool, confs uint64) string {
 	return fmt.Sprintf("%s <= (%s)", blockFieldName, builder.String())
 }
 
-func (v *pgDSLParser) VisitEventByWordFilter(p *eventByWordFilter) {
+func (v *pgDSLParser) visitEventByWordFilter(p *eventByWordFilter) {
 	if len(p.HashedValueComparers) > 0 {
 		columnName := fmt.Sprintf("substring(data from 32*%d+1 for 32)", p.WordIndex)
 
@@ -166,7 +169,7 @@ func (v *pgDSLParser) VisitEventByWordFilter(p *eventByWordFilter) {
 		v.expression = strings.Join(comps, " AND ")
 	}
 }
-func (v *pgDSLParser) VisitEventTopicsByValueFilter(p *eventByTopicFilter) {
+func (v *pgDSLParser) visitEventTopicsByValueFilter(p *eventByTopicFilter) {
 	if len(p.ValueComparers) == 0 {
 		return
 	}
@@ -189,6 +192,22 @@ func (v *pgDSLParser) VisitEventTopicsByValueFilter(p *eventByTopicFilter) {
 	}
 
 	v.expression = strings.Join(comps, " AND ")
+}
+
+func (v *pgDSLParser) Address(f *evmprimitives.Address) {
+	v.visitAddressFilter(toAddress(f))
+}
+
+func (v *pgDSLParser) EventSig(f *evmprimitives.EventSig) {
+	v.visitEventSigFilter(toEventSig(f))
+}
+
+func (v *pgDSLParser) EventTopicsByValue(f *evmprimitives.EventByTopic) {
+	v.visitEventTopicsByValueFilter(toEventTopicsByValue(f))
+}
+
+func (v *pgDSLParser) EventByWord(f *evmprimitives.EventByWord) {
+	v.visitEventByWordFilter(toEventByWord(f))
 }
 
 func (v *pgDSLParser) VisitConfirmationsFilter(p *confirmationsFilter) {
@@ -479,7 +498,7 @@ func NewAddressFilter(address common.Address) query.Expression {
 func (f *addressFilter) Accept(visitor primitives.Visitor) {
 	switch v := visitor.(type) {
 	case *pgDSLParser:
-		v.VisitAddressFilter(f)
+		v.visitAddressFilter(f)
 	}
 }
 
@@ -496,7 +515,7 @@ func NewEventSigFilter(hash common.Hash) query.Expression {
 func (f *eventSigFilter) Accept(visitor primitives.Visitor) {
 	switch v := visitor.(type) {
 	case *pgDSLParser:
-		v.VisitEventSigFilter(f)
+		v.visitEventSigFilter(f)
 	}
 }
 
@@ -520,7 +539,7 @@ func NewEventByWordFilter(wordIndex int, valueComparers []HashedValueComparator)
 func (f *eventByWordFilter) Accept(visitor primitives.Visitor) {
 	switch v := visitor.(type) {
 	case *pgDSLParser:
-		v.VisitEventByWordFilter(f)
+		v.visitEventByWordFilter(f)
 	}
 }
 
@@ -539,7 +558,7 @@ func NewEventByTopicFilter(topicIndex uint64, valueComparers []HashedValueCompar
 func (f *eventByTopicFilter) Accept(visitor primitives.Visitor) {
 	switch v := visitor.(type) {
 	case *pgDSLParser:
-		v.VisitEventTopicsByValueFilter(f)
+		v.visitEventTopicsByValueFilter(f)
 	}
 }
 
@@ -558,4 +577,52 @@ func (f *confirmationsFilter) Accept(visitor primitives.Visitor) {
 	case *pgDSLParser:
 		v.VisitConfirmationsFilter(f)
 	}
+}
+
+func toAddress(f *evmprimitives.Address) *addressFilter {
+	return &addressFilter{
+		address: f.Address,
+	}
+}
+
+func toEventSig(f *evmprimitives.EventSig) *eventSigFilter {
+	return &eventSigFilter{
+		eventSig: f.EventSig,
+	}
+}
+
+func toEventTopicsByValue(f *evmprimitives.EventByTopic) *eventByTopicFilter {
+	return &eventByTopicFilter{
+		Topic:          f.Topic,
+		ValueComparers: toHashValueComparers(f.HashedValueComprarers),
+	}
+}
+
+func toEventByWord(f *evmprimitives.EventByWord) *eventByWordFilter {
+	return &eventByWordFilter{
+		WordIndex:            f.WordIndex,
+		HashedValueComparers: toHashValueComparers(f.HashedValueComparers),
+	}
+}
+
+func toHashValueComparers(cs []evmprimitives.HashedValueComparator) []HashedValueComparator {
+	ret := make([]HashedValueComparator, 0, len(cs))
+
+	for _, c := range cs {
+		ret = append(ret, HashedValueComparator{
+			Values:   toHashes(c.Values),
+			Operator: c.Operator,
+		})
+	}
+
+	return ret
+}
+
+func toHashes(ss []evm.Hash) []common.Hash {
+	ret := make([]common.Hash, 0, len(ss))
+	for _, s := range ss {
+		ret = append(ret, s)
+	}
+
+	return ret
 }

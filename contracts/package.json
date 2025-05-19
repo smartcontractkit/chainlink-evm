@@ -1,8 +1,9 @@
 {
   "name": "@chainlink/contracts",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Chainlink smart contracts",
   "author": "Chainlink devs",
+  "repository": "github:smartcontractkit/chainlink-evm",
   "license": "BUSL-1.1",
   "private": false,
   "scripts": {
@@ -24,8 +25,16 @@
   "files": [
     "src/v0.8",
     "abi/v0.8",
+    "!**/test/**/*",
+    "src/**/test/mocks/**/*.sol",
+    "!src/**/test/mocks/test/*.sol",
+    "src/**/test/helpers/**/*.sol",
     "foundry.toml",
-    "remappings.txt"
+    "remappings.txt",
+    ".solhint.json",
+    ".solhint-test.json",
+    ".solhintignore",
+    ".solhintignore-test"
   ],
   "pnpm": {
     "_comment": "See https://github.com/ethers-io/ethers.js/discussions/2849#discussioncomment-2696454",

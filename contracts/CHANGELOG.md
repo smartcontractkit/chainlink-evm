@@ -1,5 +1,48 @@
 # @chainlink/contracts
 
+## 1.4.0
+
+The source code has moved from [chainlink](https://github.com/smartcontractkit/chainlink) to [chainlink-evm](https://github.com/smartcontractkit/chainlink-evm). 
+
+### Minor Changes
+
+- [`73dd659`](https://github.com/smartcontractkit/chainlink-evm/commit/73dd659d41e598cb9f13cd467f48f2ef261e70b2) - #updated [CCIP-5323] Compile vrf using forge instead of solc.
+
+- [`9dc6c2f`](https://github.com/smartcontractkit/chainlink-evm/commit/9dc6c2fa7ab9aa332a4d5c72dbdf0ed8075d1a4f) - #updated [CCIP-5323] Compile automation using forge instead of solc.
+
+- [#20](https://github.com/smartcontractkit/chainlink-evm/pull/20) [`99d4408`](https://github.com/smartcontractkit/chainlink-evm/commit/99d440803b31be349991994dfd13c0b2dc6e8268) - #updated Adds events for L2EP L1 Validator contracts
+
+- [`cde4cbb`](https://github.com/smartcontractkit/chainlink-evm/commit/cde4cbb783a4bcb482a260f22389891eb14f0b4d) - #removed [CCIP-5323] Delete unused vrfv2plus script.
+
+- [`8c696b1`](https://github.com/smartcontractkit/chainlink-evm/commit/8c696b1b45e834c664c79f6a219112d7614a6465) - #updated [CCIP-5323] Compile l2ep using forge instead of solc.
+
+- [`5ac8fee`](https://github.com/smartcontractkit/chainlink-evm/commit/5ac8fee7f181ee1513577745461d3808a11a5c70) - #removed [CCIP-5323] Remove unused Functions\* mocks.
+
+- [`84e3996`](https://github.com/smartcontractkit/chainlink-evm/commit/84e39962106e4cd87090610f9f549e4111a43d64) - #updated workflow registry license
+
+- [`7492d01`](https://github.com/smartcontractkit/chainlink-evm/commit/7492d01b780faa0be41d0c10a5a5cc5858f9346f) - #updated [CCIP-5323] Compile llo-feeds using forge instead of solc.
+
+- [`b92d8c9`](https://github.com/smartcontractkit/chainlink-evm/commit/b92d8c928e4f65f91cc729690f08fea5e9550b3b) - #removed [CRE-244] Remove unused feeds compile script.
+
+- [`14a99b3`](https://github.com/smartcontractkit/chainlink-evm/commit/14a99b38433f5dcdf0628a1c05d1e574b5a53c25) - #updated [CCIP-5323] Compile workflow using forge instead of solidity.
+
+- [`2724ef8`](https://github.com/smartcontractkit/chainlink-evm/commit/2724ef8937488de77b320e4e9692ed0dcb3a165a) - #updated Add typeAndVersion to Keystone BalanceReader
+
+
+### Patch Changes
+
+- [`b10ee6f`](https://github.com/smartcontractkit/chainlink-evm/commit/b10ee6fee6202aeaab81b2fbe25464034ab52846) - Remove liquiditymanager onchain code.
+
+- [`9862f62`](https://github.com/smartcontractkit/chainlink-evm/commit/9862f6281ea5e38a825f0b5db1770f15584717c6) - #internal Add Proxy contract for resolving problem with USDC upgradeability
+
+- [`7b5bb8f`](https://github.com/smartcontractkit/chainlink-evm/commit/7b5bb8f2ff77907c731340c93a2b2ae39b85c662) - #updated rename EVMExtraArgsV2 to GenericExtraArgsV2
+
+- [`fba3796`](https://github.com/smartcontractkit/chainlink-evm/commit/fba3796a5d4f936ba28590d1ec8724394f49b35e) - #internal fix solhint issues
+
+- [`ff814eb`](https://github.com/smartcontractkit/chainlink-evm/commit/ff814eb0a01f89d9a215f825d243bf421e6434a9) - Added ZKSync support for Functions
+
+- [`5784978`](https://github.com/smartcontractkit/chainlink-evm/commit/57849786c00f613172bf2b910ca0a63f35d3bc0e) - Add llo MockFeeManager contract for tests
+
 ## 1.3.0 - 2024-10-21
 
 ### Minor Changes

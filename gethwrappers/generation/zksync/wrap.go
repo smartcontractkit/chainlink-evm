@@ -24,7 +24,12 @@ func main() {
 	srcFile := filepath.Join(cwd, "..", "..", "contracts", "zkout", contractName+".sol", contractName+".json")
 	bytecode := zksyncwrapper.ReadBytecodeFromForgeJson(srcFile)
 
-	outPath := filepath.Join(cwd, "..", project, "generated", packageName, packageName+"_zksync.go")
+	var outPath string
+	if project != "automation" {
+		outPath = filepath.Join(cwd, "..", project, "generated", packageName, packageName+"_zksync.go")
+	} else {
+		outPath = filepath.Join(cwd, "..", "generated", packageName, packageName+"_zksync.go")
+	}
 
 	zksyncwrapper.WrapZksyncDeploy(bytecode, contractName, packageName, outPath)
 }

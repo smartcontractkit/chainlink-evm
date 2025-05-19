@@ -1,13 +1,37 @@
 # Chainlink Smart Contracts
 
+> [!IMPORTANT] Since v1.4.0 of the Chainlink contracts, the contracts have been moved to their own repository:
+> [chainlink-evm](https://github.com/smartcontractkit/chainlink-evm). 
+> Prior to that, the contracts were part of the [main Chainlink repository](https://github.com/smartcontractkit/chainlink)
+
 ## Installation
 
+#### Foundry (git)
+
+> [!WARNING]
+> When installing via git, the ref defaults to master when no tag is given.
+
+
 ```sh
-# via pnpm
+$ forge install smartcontractkit/chainlink-evm@<version_tag>
+```
+
+Add `@chainlink/contracts/=lib/smartcontractkit/chainlink-evm/contracts/` in remappings.txt.
+
+#### NPM
+```sh
+# pnpm
 $ pnpm add @chainlink/contracts
-# via npm
+```
+
+```sh
+# npm
 $ npm install @chainlink/contracts --save
 ```
+
+Add `@chainlink/contracts/=node_modules/@chainlink/contracts/` in remappings.txt.
+
+
 
 ### Directory Structure
 
@@ -24,20 +48,43 @@ $ npm install @chainlink/contracts --save
 The solidity smart contracts themselves can be imported via the `src` directory of `@chainlink/contracts`:
 
 ```solidity
-import {AutomationCompatibleInterface} from '@chainlink/contracts/src/v0.8/AutomationCompatibleInterface.sol';
+import {IVerifier} from '@chainlink/contracts/src/v0.8/llo-feeds/v0.5.0/interfaces/IVerifier.sol';
 ```
+
+### Remapping
+
+This repository uses [Solidity remappings](https://docs.soliditylang.org/en/v0.8.20/using-the-compiler.html#compiler-remapping) to resolve imports.
+The remapping is defined in the `remappings.txt` file.
+
 
 ## Local Development
 
-Note: Contracts in `dev/` directories are under active development and are likely unaudited. Please refrain from using these in production applications.
+Note:
+Contracts in `dev/` directories or with a typeAndVersion ending in `-dev` are under active development
+and are likely unaudited.
+Please refrain from using these in production applications.
 
 ```bash
 # Clone Chainlink repository
 $ git clone https://github.com/smartcontractkit/chainlink.git
-# Continuing via pnpm
 $ cd contracts/
 $ pnpm
-$ pnpm test
+```
+
+Each Chainlink project has its own directory under `src/` which can be targeted using Foundry profiles.
+To test a specific project, run:
+
+```bash
+# Replace <project> with the product you want to test
+export FOUNDRY_PROFILE=<project>
+forge test
+```
+
+To test the llo-feeds (data steams) project:
+
+```bash
+export FOUNDRY_PROFILE=llo-feeds
+forge test
 ```
 
 ## Contributing

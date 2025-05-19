@@ -7,6 +7,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgtype v1.14.4
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/jpillora/backoff v1.0.0
@@ -20,11 +21,11 @@ require (
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.63.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250514171116-a973d22fbfc5
-	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250514175738-d591c907dec4
-	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250514175738-d591c907dec4
-	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250502210357-2df484128afa
-	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250502210357-2df484128afa
+	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250519165528-6cfaac28b015
+	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250519165632-9366d78aa7de
+	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250514200342-5169fbe9e28d
+	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250514200342-5169fbe9e28d
+	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250514200342-5169fbe9e28d
 	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
 	github.com/smartcontractkit/libocr v0.0.0-20250328171017-609ec10a5510
 	github.com/stretchr/testify v1.10.0
@@ -104,7 +105,6 @@ require (
 	github.com/huin/goupnp v1.3.0 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.14.3 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.3 // indirect

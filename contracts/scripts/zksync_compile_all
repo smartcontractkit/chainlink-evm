@@ -23,4 +23,7 @@ compileContract() {
 compileContract shared/token/ERC677/LinkToken shared "--use 0.8.19"
 compileContract shared/token/ERC677/BurnMintERC677 shared "--use 0.8.19"
 compileContract vendor/multicall/ebd8b64/src/Multicall3 shared "--use 0.8.19"
-compileContract keystone/CapabilitiesRegistry keystone
+compileContract shared/token/ERC20/zksync/WETH9ZKSync shared "--use 0.8.19"
+compileContract shared/mocks/MockV3Aggregator shared "--use 0.8.19"
+
+compileContract automation/testhelpers/MockETHUSDAggregator automation

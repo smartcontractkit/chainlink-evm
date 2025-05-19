@@ -201,6 +201,10 @@ jobs:
       - name: Install Foundry
         uses: ./.github/actions/install-solidity-foundry
 
+      - name: Run native compile and generate wrappers
+        working-directory: contracts
+        run: make wrappers-all
+
       - name: Version package.json
         working-directory: contracts
         shell: bash
@@ -245,6 +249,10 @@ jobs:
 
       - name: Install Foundry
         uses: ./.github/actions/install-solidity-foundry
+
+      - name: Run native compile and generate wrappers
+        working-directory: contracts
+        run: make wrappers-all
 
       - name: Validate version
         working-directory: contracts
