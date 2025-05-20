@@ -1,6 +1,7 @@
 # Chainlink Smart Contracts
 
-> [!IMPORTANT] Since v1.4.0 of the Chainlink contracts, the contracts have been moved to their own repository:
+> [!IMPORTANT] 
+> Since v1.4.0 of the Chainlink contracts, the contracts have been moved to their own repository:
 > [chainlink-evm](https://github.com/smartcontractkit/chainlink-evm). 
 > Prior to that, the contracts were part of the [main Chainlink repository](https://github.com/smartcontractkit/chainlink)
 
