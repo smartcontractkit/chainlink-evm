@@ -692,10 +692,10 @@ func TestTxm_GetTransactionFee(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = txm.GetTransactionFee(ctx, idempotencyKey)
-		require.Error(t, err, "tx status is not finalized")
+		require.NoError(t, err)
 	})
 
-	t.Run("returns correct fee for finalized state", func(t *testing.T) {
+	t.Run("returns correct fee", func(t *testing.T) {
 		idempotencyKey := uuid.New().String()
 		fromAddress := memKS.MustCreate(t)
 
@@ -720,13 +720,13 @@ func TestTxm_GetTransactionFee(t *testing.T) {
 		// insert receipt
 		var r txmgr.Receipt
 		r = newEthReceipt(42, utils.NewHash(), attemptD.Hash, 0x1)
-		expFee := r.Receipt.EffectiveGasPrice.Int64() * int64(r.Receipt.GasUsed)
+		expFee := r.Receipt.EffectiveGasPrice.Uint64()*r.Receipt.GasUsed + r.Receipt.L1Fee.Uint64()
 		_, err = txStore.InsertReceipt(ctx, &r.Receipt)
 		require.NoError(t, err)
 
 		fee, err := txm.GetTransactionFee(ctx, idempotencyKey)
 		require.NoError(t, err)
-		require.Equal(t, big.NewInt(expFee), fee.TransactionFee)
+		require.Equal(t, new(big.Int).SetUint64(expFee), fee.TransactionFee)
 	})
 }
 
@@ -994,6 +994,7 @@ func newEthReceipt(blockNumber int64, blockHash common.Hash, txHash common.Hash,
 		TransactionIndex:  transactionIndex,
 		GasUsed:           123,
 		EffectiveGasPrice: big.NewInt(55),
+		L1Fee:             big.NewInt(1),
 		Status:            status,
 	}
 
