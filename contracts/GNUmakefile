@@ -43,7 +43,7 @@ mockery: $(mockery) ## Install mockery.
 
 .PHONY: foundry
 foundry: ## Install foundry.
-	foundryup --install v1.0.0
+	foundryup --install v1.2.0
 
 .PHONY: forge-zksync
 forge-zksync:
