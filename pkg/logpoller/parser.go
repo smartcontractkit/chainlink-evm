@@ -594,7 +594,7 @@ func toEventSig(f *evmprimitives.EventSig) *eventSigFilter {
 func toEventTopicsByValue(f *evmprimitives.EventByTopic) *eventByTopicFilter {
 	return &eventByTopicFilter{
 		Topic:          f.Topic,
-		ValueComparers: toHashValueComparers(f.HashedValueComprarers),
+		ValueComparers: toHashValueComparers(f.HashedValueComparers),
 	}
 }
 
