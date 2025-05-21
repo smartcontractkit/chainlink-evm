@@ -720,13 +720,13 @@ func TestTxm_GetTransactionFee(t *testing.T) {
 		// insert receipt
 		var r txmgr.Receipt
 		r = newEthReceipt(42, utils.NewHash(), attemptD.Hash, 0x1)
-		expFee := r.Receipt.EffectiveGasPrice.Int64()*int64(r.Receipt.GasUsed) + r.Receipt.L1Fee.Int64()
+		expFee := uint64(r.Receipt.EffectiveGasPrice.Int64())*uint64(r.Receipt.GasUsed) + uint64(r.Receipt.L1Fee.Int64())
 		_, err = txStore.InsertReceipt(ctx, &r.Receipt)
 		require.NoError(t, err)
 
 		fee, err := txm.GetTransactionFee(ctx, idempotencyKey)
 		require.NoError(t, err)
-		require.Equal(t, big.NewInt(expFee), fee.TransactionFee)
+		require.Equal(t, new(big.Int).SetUint64(expFee), fee.TransactionFee)
 	})
 }
 
