@@ -14,6 +14,7 @@
     "avoid-low-level-calls": "off",
     "reentrancy": "off",
     "func-name-mixedcase": "off",
+    "import-path-check": "off",
     "no-unused-import": "error",
     "gas-struct-packing": "warn",
     "interface-starts-with-i": "warn",
