@@ -65,3 +65,6 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/txmgr:
     interfaces:
       EvmTxStore:
+  github.com/smartcontractkit/chainlink-evm/pkg/log:
+    interfaces:
+      AbigenContract:
