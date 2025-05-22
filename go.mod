@@ -29,6 +29,7 @@ require (
 	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
 	github.com/smartcontractkit/libocr v0.0.0-20250328171017-609ec10a5510
 	github.com/stretchr/testify v1.10.0
+	github.com/theodesp/go-heaps v0.0.0-20190520121037-88e35354fe0a
 	github.com/tidwall/gjson v1.18.0
 	github.com/ugorji/go/codec v1.2.12
 	github.com/zksync-sdk/zksync2-go v1.0.0
