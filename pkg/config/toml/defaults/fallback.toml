@@ -98,3 +98,6 @@ GasLimit = 5400000
 
 [Workflow]
 GasLimitDefault = 400_000
+TxAcceptanceState = 3
+PollPeriod = '2s'
+AcceptanceTimeout = '30s'

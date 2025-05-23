@@ -8,6 +8,8 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
+	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
+	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
@@ -187,6 +189,9 @@ type Workflow interface {
 	FromAddress() *types.EIP55Address
 	ForwarderAddress() *types.EIP55Address
 	GasLimitDefault() *uint64
+	TxAcceptanceState() *commontypes.TransactionStatus
+	PollPeriod() *commonconfig.Duration
+	AcceptanceTimeout() *commonconfig.Duration
 }
 
 type NodePool interface {

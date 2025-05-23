@@ -628,9 +628,12 @@ func (a *Automation) setFrom(f *Automation) {
 }
 
 type Workflow struct {
-	FromAddress      *types.EIP55Address `toml:",omitempty"`
-	ForwarderAddress *types.EIP55Address `toml:",omitempty"`
-	GasLimitDefault  *uint64
+	FromAddress       *types.EIP55Address `toml:",omitempty"`
+	ForwarderAddress  *types.EIP55Address `toml:",omitempty"`
+	GasLimitDefault   *uint64
+	TxAcceptanceState *commontypes.TransactionStatus
+	PollPeriod        *commonconfig.Duration
+	AcceptanceTimeout *commonconfig.Duration
 }
 
 func (m *Workflow) setFrom(f *Workflow) {
@@ -643,6 +646,15 @@ func (m *Workflow) setFrom(f *Workflow) {
 
 	if v := f.GasLimitDefault; v != nil {
 		m.GasLimitDefault = v
+	}
+	if v := f.TxAcceptanceState; v != nil {
+		m.TxAcceptanceState = v
+	}
+	if v := f.PollPeriod; v != nil {
+		m.PollPeriod = v
+	}
+	if v := f.AcceptanceTimeout; v != nil {
+		m.AcceptanceTimeout = v
 	}
 }
 
