@@ -38,6 +38,7 @@ type TestClientErrors struct {
 	fatal                             string
 	serviceUnavailable                string
 	tooManyResults                    string
+	missingBlocks                     string
 }
 
 func NewTestClientErrors() TestClientErrors {
@@ -57,6 +58,7 @@ func NewTestClientErrors() TestClientErrors {
 		fatal:                             "client error fatal",
 		serviceUnavailable:                "client error service unavailable",
 		tooManyResults:                    "client error too many results",
+		missingBlocks:                     "client error missing blocks",
 	}
 }
 
@@ -82,7 +84,8 @@ func (c *TestClientErrors) L2Full() string                  { return c.l2Full }
 func (c *TestClientErrors) TransactionAlreadyMined() string { return c.transactionAlreadyMined }
 func (c *TestClientErrors) Fatal() string                   { return c.fatal }
 func (c *TestClientErrors) ServiceUnavailable() string      { return c.serviceUnavailable }
-func (c *TestClientErrors) TooManyResults() string          { return c.serviceUnavailable }
+func (c *TestClientErrors) TooManyResults() string          { return c.tooManyResults }
+func (c *TestClientErrors) MissingBlocks() string           { return c.missingBlocks }
 
 type TestNodePoolConfig struct {
 	NodePollFailureThreshold       uint32

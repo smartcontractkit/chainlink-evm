@@ -65,6 +65,7 @@ const (
 	TerminallyStuck
 	TooManyResults
 	ServiceTimeout
+	MissingBlocks
 )
 
 type ClientErrors map[int]*regexp.Regexp
@@ -330,6 +331,7 @@ func ClientErrorRegexes(errsRegex config.ClientErrors) *ClientErrors {
 		Fatal:                             regexp.MustCompile(errsRegex.Fatal()),
 		ServiceUnavailable:                regexp.MustCompile(errsRegex.ServiceUnavailable()),
 		TooManyResults:                    regexp.MustCompile(errsRegex.TooManyResults()),
+		MissingBlocks:                     regexp.MustCompile(errsRegex.MissingBlocks()),
 	}
 }
 
@@ -691,9 +693,14 @@ var drpc = ClientErrors{
 	TooManyResults: regexp.MustCompile(`(: |^)requested too many blocks from [0-9]+ to [0-9]+, maximum is set to [0-9,]+$`),
 }
 
+var hyperliquid = ClientErrors{
+	TooManyResults: regexp.MustCompile(`(: |^)query exceeds max block range$`),
+	MissingBlocks:  regexp.MustCompile(`(: |^)invalid block range$`),
+}
+
 // Linkpool, Blockdaemon, and Chainstack all return "request timed out" if the log results are too large for them to process
 var defaultClient = ClientErrors{
-	TooManyResults: regexp.MustCompile(`request timed out|408 Request Timed Out`),
+	TooManyResults: regexp.MustCompile(`request timed out|408 Request Timed Out$`),
 }
 
 // JSON-RPC error codes which can indicate a refusal of the server to process an eth_getLogs request because the result set is too large
@@ -712,7 +719,7 @@ const (
 	// See: https://community.infura.io/t/getlogs-error-query-returned-more-than-1000-results/358/5
 	jsonRpcLimitExceeded = -32005 // See also: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1474.md
 
-	jsonRpcInvalidParams = -32602 // Invalid method params. Returned by alchemy if the block range is too large or there are too many results to return
+	jsonRpcInvalidParams = -32602 // Invalid method params. Returned by alchemy if the block range is too large or there are too many results to return. Also returned by hyperliquid for invalid block range or block range too large
 
 	jsonRpcQuicknodeTooManyResults = -32614 // Undocumented error code used by Quicknode for too many results error
 )
@@ -743,6 +750,9 @@ func IsTooManyResults(err error, clientErrors config.ClientErrors) bool {
 		if alchemy.ErrIs(rpcErr, TooManyResults) {
 			return true
 		}
+		if hyperliquid.ErrIs(rpcErr, TooManyResults) {
+			return true
+		}
 	case jsonRpcQuicknodeTooManyResults:
 		if quicknode.ErrIs(rpcErr, TooManyResults) {
 			return true
@@ -756,6 +766,24 @@ func IsTooManyResults(err error, clientErrors config.ClientErrors) bool {
 			drpc.ErrIs(rpcErr, TooManyResults) {
 			return true
 		}
+	}
+	return false
+}
+
+// IsMissingBlocks indicates that the error is caused by the rpc server not having some of the blocks requested at all
+// This is treated as a permanent error rather than a transient issue, and should be logged as Critical
+func IsMissingBlocks(err error, clientErrors config.ClientErrors) bool {
+	var rpcErr rpc.Error
+	if !pkgerrors.As(err, &rpcErr) {
+		return false
+	}
+	configErrors := ClientErrorRegexes(clientErrors)
+	if configErrors.ErrIs(rpcErr, MissingBlocks) {
+		return true
+	}
+
+	if rpcErr.ErrorCode() == jsonRpcInvalidParams && hyperliquid.ErrIs(rpcErr, MissingBlocks) {
+		return true
 	}
 	return false
 }
