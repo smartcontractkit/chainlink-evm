@@ -49,11 +49,3 @@ func (p *porFeedsProcessor) Process(ctx context.Context, m proto.Message, attrKV
 		return nil // fallthrough
 	}
 }
-
-func (p *porFeedsProcessor) SetEmitter(e monitor.ProtoEmitter) {
-	p.emitter = e
-}
-
-func (p *porFeedsProcessor) Name() string {
-	return "evm-por-feeds"
-}

@@ -56,15 +56,3 @@ func (p *dataFeedsProcessor) Process(ctx context.Context, m proto.Message, attrK
 		return nil // fallthrough
 	}
 }
-
-func (p *dataFeedsProcessor) SetEmitter(e monitor.ProtoEmitter) {
-	p.emitter = e
-}
-
-func (p *dataFeedsProcessor) Name() string {
-	name := "evm-data-feeds"
-	if p.ccip {
-		name += "-ccip"
-	}
-	return name
-}
