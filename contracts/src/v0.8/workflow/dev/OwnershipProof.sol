@@ -14,16 +14,27 @@ abstract contract OwnershipProof is Ownable2StepMsgSender {
   mapping(address owner => bytes32 proof) private s_ownersProofs;
   EnumerableSet.AddressSet private s_ownersProofsSet;
 
+  event AllowedSignersUpdatedV1(address[] signers, bool allowed);
   event OwnershipProofSubmittedV1(address indexed owner, bytes32 indexed proof);
   event OwnershipProofRevokedV1(address indexed owner, bytes32 indexed proof);
 
   error RequestExpired(address caller, uint96 validityTimestamp);
-  error ProofAlreadySubmitted(address owner);
-  error ProofNotSubmitted(address owner);
+  error OwnershipProofAlreadySubmitted(address owner);
+  error OwnershipProofNotSubmitted(address owner);
   error InvalidSignatureLength(bytes signature);
   error InvalidSValue(bytes signature, bytes32 s);
   error InvalidVValue(bytes signature, uint8 v);
   error InvalidOwnershipProof(address owner, uint96 validityTimestamp, bytes32 proof, bytes signature);
+
+  /// @notice Modifier to check if the ownership proof is submitted by the transaction sender.
+  /// @dev This modifier can be used to restrict access to functions in the derived contract that require
+  // the ownership proof to be submitted. If the ownership proof is not submitted, the transaction will revert.
+  modifier hasOwnershipProofSubmitted() {
+    if (s_ownersProofs[msg.sender] == bytes32(0)) {
+      revert OwnershipProofNotSubmitted(msg.sender);
+    }
+    _;
+  }
 
   /// @notice Sets the allowed signers for ownership proofs.
   /// @param signers The addresses of the signers
@@ -35,6 +46,7 @@ abstract contract OwnershipProof is Ownable2StepMsgSender {
     for (uint256 i = 0; i < signers.length; i++) {
       s_allowedSigners[signers[i]] = allowed;
     }
+    emit AllowedSignersUpdatedV1(signers, allowed);
   }
 
   /// @notice Returns the allowed signer for ownership proofs.
@@ -62,10 +74,10 @@ abstract contract OwnershipProof is Ownable2StepMsgSender {
     }
 
     if (s_ownersProofs[msg.sender] != bytes32(0)) {
-      revert ProofAlreadySubmitted(msg.sender);
+      revert OwnershipProofAlreadySubmitted(msg.sender);
     }
 
-    address signer = _recoverSigner(msg.sender, validityTimestamp, proof, signature);
+    address signer = _recoverSigner(validityTimestamp, proof, signature);
     if (!s_allowedSigners[signer]) {
       revert InvalidOwnershipProof(msg.sender, validityTimestamp, proof, signature);
     }
@@ -91,10 +103,10 @@ abstract contract OwnershipProof is Ownable2StepMsgSender {
     }
 
     if (s_ownersProofs[msg.sender] != proof) {
-      revert ProofNotSubmitted(msg.sender);
+      revert OwnershipProofNotSubmitted(msg.sender);
     }
 
-    address signer = _recoverSigner(msg.sender, validityTimestamp, proof, signature);
+    address signer = _recoverSigner(validityTimestamp, proof, signature);
     if (!s_allowedSigners[signer]) {
       revert InvalidOwnershipProof(msg.sender, validityTimestamp, proof, signature);
     }
@@ -104,11 +116,16 @@ abstract contract OwnershipProof is Ownable2StepMsgSender {
     emit OwnershipProofRevokedV1(msg.sender, proof);
   }
 
+  /// @notice Admin revokes ownership proof for the given owner.
+  /// @param owner The address of the owner
+  /// @dev This function can only be called by the contract owner. It will remove the ownership proof for the given
+  /// owner and emit an revocation event. It should only be used in case of emergency if the owner has lost
+  /// access to the private key and can't revoke the proof themselves.
   function adminRevokeOwnershipProof(
     address owner
   ) external onlyOwner {
     if (s_ownersProofs[owner] == bytes32(0)) {
-      revert ProofNotSubmitted(owner);
+      revert OwnershipProofNotSubmitted(owner);
     }
 
     s_ownersProofs[owner] = bytes32(0);
@@ -153,7 +170,6 @@ abstract contract OwnershipProof is Ownable2StepMsgSender {
   }
 
   /// @notice Returns the signer of the recovered signature or revert.
-  /// @param owner The address of the owner.
   /// @param validityTimestamp The validity timestamp of the ownership proof.
   /// @param proof The ownership proof.
   /// @param signature The signature of the ownership proof metadata.
@@ -161,13 +177,12 @@ abstract contract OwnershipProof is Ownable2StepMsgSender {
   /// @dev The function tries to re-generate the message digest based on the provided parameters and by following
   /// EIP-191. The it will try to recover the signer address. The function will revert if the signature is invalid.
   function _recoverSigner(
-    address owner,
     uint96 validityTimestamp,
     bytes32 proof,
     bytes calldata signature
-  ) internal pure returns (address) {
+  ) internal view returns (address) {
     // Follow EIP-191 for recoverable signatures
-    bytes32 messageHash = keccak256(abi.encodePacked(owner, validityTimestamp, proof));
+    bytes32 messageHash = keccak256(abi.encodePacked(msg.sender, block.chainid, validityTimestamp, proof));
     bytes32 prefixedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
 
     if (signature.length != 65) {

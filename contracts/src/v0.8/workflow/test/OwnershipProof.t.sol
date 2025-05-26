@@ -48,14 +48,14 @@ contract OwnershipProofTest is Test {
     assertTrue(op.isProofSubmitted(owner));
   }
 
-  function testRevertIfProofAlreadySubmitted() public {
+  function testRevertIfOwnershipProofAlreadySubmitted() public {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
     op.submitOwnershipProof(validityTimestamp, proof, sig);
 
-    vm.expectRevert(abi.encodeWithSelector(OwnershipProof.ProofAlreadySubmitted.selector, owner));
+    vm.expectRevert(abi.encodeWithSelector(OwnershipProof.OwnershipProofAlreadySubmitted.selector, owner));
     vm.prank(owner);
     op.submitOwnershipProof(validityTimestamp, proof, sig);
   }
@@ -191,7 +191,7 @@ contract OwnershipProofTest is Test {
 
   function testAdminRevokeOwnershipProofRevertsIfNoProof() public {
     vm.prank(owner);
-    vm.expectRevert(abi.encodeWithSelector(OwnershipProof.ProofNotSubmitted.selector, owner));
+    vm.expectRevert(abi.encodeWithSelector(OwnershipProof.OwnershipProofNotSubmitted.selector, owner));
     op.adminRevokeOwnershipProof(owner);
   }
 
@@ -212,8 +212,8 @@ contract OwnershipProofTest is Test {
   }
 
   // Helper to get the EIP-191 message hash
-  function _getMessageHash(address _owner, uint96 _validityTimestamp, bytes32 _proof) public pure returns (bytes32) {
-    bytes32 messageHash = keccak256(abi.encodePacked(_owner, _validityTimestamp, _proof));
+  function _getMessageHash(address _owner, uint96 _validityTimestamp, bytes32 _proof) public view returns (bytes32) {
+    bytes32 messageHash = keccak256(abi.encodePacked(_owner, block.chainid, _validityTimestamp, _proof));
     return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
   }
 }
