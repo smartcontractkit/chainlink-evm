@@ -221,7 +221,7 @@ In most cases, safer architectural patterns can and should be employed instead o
 
 These approaches retain flexibility and upgradeability without relying on `delegatecall`, significantly reducing the risk of implementation errors or upgrade-related vulnerabilities.
 
-Exceptions to this policy may be granted on a case-by-case basis, subject to review and approval by the [@core-solidity](https://github.com/orgs/smartcontractkit/teams/core-solidity) team.
+Exceptions to this policy may be granted on a case-by-case basis, subject to a formal internal review and approval by the [@core-solidity](https://github.com/orgs/smartcontractkit/teams/core-solidity) team.
 
 ## Testing
 
