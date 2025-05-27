@@ -12,7 +12,9 @@ import (
 	trontxm "github.com/smartcontractkit/chainlink-tron/relayer/txm"
 )
 
-func ConstructTronTxm(logger logger.Logger, cfg *config.ChainScoped, nodes []*toml.Node, keystore keys.Store) (*trontxm.TronTxm, error) {
+// Creates the Transaction Manager used for Tron-based chains. Uses an adapter of the EVM Keystore to sign.
+// Doesn't currently support multinode writes.
+func ConstructTxm(logger logger.Logger, cfg *config.ChainScoped, nodes []*toml.Node, keystore keys.Store) (*trontxm.TronTxm, error) {
 	if len(nodes) == 0 {
 		return nil, fmt.Errorf("Tron chain requires at least one node")
 	}
