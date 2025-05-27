@@ -2,14 +2,15 @@
 pragma solidity ^0.8.0;
 
 import {IBurnMintERC20} from "../../../token/ERC20/IBurnMintERC20.sol";
-import {IOptimismMintableERC20Minimal, IOptimismMintableERC20} from "../../../token/ERC20/IOptimismMintableERC20.sol";
+import {IOptimismMintableERC20, IOptimismMintableERC20Minimal} from "../../../token/ERC20/IOptimismMintableERC20.sol";
 import {IERC677} from "../../../token/ERC677/IERC677.sol";
 
 import {BurnMintERC677} from "../../../token/ERC677/BurnMintERC677.sol";
-import {BaseTest} from "../../BaseTest.t.sol";
-import {OpStackBurnMintERC677} from "../../../token/ERC677/OpStackBurnMintERC677.sol";
 
-import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
+import {OpStackBurnMintERC677} from "../../../token/ERC677/OpStackBurnMintERC677.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
+
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract OpStackBurnMintERC677Setup is BaseTest {
   address internal s_l1Token = address(897352983527);
