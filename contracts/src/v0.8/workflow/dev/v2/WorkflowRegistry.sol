@@ -27,8 +27,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   constructor() {
     // Intialize with default limits for Config.
-    s_cfg.defaultMaxPerDON = 200;
-    s_cfg.defaultMaxPerUserDON = 500;
+    s_cfg.defaultMaxPerDON = 500;
+    s_cfg.defaultMaxPerUserDON = 200;
   }
 
   // ================================================================
