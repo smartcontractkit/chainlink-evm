@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {Ownable2Step} from "../../../shared/access/Ownable2Step.sol";
+import {Ownable2Step} from "../../../../shared/access/Ownable2Step.sol";
 import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 

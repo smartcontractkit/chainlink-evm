@@ -4,6 +4,7 @@ import '@nomicfoundation/hardhat-chai-matchers'
 import '@typechain/hardhat'
 import 'hardhat-abi-exporter'
 import { subtask } from 'hardhat/config'
+import path from 'path'
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from 'hardhat/builtin-tasks/task-names'
 
 const COMPILER_SETTINGS = {
@@ -16,14 +17,18 @@ const COMPILER_SETTINGS = {
   },
 }
 
+const EXCLUDE_DIRS = ['src/v0.8/vendor/forge-std', 'src/v0.8/workflow']
+
 // prune forge style tests from hardhat paths
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
   async (_, __, runSuper) => {
     const paths = await runSuper()
-    const noTests = paths.filter((p: string) => !p.endsWith('.t.sol'))
-    return noTests.filter(
-      (p: string) => !p.includes('src/v0.8/vendor/forge-std'),
-    )
+    return paths
+      .filter((p: string) => !p.endsWith('.t.sol'))
+      .filter(
+        (p: string) =>
+          !EXCLUDE_DIRS.some((dir) => p.includes(path.normalize(dir))),
+      )
   },
 )
 
@@ -137,19 +142,6 @@ let config = {
       'src/v0.8/automation/AutomationForwarderLogic.sol': {
         version: '0.8.19',
         settings: COMPILER_SETTINGS,
-      },
-      'src/v0.8/workflow/WorkflowRegistry.sol': {
-        version: '0.8.24',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 1000000, // see native_solc_compile_all_workflow
-          },
-          viaIR: true,
-          metadata: {
-            bytecodeHash: 'none',
-          },
-        },
       },
     },
   },
