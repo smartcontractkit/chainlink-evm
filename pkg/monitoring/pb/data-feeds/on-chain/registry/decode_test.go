@@ -148,6 +148,8 @@ func runTests(t *testing.T, data []byte, por bool) {
 				BlockHash:      "0xaa",
 				BlockHeight:    "17",
 				BlockTimestamp: 0x66f5bf69,
+
+				ExecutionContext: &wt_msg.ExecutionContext{},
 			},
 			expected: expected,
 			wantErr:  false,
@@ -168,6 +170,8 @@ func runTests(t *testing.T, data []byte, por bool) {
 				// Transmission Info
 				Transmitter: "example-transmitter",
 				Success:     true,
+
+				ExecutionContext: &wt_msg.ExecutionContext{},
 			},
 			expected: []FeedUpdated{},
 			wantErr:  true,
