@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 
-import {Ownable2StepMsgSender} from "../shared/access/Ownable2StepMsgSender.sol";
+import {Ownable2StepMsgSender} from "../../shared/access/Ownable2StepMsgSender.sol";
 
 /// @title WorkflowRegistryManager
 /// @notice This contract manages the versions of WorkflowRegistry contracts deployed over time.

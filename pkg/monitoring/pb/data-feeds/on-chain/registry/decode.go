@@ -81,10 +81,9 @@ func NewFeedUpdated(
 		FeedId:                feedID.String(),
 		ObservationsTimestamp: observationsTimestamp,
 		Benchmark:             benchmarkPrice.Bytes(),
-		// TODO: Unsure if I should make a separate FeedUpdated type for POR reports
-		Bundle:       bundle,
-		Report:       report,
-		BenchmarkVal: toBenchmarkVal(feedID, benchmarkPrice),
+		Bundle:                bundle,
+		Report:                report,
+		BenchmarkVal:          toBenchmarkVal(feedID, benchmarkPrice),
 
 		// Head data - when was the event produced on-chain
 		BlockHash:      m.BlockHash,
@@ -92,28 +91,28 @@ func NewFeedUpdated(
 		BlockTimestamp: m.BlockTimestamp,
 
 		// Execution Context - Source
-		MetaSourceId: m.MetaSourceId,
+		MetaSourceId: m.ExecutionContext.MetaSourceId,
 
 		// Execution Context - Chain
-		MetaChainFamilyName: m.MetaChainFamilyName,
-		MetaChainId:         m.MetaChainId,
-		MetaNetworkName:     m.MetaNetworkName,
-		MetaNetworkNameFull: m.MetaNetworkNameFull,
+		MetaChainFamilyName: m.ExecutionContext.MetaChainFamilyName,
+		MetaChainId:         m.ExecutionContext.MetaChainId,
+		MetaNetworkName:     m.ExecutionContext.MetaNetworkName,
+		MetaNetworkNameFull: m.ExecutionContext.MetaNetworkNameFull,
 
 		// Execution Context - Workflow (capabilities.RequestMetadata)
-		MetaWorkflowId:               m.MetaWorkflowId,
-		MetaWorkflowOwner:            m.MetaWorkflowOwner,
-		MetaWorkflowExecutionId:      m.MetaWorkflowExecutionId,
-		MetaWorkflowName:             m.MetaWorkflowName,
-		MetaWorkflowDonId:            m.MetaWorkflowDonId,
-		MetaWorkflowDonConfigVersion: m.MetaWorkflowDonConfigVersion,
-		MetaReferenceId:              m.MetaReferenceId,
+		MetaWorkflowId:               m.ExecutionContext.MetaWorkflowId,
+		MetaWorkflowOwner:            m.ExecutionContext.MetaWorkflowOwner,
+		MetaWorkflowExecutionId:      m.ExecutionContext.MetaWorkflowExecutionId,
+		MetaWorkflowName:             m.ExecutionContext.MetaWorkflowName,
+		MetaWorkflowDonId:            m.ExecutionContext.MetaWorkflowDonId,
+		MetaWorkflowDonConfigVersion: m.ExecutionContext.MetaWorkflowDonConfigVersion,
+		MetaReferenceId:              m.ExecutionContext.MetaReferenceId,
 
 		// Execution Context - Capability
-		MetaCapabilityType:           m.MetaCapabilityType,
-		MetaCapabilityId:             m.MetaCapabilityId,
-		MetaCapabilityTimestampStart: m.MetaCapabilityTimestampStart,
-		MetaCapabilityTimestampEmit:  m.MetaCapabilityTimestampEmit,
+		MetaCapabilityType:           m.ExecutionContext.MetaCapabilityType,
+		MetaCapabilityId:             m.ExecutionContext.MetaCapabilityId,
+		MetaCapabilityTimestampStart: m.ExecutionContext.MetaCapabilityTimestampStart,
+		MetaCapabilityTimestampEmit:  m.ExecutionContext.MetaCapabilityTimestampEmit,
 	}
 
 	if includeTxInfo {

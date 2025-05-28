@@ -6,19 +6,19 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/data-feeds/on-chain/registry"
 
-	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/beholder/monitor"
 	wt "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 )
 
 // EVM POR specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
 type porFeedsProcessor struct {
-	emitter monitor.ProtoEmitter
+	emitter beholder.ProtoEmitter
 	metrics *registry.Metrics
 }
 
-func NewPORFeedsProcessor(metrics *registry.Metrics, emitter monitor.ProtoEmitter) *porFeedsProcessor {
+func NewPORFeedsProcessor(metrics *registry.Metrics, emitter beholder.ProtoEmitter) *porFeedsProcessor {
 	return &porFeedsProcessor{
 		metrics: metrics,
 		emitter: emitter,

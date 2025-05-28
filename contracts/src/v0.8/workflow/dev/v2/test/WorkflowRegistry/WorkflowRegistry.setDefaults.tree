@@ -1,0 +1,28 @@
+WorkflowRegistry.setDefaults
+├── when the caller is NOT the owner
+│   └── it should revert with OnlyCallableByOwner
+└── when the caller IS the owner
+    ├── when there are no calls made yet
+    │   └── it should be the constructor defaults (500, 200)
+    ├── when it is called with a typical valid update
+    │   └── it should correctly set the updated values
+    │       ├── call setDefaults(200, 50)
+    │       │   ├── getMaxWorkflowsPerDon(...)        returns 200
+    │       │   └── getMaxWorkflowsPerUserDon(...)    returns 50
+    │       └── other mappings/overrides remain untouched
+    ├── when all values are zero
+    │   └── it should set 0 for all two values
+    │       └── call setDefaults(0, 0)
+    │           ├── getMaxWorkflowsPerDon(...)        returns 0
+    │           └── getMaxWorkflowsPerUserDon(...)    returns 0
+    ├── when all values are at uint32 max
+    │   └── it should set uint32 max for all two values
+    │       └── call setDefaults(4294967295, 4294967295)
+    │           ├── getMaxWorkflowsPerDon(...)        returns 4294967295
+    │           └── getMaxWorkflowsPerUserDon(...)    returns 4294967295
+    └── when called multiple times in sequence
+        └── it should set to the most recent values
+            ├── call setDefaults(A, B)
+            │   └── getters reflect (A, B)
+            └── call setDefaults(C, D)
+                └── getters now reflect (C, D) (overwriting previous)
