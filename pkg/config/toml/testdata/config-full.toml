@@ -151,6 +151,9 @@ GasLimit = 540
 FromAddress = '0x627306090abaB3A6e1400e9345bC60c78a8BEf57'
 ForwarderAddress = '0x9FBDa871d559710256a2502A2517b794B482Db40'
 GasLimitDefault = 400000
+TxAcceptanceState = 3
+PollPeriod = '2s'
+AcceptanceTimeout = '30s'
 
 [[Nodes]]
 Name = 'foo'

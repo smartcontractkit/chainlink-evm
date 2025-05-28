@@ -19,6 +19,8 @@ import (
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/config/configtest"
+	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
@@ -337,9 +339,12 @@ var fullConfig = EVMConfig{
 			},
 		},
 		Workflow: Workflow{
-			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
-			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
-			GasLimitDefault:  ptr[uint64](400000),
+			FromAddress:       ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress:  ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:   ptr[uint64](400000),
+			TxAcceptanceState: ptr(commontypes.Finalized),
+			PollPeriod:        config.MustNewDuration(2 * time.Second),
+			AcceptanceTimeout: config.MustNewDuration(30 * time.Second),
 		},
 	},
 	Nodes: EVMNodes{
