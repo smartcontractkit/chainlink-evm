@@ -362,9 +362,14 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 	if !e.geCfg.EstimateLimit() {
 		return providedGasLimit, nil
 	}
+
+	// TODO: Fetch from addr from chainlink repo
+	estimationSender := common.HexToAddress("0xC11C11C11C11C11C11C11C11C11C11C11C11C1")
+
 	// Create call msg for gas limit estimation
 	// Skip setting Gas to avoid capping the results of the estimation
 	callMsg := ethereum.CallMsg{
+		From: estimationSender,
 		To:   toAddress,
 		Data: calldata,
 	}
