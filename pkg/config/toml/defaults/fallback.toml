@@ -69,7 +69,7 @@ HistoryDepth = 100
 MaxBufferSize = 3
 SamplingInterval = '1s'
 FinalityTagBypass = false
-MaxAllowedFinalityDepth = 10000
+MaxAllowedFinalityDepth = 50000
 PersistenceEnabled = true
 
 [NodePool]

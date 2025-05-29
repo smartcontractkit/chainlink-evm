@@ -354,7 +354,7 @@ func TestChainScopedConfig_HeadTracker(t *testing.T) {
 	assert.Equal(t, uint32(3), ht.MaxBufferSize())
 	assert.Equal(t, time.Second, ht.SamplingInterval())
 	assert.True(t, ht.FinalityTagBypass())
-	assert.Equal(t, uint32(10000), ht.MaxAllowedFinalityDepth())
+	assert.Equal(t, uint32(50000), ht.MaxAllowedFinalityDepth())
 	assert.True(t, ht.PersistenceEnabled())
 }
 
