@@ -26,6 +26,7 @@ type FakeChainStore struct {
 
 	TxSigner
 	MessageSigner
+	Signer
 
 	internal.Locker[keys.Mutex]
 }
@@ -86,7 +87,9 @@ func (k *ECDSAMessageSigner) SignMessage(ctx context.Context, address common.Add
 	return crypto.Sign(accounts.TextHash(message), (*ecdsa.PrivateKey)(k))
 }
 
-func (f MessageSigner) SignRawUnhashedBytes(ctx context.Context, address common.Address, message []byte) ([]byte, error) {
+type Signer func(ctx context.Context, address common.Address, message []byte) ([]byte, error)
+
+func (f Signer) Sign(ctx context.Context, address common.Address, message []byte) ([]byte, error) {
 	if f == nil {
 		return message, nil
 	}
