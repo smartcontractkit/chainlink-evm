@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {IReceiver} from "../keystone/interfaces/IReceiver.sol";
 import {OwnerIsCreator} from "../shared/access/OwnerIsCreator.sol";
 import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
 import {IDataFeedsCache} from "./interfaces/IDataFeedsCache.sol";
+import {IReceiver} from "./interfaces/IReceiver.sol";
 import {ITokenRecover} from "./interfaces/ITokenRecover.sol";
 
 import {IERC165} from "../vendor/openzeppelin-solidity/v5.0.2/contracts/interfaces/IERC165.sol";

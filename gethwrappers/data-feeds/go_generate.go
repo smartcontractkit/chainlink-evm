@@ -6,3 +6,4 @@ package gethwrappers
 
 //go:generate go run ../generation/wrap.go data-feeds BundleAggregatorProxy bundle_aggregator_proxy
 //go:generate go run ../generation/wrap.go data-feeds DataFeedsCache data_feeds_cache
+//go:generate go run ../generation/wrap.go keystone KeystoneForwarder forwarder
