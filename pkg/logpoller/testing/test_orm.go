@@ -20,12 +20,12 @@ func NewTestORM(ds sqlutil.DataSource) *TestDSORM {
 }
 
 // HasFilterByEventSig checks if a filter exists for the provided event sig and contract address
-func (o *TestDSORM) HasFilterByEventSig(ctx context.Context, chainID string, eventSig common.Hash, address common.Address) (bool, error) {
+func (o *TestDSORM) HasFilterByEventSig(ctx context.Context, chainID string, eventSig common.Hash, address []byte) (bool, error) {
 	query := `SELECT COUNT(1) FROM evm.log_poller_filters
 		WHERE evm_chain_id = $1 AND event = $2 AND address = $3 LIMIT 1`
 
 	var exists int
-	if err := o.ds.GetContext(ctx, &exists, query, chainID, eventSig.Bytes(), address.Bytes()); err != nil {
+	if err := o.ds.GetContext(ctx, &exists, query, chainID, eventSig.Bytes(), address); err != nil {
 		return false, err
 	}
 
