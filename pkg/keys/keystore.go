@@ -24,7 +24,7 @@ type Store interface {
 	RoundRobin
 	MessageSigner
 	Locker
-	RawUnhashedSigner
+	Signer
 }
 
 // ChainStore extends Store with methods that require a chain ID.
@@ -39,25 +39,28 @@ type Addresses interface {
 }
 
 type AddressChecker interface {
+	// CheckEnabled returns an error if address is not enabled.
 	CheckEnabled(ctx context.Context, address common.Address) error
 }
 
 type AddressLister interface {
+	// EnabledAddresses returns a slice of enabled addresses.
 	EnabledAddresses(ctx context.Context) (addresses []common.Address, err error)
 }
 
-// RawUnhashedSigner is an interface for signing raw bytes without hashing them first.
-// This is useful for signing transactions or other data that needs to be signed as-is (required for TRON).
-// The interface effectively exposes the Sign method from the keystore
-type RawUnhashedSigner interface {
-	SignRawUnhashedBytes(ctx context.Context, address common.Address, bytes []byte) ([]byte, error)
+type Signer interface {
+	// Sign signs bytes with the key for address.
+	Sign(ctx context.Context, address common.Address, bytes []byte) ([]byte, error)
 }
 
 type MessageSigner interface {
+	// SignMessage signs the given message with the key for address.
+	// See [accounts.TextHash]
 	SignMessage(ctx context.Context, address common.Address, message []byte) ([]byte, error)
 }
 
 type TxSigner interface {
+	// SignTx signs the given tx with the key for fromAddress.
 	SignTx(ctx context.Context, fromAddress common.Address, tx *types.Transaction) (*types.Transaction, error)
 }
 
@@ -66,6 +69,7 @@ type Locker interface {
 }
 
 type RoundRobin interface {
+	// GetNextAddress returns the next address to use from addresses, in round-robin order.
 	GetNextAddress(ctx context.Context, addresses ...common.Address) (address common.Address, err error)
 }
 
@@ -118,7 +122,7 @@ func (s *store) SignMessage(ctx context.Context, address common.Address, message
 	return s.ks.Sign(ctx, address.String(), accounts.TextHash(message))
 }
 
-func (s *store) SignRawUnhashedBytes(ctx context.Context, address common.Address, bytes []byte) ([]byte, error) {
+func (s *store) Sign(ctx context.Context, address common.Address, bytes []byte) ([]byte, error) {
 	return s.ks.Sign(ctx, address.String(), bytes)
 }
 

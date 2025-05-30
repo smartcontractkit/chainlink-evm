@@ -72,3 +72,6 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/log:
     interfaces:
       AbigenContract:
+  github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm:
+    interfaces:
+      Chain:
