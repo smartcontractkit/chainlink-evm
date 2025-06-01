@@ -390,6 +390,53 @@ func (_c *GasEstimator_EstimateLimit_Call) RunAndReturn(run func() bool) *GasEst
 	return _c
 }
 
+// EstimationSenderAddress provides a mock function with no fields
+func (_m *GasEstimator) EstimationSenderAddress() *string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for EstimationSenderAddress")
+	}
+
+	var r0 *string
+	if rf, ok := ret.Get(0).(func() *string); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*string)
+		}
+	}
+
+	return r0
+}
+
+// GasEstimator_EstimationSenderAddress_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EstimationSenderAddress'
+type GasEstimator_EstimationSenderAddress_Call struct {
+	*mock.Call
+}
+
+// EstimationSenderAddress is a helper method to define mock.On call
+func (_e *GasEstimator_Expecter) EstimationSenderAddress() *GasEstimator_EstimationSenderAddress_Call {
+	return &GasEstimator_EstimationSenderAddress_Call{Call: _e.mock.On("EstimationSenderAddress")}
+}
+
+func (_c *GasEstimator_EstimationSenderAddress_Call) Run(run func()) *GasEstimator_EstimationSenderAddress_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *GasEstimator_EstimationSenderAddress_Call) Return(_a0 *string) *GasEstimator_EstimationSenderAddress_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *GasEstimator_EstimationSenderAddress_Call) RunAndReturn(run func() *string) *GasEstimator_EstimationSenderAddress_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FeeCapDefault provides a mock function with no fields
 func (_m *GasEstimator) FeeCapDefault() *assets.Wei {
 	ret := _m.Called()
