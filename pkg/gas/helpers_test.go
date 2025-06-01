@@ -122,20 +122,21 @@ func (m *MockBlockHistoryConfig) TransactionPercentile() uint16 {
 }
 
 type MockGasEstimatorConfig struct {
-	EIP1559DynamicFeesF bool
-	BumpPercentF        uint16
-	BumpThresholdF      uint64
-	BumpMinF            *assets.Wei
-	LimitMultiplierF    float32
-	TipCapDefaultF      *assets.Wei
-	TipCapMinF          *assets.Wei
-	PriceMaxF           *assets.Wei
-	PriceMinF           *assets.Wei
-	PriceDefaultF       *assets.Wei
-	FeeCapDefaultF      *assets.Wei
-	LimitMaxF           uint64
-	ModeF               string
-	EstimateLimitF      bool
+	EIP1559DynamicFeesF      bool
+	BumpPercentF             uint16
+	BumpThresholdF           uint64
+	BumpMinF                 *assets.Wei
+	LimitMultiplierF         float32
+	TipCapDefaultF           *assets.Wei
+	TipCapMinF               *assets.Wei
+	PriceMaxF                *assets.Wei
+	PriceMinF                *assets.Wei
+	PriceDefaultF            *assets.Wei
+	FeeCapDefaultF           *assets.Wei
+	LimitMaxF                uint64
+	ModeF                    string
+	EstimateLimitF           bool
+	EstimationSenderAddressF *string
 }
 
 func NewMockGasConfig() *MockGasEstimatorConfig {
@@ -196,4 +197,8 @@ func (m *MockGasEstimatorConfig) Mode() string {
 
 func (m *MockGasEstimatorConfig) EstimateLimit() bool {
 	return m.EstimateLimitF
+}
+
+func (m *MockGasEstimatorConfig) EstimationSenderAddress() *string {
+	return m.EstimationSenderAddressF
 }

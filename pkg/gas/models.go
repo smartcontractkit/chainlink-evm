@@ -363,17 +363,22 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 		return providedGasLimit, nil
 	}
 
-	// TODO: Fetch from addr from chainlink repo
-	estimationSender := common.HexToAddress("0xC11C11C11C11C11C11C11C11C11C11C11C11C1")
+	// If EstimationSenderAddress string is not empty, then we unwrap the config value and set the pointer. Otherwise, it remains nil
+	var estimationSenderAddress *common.Address
+	if len(*e.geCfg.EstimationSenderAddress()) != 0 {
+		estimationSenderAddressUnwrapped := common.HexToAddress(*e.geCfg.EstimationSenderAddress())
+		estimationSenderAddress = &estimationSenderAddressUnwrapped
+	}
 
 	// Create call msg for gas limit estimation
 	// Skip setting Gas to avoid capping the results of the estimation
 	callMsg := ethereum.CallMsg{
-		From: estimationSender,
 		To:   toAddress,
 		Data: calldata,
 	}
-	if fromAddress != nil {
+	if estimationSenderAddress != nil {
+		callMsg.From = *estimationSenderAddress
+	} else if fromAddress != nil {
 		callMsg.From = *fromAddress
 	}
 	estimatedGas, estimateErr := e.ethClient.EstimateGas(ctx, callMsg)
@@ -422,6 +427,7 @@ type GasEstimatorConfig interface {
 	PriceMax() *assets.Wei
 	Mode() string
 	EstimateLimit() bool
+	EstimationSenderAddress() *string
 }
 
 // BumpLegacyGasPriceOnly will increase the price
