@@ -663,13 +663,13 @@ type GasEstimator struct {
 	PriceMax     *assets.Wei
 	PriceMin     *assets.Wei
 
-	LimitDefault    *uint64
-	LimitMax        *uint64
-	LimitMultiplier *decimal.Decimal
-	LimitTransfer   *uint64
-	LimitJobType    GasLimitJobType `toml:",omitempty"`
-	EstimateLimit   *bool
-	SenderAddress   *string
+	LimitDefault            *uint64
+	LimitMax                *uint64
+	LimitMultiplier         *decimal.Decimal
+	LimitTransfer           *uint64
+	LimitJobType            GasLimitJobType `toml:",omitempty"`
+	EstimateLimit           *bool
+	EstimationSenderAddress *string
 
 	BumpMin       *assets.Wei
 	BumpPercent   *uint16
@@ -762,8 +762,8 @@ func (e *GasEstimator) setFrom(f *GasEstimator) {
 	if v := f.EstimateLimit; v != nil {
 		e.EstimateLimit = v
 	}
-	if v := f.SenderAddress; v != nil {
-		e.SenderAddress = v
+	if v := f.EstimationSenderAddress; v != nil {
+		e.EstimationSenderAddress = v
 	}
 	if v := f.PriceDefault; v != nil {
 		e.PriceDefault = v

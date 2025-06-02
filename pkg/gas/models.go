@@ -363,11 +363,11 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 		return providedGasLimit, nil
 	}
 
-	// If SenderAddress string is not empty, then we unwrap the config value and set the pointer. Otherwise, it remains nil
-	var senderAddress *common.Address
-	if len(*e.geCfg.SenderAddress()) != 0 {
-		senderAddressUnwrapped := common.HexToAddress(*e.geCfg.SenderAddress())
-		senderAddress = &senderAddressUnwrapped
+	// If EstimationSenderAddress string is not empty, then we unwrap the config value and set the pointer. Otherwise, it remains nil
+	var estimationSenderAddress *common.Address
+	if len(*e.geCfg.EstimationSenderAddress()) != 0 {
+		estimationSenderAddressUnwrapped := common.HexToAddress(*e.geCfg.EstimationSenderAddress())
+		estimationSenderAddress = &estimationSenderAddressUnwrapped
 	}
 
 	// Create call msg for gas limit estimation
@@ -376,8 +376,8 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 		To:   toAddress,
 		Data: calldata,
 	}
-	if senderAddress != nil {
-		callMsg.From = *senderAddress
+	if estimationSenderAddress != nil {
+		callMsg.From = *estimationSenderAddress
 	} else if fromAddress != nil {
 		callMsg.From = *fromAddress
 	}
@@ -427,7 +427,7 @@ type GasEstimatorConfig interface {
 	PriceMax() *assets.Wei
 	Mode() string
 	EstimateLimit() bool
-	SenderAddress() *string
+	EstimationSenderAddress() *string
 }
 
 // BumpLegacyGasPriceOnly will increase the price
