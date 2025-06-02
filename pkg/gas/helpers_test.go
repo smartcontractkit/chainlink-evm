@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
+
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
@@ -136,7 +137,7 @@ type MockGasEstimatorConfig struct {
 	LimitMaxF           uint64
 	ModeF               string
 	EstimateLimitF      bool
-	SenderAddressF      *string
+	SenderAddressF      *evmtypes.EIP55Address
 }
 
 func NewMockGasConfig() *MockGasEstimatorConfig {
@@ -199,6 +200,6 @@ func (m *MockGasEstimatorConfig) EstimateLimit() bool {
 	return m.EstimateLimitF
 }
 
-func (m *MockGasEstimatorConfig) SenderAddress() *string {
+func (m *MockGasEstimatorConfig) SenderAddress() *evmtypes.EIP55Address {
 	return m.SenderAddressF
 }

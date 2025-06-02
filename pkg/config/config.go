@@ -151,7 +151,7 @@ type GasEstimator interface {
 	Mode() string
 	PriceMaxKey(gethcommon.Address) *assets.Wei
 	EstimateLimit() bool
-	SenderAddress() *string
+	SenderAddress() *types.EIP55Address
 	DAOracle() DAOracle
 }
 

@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/txpool/legacypool"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/shopspring/decimal"
@@ -670,7 +669,7 @@ type GasEstimator struct {
 	LimitTransfer   *uint64
 	LimitJobType    GasLimitJobType `toml:",omitempty"`
 	EstimateLimit   *bool
-	SenderAddress   *string
+	SenderAddress   *types.EIP55Address `toml:",omitempty"`
 
 	BumpMin       *assets.Wei
 	BumpPercent   *uint16
@@ -721,10 +720,6 @@ func (e *GasEstimator) ValidateConfig() (err error) {
 	if *e.Mode == "BlockHistory" && *e.BlockHistory.BlockHistorySize <= 0 {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "BlockHistory.BlockHistorySize", Value: *e.BlockHistory.BlockHistorySize,
 			Msg: "must be greater than or equal to 1 with BlockHistory Mode"})
-	}
-	if e.SenderAddress != nil && len(*e.SenderAddress) > 0 && !common.IsHexAddress(*e.SenderAddress) {
-		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "SenderAddress", Value: *e.SenderAddress,
-			Msg: "must be a valid hex-encoded address"})
 	}
 
 	return

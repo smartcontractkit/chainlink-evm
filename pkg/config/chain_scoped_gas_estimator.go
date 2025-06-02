@@ -124,7 +124,7 @@ func (g *gasEstimatorConfig) EstimateLimit() bool {
 }
 
 // SenderAddress returns the estimation sender address for dynamic gas estimation and is ignored if EstimateLimit is set to false.
-func (g *gasEstimatorConfig) SenderAddress() *string {
+func (g *gasEstimatorConfig) SenderAddress() *types.EIP55Address {
 	if g.c.EstimateLimit != nil && *g.c.EstimateLimit {
 		return g.c.SenderAddress
 	}
