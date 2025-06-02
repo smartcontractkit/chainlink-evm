@@ -365,7 +365,7 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 
 	// If EstimationSenderAddress string is not empty, then we unwrap the config value and set the pointer. Otherwise, it remains nil
 	var estimationSenderAddress *common.Address
-	if len(*e.geCfg.EstimationSenderAddress()) != 0 {
+	if e.geCfg.EstimationSenderAddress() != nil && len(*e.geCfg.EstimationSenderAddress()) != 0 {
 		estimationSenderAddressUnwrapped := common.HexToAddress(*e.geCfg.EstimationSenderAddress())
 		estimationSenderAddress = &estimationSenderAddressUnwrapped
 	}
