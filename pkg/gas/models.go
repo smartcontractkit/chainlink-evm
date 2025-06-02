@@ -369,8 +369,8 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 		To:   toAddress,
 		Data: calldata,
 	}
-	if e.geCfg.EstimationSenderAddress() != nil && len(*e.geCfg.EstimationSenderAddress()) != 0 {
-		callMsg.From = common.HexToAddress(*e.geCfg.EstimationSenderAddress())
+	if e.geCfg.SenderAddress() != nil && len(*e.geCfg.SenderAddress()) != 0 {
+		callMsg.From = common.HexToAddress(*e.geCfg.SenderAddress())
 	} else if fromAddress != nil {
 		callMsg.From = *fromAddress
 	}
@@ -420,7 +420,7 @@ type GasEstimatorConfig interface {
 	PriceMax() *assets.Wei
 	Mode() string
 	EstimateLimit() bool
-	EstimationSenderAddress() *string
+	SenderAddress() *string
 }
 
 // BumpLegacyGasPriceOnly will increase the price
