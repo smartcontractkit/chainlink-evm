@@ -363,21 +363,14 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 		return providedGasLimit, nil
 	}
 
-	// If EstimationSenderAddress string is not empty, then we unwrap the config value and set the pointer. Otherwise, it remains nil
-	var estimationSenderAddress *common.Address
-	if e.geCfg.EstimationSenderAddress() != nil && len(*e.geCfg.EstimationSenderAddress()) != 0 {
-		estimationSenderAddressUnwrapped := common.HexToAddress(*e.geCfg.EstimationSenderAddress())
-		estimationSenderAddress = &estimationSenderAddressUnwrapped
-	}
-
 	// Create call msg for gas limit estimation
 	// Skip setting Gas to avoid capping the results of the estimation
 	callMsg := ethereum.CallMsg{
 		To:   toAddress,
 		Data: calldata,
 	}
-	if estimationSenderAddress != nil {
-		callMsg.From = *estimationSenderAddress
+	if e.geCfg.EstimationSenderAddress() != nil && len(*e.geCfg.EstimationSenderAddress()) != 0 {
+		callMsg.From = common.HexToAddress(*e.geCfg.EstimationSenderAddress())
 	} else if fromAddress != nil {
 		callMsg.From = *fromAddress
 	}
