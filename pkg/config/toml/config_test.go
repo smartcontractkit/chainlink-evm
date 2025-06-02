@@ -203,6 +203,7 @@ var fullConfig = EVMConfig{
 			LimitMultiplier:    ptr(decimal.RequireFromString("1.234")),
 			LimitTransfer:      ptr[uint64](100),
 			EstimateLimit:      ptr(false),
+			SenderAddress:      ptr(""),
 			TipCapDefault:      assets.NewWeiI(2),
 			TipCapMin:          assets.NewWeiI(1),
 			PriceDefault:       assets.NewWeiI(math.MaxInt64),
