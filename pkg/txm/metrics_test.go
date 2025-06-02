@@ -5,12 +5,15 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
 	"google.golang.org/protobuf/proto"
 )
 
