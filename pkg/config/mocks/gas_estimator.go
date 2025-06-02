@@ -390,12 +390,12 @@ func (_c *GasEstimator_EstimateLimit_Call) RunAndReturn(run func() bool) *GasEst
 	return _c
 }
 
-// EstimationSenderAddress provides a mock function with no fields
-func (_m *GasEstimator) EstimationSenderAddress() *string {
+// SenderAddress provides a mock function with no fields
+func (_m *GasEstimator) SenderAddress() *string {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for EstimationSenderAddress")
+		panic("no return value specified for SenderAddress")
 	}
 
 	var r0 *string
@@ -410,29 +410,29 @@ func (_m *GasEstimator) EstimationSenderAddress() *string {
 	return r0
 }
 
-// GasEstimator_EstimationSenderAddress_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EstimationSenderAddress'
-type GasEstimator_EstimationSenderAddress_Call struct {
+// GasEstimator_SenderAddress_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SenderAddress'
+type GasEstimator_SenderAddress_Call struct {
 	*mock.Call
 }
 
-// EstimationSenderAddress is a helper method to define mock.On call
-func (_e *GasEstimator_Expecter) EstimationSenderAddress() *GasEstimator_EstimationSenderAddress_Call {
-	return &GasEstimator_EstimationSenderAddress_Call{Call: _e.mock.On("EstimationSenderAddress")}
+// SenderAddress is a helper method to define mock.On call
+func (_e *GasEstimator_Expecter) SenderAddress() *GasEstimator_SenderAddress_Call {
+	return &GasEstimator_SenderAddress_Call{Call: _e.mock.On("SenderAddress")}
 }
 
-func (_c *GasEstimator_EstimationSenderAddress_Call) Run(run func()) *GasEstimator_EstimationSenderAddress_Call {
+func (_c *GasEstimator_SenderAddress_Call) Run(run func()) *GasEstimator_SenderAddress_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *GasEstimator_EstimationSenderAddress_Call) Return(_a0 *string) *GasEstimator_EstimationSenderAddress_Call {
+func (_c *GasEstimator_SenderAddress_Call) Return(_a0 *string) *GasEstimator_SenderAddress_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *GasEstimator_EstimationSenderAddress_Call) RunAndReturn(run func() *string) *GasEstimator_EstimationSenderAddress_Call {
+func (_c *GasEstimator_SenderAddress_Call) RunAndReturn(run func() *string) *GasEstimator_SenderAddress_Call {
 	_c.Call.Return(run)
 	return _c
 }

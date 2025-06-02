@@ -53,7 +53,7 @@ FeeCapDefault = '100 gwei'
 TipCapDefault = '1'
 TipCapMin = '1'
 EstimateLimit = false
-EstimationSenderAddress = ''
+SenderAddress = ''
 
 [GasEstimator.BlockHistory]
 BatchSize = 25
