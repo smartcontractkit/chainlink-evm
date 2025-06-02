@@ -83,7 +83,6 @@ func TestEmitTxMessage(t *testing.T) {
 			"beholder_entity", "svr.v1.TxMessage",
 			"beholder_data_schema", "/beholder-tx-message/versions/2",
 		)
-
 	})
 
 	t.Run("sends original ToAddress if tx is not purgeable", func(t *testing.T) {
@@ -146,6 +145,5 @@ func TestEmitTxMessage(t *testing.T) {
 			"beholder_entity", "svr.v1.TxMessage",
 			"beholder_data_schema", "/beholder-tx-message/versions/2",
 		)
-
 	})
 }
