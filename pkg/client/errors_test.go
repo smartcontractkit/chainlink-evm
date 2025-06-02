@@ -562,10 +562,10 @@ func Test_IsTooManyResultsError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.network, func(t *testing.T) {
-			jsonRpcErr := evmclient.JsonError{}
-			err := json.Unmarshal([]byte(test.message), &jsonRpcErr)
+			jsonRPCErr := evmclient.JsonError{}
+			err := json.Unmarshal([]byte(test.message), &jsonRPCErr)
 			if err == nil {
-				err = jsonRpcErr
+				err = jsonRPCErr
 			}
 			assert.Equal(t, test.expect, evmclient.IsTooManyResults(err, &customErrors))
 		})
@@ -574,4 +574,36 @@ func Test_IsTooManyResultsError(t *testing.T) {
 	t.Run("Context DeadlineExceeded is TooManyResults", func(t *testing.T) {
 		assert.True(t, evmclient.IsTooManyResults(context.DeadlineExceeded, nil))
 	})
+}
+
+func Test_IsMissingBlocksError(t *testing.T) {
+	customErrors := evmclient.NewTestClientErrors()
+
+	tests := []errorCase{{`{
+		"code":-32602",
+		"message":"unrelated invalid params error"}`,
+		false,
+		"generic invalid params error",
+	}, {`{
+		"code":-32500,
+		"message":"unrelated error code"}`,
+		false,
+		"unrelated",
+	}, {fmt.Sprintf(`{
+		"code" : -43106,
+		"message" : "%s"}`, customErrors.MissingBlocks()),
+		true,
+		"custom chain with error specified in toml config",
+	}}
+
+	for _, test := range tests {
+		t.Run(test.network, func(t *testing.T) {
+			jsonRPCErr := evmclient.JsonError{}
+			err := json.Unmarshal([]byte(test.message), &jsonRPCErr)
+			if err == nil {
+				err = jsonRPCErr
+			}
+			assert.Equal(t, test.expect, evmclient.IsMissingBlocks(err, &customErrors), err)
+		})
+	}
 }
