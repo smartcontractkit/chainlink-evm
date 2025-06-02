@@ -1,6 +1,9 @@
 package txm
 
 import (
+	"strconv"
+	"testing"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
@@ -9,8 +12,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
-	"strconv"
-	"testing"
 )
 
 func TestEmitTxMessage(t *testing.T) {
