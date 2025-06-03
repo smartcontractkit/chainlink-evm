@@ -362,13 +362,16 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 	if !e.geCfg.EstimateLimit() {
 		return providedGasLimit, nil
 	}
+
 	// Create call msg for gas limit estimation
 	// Skip setting Gas to avoid capping the results of the estimation
 	callMsg := ethereum.CallMsg{
 		To:   toAddress,
 		Data: calldata,
 	}
-	if fromAddress != nil {
+	if e.geCfg.SenderAddress() != nil {
+		callMsg.From = e.geCfg.SenderAddress().Address()
+	} else if fromAddress != nil {
 		callMsg.From = *fromAddress
 	}
 	estimatedGas, estimateErr := e.ethClient.EstimateGas(ctx, callMsg)
@@ -417,6 +420,7 @@ type GasEstimatorConfig interface {
 	PriceMax() *assets.Wei
 	Mode() string
 	EstimateLimit() bool
+	SenderAddress() *evmtypes.EIP55Address
 }
 
 // BumpLegacyGasPriceOnly will increase the price
