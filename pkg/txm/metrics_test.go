@@ -11,6 +11,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -31,10 +32,12 @@ func TestEmitTxMessage(t *testing.T) {
 		// GIVEN
 		ctx := t.Context()
 
+		expectedFromAddress := fromAddress
 		expectedToAddress := common.Address{}
 		expectedHash := common.Hash{}
 		expectedChain := testutils.FixtureChainID
 		expectedNonce := uint64(256)
+		var actualMessage svrv1.TxMessage
 
 		txmMetrics, err := NewTxmMetrics(expectedChain)
 		require.NoError(t, err)
@@ -72,31 +75,33 @@ func TestEmitTxMessage(t *testing.T) {
 			"Emit",
 			ctx,
 			mock.MatchedBy(func(b []byte) bool {
-				var actual svrv1.TxMessage
-				if err := proto.Unmarshal(b, &actual); err != nil {
+				if err := proto.Unmarshal(b, &actualMessage); err != nil {
 					return false
 				}
-
-				return actual.FromAddress == fromAddress.String() &&
-					actual.ToAddress == expectedToAddress.String() &&
-					actual.Nonce == strconv.FormatUint(expectedNonce, 10) &&
-					actual.ChainId == expectedChain.String() &&
-					actual.FeedAddress == ""
+				return true
 			}),
 			"beholder_domain", "svr",
 			"beholder_entity", "svr.v1.TxMessage",
 			"beholder_data_schema", "/beholder-tx-message/versions/2",
 		)
+
+		assert.Equal(t, expectedFromAddress.String(), actualMessage.FromAddress)
+		assert.Equal(t, expectedToAddress.String(), actualMessage.ToAddress)
+		assert.Equal(t, strconv.FormatUint(expectedNonce, 10), actualMessage.Nonce)
+		assert.Equal(t, expectedChain.String(), actualMessage.ChainId)
+		assert.Equal(t, "", actualMessage.FeedAddress)
 	})
 
 	t.Run("sends original ToAddress if tx is not purgeable", func(t *testing.T) {
 		// GIVEN
 		ctx := t.Context()
 
+		expectedFromAddress := fromAddress
 		expectedToAddress := toAddress
 		expectedHash := common.Hash{}
 		expectedChain := testutils.FixtureChainID
 		expectedNonce := uint64(256)
+		var actualMessage svrv1.TxMessage
 
 		txmMetrics, err := NewTxmMetrics(expectedChain)
 		require.NoError(t, err)
@@ -134,20 +139,20 @@ func TestEmitTxMessage(t *testing.T) {
 			"Emit",
 			ctx,
 			mock.MatchedBy(func(b []byte) bool {
-				var actual svrv1.TxMessage
-				if err := proto.Unmarshal(b, &actual); err != nil {
+				if err := proto.Unmarshal(b, &actualMessage); err != nil {
 					return false
 				}
-
-				return actual.FromAddress == fromAddress.String() &&
-					actual.ToAddress == expectedToAddress.String() &&
-					actual.Nonce == strconv.FormatUint(expectedNonce, 10) &&
-					actual.ChainId == expectedChain.String() &&
-					actual.FeedAddress == ""
+				return true
 			}),
 			"beholder_domain", "svr",
 			"beholder_entity", "svr.v1.TxMessage",
 			"beholder_data_schema", "/beholder-tx-message/versions/2",
 		)
+
+		assert.Equal(t, expectedFromAddress.String(), actualMessage.FromAddress)
+		assert.Equal(t, expectedToAddress.String(), actualMessage.ToAddress)
+		assert.Equal(t, strconv.FormatUint(expectedNonce, 10), actualMessage.Nonce)
+		assert.Equal(t, expectedChain.String(), actualMessage.ChainId)
+		assert.Equal(t, "", actualMessage.FeedAddress)
 	})
 }
