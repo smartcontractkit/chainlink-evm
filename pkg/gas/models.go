@@ -370,7 +370,7 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 		Data: calldata,
 	}
 	if e.geCfg.SenderAddress() != nil {
-		callMsg.From = (*e.geCfg.SenderAddress()).Address()
+		callMsg.From = e.geCfg.SenderAddress().Address()
 	} else if fromAddress != nil {
 		callMsg.From = *fromAddress
 	}
