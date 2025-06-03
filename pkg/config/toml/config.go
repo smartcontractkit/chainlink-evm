@@ -1004,6 +1004,7 @@ type ClientErrors struct {
 	Fatal                             *string `toml:",omitempty"`
 	ServiceUnavailable                *string `toml:",omitempty"`
 	TooManyResults                    *string `toml:",omitempty"`
+	MissingBlocks                     *string `toml:",omitempty"`
 }
 
 func (r *ClientErrors) setFrom(f *ClientErrors) bool {
@@ -1051,6 +1052,9 @@ func (r *ClientErrors) setFrom(f *ClientErrors) bool {
 	}
 	if v := f.TooManyResults; v != nil {
 		r.TooManyResults = v
+	}
+	if v := f.MissingBlocks; v != nil {
+		r.MissingBlocks = v
 	}
 	return true
 }

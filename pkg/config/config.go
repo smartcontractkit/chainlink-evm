@@ -102,6 +102,7 @@ type ClientErrors interface {
 	Fatal() string
 	ServiceUnavailable() string
 	TooManyResults() string
+	MissingBlocks() string
 }
 
 type Transactions interface {

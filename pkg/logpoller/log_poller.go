@@ -137,6 +137,7 @@ type logPoller struct {
 	// LogPoller keeps running in infinite loop, so whenever the invalid state is removed from the database it should
 	// recover automatically without needing to restart the LogPoller.
 	finalityViolated           atomic.Bool
+	missingBlocksErrorCount    atomic.Uint64
 	countBasedLogPruningActive atomic.Bool
 }
 
@@ -536,6 +537,9 @@ func (lp *logPoller) Healthy() error {
 	if lp.finalityViolated.Load() {
 		return commontypes.ErrFinalityViolated
 	}
+	if errCount := lp.missingBlocksErrorCount.Load(); errCount > 2 {
+		return pkgerrors.Errorf("rpc servers reported missing blocks %d times in a row", errCount)
+	}
 	return nil
 }
 
@@ -901,6 +905,16 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 
 		gethLogs, err := lp.latencyMonitor.FilterLogs(ctx, lp.Filter(big.NewInt(from), big.NewInt(to), nil))
 		if err != nil {
+			if client.IsMissingBlocks(err, lp.clientErrors) {
+				errCount := lp.missingBlocksErrorCount.Add(1)
+				if errCount < 2 {
+					lp.lggr.Errorw("Missing blocks", "err", err, "from", from, "to", to)
+					return err
+				}
+				lp.lggr.Criticalw("Missing blocks: cannot continue until at least one rpc server we're connected to has the logs for these blocks", "err", err, "from", from, "to", to)
+				lp.SvcErrBuffer.Append(err)
+				return err
+			}
 			if !client.IsTooManyResults(err, lp.clientErrors) {
 				lp.lggr.Errorw("Unable to query for logs", "err", err, "from", from, "to", to)
 				return err
@@ -915,6 +929,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 			from -= batchSize // counteract +=batchSize on next loop iteration, so starting block does not change
 			continue
 		}
+		lp.missingBlocksErrorCount.Store(0) // clear unhealthy node state in case we were missing blocks and just found them
 		if len(gethLogs) == 0 {
 			continue
 		}

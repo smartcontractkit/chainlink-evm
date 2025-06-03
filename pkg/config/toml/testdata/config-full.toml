@@ -134,6 +134,7 @@ TransactionAlreadyMined = '(: |^)transaction already mined'
 Fatal = '(: |^)fatal'
 ServiceUnavailable = '(: |^)service unavailable'
 TooManyResults = '(: |^)too many results'
+MissingBlocks = '(: |^)invalid block range'
 
 [OCR]
 ContractConfirmations = 11

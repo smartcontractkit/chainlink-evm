@@ -21,8 +21,8 @@ require (
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.63.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250603131953-a99824a0746b
-	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250603132148-1579e286c9c8
+	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250605161733-bc72ed95ed5c
+	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250605161945-e139f71c341e
 	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250522110034-65c54665034a
 	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250522110034-65c54665034a
 	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250522110034-65c54665034a
@@ -155,7 +155,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0 // indirect
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
-	github.com/smartcontractkit/freeport v0.1.0 // indirect
+	github.com/smartcontractkit/freeport v0.1.1 // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/stephenlacy/go-ethereum-hdwallet v0.0.0-20230913225845-a4fa94429863 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect

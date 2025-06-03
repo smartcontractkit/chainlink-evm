@@ -97,6 +97,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		Fatal:                             ptr("fatal"),
 		ServiceUnavailable:                ptr("unavailable"),
 		TooManyResults:                    ptr("too-many"),
+		MissingBlocks:                     ptr("missing"),
 	}
 
 	configtest.AssertFieldsNotNil(t, unknown)
@@ -323,6 +324,7 @@ var fullConfig = EVMConfig{
 				Fatal:                             ptr[string]("(: |^)fatal"),
 				ServiceUnavailable:                ptr[string]("(: |^)service unavailable"),
 				TooManyResults:                    ptr[string]("(: |^)too many results"),
+				MissingBlocks:                     ptr[string]("(: |^)invalid block range"),
 			},
 		},
 		OCR: OCR{

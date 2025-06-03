@@ -150,8 +150,7 @@ type ChainOpts struct {
 	FeatureConfig  FeatureConfig
 	ListenerConfig txmgr.ListenerConfig
 
-	MailMon      *mailbox.Monitor
-	GasEstimator gas.EvmFeeEstimator
+	MailMon *mailbox.Monitor
 
 	DS sqlutil.DataSource
 
