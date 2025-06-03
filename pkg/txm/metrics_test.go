@@ -21,9 +21,6 @@ import (
 func TestEmitTxMessage(t *testing.T) {
 	t.Parallel()
 
-	toAddress := testutils.NewAddress()
-	fromAddress := testutils.NewAddress()
-
 	beholderEmitter := newMockEmitter(t)
 	beholderClient := beholder.GetClient()
 	beholderClient.Emitter = beholderEmitter
@@ -31,6 +28,9 @@ func TestEmitTxMessage(t *testing.T) {
 	t.Run("overrides 0x0 as ToAddress if tx is purgeable", func(t *testing.T) {
 		// GIVEN
 		ctx := t.Context()
+
+		toAddress := testutils.NewAddress()
+		fromAddress := testutils.NewAddress()
 
 		expectedFromAddress := fromAddress
 		expectedToAddress := common.Address{}
@@ -95,6 +95,9 @@ func TestEmitTxMessage(t *testing.T) {
 	t.Run("sends original ToAddress if tx is not purgeable", func(t *testing.T) {
 		// GIVEN
 		ctx := t.Context()
+
+		toAddress := testutils.NewAddress()
+		fromAddress := testutils.NewAddress()
 
 		expectedFromAddress := fromAddress
 		expectedToAddress := toAddress
