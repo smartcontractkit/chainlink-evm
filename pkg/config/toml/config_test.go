@@ -167,6 +167,9 @@ func TestDocs(t *testing.T) {
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
 
+		// GasEstimator SendAddress is only set if EstimateLimit is enabled
+		docDefaults.GasEstimator.SenderAddress = nil
+
 		fallbackDefaults := Defaults(nil)
 		assertTOML(t, fallbackDefaults, docDefaults.Chain)
 	})
