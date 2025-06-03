@@ -342,7 +342,7 @@ var fullConfig = EVMConfig{
 			FromAddress:       ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
 			ForwarderAddress:  ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
 			GasLimitDefault:   ptr[uint64](400000),
-			TxAcceptanceState: ptr(commontypes.Finalized),
+			TxAcceptanceState: ptr(commontypes.Unconfirmed),
 			PollPeriod:        config.MustNewDuration(2 * time.Second),
 			AcceptanceTimeout: config.MustNewDuration(30 * time.Second),
 		},
