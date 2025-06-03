@@ -66,6 +66,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
 	unknown.GasEstimator.BlockHistory.EIP1559FeeCapBufferBlocks = ptr[uint16](10)
+	unknown.GasEstimator.SenderAddress = asEIP55Address(t, "0xae4E781a6218A8031764928E88d457937A954fC3")
 	oracleType := DAOracleOPStack
 	unknown.GasEstimator.DAOracle.OracleType = &oracleType
 	unknown.GasEstimator.DAOracle.OracleAddress = new(types.EIP55Address)
