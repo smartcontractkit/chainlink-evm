@@ -99,7 +99,7 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
   uint256 internal constant SIGNATURE_LENGTH = 65;
 
   /// @dev This is the gas required to store `success` after the report is processed.
-  /// It is a warm storage write because of the packed struct. In practice it will cost less.
+  /// It is a warm storawrite because of the packed struct. In practice it will cost less.
   uint256 internal constant INTERNAL_GAS_REQUIREMENTS_AFTER_REPORT = 5_000;
   /// @dev This is the gas required to store the transmission struct and perform other checks.
   uint256 internal constant INTERNAL_GAS_REQUIREMENTS = 25_000 + INTERNAL_GAS_REQUIREMENTS_AFTER_REPORT;

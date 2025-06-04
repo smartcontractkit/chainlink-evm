@@ -296,6 +296,10 @@ type EVMConfig struct {
 	Nodes EVMNodes
 }
 
+func (c *EVMConfig) TxMaximumWaitTimeForConfirmation() time.Duration {
+	panic("unimplemented")
+}
+
 func (c *EVMConfig) IsEnabled() bool {
 	return c.Enabled == nil || *c.Enabled
 }
@@ -408,6 +412,8 @@ type Chain struct {
 	RPCBlockQueryDelay           *uint16
 	FinalizedBlockOffset         *uint32
 	NoNewFinalizedHeadsThreshold *commonconfig.Duration
+	TxMaximumWaitTimeForConfirmation *commonconfig.Duration
+	TxMinimumWaitTimeForConfirmation *commonconfig.Duration
 
 	Transactions   Transactions      `toml:",omitempty"`
 	BalanceMonitor BalanceMonitor    `toml:",omitempty"`

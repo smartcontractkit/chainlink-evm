@@ -35,6 +35,14 @@ type EVMConfig struct {
 	C *toml.EVMConfig
 }
 
+func (e *EVMConfig) TxMaximumWaitTimeForConfirmation() time.Duration {
+	return e.C.TxMaximumWaitTimeForConfirmation()
+}
+
+func (e *EVMConfig) TxMinimumWaitTimeForConfirmation() time.Duration {
+		return e.C.TxMaximumWaitTimeForConfirmation()
+}
+
 func (e *EVMConfig) IsEnabled() bool {
 	return e.C.IsEnabled()
 }
