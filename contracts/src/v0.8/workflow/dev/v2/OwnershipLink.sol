@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL 1.1
-pragma solidity 0.8.24;
+pragma solidity 0.8.26;
 
-import {Ownable2StepMsgSender} from "../../shared/access/Ownable2StepMsgSender.sol";
+import {Ownable2StepMsgSender} from "../../../shared/access/Ownable2StepMsgSender.sol";
 
-import {ECDSA} from "../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "../../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from
-  "../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/cryptography/MessageHashUtils.sol";
-import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/structs/EnumerableSet.sol";
+  "../../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/cryptography/MessageHashUtils.sol";
+import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/structs/EnumerableSet.sol";
 
 /// @title OwnershipLink
 /// @notice This contract allows the transaction senders to submit ownership proofs for linking and unlinking their address.

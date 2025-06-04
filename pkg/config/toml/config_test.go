@@ -66,6 +66,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
 	unknown.GasEstimator.BlockHistory.EIP1559FeeCapBufferBlocks = ptr[uint16](10)
+	unknown.GasEstimator.SenderAddress = asEIP55Address(t, "0xae4E781a6218A8031764928E88d457937A954fC3")
 	oracleType := DAOracleOPStack
 	unknown.GasEstimator.DAOracle.OracleType = &oracleType
 	unknown.GasEstimator.DAOracle.OracleAddress = new(types.EIP55Address)
@@ -95,6 +96,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		Fatal:                             ptr("fatal"),
 		ServiceUnavailable:                ptr("unavailable"),
 		TooManyResults:                    ptr("too-many"),
+		MissingBlocks:                     ptr("missing"),
 	}
 
 	configtest.AssertFieldsNotNil(t, unknown)
@@ -166,6 +168,9 @@ func TestDocs(t *testing.T) {
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
 
+		// GasEstimator SendAddress is only set if EstimateLimit is enabled
+		docDefaults.GasEstimator.SenderAddress = nil
+
 		fallbackDefaults := Defaults(nil)
 		assertTOML(t, fallbackDefaults, docDefaults.Chain)
 	})
@@ -203,6 +208,7 @@ var fullConfig = EVMConfig{
 			LimitMultiplier:    ptr(decimal.RequireFromString("1.234")),
 			LimitTransfer:      ptr[uint64](100),
 			EstimateLimit:      ptr(false),
+			SenderAddress:      ptr(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
 			TipCapDefault:      assets.NewWeiI(2),
 			TipCapMin:          assets.NewWeiI(1),
 			PriceDefault:       assets.NewWeiI(math.MaxInt64),
@@ -321,6 +327,7 @@ var fullConfig = EVMConfig{
 				Fatal:                             ptr[string]("(: |^)fatal"),
 				ServiceUnavailable:                ptr[string]("(: |^)service unavailable"),
 				TooManyResults:                    ptr[string]("(: |^)too many results"),
+				MissingBlocks:                     ptr[string]("(: |^)invalid block range"),
 			},
 		},
 		OCR: OCR{

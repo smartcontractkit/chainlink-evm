@@ -100,6 +100,7 @@ type ClientErrors interface {
 	Fatal() string
 	ServiceUnavailable() string
 	TooManyResults() string
+	MissingBlocks() string
 }
 
 type Transactions interface {
@@ -151,6 +152,7 @@ type GasEstimator interface {
 	Mode() string
 	PriceMaxKey(gethcommon.Address) *assets.Wei
 	EstimateLimit() bool
+	SenderAddress() *types.EIP55Address
 	DAOracle() DAOracle
 }
 

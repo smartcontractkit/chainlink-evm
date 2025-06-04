@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.24;
+pragma solidity 0.8.26;
 
-import {Ownable2Step} from "../../shared/access/Ownable2StepMsgSender.sol";
-import {OwnershipLink} from "../dev/OwnershipLink.sol";
+import {Ownable2Step} from "../../../../shared/access/Ownable2StepMsgSender.sol";
+import {OwnershipLink} from "../OwnershipLink.sol";
 
 import "forge-std/Test.sol";
 

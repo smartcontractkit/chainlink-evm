@@ -92,11 +92,23 @@ src = 'src/v0.8/operatorforwarder'
 test = 'src/v0.8/operatorforwarder/test'
 
 [profile.workflow]
+src = 'src/v0.8/workflow'
+via_ir = true
+
+[profile.workflow-v1]
 optimizer_runs = 1_000_000
 solc_version = '0.8.24'
-src = 'src/v0.8/workflow'
-test = 'src/v0.8/workflow/test'
-via_ir = true                   # reconsider using the --via-ir flag if compilation takes too long
+src = 'src/v0.8/workflow/v1'
+test = 'src/v0.8/workflow/v1/test'
+via_ir = true
+evm_version = 'paris'
+
+[profile.workflow-v2]
+optimizer_runs = 1_000_000
+solc_version = '0.8.26'
+src = 'src/v0.8/workflow/dev/v2'
+test = 'src/v0.8/workflow/dev/v2/test'
+via_ir = true
 evm_version = 'paris'
 
 [profile.data-feeds]

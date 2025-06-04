@@ -669,6 +669,7 @@ type GasEstimator struct {
 	LimitTransfer   *uint64
 	LimitJobType    GasLimitJobType `toml:",omitempty"`
 	EstimateLimit   *bool
+	SenderAddress   *types.EIP55Address `toml:",omitempty"`
 
 	BumpMin       *assets.Wei
 	BumpPercent   *uint16
@@ -760,6 +761,9 @@ func (e *GasEstimator) setFrom(f *GasEstimator) {
 	}
 	if v := f.EstimateLimit; v != nil {
 		e.EstimateLimit = v
+	}
+	if v := f.SenderAddress; v != nil {
+		e.SenderAddress = v
 	}
 	if v := f.PriceDefault; v != nil {
 		e.PriceDefault = v
@@ -992,6 +996,7 @@ type ClientErrors struct {
 	Fatal                             *string `toml:",omitempty"`
 	ServiceUnavailable                *string `toml:",omitempty"`
 	TooManyResults                    *string `toml:",omitempty"`
+	MissingBlocks                     *string `toml:",omitempty"`
 }
 
 func (r *ClientErrors) setFrom(f *ClientErrors) bool {
@@ -1039,6 +1044,9 @@ func (r *ClientErrors) setFrom(f *ClientErrors) bool {
 	}
 	if v := f.TooManyResults; v != nil {
 		r.TooManyResults = v
+	}
+	if v := f.MissingBlocks; v != nil {
+		r.MissingBlocks = v
 	}
 	return true
 }

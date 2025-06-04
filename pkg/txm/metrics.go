@@ -109,10 +109,15 @@ func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, from
 		destAddress = meta.FwdrDestAddress.String()
 	}
 
+	toAddress := common.Address{}
+	if !tx.IsPurgeable {
+		toAddress = tx.ToAddress
+	}
+
 	message := &svrv1.TxMessage{
 		Hash:        txHash.String(),
 		FromAddress: fromAddress.String(),
-		ToAddress:   tx.ToAddress.String(),
+		ToAddress:   toAddress.String(),
 		Nonce:       strconv.FormatUint(*tx.Nonce, 10),
 		CreatedAt:   time.Now().UnixMicro(),
 		ChainId:     m.chainID.String(),

@@ -65,6 +65,7 @@ const (
 	TerminallyStuck
 	TooManyResults
 	ServiceTimeout
+	MissingBlocks
 )
 
 type ClientErrors map[int]*regexp.Regexp
@@ -330,6 +331,7 @@ func ClientErrorRegexes(errsRegex config.ClientErrors) *ClientErrors {
 		Fatal:                             regexp.MustCompile(errsRegex.Fatal()),
 		ServiceUnavailable:                regexp.MustCompile(errsRegex.ServiceUnavailable()),
 		TooManyResults:                    regexp.MustCompile(errsRegex.TooManyResults()),
+		MissingBlocks:                     regexp.MustCompile(errsRegex.MissingBlocks()),
 	}
 }
 
@@ -691,30 +693,35 @@ var drpc = ClientErrors{
 	TooManyResults: regexp.MustCompile(`(: |^)requested too many blocks from [0-9]+ to [0-9]+, maximum is set to [0-9,]+$`),
 }
 
+var hyperliquid = ClientErrors{
+	TooManyResults: regexp.MustCompile(`(: |^)query exceeds max block range$`),
+	MissingBlocks:  regexp.MustCompile(`(: |^)invalid block range$`),
+}
+
 // Linkpool, Blockdaemon, and Chainstack all return "request timed out" if the log results are too large for them to process
 var defaultClient = ClientErrors{
-	TooManyResults: regexp.MustCompile(`request timed out|408 Request Timed Out`),
+	TooManyResults: regexp.MustCompile(`request timed out|408 Request Timed Out$`),
 }
 
 // JSON-RPC error codes which can indicate a refusal of the server to process an eth_getLogs request because the result set is too large
 const (
-	jsonRpcServerError = -32000 // Server error. SimplyVC uses this error code when too many results are returned
+	jsonRPCServerError = -32000 // Server error. SimplyVC uses this error code when too many results are returned
 
 	// Server timeout. When the rpc server has its own limit on how long it can take to compile the results
 	// Examples: Linkpool, Chainstack, Block Daemon
-	jsonRpcTimedOut = -32002
+	jsonRPCTimedOut = -32002
 
 	// See: https://github.com/ethereum/go-ethereum/blob/master/rpc/errors.go#L63
 	// Can occur if the rpc server is configured with a maximum byte limit on the response size of batch requests
-	jsonRpcResponseTooLarge = -32003
+	jsonRPCResponseTooLarge = -32003
 
 	// Not implemented in geth by default, but is defined in EIP 1474 and implemented by infura and some other 3rd party rpc servers
 	// See: https://community.infura.io/t/getlogs-error-query-returned-more-than-1000-results/358/5
-	jsonRpcLimitExceeded = -32005 // See also: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1474.md
+	jsonRPCLimitExceeded = -32005 // See also: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1474.md
 
-	jsonRpcInvalidParams = -32602 // Invalid method params. Returned by alchemy if the block range is too large or there are too many results to return
+	jsonRPCInvalidParams = -32602 // Invalid method params. Returned by alchemy if the block range is too large or there are too many results to return. Also returned by hyperliquid for invalid block range or block range too large
 
-	jsonRpcQuicknodeTooManyResults = -32614 // Undocumented error code used by Quicknode for too many results error
+	jsonRPCQuicknodeTooManyResults = -32614 // Undocumented error code used by Quicknode for too many results error
 )
 
 func IsTooManyResults(err error, clientErrors config.ClientErrors) bool {
@@ -733,29 +740,50 @@ func IsTooManyResults(err error, clientErrors config.ClientErrors) bool {
 	}
 
 	switch rpcErr.ErrorCode() {
-	case jsonRpcResponseTooLarge:
+	case jsonRPCResponseTooLarge:
 		return true
-	case jsonRpcLimitExceeded:
+	case jsonRPCLimitExceeded:
 		if infura.ErrIs(rpcErr, TooManyResults) {
 			return true
 		}
-	case jsonRpcInvalidParams:
+	case jsonRPCInvalidParams:
 		if alchemy.ErrIs(rpcErr, TooManyResults) {
 			return true
 		}
-	case jsonRpcQuicknodeTooManyResults:
+		if hyperliquid.ErrIs(rpcErr, TooManyResults) {
+			return true
+		}
+	case jsonRPCQuicknodeTooManyResults:
 		if quicknode.ErrIs(rpcErr, TooManyResults) {
 			return true
 		}
-	case jsonRpcTimedOut:
+	case jsonRPCTimedOut:
 		if defaultClient.ErrIs(rpcErr, TooManyResults) {
 			return true
 		}
-	case jsonRpcServerError:
+	case jsonRPCServerError:
 		if simplyvc.ErrIs(rpcErr, TooManyResults) ||
 			drpc.ErrIs(rpcErr, TooManyResults) {
 			return true
 		}
+	}
+	return false
+}
+
+// IsMissingBlocks indicates that the error is caused by the rpc server not having some of the blocks requested at all
+// This is treated as a permanent error rather than a transient issue, and should be logged as Critical
+func IsMissingBlocks(err error, clientErrors config.ClientErrors) bool {
+	var rpcErr rpc.Error
+	if !pkgerrors.As(err, &rpcErr) {
+		return false
+	}
+	configErrors := ClientErrorRegexes(clientErrors)
+	if configErrors.ErrIs(rpcErr, MissingBlocks) {
+		return true
+	}
+
+	if rpcErr.ErrorCode() == jsonRPCInvalidParams && hyperliquid.ErrIs(rpcErr, MissingBlocks) {
+		return true
 	}
 	return false
 }

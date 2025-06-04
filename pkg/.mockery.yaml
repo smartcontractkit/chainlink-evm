@@ -68,3 +68,14 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/log:
     interfaces:
       AbigenContract:
+  github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm:
+    interfaces:
+      Chain:
+  github.com/smartcontractkit/chainlink-common/pkg/beholder:
+    config:
+      dir: txm/
+      outpkg: txm
+      mockname: "mock{{ .InterfaceName }}"
+      filename: "mock_{{ .InterfaceName | snakecase }}_test.go"
+    interfaces:
+      Emitter:

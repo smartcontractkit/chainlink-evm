@@ -58,6 +58,7 @@ LimitMax = 17
 LimitMultiplier = '1.234'
 LimitTransfer = 100
 EstimateLimit = false
+SenderAddress = '0xae4E781a6218A8031764928E88d457937A954fC3'
 BumpMin = '100 wei'
 BumpPercent = 10
 BumpThreshold = 6
@@ -134,6 +135,7 @@ TransactionAlreadyMined = '(: |^)transaction already mined'
 Fatal = '(: |^)fatal'
 ServiceUnavailable = '(: |^)service unavailable'
 TooManyResults = '(: |^)too many results'
+MissingBlocks = '(: |^)invalid block range'
 
 [OCR]
 ContractConfirmations = 11
