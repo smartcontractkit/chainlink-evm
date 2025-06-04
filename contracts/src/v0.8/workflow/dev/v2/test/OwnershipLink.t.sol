@@ -86,7 +86,7 @@ contract OwnershipLinkTest is Test {
       )
     );
     vm.prank(owner);
-    op.unlinkOwner(validityTimestamp, proof, sig);
+    op.unlinkOwner(owner, validityTimestamp, proof, sig);
   }
 
   function testUnlinkOwner() public {
@@ -97,7 +97,7 @@ contract OwnershipLinkTest is Test {
     op.linkOwner(validityTimestamp, proof, sig);
 
     vm.prank(owner);
-    op.unlinkOwner(validityTimestamp, proof, sig);
+    op.unlinkOwner(owner, validityTimestamp, proof, sig);
 
     assertFalse(op.isOwnerLinked(owner));
   }
@@ -177,45 +177,6 @@ contract OwnershipLinkTest is Test {
   function testgetLinkedOwnersEmpty() public {
     address[] memory owners = op.getLinkedOwners(0, 10);
     assertEq(owners.length, 0);
-  }
-
-  function testAdminRevokeOwnershipLink() public {
-    // Submit proof for owner
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
-    bytes memory sig = abi.encodePacked(r, s, v);
-
-    vm.prank(owner);
-    op.linkOwner(validityTimestamp, proof, sig);
-
-    // Admin revokes proof
-    vm.prank(owner);
-    vm.expectEmit(true, true, false, true);
-    emit OwnershipLink.OwnershipLinkUpdatedV1(owner, bytes32(0), false);
-    op.adminUnlinkOwner(owner);
-
-    assertFalse(op.isOwnerLinked(owner));
-  }
-
-  function testAdminRevokeOwnershipLinkRevertsIfNoProof() public {
-    vm.prank(owner);
-    vm.expectRevert(abi.encodeWithSelector(OwnershipLink.OwnershipLinkDoesNotExist.selector, owner));
-    op.adminUnlinkOwner(owner);
-  }
-
-  function testAdminRevokeOwnershipLinkOnlyOwner() public {
-    address notOwner = address(0xBEEF);
-
-    // Submit proof for owner
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
-    bytes memory sig = abi.encodePacked(r, s, v);
-
-    vm.prank(owner);
-    op.linkOwner(validityTimestamp, proof, sig);
-
-    // Try to revoke as not owner
-    vm.prank(notOwner);
-    vm.expectRevert(Ownable2Step.OnlyCallableByOwner.selector);
-    op.adminUnlinkOwner(owner);
   }
 
   // Helper to get the EIP-191 message hash

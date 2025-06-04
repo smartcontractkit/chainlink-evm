@@ -5,13 +5,17 @@ import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 
 import {Ownable2StepMsgSender} from "../../../shared/access/Ownable2StepMsgSender.sol";
 
-contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
+import {OwnershipLink} from "./OwnershipLink.sol";
+
+contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLink {
   string public constant override typeAndVersion = "WorkflowRegistry 2.0.0-dev";
 
   enum WorkflowStatus {
     ACTIVE,
     PAUSED
   }
+
+  error CallingThisFunctionNotAllowed();
 
   struct WorkflowMetadata {
     bytes32 workflowID; //     Unique identifier from hash of owner address, WASM binary content, config content and secrets URL.
@@ -114,5 +118,52 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         (maxWorkflowsPerDON, maxWorkflowsPerUserDON)
   function getDefaults() external view returns (uint32 maxPerDON, uint32 maxPerUserDON) {
     return (s_cfg.defaultMaxPerDON, s_cfg.defaultMaxPerUserDON);
+  }
+
+  // ================================================================
+  // |      Workflow owner linking and unlinking overrides          |
+  // ================================================================
+  function tryUnlinkOwner(
+    address owner,
+    uint256 validityTimestamp,
+    bytes32 proof,
+    bytes calldata signature
+  ) public view override {
+    // Override to block direct calls, use tryUnlinkWorkflowOwner instead, because we need extra parameter
+    revert CallingThisFunctionNotAllowed();
+  }
+
+  function unlinkOwner(
+    address owner,
+    uint256 validityTimestamp,
+    bytes32 proof,
+    bytes calldata signature
+  ) public override {
+    // Override to block direct calls, use unlinkWorkflowOwner instead, because we need extra parameter
+    revert CallingThisFunctionNotAllowed();
+  }
+
+  function tryUnlinkOwner(
+    address owner,
+    uint256 validityTimestamp,
+    bytes32 proof,
+    bytes calldata signature,
+    bool removeWorkflows
+  ) public view {
+    // TODO: if removeWorkflows is true, assume that unlinkWorkflowOwner() will proceed with removing workflows
+    // TODO: if removeWorkflows is false, verify if there are any active workflows, if yes, revert
+    super.tryUnlinkOwner(owner, validityTimestamp, proof, signature);
+  }
+
+  function unlinkOwner(
+    address owner,
+    uint256 validityTimestamp,
+    bytes32 proof,
+    bytes calldata signature,
+    bool removeWorkflows
+  ) external {
+    // TODO: if removeWorkflows is true, remove all workflows owned by the owner before unlinking
+    // TODO: if removeWorkflows is false, verify if there are any active workflows, if yes, revert
+    super.unlinkOwner(owner, validityTimestamp, proof, signature);
   }
 }
