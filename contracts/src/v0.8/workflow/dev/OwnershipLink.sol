@@ -204,7 +204,8 @@ abstract contract OwnershipLink is Ownable2StepMsgSender {
     bytes memory signature
   ) internal view returns (address) {
     // Follow EIP-191 for recoverable signatures
-    bytes32 messageHash = keccak256(abi.encodePacked(msg.sender, block.chainid, validityTimestamp, proof));
+    bytes32 messageHash =
+      keccak256(abi.encodePacked(msg.sender, block.chainid, address(this), validityTimestamp, proof));
     bytes32 prefixedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
 
     (address signer, ECDSA.RecoverError err, bytes32 errArg) = ECDSA.tryRecover(prefixedMessageHash, signature);

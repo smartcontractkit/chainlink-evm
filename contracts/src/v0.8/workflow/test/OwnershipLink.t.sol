@@ -220,7 +220,7 @@ contract OwnershipLinkTest is Test {
 
   // Helper to get the EIP-191 message hash
   function _getMessageHash(address _owner, uint256 _validityTimestamp, bytes32 _proof) public view returns (bytes32) {
-    bytes32 messageHash = keccak256(abi.encodePacked(_owner, block.chainid, _validityTimestamp, _proof));
+    bytes32 messageHash = keccak256(abi.encodePacked(_owner, block.chainid, address(op), _validityTimestamp, _proof));
     return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
   }
 }
