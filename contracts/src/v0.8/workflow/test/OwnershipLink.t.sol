@@ -2,18 +2,19 @@
 pragma solidity 0.8.24;
 
 import {Ownable2Step} from "../../shared/access/Ownable2StepMsgSender.sol";
-import {OwnershipProof} from "../dev/OwnershipProof.sol";
+import {OwnershipLink} from "../dev/OwnershipLink.sol";
+
 import "forge-std/Test.sol";
 
 // ,inimal inheriting contract for testing
-contract OwnershipProofTestable is OwnershipProof {}
+contract OwnershipLinkTestable is OwnershipLink {}
 
-contract OwnershipProofTest is Test {
-  OwnershipProofTestable op;
+contract OwnershipLinkTest is Test {
+  OwnershipLinkTestable op;
   address owner = address(0xabcd);
   uint256 allowedSignerPrivateKey = 0x200b7adf7bcce82338c9b5d8114629b511e4be583683449d90c60718739b683c;
   address allowedSigner;
-  uint96 validityTimestamp;
+  uint256 validityTimestamp;
   bytes32 proof = keccak256("test-proof");
 
   function setUp() public {
@@ -22,11 +23,11 @@ contract OwnershipProofTest is Test {
     assertEq(allowedSigner, address(0x86f2cE81640Fd86e68CF3EB25c2801D6E1C62bd0));
 
     vm.startPrank(owner);
-    op = new OwnershipProofTestable();
+    op = new OwnershipLinkTestable();
     address[] memory signers = new address[](1);
     signers[0] = allowedSigner;
     op.updateAllowedSigners(signers, true);
-    validityTimestamp = uint96(block.timestamp + 1 hours);
+    validityTimestamp = uint256(block.timestamp + 1 hours);
     vm.stopPrank();
   }
 
@@ -38,83 +39,89 @@ contract OwnershipProofTest is Test {
     assertTrue(op.isAllowedSigner(address(0xbeef)));
   }
 
-  function testSubmitOwnershipProof() public {
+  function testLinkOwner() public {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig);
+    op.linkOwner(validityTimestamp, proof, sig);
 
-    assertTrue(op.isProofSubmitted(owner));
+    assertTrue(op.isOwnerLinked(owner));
   }
 
-  function testRevertIfOwnershipProofAlreadySubmitted() public {
+  function testRevertIfOwnerAlreadyLinked() public {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig);
+    op.linkOwner(validityTimestamp, proof, sig);
 
-    vm.expectRevert(abi.encodeWithSelector(OwnershipProof.OwnershipProofAlreadySubmitted.selector, owner));
+    vm.expectRevert(abi.encodeWithSelector(OwnershipLink.OwnershipLinkAlreadyExists.selector, owner));
     vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig);
+    op.linkOwner(validityTimestamp, proof, sig);
   }
 
-  function testRevertSubmitProofIfRequestExpired() public {
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
-    bytes memory sig = abi.encodePacked(r, s, v);
-
-    vm.warp(block.timestamp + 24 hours);
-
-    vm.expectRevert(abi.encodeWithSelector(OwnershipProof.RequestExpired.selector, owner, validityTimestamp));
-    vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig);
-  }
-
-  function testRevertRevokeProofIfRequestExpired() public {
+  function testRevertLinkOwnerIfRequestExpired() public {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.warp(block.timestamp + 24 hours);
 
-    vm.expectRevert(abi.encodeWithSelector(OwnershipProof.RequestExpired.selector, owner, validityTimestamp));
+    vm.expectRevert(
+      abi.encodeWithSelector(OwnershipLink.LinkOwnerRequestExpired.selector, owner, block.timestamp, validityTimestamp)
+    );
     vm.prank(owner);
-    op.revokeOwnershipProof(validityTimestamp, proof, sig);
+    op.linkOwner(validityTimestamp, proof, sig);
   }
 
-  function testRevokeOwnershipProof() public {
+  function testRevertUnlinkOwnerIfRequestExpired() public {
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
+    bytes memory sig = abi.encodePacked(r, s, v);
+
+    vm.warp(block.timestamp + 24 hours);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        OwnershipLink.UnlinkOwnerRequestExpired.selector, owner, block.timestamp, validityTimestamp
+      )
+    );
+    vm.prank(owner);
+    op.unlinkOwner(validityTimestamp, proof, sig);
+  }
+
+  function testUnlinkOwner() public {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig);
+    op.linkOwner(validityTimestamp, proof, sig);
 
     vm.prank(owner);
-    op.revokeOwnershipProof(validityTimestamp, proof, sig);
+    op.unlinkOwner(validityTimestamp, proof, sig);
 
-    assertFalse(op.isProofSubmitted(owner));
+    assertFalse(op.isOwnerLinked(owner));
   }
 
-  function testGetOwnersWithSubmittedProofSingle() public {
+  function testgetLinkedOwnersSingle() public {
     // Submit proof for owner
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig);
+    op.linkOwner(validityTimestamp, proof, sig);
 
-    address[] memory owners = op.getOwnersWithSubmittedProof(0, 10);
+    address[] memory owners = op.getLinkedOwners(0, 10);
     assertEq(owners.length, 1);
     assertEq(owners[0], owner);
 
     // no owners from index 1 onwards
     for (uint256 i = 1; i < 10; i++) {
-      owners = op.getOwnersWithSubmittedProof(i, 10);
+      owners = op.getLinkedOwners(i, 10);
       assertEq(owners.length, 0);
     }
   }
 
-  function testGetOwnersWithSubmittedProofMultiple() public {
+  function testgetLinkedOwnersMultiple() public {
     address owner2 = address(0x2222);
     address owner3 = address(0x3333);
 
@@ -132,70 +139,70 @@ contract OwnershipProofTest is Test {
     bytes memory sig3 = abi.encodePacked(r3, s3, v3);
 
     vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig1);
+    op.linkOwner(validityTimestamp, proof, sig1);
     vm.prank(owner2);
-    op.submitOwnershipProof(validityTimestamp, proof, sig2);
+    op.linkOwner(validityTimestamp, proof, sig2);
     vm.prank(owner3);
-    op.submitOwnershipProof(validityTimestamp, proof, sig3);
+    op.linkOwner(validityTimestamp, proof, sig3);
 
     // Batch size larger than total
-    address[] memory owners = op.getOwnersWithSubmittedProof(0, 10);
+    address[] memory owners = op.getLinkedOwners(0, 10);
     assertEq(owners.length, 3);
     assertEq(owners[0], owner);
     assertEq(owners[1], owner2);
     assertEq(owners[2], owner3);
 
     // Batch size 2, start 0
-    owners = op.getOwnersWithSubmittedProof(0, 2);
+    owners = op.getLinkedOwners(0, 2);
     assertEq(owners.length, 2);
     assertEq(owners[0], owner);
     assertEq(owners[1], owner2);
 
     // Batch size 2, start 1
-    owners = op.getOwnersWithSubmittedProof(1, 2);
+    owners = op.getLinkedOwners(1, 2);
     assertEq(owners.length, 2);
     assertEq(owners[0], owner2);
     assertEq(owners[1], owner3);
 
     // Batch size 2, start 2
-    owners = op.getOwnersWithSubmittedProof(2, 2);
+    owners = op.getLinkedOwners(2, 2);
     assertEq(owners.length, 1);
     assertEq(owners[0], owner3);
 
     // Start > total
-    owners = op.getOwnersWithSubmittedProof(3, 2);
+    owners = op.getLinkedOwners(3, 2);
     assertEq(owners.length, 0);
   }
 
-  function testGetOwnersWithSubmittedProofEmpty() public {
-    address[] memory owners = op.getOwnersWithSubmittedProof(0, 10);
+  function testgetLinkedOwnersEmpty() public {
+    address[] memory owners = op.getLinkedOwners(0, 10);
     assertEq(owners.length, 0);
   }
 
-  function testAdminRevokeOwnershipProof() public {
+  function testAdminRevokeOwnershipLink() public {
     // Submit proof for owner
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(allowedSignerPrivateKey, _getMessageHash(owner, validityTimestamp, proof));
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig);
+    op.linkOwner(validityTimestamp, proof, sig);
 
     // Admin revokes proof
     vm.prank(owner);
     vm.expectEmit(true, true, false, true);
-    emit OwnershipProof.OwnershipProofRevokedV1(owner, bytes32(0));
-    op.adminRevokeOwnershipProof(owner);
+    emit OwnershipLink.OwnershipLinkUpdatedV1(owner, bytes32(0), false);
+    op.adminUnlinkOwner(owner);
 
-    assertFalse(op.isProofSubmitted(owner));
+    assertFalse(op.isOwnerLinked(owner));
   }
 
-  function testAdminRevokeOwnershipProofRevertsIfNoProof() public {
+  function testAdminRevokeOwnershipLinkRevertsIfNoProof() public {
     vm.prank(owner);
-    vm.expectRevert(abi.encodeWithSelector(OwnershipProof.OwnershipProofNotSubmitted.selector, owner));
-    op.adminRevokeOwnershipProof(owner);
+    vm.expectRevert(abi.encodeWithSelector(OwnershipLink.OwnershipLinkDoesNotExist.selector, owner));
+    op.adminUnlinkOwner(owner);
   }
 
-  function testAdminRevokeOwnershipProofOnlyOwner() public {
+  function testAdminRevokeOwnershipLinkOnlyOwner() public {
     address notOwner = address(0xBEEF);
 
     // Submit proof for owner
@@ -203,16 +210,16 @@ contract OwnershipProofTest is Test {
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
-    op.submitOwnershipProof(validityTimestamp, proof, sig);
+    op.linkOwner(validityTimestamp, proof, sig);
 
     // Try to revoke as not owner
     vm.prank(notOwner);
     vm.expectRevert(Ownable2Step.OnlyCallableByOwner.selector);
-    op.adminRevokeOwnershipProof(owner);
+    op.adminUnlinkOwner(owner);
   }
 
   // Helper to get the EIP-191 message hash
-  function _getMessageHash(address _owner, uint96 _validityTimestamp, bytes32 _proof) public view returns (bytes32) {
+  function _getMessageHash(address _owner, uint256 _validityTimestamp, bytes32 _proof) public view returns (bytes32) {
     bytes32 messageHash = keccak256(abi.encodePacked(_owner, block.chainid, _validityTimestamp, _proof));
     return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
   }
