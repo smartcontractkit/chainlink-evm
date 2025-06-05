@@ -47,11 +47,11 @@ contract OwnershipLinkGetLinkedOwners is Test {
   }
 
   modifier whenThereAreLinkedOwners() {
-    LinkingUtils.linkOwner(vm, address(op), allowedSignerPrivateKey, owner1, validityTimestamp, proof);
-    LinkingUtils.linkOwner(vm, address(op), allowedSignerPrivateKey, owner2, validityTimestamp, proof);
-    LinkingUtils.linkOwner(vm, address(op), allowedSignerPrivateKey, owner3, validityTimestamp, proof);
-    LinkingUtils.linkOwner(vm, address(op), allowedSignerPrivateKey, owner4, validityTimestamp, proof);
-    LinkingUtils.linkOwner(vm, address(op), allowedSignerPrivateKey, owner5, validityTimestamp, proof);
+    linkOwner(owner1);
+    linkOwner(owner2);
+    linkOwner(owner3);
+    linkOwner(owner4);
+    linkOwner(owner5);
     _;
   }
 
@@ -171,5 +171,16 @@ contract OwnershipLinkGetLinkedOwners is Test {
 
     owners = op.getLinkedOwners(10, 10);
     assertEq(owners.length, 0, "Expected no linked owners");
+  }
+
+  // Helper to link an owner
+  function linkOwner(
+    address newOwner
+  ) public {
+    (uint8 v, bytes32 r, bytes32 s) =
+      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(op), newOwner, validityTimestamp, proof));
+    bytes memory sig = abi.encodePacked(r, s, v);
+    vm.prank(newOwner);
+    op.linkOwner(validityTimestamp, proof, sig);
   }
 }
