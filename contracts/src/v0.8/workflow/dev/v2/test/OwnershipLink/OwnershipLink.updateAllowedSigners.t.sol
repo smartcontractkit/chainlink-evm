@@ -7,11 +7,11 @@ import {OwnershipLink} from "../../OwnershipLink.sol";
 
 import {OwnershipLinkTestable} from "../../testutils/OwnershipLinkTestable.sol";
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract OwnershipLinkUpdateAllowedSigners is Test {
-  OwnershipLinkTestable op;
-  address owner = address(0xabcd);
+  OwnershipLinkTestable public op;
+  address public owner = address(0xabcd);
 
   function setUp() external {
     vm.prank(owner);

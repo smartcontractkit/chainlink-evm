@@ -1,24 +1,22 @@
 // SPDX-License-Identifier: BUSL 1.1
 pragma solidity 0.8.26;
 
-import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
-
 import {OwnershipLink} from "../../OwnershipLink.sol";
 
 import {LinkingUtils} from "../../testutils/LinkingUtils.sol";
 import {OwnershipLinkTestable} from "../../testutils/OwnershipLinkTestable.sol";
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract OwnershipLinkTest is Test {
-  OwnershipLinkTestable op;
-  address owner = address(0xabcd);
-  uint256 allowedSignerPrivateKey = 0x200b7adf7bcce82338c9b5d8114629b511e4be583683449d90c60718739b683c;
-  address allowedSigner;
-  uint256 validityTimestamp = uint256(block.timestamp + 1 hours);
-  bytes32 proof = keccak256("test-proof");
-  address notOwner = address(0x1234);
-  address caller;
+  OwnershipLinkTestable public op;
+  address public owner = address(0xabcd);
+  uint256 public allowedSignerPrivateKey = 0x200b7adf7bcce82338c9b5d8114629b511e4be583683449d90c60718739b683c;
+  address public allowedSigner;
+  uint256 public validityTimestamp = uint256(block.timestamp + 1 hours);
+  bytes32 public proof = keccak256("test-proof");
+  address public notOwner = address(0x1234);
+  address public caller;
 
   function setUp() public {
     // hardcode the signer's private key into test environment (so that vm.sign can be used)
