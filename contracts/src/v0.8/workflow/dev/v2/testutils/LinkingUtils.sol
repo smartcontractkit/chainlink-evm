@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import {OwnershipLinkTestable} from "./OwnershipLinkTestable.sol";
 
-import {Vm} from "forge-std/Vm.sol";
+import "forge-std/Test.sol";
 
 library LinkingUtils {
   // Helper to get the EIP-191 message hash
