@@ -930,9 +930,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 			continue
 		}
 		lp.missingBlocksErrorCount.Store(0) // clear unhealthy node state in case we were missing blocks and just found them
-		if len(gethLogs) == 0 {
-			continue
-		}
+
 		blocks, err := lp.blocksFromFinalizedLogs(ctx, gethLogs, uint64(to)) //nolint:gosec // G115
 		if err != nil {
 			return err
@@ -944,7 +942,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 			blocks = blocks[:len(blocks)-1]
 		}
 
-		lp.lggr.Debugw("Backfill found logs", "from", from, "to", to, "logs", len(gethLogs), "blocks", blocks)
+		lp.lggr.Debugw("Inserting backfilled logs with batch endblock", "from", from, "to", to, "logs", len(gethLogs), "blocks", blocks)
 		err = lp.orm.InsertLogsWithBlock(ctx, convertLogs(gethLogs, blocks, lp.lggr, lp.ec.ConfiguredChainID()), endblock)
 		if err != nil {
 			lp.lggr.Warnw("Unable to insert logs, retrying", "err", err, "from", from, "to", to)
