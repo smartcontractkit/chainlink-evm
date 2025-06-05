@@ -1,0 +1,19 @@
+name: Manage stale PRs
+
+on:
+  schedule:
+    - cron: "30 0 * * *" # will be triggered daily at 00:30 UTC.
+permissions: {}
+jobs:
+  stale-prs:
+    permissions:
+      actions: write
+      contents: write
+      issues: write
+      pull-requests: write
+    uses: smartcontractkit/.github/.github/workflows/reusable-stale-prs-issues.yml@de0ec7feedae310c287330a2bb2b9e61db035114 # 2025-06-05
+    with:
+      days-before-pr-stale: 30 # days
+      days-before-pr-close: 7 # days
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
