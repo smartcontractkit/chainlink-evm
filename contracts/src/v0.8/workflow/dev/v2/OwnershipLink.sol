@@ -38,6 +38,7 @@ abstract contract OwnershipLink is Ownable2StepMsgSender {
   // |                         Errors                               |
   // ================================================================
 
+  error ZeroAddressNotAllowed();
   error LinkOwnerRequestExpired(address caller, uint256 currentTime, uint256 expiryTimestamp);
   error UnlinkOwnerRequestExpired(address caller, uint256 currentTime, uint256 expiryTimestamp);
   error OwnershipLinkAlreadyExists(address owner);
@@ -74,6 +75,9 @@ abstract contract OwnershipLink is Ownable2StepMsgSender {
   /// it will be rejected.
   function updateAllowedSigners(address[] calldata signers, bool allowed) public virtual onlyOwner {
     for (uint256 i = 0; i < signers.length; ++i) {
+      if (signers[i] == address(0)) {
+        revert ZeroAddressNotAllowed();
+      }
       s_allowedSigners[signers[i]] = allowed;
     }
     emit AllowedSignersUpdatedV1(signers, allowed);
@@ -112,7 +116,7 @@ abstract contract OwnershipLink is Ownable2StepMsgSender {
       revert OwnershipLinkAlreadyExists(msg.sender);
     }
 
-    address signer = _recoverSigner(validityTimestamp, proof, signature);
+    address signer = _recoverSigner(msg.sender, validityTimestamp, proof, signature);
     if (!s_allowedSigners[signer]) {
       revert InvalidOwnershipLink(msg.sender, validityTimestamp, proof, signature);
     }
@@ -170,7 +174,7 @@ abstract contract OwnershipLink is Ownable2StepMsgSender {
       revert OwnershipLinkProofDoesNotMatch(owner, proof, storedProof);
     }
 
-    address signer = _recoverSigner(validityTimestamp, proof, signature);
+    address signer = _recoverSigner(owner, validityTimestamp, proof, signature);
     if (!s_allowedSigners[signer]) {
       revert InvalidOwnershipLink(owner, validityTimestamp, proof, signature);
     }
@@ -246,6 +250,7 @@ abstract contract OwnershipLink is Ownable2StepMsgSender {
   // ================================================================
 
   /// @notice Returns the signer of the recovered signature or revert.
+  /// @param owner The address of the owner.
   /// @param validityTimestamp The validity timestamp of the ownership proof.
   /// @param proof The ownership proof.
   /// @param signature The signature of the ownership proof metadata.
@@ -253,13 +258,14 @@ abstract contract OwnershipLink is Ownable2StepMsgSender {
   /// @dev The function tries to re-generate the message digest based on the provided parameters and by following
   /// EIP-191. The it will try to recover the signer address. The function will revert if the signature is invalid.
   function _recoverSigner(
+    address owner,
     uint256 validityTimestamp,
     bytes32 proof,
     bytes memory signature
   ) internal view returns (address) {
     // Follow EIP-191 for recoverable signatures
     bytes32 prefixedMessageHash = MessageHashUtils.toEthSignedMessageHash(
-      keccak256(abi.encodePacked(msg.sender, block.chainid, address(this), validityTimestamp, proof))
+      keccak256(abi.encodePacked(owner, block.chainid, address(this), validityTimestamp, proof))
     );
 
     (address signer, ECDSA.RecoverError err, bytes32 errArg) = ECDSA.tryRecover(prefixedMessageHash, signature);

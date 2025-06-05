@@ -15,8 +15,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLi
     PAUSED
   }
 
-  error CallingThisFunctionNotAllowed();
-
   struct WorkflowMetadata {
     bytes32 workflowID; //     Unique identifier from hash of owner address, WASM binary content, config content and secrets URL.
     bytes32 donLabel; //       Label for the DON that is used when distributing the workflow across DONs.
@@ -123,44 +121,75 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLi
   // ================================================================
   // |      Workflow owner linking and unlinking overrides          |
   // ================================================================
+
+  /// @notice Overrides OwnershipLink inherited function tryUnlinkOwner and hooks it to the new tryUnlinkOwner function.
+  /// @param owner The address of the owner to be unlinked.
+  /// @param validityTimestamp Validity of the ownership proof.
+  /// @param proof The ownership proof to be submitted.
+  /// @param signature The signature of the ownership proof metadata.
   function tryUnlinkOwner(
     address owner,
     uint256 validityTimestamp,
     bytes32 proof,
     bytes calldata signature
   ) public view override {
-    // Override to block direct calls, use tryUnlinkWorkflowOwner instead, because we need extra parameter
-    revert CallingThisFunctionNotAllowed();
+    // set removeWorkflows to false, to simulate the original tryUnlinkOwner
+    this.tryUnlinkOwner(owner, validityTimestamp, proof, signature, false);
   }
 
+  /// @notice Overrides OwnershipLink inherited function unlinkOwner and hooks it to the new unlinkOwner function.
+  /// @param owner The address of the owner to be unlinked.
+  /// @param validityTimestamp Validity of the ownership proof.
+  /// @param proof The ownership proof to be submitted.
+  /// @param signature The signature of the ownership proof metadata.
   function unlinkOwner(
     address owner,
     uint256 validityTimestamp,
     bytes32 proof,
     bytes calldata signature
   ) public override {
-    // Override to block direct calls, use unlinkWorkflowOwner instead, because we need extra parameter
-    revert CallingThisFunctionNotAllowed();
+    // set removeWorkflows to false, to simulate the original unlinkOwner
+    this.unlinkOwner(owner, validityTimestamp, proof, signature, false);
   }
 
+  /// @notice Used instead of the original tryUnlinkOwner to allow unlinking with an extra removeWorkflows parameter.
+  /// @param owner The address of the owner to be unlinked.
+  /// @param validityTimestamp Validity of the ownership proof.
+  /// @param proof The ownership proof to be submitted.
+  /// @param signature The signature of the ownership proof metadata.
+  /// removeWorkflows If true, unlinking will proceed with removing all workflows owned by the owner.
+  /// @dev If removeWorkflows is false, the function will check if there are any active workflows registered to the
+  /// owner, and if so, the transaction will revert. If removeWorkflows is true, then all workflows owned by this
+  /// owner's address will be removed before unlinking is completed.
+  /// @dev It is essential to ensure that the unlinking process does not leave any active workflows running because
+  /// they can't be managed on the registry by anyone else aside from a valid owner. Without this, the workflows
+  /// would be stuck since they can't be managed or removed by anyone.
   function tryUnlinkOwner(
     address owner,
     uint256 validityTimestamp,
     bytes32 proof,
     bytes calldata signature,
-    bool removeWorkflows
+    bool /* removeWorkflows */
   ) public view {
     // TODO: if removeWorkflows is true, assume that unlinkWorkflowOwner() will proceed with removing workflows
     // TODO: if removeWorkflows is false, verify if there are any active workflows, if yes, revert
     super.tryUnlinkOwner(owner, validityTimestamp, proof, signature);
   }
 
+  /// @notice Used instead of the original tryUnlinkOwner to allow unlinking with an extra removeWorkflows parameter.
+  /// @param owner The address of the owner to be unlinked.
+  /// @param validityTimestamp Validity of the ownership proof.
+  /// @param proof The ownership proof to be submitted.
+  /// @param signature The signature of the ownership proof metadata.
+  /// removeWorkflows If true, unlinking will proceed with removing all workflows owned by the owner.
+  /// @dev Run the verification process first by calling tryUnlinkOwner() function. If the verification does not result
+  /// in a revert, and there are no active workflows left, then the owner address can be unlinked.
   function unlinkOwner(
     address owner,
     uint256 validityTimestamp,
     bytes32 proof,
     bytes calldata signature,
-    bool removeWorkflows
+    bool /* removeWorkflows */
   ) external {
     // TODO: if removeWorkflows is true, remove all workflows owned by the owner before unlinking
     // TODO: if removeWorkflows is false, verify if there are any active workflows, if yes, revert
