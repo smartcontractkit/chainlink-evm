@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL 1.1
 pragma solidity 0.8.26;
 
-import {LinkingUtils} from "../../testutils/LinkingUtils.sol";
-import {OwnershipLinkTestable} from "../../testutils/OwnershipLinkTestable.sol";
+import {LinkingUtils} from "../../testhelpers/LinkingUtils.sol";
+import {OwnershipLinkTestable} from "../../testhelpers/OwnershipLinkTestable.sol";
 
 import {Test} from "forge-std/Test.sol";
 

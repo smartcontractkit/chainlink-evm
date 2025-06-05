@@ -5,7 +5,7 @@ import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 
 import {OwnershipLink} from "../../OwnershipLink.sol";
 
-import {OwnershipLinkTestable} from "../../testutils/OwnershipLinkTestable.sol";
+import {OwnershipLinkTestable} from "../../testhelpers/OwnershipLinkTestable.sol";
 
 import {Test} from "forge-std/Test.sol";
 
