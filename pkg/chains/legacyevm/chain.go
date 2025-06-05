@@ -64,22 +64,24 @@ var (
 
 // LegacyChains implements [LegacyChainContainer]
 type LegacyChains struct {
-	*chains.ChainsKV[Chain]
+	*chains.ChainsKV[types.ChainService]
 }
 
-// LegacyChainContainer is container for EVM chains.
+// LegacyChainContainer is container for EVM chains of type [types.ChainService], which may be castable to [Chain].
+// The cast will fail if the chain is running in LOOPP mode, in which case the legacy API is limited to the overlapping set
+// defined by [types.ChainService].
 type LegacyChainContainer interface {
-	Get(id string) (Chain, error)
+	Get(id string) (types.ChainService, error)
 	Len() int
-	List(ids ...string) ([]Chain, error)
-	Slice() []Chain
+	List(ids ...string) ([]types.ChainService, error)
+	Slice() []types.ChainService
 }
 
 var _ LegacyChainContainer = &LegacyChains{}
 
-func NewLegacyChains(m map[string]Chain) *LegacyChains {
+func NewLegacyChains(m map[string]types.ChainService) *LegacyChains {
 	return &LegacyChains{
-		ChainsKV: chains.NewChainsKV[Chain](m),
+		ChainsKV: chains.NewChainsKV[types.ChainService](m),
 	}
 }
 
@@ -88,7 +90,7 @@ func NewLegacyChains(m map[string]Chain) *LegacyChains {
 // *big.Int, string, and int64.
 //
 // TODO BCF-2507 unify the type system
-func (c *LegacyChains) Get(id string) (Chain, error) {
+func (c *LegacyChains) Get(id string) (types.ChainService, error) {
 	if id == nilBigInt.String() || id == emptyString {
 		return nil, fmt.Errorf("invalid chain id requested: %q", id)
 	}
