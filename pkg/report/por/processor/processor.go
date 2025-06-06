@@ -1,51 +1,54 @@
-package processor
+package por
 
 import (
-	"context"
 	"fmt"
+	"math/big"
 
-	"google.golang.org/protobuf/proto"
-
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/data-feeds/on-chain/registry"
+	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 
 	wt "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 )
 
-// EVM POR specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
-type porFeedsProcessor struct {
-	emitter beholder.ProtoEmitter
-	metrics *registry.Metrics
+func NewPORProcessor(metrics *registry.Metrics, emitter beholder.ProtoEmitter) *registry.Processor {
+	return registry.NewProcessor(metrics, emitter,
+		GetPORSchema(),
+		Decode,
+	)
 }
 
-func NewPORFeedsProcessor(metrics *registry.Metrics, emitter beholder.ProtoEmitter) *porFeedsProcessor {
-	return &porFeedsProcessor{
-		metrics: metrics,
-		emitter: emitter,
-	}
+func GetPORSchema() abi.Arguments {
+	return registry.GetSchema("tuple(bytes32,uint32,bytes)[]", "", []abi.ArgumentMarshaling{
+		{Name: "dataId", Type: "bytes32"},
+		{Name: "timestamp", Type: "uint32"},
+		{Name: "bundle", Type: "bytes"},
+	})
 }
 
-func (p *porFeedsProcessor) Process(ctx context.Context, m proto.Message, attrKVs ...any) error {
-	// Switch on the type of the proto.Message
-	switch msg := m.(type) {
-	case *wt.WriteConfirmed:
-		updates, err := registry.DecodePORAsFeedUpdated(msg)
-		if err != nil {
-			return fmt.Errorf("failed to decode as 'data-feeds.registry.FeedUpdated': %w", err)
-		}
-		for _, update := range updates {
-			err = p.emitter.EmitWithLog(ctx, update, attrKVs...)
-			if err != nil {
-				return fmt.Errorf("failed to emit with log: %w", err)
-			}
-			// Process emit and derive metrics
-			err = p.metrics.OnFeedUpdated(ctx, update, attrKVs...)
-			if err != nil {
-				return fmt.Errorf("failed to publish feed updated metrics: %w", err)
-			}
-		}
-		return nil
-	default:
-		return nil // fallthrough
+// Decode is made available to external users (i.e. mercury server)
+func Decode(m *wt.WriteConfirmed, data []byte, schema abi.Arguments) ([]*registry.FeedUpdated, error) {
+	values, err := schema.Unpack(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode report: %w", err)
 	}
+
+	var decoded registry.PORReports
+	if err = schema.Copy(&decoded, values); err != nil {
+		return nil, fmt.Errorf("failed to copy report values to struct: %w", err)
+	}
+
+	// Allocate space for the messages (event per updated feed)
+	msgs := make([]*registry.FeedUpdated, 0, len(decoded))
+
+	// Iterate over the underlying reports
+	for _, rf := range decoded {
+		feedID := datafeeds.FeedID(rf.DataId)
+
+		// Notice: uses a placeholder for the benchmark price
+		msgs = append(msgs, registry.NewFeedUpdated(m, feedID, rf.Timestamp, big.NewInt(0), rf.Bundle, []byte{}, true))
+	}
+
+	return msgs, nil
 }

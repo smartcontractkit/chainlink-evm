@@ -1,5 +1,5 @@
 //nolint:govet, testifylint // disable govet, testifylint
-package registry
+package registry_test
 
 import (
 	"math"
@@ -10,14 +10,16 @@ import (
 
 	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
 
+	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/data-feeds/on-chain/registry"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/por"
+	df_processor "github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds/processor"
+	por_processor "github.com/smartcontractkit/chainlink-evm/pkg/report/por/processor"
 	wt_msg "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
 )
 
 func TestDecodeAsReportProcessed(t *testing.T) {
-	reports := &datafeeds.Reports{
+	reports := &registry.Reports{
 		{
 			FeedID:    [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x8, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
 			Price:     big.NewInt(1234567890123456789),
@@ -30,14 +32,16 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 		},
 	}
 
-	data, err := datafeeds.GetSchema(false).Pack(reports)
+	dfProcessor := df_processor.NewDataFeedsProcessor(nil, nil)
+
+	data, err := df_processor.GetDataFeedsSchema().Pack(reports)
 	require.NoError(t, err)
 
-	runTests(t, data, false)
+	runTests(t, data, dfProcessor, false)
 }
 
 func TestPORDecodeAsReportProcessed(t *testing.T) {
-	reports := &por.Reports{
+	reports := &registry.PORReports{
 		{
 			DataId:    [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x8, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
 			Timestamp: 1620000000,
@@ -50,13 +54,15 @@ func TestPORDecodeAsReportProcessed(t *testing.T) {
 		},
 	}
 
-	data, err := por.GetSchema().Pack(reports)
+	porProcessor := por_processor.NewPORProcessor(nil, nil)
+
+	data, err := por_processor.GetPORSchema().Pack(reports)
 	require.NoError(t, err)
 
-	runTests(t, data, true)
+	runTests(t, data, porProcessor, true)
 }
 
-func runTests(t *testing.T, data []byte, por bool) {
+func runTests(t *testing.T, data []byte, processor *registry.Processor, por bool) {
 	report := platform.Report{
 		Metadata: ocr3types.Metadata{
 			Version:          1,
@@ -75,7 +81,7 @@ func runTests(t *testing.T, data []byte, por bool) {
 	rawReport, err := report.Encode()
 	require.NoError(t, err)
 
-	expected := []FeedUpdated{
+	expected := []registry.FeedUpdated{
 		{
 			FeedId:                "0x0102030405060708090a0b0c0d0e0f1000000000000000000000000000000000",
 			ObservationsTimestamp: 1620000000,
@@ -124,7 +130,7 @@ func runTests(t *testing.T, data []byte, por bool) {
 	tests := []struct {
 		name     string
 		input    wt_msg.WriteConfirmed
-		expected []FeedUpdated
+		expected []registry.FeedUpdated
 		wantErr  bool
 	}{
 		{
@@ -173,7 +179,7 @@ func runTests(t *testing.T, data []byte, por bool) {
 
 				ExecutionContext: &wt_msg.ExecutionContext{},
 			},
-			expected: []FeedUpdated{},
+			expected: []registry.FeedUpdated{},
 			wantErr:  true,
 		},
 		// Add more test cases as needed
@@ -181,13 +187,11 @@ func runTests(t *testing.T, data []byte, por bool) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var result []*FeedUpdated
+			var result []*registry.FeedUpdated
 			var err error
-			if por {
-				result, err = DecodePORAsFeedUpdated(&tt.input)
-			} else {
-				result, err = DecodeAsFeedUpdated(&tt.input, false)
-			}
+
+			result, err = processor.DecodeAsFeedUpdated(&tt.input)
+
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
@@ -303,7 +307,7 @@ func TestToBenchmarkVal(t *testing.T) {
 
 			decimals, isNumber := datafeeds.GetDecimals(feedID.GetDataType())
 
-			result := toBenchmarkVal(feedID, tt.val)
+			result := registry.ToBenchmarkVal(feedID, tt.val)
 			if math.IsNaN(tt.expected) {
 				require.False(t, isNumber)
 				require.True(t, math.IsNaN(result))

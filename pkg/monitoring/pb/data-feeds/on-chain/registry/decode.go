@@ -1,66 +1,87 @@
 package registry
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/big"
 
-	wt_msg "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/por"
+
+	wt "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 )
 
-func DecodeAsFeedUpdated(m *wt_msg.WriteConfirmed, ccip bool) ([]*FeedUpdated, error) {
-	// Decode the confirmed report (WT -> DF contract event)
-	r, err := platform.Decode(m.Report)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode report: %w", err)
-	}
-
-	// Decode the underlying Data Feeds reports
-	reports, err := datafeeds.Decode(r.Data, ccip)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode Data Feeds report: %w", err)
-	}
-
-	// Allocate space for the messages (event per updated feed)
-	msgs := make([]*FeedUpdated, 0, len(*reports))
-
-	// Iterate over the underlying Mercury reports
-	for _, rf := range *reports {
-		feedID := datafeeds.FeedID(rf.FeedID)
-
-		// Notice: this encoding of a DF report doesn't provide a raw underlying report
-		msgs = append(msgs, NewFeedUpdated(m, feedID, rf.Timestamp, rf.Price, []byte{}, []byte{}, true))
-	}
-
-	return msgs, nil
+// EVM POR specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
+type Processor struct {
+	emitter      beholder.ProtoEmitter
+	metrics      *Metrics
+	schema       abi.Arguments
+	decodeReport func(*wt.WriteConfirmed, []byte, abi.Arguments) ([]*FeedUpdated, error)
 }
 
-func DecodePORAsFeedUpdated(m *wt_msg.WriteConfirmed) ([]*FeedUpdated, error) {
+func NewProcessor(metrics *Metrics, emitter beholder.ProtoEmitter, schema abi.Arguments, decodeReport func(*wt.WriteConfirmed, []byte, abi.Arguments) ([]*FeedUpdated, error)) *Processor {
+	return &Processor{
+		metrics:      metrics,
+		emitter:      emitter,
+		schema:       schema,
+		decodeReport: decodeReport,
+	}
+}
+
+func (p *Processor) Process(ctx context.Context, m proto.Message, attrKVs ...any) error {
+	// Switch on the type of the proto.Message
+	switch msg := m.(type) {
+	case *wt.WriteConfirmed:
+		updates, err := p.DecodeAsFeedUpdated(msg)
+		if err != nil {
+			return fmt.Errorf("failed to decode as 'data-feeds.registry.FeedUpdated': %w", err)
+		}
+		for _, update := range updates {
+			err = p.emitter.EmitWithLog(ctx, update, attrKVs...)
+			if err != nil {
+				return fmt.Errorf("failed to emit with log: %w", err)
+			}
+			// Process emit and derive metrics
+			err = p.metrics.OnFeedUpdated(ctx, update, attrKVs...)
+			if err != nil {
+				return fmt.Errorf("failed to publish feed updated metrics: %w", err)
+			}
+		}
+		return nil
+	default:
+		return nil // fallthrough
+	}
+}
+
+func GetSchema(typ string, internalType string, components []abi.ArgumentMarshaling) abi.Arguments {
+	result, err := abi.NewType(typ, internalType, components)
+	if err != nil {
+		panic(fmt.Sprintf("Unexpected error during abi.NewType: %s", err))
+	}
+	return abi.Arguments([]abi.Argument{
+		{
+			// This defines the array of tuple records.
+			Type: result,
+		},
+	})
+}
+
+func (p *Processor) DecodeAsFeedUpdated(m *wt.WriteConfirmed) ([]*FeedUpdated, error) {
 	// Decode the confirmed report (WT -> DF contract event)
 	r, err := platform.Decode(m.Report)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode report: %w", err)
 	}
 
-	// Decode the underlying Data Feeds reports
-	reports, err := por.Decode(r.Data)
+	msgs, err := p.decodeReport(m, r.Data, p.schema)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode Data Feeds report: %w", err)
-	}
-
-	// Allocate space for the messages (event per updated feed)
-	msgs := make([]*FeedUpdated, 0, len(*reports))
-
-	// Iterate over the underlying Mercury reports
-	for _, rf := range *reports {
-		feedID := datafeeds.FeedID(rf.DataId)
-
-		// Notice: uses a placeholder for the benchmark price
-		msgs = append(msgs, NewFeedUpdated(m, feedID, rf.Timestamp, big.NewInt(0), rf.Bundle, []byte{}, true))
 	}
 
 	return msgs, nil
@@ -69,7 +90,7 @@ func DecodePORAsFeedUpdated(m *wt_msg.WriteConfirmed) ([]*FeedUpdated, error) {
 // newFeedUpdated creates a FeedUpdated from the given common parameters.
 // If includeTxInfo is true, TxSender and TxReceiver are set.
 func NewFeedUpdated(
-	m *wt_msg.WriteConfirmed,
+	m *wt.WriteConfirmed,
 	feedID datafeeds.FeedID,
 	observationsTimestamp uint32,
 	benchmarkPrice *big.Int,
@@ -83,7 +104,7 @@ func NewFeedUpdated(
 		Benchmark:             benchmarkPrice.Bytes(),
 		Bundle:                bundle,
 		Report:                report,
-		BenchmarkVal:          toBenchmarkVal(feedID, benchmarkPrice),
+		BenchmarkVal:          ToBenchmarkVal(feedID, benchmarkPrice),
 
 		// Head data - when was the event produced on-chain
 		BlockHash:      m.BlockHash,
@@ -123,14 +144,14 @@ func NewFeedUpdated(
 	return fu
 }
 
-// toBenchmarkVal returns the benchmark i192 on-chain value decoded as an double (float64), scaled by number of decimals (e.g., 1e-18)
+// ToBenchmarkVal returns the benchmark i192 on-chain value decoded as an double (float64), scaled by number of decimals (e.g., 1e-18)
 // Where the number of decimals is extracted from the feed ID.
 //
 // This is the largest type Prometheus supports, and this conversion can overflow but so far was sufficient
 // for most use-cases. For big numbers, benchmark bytes should be used instead.
 //
 // Returns `math.NaN()` if report data type not a number, or `+/-Inf` if number doesn't fit in double.
-func toBenchmarkVal(feedID datafeeds.FeedID, val *big.Int) float64 {
+func ToBenchmarkVal(feedID datafeeds.FeedID, val *big.Int) float64 {
 	// Return NaN if the value is nil
 	if val == nil {
 		return math.NaN()
