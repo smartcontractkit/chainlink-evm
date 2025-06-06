@@ -937,7 +937,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 		}
 
 		endblock := blocks[len(blocks)-1]
-		if len(gethLogs) == 0 || gethLogs[len(gethLogs)-1].BlockNumber != uint64(to) {
+		if len(gethLogs) == 0 || gethLogs[len(gethLogs)-1].BlockNumber != uint64(to) { //nolint:gosec // G115
 			// Pop endblock if there were no logs for it, so that length of blocks & gethLogs are the same to pass to convertLogs
 			blocks = blocks[:len(blocks)-1]
 		}
@@ -1206,7 +1206,13 @@ func (lp *logPoller) PruneOldBlocks(ctx context.Context) (bool, error) {
 		// No blocks saved yet.
 		return true, nil
 	}
-	if latestBlock.FinalizedBlockNumber <= lp.keepFinalizedBlocksDepth {
+
+	// If the latest block we have in the db was saved during a backfill, then the latest finalized
+	// block number stored with it will be larger than its block number. Instead of risking deleting
+	// all blocks from the db, we should still keep the latest keepFinalizedBlocksDepth blocks
+	referenceBlockNumber := mathutil.Min(latestBlock.FinalizedBlockNumber, latestBlock.BlockNumber)
+
+	if referenceBlockNumber <= lp.keepFinalizedBlocksDepth {
 		// No-op, keep all blocks
 		return true, nil
 	}
