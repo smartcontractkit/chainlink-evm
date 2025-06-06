@@ -1,7 +1,8 @@
 package config
 
 import (
-	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
+	"time"
+
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
@@ -27,9 +28,9 @@ func (b *workflowConfig) TxAcceptanceState() *commontypes.TransactionStatus {
 	return b.c.TxAcceptanceState
 }
 
-func (b *workflowConfig) PollPeriod() *commonconfig.Duration {
-	return b.c.PollPeriod
+func (b *workflowConfig) PollPeriod() time.Duration {
+	return b.c.PollPeriod.Duration()
 }
-func (b *workflowConfig) AcceptanceTimeout() *commonconfig.Duration {
-	return b.c.AcceptanceTimeout
+func (b *workflowConfig) AcceptanceTimeout() time.Duration {
+	return b.c.AcceptanceTimeout.Duration()
 }
