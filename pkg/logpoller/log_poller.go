@@ -879,7 +879,7 @@ func (lp *logPoller) blocksFromFinalizedLogs(ctx context.Context, logs []types.L
 	for _, log := range logs {
 		numbers = append(numbers, log.BlockNumber)
 	}
-	if numbers[len(numbers)-1] != endBlockNumber {
+	if len(numbers) == 0 || numbers[len(numbers)-1] != endBlockNumber {
 		numbers = append(numbers, endBlockNumber)
 	}
 	blocks, err = lp.GetBlocksRange(ctx, numbers)
@@ -937,7 +937,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 		}
 
 		endblock := blocks[len(blocks)-1]
-		if gethLogs[len(gethLogs)-1].BlockNumber != uint64(to) {
+		if len(gethLogs) == 0 || gethLogs[len(gethLogs)-1].BlockNumber != uint64(to) {
 			// Pop endblock if there were no logs for it, so that length of blocks & gethLogs are the same to pass to convertLogs
 			blocks = blocks[:len(blocks)-1]
 		}
