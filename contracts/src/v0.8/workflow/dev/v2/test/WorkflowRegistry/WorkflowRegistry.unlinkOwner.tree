@@ -1,0 +1,13 @@
+WorkflowRegistry::UnlinkOwner
+├── when the owner is linked
+│   ├── given that the owner selects none pre action
+│   │   ├── given that the owner does not have active workflows
+│   │   │   └── it should unlink the owner
+│   │   └── given that the owner has active workflows
+│   │       └── it should revert with active workflows error
+│   ├── given that the owner selects pausing workflows
+│   │   └── it should pause all workflows and unlink the owner
+│   └── given that the owner selects removing workflows
+│       └── it should remove all workflows and unlink the owner
+└── when the owner is not linked
+    └── it should revert with not linked error
