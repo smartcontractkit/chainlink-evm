@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/data-feeds/on-chain/registry"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
@@ -44,7 +45,7 @@ func Decode(m *wt.WriteConfirmed, data []byte, schema abi.Arguments) ([]*registr
 
 	// Iterate over the underlying reports
 	for _, rf := range decoded {
-		feedID := datafeeds.FeedID(rf.DataId)
+		feedID := datafeeds.FeedID(rf.DataID)
 
 		// Notice: uses a placeholder for the benchmark price
 		msgs = append(msgs, registry.NewFeedUpdated(m, feedID, rf.Timestamp, big.NewInt(0), rf.Bundle, []byte{}, true))

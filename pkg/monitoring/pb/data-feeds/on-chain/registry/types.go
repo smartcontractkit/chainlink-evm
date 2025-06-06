@@ -23,7 +23,7 @@ type CCIPFeedReport struct {
 }
 
 type PORReport struct {
-	DataId    [32]byte
+	DataID    [32]byte
 	Timestamp uint32
 	Bundle    []byte
 }

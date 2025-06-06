@@ -7,14 +7,14 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
-	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
-
 	"google.golang.org/protobuf/proto"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 
 	wt "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
+	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
 )
 
 // EVM POR specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
