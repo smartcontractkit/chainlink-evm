@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
@@ -1562,14 +1563,41 @@ func TestTooManyLogResults(t *testing.T) {
 		if blockNumber == nil {
 			require.FailNow(t, "unexpected call to get current head")
 		}
-		return &evmtypes.Head{Number: blockNumber.Int64()}, nil
+		return &evmtypes.Head{Number: blockNumber.Int64(), ParentHash: common.HexToHash(fmt.Sprintf("0x%x", blockNumber.Int64()-1))}, nil
 	})
 
 	t.Run("halves size until small enough, then succeeds", func(t *testing.T) {
-		// Simulate currentBlock = 300
+		// Simulate latestBlock = 300
 		head.Number = 300
+		head.Hash = common.HexToHash("0x1234") // needed to satisfy validation in fetchBlocks()
 		finalized.Number = head.Number - lpOpts.FinalityDepth
+
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil).Once()
+
+		headByHash := ec.On("HeadByHash", mock.Anything, mock.Anything).Return(func(ctx context.Context, blockHash common.Hash) (*evmtypes.Head, error) {
+			return &evmtypes.Head{Hash: blockHash}, nil
+		})
+
+		batchCallContext := ec.On("BatchCallContext", mock.Anything, mock.Anything).Return(
+			func(ctx context.Context, calls []rpc.BatchElem) error {
+				for i := range calls {
+					blockNumberHex := calls[i].Args[0].(string)
+					if blockNumberHex == "latest" {
+						calls[i].Result = head
+						continue
+					}
+					blockNumber, ok := new(big.Int).SetString(blockNumberHex[2:], 16)
+					require.True(t, ok, blockNumberHex)
+
+					calls[i].Result = &evmtypes.Head{
+						Number:     blockNumber.Int64(),
+						Hash:       common.HexToHash(fmt.Sprintf("0x%x", blockNumber.Int64())),
+						ParentHash: common.HexToHash(fmt.Sprintf("0x%x", blockNumber.Int64()-1)),
+					}
+				}
+				return nil
+			},
+		)
 
 		filterLogsCall = ec.On("FilterLogs", mock.Anything, mock.Anything).Return(func(ctx context.Context, fq ethereum.FilterQuery) (logs []types.Log, err error) {
 			if fq.BlockHash != nil {
@@ -1605,6 +1633,8 @@ func TestTooManyLogResults(t *testing.T) {
 			assert.Equal(t, s, logs[i].ContextMap()["newBatchSize"])
 		}
 		filterLogsCall.Unset()
+		batchCallContext.Unset()
+		headByHash.Unset()
 	})
 
 	t.Run("Halves size until single block, then reports critical error", func(t *testing.T) {
