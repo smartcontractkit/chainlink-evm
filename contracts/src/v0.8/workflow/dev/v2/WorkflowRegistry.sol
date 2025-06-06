@@ -15,6 +15,13 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLi
     PAUSED
   }
 
+  enum PreUnlinkAction {
+    NONE, //              No action prior to unlinking.
+    REMOVE_WORKFLOWS, //  Remove all workflows owned by the owner prior to unlinking.
+    PAUSE_WORKFLOWS //    Pause all workflows owned by the owner prior to unlinking.
+
+  }
+
   struct WorkflowMetadata {
     bytes32 workflowID; //     Unique identifier from hash of owner address, WASM binary content, config content and secrets URL.
     bytes32 donLabel; //       Label for the DON that is used when distributing the workflow across DONs.
@@ -157,10 +164,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLi
   /// @param validityTimestamp Validity of the ownership proof.
   /// @param proof The ownership proof to be submitted.
   /// @param signature The signature of the ownership proof metadata.
-  /// removeWorkflows If true, unlinking will proceed with removing all workflows owned by the owner.
-  /// @dev If removeWorkflows is false, the function will check if there are any active workflows registered to the
-  /// owner, and if so, the transaction will revert. If removeWorkflows is true, then all workflows owned by this
-  /// owner's address will be removed before unlinking is completed.
+  /// preUnlinkAction Determines what to do with existing workflows owned by the owner before unlinking.
+  /// @dev If preUnlinkAction is NONE, the function will check if there are any active workflows registered to the
+  /// owner, and if so, the transaction will revert. If preUnlinkAction is not NONE, then all workflows owned by this
+  /// owner's address will be removed or paused before unlinking is completed.
   /// @dev It is essential to ensure that the unlinking process does not leave any active workflows running because
   /// they can't be managed on the registry by anyone else aside from a valid owner. Without this, the workflows
   /// would be stuck since they can't be managed or removed by anyone.
@@ -169,10 +176,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLi
     uint256 validityTimestamp,
     bytes32 proof,
     bytes calldata signature,
-    bool /* removeWorkflows */
+    PreUnlinkAction /* preUnlinkAction */
   ) public view {
-    // TODO: if removeWorkflows is true, assume that unlinkWorkflowOwner() will proceed with removing workflows
-    // TODO: if removeWorkflows is false, verify if there are any active workflows, if yes, revert
+    // TODO: if preUnlinkAction is not NONE, assume that unlinkWorkflowOwner() will remove or pause workflows
+    // TODO: if preUnlinkAction is NONE, verify if there are any active workflows, if yes, revert
     super.tryUnlinkOwner(owner, validityTimestamp, proof, signature);
   }
 
@@ -181,18 +188,19 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLi
   /// @param validityTimestamp Validity of the ownership proof.
   /// @param proof The ownership proof to be submitted.
   /// @param signature The signature of the ownership proof metadata.
-  /// removeWorkflows If true, unlinking will proceed with removing all workflows owned by the owner.
-  /// @dev Run the verification process first by calling tryUnlinkOwner() function. If the verification does not result
-  /// in a revert, and there are no active workflows left, then the owner address can be unlinked.
+  /// preUnlinkAction Determines what to do with existing workflows owned by the owner before unlinking.
+  /// @dev If preUnlinkAction is NONE, the function will check if there are any active workflows registered to the
+  /// owner, and if so, the transaction will revert. If preUnlinkAction is not NONE, then all workflows owned by this
+  /// owner's address will be removed or paused before unlinking is completed.
   function unlinkOwner(
     address owner,
     uint256 validityTimestamp,
     bytes32 proof,
     bytes calldata signature,
-    bool /* removeWorkflows */
+    PreUnlinkAction /* preUnlinkAction */
   ) external {
-    // TODO: if removeWorkflows is true, remove all workflows owned by the owner before unlinking
-    // TODO: if removeWorkflows is false, verify if there are any active workflows, if yes, revert
+    // TODO: if preUnlinkAction is not NONE, assume that unlinkWorkflowOwner() will remove or pause workflows
+    // TODO: if preUnlinkAction is NONE, verify if there are any active workflows, if yes, revert
     super.unlinkOwner(owner, validityTimestamp, proof, signature);
   }
 }

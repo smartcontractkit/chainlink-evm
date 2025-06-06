@@ -6,6 +6,8 @@ import {OwnershipLink} from "../../OwnershipLink.sol";
 import {LinkingUtils} from "../../testhelpers/LinkingUtils.sol";
 import {OwnershipLinkTestable} from "../../testhelpers/OwnershipLinkTestable.sol";
 
+import {ECDSA} from "../../../../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/cryptography/ECDSA.sol";
+
 import {Test} from "forge-std/Test.sol";
 
 contract OwnershipLinkLinkOwner is Test {
@@ -84,6 +86,20 @@ contract OwnershipLinkLinkOwner is Test {
       abi.encodeWithSelector(OwnershipLink.InvalidOwnershipLink.selector, owner, validityTimestamp, proof, sig)
     );
     op.linkOwner(validityTimestamp, proof, sig);
+    assertFalse(op.isOwnerLinked(owner), "Owner should not be linked");
+  }
+
+  function test_WhenTheSignatureIsNotValid() external whenTheOwnerIsNotAlreadyLinked whenTheTimestampHasNotExpired {
+    // it should revert with internal signature error
+    bytes memory invalidSignature = "invalid-signature";
+
+    vm.prank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        OwnershipLink.InvalidSignature.selector, invalidSignature, ECDSA.RecoverError.InvalidSignatureLength, 0x11
+      )
+    );
+    op.linkOwner(validityTimestamp, proof, invalidSignature);
     assertFalse(op.isOwnerLinked(owner), "Owner should not be linked");
   }
 

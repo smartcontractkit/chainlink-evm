@@ -32,7 +32,7 @@ contract OwnershipLinkGetLinkedOwners is Test {
     vm.stopPrank();
   }
 
-  function test_WhenThereAreNoLinkedOwners() external {
+  function test_WhenThereAreNoLinkedOwners() external view {
     // it should return an empty result
     address[] memory owners = op.getLinkedOwners(0, 10);
     assertEq(owners.length, 0, "Expected no linked owners");

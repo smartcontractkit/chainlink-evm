@@ -45,8 +45,6 @@ abstract contract OwnershipLink is Ownable2StepMsgSender {
   error OwnershipLinkDoesNotExist(address owner);
   error OwnershipLinkProofDoesNotMatch(address owner, bytes32 proof, bytes32 storedProof);
   error InvalidSignature(bytes signature, uint8 recoverErrorId, bytes32 recoverErrorArg);
-  error InvalidSValue(bytes signature, bytes32 s);
-  error InvalidVValue(bytes signature, uint8 v);
   error InvalidOwnershipLink(address owner, uint256 validityTimestamp, bytes32 proof, bytes signature);
 
   // ================================================================
