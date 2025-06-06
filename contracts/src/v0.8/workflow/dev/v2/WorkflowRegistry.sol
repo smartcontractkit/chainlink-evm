@@ -141,7 +141,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLi
     bytes calldata signature
   ) public view override {
     // set removeWorkflows to false, to simulate the original tryUnlinkOwner
-    this.tryUnlinkOwner(owner, validityTimestamp, proof, signature, false);
+    this.tryUnlinkOwner(owner, validityTimestamp, proof, signature, PreUnlinkAction.NONE);
   }
 
   /// @notice Overrides OwnershipLink inherited function unlinkOwner and hooks it to the new unlinkOwner function.
@@ -156,7 +156,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion, OwnershipLi
     bytes calldata signature
   ) public override {
     // set removeWorkflows to false, to simulate the original unlinkOwner
-    this.unlinkOwner(owner, validityTimestamp, proof, signature, false);
+    this.unlinkOwner(owner, validityTimestamp, proof, signature, PreUnlinkAction.NONE);
   }
 
   /// @notice Used instead of the original tryUnlinkOwner to allow unlinking with an extra removeWorkflows parameter.
