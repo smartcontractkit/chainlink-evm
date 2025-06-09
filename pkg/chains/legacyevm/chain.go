@@ -31,6 +31,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitor"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
+	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 	trontxm "github.com/smartcontractkit/chainlink-tron/relayer/txm"
 )
@@ -64,25 +65,35 @@ var (
 
 // LegacyChains implements [LegacyChainContainer]
 type LegacyChains struct {
-	*chains.ChainsKV[types.ChainService]
+	*chains.ChainsKV[Chain]
+
+	cfgs toml.EVMConfigs
 }
 
-// LegacyChainContainer is container for EVM chains of type [types.ChainService], which may be castable to [Chain].
-// The cast will fail if the chain is running in LOOPP mode, in which case the legacy API is limited to the overlapping set
-// defined by [types.ChainService].
+// LegacyChainContainer is container for EVM chains.
 type LegacyChainContainer interface {
-	Get(id string) (types.ChainService, error)
+	Get(id string) (Chain, error)
 	Len() int
-	List(ids ...string) ([]types.ChainService, error)
-	Slice() []types.ChainService
+	List(ids ...string) ([]Chain, error)
+	Slice() []Chain
+
+	// BCF-2516: this is only used for EVMORM. When we delete that
+	// we can promote/move the needed funcs from it to LegacyChainContainer
+	// so instead of EVMORM().XYZ() we'd have something like legacyChains.XYZ()
+	ChainNodeConfigs() evmtypes.Configs
 }
 
 var _ LegacyChainContainer = &LegacyChains{}
 
-func NewLegacyChains(m map[string]types.ChainService) *LegacyChains {
+func NewLegacyChains(m map[string]Chain, evmCfgs toml.EVMConfigs) *LegacyChains {
 	return &LegacyChains{
-		ChainsKV: chains.NewChainsKV[types.ChainService](m),
+		ChainsKV: chains.NewChainsKV[Chain](m),
+		cfgs:     evmCfgs,
 	}
+}
+
+func (c *LegacyChains) ChainNodeConfigs() evmtypes.Configs {
+	return c.cfgs
 }
 
 // backward compatibility.
@@ -90,7 +101,7 @@ func NewLegacyChains(m map[string]types.ChainService) *LegacyChains {
 // *big.Int, string, and int64.
 //
 // TODO BCF-2507 unify the type system
-func (c *LegacyChains) Get(id string) (types.ChainService, error) {
+func (c *LegacyChains) Get(id string) (Chain, error) {
 	if id == nilBigInt.String() || id == emptyString {
 		return nil, fmt.Errorf("invalid chain id requested: %q", id)
 	}
