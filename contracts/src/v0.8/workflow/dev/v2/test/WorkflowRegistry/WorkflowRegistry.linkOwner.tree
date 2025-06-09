@@ -1,4 +1,4 @@
-OwnershipLink::LinkOwner
+WorkflowRegistry_linkOwner
 ├── when the owner is not already linked
 │   ├── when the timestamp has not expired
 │   │   ├── when proof is valid

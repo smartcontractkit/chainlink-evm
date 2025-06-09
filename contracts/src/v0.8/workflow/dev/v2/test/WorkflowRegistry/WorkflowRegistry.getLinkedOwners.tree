@@ -1,4 +1,4 @@
-OwnershipLink::GetLinkedOwners
+WorkflowRegistry_getLinkedOwners
 ├── when there are no linked owners
 │   └── it should return an empty result
 └── when there are linked owners

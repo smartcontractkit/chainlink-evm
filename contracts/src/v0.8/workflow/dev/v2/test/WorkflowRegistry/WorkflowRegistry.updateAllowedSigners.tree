@@ -1,4 +1,4 @@
-OwnershipLink::UpdateAllowedSigners
+WorkflowRegistry_updateAllowedSigners
 ├── it should only be called by the contract owner
 ├── when a new signer is added
 │   ├── given signer is not already added
