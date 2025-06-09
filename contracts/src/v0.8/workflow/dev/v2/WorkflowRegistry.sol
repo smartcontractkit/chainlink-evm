@@ -66,6 +66,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   }
 
+  enum LinkingRequestType {
+    LINK_OWNER, //       Request to link an owner address.
+    UNLINK_OWNER //       Request to unlink an owner address.
+
+  }
+
   // ================================================================
   // |                         Structs                               |
   // ================================================================
@@ -240,7 +246,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert OwnershipLinkAlreadyExists(msg.sender);
     }
 
-    address signer = _recoverSigner(msg.sender, validityTimestamp, proof, signature);
+    address signer =
+      _recoverSigner(uint8(LinkingRequestType.LINK_OWNER), msg.sender, validityTimestamp, proof, signature);
     if (!s_allowedSigners[signer]) {
       revert InvalidOwnershipLink(msg.sender, validityTimestamp, proof, signature);
     }
@@ -309,7 +316,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert OwnershipLinkProofDoesNotMatch(owner, proof, storedProof);
     }
 
-    address signer = _recoverSigner(owner, validityTimestamp, proof, signature);
+    // Request type prevents replay attacks, since the same proof can be used for both linking and unlinking
+    address signer = _recoverSigner(uint8(LinkingRequestType.UNLINK_OWNER), owner, validityTimestamp, proof, signature);
     if (!s_allowedSigners[signer]) {
       revert InvalidOwnershipLink(owner, validityTimestamp, proof, signature);
     }
@@ -338,7 +346,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     tryUnlinkOwner(owner, validityTimestamp, proof, signature, PreUnlinkAction.NONE);
 
-    s_ownerProofs[owner] = bytes32(0);
+    delete s_ownerProofs[owner];
     s_linkedOwners.remove(owner);
     emit OwnershipLinkUpdatedV1(owner, proof, false);
   }
@@ -393,6 +401,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
 
   /// @notice Returns the signer of the recovered signature or revert.
+  /// @param requestType The type of the request (LINK_OWNER = 0 or UNLINK_OWNER = 1).
   /// @param owner The address of the owner.
   /// @param validityTimestamp The validity timestamp of the ownership proof.
   /// @param proof The ownership proof.
@@ -401,14 +410,15 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev The function tries to re-generate the message digest based on the provided parameters and by following
   /// EIP-191. The it will try to recover the signer address. The function will revert if the signature is invalid.
   function _recoverSigner(
+    uint8 requestType,
     address owner,
     uint256 validityTimestamp,
     bytes32 proof,
-    bytes memory signature
+    bytes calldata signature
   ) internal view returns (address) {
     // Follow EIP-191 for recoverable signatures
     bytes32 prefixedMessageHash = MessageHashUtils.toEthSignedMessageHash(
-      keccak256(abi.encodePacked(owner, block.chainid, address(this), validityTimestamp, proof))
+      keccak256(abi.encode(requestType, owner, block.chainid, address(this), validityTimestamp, proof))
     );
 
     (address signer, ECDSA.RecoverError err, bytes32 errArg) = ECDSA.tryRecover(prefixedMessageHash, signature);

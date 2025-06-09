@@ -176,8 +176,10 @@ contract WorkflowRegistry_getLinkedOwners is Test {
   function linkOwner(
     address newOwner
   ) public {
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), newOwner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), newOwner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
     vm.prank(newOwner);
     wr.linkOwner(validityTimestamp, proof, sig);

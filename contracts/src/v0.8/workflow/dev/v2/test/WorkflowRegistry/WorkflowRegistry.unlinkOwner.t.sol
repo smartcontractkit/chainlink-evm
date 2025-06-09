@@ -27,8 +27,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     address[] memory signers = new address[](1);
     signers[0] = allowedSigner;
     wr.updateAllowedSigners(signers, true);
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
     wr.linkOwner(validityTimestamp, proof, sig);
     vm.stopPrank();
@@ -44,8 +46,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     whenCallerIsEqualToTheOwnerAddress
   {
     // it should revert with expiration error
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     // block time has advanced by 24 hours so the validity timestamp is in the past
@@ -72,7 +76,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     // it should revert with not linked error
     address unlinkedOwner = address(0x5678);
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-      allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), unlinkedOwner, validityTimestamp, proof)
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(
+        LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), unlinkedOwner, validityTimestamp, proof
+      )
     );
     bytes memory sig = abi.encodePacked(r, s, v);
 
@@ -98,8 +105,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     givenTheProofMatchesTheStoredProof
   {
     // it should unlink the owner
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(caller); // caller = owner
@@ -119,7 +128,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     // it should revert with signature error
     uint256 differentValidityTimestamp = uint256(block.timestamp + 2 hours);
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-      allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, differentValidityTimestamp, proof)
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(
+        LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, differentValidityTimestamp, proof
+      )
     );
     bytes memory sig = abi.encodePacked(r, s, v);
 
@@ -141,7 +153,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     // it should revert with proof does not match error
     bytes32 differentProof = keccak256("different-proof");
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-      allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, differentProof)
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(
+        LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, validityTimestamp, differentProof
+      )
     );
     bytes memory sig = abi.encodePacked(r, s, v);
 
@@ -163,8 +178,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     whenCallerIsDifferentFromTheOwnerAddress
   {
     // it should revert with expiration error
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     // block time has advanced by 24 hours so the validity timestamp is in the past
@@ -187,7 +204,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     // it should revert with not linked error
     address unlinkedOwner = address(0x5678);
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-      allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), unlinkedOwner, validityTimestamp, proof)
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(
+        LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), unlinkedOwner, validityTimestamp, proof
+      )
     );
     bytes memory sig = abi.encodePacked(r, s, v);
 
@@ -205,8 +225,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     givenTheProofMatchesTheStoredProof
   {
     // it should unlink the owner
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(caller); // caller = not owner
@@ -226,7 +248,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     // it should revert with signature error
     uint256 differentValidityTimestamp = uint256(block.timestamp + 2 hours);
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-      allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, differentValidityTimestamp, proof)
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(
+        LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, differentValidityTimestamp, proof
+      )
     );
     bytes memory sig = abi.encodePacked(r, s, v);
 
@@ -248,7 +273,10 @@ contract WorkflowRegistry_unlinkOwner is Test {
     // it should revert with proof does not match error
     bytes32 differentProof = keccak256("different-proof");
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-      allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, differentProof)
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(
+        LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, validityTimestamp, differentProof
+      )
     );
     bytes memory sig = abi.encodePacked(r, s, v);
 

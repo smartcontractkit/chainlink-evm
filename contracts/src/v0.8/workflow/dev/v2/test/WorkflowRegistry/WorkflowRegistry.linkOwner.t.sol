@@ -40,8 +40,10 @@ contract WorkflowRegistry_linkOwner is Test {
 
   function test_linkOwner_WhenProofIsValid() external whenTheOwnerIsNotAlreadyLinked whenTheTimestampHasNotExpired {
     // it should link the owner
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
@@ -61,8 +63,10 @@ contract WorkflowRegistry_linkOwner is Test {
     address unknownSigner = vm.addr(unknownSignerPrivateKey);
     assertEq(unknownSigner, address(0xfF2B8E43743892d9a8416254711A473b8B70DDe4));
 
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(unknownSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      unknownSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
@@ -80,8 +84,10 @@ contract WorkflowRegistry_linkOwner is Test {
   {
     // it should revert with invalid signature error
     address invalidOwner = address(0x1234);
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), invalidOwner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), invalidOwner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
@@ -112,8 +118,10 @@ contract WorkflowRegistry_linkOwner is Test {
 
   function test_linkOwner_WhenTheTimestampHasExpired() external whenTheOwnerIsNotAlreadyLinked {
     // it should revert with expiration error
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     // block time has advanced by 24 hours so the validity timestamp is in the past
@@ -129,8 +137,10 @@ contract WorkflowRegistry_linkOwner is Test {
   }
 
   modifier whenTheOwnerIsAlreadyLinked() {
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
@@ -143,8 +153,10 @@ contract WorkflowRegistry_linkOwner is Test {
 
   function test_linkOwner_WhenTheTimestampIsStillValid() external whenTheOwnerIsAlreadyLinked {
     // it should revert with already linked error
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     vm.prank(owner);
@@ -155,8 +167,10 @@ contract WorkflowRegistry_linkOwner is Test {
 
   function test_linkOwner_WhenTheTimestampIsExpired() external whenTheOwnerIsAlreadyLinked {
     // it should revert with expired error
-    (uint8 v, bytes32 r, bytes32 s) =
-      vm.sign(allowedSignerPrivateKey, LinkingUtils.getMessageHash(address(wr), owner, validityTimestamp, proof));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), owner, validityTimestamp, proof)
+    );
     bytes memory sig = abi.encodePacked(r, s, v);
 
     // block time has advanced by 24 hours so the validity timestamp is in the past
