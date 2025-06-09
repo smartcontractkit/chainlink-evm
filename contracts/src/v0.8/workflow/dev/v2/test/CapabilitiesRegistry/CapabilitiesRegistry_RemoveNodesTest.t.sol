@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {INodeInfoProvider} from "../../interfaces/INodeInfoProvider.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
   function setUp() public override {
@@ -83,8 +83,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     nodes[0] = P2P_ID;
     nodes[1] = P2P_ID_TWO;
 
-    CapabilitiesRegistry.CapabilityConfiguration[]
-      memory capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](1);
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG
@@ -103,8 +103,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     nodes[0] = P2P_ID;
     nodes[1] = P2P_ID_TWO;
 
-    CapabilitiesRegistry.CapabilityConfiguration[]
-      memory capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](1);
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG
@@ -142,8 +142,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     nodes[1] = P2P_ID_TWO;
     nodes[2] = P2P_ID_THREE;
 
-    CapabilitiesRegistry.CapabilityConfiguration[]
-      memory capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](1);
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG

@@ -43,8 +43,8 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     changePrank(NODE_OPERATOR_ONE_ADMIN);
     s_CapabilitiesRegistry.addNodes(nodes);
 
-    CapabilitiesRegistry.CapabilityConfiguration[]
-      memory capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](1);
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG
@@ -87,8 +87,8 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     assertEq(donInfo.isPublic, false);
     assertEq(donInfo.capabilityConfigurations.length, 0);
 
-    (bytes memory CapabilitiesRegistryDONConfig, bytes memory capabilityConfigContractConfig) = s_CapabilitiesRegistry
-      .getCapabilityConfigs(DON_ID, s_basicHashedCapabilityId);
+    (bytes memory CapabilitiesRegistryDONConfig, bytes memory capabilityConfigContractConfig) =
+      s_CapabilitiesRegistry.getCapabilityConfigs(DON_ID, s_basicHashedCapabilityId);
 
     assertEq(CapabilitiesRegistryDONConfig, bytes(""));
     assertEq(capabilityConfigContractConfig, bytes(""));

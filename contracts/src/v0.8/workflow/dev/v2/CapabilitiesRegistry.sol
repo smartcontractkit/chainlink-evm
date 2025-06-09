@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {ITypeAndVersion} from "@shared/v0.8/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
+import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 
-import {OwnerIsCreator} from "@shared/v0.8/access/OwnerIsCreator.sol";
+import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
 
-import {EnumerableSet} from "@vendor/v0.8/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
-import {ERC165Checker} from "@vendor/v0.8/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
+import {ERC165Checker} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
+import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
 
 /// @notice CapabilitiesRegistry is used to manage Nodes (including their links to Node Operators), Capabilities,
 /// and DONs (Decentralized Oracle Networks) which are sets of nodes that support those Capabilities.
@@ -453,8 +453,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param nodeOperatorIds The ID of the node operator being updated
   /// @param nodeOperators The updated node operator params
   function updateNodeOperators(uint32[] calldata nodeOperatorIds, NodeOperator[] calldata nodeOperators) external {
-    if (nodeOperatorIds.length != nodeOperators.length)
+    if (nodeOperatorIds.length != nodeOperators.length) {
       revert LengthMismatch(nodeOperatorIds.length, nodeOperators.length);
+    }
 
     address owner = owner();
     for (uint256 i; i < nodeOperatorIds.length; ++i) {
@@ -564,8 +565,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       Node storage node = s_nodes[p2pId];
 
       if (node.signer == bytes32("")) revert NodeDoesNotExist(p2pId);
-      if (node.capabilitiesDONIds.length() > 0)
+      if (node.capabilitiesDONIds.length() > 0) {
         revert NodePartOfCapabilitiesDON(uint32(node.capabilitiesDONIds.at(i)), p2pId);
+      }
       if (node.workflowDONId != 0) revert NodePartOfWorkflowDON(node.workflowDONId, p2pId);
 
       if (!isOwner && msg.sender != s_nodeOperators[node.nodeOperatorId].admin) revert AccessForbidden(msg.sender);
@@ -606,8 +608,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       uint32 capabilityConfigCount = ++storedNode.configCount;
       for (uint256 j; j < supportedHashedCapabilityIds.length; ++j) {
-        if (!s_hashedCapabilityIds.contains(supportedHashedCapabilityIds[j]))
+        if (!s_hashedCapabilityIds.contains(supportedHashedCapabilityIds[j])) {
           revert InvalidNodeCapabilities(supportedHashedCapabilityIds);
+        }
         storedNode.supportedHashedCapabilityIds[capabilityConfigCount].add(supportedHashedCapabilityIds[j]);
       }
 
@@ -619,8 +622,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
           .capabilityIds;
 
         for (uint256 j; j < workflowDonCapabilityIds.length; ++j) {
-          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j]))
+          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j])) {
             revert CapabilityRequiredByDON(workflowDonCapabilityIds[j], nodeWorkflowDONId);
+          }
         }
       }
 
@@ -631,8 +635,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         bytes32[] memory donCapabilityIds = s_dons[donId].config[s_dons[donId].configCount].capabilityIds;
 
         for (uint256 k; k < donCapabilityIds.length; ++k) {
-          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(donCapabilityIds[k]))
+          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(donCapabilityIds[k])) {
             revert CapabilityRequiredByDON(donCapabilityIds[k], donId);
+          }
         }
       }
 
@@ -928,8 +933,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       if (!donCapabilityConfig.nodes.add(nodes[i])) revert DuplicateDONNode(donParams.id, nodes[i]);
 
       if (donParams.acceptsWorkflows) {
-        if (s_nodes[nodes[i]].workflowDONId != donParams.id && s_nodes[nodes[i]].workflowDONId != 0)
+        if (s_nodes[nodes[i]].workflowDONId != donParams.id && s_nodes[nodes[i]].workflowDONId != 0) {
           revert NodePartOfWorkflowDON(donParams.id, nodes[i]);
+        }
         s_nodes[nodes[i]].workflowDONId = donParams.id;
       } else {
         /// Fine to add a duplicate DON ID to the set of supported DON IDs again as the set
@@ -941,13 +947,16 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     for (uint256 i; i < capabilityConfigurations.length; ++i) {
       CapabilityConfiguration calldata configuration = capabilityConfigurations[i];
 
-      if (!s_hashedCapabilityIds.contains(configuration.capabilityId))
+      if (!s_hashedCapabilityIds.contains(configuration.capabilityId)) {
         revert CapabilityDoesNotExist(configuration.capabilityId);
-      if (s_deprecatedHashedCapabilityIds.contains(configuration.capabilityId))
+      }
+      if (s_deprecatedHashedCapabilityIds.contains(configuration.capabilityId)) {
         revert CapabilityIsDeprecated(configuration.capabilityId);
+      }
 
-      if (donCapabilityConfig.capabilityConfigs[configuration.capabilityId].length > 0)
+      if (donCapabilityConfig.capabilityConfigs[configuration.capabilityId].length > 0) {
         revert DuplicateDONCapability(donParams.id, configuration.capabilityId);
+      }
 
       for (uint256 j; j < nodes.length; ++j) {
         if (

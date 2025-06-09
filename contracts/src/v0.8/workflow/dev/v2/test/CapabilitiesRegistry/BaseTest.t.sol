@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/Test.sol";
+import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {Constants} from "./Constants.t.sol";
 import {CapabilityConfigurationContract} from "./mocks/CapabilityConfigurationContract.sol";
-import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract BaseTest is Test, Constants {
   CapabilitiesRegistry internal s_CapabilitiesRegistry;
@@ -35,27 +35,18 @@ contract BaseTest is Test, Constants {
       capabilityType: CapabilitiesRegistry.CapabilityType.ACTION
     });
 
-    s_basicHashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_basicCapability.labelledName,
-      s_basicCapability.version
-    );
+    s_basicHashedCapabilityId =
+      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
     s_capabilityWithConfigurationContractId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_capabilityWithConfigurationContract.labelledName,
-      s_capabilityWithConfigurationContract.version
+      s_capabilityWithConfigurationContract.labelledName, s_capabilityWithConfigurationContract.version
     );
     s_nonExistentHashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId("non-existent-capability", "1.0.0");
   }
 
   function _getNodeOperators() internal pure returns (CapabilitiesRegistry.NodeOperator[] memory) {
     CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](3);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({
-      admin: NODE_OPERATOR_ONE_ADMIN,
-      name: NODE_OPERATOR_ONE_NAME
-    });
-    nodeOperators[1] = CapabilitiesRegistry.NodeOperator({
-      admin: NODE_OPERATOR_TWO_ADMIN,
-      name: NODE_OPERATOR_TWO_NAME
-    });
+    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NODE_OPERATOR_ONE_ADMIN, name: NODE_OPERATOR_ONE_NAME});
+    nodeOperators[1] = CapabilitiesRegistry.NodeOperator({admin: NODE_OPERATOR_TWO_ADMIN, name: NODE_OPERATOR_TWO_NAME});
     nodeOperators[2] = CapabilitiesRegistry.NodeOperator({admin: NODE_OPERATOR_THREE, name: NODE_OPERATOR_THREE_NAME});
     return nodeOperators;
   }
