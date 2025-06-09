@@ -2,9 +2,6 @@
 pragma solidity ^0.8.26;
 
 import {BaseTest} from "./BaseTest.t.sol";
-import {CapabilityConfigurationContract} from "./mocks/CapabilityConfigurationContract.sol";
-
-import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 
 contract CapabilitiesRegistry_GetHashedCapabilityTest is BaseTest {
   string constant CAPABILITY_LABELLED_NAME = "ccip1";
