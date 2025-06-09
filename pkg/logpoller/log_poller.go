@@ -1220,7 +1220,7 @@ func (lp *logPoller) PruneOldBlocks(ctx context.Context) (bool, error) {
 	// Remove <= 2
 	rowsRemoved, err := lp.orm.DeleteBlocksBefore(
 		ctx,
-		latestBlock.FinalizedBlockNumber-lp.keepFinalizedBlocksDepth,
+		referenceBlockNumber-lp.keepFinalizedBlocksDepth,
 		lp.logPrunePageSize,
 	)
 	return lp.logPrunePageSize == 0 || rowsRemoved < lp.logPrunePageSize, err
