@@ -879,7 +879,7 @@ func (lp *logPoller) blocksFromFinalizedLogs(ctx context.Context, logs []types.L
 	for _, log := range logs {
 		numbers = append(numbers, log.BlockNumber)
 	}
-	if numbers[len(numbers)-1] != endBlockNumber {
+	if len(numbers) == 0 || numbers[len(numbers)-1] != endBlockNumber {
 		numbers = append(numbers, endBlockNumber)
 	}
 	blocks, err = lp.GetBlocksRange(ctx, numbers)
@@ -930,21 +930,19 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 			continue
 		}
 		lp.missingBlocksErrorCount.Store(0) // clear unhealthy node state in case we were missing blocks and just found them
-		if len(gethLogs) == 0 {
-			continue
-		}
+
 		blocks, err := lp.blocksFromFinalizedLogs(ctx, gethLogs, uint64(to)) //nolint:gosec // G115
 		if err != nil {
 			return err
 		}
 
 		endblock := blocks[len(blocks)-1]
-		if gethLogs[len(gethLogs)-1].BlockNumber != uint64(to) {
+		if len(gethLogs) == 0 || gethLogs[len(gethLogs)-1].BlockNumber != uint64(to) { //nolint:gosec // G115
 			// Pop endblock if there were no logs for it, so that length of blocks & gethLogs are the same to pass to convertLogs
 			blocks = blocks[:len(blocks)-1]
 		}
 
-		lp.lggr.Debugw("Backfill found logs", "from", from, "to", to, "logs", len(gethLogs), "blocks", blocks)
+		lp.lggr.Debugw("Inserting backfilled logs with batch endblock", "from", from, "to", to, "logs", len(gethLogs), "blocks", blocks)
 		err = lp.orm.InsertLogsWithBlock(ctx, convertLogs(gethLogs, blocks, lp.lggr, lp.ec.ConfiguredChainID()), endblock)
 		if err != nil {
 			lp.lggr.Warnw("Unable to insert logs, retrying", "err", err, "from", from, "to", to)
@@ -1208,7 +1206,13 @@ func (lp *logPoller) PruneOldBlocks(ctx context.Context) (bool, error) {
 		// No blocks saved yet.
 		return true, nil
 	}
-	if latestBlock.FinalizedBlockNumber <= lp.keepFinalizedBlocksDepth {
+
+	// If the latest block we have in the db was saved during a backfill, then the latest finalized
+	// block number stored with it will be larger than its block number. Instead of risking deleting
+	// all blocks from the db, we should still keep the latest keepFinalizedBlocksDepth blocks
+	referenceBlockNumber := mathutil.Min(latestBlock.FinalizedBlockNumber, latestBlock.BlockNumber)
+
+	if referenceBlockNumber <= lp.keepFinalizedBlocksDepth {
 		// No-op, keep all blocks
 		return true, nil
 	}

@@ -22,7 +22,7 @@ func NewPORProcessor(metrics *registry.Metrics, emitter beholder.ProtoEmitter) *
 
 func GetPORSchema() abi.Arguments {
 	return registry.GetSchema("tuple(bytes32,uint32,bytes)[]", "", []abi.ArgumentMarshaling{
-		{Name: "dataId", Type: "bytes32"},
+		{Name: "dataID", Type: "bytes32"},
 		{Name: "timestamp", Type: "uint32"},
 		{Name: "bundle", Type: "bytes"},
 	})
