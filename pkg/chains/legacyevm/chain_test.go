@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil/sqltest"
-	"github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox"
 	"github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm/mocks"
@@ -18,7 +17,7 @@ import (
 func TestLegacyChains(t *testing.T) {
 	c := mocks.NewChain(t)
 	c.On("ID").Return(big.NewInt(7))
-	m := map[string]types.ChainService{c.ID().String(): c}
+	m := map[string]legacyevm.Chain{c.ID().String(): c}
 
 	l := legacyevm.NewLegacyChains(m)
 	got, err := l.Get(c.ID().String())
