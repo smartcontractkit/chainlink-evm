@@ -1,5 +1,5 @@
 //nolint:govet, testifylint // disable govet, testifylint
-package registry_test
+package datafeeds_test
 
 import (
 	"math"
@@ -10,16 +10,18 @@ import (
 
 	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/monitoring/pb/data-feeds/on-chain/registry"
 	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
 	df_processor "github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds/processor"
 	por_processor "github.com/smartcontractkit/chainlink-evm/pkg/report/por/processor"
+	commonpb "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/common"
+	df "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/data-feeds/on-chain/registry"
 	wt_msg "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
+
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
 )
 
 func TestDecodeAsReportProcessed(t *testing.T) {
-	reports := &registry.Reports{
+	reports := &datafeeds.Reports{
 		{
 			FeedID:    [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x8, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
 			Price:     big.NewInt(1234567890123456789),
@@ -41,7 +43,7 @@ func TestDecodeAsReportProcessed(t *testing.T) {
 }
 
 func TestPORDecodeAsReportProcessed(t *testing.T) {
-	reports := &registry.PORReports{
+	reports := &datafeeds.PORReports{
 		{
 			DataID:    [32]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x8, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10},
 			Timestamp: 1620000000,
@@ -62,7 +64,7 @@ func TestPORDecodeAsReportProcessed(t *testing.T) {
 	runTests(t, data, porProcessor, true)
 }
 
-func runTests(t *testing.T, data []byte, processor *registry.Processor, por bool) {
+func runTests(t *testing.T, data []byte, processor *datafeeds.Processor, por bool) {
 	report := platform.Report{
 		Metadata: ocr3types.Metadata{
 			Version:          1,
@@ -81,7 +83,7 @@ func runTests(t *testing.T, data []byte, processor *registry.Processor, por bool
 	rawReport, err := report.Encode()
 	require.NoError(t, err)
 
-	expected := []registry.FeedUpdated{
+	expected := []df.FeedUpdated{
 		{
 			FeedId:                "0x0102030405060708090a0b0c0d0e0f1000000000000000000000000000000000",
 			ObservationsTimestamp: 1620000000,
@@ -95,8 +97,9 @@ func runTests(t *testing.T, data []byte, processor *registry.Processor, por bool
 			BlockHeight:    "17",
 			BlockTimestamp: 0x66f5bf69,
 
-			TxSender:   "example-transmitter",
-			TxReceiver: "example-forwarder",
+			TxSender:         "example-transmitter",
+			TxReceiver:       "example-forwarder",
+			ExecutionContext: &commonpb.ExecutionContext{},
 		},
 		{
 			FeedId:                "0x0102030405060722090a0b0c0d0e0f1000000000000000000000000000000000",
@@ -110,8 +113,9 @@ func runTests(t *testing.T, data []byte, processor *registry.Processor, por bool
 			BlockHeight:    "17",
 			BlockTimestamp: 0x66f5bf69,
 
-			TxSender:   "example-transmitter",
-			TxReceiver: "example-forwarder",
+			TxSender:         "example-transmitter",
+			TxReceiver:       "example-forwarder",
+			ExecutionContext: &commonpb.ExecutionContext{},
 		},
 	}
 
@@ -130,7 +134,7 @@ func runTests(t *testing.T, data []byte, processor *registry.Processor, por bool
 	tests := []struct {
 		name     string
 		input    wt_msg.WriteConfirmed
-		expected []registry.FeedUpdated
+		expected []df.FeedUpdated
 		wantErr  bool
 	}{
 		{
@@ -155,7 +159,7 @@ func runTests(t *testing.T, data []byte, processor *registry.Processor, por bool
 				BlockHeight:    "17",
 				BlockTimestamp: 0x66f5bf69,
 
-				ExecutionContext: &wt_msg.ExecutionContext{},
+				ExecutionContext: &commonpb.ExecutionContext{},
 			},
 			expected: expected,
 			wantErr:  false,
@@ -177,17 +181,19 @@ func runTests(t *testing.T, data []byte, processor *registry.Processor, por bool
 				Transmitter: "example-transmitter",
 				Success:     true,
 
-				ExecutionContext: &wt_msg.ExecutionContext{},
+				ExecutionContext: &commonpb.ExecutionContext{},
 			},
-			expected: []registry.FeedUpdated{},
-			wantErr:  true,
+			expected: []df.FeedUpdated{
+				{ExecutionContext: &commonpb.ExecutionContext{}},
+			},
+			wantErr: true,
 		},
 		// Add more test cases as needed
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var result []*registry.FeedUpdated
+			var result []*df.FeedUpdated
 			var err error
 
 			result, err = processor.DecodeAsFeedUpdated(&tt.input)
@@ -307,7 +313,7 @@ func TestToBenchmarkVal(t *testing.T) {
 
 			decimals, isNumber := datafeeds.GetDecimals(feedID.GetDataType())
 
-			result := registry.ToBenchmarkVal(feedID, tt.val)
+			result := datafeeds.ToBenchmarkVal(feedID, tt.val)
 			if math.IsNaN(tt.expected) {
 				require.False(t, isNumber)
 				require.True(t, math.IsNaN(result))

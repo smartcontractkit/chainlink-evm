@@ -1,4 +1,4 @@
-package registry
+package datafeeds
 
 import (
 	"math/big"

@@ -1,4 +1,4 @@
-package registry
+package datafeeds
 
 import (
 	"context"
@@ -11,8 +11,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/report/datafeeds"
-
+	df "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/data-feeds/on-chain/registry"
 	wt "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
 )
@@ -20,12 +19,12 @@ import (
 // EVM POR specific processor decodes writes as 'data-feeds.registry.FeedUpdated' messages + metrics
 type Processor struct {
 	emitter      beholder.ProtoEmitter
-	metrics      *Metrics
+	metrics      *df.Metrics
 	schema       abi.Arguments
-	decodeReport func(*wt.WriteConfirmed, []byte, abi.Arguments) ([]*FeedUpdated, error)
+	decodeReport func(*wt.WriteConfirmed, []byte, abi.Arguments) ([]*df.FeedUpdated, error)
 }
 
-func NewProcessor(metrics *Metrics, emitter beholder.ProtoEmitter, schema abi.Arguments, decodeReport func(*wt.WriteConfirmed, []byte, abi.Arguments) ([]*FeedUpdated, error)) *Processor {
+func NewProcessor(metrics *df.Metrics, emitter beholder.ProtoEmitter, schema abi.Arguments, decodeReport func(*wt.WriteConfirmed, []byte, abi.Arguments) ([]*df.FeedUpdated, error)) *Processor {
 	return &Processor{
 		metrics:      metrics,
 		emitter:      emitter,
@@ -40,7 +39,7 @@ func (p *Processor) Process(ctx context.Context, m proto.Message, attrKVs ...any
 	case *wt.WriteConfirmed:
 		updates, err := p.DecodeAsFeedUpdated(msg)
 		if err != nil {
-			return fmt.Errorf("failed to decode as 'data-feeds.registry.FeedUpdated': %w", err)
+			return fmt.Errorf("failed to decode as 'data-feeds.registry.df.FeedUpdated': %w", err)
 		}
 		for _, update := range updates {
 			err = p.emitter.EmitWithLog(ctx, update, attrKVs...)
@@ -72,7 +71,7 @@ func GetSchema(typ string, internalType string, components []abi.ArgumentMarshal
 	})
 }
 
-func (p *Processor) DecodeAsFeedUpdated(m *wt.WriteConfirmed) ([]*FeedUpdated, error) {
+func (p *Processor) DecodeAsFeedUpdated(m *wt.WriteConfirmed) ([]*df.FeedUpdated, error) {
 	// Decode the confirmed report (WT -> DF contract event)
 	r, err := platform.Decode(m.Report)
 	if err != nil {
@@ -87,18 +86,18 @@ func (p *Processor) DecodeAsFeedUpdated(m *wt.WriteConfirmed) ([]*FeedUpdated, e
 	return msgs, nil
 }
 
-// newFeedUpdated creates a FeedUpdated from the given common parameters.
+// newdf.FeedUpdated creates a df.FeedUpdated from the given common parameters.
 // If includeTxInfo is true, TxSender and TxReceiver are set.
 func NewFeedUpdated(
 	m *wt.WriteConfirmed,
-	feedID datafeeds.FeedID,
+	feedID FeedID,
 	observationsTimestamp uint32,
 	benchmarkPrice *big.Int,
 	bundle []byte,
 	report []byte,
 	includeTxInfo bool,
-) *FeedUpdated {
-	fu := &FeedUpdated{
+) *df.FeedUpdated {
+	fu := &df.FeedUpdated{
 		FeedId:                feedID.String(),
 		ObservationsTimestamp: observationsTimestamp,
 		Benchmark:             benchmarkPrice.Bytes(),
@@ -111,29 +110,7 @@ func NewFeedUpdated(
 		BlockHeight:    m.BlockHeight,
 		BlockTimestamp: m.BlockTimestamp,
 
-		// Execution Context - Source
-		MetaSourceId: m.ExecutionContext.MetaSourceId,
-
-		// Execution Context - Chain
-		MetaChainFamilyName: m.ExecutionContext.MetaChainFamilyName,
-		MetaChainId:         m.ExecutionContext.MetaChainId,
-		MetaNetworkName:     m.ExecutionContext.MetaNetworkName,
-		MetaNetworkNameFull: m.ExecutionContext.MetaNetworkNameFull,
-
-		// Execution Context - Workflow (capabilities.RequestMetadata)
-		MetaWorkflowId:               m.ExecutionContext.MetaWorkflowId,
-		MetaWorkflowOwner:            m.ExecutionContext.MetaWorkflowOwner,
-		MetaWorkflowExecutionId:      m.ExecutionContext.MetaWorkflowExecutionId,
-		MetaWorkflowName:             m.ExecutionContext.MetaWorkflowName,
-		MetaWorkflowDonId:            m.ExecutionContext.MetaWorkflowDonId,
-		MetaWorkflowDonConfigVersion: m.ExecutionContext.MetaWorkflowDonConfigVersion,
-		MetaReferenceId:              m.ExecutionContext.MetaReferenceId,
-
-		// Execution Context - Capability
-		MetaCapabilityType:           m.ExecutionContext.MetaCapabilityType,
-		MetaCapabilityId:             m.ExecutionContext.MetaCapabilityId,
-		MetaCapabilityTimestampStart: m.ExecutionContext.MetaCapabilityTimestampStart,
-		MetaCapabilityTimestampEmit:  m.ExecutionContext.MetaCapabilityTimestampEmit,
+		ExecutionContext: m.ExecutionContext,
 	}
 
 	if includeTxInfo {
@@ -151,7 +128,7 @@ func NewFeedUpdated(
 // for most use-cases. For big numbers, benchmark bytes should be used instead.
 //
 // Returns `math.NaN()` if report data type not a number, or `+/-Inf` if number doesn't fit in double.
-func ToBenchmarkVal(feedID datafeeds.FeedID, val *big.Int) float64 {
+func ToBenchmarkVal(feedID FeedID, val *big.Int) float64 {
 	// Return NaN if the value is nil
 	if val == nil {
 		return math.NaN()
@@ -159,7 +136,7 @@ func ToBenchmarkVal(feedID datafeeds.FeedID, val *big.Int) float64 {
 
 	// Get the number of decimals from the feed ID
 	t := feedID.GetDataType()
-	decimals, isNumber := datafeeds.GetDecimals(t)
+	decimals, isNumber := GetDecimals(t)
 
 	// Return NaN if the value is not a number
 	if !isNumber {
