@@ -215,10 +215,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bool acceptsWorkflows;
     /// @notice List of member node P2P Ids
     bytes32[] nodeP2PIds;
-    /// @notice The family of the DON. A DON family is a group of DONs that
-    /// are connected with each other. Can be empty if the DON is not part of
-    /// any family.
-    string donFamily;
     /// @notice List of capability configurations
     CapabilityConfiguration[] capabilityConfigurations;
   }
@@ -393,11 +389,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param hashedCapabilityId The hashed ID of the deprecated capability
   event CapabilityDeprecated(bytes32 indexed hashedCapabilityId);
 
-  /// @notice This event is emitted when a DON family is set
-  /// @param donId The ID of the DON whose family was set
-  /// @param donFamily The family name that was set
-  event DONFamilySet(uint32 indexed donId, string indexed donFamily);
-
   string public constant override typeAndVersion = "CapabilitiesRegistry 1.1.0";
 
   /// @notice Mapping of capabilities
@@ -425,12 +416,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice Mapping of DON IDs to DONs
   mapping(uint32 donId => DON don) private s_dons;
-
-  /// @notice Mapping of DON ID to DON family
-  mapping(uint32 donId => string donFamily) private s_donFamily;
-
-  /// @notice Mapping of DON families
-  mapping(string donFamily => EnumerableSet.UintSet donIds) private s_donFamilies;
 
   /// @notice The next ID to assign a new node operator to
   /// @dev Starting with 1 to avoid confusion with the zero value
@@ -854,13 +839,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       // DON config count starts at index 1
       if (don.configCount == 0) revert DONDoesNotExist(donId);
 
-      // Clean up DON family mappings
-      string memory donFamily = s_donFamily[donId];
-      if (bytes(donFamily).length > 0) {
-        s_donFamilies[donFamily].remove(donId);
-        delete s_donFamily[donId];
-      }
-
       delete s_dons[donId];
       emit ConfigSet(donId, 0);
     }
@@ -912,39 +890,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     }
 
     return (donCapabilityConfig, globalCapabilityConfig);
-  }
-
-  /// @notice Sets the DON family for a DON
-  /// @param donId The ID of the DON to set the family for
-  /// @param donFamily The family name to set for the DON
-  function setDONFamily(uint32 donId, string calldata donFamily) external onlyOwner {
-    if (s_dons[donId].configCount == 0) revert DONDoesNotExist(donId);
-
-    string memory currentFamily = s_donFamily[donId];
-    // If the DON is already in the family, do nothing
-    // There is no point in erroring out as this is a no-op and the erroring
-    // would not provide any value to the user.
-    if (keccak256(bytes(currentFamily)) == keccak256(bytes(donFamily))) return;
-
-    if (bytes(currentFamily).length > 0) {
-      s_donFamilies[currentFamily].remove(donId);
-    }
-
-    if (bytes(donFamily).length == 0) {
-      delete s_donFamily[donId];
-    } else {
-      s_donFamily[donId] = donFamily;
-      s_donFamilies[donFamily].add(donId);
-    }
-
-    emit DONFamilySet(donId, donFamily);
-  }
-
-  /// @notice Gets all DON IDs that belong to a specific family
-  /// @param donFamily The family name to query for
-  /// @return uint[] Array of DON IDs that belong to the specified family
-  function getDONsInFamily(string calldata donFamily) external view returns (uint[] memory) {
-    return s_donFamilies[donFamily].values();
   }
 
   /// @notice Sets the configuration for a DON
@@ -1098,8 +1043,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         isPublic: s_dons[donId].isPublic,
         acceptsWorkflows: s_dons[donId].acceptsWorkflows,
         nodeP2PIds: donCapabilityConfig.nodes.values(),
-        capabilityConfigurations: capabilityConfigurations,
-        donFamily: s_donFamily[donId]
+        capabilityConfigurations: capabilityConfigurations
       });
   }
 }
