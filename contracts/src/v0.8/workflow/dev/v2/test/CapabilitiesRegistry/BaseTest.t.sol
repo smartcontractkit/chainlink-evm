@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {Constants} from "./Constants.t.sol";
 import {CapabilityConfigurationContract} from "./mocks/CapabilityConfigurationContract.sol";
-import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
+import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 
 contract BaseTest is Test, Constants {
   CapabilitiesRegistry internal s_CapabilitiesRegistry;

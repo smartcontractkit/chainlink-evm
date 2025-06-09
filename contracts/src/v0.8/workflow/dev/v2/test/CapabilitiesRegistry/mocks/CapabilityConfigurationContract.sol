@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.26;
 
-import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
-import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {ICapabilityConfiguration} from "../../../interfaces/ICapabilityConfiguration.sol";
+import {IERC165} from "@vendor/v0.8/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
 
 contract CapabilityConfigurationContract is ICapabilityConfiguration, IERC165 {
   mapping(uint256 => bytes) private s_donConfiguration;

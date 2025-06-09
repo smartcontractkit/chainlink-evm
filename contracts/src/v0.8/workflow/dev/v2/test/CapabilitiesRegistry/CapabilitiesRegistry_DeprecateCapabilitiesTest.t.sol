@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.26;
 
 import {BaseTest} from "./BaseTest.t.sol";
-import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
+import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 
 contract CapabilitiesRegistry_DeprecateCapabilitiesTest is BaseTest {
   function setUp() public override {

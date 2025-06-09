@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.26;
 
 import {BaseTest} from "./BaseTest.t.sol";
-import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
-import {INodeInfoProvider} from "../interfaces/INodeInfoProvider.sol";
+import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
+import {INodeInfoProvider} from "../../interfaces/INodeInfoProvider.sol";
 
 contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
   function setUp() public override {

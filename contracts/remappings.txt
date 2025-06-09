@@ -1,5 +1,8 @@
 forge-std/=src/v0.8/vendor/forge-std/src/
 
+@shared/v0.8/=src/v0.8/shared/
+@vendor/v0.8/=src/v0.8/vendor/
+
 @openzeppelin/=node_modules/@openzeppelin/
 @arbitrum/=node_modules/@arbitrum/
 hardhat/=node_modules/hardhat/
