@@ -19,7 +19,8 @@ func TestLegacyChains(t *testing.T) {
 	c.On("ID").Return(big.NewInt(7))
 	m := map[string]legacyevm.Chain{c.ID().String(): c}
 
-	l := legacyevm.NewLegacyChains(m)
+	l := legacyevm.NewLegacyChains(m, []*toml.EVMConfig{})
+	assert.NotNil(t, l.ChainNodeConfigs())
 	got, err := l.Get(c.ID().String())
 	assert.NoError(t, err)
 	assert.Equal(t, c, got)

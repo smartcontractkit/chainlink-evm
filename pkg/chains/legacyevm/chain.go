@@ -31,6 +31,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitor"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
+	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 	trontxm "github.com/smartcontractkit/chainlink-tron/relayer/txm"
 )
@@ -65,6 +66,8 @@ var (
 // LegacyChains implements [LegacyChainContainer]
 type LegacyChains struct {
 	*chains.ChainsKV[Chain]
+
+	cfgs toml.EVMConfigs
 }
 
 // LegacyChainContainer is container for EVM chains.
@@ -73,14 +76,24 @@ type LegacyChainContainer interface {
 	Len() int
 	List(ids ...string) ([]Chain, error)
 	Slice() []Chain
+
+	// BCF-2516: this is only used for EVMORM. When we delete that
+	// we can promote/move the needed funcs from it to LegacyChainContainer
+	// so instead of EVMORM().XYZ() we'd have something like legacyChains.XYZ()
+	ChainNodeConfigs() evmtypes.Configs
 }
 
 var _ LegacyChainContainer = &LegacyChains{}
 
-func NewLegacyChains(m map[string]Chain) *LegacyChains {
+func NewLegacyChains(m map[string]Chain, evmCfgs toml.EVMConfigs) *LegacyChains {
 	return &LegacyChains{
 		ChainsKV: chains.NewChainsKV[Chain](m),
+		cfgs:     evmCfgs,
 	}
+}
+
+func (c *LegacyChains) ChainNodeConfigs() evmtypes.Configs {
+	return c.cfgs
 }
 
 // backward compatibility.
