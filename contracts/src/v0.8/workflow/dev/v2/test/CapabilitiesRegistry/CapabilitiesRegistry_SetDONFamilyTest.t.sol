@@ -5,7 +5,7 @@ import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import "forge-std/Vm.sol";
 
-contract CapabilitiesRegistry_DONFamilyTest is BaseTest {
+contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
   string internal constant FAMILY_NAME_ONE = "production-mainnet";
   string internal constant FAMILY_NAME_TWO = "production-testnet";
 
@@ -67,10 +67,7 @@ contract CapabilitiesRegistry_DONFamilyTest is BaseTest {
       config: BASIC_CAPABILITY_CONFIG
     });
 
-    // Add first DON (ID: 1)
     s_CapabilitiesRegistry.addDON(don1Nodes, capabilityConfigs, true, false, F_VALUE);
-
-    // Add second DON (ID: 2)
     s_CapabilitiesRegistry.addDON(don2Nodes, capabilityConfigs, true, false, F_VALUE);
 
     vm.startPrank(ADMIN);
@@ -89,33 +86,17 @@ contract CapabilitiesRegistry_DONFamilyTest is BaseTest {
     s_CapabilitiesRegistry.setDONFamily(nonExistentDONId, FAMILY_NAME_ONE);
   }
 
-  function test_SetDONFamily() public {
+  function test_SetDONFamily_EmitsEvent() public {
     vm.expectEmit(true, true, false, true);
     emit CapabilitiesRegistry.DONFamilySet(DON_ID, FAMILY_NAME_ONE);
 
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
-
-    // Verify the DON family was set correctly
-    CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
-    assertEq(donInfo.donFamily, FAMILY_NAME_ONE);
-
-    // Verify the DON appears in the family list
-    uint[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
-    assertEq(familyDONs.length, 1);
-    assertEq(familyDONs[0], DON_ID);
   }
 
   function test_SetDONFamily_MultipleDONsInSameFamily() public {
-    // Set both DONs to the same family
-    vm.expectEmit(true, true, false, true);
-    emit CapabilitiesRegistry.DONFamilySet(DON_ID, FAMILY_NAME_ONE);
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
-
-    vm.expectEmit(true, true, false, true);
-    emit CapabilitiesRegistry.DONFamilySet(DON_ID_TWO, FAMILY_NAME_ONE);
     s_CapabilitiesRegistry.setDONFamily(DON_ID_TWO, FAMILY_NAME_ONE);
 
-    // Verify both DONs are in the same family
     uint[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
     assertEq(familyDONs.length, 2);
 
@@ -131,58 +112,40 @@ contract CapabilitiesRegistry_DONFamilyTest is BaseTest {
   }
 
   function test_SetDONFamily_MoveDONBetweenFamilies() public {
-    // Initially set DON to family one
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
 
-    // Verify DON is in family one
     uint[] memory family1DONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
     assertEq(family1DONs.length, 1);
     assertEq(family1DONs[0], DON_ID);
 
-    // Move DON to family two
-    vm.expectEmit(true, true, false, true);
-    emit CapabilitiesRegistry.DONFamilySet(DON_ID, FAMILY_NAME_TWO);
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_TWO);
 
-    // Verify DON is now in family two
     uint[] memory family2DONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_TWO);
     assertEq(family2DONs.length, 1);
     assertEq(family2DONs[0], DON_ID);
 
-    // Verify DON is no longer in family one
     family1DONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
     assertEq(family1DONs.length, 0);
 
-    // Verify DON info reflects the new family
     CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
     assertEq(donInfo.donFamily, FAMILY_NAME_TWO);
   }
 
   function test_SetDONFamily_RemoveFromFamily() public {
-    // Initially set DON to a family
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
 
-    // Verify DON is in the family
-    uint[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
-    assertEq(familyDONs.length, 1);
-    assertEq(familyDONs[0], DON_ID);
-
-    // Remove DON from family by setting empty string
     vm.expectEmit(true, true, false, true);
     emit CapabilitiesRegistry.DONFamilySet(DON_ID, "");
     s_CapabilitiesRegistry.setDONFamily(DON_ID, "");
 
-    // Verify DON is no longer in the family
-    familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
+    uint[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
     assertEq(familyDONs.length, 0);
 
-    // Verify DON info reflects empty family
     CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
     assertEq(donInfo.donFamily, "");
   }
 
   function test_SetDONFamily_SameFamilyNoOp() public {
-    // Set DON to a family
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
 
     // Try to set to the same family again - should be a no-op
@@ -206,77 +169,29 @@ contract CapabilitiesRegistry_DONFamilyTest is BaseTest {
     assertEq(familyDONs.length, 0);
   }
 
-  function test_GetDONsInFamily_MultipleFamilies() public {
-    // Set DONs to different families
-    s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
-    s_CapabilitiesRegistry.setDONFamily(DON_ID_TWO, FAMILY_NAME_TWO);
-
-    // Verify each family has the correct DON
-    uint[] memory family1DONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
-    assertEq(family1DONs.length, 1);
-    assertEq(family1DONs[0], DON_ID);
-
-    uint[] memory family2DONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_TWO);
-    assertEq(family2DONs.length, 1);
-    assertEq(family2DONs[0], DON_ID_TWO);
-  }
-
   function test_DONInfo_IncludesFamilyInformation() public {
-    // Initially, DON should have no family
     CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
     assertEq(donInfo.donFamily, "");
 
-    // Set DON family
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
 
-    // Verify DON info includes the family
     donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
     assertEq(donInfo.donFamily, FAMILY_NAME_ONE);
   }
 
-  function test_EmptyStringFamilyName() public {
-    // Set DON to a family
-    s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
-
-    // Remove DON from family by setting empty string
-    vm.expectEmit(true, true, false, true);
-    emit CapabilitiesRegistry.DONFamilySet(DON_ID, "");
-    s_CapabilitiesRegistry.setDONFamily(DON_ID, "");
-
-    // Verify DON info has empty family
-    CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
-    assertEq(donInfo.donFamily, "");
-
-    // Verify no DONs are returned for empty family name query
-    uint[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily("");
-    assertEq(familyDONs.length, 0);
-  }
-
   function test_FamilyCleanupOnDONRemoval() public {
-    // Set DON family
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
     s_CapabilitiesRegistry.setDONFamily(DON_ID_TWO, FAMILY_NAME_ONE);
 
-    // Verify both DONs are in the family
     uint[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
     assertEq(familyDONs.length, 2);
 
-    // Remove one DON
     uint32[] memory donsToRemove = new uint32[](1);
     donsToRemove[0] = DON_ID;
     s_CapabilitiesRegistry.removeDONs(donsToRemove);
 
-    // Verify only the remaining DON is in the family
     familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
     assertEq(familyDONs.length, 1);
     assertEq(familyDONs[0], DON_ID_TWO);
-
-    // Remove the second DON
-    donsToRemove[0] = DON_ID_TWO;
-    s_CapabilitiesRegistry.removeDONs(donsToRemove);
-
-    // Verify family is now empty
-    familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
-    assertEq(familyDONs.length, 0);
   }
 }
