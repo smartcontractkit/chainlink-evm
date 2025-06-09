@@ -2,8 +2,8 @@
 pragma solidity 0.8.26;
 
 library LinkingUtils {
-  uint8 constant REQUEST_TYPE_LINK = 0;
-  uint8 constant REQUEST_TYPE_UNLINK = 1;
+  uint8 public constant REQUEST_TYPE_LINK = 0;
+  uint8 public constant REQUEST_TYPE_UNLINK = 1;
 
   // Helper to get the EIP-191 message hash
   function getMessageHash(
