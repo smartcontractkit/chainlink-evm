@@ -245,12 +245,16 @@ contract CapabilitiesRegistry_AddDONTest_WhenMaliciousCapabilityConfigurationCon
   function setUp() public override {
     BaseTest.setUp();
     CapabilitiesRegistry.Capability[] memory capabilities = new CapabilitiesRegistry.Capability[](2);
+    MaliciousConfigurationContract maliciousConfigurationContract =
+      new MaliciousConfigurationContract(s_capabilityWithConfigurationContractId);
 
-    address maliciousConfigContractAddr =
-      address(new MaliciousConfigurationContract(s_capabilityWithConfigurationContractId));
+    address maliciousConfigContractAddr = address(maliciousConfigurationContract);
     s_basicCapability.configurationContract = maliciousConfigContractAddr;
     capabilities[0] = s_basicCapability;
     capabilities[1] = s_capabilityWithConfigurationContract;
+
+    bytes memory config = maliciousConfigurationContract.getCapabilityConfiguration(DON_ID);
+    assertEq(config, bytes(""));
 
     CapabilitiesRegistry.NodeOperator[] memory nodeOperators = _getNodeOperators();
     nodeOperators[0].admin = maliciousConfigContractAddr;
