@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {BaseTest} from "./BaseTest.t.sol";
-import "forge-std/Vm.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
   string internal constant FAMILY_NAME_ONE = "production-mainnet";
