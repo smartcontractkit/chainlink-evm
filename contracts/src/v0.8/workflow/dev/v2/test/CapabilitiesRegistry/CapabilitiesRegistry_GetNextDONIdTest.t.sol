@@ -80,7 +80,7 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
       ),
       1
     );
-    s_CapabilitiesRegistry.addDON(nodes, capabilityConfigs, true, true, F_VALUE);
+    s_CapabilitiesRegistry.addDON(nodes, capabilityConfigs, true, true, F_VALUE, s_emptyOptionalDONParams);
 
     nextDONId = s_CapabilitiesRegistry.getNextDONId();
     assertEq(nextDONId, 2); // After adding one DON, the next DON ID should be 2

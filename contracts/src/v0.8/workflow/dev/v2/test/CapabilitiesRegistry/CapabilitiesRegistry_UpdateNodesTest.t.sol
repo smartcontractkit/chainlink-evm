@@ -243,7 +243,7 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
 
     // Operations
     changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, true, 1);
+    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, true, 1, s_emptyOptionalDONParams);
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -282,7 +282,7 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
 
     // Operations
     changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, false, 1);
+    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, false, 1, s_emptyOptionalDONParams);
 
     vm.expectRevert(
       abi.encodeWithSelector(

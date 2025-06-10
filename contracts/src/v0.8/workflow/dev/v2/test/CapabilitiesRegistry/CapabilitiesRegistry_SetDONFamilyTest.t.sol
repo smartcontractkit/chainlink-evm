@@ -67,8 +67,8 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
       config: BASIC_CAPABILITY_CONFIG
     });
 
-    s_CapabilitiesRegistry.addDON(don1Nodes, capabilityConfigs, true, false, F_VALUE);
-    s_CapabilitiesRegistry.addDON(don2Nodes, capabilityConfigs, true, false, F_VALUE);
+    s_CapabilitiesRegistry.addDON(don1Nodes, capabilityConfigs, true, false, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.addDON(don2Nodes, capabilityConfigs, true, false, F_VALUE, s_emptyOptionalDONParams);
 
     vm.startPrank(ADMIN);
   }

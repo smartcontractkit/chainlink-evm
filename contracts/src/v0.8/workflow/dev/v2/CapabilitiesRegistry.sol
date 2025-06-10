@@ -22,6 +22,35 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.UintSet;
 
+  // ================================================================
+  // |                         Enums                               |
+  // ================================================================
+
+  /// @notice CapabilityResponseType indicates whether remote response requires aggregation or is
+  /// an already aggregated report. There are multiple possible ways to aggregate.
+  /// @dev REPORT response type receives signatures together with the response that is used to verify the data.
+  /// OBSERVATION_IDENTICAL just receives data without signatures and waits for some number of observations before
+  /// proceeding to the next step
+  enum CapabilityResponseType {
+    // No additional aggregation is needed on the remote response.
+    REPORT,
+    // A number of identical observations need to be aggregated.
+    OBSERVATION_IDENTICAL
+  }
+
+  /// @notice CapabilityType indicates the type of capability which determines
+  /// where the capability can be used in a Workflow Spec.
+  enum CapabilityType {
+    TRIGGER,
+    ACTION,
+    CONSENSUS,
+    TARGET
+  }
+
+  // ================================================================
+  // |                         Structs                               |
+  // ================================================================
+
   struct NodeOperator {
     /// @notice The address of the admin that can manage a node operator
     address admin;
@@ -73,27 +102,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// @notice The list of capabilities DON Ids supported by the node. A node can belong to multiple
     /// capabilities DONs. This list does not include a Workflow DON id if the node belongs to one.
     EnumerableSet.UintSet capabilitiesDONIds;
-  }
-
-  /// @notice CapabilityResponseType indicates whether remote response requires aggregation or is
-  /// an already aggregated report. There are multiple possible ways to aggregate.
-  /// @dev REPORT response type receives signatures together with the response that is used to verify the data.
-  /// OBSERVATION_IDENTICAL just receives data without signatures and waits for some number of observations before
-  /// proceeding to the next step
-  enum CapabilityResponseType {
-    // No additional aggregation is needed on the remote response.
-    REPORT,
-    // A number of identical observations need to be aggregated.
-    OBSERVATION_IDENTICAL
-  }
-
-  /// @notice CapabilityType indicates the type of capability which determines
-  /// where the capability can be used in a Workflow Spec.
-  enum CapabilityType {
-    TRIGGER,
-    ACTION,
-    CONSENSUS,
-    TARGET
   }
 
   struct Capability {
@@ -172,6 +180,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   struct DONCapabilityConfig {
     /// @notice The set of p2pIds of nodes that belong to this DON. A node (the same p2pId) can belong to multiple DONs.
     EnumerableSet.Bytes32Set nodes;
+    /// @notice The general config for the DON. This holds general DON config that is not
+    /// specific to a capability.
+    bytes config;
     /// @notice The set of capabilityIds
     bytes32[] capabilityIds;
     /// @notice Mapping from hashed capability IDs to configs
@@ -196,6 +207,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// is called Workflow DON and it can process Workflow Specs. A Workflow
     /// DON also support one or more capabilities as well.
     bool acceptsWorkflows;
+    /// @notice The name of the DON. Can be empty. If not empty, must be unique
+    /// to the registry.
+    string name;
     /// @notice Mapping of config counts to configurations
     mapping(uint32 configCount => DONCapabilityConfig donConfig) config;
   }
@@ -220,8 +234,19 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// are connected with each other. Can be empty if the DON is not part of
     /// any family.
     string donFamily;
+    /// @notice The name of the DON. Can be empty. If not empty, must be unique
+    /// to the registry.
+    string name;
+    /// @notice The config for the DON. This holds general DON config that is not
+    /// specific to a capability.
+    bytes config;
     /// @notice List of capability configurations
     CapabilityConfiguration[] capabilityConfigurations;
+  }
+
+  struct AdditionalDONParams {
+    string name;
+    bytes config;
   }
 
   /// @notice DONParams is a struct that holds the parameters for a DON.
@@ -232,7 +257,12 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bool isPublic;
     bool acceptsWorkflows;
     uint8 f;
+    AdditionalDONParams additionalParams;
   }
+
+  // ================================================================
+  // |                         Errors                               |
+  // ================================================================
 
   /// @notice This error is thrown when a caller is not allowed
   /// to execute the transaction
@@ -347,6 +377,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// configuration contract.
   error InvalidCapabilityConfigurationContractInterface(address proposedConfigurationContract);
 
+  /// @notice This error is thrown when trying to add a DON with a name that
+  /// is already taken
+  /// @param name The name of the DON that is already taken
+  error DONNameAlreadyTaken(string name);
+
+  // ================================================================
+  // |                         Events                               |
+  // ================================================================
+
   /// @notice This event is emitted when a new node is added
   /// @param p2pId The P2P ID of the node
   /// @param nodeOperatorId The ID of the node operator that manages this node
@@ -400,6 +439,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   event DONFamilySet(uint32 indexed donId, string indexed donFamily);
 
   string public constant override typeAndVersion = "CapabilitiesRegistry 1.1.0";
+
+  // ================================================================
+  // |                 Internal variables                            |
+  // ================================================================
+
+  /// @notice Mapping of DON names to boolean indicating if the name is taken
+  mapping(string donName => uint32 donId) private s_donNameToId;
 
   /// @notice Mapping of capabilities
   mapping(bytes32 hashedCapabilityId => Capability capability) private s_capabilities;
@@ -811,12 +857,14 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param isPublic True if the DON is can accept external capability requests
   /// @param acceptsWorkflows True if the DON can accept workflows
   /// @param f The maximum number of faulty nodes the DON can tolerate
+  /// @param additionalParams The optional parameters for the DON
   function addDON(
     bytes32[] calldata nodes,
     CapabilityConfiguration[] calldata capabilityConfigurations,
     bool isPublic,
     bool acceptsWorkflows,
-    uint8 f
+    uint8 f,
+    AdditionalDONParams calldata additionalParams
   ) external onlyOwner {
     uint32 id = s_nextDONId++;
     s_dons[id].id = id;
@@ -824,7 +872,14 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     _setDONConfig(
       nodes,
       capabilityConfigurations,
-      DONParams({id: id, configCount: 1, isPublic: isPublic, acceptsWorkflows: acceptsWorkflows, f: f})
+      DONParams({
+        id: id,
+        configCount: 1,
+        isPublic: isPublic,
+        acceptsWorkflows: acceptsWorkflows,
+        f: f,
+        additionalParams: additionalParams
+      })
     );
   }
 
@@ -838,12 +893,14 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// capabilities supported by the DON
   /// @param isPublic True if the DON is can accept external capability requests
   /// @param f The maximum number of nodes that can fail
+  /// @param additionalParams The optional parameters for the DON
   function updateDON(
     uint32 donId,
     bytes32[] calldata nodes,
     CapabilityConfiguration[] calldata capabilityConfigurations,
     bool isPublic,
-    uint8 f
+    uint8 f,
+    AdditionalDONParams calldata additionalParams
   ) external onlyOwner {
     DON storage don = s_dons[donId];
     uint32 configCount = don.configCount;
@@ -856,7 +913,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         configCount: ++configCount,
         isPublic: isPublic,
         acceptsWorkflows: don.acceptsWorkflows,
-        f: f
+        f: f,
+        additionalParams: additionalParams
       })
     );
   }
@@ -884,6 +942,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       // DON config count starts at index 1
       if (don.configCount == 0) revert DONDoesNotExist(donId);
+
+      // Free up the DON name for reuse
+      delete s_donNameToId[don.name];
 
       // Clean up DON family mappings
       string memory donFamily = s_donFamily[donId];
@@ -982,6 +1043,12 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     return s_donFamilies[donFamily].values();
   }
 
+  function isDONNameTaken(
+    string calldata donName
+  ) external view returns (bool) {
+    return s_donNameToId[donName] != 0;
+  }
+
   /// @notice Sets the configuration for a DON
   /// @param nodes The nodes making up the DON
   /// @param capabilityConfigurations The list of configurations for the capabilities supported by the DON
@@ -991,11 +1058,25 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     CapabilityConfiguration[] calldata capabilityConfigurations,
     DONParams memory donParams
   ) internal {
+    DON storage don = s_dons[donParams.id];
     DONCapabilityConfig storage donCapabilityConfig = s_dons[donParams.id].config[donParams.configCount];
 
     // Validate the f value. We are intentionally relaxing the 3f+1 requirement
     // as not all DONs will run OCR instances.
     if (donParams.f == 0 || donParams.f + 1 > nodes.length) revert InvalidFaultTolerance(donParams.f, nodes.length);
+
+    // Check if the DON name is changing
+    if (keccak256(bytes(don.name)) != keccak256(bytes(donParams.additionalParams.name))) {
+      delete s_donNameToId[don.name];
+
+      if (bytes(donParams.additionalParams.name).length > 0) {
+        // If the new name is not empty, add it to the mapping
+        if (s_donNameToId[donParams.additionalParams.name] != 0) {
+          revert DONNameAlreadyTaken(donParams.additionalParams.name);
+        }
+        s_donNameToId[donParams.additionalParams.name] = donParams.id;
+      }
+    }
 
     // Skip removing supported DON Ids from previously configured nodes in DON if
     // we are adding the DON for the first time
@@ -1053,11 +1134,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       donCapabilityConfig.capabilityIds.push(configuration.capabilityId);
       donCapabilityConfig.capabilityConfigs[configuration.capabilityId] = configuration.config;
+      donCapabilityConfig.config = donParams.additionalParams.config;
 
       s_dons[donParams.id].isPublic = donParams.isPublic;
       s_dons[donParams.id].acceptsWorkflows = donParams.acceptsWorkflows;
       s_dons[donParams.id].f = donParams.f;
       s_dons[donParams.id].configCount = donParams.configCount;
+      s_dons[donParams.id].name = donParams.additionalParams.name;
 
       _setDONCapabilityConfig(
         donParams.id, donParams.configCount, configuration.capabilityId, nodes, configuration.config
@@ -1126,7 +1209,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
     return DONInfo({
       id: s_dons[donId].id,
+      name: s_dons[donId].name,
       configCount: configCount,
+      config: donCapabilityConfig.config,
       f: s_dons[donId].f,
       isPublic: s_dons[donId].isPublic,
       acceptsWorkflows: s_dons[donId].acceptsWorkflows,

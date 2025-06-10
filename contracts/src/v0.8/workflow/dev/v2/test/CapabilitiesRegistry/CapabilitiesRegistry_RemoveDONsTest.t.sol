@@ -40,7 +40,8 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
       hashedCapabilityIds: nodeTwoCapabilityIds
     });
 
-    changePrank(NODE_OPERATOR_ONE_ADMIN);
+    vm.stopPrank();
+    vm.startPrank(NODE_OPERATOR_ONE_ADMIN);
     s_CapabilitiesRegistry.addNodes(nodes);
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
@@ -54,8 +55,16 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     nodeIds[0] = P2P_ID;
     nodeIds[1] = P2P_ID_TWO;
 
-    changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, true, 1);
+    vm.stopPrank();
+    vm.startPrank(ADMIN);
+    s_CapabilitiesRegistry.addDON(
+      nodeIds,
+      capabilityConfigs,
+      true,
+      true,
+      1,
+      CapabilitiesRegistry.AdditionalDONParams({config: bytes(""), name: "test-name"})
+    );
   }
 
   function test_RevertWhen_CalledByNonAdmin() public {
@@ -93,6 +102,8 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     assertEq(CapabilitiesRegistryDONConfig, bytes(""));
     assertEq(capabilityConfigContractConfig, bytes(""));
     assertEq(donInfo.nodeP2PIds.length, 0);
+
+    assertEq(s_CapabilitiesRegistry.isDONNameTaken("test-name"), false);
   }
 
   function test_RemovesCapabilitiesDON() public {
@@ -107,7 +118,7 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     nodeIds[0] = P2P_ID;
     nodeIds[1] = P2P_ID_TWO;
 
-    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, false, 1);
+    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, false, 1, s_emptyOptionalDONParams);
     uint32 capabilitiesDONId = DON_ID_TWO;
 
     CapabilitiesRegistry.NodeInfo memory nodeInfoBefore = s_CapabilitiesRegistry.getNode(P2P_ID);
