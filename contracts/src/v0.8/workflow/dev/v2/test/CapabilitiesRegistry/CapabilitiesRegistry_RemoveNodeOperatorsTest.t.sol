@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_RemoveNodeOperatorsTest is BaseTest {
   function setUp() public override {
@@ -31,15 +31,13 @@ contract CapabilitiesRegistry_RemoveNodeOperatorsTest is BaseTest {
     nodeOperatorsToRemove[1] = TEST_NODE_OPERATOR_TWO_ID;
     s_CapabilitiesRegistry.removeNodeOperators(nodeOperatorsToRemove);
 
-    CapabilitiesRegistry.NodeOperator memory nodeOperatorOne = s_CapabilitiesRegistry.getNodeOperator(
-      TEST_NODE_OPERATOR_ONE_ID
-    );
+    CapabilitiesRegistry.NodeOperator memory nodeOperatorOne =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ONE_ID);
     assertEq(nodeOperatorOne.admin, address(0));
     assertEq(nodeOperatorOne.name, "");
 
-    CapabilitiesRegistry.NodeOperator memory nodeOperatorTwo = s_CapabilitiesRegistry.getNodeOperator(
-      TEST_NODE_OPERATOR_TWO_ID
-    );
+    CapabilitiesRegistry.NodeOperator memory nodeOperatorTwo =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_TWO_ID);
     assertEq(nodeOperatorTwo.admin, address(0));
     assertEq(nodeOperatorTwo.name, "");
   }

@@ -1,19 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {ICapabilityConfiguration} from "../../../interfaces/ICapabilityConfiguration.sol";
 import {CapabilitiesRegistry} from "../../../CapabilitiesRegistry.sol";
-import {IERC165} from "@vendor/v0.8/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {ICapabilityConfiguration} from "../../../interfaces/ICapabilityConfiguration.sol";
+
+import {IERC165} from "../../../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
 import {Constants} from "../Constants.t.sol";
 
 contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Constants {
   bytes32 internal s_capabilityWithConfigurationContractId;
 
-  constructor(bytes32 capabilityWithConfigContractId) {
+  constructor(
+    bytes32 capabilityWithConfigContractId
+  ) {
     s_capabilityWithConfigurationContractId = capabilityWithConfigContractId;
   }
 
-  function getCapabilityConfiguration(uint32) external pure returns (bytes memory configuration) {
+  function getCapabilityConfiguration(
+    uint32
+  ) external pure returns (bytes memory configuration) {
     return bytes("");
   }
 
@@ -43,7 +48,9 @@ contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Co
     CapabilitiesRegistry(msg.sender).updateNodes(nodes);
   }
 
-  function supportsInterface(bytes4 interfaceId) public pure returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public pure returns (bool) {
     return interfaceId == type(ICapabilityConfiguration).interfaceId || interfaceId == type(IERC165).interfaceId;
   }
 }

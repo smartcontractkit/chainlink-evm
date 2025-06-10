@@ -43,8 +43,8 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     changePrank(NODE_OPERATOR_ONE_ADMIN);
     s_CapabilitiesRegistry.addNodes(nodes);
 
-    CapabilitiesRegistry.CapabilityConfiguration[]
-      memory capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](1);
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG
@@ -87,11 +87,43 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     assertEq(donInfo.isPublic, false);
     assertEq(donInfo.capabilityConfigurations.length, 0);
 
-    (bytes memory CapabilitiesRegistryDONConfig, bytes memory capabilityConfigContractConfig) = s_CapabilitiesRegistry
-      .getCapabilityConfigs(DON_ID, s_basicHashedCapabilityId);
+    (bytes memory CapabilitiesRegistryDONConfig, bytes memory capabilityConfigContractConfig) =
+      s_CapabilitiesRegistry.getCapabilityConfigs(DON_ID, s_basicHashedCapabilityId);
 
     assertEq(CapabilitiesRegistryDONConfig, bytes(""));
     assertEq(capabilityConfigContractConfig, bytes(""));
     assertEq(donInfo.nodeP2PIds.length, 0);
+  }
+
+  function test_RemovesCapabilitiesDON() public {
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicHashedCapabilityId,
+      config: BASIC_CAPABILITY_CONFIG
+    });
+
+    bytes32[] memory nodeIds = new bytes32[](2);
+    nodeIds[0] = P2P_ID;
+    nodeIds[1] = P2P_ID_TWO;
+
+    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, false, 1);
+    uint32 capabilitiesDONId = DON_ID_TWO;
+
+    CapabilitiesRegistry.NodeInfo memory nodeInfoBefore = s_CapabilitiesRegistry.getNode(P2P_ID);
+    CapabilitiesRegistry.NodeInfo memory nodeTwoInfoBefore = s_CapabilitiesRegistry.getNode(P2P_ID_TWO);
+
+    assertEq(nodeInfoBefore.capabilitiesDONIds[0], DON_ID_TWO);
+    assertEq(nodeTwoInfoBefore.capabilitiesDONIds[0], DON_ID_TWO);
+
+    uint32[] memory donIDs = new uint32[](1);
+    donIDs[0] = capabilitiesDONId;
+    s_CapabilitiesRegistry.removeDONs(donIDs);
+
+    CapabilitiesRegistry.NodeInfo memory nodeInfoAfter = s_CapabilitiesRegistry.getNode(P2P_ID);
+    CapabilitiesRegistry.NodeInfo memory nodeTwoInfoAfter = s_CapabilitiesRegistry.getNode(P2P_ID_TWO);
+
+    assertEq(nodeInfoAfter.capabilitiesDONIds.length, 0);
+    assertEq(nodeTwoInfoAfter.capabilitiesDONIds.length, 0);
   }
 }

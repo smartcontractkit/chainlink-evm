@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_GetCapabilitiesTest is BaseTest {
   function setUp() public override {
@@ -14,10 +14,8 @@ contract CapabilitiesRegistry_GetCapabilitiesTest is BaseTest {
   }
 
   function test_ReturnsCapabilities() public {
-    bytes32 hashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_basicCapability.labelledName,
-      s_basicCapability.version
-    );
+    bytes32 hashedCapabilityId =
+      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
     bytes32[] memory deprecatedCapabilities = new bytes32[](1);
     deprecatedCapabilities[0] = hashedCapabilityId;
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
@@ -37,8 +35,7 @@ contract CapabilitiesRegistry_GetCapabilitiesTest is BaseTest {
     assertEq(capabilities[1].labelledName, "read-ethereum-mainnet-gas-price");
     assertEq(capabilities[1].version, "1.0.2");
     assertEq(
-      uint256(capabilities[1].responseType),
-      uint256(CapabilitiesRegistry.CapabilityResponseType.OBSERVATION_IDENTICAL)
+      uint256(capabilities[1].responseType), uint256(CapabilitiesRegistry.CapabilityResponseType.OBSERVATION_IDENTICAL)
     );
     assertEq(uint256(capabilities[1].capabilityType), uint256(CapabilitiesRegistry.CapabilityType.ACTION));
     assertEq(capabilities[1].configurationContract, address(s_capabilityConfigurationContract));

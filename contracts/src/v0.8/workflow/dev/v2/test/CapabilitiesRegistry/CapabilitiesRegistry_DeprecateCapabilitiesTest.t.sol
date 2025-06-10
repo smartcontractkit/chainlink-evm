@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_DeprecateCapabilitiesTest is BaseTest {
   function setUp() public override {
@@ -16,10 +16,8 @@ contract CapabilitiesRegistry_DeprecateCapabilitiesTest is BaseTest {
 
   function test_RevertWhen_CalledByNonAdmin() public {
     changePrank(STRANGER);
-    bytes32 hashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_basicCapability.labelledName,
-      s_basicCapability.version
-    );
+    bytes32 hashedCapabilityId =
+      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
 
     bytes32[] memory deprecatedCapabilities = new bytes32[](1);
     deprecatedCapabilities[0] = hashedCapabilityId;
@@ -39,10 +37,8 @@ contract CapabilitiesRegistry_DeprecateCapabilitiesTest is BaseTest {
   }
 
   function test_RevertWhen_CapabilityIsDeprecated() public {
-    bytes32 hashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_basicCapability.labelledName,
-      s_basicCapability.version
-    );
+    bytes32 hashedCapabilityId =
+      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
 
     bytes32[] memory deprecatedCapabilities = new bytes32[](1);
     deprecatedCapabilities[0] = hashedCapabilityId;
@@ -53,10 +49,8 @@ contract CapabilitiesRegistry_DeprecateCapabilitiesTest is BaseTest {
   }
 
   function test_DeprecatesCapability() public {
-    bytes32 hashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_basicCapability.labelledName,
-      s_basicCapability.version
-    );
+    bytes32 hashedCapabilityId =
+      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
     bytes32[] memory deprecatedCapabilities = new bytes32[](1);
     deprecatedCapabilities[0] = hashedCapabilityId;
 
@@ -65,10 +59,8 @@ contract CapabilitiesRegistry_DeprecateCapabilitiesTest is BaseTest {
   }
 
   function test_EmitsEvent() public {
-    bytes32 hashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_basicCapability.labelledName,
-      s_basicCapability.version
-    );
+    bytes32 hashedCapabilityId =
+      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
 
     bytes32[] memory deprecatedCapabilities = new bytes32[](1);
     deprecatedCapabilities[0] = hashedCapabilityId;
