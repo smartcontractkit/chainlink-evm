@@ -495,14 +495,8 @@ func (c *Chain) ValidateConfig() (err error) {
 func (c *Transactions) ValidateConfig() (err error) {
 	if c.TransactionManagerV2.Enabled != nil && *c.TransactionManagerV2.Enabled &&
 		c.TransactionManagerV2.DualBroadcast != nil && *c.TransactionManagerV2.DualBroadcast {
-		if c.TransactionManagerV2.CustomURL == nil {
-			err = multierr.Append(err, commonconfig.ErrMissing{Name: "TransactionManagerV2.CustomURL", Msg: "must be set if DualBroadcast is enabled"})
-		}
 		if c.AutoPurge.Enabled != nil && !*c.AutoPurge.Enabled {
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "AutoPurge.Enabled", Value: false, Msg: "cannot be false if DualBroadcast is enabled"})
-		}
-		if c.AutoPurge.DetectionApiUrl == nil {
-			err = multierr.Append(err, commonconfig.ErrMissing{Name: "AutoPurge.DetectionApiUrl", Msg: "must be set if DualBroadcast is enabled"})
 		}
 		if c.AutoPurge.Threshold == nil {
 			err = multierr.Append(err, commonconfig.ErrMissing{Name: "AutoPurge.Threshold", Msg: "needs to be set if auto-purge feature is enabled"})
