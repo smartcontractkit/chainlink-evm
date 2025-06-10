@@ -236,7 +236,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// not match the one that was originally submitted, or if the signature is not valid (for different reasons).
   /// @dev Verification will use msg.sender as the owner address, which means caller must be the owner of the address,
   /// otherwise the verification will fail with invalid signature error.
-  function tryLinkOwner(uint256 validityTimestamp, bytes32 proof, bytes calldata signature) public view virtual {
+  function canLinkOwner(uint256 validityTimestamp, bytes32 proof, bytes calldata signature) public view virtual {
     if (block.timestamp > validityTimestamp) {
       revert LinkOwnerRequestExpired(msg.sender, block.timestamp, validityTimestamp);
     }
@@ -257,10 +257,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param validityTimestamp Validity of the ownership proof.
   /// @param proof The ownership proof to be submitted.
   /// @param signature The signature of the ownership proof metadata.
-  /// @dev Run the verification process first by calling tryLinkOwner() function. If the verification does not result
+  /// @dev Run the verification process first by calling canLinkOwner() function. If the verification does not result
   /// in a revert, then the ownership proof is valid and the owner address can be linked.
   function linkOwner(uint256 validityTimestamp, bytes32 proof, bytes calldata signature) public virtual {
-    tryLinkOwner(validityTimestamp, proof, signature);
+    canLinkOwner(validityTimestamp, proof, signature);
 
     s_ownerProofs[msg.sender] = proof;
     s_linkedOwners.add(msg.sender);
@@ -287,7 +287,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// long as the valid proof is provided. The caller does not have to be the owner of the address being unlinked.
   /// This is done to ensure that unlinking can be done even in cases when access to the private key of the owner
   /// address is lost or compromised, and the owner is not able to submit the unlinking request themselves.
-  function tryUnlinkOwner(
+  function canUnlinkOwner(
     address owner,
     uint256 validityTimestamp,
     bytes32 proof,
@@ -332,7 +332,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev If preUnlinkAction is NONE, the function will check if there are any active workflows registered to the
   /// owner, and if so, the transaction will revert. If preUnlinkAction is not NONE, then all workflows owned by this
   /// owner's address will be removed or paused before unlinking is completed.
-  /// @dev Run the verification process first by calling tryUnlinkOwner() function. If the verification does not result
+  /// @dev Run the verification process first by calling canUnlinkOwner() function. If the verification does not result
   /// in a revert, then the ownership proof is valid and the owner address can be unlinked.
   function unlinkOwner(
     address owner,
@@ -344,7 +344,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     // TODO: if preUnlinkAction is not NONE, assume that unlinkWorkflowOwner() will remove or pause workflows
     // TODO: if preUnlinkAction is NONE, verify if there are any active workflows, if yes, revert
 
-    tryUnlinkOwner(owner, validityTimestamp, proof, signature, PreUnlinkAction.NONE);
+    canUnlinkOwner(owner, validityTimestamp, proof, signature, PreUnlinkAction.NONE);
 
     delete s_ownerProofs[owner];
     s_linkedOwners.remove(owner);
