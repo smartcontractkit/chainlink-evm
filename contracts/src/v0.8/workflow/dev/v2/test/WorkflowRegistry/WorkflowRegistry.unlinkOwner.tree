@@ -1,0 +1,31 @@
+WorkflowRegistry_unlinkOwner_WhenCallerIsOwner
+└── when caller is equal to the owner address
+    ├── when request timestamp has expired
+    │   └── it should revert with expiration error
+    └── when the request timestamp has not expired
+        ├── given the owner is not linked
+        │   └── it should revert with not linked error
+        └── given the owner is linked
+            ├── given the proof matches the stored proof
+            │   ├── when the proof is valid
+            │   │   └── it should unlink the owner
+            │   └── when the proof is not valid
+            │       └── it should revert with signature error
+            └── given the proof does not match the stored proof
+                └── it should revert with proof does not match error
+
+WorkflowRegistry_unlinkOwner_WhenCallerIsNotOwner
+└── when caller is different from the owner address
+    ├── when request timestamp has expired
+    │   └── it should revert with expiration error
+    └── when the request timestamp has not expired
+        ├── given the owner is not linked
+        │   └── it should revert with not linked error
+        └── given the owner is linked
+            ├── given the proof matches the stored proof
+            │   ├── when the proof is valid
+            │   │   └── it should unlink the owner
+            │   └── when the proof is not valid
+            │       └── it should revert with signature error
+            └── given the proof does not match the stored proof
+                └── it should revert with proof does not match error
