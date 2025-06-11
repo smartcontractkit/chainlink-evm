@@ -11,6 +11,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 
+	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/common"
 	df "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/data-feeds/on-chain/registry"
 	wt "github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform"
 	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/report/platform"
@@ -106,16 +107,16 @@ func NewFeedUpdated(
 		BenchmarkVal:          ToBenchmarkVal(feedID, benchmarkPrice),
 
 		// Head data - when was the event produced on-chain
-		BlockHash:      m.BlockHash,
-		BlockHeight:    m.BlockHeight,
-		BlockTimestamp: m.BlockTimestamp,
+		BlockData: m.BlockData,
 
 		ExecutionContext: m.ExecutionContext,
 	}
 
 	if includeTxInfo {
-		fu.TxSender = m.Transmitter
-		fu.TxReceiver = m.Forwarder
+		fu.TransactionData = &common.TransactionData{
+			TxSender:   m.Transmitter,
+			TxReceiver: m.Forwarder,
+		}
 	}
 
 	return fu

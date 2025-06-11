@@ -93,12 +93,17 @@ func runTests(t *testing.T, data []byte, processor *datafeeds.Processor, por boo
 
 			BenchmarkVal: math.NaN(),
 
-			BlockHash:      "0xaa",
-			BlockHeight:    "17",
-			BlockTimestamp: 0x66f5bf69,
+			BlockData: &commonpb.BlockData{
+				BlockHash:      "0xaa",
+				BlockHeight:    "17",
+				BlockTimestamp: 0x66f5bf69,
+			},
 
-			TxSender:         "example-transmitter",
-			TxReceiver:       "example-forwarder",
+			TransactionData: &commonpb.TransactionData{
+				TxSender:   "example-transmitter",
+				TxReceiver: "example-forwarder",
+			},
+
 			ExecutionContext: &commonpb.ExecutionContext{},
 		},
 		{
@@ -109,12 +114,17 @@ func runTests(t *testing.T, data []byte, processor *datafeeds.Processor, por boo
 			Report:                []uint8{},
 			BenchmarkVal:          3000.69,
 
-			BlockHash:      "0xaa",
-			BlockHeight:    "17",
-			BlockTimestamp: 0x66f5bf69,
+			BlockData: &commonpb.BlockData{
+				BlockHash:      "0xaa",
+				BlockHeight:    "17",
+				BlockTimestamp: 0x66f5bf69,
+			},
 
-			TxSender:         "example-transmitter",
-			TxReceiver:       "example-forwarder",
+			TransactionData: &commonpb.TransactionData{
+				TxSender:   "example-transmitter",
+				TxReceiver: "example-forwarder",
+			},
+
 			ExecutionContext: &commonpb.ExecutionContext{},
 		},
 	}
@@ -154,10 +164,11 @@ func runTests(t *testing.T, data []byte, processor *datafeeds.Processor, por boo
 				Transmitter: "example-transmitter",
 				Success:     true,
 
-				// Block Info
-				BlockHash:      "0xaa",
-				BlockHeight:    "17",
-				BlockTimestamp: 0x66f5bf69,
+				BlockData: &commonpb.BlockData{
+					BlockHash:      "0xaa",
+					BlockHeight:    "17",
+					BlockTimestamp: 0x66f5bf69,
+				},
 
 				ExecutionContext: &commonpb.ExecutionContext{},
 			},
