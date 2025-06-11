@@ -54,7 +54,7 @@ func TestEmitTxMessage(t *testing.T) {
 		// THEN
 		messages := beholderTester.Messages(t)
 
-		assert.Equal(t, 1, len(messages))
+		assert.Len(t, messages, 1)
 		actualMessageBody := messages[0]
 		err = proto.Unmarshal(actualMessageBody.Body, &actualMessage)
 		require.NoError(t, err)
@@ -103,7 +103,7 @@ func TestEmitTxMessage(t *testing.T) {
 		// THEN
 		messages := beholderTester.Messages(t)
 
-		assert.Equal(t, 1, len(messages))
+		assert.Len(t, messages, 1)
 		actualMessageBody := messages[0]
 		err = proto.Unmarshal(actualMessageBody.Body, &actualMessage)
 		require.NoError(t, err)
