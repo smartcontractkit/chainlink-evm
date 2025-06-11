@@ -16,6 +16,7 @@ contract BaseTest is Test, Constants {
   bytes32 internal s_nonExistentHashedCapabilityId;
 
   CapabilitiesRegistry.AdditionalDONParams internal s_emptyOptionalDONParams;
+  CapabilitiesRegistry.AdditionalDONParams internal s_testDONParams;
 
   function setUp() public virtual {
     vm.startPrank(ADMIN);
@@ -45,6 +46,7 @@ contract BaseTest is Test, Constants {
     s_nonExistentHashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId("non-existent-capability", "1.0.0");
 
     s_emptyOptionalDONParams = CapabilitiesRegistry.AdditionalDONParams({config: bytes(""), name: ""});
+    s_testDONParams = CapabilitiesRegistry.AdditionalDONParams({config: bytes("abc"), name: "test-name"});
   }
 
   function _getNodeOperators() internal pure returns (CapabilitiesRegistry.NodeOperator[] memory) {

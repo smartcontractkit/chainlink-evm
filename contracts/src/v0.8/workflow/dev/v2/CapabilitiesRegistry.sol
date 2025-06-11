@@ -298,6 +298,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param donId The ID of the nonexistent DON
   error DONDoesNotExist(uint32 donId);
 
+  /// @notice This error is emitted when a DON with the given name does not exist
+  /// @param donName The name of the nonexistent DON
+  error DONWithNameDoesNotExist(string donName);
+
   /// @notice This error is thrown when trying to set the node's
   /// signer address to zero or if the signer address has already
   /// been used by another node
@@ -919,6 +923,41 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     );
   }
 
+  /// @notice Updates a DON's configuration by its name
+  /// @param donName The name of the DON to update
+  /// @param nodes The nodes making up the DON
+  /// @param capabilityConfigurations The list of configurations for the
+  /// capabilities supported by the DON
+  /// @param isPublic True if the DON is can accept external capability requests
+  /// @param f The maximum number of nodes that can fail
+  /// @param additionalParams The optional parameters for the DON
+  function updateDONByName(
+    string calldata donName,
+    bytes32[] calldata nodes,
+    CapabilityConfiguration[] calldata capabilityConfigurations,
+    bool isPublic,
+    uint8 f,
+    AdditionalDONParams calldata additionalParams
+  ) external onlyOwner {
+    uint32 donId = s_donNameToId[donName];
+    if (donId == 0) revert DONWithNameDoesNotExist(donName);
+
+    DON storage don = s_dons[donId];
+
+    _setDONConfig(
+      nodes,
+      capabilityConfigurations,
+      DONParams({
+        id: donId,
+        configCount: ++don.configCount,
+        isPublic: isPublic,
+        acceptsWorkflows: don.acceptsWorkflows,
+        f: f,
+        additionalParams: additionalParams
+      })
+    );
+  }
+
   /// @notice Removes DONs from the Capability Registry
   /// @param donIds The IDs of the DON to be removed
   function removeDONs(
@@ -926,44 +965,67 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   ) external onlyOwner {
     for (uint256 i; i < donIds.length; ++i) {
       uint32 donId = donIds[i];
-      DON storage don = s_dons[donId];
-
-      uint32 configCount = don.configCount;
-      EnumerableSet.Bytes32Set storage nodeP2PIds = don.config[configCount].nodes;
-
-      bool isWorkflowDON = don.acceptsWorkflows;
-      for (uint256 j; j < nodeP2PIds.length(); ++j) {
-        if (isWorkflowDON) {
-          delete s_nodes[nodeP2PIds.at(j)].workflowDONId;
-        } else {
-          s_nodes[nodeP2PIds.at(j)].capabilitiesDONIds.remove(donId);
-        }
-      }
-
-      // DON config count starts at index 1
-      if (don.configCount == 0) revert DONDoesNotExist(donId);
-
-      // Free up the DON name for reuse
-      delete s_donNameToId[don.name];
-
-      // Clean up DON family mappings
-      string memory donFamily = s_donFamily[donId];
-      if (bytes(donFamily).length > 0) {
-        s_donFamilies[donFamily].remove(donId);
-        delete s_donFamily[donId];
-      }
-
-      delete s_dons[donId];
-      emit ConfigSet(donId, 0);
+      _removeDON(donId);
     }
   }
 
-  /// @notice Gets DON's data
+  function removeDONsByName(
+    string[] calldata donNames
+  ) external onlyOwner {
+    for (uint256 i; i < donNames.length; ++i) {
+      uint32 donId = s_donNameToId[donNames[i]];
+      if (donId == 0) continue;
+      _removeDON(donId);
+    }
+  }
+
+  /// @notice Sets the DON family for a DON
+  /// @param donId The ID of the DON to set the family for
+  /// @param donFamily The family name to set for the DON
+  function setDONFamily(uint32 donId, string calldata donFamily) external onlyOwner {
+    if (s_dons[donId].configCount == 0) revert DONDoesNotExist(donId);
+
+    string memory currentFamily = s_donFamily[donId];
+    // If the DON is already in the family, do nothing
+    // There is no point in erroring out as this is a no-op and the erroring
+    // would not provide any value to the user.
+    if (keccak256(bytes(currentFamily)) == keccak256(bytes(donFamily))) return;
+
+    if (bytes(currentFamily).length > 0) {
+      s_donFamilies[currentFamily].remove(donId);
+    }
+
+    if (bytes(donFamily).length == 0) {
+      delete s_donFamily[donId];
+    } else {
+      s_donFamily[donId] = donFamily;
+      s_donFamilies[donFamily].add(donId);
+    }
+
+    emit DONFamilySet(donId, donFamily);
+  }
+
+  // ================================================================
+  // |                      View functions                          |
+  // ================================================================
+
+  /// @notice Gets DON's info
   /// @param donId The DON ID
   /// @return DONInfo The DON's parameters
   function getDON(
     uint32 donId
   ) external view returns (DONInfo memory) {
+    return _getDON(donId);
+  }
+
+  /// @notice Gets DON's info by its name
+  /// @param donName The name of the DON
+  /// @return DONInfo The DON's parameters
+  function getDONByName(
+    string calldata donName
+  ) external view returns (DONInfo memory) {
+    uint32 donId = s_donNameToId[donName];
+    if (donId == 0) revert DONWithNameDoesNotExist(donName);
     return _getDON(donId);
   }
 
@@ -1008,32 +1070,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     return (donCapabilityConfig, globalCapabilityConfig);
   }
 
-  /// @notice Sets the DON family for a DON
-  /// @param donId The ID of the DON to set the family for
-  /// @param donFamily The family name to set for the DON
-  function setDONFamily(uint32 donId, string calldata donFamily) external onlyOwner {
-    if (s_dons[donId].configCount == 0) revert DONDoesNotExist(donId);
-
-    string memory currentFamily = s_donFamily[donId];
-    // If the DON is already in the family, do nothing
-    // There is no point in erroring out as this is a no-op and the erroring
-    // would not provide any value to the user.
-    if (keccak256(bytes(currentFamily)) == keccak256(bytes(donFamily))) return;
-
-    if (bytes(currentFamily).length > 0) {
-      s_donFamilies[currentFamily].remove(donId);
-    }
-
-    if (bytes(donFamily).length == 0) {
-      delete s_donFamily[donId];
-    } else {
-      s_donFamily[donId] = donFamily;
-      s_donFamilies[donFamily].add(donId);
-    }
-
-    emit DONFamilySet(donId, donFamily);
-  }
-
   /// @notice Gets all DON IDs that belong to a specific family
   /// @param donFamily The family name to query for
   /// @return uint[] Array of DON IDs that belong to the specified family
@@ -1047,6 +1083,46 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     string calldata donName
   ) external view returns (bool) {
     return s_donNameToId[donName] != 0;
+  }
+
+  // ================================================================
+  // |                   Internal functions                         |
+  // ================================================================
+
+  /// @notice Removes a DON from the Capability Registry
+  /// @param donId The ID of the DON to remove
+  function _removeDON(
+    uint32 donId
+  ) internal {
+    DON storage don = s_dons[donId];
+
+    uint32 configCount = don.configCount;
+    EnumerableSet.Bytes32Set storage nodeP2PIds = don.config[configCount].nodes;
+
+    bool isWorkflowDON = don.acceptsWorkflows;
+    for (uint256 j; j < nodeP2PIds.length(); ++j) {
+      if (isWorkflowDON) {
+        delete s_nodes[nodeP2PIds.at(j)].workflowDONId;
+      } else {
+        s_nodes[nodeP2PIds.at(j)].capabilitiesDONIds.remove(donId);
+      }
+    }
+
+    // DON config count starts at index 1
+    if (don.configCount == 0) revert DONDoesNotExist(donId);
+
+    // Free up the DON name for reuse
+    delete s_donNameToId[don.name];
+
+    // Clean up DON family mappings
+    string memory donFamily = s_donFamily[donId];
+    if (bytes(donFamily).length > 0) {
+      s_donFamilies[donFamily].remove(donId);
+      delete s_donFamily[donId];
+    }
+
+    delete s_dons[donId];
+    emit ConfigSet(donId, 0);
   }
 
   /// @notice Sets the configuration for a DON
