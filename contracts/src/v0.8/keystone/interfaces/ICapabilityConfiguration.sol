@@ -22,13 +22,13 @@ interface ICapabilityConfiguration {
 
   /// @notice Called by the registry prior to the config being set for a particular DON.
   /// @param nodes The nodes that the configuration is being set for.
-  /// @param donCapabilityConfig The configuration being set on the capability registry.
-  /// @param donCapabilityConfigCount The number of times the DON has been configured, tracked on the capability registry.
+  /// @param mutableDONConfig The configuration being set on the capability registry.
+  /// @param mutableDONConfigCount The number of times the DON has been configured, tracked on the capability registry.
   /// @param donId The DON ID on the capability registry.
   function beforeCapabilityConfigSet(
     bytes32[] calldata nodes,
-    bytes calldata donCapabilityConfig,
-    uint64 donCapabilityConfigCount,
+    bytes calldata mutableDONConfig,
+    uint64 mutableDONConfigCount,
     uint32 donId
   ) external;
 }

@@ -76,12 +76,12 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
     CapabilitiesRegistry.DONInfo memory don = s_CapabilitiesRegistry.getHistoricalDONInfo(DON_ID, 1);
     assertEq(don.id, DON_ID);
     assertEq(don.configCount, 1);
-    assertEq(don.isPublic, false);
+    assertEq(don.isPublic, true);
     assertEq(don.acceptsWorkflows, true);
     assertEq(don.f, 1);
     assertEq(don.capabilityConfigurations.length, s_capabilityConfigs.length);
     assertEq(don.capabilityConfigurations[0].capabilityId, s_basicHashedCapabilityId);
-    assertEq(don.name, "");
+    assertEq(don.name, "test-name");
     assertEq(don.config, bytes("abc"));
 
     don = s_CapabilitiesRegistry.getHistoricalDONInfo(DON_ID, 2);
