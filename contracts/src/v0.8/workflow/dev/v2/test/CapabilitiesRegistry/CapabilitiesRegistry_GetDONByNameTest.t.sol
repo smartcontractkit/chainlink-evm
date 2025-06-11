@@ -57,7 +57,17 @@ contract CapabilitiesRegistry_GetDONByNameTest is BaseTest {
     nodeIds[1] = P2P_ID_TWO;
 
     changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, s_capabilityConfigs, true, true, 1, s_testDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: s_capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: 1,
+      name: s_testDONParams.name,
+      config: s_testDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
   }
 
   function test_RevertWhen_DONDoesNotExist() public {
@@ -68,7 +78,7 @@ contract CapabilitiesRegistry_GetDONByNameTest is BaseTest {
   }
 
   function test_CorrectlyFetchesDONByName() public view {
-    CapabilitiesRegistry.DONInfo memory don = s_CapabilitiesRegistry.getDONByName("test-name");
+    CapabilitiesRegistry.DONInfo memory don = s_CapabilitiesRegistry.getDONByName(s_testDONParams.name);
     assertEq(don.id, DON_ID);
     assertEq(don.configCount, 1);
     assertEq(don.isPublic, true);
@@ -76,7 +86,7 @@ contract CapabilitiesRegistry_GetDONByNameTest is BaseTest {
     assertEq(don.f, 1);
     assertEq(don.capabilityConfigurations.length, s_capabilityConfigs.length);
     assertEq(don.capabilityConfigurations[0].capabilityId, s_basicHashedCapabilityId);
-    assertEq(don.name, "test-name");
-    assertEq(don.config, bytes("abc"));
+    assertEq(don.name, s_testDONParams.name);
+    assertEq(don.config, s_testDONParams.config);
   }
 }

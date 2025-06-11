@@ -243,7 +243,17 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
 
     // Operations
     changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, true, 1, s_emptyOptionalDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: 1,
+      name: s_emptyOptionalDONParams.name,
+      config: s_emptyOptionalDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -282,7 +292,17 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
 
     // Operations
     changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, false, 1, s_emptyOptionalDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs2 = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs2[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: false,
+      f: 1,
+      name: s_emptyOptionalDONParams.name,
+      config: s_emptyOptionalDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs2);
 
     vm.expectRevert(
       abi.encodeWithSelector(

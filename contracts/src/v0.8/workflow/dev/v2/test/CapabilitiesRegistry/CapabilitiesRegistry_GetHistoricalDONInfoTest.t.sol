@@ -57,7 +57,17 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
     nodeIds[1] = P2P_ID_TWO;
 
     changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, s_capabilityConfigs, true, true, F_VALUE, s_testDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: s_capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: F_VALUE,
+      name: s_testDONParams.name,
+      config: s_testDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
     // Remove the DON name to test the historical DON info
     s_CapabilitiesRegistry.updateDON(DON_ID, nodeIds, s_capabilityConfigs, false, F_VALUE, s_emptyOptionalDONParams);
   }

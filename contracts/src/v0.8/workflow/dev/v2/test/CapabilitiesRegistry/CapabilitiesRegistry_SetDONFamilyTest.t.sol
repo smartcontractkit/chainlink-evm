@@ -67,8 +67,26 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
       config: BASIC_CAPABILITY_CONFIG
     });
 
-    s_CapabilitiesRegistry.addDON(don1Nodes, capabilityConfigs, true, false, F_VALUE, s_emptyOptionalDONParams);
-    s_CapabilitiesRegistry.addDON(don2Nodes, capabilityConfigs, true, false, F_VALUE, s_emptyOptionalDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](2);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: don1Nodes,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: false,
+      f: F_VALUE,
+      name: s_emptyOptionalDONParams.name,
+      config: s_emptyOptionalDONParams.config
+    });
+    newDONs[1] = CapabilitiesRegistry.NewDONParams({
+      nodes: don2Nodes,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: false,
+      f: F_VALUE,
+      name: s_emptyOptionalDONParams.name,
+      config: s_emptyOptionalDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
 
     vm.startPrank(ADMIN);
   }

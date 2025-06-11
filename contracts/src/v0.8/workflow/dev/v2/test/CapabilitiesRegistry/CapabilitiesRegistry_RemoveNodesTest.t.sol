@@ -90,7 +90,17 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       config: BASIC_CAPABILITY_CONFIG
     });
 
-    s_CapabilitiesRegistry.addDON(nodes, capabilityConfigs, true, false, F_VALUE, s_emptyOptionalDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodes,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: false,
+      f: F_VALUE,
+      name: s_emptyOptionalDONParams.name,
+      config: s_emptyOptionalDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
 
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.NodePartOfCapabilitiesDON.selector, 1, P2P_ID));
     s_CapabilitiesRegistry.removeNodes(nodes);
@@ -111,7 +121,17 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     });
 
     // Add DON
-    s_CapabilitiesRegistry.addDON(nodes, capabilityConfigs, true, true, F_VALUE, s_emptyOptionalDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodes,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: F_VALUE,
+      name: s_emptyOptionalDONParams.name,
+      config: s_emptyOptionalDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
 
     // Try remove nodes
     bytes32[] memory removedNodes = new bytes32[](1);
@@ -150,7 +170,17 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     });
 
     // Add DON
-    s_CapabilitiesRegistry.addDON(nodes, capabilityConfigs, true, true, F_VALUE, s_emptyOptionalDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs2 = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs2[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodes,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: F_VALUE,
+      name: s_emptyOptionalDONParams.name,
+      config: s_emptyOptionalDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs2);
 
     // Try remove nodes
     bytes32[] memory removedNodes = new bytes32[](1);

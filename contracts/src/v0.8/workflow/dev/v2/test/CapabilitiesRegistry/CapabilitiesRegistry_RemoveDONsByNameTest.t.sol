@@ -57,7 +57,17 @@ contract CapabilitiesRegistry_RemoveDONsByNameTest is BaseTest {
 
     vm.stopPrank();
     vm.startPrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, true, 1, s_testDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: 1,
+      name: s_testDONParams.name,
+      config: s_testDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
   }
 
   function test_RevertWhen_CalledByNonAdmin() public {

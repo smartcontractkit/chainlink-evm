@@ -57,8 +57,28 @@ contract CapabilitiesRegistry_GetDONsTest is BaseTest {
     nodeIds[1] = P2P_ID_TWO;
 
     changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, s_capabilityConfigs, true, true, 1, s_emptyOptionalDONParams);
-    s_CapabilitiesRegistry.addDON(nodeIds, s_capabilityConfigs, false, false, 1, s_emptyOptionalDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](2);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: s_capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: 1,
+      name: "",
+      config: bytes("")
+    });
+
+    newDONs[1] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: s_capabilityConfigs,
+      isPublic: false,
+      acceptsWorkflows: false,
+      f: 1,
+      name: "",
+      config: bytes("")
+    });
+
+    s_CapabilitiesRegistry.addDONs(newDONs);
   }
 
   function test_CorrectlyFetchesDONs() public view {

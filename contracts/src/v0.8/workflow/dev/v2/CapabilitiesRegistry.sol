@@ -260,6 +260,16 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     AdditionalDONParams additionalParams;
   }
 
+  struct NewDONParams {
+    bytes32[] nodes;
+    CapabilityConfiguration[] capabilityConfigurations;
+    bool isPublic;
+    bool acceptsWorkflows;
+    uint8 f;
+    string name;
+    bytes config;
+  }
+
   // ================================================================
   // |                         Errors                               |
   // ================================================================
@@ -860,38 +870,29 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     return s_deprecatedHashedCapabilityIds.contains(hashedCapabilityId);
   }
 
-  /// @notice Adds a DON made up by a group of nodes that support a list
-  /// of capability configurations
-  /// @param nodes The nodes making up the DON
-  /// @param capabilityConfigurations The list of configurations for the
-  /// capabilities supported by the DON
-  /// @param isPublic True if the DON is can accept external capability requests
-  /// @param acceptsWorkflows True if the DON can accept workflows
-  /// @param f The maximum number of faulty nodes the DON can tolerate
-  /// @param additionalParams The optional parameters for the DON
-  function addDON(
-    bytes32[] calldata nodes,
-    CapabilityConfiguration[] calldata capabilityConfigurations,
-    bool isPublic,
-    bool acceptsWorkflows,
-    uint8 f,
-    AdditionalDONParams calldata additionalParams
+  /// @notice Adds a list of DONs
+  /// @param newDONs The list of DONs to add
+  /// @dev The DONs are added in the order they are provided in the `newDONs` array
+  function addDONs(
+    NewDONParams[] calldata newDONs
   ) external onlyOwner {
-    uint32 id = s_nextDONId++;
-    s_dons[id].id = id;
+    if (newDONs.length == 0) return;
 
-    _setDONConfig(
-      nodes,
-      capabilityConfigurations,
-      DONParams({
-        id: id,
-        configCount: 1,
-        isPublic: isPublic,
-        acceptsWorkflows: acceptsWorkflows,
-        f: f,
-        additionalParams: additionalParams
-      })
-    );
+    for (uint256 i; i < newDONs.length; ++i) {
+      NewDONParams memory newDON = newDONs[i];
+      _setDONConfig(
+        newDON.nodes,
+        newDON.capabilityConfigurations,
+        DONParams({
+          id: s_nextDONId++,
+          configCount: 1,
+          isPublic: newDON.isPublic,
+          acceptsWorkflows: newDON.acceptsWorkflows,
+          f: newDON.f,
+          additionalParams: AdditionalDONParams({name: newDON.name, config: newDON.config})
+        })
+      );
+    }
   }
 
   /// @notice Updates a DON's configuration.  This allows
@@ -1150,8 +1151,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param capabilityConfigurations The list of configurations for the capabilities supported by the DON
   /// @param donParams The DON's parameters
   function _setDONConfig(
-    bytes32[] calldata nodes,
-    CapabilityConfiguration[] calldata capabilityConfigurations,
+    bytes32[] memory nodes,
+    CapabilityConfiguration[] memory capabilityConfigurations,
     DONParams memory donParams
   ) internal {
     DON storage don = s_dons[donParams.id];
@@ -1207,7 +1208,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     }
 
     for (uint256 i; i < capabilityConfigurations.length; ++i) {
-      CapabilityConfiguration calldata configuration = capabilityConfigurations[i];
+      CapabilityConfiguration memory configuration = capabilityConfigurations[i];
 
       if (!s_hashedCapabilityIds.contains(configuration.capabilityId)) {
         revert CapabilityDoesNotExist(configuration.capabilityId);
@@ -1235,6 +1236,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       donConfig.isPublic = donParams.isPublic;
       donConfig.f = donParams.f;
 
+      s_dons[donParams.id].id = donParams.id;
       s_dons[donParams.id].acceptsWorkflows = donParams.acceptsWorkflows;
       s_dons[donParams.id].configCount = donParams.configCount;
 
@@ -1254,7 +1256,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     uint32 donId,
     uint32 configCount,
     bytes32 capabilityId,
-    bytes32[] calldata nodes,
+    bytes32[] memory nodes,
     bytes memory config
   ) internal {
     if (s_capabilities[capabilityId].configurationContract != address(0)) {

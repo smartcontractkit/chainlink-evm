@@ -57,14 +57,17 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
 
     vm.stopPrank();
     vm.startPrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(
-      nodeIds,
-      capabilityConfigs,
-      true,
-      true,
-      1,
-      CapabilitiesRegistry.AdditionalDONParams({config: bytes(""), name: "test-name"})
-    );
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: 1,
+      name: "test-name",
+      config: bytes("")
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
   }
 
   function test_RevertWhen_CalledByNonAdmin() public {
@@ -115,7 +118,17 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     nodeIds[0] = P2P_ID;
     nodeIds[1] = P2P_ID_TWO;
 
-    s_CapabilitiesRegistry.addDON(nodeIds, capabilityConfigs, true, false, 1, s_emptyOptionalDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs2 = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs2[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodeIds,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: false,
+      f: 1,
+      name: s_emptyOptionalDONParams.name,
+      config: s_emptyOptionalDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs2);
     uint32 capabilitiesDONId = DON_ID_TWO;
 
     CapabilitiesRegistry.NodeInfo memory nodeInfoBefore = s_CapabilitiesRegistry.getNode(P2P_ID);

@@ -60,7 +60,17 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG
     });
-    s_CapabilitiesRegistry.addDON(donNodes, capabilityConfigs, true, true, F_VALUE, s_testDONParams);
+    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    newDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: donNodes,
+      capabilityConfigurations: capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: F_VALUE,
+      name: s_testDONParams.name,
+      config: s_testDONParams.config
+    });
+    s_CapabilitiesRegistry.addDONs(newDONs);
   }
 
   function test_RevertWhen_CalledByNonAdmin() public {
