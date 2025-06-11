@@ -5,29 +5,22 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
+	beholderTests "github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"google.golang.org/protobuf/proto"
 )
 
 func TestEmitTxMessage(t *testing.T) {
-	t.Parallel()
-
-	beholderEmitter := newMockEmitter(t)
-	beholderClient := beholder.GetClient()
-	beholderClient.Emitter = beholderEmitter
-
 	t.Run("overrides 0x0 as ToAddress if tx is purgeable", func(t *testing.T) {
 		// GIVEN
 		ctx := t.Context()
+		beholderTester := beholderTests.Beholder(t)
 
 		toAddress := testutils.NewAddress()
 		fromAddress := testutils.NewAddress()
@@ -49,18 +42,6 @@ func TestEmitTxMessage(t *testing.T) {
 			Nonce:       &expectedNonce,
 		}
 
-		beholderEmitter.On(
-			"Emit",
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-		).Return(nil)
-
 		// WHEN
 		err = txmMetrics.EmitTxMessage(
 			ctx,
@@ -71,19 +52,12 @@ func TestEmitTxMessage(t *testing.T) {
 		require.NoError(t, err)
 
 		// THEN
-		beholderEmitter.AssertCalled(t,
-			"Emit",
-			ctx,
-			mock.MatchedBy(func(b []byte) bool {
-				if err := proto.Unmarshal(b, &actualMessage); err != nil {
-					return false
-				}
-				return true
-			}),
-			"beholder_domain", "svr",
-			"beholder_entity", "svr.v1.TxMessage",
-			"beholder_data_schema", "/beholder-tx-message/versions/2",
-		)
+		messages := beholderTester.Messages(t)
+
+		assert.Equal(t, 1, len(messages))
+		actualMessageBody := messages[0]
+		err = proto.Unmarshal(actualMessageBody.Body, &actualMessage)
+		require.NoError(t, err)
 
 		assert.Equal(t, expectedFromAddress.String(), actualMessage.FromAddress)
 		assert.Equal(t, expectedToAddress.String(), actualMessage.ToAddress)
@@ -95,6 +69,7 @@ func TestEmitTxMessage(t *testing.T) {
 	t.Run("sends original ToAddress if tx is not purgeable", func(t *testing.T) {
 		// GIVEN
 		ctx := t.Context()
+		beholderTester := beholderTests.Beholder(t)
 
 		toAddress := testutils.NewAddress()
 		fromAddress := testutils.NewAddress()
@@ -116,18 +91,6 @@ func TestEmitTxMessage(t *testing.T) {
 			Nonce:       &expectedNonce,
 		}
 
-		beholderEmitter.On(
-			"Emit",
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-			mock.Anything,
-		).Return(nil)
-
 		// WHEN
 		err = txmMetrics.EmitTxMessage(
 			ctx,
@@ -138,19 +101,12 @@ func TestEmitTxMessage(t *testing.T) {
 		require.NoError(t, err)
 
 		// THEN
-		beholderEmitter.AssertCalled(t,
-			"Emit",
-			ctx,
-			mock.MatchedBy(func(b []byte) bool {
-				if err := proto.Unmarshal(b, &actualMessage); err != nil {
-					return false
-				}
-				return true
-			}),
-			"beholder_domain", "svr",
-			"beholder_entity", "svr.v1.TxMessage",
-			"beholder_data_schema", "/beholder-tx-message/versions/2",
-		)
+		messages := beholderTester.Messages(t)
+
+		assert.Equal(t, 1, len(messages))
+		actualMessageBody := messages[0]
+		err = proto.Unmarshal(actualMessageBody.Body, &actualMessage)
+		require.NoError(t, err)
 
 		assert.Equal(t, expectedFromAddress.String(), actualMessage.FromAddress)
 		assert.Equal(t, expectedToAddress.String(), actualMessage.ToAddress)
