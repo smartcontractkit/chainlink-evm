@@ -386,6 +386,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param name The name of the DON that is already taken
   error DONNameAlreadyTaken(string name);
 
+  /// @notice This error is thrown when trying to get a historical DON config
+  /// that does not exist
+  /// @param donId The ID of the DON
+  /// @param maxConfigCount The current config count of the DON
+  /// @param requestedConfigCount The requested config count
+  error DONConfigDoesNotExist(uint32 donId, uint32 maxConfigCount, uint32 requestedConfigCount);
+
   // ================================================================
   // |                         Events                               |
   // ================================================================
@@ -1015,7 +1022,18 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   function getDON(
     uint32 donId
   ) external view returns (DONInfo memory) {
-    return _getDON(donId);
+    uint32 configCount = s_dons[donId].configCount;
+    if (configCount == 0) revert DONDoesNotExist(donId);
+    return _getDON(donId, configCount);
+  }
+
+  function getHistoricalDONInfo(uint32 donId, uint32 configCount) external view returns (DONInfo memory) {
+    if (s_dons[donId].configCount == 0) revert DONDoesNotExist(donId);
+    if (configCount > s_dons[donId].configCount) {
+      revert DONConfigDoesNotExist(donId, s_dons[donId].configCount, configCount);
+    }
+
+    return _getDON(donId, configCount);
   }
 
   /// @notice Gets DON's info by its name
@@ -1026,7 +1044,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   ) external view returns (DONInfo memory) {
     uint32 donId = s_donNameToId[donName];
     if (donId == 0) revert DONWithNameDoesNotExist(donName);
-    return _getDON(donId);
+    uint32 configCount = s_dons[donId].configCount;
+    return _getDON(donId, configCount);
   }
 
   /// @notice Returns the list of configured DONs
@@ -1039,7 +1058,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     ///
     for (uint32 i = 1; i < donId; ++i) {
       if (s_dons[i].id != 0) {
-        dons[idx] = _getDON(i);
+        uint32 configCount = s_dons[i].configCount;
+        dons[idx] = _getDON(i, configCount);
         ++idx;
       }
     }
@@ -1265,33 +1285,29 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice Gets DON's data
   /// @param donId The DON ID
+  /// @param configCount The config count of the DON
   /// @return DONInfo The DON's parameters
-  function _getDON(
-    uint32 donId
-  ) internal view returns (DONInfo memory) {
-    uint32 configCount = s_dons[donId].configCount;
+  function _getDON(uint32 donId, uint32 configCount) internal view returns (DONInfo memory) {
+    DON storage don = s_dons[donId];
+    DONCapabilityConfig storage donConfig = don.config[configCount];
 
-    DONCapabilityConfig storage donCapabilityConfig = s_dons[donId].config[configCount];
-
-    bytes32[] memory capabilityIds = donCapabilityConfig.capabilityIds;
+    bytes32[] memory capabilityIds = donConfig.capabilityIds;
     CapabilityConfiguration[] memory capabilityConfigurations = new CapabilityConfiguration[](capabilityIds.length);
 
     for (uint256 i; i < capabilityConfigurations.length; ++i) {
-      capabilityConfigurations[i] = CapabilityConfiguration({
-        capabilityId: capabilityIds[i],
-        config: donCapabilityConfig.capabilityConfigs[capabilityIds[i]]
-      });
+      capabilityConfigurations[i] =
+        CapabilityConfiguration({capabilityId: capabilityIds[i], config: donConfig.capabilityConfigs[capabilityIds[i]]});
     }
 
     return DONInfo({
-      id: s_dons[donId].id,
-      name: s_dons[donId].name,
+      id: don.id,
+      name: don.name,
       configCount: configCount,
-      config: donCapabilityConfig.config,
-      f: s_dons[donId].f,
-      isPublic: s_dons[donId].isPublic,
-      acceptsWorkflows: s_dons[donId].acceptsWorkflows,
-      nodeP2PIds: donCapabilityConfig.nodes.values(),
+      config: donConfig.config,
+      f: don.f,
+      isPublic: don.isPublic,
+      acceptsWorkflows: don.acceptsWorkflows,
+      nodeP2PIds: donConfig.nodes.values(),
       capabilityConfigurations: capabilityConfigurations,
       donFamily: s_donFamily[donId]
     });
