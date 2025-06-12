@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/smartcontractkit/chainlink-ccip/chains/evm/gobindings/generated/latest/nonce_manager"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/stretchr/testify/require"
@@ -142,10 +143,12 @@ func readContracts(path string, result map[string]string) error {
 }
 
 type Result struct {
-	ChainName string
-	RPCName   string
-	InMinutes float64
-	Error     error
+	ChainName          string
+	RPCName            string
+	Tags               string
+	AvailableInMinutes float64
+	RequiredInMinutes  float64
+	Error              error
 }
 
 func TestCall(t *testing.T) {
@@ -170,7 +173,7 @@ func TestCall(t *testing.T) {
 	}
 
 	for _, result := range results {
-		println(fmt.Sprintf("%s\t%s\t%.2f\t%v", result.ChainName, result.RPCName, result.InMinutes, result.Error))
+		println(fmt.Sprintf("%s\t%s\t%.2f\t%.2f\t%v\t%s", result.ChainName, result.RPCName, result.AvailableInMinutes, result.RequiredInMinutes, result.Error, result.Tags))
 	}
 
 }
@@ -180,22 +183,18 @@ func ensureSufficientLookBackForChain(t *testing.T, rpcCfg Config, contractAddr 
 	name := rpcCfg.Names.Fullname
 	var results []Result
 	for _, node := range rpcCfg.Nodes {
-		lookBack, err := findLookBackDuration(node.HTTPURL, contractAddr)
+		available, required, err := findLookBackDuration(node.HTTPURL, contractAddr)
 		if err != nil {
 			lggr.Errorf("Error finding look back duration for %s using %s: %v", name, node.HTTPURL, err)
 		}
 
-		if lookBack < time.Hour {
-			lggr.Warnf("lookback for %s %s is not old enought %s", name, node.HTTPURL, lookBack)
-		} else {
-			lggr.Infof("lookback for %s %s is older than %s", name, node.HTTPURL, lookBack)
-		}
-
 		results = append(results, Result{
-			ChainName: name,
-			RPCName:   node.Provider,
-			InMinutes: float64(lookBack) / float64(time.Minute),
-			Error:     err,
+			ChainName:          name,
+			RPCName:            node.Provider,
+			AvailableInMinutes: float64(available) / float64(time.Minute),
+			RequiredInMinutes:  float64(required) / float64(time.Minute),
+			Tags:               strings.Join(node.Tags, ","),
+			Error:              err,
 		})
 	}
 
@@ -209,7 +208,7 @@ func headByNumber(client *ethclient.Client, number *big.Int) (*types.Header, err
 
 }
 
-func findLookBackDuration(rpcURL, contract string) (dur time.Duration, err error) {
+func findLookBackDuration(rpcURL, contract string) (availableLookBack, finalityLookBack time.Duration, err error) {
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
@@ -218,24 +217,29 @@ func findLookBackDuration(rpcURL, contract string) (dur time.Duration, err error
 	}()
 	client, err := ethclient.Dial(rpcURL)
 	if err != nil {
-		return 0, fmt.Errorf("failed to dial client: %w", err)
+		return 0, 0, fmt.Errorf("failed to dial client: %w", err)
 	}
 	client.Close()
-	latestBlock, err := headByNumber(client, nil)
+	latestBlock, err := headByNumber(client, big.NewInt(rpc.LatestBlockNumber.Int64()))
 	if err != nil {
-		return 0, fmt.Errorf("error getting latest block number: %v", err)
+		return 0, 0, fmt.Errorf("error getting latest block number: %v", err)
+	}
+
+	finalizedBlock, err := headByNumber(client, big.NewInt(rpc.FinalizedBlockNumber.Int64()))
+	if err != nil {
+		return 0, 0, fmt.Errorf("error getting finalized block number: %v", err)
 	}
 
 	addr := common.HexToAddress(contract)
 	registry, err := nonce_manager.NewNonceManager(addr, client)
 	if err != nil {
-		return 0, fmt.Errorf("error getting capabilities registry: %v", err)
+		return 0, 0, fmt.Errorf("error getting capabilities registry: %v", err)
 	}
 
-	const maxLookBack = 2000
+	maxLookBack := latestBlock.Number.Int64() - finalizedBlock.Number.Int64() + 2000
 	startTime := time.Unix(int64(latestBlock.Time), 0)
 	var maxDuration time.Duration
-	_, found := sort.Find(maxLookBack, func(offset int) int {
+	_, found := sort.Find(int(maxLookBack), func(offset int) int {
 		blockNumToTry := latestBlock.Number.Int64() - (maxLookBack - int64(offset))
 
 		block, err := headByNumber(client, big.NewInt(blockNumToTry))
@@ -259,9 +263,11 @@ func findLookBackDuration(rpcURL, contract string) (dur time.Duration, err error
 		return 0
 	})
 
+	requiredLookBack := startTime.Sub(time.Unix(int64(finalizedBlock.Time), 0))
+
 	if !found {
-		return 0, fmt.Errorf("failed to find look back for %s", contract)
+		return 0, requiredLookBack, fmt.Errorf("failed to find look back for %s", contract)
 	}
 
-	return maxDuration, nil
+	return maxDuration, requiredLookBack, nil
 }
