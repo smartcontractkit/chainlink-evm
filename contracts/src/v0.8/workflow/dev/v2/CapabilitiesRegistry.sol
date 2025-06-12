@@ -194,11 +194,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     CapabilityConfiguration[] capabilityConfigurations;
   }
 
-  struct AdditionalDONParams {
-    string name;
-    bytes config;
-  }
-
   /// @notice DONParams is a struct that holds the parameters for a DON.
   /// @dev This is needed to avoid "stack too deep" errors in _setDONConfig.
   struct DONParams {
@@ -207,17 +202,29 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bool isPublic;
     bool acceptsWorkflows;
     uint8 f;
-    AdditionalDONParams additionalParams;
-  }
-
-  struct NewDONParams {
-    bytes32[] nodes;
-    CapabilityConfiguration[] capabilityConfigurations;
-    bool isPublic;
-    bool acceptsWorkflows;
-    uint8 f;
     string name;
     bytes config;
+  }
+
+  /// @notice NewDONParams is a struct that holds the parameters for a new DON.
+  struct NewDONParams {
+    string name;
+    bytes config;
+    CapabilityConfiguration[] capabilityConfigurations;
+    bytes32[] nodes;
+    uint8 f;
+    bool isPublic;
+    bool acceptsWorkflows;
+  }
+
+  /// @notice UpdateDONParams is a struct that holds the parameters for updating a DON.
+  struct UpdateDONParams {
+    string name;
+    bytes config;
+    CapabilityConfiguration[] capabilityConfigurations;
+    bytes32[] nodes;
+    uint8 f;
+    bool isPublic;
   }
 
   // ================================================================
@@ -834,7 +841,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
           isPublic: newDON.isPublic,
           acceptsWorkflows: newDON.acceptsWorkflows,
           f: newDON.f,
-          additionalParams: AdditionalDONParams({name: newDON.name, config: newDON.config})
+          name: newDON.name,
+          config: newDON.config
         })
       );
     }
@@ -845,68 +853,46 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// by the DON, the list of nodes that make up the DON as well
   /// as whether or not the DON can accept external workflows
   /// @param donId The ID of the DON to update
-  /// @param nodes The nodes making up the DON
-  /// @param capabilityConfigurations The list of configurations for the
-  /// capabilities supported by the DON
-  /// @param isPublic True if the DON is can accept external capability requests
-  /// @param f The maximum number of nodes that can fail
-  /// @param additionalParams The optional parameters for the DON
-  function updateDON(
-    uint32 donId,
-    bytes32[] calldata nodes,
-    CapabilityConfiguration[] calldata capabilityConfigurations,
-    bool isPublic,
-    uint8 f,
-    AdditionalDONParams calldata additionalParams
-  ) external onlyOwner {
+  /// @param updateDONParams The parameters for the DON to update
+  function updateDON(uint32 donId, UpdateDONParams calldata updateDONParams) external onlyOwner {
     DON storage don = s_dons[donId];
     uint32 configCount = don.configCount;
     if (configCount == 0) revert DONDoesNotExist(donId);
     _setDONConfig(
-      nodes,
-      capabilityConfigurations,
+      updateDONParams.nodes,
+      updateDONParams.capabilityConfigurations,
       DONParams({
         id: donId,
         configCount: ++configCount,
-        isPublic: isPublic,
+        isPublic: updateDONParams.isPublic,
         acceptsWorkflows: don.acceptsWorkflows,
-        f: f,
-        additionalParams: additionalParams
+        f: updateDONParams.f,
+        name: updateDONParams.name,
+        config: updateDONParams.config
       })
     );
   }
 
   /// @notice Updates a DON's configuration by its name
   /// @param donName The name of the DON to update
-  /// @param nodes The nodes making up the DON
-  /// @param capabilityConfigurations The list of configurations for the
-  /// capabilities supported by the DON
-  /// @param isPublic True if the DON is can accept external capability requests
-  /// @param f The maximum number of nodes that can fail
-  /// @param additionalParams The optional parameters for the DON
-  function updateDONByName(
-    string calldata donName,
-    bytes32[] calldata nodes,
-    CapabilityConfiguration[] calldata capabilityConfigurations,
-    bool isPublic,
-    uint8 f,
-    AdditionalDONParams calldata additionalParams
-  ) external onlyOwner {
+  /// @param updateDONParams The parameters for the DON to update
+  function updateDONByName(string calldata donName, UpdateDONParams calldata updateDONParams) external onlyOwner {
     uint32 donId = s_donNameToId[donName];
     if (donId == 0) revert DONWithNameDoesNotExist(donName);
 
     DON storage don = s_dons[donId];
 
     _setDONConfig(
-      nodes,
-      capabilityConfigurations,
+      updateDONParams.nodes,
+      updateDONParams.capabilityConfigurations,
       DONParams({
         id: donId,
         configCount: ++don.configCount,
-        isPublic: isPublic,
+        isPublic: updateDONParams.isPublic,
         acceptsWorkflows: don.acceptsWorkflows,
-        f: f,
-        additionalParams: additionalParams
+        f: updateDONParams.f,
+        name: updateDONParams.name,
+        config: updateDONParams.config
       })
     );
   }
@@ -1113,15 +1099,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     MutableDONConfig storage prevDONConfig = don.config[donParams.configCount - 1];
 
     // Check if the DON name is changing
-    if (keccak256(bytes(prevDONConfig.name)) != keccak256(bytes(donParams.additionalParams.name))) {
+    if (keccak256(bytes(prevDONConfig.name)) != keccak256(bytes(donParams.name))) {
       delete s_donNameToId[donConfig.name];
 
-      if (bytes(donParams.additionalParams.name).length > 0) {
+      if (bytes(donParams.name).length > 0) {
         // If the new name is not empty, add it to the mapping
-        if (s_donNameToId[donParams.additionalParams.name] != 0) {
-          revert DONNameAlreadyTaken(donParams.additionalParams.name);
+        if (s_donNameToId[donParams.name] != 0) {
+          revert DONNameAlreadyTaken(donParams.name);
         }
-        s_donNameToId[donParams.additionalParams.name] = donParams.id;
+        s_donNameToId[donParams.name] = donParams.id;
       }
     }
 
@@ -1177,8 +1163,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       donConfig.capabilityIds.push(configuration.capabilityId);
       donConfig.capabilityConfigs[configuration.capabilityId] = configuration.config;
-      donConfig.config = donParams.additionalParams.config;
-      donConfig.name = donParams.additionalParams.name;
+      donConfig.config = donParams.config;
+      donConfig.name = donParams.name;
       donConfig.isPublic = donParams.isPublic;
       donConfig.f = donParams.f;
 

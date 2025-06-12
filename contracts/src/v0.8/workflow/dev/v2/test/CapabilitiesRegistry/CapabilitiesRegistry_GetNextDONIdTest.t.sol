@@ -57,8 +57,8 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
+      name: "",
+      config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
 

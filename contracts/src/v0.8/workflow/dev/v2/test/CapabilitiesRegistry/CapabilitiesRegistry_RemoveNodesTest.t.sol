@@ -91,8 +91,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: false,
       f: F_VALUE,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
+      name: "",
+      config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
 
@@ -120,8 +120,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
+      name: "",
+      config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
 
@@ -167,8 +167,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
+      name: "",
+      config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs2);
 
@@ -182,7 +182,17 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     bytes32[] memory updatedNodes = new bytes32[](2);
     updatedNodes[0] = P2P_ID;
     updatedNodes[1] = P2P_ID_THREE;
-    s_CapabilitiesRegistry.updateDON(DON_ID, updatedNodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: updatedNodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
 
     // Remove node
     s_CapabilitiesRegistry.removeNodes(removedNodes);

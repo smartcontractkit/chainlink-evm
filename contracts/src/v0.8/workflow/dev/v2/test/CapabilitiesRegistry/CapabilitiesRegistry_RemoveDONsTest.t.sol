@@ -97,8 +97,8 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: false,
       f: 1,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
+      name: "",
+      config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs2);
     uint32 capabilitiesDONId = DON_ID_TWO;

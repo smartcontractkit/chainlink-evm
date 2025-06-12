@@ -248,8 +248,8 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: 1,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
+      name: "",
+      config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
 
@@ -293,8 +293,8 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: false,
       f: 1,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
+      name: "",
+      config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs2);
 

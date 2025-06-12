@@ -43,7 +43,17 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
 
     capabilityConfigs[0] =
       CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
-    s_CapabilitiesRegistry.updateDON(DON_ID, nodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
   }
 
   function test_RevertWhen_DONDoesNotExist() public {
@@ -57,7 +67,15 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
       CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.DONWithNameDoesNotExist.selector, nonExistentDONName));
     s_CapabilitiesRegistry.updateDONByName(
-      nonExistentDONName, nodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams
+      nonExistentDONName,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
     );
   }
 
@@ -101,10 +119,16 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
       ),
       1
     );
-    CapabilitiesRegistry.AdditionalDONParams memory additionalDONParams =
-      CapabilitiesRegistry.AdditionalDONParams({config: TEST_DON_CONFIG, name: TEST_DON_NAME});
     s_CapabilitiesRegistry.updateDONByName(
-      TEST_DON_NAME, nodes, capabilityConfigs, expectedDONIsPublic, F_VALUE, additionalDONParams
+      TEST_DON_NAME,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: expectedDONIsPublic,
+        f: F_VALUE,
+        name: TEST_DON_NAME,
+        config: TEST_DON_CONFIG
+      })
     );
 
     CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME);

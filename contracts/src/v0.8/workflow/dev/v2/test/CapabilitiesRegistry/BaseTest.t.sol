@@ -22,8 +22,6 @@ contract BaseTest is Test, Constants {
   CapabilitiesRegistry.NewDONParams[] internal s_paramsForTwoDONs;
   bytes32[] internal s_nodeIds;
 
-  CapabilitiesRegistry.AdditionalDONParams internal s_emptyOptionalDONParams;
-
   function setUp() public virtual {
     vm.startPrank(ADMIN);
     s_CapabilitiesRegistry = new CapabilitiesRegistry();
@@ -43,8 +41,6 @@ contract BaseTest is Test, Constants {
     s_basicCapabilityId = s_basicCapability.capabilityId;
     s_capabilityWithConfigurationContractId = s_capabilityWithConfigurationContract.capabilityId;
     s_nonExistentCapabilityId = "non-existent-capability@1.0.0";
-
-    s_emptyOptionalDONParams = CapabilitiesRegistry.AdditionalDONParams({config: bytes(""), name: ""});
 
     s_oneCapabilityArray = new string[](1);
     s_oneCapabilityArray[0] = s_basicCapabilityId;

@@ -61,7 +61,17 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
     // Remove the DON name to test the historical DON info
-    s_CapabilitiesRegistry.updateDON(DON_ID, nodeIds, s_capabilityConfigs, false, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodeIds,
+        capabilityConfigurations: s_capabilityConfigs,
+        isPublic: false,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
   }
 
   function test_RevertWhen_DONDoesNotExist() public {

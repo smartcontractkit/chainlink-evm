@@ -24,7 +24,17 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
 
     capabilityConfigs[0] =
       CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
-    s_CapabilitiesRegistry.updateDON(DON_ID, nodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
   }
 
   function test_RevertWhen_NodeDoesNotSupportCapability() public {
@@ -42,7 +52,17 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         CapabilitiesRegistry.NodeDoesNotSupportCapability.selector, P2P_ID_TWO, s_capabilityWithConfigurationContractId
       )
     );
-    s_CapabilitiesRegistry.updateDON(DON_ID, s_nodeIds, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: s_nodeIds,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
   }
 
   function test_RevertWhen_DONDoesNotExist() public {
@@ -56,7 +76,15 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
       CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.DONDoesNotExist.selector, nonExistentDONId));
     s_CapabilitiesRegistry.updateDON(
-      nonExistentDONId, nodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams
+      nonExistentDONId,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
     );
   }
 
@@ -73,7 +101,17 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     vm.expectRevert(
       abi.encodeWithSelector(CapabilitiesRegistry.CapabilityDoesNotExist.selector, s_nonExistentCapabilityId)
     );
-    s_CapabilitiesRegistry.updateDON(DON_ID, nodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
   }
 
   function test_RevertWhen_DuplicateCapabilityAdded() public {
@@ -91,7 +129,17 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     vm.expectRevert(
       abi.encodeWithSelector(CapabilitiesRegistry.DuplicateDONCapability.selector, 1, s_basicCapabilityId)
     );
-    s_CapabilitiesRegistry.updateDON(DON_ID, nodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
   }
 
   function test_RevertWhen_DeprecatedCapabilityAdded() public {
@@ -109,7 +157,17 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
       CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
 
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.CapabilityIsDeprecated.selector, s_basicCapabilityId));
-    s_CapabilitiesRegistry.updateDON(DON_ID, nodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
   }
 
   function test_RevertWhen_DuplicateNodeAdded() public {
@@ -122,7 +180,17 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     capabilityConfigs[0] =
       CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.DuplicateDONNode.selector, 1, P2P_ID));
-    s_CapabilitiesRegistry.updateDON(DON_ID, nodes, capabilityConfigs, true, F_VALUE, s_emptyOptionalDONParams);
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: true,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
+    );
   }
 
   function test_UpdatesDON() public {
@@ -166,7 +234,15 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
       1
     );
     s_CapabilitiesRegistry.updateDON(
-      DON_ID, nodes, capabilityConfigs, expectedDONIsPublic, F_VALUE, s_emptyOptionalDONParams
+      DON_ID,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: nodes,
+        capabilityConfigurations: capabilityConfigs,
+        isPublic: expectedDONIsPublic,
+        f: F_VALUE,
+        name: "",
+        config: bytes("")
+      })
     );
 
     CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
