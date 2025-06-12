@@ -79,6 +79,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     EnumerableSet.UintSet capabilitiesDONIds;
   }
 
+  /// @notice Capability is a struct that holds the capability information
+  /// It is an input struct for the `addCapability` function.
   struct Capability {
     /// @notice The capability ID
     /// @dev Example: "data-streams-reports@1.0.0"
@@ -97,6 +99,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bytes metadata;
   }
 
+  /// @notice CapabilityInfo is a struct that holds the capability information
+  /// It is an output struct for the `getCapabilities` function.
   struct CapabilityInfo {
     /// @notice The capability ID
     /// @dev Example: "data-streams-reports@1.0.0"
@@ -126,6 +130,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bytes config;
   }
 
+  /// @notice MutableDONConfig is a struct that holds the configuration for a
+  /// specific DON. It is used to store the configuration for a DON that can be
+  /// updated.
   struct MutableDONConfig {
     /// @notice The set of p2pIds of nodes that belong to this DON. A node (the same p2pId) can belong to multiple DONs.
     EnumerableSet.Bytes32Set nodes;
