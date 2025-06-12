@@ -6,8 +6,8 @@ import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.so
 
 import {OwnerIsCreator} from "../shared/access/OwnerIsCreator.sol";
 
-import {ERC165Checker} from "../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
 import {EnumerableSet} from "../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
+import {ERC165Checker} from "../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 
@@ -168,7 +168,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bytes config;
   }
 
-  struct MutableDONConfig {
+  struct DONCapabilityConfig {
     /// @notice The set of p2pIds of nodes that belong to this DON. A node (the same p2pId) can belong to multiple DONs.
     EnumerableSet.Bytes32Set nodes;
     /// @notice The set of capabilityIds
@@ -196,7 +196,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// DON also support one or more capabilities as well.
     bool acceptsWorkflows;
     /// @notice Mapping of config counts to configurations
-    mapping(uint32 configCount => MutableDONConfig donConfig) config;
+    mapping(uint32 configCount => DONCapabilityConfig donConfig) config;
   }
 
   struct DONInfo {
@@ -453,9 +453,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param nodeOperatorIds The ID of the node operator being updated
   /// @param nodeOperators The updated node operator params
   function updateNodeOperators(uint32[] calldata nodeOperatorIds, NodeOperator[] calldata nodeOperators) external {
-    if (nodeOperatorIds.length != nodeOperators.length) {
+    if (nodeOperatorIds.length != nodeOperators.length)
       revert LengthMismatch(nodeOperatorIds.length, nodeOperators.length);
-    }
 
     address owner = owner();
     for (uint256 i; i < nodeOperatorIds.length; ++i) {
@@ -565,9 +564,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       Node storage node = s_nodes[p2pId];
 
       if (node.signer == bytes32("")) revert NodeDoesNotExist(p2pId);
-      if (node.capabilitiesDONIds.length() > 0) {
+      if (node.capabilitiesDONIds.length() > 0)
         revert NodePartOfCapabilitiesDON(uint32(node.capabilitiesDONIds.at(i)), p2pId);
-      }
       if (node.workflowDONId != 0) revert NodePartOfWorkflowDON(node.workflowDONId, p2pId);
 
       if (!isOwner && msg.sender != s_nodeOperators[node.nodeOperatorId].admin) revert AccessForbidden(msg.sender);
@@ -608,9 +606,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       uint32 capabilityConfigCount = ++storedNode.configCount;
       for (uint256 j; j < supportedHashedCapabilityIds.length; ++j) {
-        if (!s_hashedCapabilityIds.contains(supportedHashedCapabilityIds[j])) {
+        if (!s_hashedCapabilityIds.contains(supportedHashedCapabilityIds[j]))
           revert InvalidNodeCapabilities(supportedHashedCapabilityIds);
-        }
         storedNode.supportedHashedCapabilityIds[capabilityConfigCount].add(supportedHashedCapabilityIds[j]);
       }
 
@@ -622,9 +619,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
           .capabilityIds;
 
         for (uint256 j; j < workflowDonCapabilityIds.length; ++j) {
-          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j])) {
+          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j]))
             revert CapabilityRequiredByDON(workflowDonCapabilityIds[j], nodeWorkflowDONId);
-          }
         }
       }
 
@@ -635,9 +631,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         bytes32[] memory donCapabilityIds = s_dons[donId].config[s_dons[donId].configCount].capabilityIds;
 
         for (uint256 k; k < donCapabilityIds.length; ++k) {
-          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(donCapabilityIds[k])) {
+          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(donCapabilityIds[k]))
             revert CapabilityRequiredByDON(donCapabilityIds[k], donId);
-          }
         }
       }
 
@@ -885,7 +880,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   function getCapabilityConfigs(uint32 donId, bytes32 capabilityId) external view returns (bytes memory, bytes memory) {
     uint32 configCount = s_dons[donId].configCount;
 
-    bytes memory mutableDONConfig = s_dons[donId].config[configCount].capabilityConfigs[capabilityId];
+    bytes memory donCapabilityConfig = s_dons[donId].config[configCount].capabilityConfigs[capabilityId];
     bytes memory globalCapabilityConfig;
 
     if (s_capabilities[capabilityId].configurationContract != address(0)) {
@@ -893,7 +888,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         .getCapabilityConfiguration(donId);
     }
 
-    return (mutableDONConfig, globalCapabilityConfig);
+    return (donCapabilityConfig, globalCapabilityConfig);
   }
 
   /// @notice Sets the configuration for a DON
@@ -905,7 +900,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     CapabilityConfiguration[] calldata capabilityConfigurations,
     DONParams memory donParams
   ) internal {
-    MutableDONConfig storage mutableDONConfig = s_dons[donParams.id].config[donParams.configCount];
+    DONCapabilityConfig storage donCapabilityConfig = s_dons[donParams.id].config[donParams.configCount];
 
     // Validate the f value. We are intentionally relaxing the 3f+1 requirement
     // as not all DONs will run OCR instances.
@@ -914,7 +909,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     // Skip removing supported DON Ids from previously configured nodes in DON if
     // we are adding the DON for the first time
     if (donParams.configCount > 1) {
-      MutableDONConfig storage prevMutableDONConfig = s_dons[donParams.id].config[donParams.configCount - 1];
+      DONCapabilityConfig storage prevDONCapabilityConfig = s_dons[donParams.id].config[donParams.configCount - 1];
 
       // We acknowledge that this may result in an out of gas error if the number of configured
       // nodes is large.  This is mitigated by ensuring that there will not be a large number
@@ -922,19 +917,18 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       // We also do not remove the nodes from the previous DON capability config.  This is not
       // needed as the previous config will be overwritten by storing the latest config
       // at configCount
-      for (uint256 i; i < prevMutableDONConfig.nodes.length(); ++i) {
-        s_nodes[prevMutableDONConfig.nodes.at(i)].capabilitiesDONIds.remove(donParams.id);
-        delete s_nodes[prevMutableDONConfig.nodes.at(i)].workflowDONId;
+      for (uint256 i; i < prevDONCapabilityConfig.nodes.length(); ++i) {
+        s_nodes[prevDONCapabilityConfig.nodes.at(i)].capabilitiesDONIds.remove(donParams.id);
+        delete s_nodes[prevDONCapabilityConfig.nodes.at(i)].workflowDONId;
       }
     }
 
     for (uint256 i; i < nodes.length; ++i) {
-      if (!mutableDONConfig.nodes.add(nodes[i])) revert DuplicateDONNode(donParams.id, nodes[i]);
+      if (!donCapabilityConfig.nodes.add(nodes[i])) revert DuplicateDONNode(donParams.id, nodes[i]);
 
       if (donParams.acceptsWorkflows) {
-        if (s_nodes[nodes[i]].workflowDONId != donParams.id && s_nodes[nodes[i]].workflowDONId != 0) {
+        if (s_nodes[nodes[i]].workflowDONId != donParams.id && s_nodes[nodes[i]].workflowDONId != 0)
           revert NodePartOfWorkflowDON(donParams.id, nodes[i]);
-        }
         s_nodes[nodes[i]].workflowDONId = donParams.id;
       } else {
         /// Fine to add a duplicate DON ID to the set of supported DON IDs again as the set
@@ -946,16 +940,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     for (uint256 i; i < capabilityConfigurations.length; ++i) {
       CapabilityConfiguration calldata configuration = capabilityConfigurations[i];
 
-      if (!s_hashedCapabilityIds.contains(configuration.capabilityId)) {
+      if (!s_hashedCapabilityIds.contains(configuration.capabilityId))
         revert CapabilityDoesNotExist(configuration.capabilityId);
-      }
-      if (s_deprecatedHashedCapabilityIds.contains(configuration.capabilityId)) {
+      if (s_deprecatedHashedCapabilityIds.contains(configuration.capabilityId))
         revert CapabilityIsDeprecated(configuration.capabilityId);
-      }
 
-      if (mutableDONConfig.capabilityConfigs[configuration.capabilityId].length > 0) {
+      if (donCapabilityConfig.capabilityConfigs[configuration.capabilityId].length > 0)
         revert DuplicateDONCapability(donParams.id, configuration.capabilityId);
-      }
 
       for (uint256 j; j < nodes.length; ++j) {
         if (
@@ -965,15 +956,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         ) revert NodeDoesNotSupportCapability(nodes[j], configuration.capabilityId);
       }
 
-      mutableDONConfig.capabilityIds.push(configuration.capabilityId);
-      mutableDONConfig.capabilityConfigs[configuration.capabilityId] = configuration.config;
+      donCapabilityConfig.capabilityIds.push(configuration.capabilityId);
+      donCapabilityConfig.capabilityConfigs[configuration.capabilityId] = configuration.config;
 
       s_dons[donParams.id].isPublic = donParams.isPublic;
       s_dons[donParams.id].acceptsWorkflows = donParams.acceptsWorkflows;
       s_dons[donParams.id].f = donParams.f;
       s_dons[donParams.id].configCount = donParams.configCount;
 
-      _setMutableDONConfig(
+      _setDONCapabilityConfig(
         donParams.id,
         donParams.configCount,
         configuration.capabilityId,
@@ -991,7 +982,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param nodes The nodes in the DON
   /// @param config The DON's capability config
   /// @dev Helper function used to resolve stack too deep errors in _setDONConfig
-  function _setMutableDONConfig(
+  function _setDONCapabilityConfig(
     uint32 donId,
     uint32 configCount,
     bytes32 capabilityId,
@@ -1031,15 +1022,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   function _getDON(uint32 donId) internal view returns (DONInfo memory) {
     uint32 configCount = s_dons[donId].configCount;
 
-    MutableDONConfig storage mutableDONConfig = s_dons[donId].config[configCount];
+    DONCapabilityConfig storage donCapabilityConfig = s_dons[donId].config[configCount];
 
-    bytes32[] memory capabilityIds = mutableDONConfig.capabilityIds;
+    bytes32[] memory capabilityIds = donCapabilityConfig.capabilityIds;
     CapabilityConfiguration[] memory capabilityConfigurations = new CapabilityConfiguration[](capabilityIds.length);
 
     for (uint256 i; i < capabilityConfigurations.length; ++i) {
       capabilityConfigurations[i] = CapabilityConfiguration({
         capabilityId: capabilityIds[i],
-        config: mutableDONConfig.capabilityConfigs[capabilityIds[i]]
+        config: donCapabilityConfig.capabilityConfigs[capabilityIds[i]]
       });
     }
 
@@ -1050,7 +1041,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         f: s_dons[donId].f,
         isPublic: s_dons[donId].isPublic,
         acceptsWorkflows: s_dons[donId].acceptsWorkflows,
-        nodeP2PIds: mutableDONConfig.nodes.values(),
+        nodeP2PIds: donCapabilityConfig.nodes.values(),
         capabilityConfigurations: capabilityConfigurations
       });
   }
