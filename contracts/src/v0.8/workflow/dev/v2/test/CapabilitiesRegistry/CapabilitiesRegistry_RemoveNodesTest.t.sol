@@ -17,16 +17,12 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     s_CapabilitiesRegistry.addCapabilities(capabilities);
 
     CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](3);
-    bytes32[] memory hashedCapabilityIds = new bytes32[](2);
-    hashedCapabilityIds[0] = s_basicHashedCapabilityId;
-    hashedCapabilityIds[1] = s_capabilityWithConfigurationContractId;
-
     nodes[0] = CapabilitiesRegistry.NodeParams({
       nodeOperatorId: TEST_NODE_OPERATOR_ONE_ID,
       p2pId: P2P_ID,
       signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
-      hashedCapabilityIds: hashedCapabilityIds
+      capabilityIds: s_twoCapabilitiesArray
     });
 
     nodes[1] = CapabilitiesRegistry.NodeParams({
@@ -34,7 +30,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       p2pId: P2P_ID_TWO,
       signer: NODE_OPERATOR_TWO_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_TWO,
-      hashedCapabilityIds: hashedCapabilityIds
+      capabilityIds: s_twoCapabilitiesArray
     });
 
     nodes[2] = CapabilitiesRegistry.NodeParams({
@@ -42,7 +38,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       p2pId: P2P_ID_THREE,
       signer: NODE_OPERATOR_THREE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_THREE,
-      hashedCapabilityIds: hashedCapabilityIds
+      capabilityIds: s_twoCapabilitiesArray
     });
 
     changePrank(ADMIN);
@@ -85,10 +81,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
+    capabilityConfigs[0] =
+      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
 
     CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
     newDONs[0] = CapabilitiesRegistry.NewDONParams({
@@ -115,10 +109,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
+    capabilityConfigs[0] =
+      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
 
     // Add DON
     CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
@@ -150,7 +142,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     assertEq(node.nodeOperatorId, 0);
     assertEq(node.p2pId, bytes32(""));
     assertEq(node.signer, bytes32(""));
-    assertEq(node.hashedCapabilityIds.length, 0);
+    assertEq(node.capabilityIds.length, 0);
     assertEq(node.configCount, 0);
   }
 
@@ -164,10 +156,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
+    capabilityConfigs[0] =
+      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
 
     // Add DON
     CapabilitiesRegistry.NewDONParams[] memory newDONs2 = new CapabilitiesRegistry.NewDONParams[](1);
@@ -200,7 +190,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     assertEq(node.nodeOperatorId, 0);
     assertEq(node.p2pId, bytes32(""));
     assertEq(node.signer, bytes32(""));
-    assertEq(node.hashedCapabilityIds.length, 0);
+    assertEq(node.capabilityIds.length, 0);
     assertEq(node.configCount, 0);
   }
 
@@ -218,7 +208,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     assertEq(node.nodeOperatorId, 0);
     assertEq(node.p2pId, bytes32(""));
     assertEq(node.signer, bytes32(""));
-    assertEq(node.hashedCapabilityIds.length, 0);
+    assertEq(node.capabilityIds.length, 0);
     assertEq(node.configCount, 0);
   }
 
@@ -231,16 +221,16 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     s_CapabilitiesRegistry.removeNodes(nodes);
 
     CapabilitiesRegistry.NodeParams[] memory nodeParams = new CapabilitiesRegistry.NodeParams[](1);
-    bytes32[] memory hashedCapabilityIds = new bytes32[](2);
-    hashedCapabilityIds[0] = s_basicHashedCapabilityId;
-    hashedCapabilityIds[1] = s_capabilityWithConfigurationContractId;
+    string[] memory capabilityIds = new string[](2);
+    capabilityIds[0] = s_basicCapabilityId;
+    capabilityIds[1] = s_capabilityWithConfigurationContractId;
 
     nodeParams[0] = CapabilitiesRegistry.NodeParams({
       nodeOperatorId: TEST_NODE_OPERATOR_ONE_ID,
       p2pId: P2P_ID,
       signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
-      hashedCapabilityIds: hashedCapabilityIds
+      capabilityIds: capabilityIds
     });
 
     s_CapabilitiesRegistry.addNodes(nodeParams);
@@ -248,9 +238,9 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     CapabilitiesRegistry.NodeInfo memory node = s_CapabilitiesRegistry.getNode(P2P_ID);
     assertEq(node.nodeOperatorId, TEST_NODE_OPERATOR_ONE_ID);
     assertEq(node.p2pId, P2P_ID);
-    assertEq(node.hashedCapabilityIds.length, 2);
-    assertEq(node.hashedCapabilityIds[0], s_basicHashedCapabilityId);
-    assertEq(node.hashedCapabilityIds[1], s_capabilityWithConfigurationContractId);
+    assertEq(node.capabilityIds.length, 2);
+    assertEq(node.capabilityIds[0], s_basicCapabilityId);
+    assertEq(node.capabilityIds[1], s_capabilityWithConfigurationContractId);
     assertEq(node.configCount, 1);
   }
 
@@ -268,7 +258,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     assertEq(node.nodeOperatorId, 0);
     assertEq(node.p2pId, bytes32(""));
     assertEq(node.signer, bytes32(""));
-    assertEq(node.hashedCapabilityIds.length, 0);
+    assertEq(node.capabilityIds.length, 0);
     assertEq(node.configCount, 0);
   }
 }

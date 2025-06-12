@@ -16,57 +16,46 @@ contract CapabilitiesRegistry_DeprecateCapabilitiesTest is BaseTest {
 
   function test_RevertWhen_CalledByNonAdmin() public {
     changePrank(STRANGER);
-    bytes32 hashedCapabilityId =
-      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
-
-    bytes32[] memory deprecatedCapabilities = new bytes32[](1);
-    deprecatedCapabilities[0] = hashedCapabilityId;
+    string[] memory deprecatedCapabilities = new string[](1);
+    deprecatedCapabilities[0] = s_basicCapabilityId;
 
     vm.expectRevert("Only callable by owner");
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
   }
 
   function test_RevertWhen_CapabilityDoesNotExist() public {
-    bytes32[] memory deprecatedCapabilities = new bytes32[](1);
-    deprecatedCapabilities[0] = s_nonExistentHashedCapabilityId;
+    string[] memory deprecatedCapabilities = new string[](1);
+    deprecatedCapabilities[0] = s_nonExistentCapabilityId;
 
     vm.expectRevert(
-      abi.encodeWithSelector(CapabilitiesRegistry.CapabilityDoesNotExist.selector, s_nonExistentHashedCapabilityId)
+      abi.encodeWithSelector(CapabilitiesRegistry.CapabilityDoesNotExist.selector, s_nonExistentCapabilityId)
     );
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
   }
 
   function test_RevertWhen_CapabilityIsDeprecated() public {
-    bytes32 hashedCapabilityId =
-      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
-
-    bytes32[] memory deprecatedCapabilities = new bytes32[](1);
-    deprecatedCapabilities[0] = hashedCapabilityId;
+    string[] memory deprecatedCapabilities = new string[](1);
+    deprecatedCapabilities[0] = s_basicCapabilityId;
 
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
-    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.CapabilityIsDeprecated.selector, hashedCapabilityId));
+    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.CapabilityIsDeprecated.selector, s_basicCapabilityId));
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
   }
 
   function test_DeprecatesCapability() public {
-    bytes32 hashedCapabilityId =
-      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
-    bytes32[] memory deprecatedCapabilities = new bytes32[](1);
-    deprecatedCapabilities[0] = hashedCapabilityId;
+    string[] memory deprecatedCapabilities = new string[](1);
+    deprecatedCapabilities[0] = s_basicCapabilityId;
 
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
-    assertEq(s_CapabilitiesRegistry.isCapabilityDeprecated(hashedCapabilityId), true);
+    assertEq(s_CapabilitiesRegistry.isCapabilityDeprecated(s_basicCapabilityId), true);
   }
 
   function test_EmitsEvent() public {
-    bytes32 hashedCapabilityId =
-      s_CapabilitiesRegistry.getHashedCapabilityId(s_basicCapability.labelledName, s_basicCapability.version);
-
-    bytes32[] memory deprecatedCapabilities = new bytes32[](1);
-    deprecatedCapabilities[0] = hashedCapabilityId;
+    string[] memory deprecatedCapabilities = new string[](1);
+    deprecatedCapabilities[0] = s_basicCapabilityId;
 
     vm.expectEmit(address(s_CapabilitiesRegistry));
-    emit CapabilitiesRegistry.CapabilityDeprecated(hashedCapabilityId);
+    emit CapabilitiesRegistry.CapabilityDeprecated(s_basicCapabilityId);
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
   }
 }

@@ -8,46 +8,10 @@ import {BaseTest} from "./BaseTest.t.sol";
 contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
   function setUp() public override {
     BaseTest.setUp();
-    CapabilitiesRegistry.Capability[] memory capabilities = new CapabilitiesRegistry.Capability[](2);
-    capabilities[0] = s_basicCapability;
-    capabilities[1] = s_capabilityWithConfigurationContract;
 
     s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
-    s_CapabilitiesRegistry.addCapabilities(capabilities);
-
-    CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](3);
-    bytes32[] memory capabilityIds = new bytes32[](2);
-    capabilityIds[0] = s_basicHashedCapabilityId;
-    capabilityIds[1] = s_capabilityWithConfigurationContractId;
-
-    nodes[0] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_ONE_ID,
-      p2pId: P2P_ID,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
-      signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
-      hashedCapabilityIds: capabilityIds
-    });
-
-    bytes32[] memory nodeTwoCapabilityIds = new bytes32[](1);
-    nodeTwoCapabilityIds[0] = s_basicHashedCapabilityId;
-
-    nodes[1] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_TWO_ID,
-      p2pId: P2P_ID_TWO,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_TWO,
-      signer: NODE_OPERATOR_TWO_SIGNER_ADDRESS,
-      hashedCapabilityIds: nodeTwoCapabilityIds
-    });
-
-    nodes[2] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_THREE_ID,
-      p2pId: P2P_ID_THREE,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_THREE,
-      signer: NODE_OPERATOR_THREE_SIGNER_ADDRESS,
-      hashedCapabilityIds: capabilityIds
-    });
-
-    s_CapabilitiesRegistry.addNodes(nodes);
+    s_CapabilitiesRegistry.addCapabilities(s_capabilities);
+    s_CapabilitiesRegistry.addNodes(s_paramsForTwoNodes);
 
     changePrank(ADMIN);
   }
@@ -56,16 +20,22 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
     uint32 nextDONId = s_CapabilitiesRegistry.getNextDONId();
     assertEq(nextDONId, 1); // Expecting the first DON ID since no DONs have been added yet
 
+    CapabilitiesRegistry.NodeParams[] memory nodeParams = new CapabilitiesRegistry.NodeParams[](1);
+    nodeParams[0].p2pId = P2P_ID_THREE;
+    nodeParams[0].capabilityIds = s_twoCapabilitiesArray;
+    nodeParams[0].nodeOperatorId = TEST_NODE_OPERATOR_THREE_ID;
+    nodeParams[0].signer = NODE_OPERATOR_THREE_SIGNER_ADDRESS;
+    nodeParams[0].encryptionPublicKey = TEST_ENCRYPTION_PUBLIC_KEY_THREE;
+    s_CapabilitiesRegistry.addNodes(nodeParams);
+
     bytes32[] memory nodes = new bytes32[](2);
     nodes[0] = P2P_ID;
     nodes[1] = P2P_ID_THREE;
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](2);
-    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
+    capabilityConfigs[0] =
+      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
     capabilityConfigs[1] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_capabilityWithConfigurationContractId,
       config: CONFIG_CAPABILITY_CONFIG

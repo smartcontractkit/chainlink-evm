@@ -8,7 +8,7 @@ import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
 
 import {ERC165Checker} from
   "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
-import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v5.4.0/contracts/utils/structs/EnumerableSet.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 
@@ -21,6 +21,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   // Add the library methods
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.UintSet;
+  using EnumerableSet for EnumerableSet.StringSet;
 
   // ================================================================
   // |                         Enums                               |
@@ -70,8 +71,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bytes32 p2pId;
     /// @notice Public key used to encrypt secrets for this node
     bytes32 encryptionPublicKey;
-    /// @notice The list of hashed capability IDs supported by the node
-    bytes32[] hashedCapabilityIds;
+    /// @notice The list of capability IDs supported by the node
+    string[] capabilityIds;
   }
 
   struct Node {
@@ -98,24 +99,16 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// @notice The node's supported capabilities
     /// @dev This is stored as a map so that we can easily update to a set of new capabilities by
     /// incrementing the configCount and creating a new set of supported capability IDs
-    mapping(uint32 configCount => EnumerableSet.Bytes32Set capabilityId) supportedHashedCapabilityIds;
+    mapping(uint32 configCount => EnumerableSet.StringSet capabilityId) supportedCapabilityIds;
     /// @notice The list of capabilities DON Ids supported by the node. A node can belong to multiple
     /// capabilities DONs. This list does not include a Workflow DON id if the node belongs to one.
     EnumerableSet.UintSet capabilitiesDONIds;
   }
 
   struct Capability {
-    /// @notice The partially qualified ID for the capability.
-    /// @dev Given the following capability ID: {name}:{label1_key}_{label1_value}:{label2_key}_{label2_value}@{version}
-    /// Then we denote the `labelledName` as the `{name}:{label1_key}_{label1_value}:{label2_key}_{label2_value}`
-    /// portion of the ID.
-    ///
-    /// Ex. id = "data-streams-reports:chain:ethereum@1.0.0"
-    ///     labelledName = "data-streams-reports:chain:ethereum"
-    string labelledName;
-    /// @notice Semver, e.g., "1.2.3"
-    /// @dev must be valid Semver + max 32 characters.
-    string version;
+    /// @notice The capability ID
+    /// @dev Example: "data-streams-reports@1.0.0"
+    string capabilityId;
     /// @notice CapabilityType indicates the type of capability which determines
     /// where the capability can be used in a Workflow Spec.
     CapabilityType capabilityType;
@@ -135,19 +128,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   }
 
   struct CapabilityInfo {
-    /// @notice A hashed ID created by the `getHashedCapabilityId` function.
-    bytes32 hashedId;
-    /// @notice The partially qualified ID for the capability.
-    /// @dev Given the following capability ID: {name}:{label1_key}_{label1_value}:{label2_key}_{label2_value}@{version}
-    /// Then we denote the `labelledName` as the `{name}:{label1_key}_{label1_value}:{label2_key}_{label2_value}`
-    /// portion of the ID.
-    ///
-    /// Ex. id = "data-streams-reports:chain:ethereum@1.0.0"
-    ///     labelledName = "data-streams-reports:chain:ethereum"
-    string labelledName;
-    /// @notice Semver, e.g., "1.2.3"
-    /// @dev must be valid Semver + max 32 characters.
-    string version;
+    /// @notice The capability ID
+    /// @dev Example: "data-streams-reports@1.0.0"
+    string capabilityId;
     /// @notice CapabilityType indicates the type of capability which determines
     /// where the capability can be used in a Workflow Spec.
     CapabilityType capabilityType;
@@ -172,7 +155,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// for a specific DON
   struct CapabilityConfiguration {
     /// @notice The capability Id
-    bytes32 capabilityId;
+    string capabilityId;
     /// @notice The capability config specific to a DON.  This will be decoded offchain
     bytes config;
   }
@@ -184,7 +167,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// specific to a capability.
     bytes config;
     /// @notice The set of capabilityIds
-    bytes32[] capabilityIds;
+    string[] capabilityIds;
     /// @notice True if the DON is public. A public DON means that it accepts
     /// external capability requests
     bool isPublic;
@@ -195,8 +178,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// @notice The name of the DON. Can be empty. If not empty, must be unique
     /// to the registry.
     string name;
-    /// @notice Mapping from hashed capability IDs to configs
-    mapping(bytes32 capabilityId => bytes config) capabilityConfigs;
+    /// @notice Mapping from capability IDs to configs
+    mapping(string capabilityId => bytes config) capabilityConfigs;
   }
 
   /// @notice DON (Decentralized Oracle Network) is a grouping of nodes that support
@@ -301,8 +284,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice This error is thrown when trying to add a node without
   /// capabilities or with capabilities that do not exist.
-  /// @param hashedCapabilityIds The IDs of the capabilities that are being added.
-  error InvalidNodeCapabilities(bytes32[] hashedCapabilityIds);
+  /// @param capabilityIds The IDs of the capabilities that are being added.
+  error InvalidNodeCapabilities(string[] capabilityIds);
 
   /// @notice This error is emitted when a DON does not exist
   /// @param donId The ID of the nonexistent DON
@@ -319,9 +302,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice This error is thrown when trying to add a capability that already
   /// exists.
-  /// @param hashedCapabilityId The hashed capability ID of the capability
+  /// @param capabilityId The capability ID of the capability
   /// that already exists
-  error CapabilityAlreadyExists(bytes32 hashedCapabilityId);
+  error CapabilityAlreadyExists(string capabilityId);
 
   /// @notice This error is thrown when trying to add a node that already
   /// exists.
@@ -332,13 +315,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// the node does not support the capability
   /// @param nodeP2PId The P2P ID of the node
   /// @param capabilityId The ID of the capability
-  error NodeDoesNotSupportCapability(bytes32 nodeP2PId, bytes32 capabilityId);
+  error NodeDoesNotSupportCapability(bytes32 nodeP2PId, string capabilityId);
 
   /// @notice This error is thrown when trying to add a capability configuration
   /// for a capability that was already configured on a DON
   /// @param donId The ID of the DON that the capability was configured for
   /// @param capabilityId The ID of the capability that was configured
-  error DuplicateDONCapability(uint32 donId, bytes32 capabilityId);
+  error DuplicateDONCapability(uint32 donId, string capabilityId);
 
   /// @notice This error is thrown when trying to add a duplicate node to a DON
   /// @param donId The ID of the DON that the node was added for
@@ -351,15 +334,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param nodeCount The proposed number of nodes in the DON
   error InvalidFaultTolerance(uint8 f, uint256 nodeCount);
 
-  /// @notice This error is thrown when a capability with the provided hashed ID is
+  /// @notice This error is thrown when a capability with the provided ID is
   /// not found.
-  /// @param hashedCapabilityId The hashed ID used for the lookup.
-  error CapabilityDoesNotExist(bytes32 hashedCapabilityId);
+  /// @param capabilityId The ID used for the lookup.
+  error CapabilityDoesNotExist(string capabilityId);
 
   /// @notice This error is thrown when trying to deprecate a capability that
   /// is deprecated.
-  /// @param hashedCapabilityId The hashed ID of the capability that is deprecated.
-  error CapabilityIsDeprecated(bytes32 hashedCapabilityId);
+  /// @param capabilityId The ID of the capability that is deprecated.
+  error CapabilityIsDeprecated(string capabilityId);
 
   /// @notice This error is thrown when a node operator does not exist
   /// @param nodeOperatorId The ID of the node operator that does not exist
@@ -381,9 +364,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice This error is thrown when removing a capability from the node
   /// when that capability is still required by one of the DONs the node
   /// belongs to.
-  /// @param hashedCapabilityId The hashed ID of the capability
+  /// @param capabilityId The ID of the capability
   /// @param donId The ID of the DON that requires the capability
-  error CapabilityRequiredByDON(bytes32 hashedCapabilityId, uint32 donId);
+  error CapabilityRequiredByDON(string capabilityId, uint32 donId);
 
   /// @notice This error is thrown when trying to add a capability with a
   /// configuration contract that does not implement the required interface.
@@ -447,12 +430,12 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   event NodeOperatorUpdated(uint32 indexed nodeOperatorId, address indexed admin, string name);
 
   /// @notice This event is emitted when a new capability is added
-  /// @param hashedCapabilityId The hashed ID of the newly added capability
-  event CapabilityConfigured(bytes32 indexed hashedCapabilityId);
+  /// @param capabilityId The ID of the newly added capability
+  event CapabilityConfigured(string indexed capabilityId);
 
   /// @notice This event is emitted when a capability is deprecated
-  /// @param hashedCapabilityId The hashed ID of the deprecated capability
-  event CapabilityDeprecated(bytes32 indexed hashedCapabilityId);
+  /// @param capabilityId The ID of the deprecated capability
+  event CapabilityDeprecated(string indexed capabilityId);
 
   /// @notice This event is emitted when a DON family is set
   /// @param donId The ID of the DON whose family was set
@@ -469,15 +452,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   mapping(string donName => uint32 donId) private s_donNameToId;
 
   /// @notice Mapping of capabilities
-  mapping(bytes32 hashedCapabilityId => Capability capability) private s_capabilities;
+  mapping(string capabilityId => Capability capability) private s_capabilities;
 
-  /// @notice Set of hashed capability IDs.
-  /// A hashed ID is created by the function `getHashedCapabilityId`.
-  EnumerableSet.Bytes32Set private s_hashedCapabilityIds;
+  /// @notice Set of capability IDs.
+  EnumerableSet.StringSet private s_capabilityIds;
 
-  /// @notice Set of deprecated hashed capability IDs,
-  /// A hashed ID is created by the function `getHashedCapabilityId`.
-  EnumerableSet.Bytes32Set private s_deprecatedHashedCapabilityIds;
+  /// @notice Set of deprecated capability IDs
+  EnumerableSet.StringSet private s_deprecatedCapabilityIds;
 
   /// @notice Encoded node signer addresses
   EnumerableSet.Bytes32Set private s_nodeSigners;
@@ -624,15 +605,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       if (node.encryptionPublicKey == bytes32("")) revert InvalidNodeEncryptionPublicKey(node.encryptionPublicKey);
 
-      bytes32[] memory capabilityIds = node.hashedCapabilityIds;
+      string[] memory capabilityIds = node.capabilityIds;
       if (capabilityIds.length == 0) revert InvalidNodeCapabilities(capabilityIds);
 
       ++storedNode.configCount;
 
       uint32 capabilityConfigCount = storedNode.configCount;
       for (uint256 j; j < capabilityIds.length; ++j) {
-        if (!s_hashedCapabilityIds.contains(capabilityIds[j])) revert InvalidNodeCapabilities(capabilityIds);
-        storedNode.supportedHashedCapabilityIds[capabilityConfigCount].add(capabilityIds[j]);
+        if (!s_capabilityIds.contains(capabilityIds[j])) revert InvalidNodeCapabilities(capabilityIds);
+        storedNode.supportedCapabilityIds[capabilityConfigCount].add(capabilityIds[j]);
       }
 
       storedNode.encryptionPublicKey = node.encryptionPublicKey;
@@ -698,25 +679,25 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       if (node.encryptionPublicKey == bytes32("")) revert InvalidNodeEncryptionPublicKey(node.encryptionPublicKey);
 
-      bytes32[] memory supportedHashedCapabilityIds = node.hashedCapabilityIds;
-      if (supportedHashedCapabilityIds.length == 0) revert InvalidNodeCapabilities(supportedHashedCapabilityIds);
+      string[] memory capabilityIds = node.capabilityIds;
+      if (capabilityIds.length == 0) revert InvalidNodeCapabilities(capabilityIds);
 
       uint32 capabilityConfigCount = ++storedNode.configCount;
-      for (uint256 j; j < supportedHashedCapabilityIds.length; ++j) {
-        if (!s_hashedCapabilityIds.contains(supportedHashedCapabilityIds[j])) {
-          revert InvalidNodeCapabilities(supportedHashedCapabilityIds);
+      for (uint256 j; j < capabilityIds.length; ++j) {
+        if (!s_capabilityIds.contains(capabilityIds[j])) {
+          revert InvalidNodeCapabilities(capabilityIds);
         }
-        storedNode.supportedHashedCapabilityIds[capabilityConfigCount].add(supportedHashedCapabilityIds[j]);
+        storedNode.supportedCapabilityIds[capabilityConfigCount].add(capabilityIds[j]);
       }
 
       // Validate that capabilities required by a Workflow DON are still supported
       uint32 nodeWorkflowDONId = storedNode.workflowDONId;
       if (nodeWorkflowDONId != 0) {
-        bytes32[] memory workflowDonCapabilityIds =
+        string[] memory workflowDonCapabilityIds =
           s_dons[nodeWorkflowDONId].config[s_dons[nodeWorkflowDONId].configCount].capabilityIds;
 
         for (uint256 j; j < workflowDonCapabilityIds.length; ++j) {
-          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j])) {
+          if (!storedNode.supportedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j])) {
             revert CapabilityRequiredByDON(workflowDonCapabilityIds[j], nodeWorkflowDONId);
           }
         }
@@ -726,10 +707,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       uint256[] memory capabilitiesDONIds = storedNode.capabilitiesDONIds.values();
       for (uint32 j; j < capabilitiesDONIds.length; ++j) {
         uint32 donId = uint32(capabilitiesDONIds[j]);
-        bytes32[] memory donCapabilityIds = s_dons[donId].config[s_dons[donId].configCount].capabilityIds;
+        string[] memory donCapabilityIds = s_dons[donId].config[s_dons[donId].configCount].capabilityIds;
 
         for (uint256 k; k < donCapabilityIds.length; ++k) {
-          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(donCapabilityIds[k])) {
+          if (!storedNode.supportedCapabilityIds[capabilityConfigCount].contains(donCapabilityIds[k])) {
             revert CapabilityRequiredByDON(donCapabilityIds[k], donId);
           }
         }
@@ -755,7 +736,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         p2pId: s_nodes[p2pId].p2pId,
         signer: s_nodes[p2pId].signer,
         encryptionPublicKey: s_nodes[p2pId].encryptionPublicKey,
-        hashedCapabilityIds: s_nodes[p2pId].supportedHashedCapabilityIds[s_nodes[p2pId].configCount].values(),
+        capabilityIds: s_nodes[p2pId].supportedCapabilityIds[s_nodes[p2pId].configCount].values(),
         configCount: s_nodes[p2pId].configCount,
         workflowDONId: s_nodes[p2pId].workflowDONId,
         capabilitiesDONIds: s_nodes[p2pId].capabilitiesDONIds.values()
@@ -800,40 +781,47 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   ) external onlyOwner {
     for (uint256 i; i < capabilities.length; ++i) {
       Capability memory capability = capabilities[i];
-      bytes32 hashedCapabilityId = getHashedCapabilityId(capability.labelledName, capability.version);
-      if (!s_hashedCapabilityIds.add(hashedCapabilityId)) revert CapabilityAlreadyExists(hashedCapabilityId);
-      _setCapability(hashedCapabilityId, capability);
+      if (!s_capabilityIds.add(capability.capabilityId)) revert CapabilityAlreadyExists(capability.capabilityId);
+
+      if (capability.configurationContract != address(0)) {
+        /// Check that the configuration contract being assigned
+        /// correctly supports the ICapabilityConfiguration interface
+        /// by implementing both getCapabilityConfiguration and
+        /// beforeCapabilityConfigSet
+        if (
+          !ERC165Checker.supportsInterface(capability.configurationContract, type(ICapabilityConfiguration).interfaceId)
+        ) revert InvalidCapabilityConfigurationContractInterface(capability.configurationContract);
+      }
+      s_capabilities[capability.capabilityId] = capability;
+      emit CapabilityConfigured(capability.capabilityId);
     }
   }
 
   /// @notice Deprecates a capability
-  /// @param hashedCapabilityIds[] The IDs of the capabilities to deprecate
+  /// @param capabilityIds[] The IDs of the capabilities to deprecate
   function deprecateCapabilities(
-    bytes32[] calldata hashedCapabilityIds
+    string[] calldata capabilityIds
   ) external onlyOwner {
-    for (uint256 i; i < hashedCapabilityIds.length; ++i) {
-      bytes32 hashedCapabilityId = hashedCapabilityIds[i];
-      if (!s_hashedCapabilityIds.contains(hashedCapabilityId)) revert CapabilityDoesNotExist(hashedCapabilityId);
-      if (!s_deprecatedHashedCapabilityIds.add(hashedCapabilityId)) revert CapabilityIsDeprecated(hashedCapabilityId);
+    for (uint256 i; i < capabilityIds.length; ++i) {
+      string memory capabilityId = capabilityIds[i];
+      if (!s_capabilityIds.contains(capabilityId)) revert CapabilityDoesNotExist(capabilityId);
+      if (!s_deprecatedCapabilityIds.add(capabilityId)) revert CapabilityIsDeprecated(capabilityId);
 
-      emit CapabilityDeprecated(hashedCapabilityId);
+      emit CapabilityDeprecated(capabilityId);
     }
   }
 
-  /// @notice Returns a Capability by its hashed ID.
-  /// @dev Use `getHashedCapabilityId` to get the hashed ID.
+  /// @notice Returns a Capability by its ID.
   function getCapability(
-    bytes32 hashedId
+    string memory capabilityId
   ) public view returns (CapabilityInfo memory) {
     return (
       CapabilityInfo({
-        hashedId: hashedId,
-        labelledName: s_capabilities[hashedId].labelledName,
-        version: s_capabilities[hashedId].version,
-        capabilityType: s_capabilities[hashedId].capabilityType,
-        responseType: s_capabilities[hashedId].responseType,
-        configurationContract: s_capabilities[hashedId].configurationContract,
-        isDeprecated: s_deprecatedHashedCapabilityIds.contains(hashedId)
+        capabilityId: capabilityId,
+        capabilityType: s_capabilities[capabilityId].capabilityType,
+        responseType: s_capabilities[capabilityId].responseType,
+        configurationContract: s_capabilities[capabilityId].configurationContract,
+        isDeprecated: s_deprecatedCapabilityIds.contains(capabilityId)
       })
     );
   }
@@ -843,31 +831,22 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// used by view accessors that are queried without any gas fees.
   /// @return CapabilityInfo[] List of capabilities
   function getCapabilities() external view returns (CapabilityInfo[] memory) {
-    bytes32[] memory hashedCapabilityIds = s_hashedCapabilityIds.values();
-    CapabilityInfo[] memory capabilitiesInfo = new CapabilityInfo[](hashedCapabilityIds.length);
+    string[] memory capabilityIds = s_capabilityIds.values();
+    CapabilityInfo[] memory capabilitiesInfo = new CapabilityInfo[](capabilityIds.length);
 
-    for (uint256 i; i < hashedCapabilityIds.length; ++i) {
-      capabilitiesInfo[i] = getCapability(hashedCapabilityIds[i]);
+    for (uint256 i; i < capabilityIds.length; ++i) {
+      capabilitiesInfo[i] = getCapability(capabilityIds[i]);
     }
     return capabilitiesInfo;
   }
 
-  /// @notice This functions returns a capability id that has been hashed to fit into a bytes32 for cheaper access
-  /// @param labelledName The name of the capability
-  /// @param version The capability's version number
-  /// @return bytes32 A unique identifier for the capability
-  /// @dev The hash of the encoded labelledName and version
-  function getHashedCapabilityId(string memory labelledName, string memory version) public pure returns (bytes32) {
-    return keccak256(abi.encode(labelledName, version));
-  }
-
   /// @notice Returns whether a capability is deprecated
-  /// @param hashedCapabilityId The hashed ID of the capability to check
+  /// @param capabilityId The ID of the capability to check
   /// @return bool True if the capability is deprecated, false otherwise
   function isCapabilityDeprecated(
-    bytes32 hashedCapabilityId
+    string calldata capabilityId
   ) external view returns (bool) {
-    return s_deprecatedHashedCapabilityIds.contains(hashedCapabilityId);
+    return s_deprecatedCapabilityIds.contains(capabilityId);
   }
 
   /// @notice Adds a list of DONs
@@ -1077,7 +1056,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param capabilityId The Capability ID
   /// @return bytes The DON specific configuration for the capability stored on the capability registry
   /// @return bytes The DON specific configuration stored on the capability's configuration contract
-  function getCapabilityConfigs(uint32 donId, bytes32 capabilityId) external view returns (bytes memory, bytes memory) {
+  function getCapabilityConfigs(
+    uint32 donId,
+    string memory capabilityId
+  ) external view returns (bytes memory, bytes memory) {
     uint32 configCount = s_dons[donId].configCount;
 
     bytes memory mutableDONConfig = s_dons[donId].config[configCount].capabilityConfigs[capabilityId];
@@ -1210,10 +1192,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     for (uint256 i; i < capabilityConfigurations.length; ++i) {
       CapabilityConfiguration memory configuration = capabilityConfigurations[i];
 
-      if (!s_hashedCapabilityIds.contains(configuration.capabilityId)) {
+      if (!s_capabilityIds.contains(configuration.capabilityId)) {
         revert CapabilityDoesNotExist(configuration.capabilityId);
       }
-      if (s_deprecatedHashedCapabilityIds.contains(configuration.capabilityId)) {
+      if (s_deprecatedCapabilityIds.contains(configuration.capabilityId)) {
         revert CapabilityIsDeprecated(configuration.capabilityId);
       }
 
@@ -1223,9 +1205,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       for (uint256 j; j < nodes.length; ++j) {
         if (
-          !s_nodes[nodes[j]].supportedHashedCapabilityIds[s_nodes[nodes[j]].configCount].contains(
-            configuration.capabilityId
-          )
+          !s_nodes[nodes[j]].supportedCapabilityIds[s_nodes[nodes[j]].configCount].contains(configuration.capabilityId)
         ) revert NodeDoesNotSupportCapability(nodes[j], configuration.capabilityId);
       }
 
@@ -1255,7 +1235,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   function _setCapabilityConfig(
     uint32 donId,
     uint32 configCount,
-    bytes32 capabilityId,
+    string memory capabilityId,
     bytes32[] memory nodes,
     bytes memory config
   ) internal {
@@ -1266,23 +1246,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     }
   }
 
-  /// @notice Sets a capability's data
-  /// @param hashedCapabilityId The ID of the capability being set
-  /// @param capability The capability's data
-  function _setCapability(bytes32 hashedCapabilityId, Capability memory capability) internal {
-    if (capability.configurationContract != address(0)) {
-      /// Check that the configuration contract being assigned
-      /// correctly supports the ICapabilityConfiguration interface
-      /// by implementing both getCapabilityConfiguration and
-      /// beforeCapabilityConfigSet
-      if (
-        !ERC165Checker.supportsInterface(capability.configurationContract, type(ICapabilityConfiguration).interfaceId)
-      ) revert InvalidCapabilityConfigurationContractInterface(capability.configurationContract);
-    }
-    s_capabilities[hashedCapabilityId] = capability;
-    emit CapabilityConfigured(hashedCapabilityId);
-  }
-
   /// @notice Gets DON's data
   /// @param donId The DON ID
   /// @param configCount The config count of the DON
@@ -1291,7 +1254,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     DON storage don = s_dons[donId];
     MutableDONConfig storage donConfig = don.config[configCount];
 
-    bytes32[] memory capabilityIds = donConfig.capabilityIds;
+    string[] memory capabilityIds = donConfig.capabilityIds;
     CapabilityConfiguration[] memory capabilityConfigurations = new CapabilityConfiguration[](capabilityIds.length);
 
     for (uint256 i; i < capabilityConfigurations.length; ++i) {

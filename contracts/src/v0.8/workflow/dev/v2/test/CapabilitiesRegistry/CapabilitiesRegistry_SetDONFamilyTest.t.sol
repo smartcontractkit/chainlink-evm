@@ -12,81 +12,10 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
   function setUp() public override {
     BaseTest.setUp();
 
-    // Add capabilities
-    CapabilitiesRegistry.Capability[] memory capabilities = new CapabilitiesRegistry.Capability[](1);
-    capabilities[0] = s_basicCapability;
-    s_CapabilitiesRegistry.addCapabilities(capabilities);
-
-    // Add node operators
+    s_CapabilitiesRegistry.addCapabilities(s_capabilities);
     s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
-
-    // Add nodes
-    CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](3);
-    bytes32[] memory capabilityIds = new bytes32[](1);
-    capabilityIds[0] = s_basicHashedCapabilityId;
-
-    nodes[0] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_ONE_ID,
-      p2pId: P2P_ID,
-      signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
-      hashedCapabilityIds: capabilityIds
-    });
-
-    nodes[1] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_TWO_ID,
-      p2pId: P2P_ID_TWO,
-      signer: NODE_OPERATOR_TWO_SIGNER_ADDRESS,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_TWO,
-      hashedCapabilityIds: capabilityIds
-    });
-
-    nodes[2] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_THREE_ID,
-      p2pId: P2P_ID_THREE,
-      signer: NODE_OPERATOR_THREE_SIGNER_ADDRESS,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_THREE,
-      hashedCapabilityIds: capabilityIds
-    });
-
-    s_CapabilitiesRegistry.addNodes(nodes);
-
-    // Add DONs
-    bytes32[] memory don1Nodes = new bytes32[](2);
-    don1Nodes[0] = P2P_ID;
-    don1Nodes[1] = P2P_ID_TWO;
-
-    bytes32[] memory don2Nodes = new bytes32[](2);
-    don2Nodes[0] = P2P_ID_TWO;
-    don2Nodes[1] = P2P_ID_THREE;
-
-    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
-      new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
-
-    CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](2);
-    newDONs[0] = CapabilitiesRegistry.NewDONParams({
-      nodes: don1Nodes,
-      capabilityConfigurations: capabilityConfigs,
-      isPublic: true,
-      acceptsWorkflows: false,
-      f: F_VALUE,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
-    });
-    newDONs[1] = CapabilitiesRegistry.NewDONParams({
-      nodes: don2Nodes,
-      capabilityConfigurations: capabilityConfigs,
-      isPublic: true,
-      acceptsWorkflows: false,
-      f: F_VALUE,
-      name: s_emptyOptionalDONParams.name,
-      config: s_emptyOptionalDONParams.config
-    });
-    s_CapabilitiesRegistry.addDONs(newDONs);
+    s_CapabilitiesRegistry.addNodes(s_paramsForTwoNodes);
+    s_CapabilitiesRegistry.addDONs(s_paramsForTwoDONs);
 
     vm.startPrank(ADMIN);
   }

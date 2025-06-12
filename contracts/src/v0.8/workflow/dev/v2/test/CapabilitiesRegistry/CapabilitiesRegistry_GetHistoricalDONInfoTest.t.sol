@@ -6,8 +6,6 @@ import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 
 contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
-  CapabilitiesRegistry.CapabilityConfiguration[] private s_capabilityConfigs;
-
   function setUp() public override {
     BaseTest.setUp();
 
@@ -19,8 +17,8 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
     s_CapabilitiesRegistry.addCapabilities(capabilities);
 
     CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](2);
-    bytes32[] memory capabilityIds = new bytes32[](2);
-    capabilityIds[0] = s_basicHashedCapabilityId;
+    string[] memory capabilityIds = new string[](2);
+    capabilityIds[0] = s_basicCapabilityId;
     capabilityIds[1] = s_capabilityWithConfigurationContractId;
 
     nodes[0] = CapabilitiesRegistry.NodeParams({
@@ -28,35 +26,29 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
       p2pId: P2P_ID,
       signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
-      hashedCapabilityIds: capabilityIds
+      capabilityIds: capabilityIds
     });
 
-    bytes32[] memory nodeTwoCapabilityIds = new bytes32[](1);
-    nodeTwoCapabilityIds[0] = s_basicHashedCapabilityId;
+    string[] memory nodeTwoCapabilityIds = new string[](1);
+    nodeTwoCapabilityIds[0] = s_basicCapabilityId;
 
     nodes[1] = CapabilitiesRegistry.NodeParams({
       nodeOperatorId: TEST_NODE_OPERATOR_ONE_ID,
       p2pId: P2P_ID_TWO,
       signer: NODE_OPERATOR_TWO_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_TWO,
-      hashedCapabilityIds: nodeTwoCapabilityIds
+      capabilityIds: nodeTwoCapabilityIds
     });
 
-    changePrank(NODE_OPERATOR_ONE_ADMIN);
+    vm.startPrank(NODE_OPERATOR_ONE_ADMIN);
     s_CapabilitiesRegistry.addNodes(nodes);
-
-    s_capabilityConfigs.push(
-      CapabilitiesRegistry.CapabilityConfiguration({
-        capabilityId: s_basicHashedCapabilityId,
-        config: BASIC_CAPABILITY_CONFIG
-      })
-    );
 
     bytes32[] memory nodeIds = new bytes32[](2);
     nodeIds[0] = P2P_ID;
     nodeIds[1] = P2P_ID_TWO;
 
-    changePrank(ADMIN);
+    vm.stopPrank();
+    vm.startPrank(ADMIN);
     CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
     newDONs[0] = CapabilitiesRegistry.NewDONParams({
       nodes: nodeIds,
@@ -64,8 +56,8 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: s_testDONParams.name,
-      config: s_testDONParams.config
+      name: TEST_DON_NAME,
+      config: TEST_DON_CONFIG
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
     // Remove the DON name to test the historical DON info
@@ -90,9 +82,9 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
     assertEq(don.acceptsWorkflows, true);
     assertEq(don.f, 1);
     assertEq(don.capabilityConfigurations.length, s_capabilityConfigs.length);
-    assertEq(don.capabilityConfigurations[0].capabilityId, s_basicHashedCapabilityId);
-    assertEq(don.name, "test-name");
-    assertEq(don.config, bytes("abc"));
+    assertEq(don.capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
+    assertEq(don.name, TEST_DON_NAME);
+    assertEq(don.config, TEST_DON_CONFIG);
 
     don = s_CapabilitiesRegistry.getHistoricalDONInfo(DON_ID, 2);
     assertEq(don.id, DON_ID);
@@ -101,7 +93,7 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
     assertEq(don.acceptsWorkflows, true);
     assertEq(don.f, 1);
     assertEq(don.capabilityConfigurations.length, s_capabilityConfigs.length);
-    assertEq(don.capabilityConfigurations[0].capabilityId, s_basicHashedCapabilityId);
+    assertEq(don.capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
     assertEq(don.name, "");
     assertEq(don.config, bytes(""));
   }

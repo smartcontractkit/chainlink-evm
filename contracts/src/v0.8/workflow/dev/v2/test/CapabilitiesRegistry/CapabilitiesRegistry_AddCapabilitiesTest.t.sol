@@ -25,9 +25,7 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
     s_CapabilitiesRegistry.addCapabilities(capabilities);
 
     // Try to add the same capability again
-    vm.expectRevert(
-      abi.encodeWithSelector(CapabilitiesRegistry.CapabilityAlreadyExists.selector, s_basicHashedCapabilityId)
-    );
+    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.CapabilityAlreadyExists.selector, s_basicCapabilityId));
     s_CapabilitiesRegistry.addCapabilities(capabilities);
   }
 
@@ -73,15 +71,13 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
     CapabilitiesRegistry.Capability[] memory capabilities = new CapabilitiesRegistry.Capability[](1);
     capabilities[0] = s_basicCapability;
 
-    bytes32 hashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId("data-streams-reports", "1.0.0");
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
-    emit CapabilitiesRegistry.CapabilityConfigured(hashedCapabilityId);
+    emit CapabilitiesRegistry.CapabilityConfigured(s_basicCapability.capabilityId);
     s_CapabilitiesRegistry.addCapabilities(capabilities);
     CapabilitiesRegistry.CapabilityInfo memory storedCapability =
-      s_CapabilitiesRegistry.getCapability(hashedCapabilityId);
+      s_CapabilitiesRegistry.getCapability(s_basicCapability.capabilityId);
 
-    assertEq(storedCapability.labelledName, s_basicCapability.labelledName);
-    assertEq(storedCapability.version, s_basicCapability.version);
+    assertEq(storedCapability.capabilityId, s_basicCapability.capabilityId);
     assertEq(uint256(storedCapability.responseType), uint256(s_basicCapability.responseType));
     assertEq(storedCapability.configurationContract, s_basicCapability.configurationContract);
   }
@@ -90,18 +86,14 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
     CapabilitiesRegistry.Capability[] memory capabilities = new CapabilitiesRegistry.Capability[](1);
     capabilities[0] = s_capabilityWithConfigurationContract;
 
-    bytes32 hashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_capabilityWithConfigurationContract.labelledName, s_capabilityWithConfigurationContract.version
-    );
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
-    emit CapabilitiesRegistry.CapabilityConfigured(hashedCapabilityId);
+    emit CapabilitiesRegistry.CapabilityConfigured(s_capabilityWithConfigurationContract.capabilityId);
     s_CapabilitiesRegistry.addCapabilities(capabilities);
 
     CapabilitiesRegistry.CapabilityInfo memory storedCapability =
-      s_CapabilitiesRegistry.getCapability(hashedCapabilityId);
+      s_CapabilitiesRegistry.getCapability(s_capabilityWithConfigurationContract.capabilityId);
 
-    assertEq(storedCapability.labelledName, s_capabilityWithConfigurationContract.labelledName);
-    assertEq(storedCapability.version, s_capabilityWithConfigurationContract.version);
+    assertEq(storedCapability.capabilityId, s_capabilityWithConfigurationContract.capabilityId);
     assertEq(uint256(storedCapability.responseType), uint256(s_capabilityWithConfigurationContract.responseType));
     assertEq(storedCapability.configurationContract, s_capabilityWithConfigurationContract.configurationContract);
   }

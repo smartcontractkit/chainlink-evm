@@ -15,41 +15,8 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     capabilities[1] = s_capabilityWithConfigurationContract;
 
     s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
-    s_CapabilitiesRegistry.addCapabilities(capabilities);
-
-    CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](3);
-    bytes32[] memory capabilityIds = new bytes32[](2);
-    capabilityIds[0] = s_basicHashedCapabilityId;
-    capabilityIds[1] = s_capabilityWithConfigurationContractId;
-
-    nodes[0] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_ONE_ID,
-      p2pId: P2P_ID,
-      signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
-      hashedCapabilityIds: capabilityIds
-    });
-
-    bytes32[] memory nodeTwoCapabilityIds = new bytes32[](1);
-    nodeTwoCapabilityIds[0] = s_basicHashedCapabilityId;
-
-    nodes[1] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_TWO_ID,
-      p2pId: P2P_ID_TWO,
-      signer: NODE_OPERATOR_TWO_SIGNER_ADDRESS,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_TWO,
-      hashedCapabilityIds: nodeTwoCapabilityIds
-    });
-
-    nodes[2] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_THREE_ID,
-      p2pId: P2P_ID_THREE,
-      signer: NODE_OPERATOR_THREE_SIGNER_ADDRESS,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_THREE,
-      hashedCapabilityIds: capabilityIds
-    });
-
-    s_CapabilitiesRegistry.addNodes(nodes);
+    s_CapabilitiesRegistry.addCapabilities(s_capabilities);
+    s_CapabilitiesRegistry.addNodes(s_paramsForTwoNodes);
 
     bytes32[] memory newNodes = new bytes32[](2);
     newNodes[0] = P2P_ID;
@@ -57,10 +24,8 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory defaultCapabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    defaultCapabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
+    defaultCapabilityConfigs[0] =
+      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
 
     s_DEFAULT_NEW_DON_PARAMS = new CapabilitiesRegistry.NewDONParams[](1);
     s_DEFAULT_NEW_DON_PARAMS[0] = CapabilitiesRegistry.NewDONParams({
@@ -93,6 +58,9 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
 
     s_DEFAULT_NEW_DON_PARAMS[0].capabilityConfigurations = capabilityConfigs;
 
+    s_paramsForTwoNodes[1].capabilityIds = s_oneCapabilityArray;
+    s_CapabilitiesRegistry.updateNodes(s_paramsForTwoNodes);
+
     vm.expectRevert(
       abi.encodeWithSelector(
         CapabilitiesRegistry.NodeDoesNotSupportCapability.selector, P2P_ID_TWO, s_capabilityWithConfigurationContractId
@@ -105,14 +73,14 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_nonExistentHashedCapabilityId, // This capability does not exist
+      capabilityId: s_nonExistentCapabilityId, // This capability does not exist
       config: BASIC_CAPABILITY_CONFIG
     });
 
     s_DEFAULT_NEW_DON_PARAMS[0].capabilityConfigurations = capabilityConfigs;
 
     vm.expectRevert(
-      abi.encodeWithSelector(CapabilitiesRegistry.CapabilityDoesNotExist.selector, s_nonExistentHashedCapabilityId)
+      abi.encodeWithSelector(CapabilitiesRegistry.CapabilityDoesNotExist.selector, s_nonExistentCapabilityId)
     );
     s_CapabilitiesRegistry.addDONs(s_DEFAULT_NEW_DON_PARAMS);
   }
@@ -127,30 +95,25 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
   function test_RevertWhen_DuplicateCapabilityAdded() public {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](2);
-    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
-    capabilityConfigs[1] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
+    capabilityConfigs[0] =
+      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[1] =
+      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
 
     s_DEFAULT_NEW_DON_PARAMS[0].capabilityConfigurations = capabilityConfigs;
 
     vm.expectRevert(
-      abi.encodeWithSelector(CapabilitiesRegistry.DuplicateDONCapability.selector, 1, s_basicHashedCapabilityId)
+      abi.encodeWithSelector(CapabilitiesRegistry.DuplicateDONCapability.selector, 1, s_basicCapabilityId)
     );
     s_CapabilitiesRegistry.addDONs(s_DEFAULT_NEW_DON_PARAMS);
   }
 
   function test_RevertWhen_DeprecatedCapabilityAdded() public {
-    bytes32 capabilityId = s_basicHashedCapabilityId;
-    bytes32[] memory deprecatedCapabilities = new bytes32[](1);
-    deprecatedCapabilities[0] = capabilityId;
+    string[] memory deprecatedCapabilities = new string[](1);
+    deprecatedCapabilities[0] = s_basicCapabilityId;
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
 
-    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.CapabilityIsDeprecated.selector, capabilityId));
+    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.CapabilityIsDeprecated.selector, s_basicCapabilityId));
     s_CapabilitiesRegistry.addDONs(s_DEFAULT_NEW_DON_PARAMS);
   }
 
@@ -185,17 +148,11 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
   }
 
   function test_AddDONs() public {
-    bytes32[] memory nodes = new bytes32[](2);
-    nodes[0] = P2P_ID;
-    nodes[1] = P2P_ID_THREE;
-
-    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigsForTwoCapabilities =
       new CapabilitiesRegistry.CapabilityConfiguration[](2);
-    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
-    });
-    capabilityConfigs[1] = CapabilitiesRegistry.CapabilityConfiguration({
+    capabilityConfigsForTwoCapabilities[0] =
+      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigsForTwoCapabilities[1] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_capabilityWithConfigurationContractId,
       config: CONFIG_CAPABILITY_CONFIG
     });
@@ -205,14 +162,14 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     vm.expectCall(
       address(s_capabilityConfigurationContract),
       abi.encodeWithSelector(
-        ICapabilityConfiguration.beforeCapabilityConfigSet.selector, nodes, CONFIG_CAPABILITY_CONFIG, 1, DON_ID
+        ICapabilityConfiguration.beforeCapabilityConfigSet.selector, s_nodeIds, CONFIG_CAPABILITY_CONFIG, 1, DON_ID
       ),
       1
     );
     CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
     newDONs[0] = CapabilitiesRegistry.NewDONParams({
-      nodes: nodes,
-      capabilityConfigurations: capabilityConfigs,
+      nodes: s_nodeIds,
+      capabilityConfigurations: capabilityConfigsForTwoCapabilities,
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
@@ -226,13 +183,18 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     assertEq(donInfo.id, DON_ID);
     assertEq(donInfo.configCount, 1);
     assertEq(donInfo.isPublic, true);
-    assertEq(donInfo.capabilityConfigurations.length, capabilityConfigs.length);
-    assertEq(donInfo.capabilityConfigurations[0].capabilityId, s_basicHashedCapabilityId);
+    assertEq(
+      donInfo.capabilityConfigurations.length,
+      capabilityConfigsForTwoCapabilities.length,
+      "Capability configs length mismatch"
+    );
+    assertEq(donInfo.capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
+    assertEq(donInfo.capabilityConfigurations[1].capabilityId, s_capabilityWithConfigurationContractId);
     assertEq(donInfo.name, "test-name");
     assertEq(donInfo.config, bytes("abc"));
 
     (bytes memory CapabilitiesRegistryDONConfig, bytes memory capabilityConfigContractConfig) =
-      s_CapabilitiesRegistry.getCapabilityConfigs(DON_ID, s_basicHashedCapabilityId);
+      s_CapabilitiesRegistry.getCapabilityConfigs(DON_ID, s_basicCapabilityId);
     assertEq(CapabilitiesRegistryDONConfig, BASIC_CAPABILITY_CONFIG);
     assertEq(capabilityConfigContractConfig, bytes(""));
 
@@ -241,8 +203,8 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     assertEq(CapabilitiesRegistryDONConfigTwo, CONFIG_CAPABILITY_CONFIG);
     assertEq(capabilityConfigContractConfigTwo, CONFIG_CAPABILITY_CONFIG);
 
-    assertEq(donInfo.nodeP2PIds.length, nodes.length);
+    assertEq(donInfo.nodeP2PIds.length, s_nodeIds.length);
     assertEq(donInfo.nodeP2PIds[0], P2P_ID);
-    assertEq(donInfo.nodeP2PIds[1], P2P_ID_THREE);
+    assertEq(donInfo.nodeP2PIds[1], P2P_ID_TWO);
   }
 }
