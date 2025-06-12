@@ -48,7 +48,7 @@ contract WorkflowRegistry_linkOwner is Test {
 
     vm.prank(owner);
     vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, true);
+    emit WorkflowRegistry.OwnershipLinkUpdated(owner, proof, true);
     wr.linkOwner(validityTimestamp, proof, sig);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
   }
@@ -127,7 +127,7 @@ contract WorkflowRegistry_linkOwner is Test {
     // link the owner using a unique proof
     vm.prank(owner);
     vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, true);
+    emit WorkflowRegistry.OwnershipLinkUpdated(owner, proof, true);
     wr.linkOwner(validityTimestamp, proof, linkSignature);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
 
@@ -140,7 +140,7 @@ contract WorkflowRegistry_linkOwner is Test {
     // now unlink the owner from the registry
     vm.prank(owner);
     vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, false);
+    emit WorkflowRegistry.OwnershipLinkUpdated(owner, proof, false);
     wr.unlinkOwner(owner, validityTimestamp, unlinkSignature, WorkflowRegistry.PreUnlinkAction.NONE);
     assertFalse(wr.isOwnerLinked(owner), "Owner should be unlinked");
 
@@ -193,7 +193,7 @@ contract WorkflowRegistry_linkOwner is Test {
 
     vm.prank(owner);
     vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, true);
+    emit WorkflowRegistry.OwnershipLinkUpdated(owner, proof, true);
     wr.linkOwner(validityTimestamp, proof, sig);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
     _;

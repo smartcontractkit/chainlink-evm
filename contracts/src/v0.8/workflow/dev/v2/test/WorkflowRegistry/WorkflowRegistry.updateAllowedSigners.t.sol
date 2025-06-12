@@ -44,7 +44,7 @@ contract WorkflowRegistry_updateAllowedSigners is Test {
     signers[0] = address(0xaaaa);
 
     vm.expectEmit(true, false, false, true);
-    emit WorkflowRegistry.AllowedSignersUpdatedV1(signers, true);
+    emit WorkflowRegistry.AllowedSignersUpdated(signers, true);
 
     wr.updateAllowedSigners(signers, true);
     assertTrue(wr.isAllowedSigner(address(0x1111)), "Signer 1 should be still here");
@@ -60,7 +60,7 @@ contract WorkflowRegistry_updateAllowedSigners is Test {
     signers[0] = address(0x2222);
 
     vm.expectEmit(true, false, false, true);
-    emit WorkflowRegistry.AllowedSignersUpdatedV1(signers, true);
+    emit WorkflowRegistry.AllowedSignersUpdated(signers, true);
 
     wr.updateAllowedSigners(signers, true);
     assertTrue(wr.isAllowedSigner(address(0x1111)), "Signer 1 should be still here");
@@ -79,7 +79,7 @@ contract WorkflowRegistry_updateAllowedSigners is Test {
     signers[0] = address(0x2222);
 
     vm.expectEmit(true, false, false, true);
-    emit WorkflowRegistry.AllowedSignersUpdatedV1(signers, false);
+    emit WorkflowRegistry.AllowedSignersUpdated(signers, false);
 
     wr.updateAllowedSigners(signers, false);
     assertTrue(wr.isAllowedSigner(address(0x1111)), "Signer 1 should be still here");
@@ -95,7 +95,7 @@ contract WorkflowRegistry_updateAllowedSigners is Test {
     signers[0] = address(0x5555);
 
     vm.expectEmit(true, false, false, true);
-    emit WorkflowRegistry.AllowedSignersUpdatedV1(signers, false);
+    emit WorkflowRegistry.AllowedSignersUpdated(signers, false);
 
     wr.updateAllowedSigners(signers, false);
     assertTrue(wr.isAllowedSigner(address(0x1111)), "Signer 1 should be still here");

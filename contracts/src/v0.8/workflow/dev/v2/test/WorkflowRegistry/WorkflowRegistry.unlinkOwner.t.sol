@@ -113,7 +113,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
 
     vm.prank(caller); // caller = owner
     vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, false);
+    emit WorkflowRegistry.OwnershipLinkUpdated(owner, proof, false);
     wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertFalse(wr.isOwnerLinked(owner), "Owner should be unlinked");
   }
@@ -233,7 +233,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
 
     vm.prank(caller); // caller = not owner
     vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, false);
+    emit WorkflowRegistry.OwnershipLinkUpdated(owner, proof, false);
     wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertFalse(wr.isOwnerLinked(owner), "Owner should be unlinked");
   }
