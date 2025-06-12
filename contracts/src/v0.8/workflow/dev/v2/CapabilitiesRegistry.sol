@@ -416,7 +416,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param donFamily The family name that was set
   event DONFamilySet(uint32 indexed donId, string indexed donFamily);
 
-  string public constant override typeAndVersion = "CapabilitiesRegistry 1.1.0";
+  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0";
 
   // ================================================================
   // |                 Internal variables                            |
@@ -908,6 +908,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     }
   }
 
+  /// @notice Removes DONs from the Capability Registry by their name
+  /// @param donNames The names of the DONs to be removed
   function removeDONsByName(
     string[] calldata donNames
   ) external onlyOwner {
@@ -1034,6 +1036,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     return s_donFamilies[donFamily].values();
   }
 
+  /// @notice Checks if a DON name is already taken
+  /// @param donName The name of the DON to check
+  /// @return bool True if the DON name is already taken, false otherwise
   function isDONNameTaken(
     string calldata donName
   ) external view returns (bool) {
