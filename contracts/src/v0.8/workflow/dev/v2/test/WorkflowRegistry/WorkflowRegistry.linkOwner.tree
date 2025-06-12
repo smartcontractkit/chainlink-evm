@@ -7,8 +7,10 @@ WorkflowRegistry_linkOwner
 │   │   │   └── it should revert with signature error
 │   │   ├── when the proof contains invalid data
 │   │   │   └── it should revert with invalid signature error
-│   │   └── when the signature is not valid
-│   │       └── it should revert with internal signature error
+│   │   ├── when the signature is not valid
+│   │   │   └── it should revert with internal signature error
+│   │   └── when the proof was previously used
+│   │       └── it should revert with already used proof error
 │   └── when the timestamp has expired
 │       └── it should revert with expiration error
 └── when the owner is already linked

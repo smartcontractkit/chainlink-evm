@@ -28,6 +28,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// address and to the off-chain account, may be able to generate a valid signature signed by the trusted entity. Once this
   /// valid signature is submitted to this contract, it can be verified and used to link or unlink the owner address.
   EnumerableMap.AddressToBytes32Map private s_linkedOwners;
+  /// @dev This is a mapping of ownership proofs indicating whether the proof has been previously used or not. This is used
+  /// to prevent someone from re-using the same proof for linking more than once, and ensures that each proof is unique per
+  /// single linking request, not matter if it originates from the same owner address or not. This allows us to verifiably
+  /// enforce an invariant on proofs.
+  mapping(bytes32 proof => bool used) private s_usedProofs;
 
   // ================================================================
   // |                         Events                               |
@@ -47,6 +52,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error OwnershipLinkDoesNotExist(address owner);
   error InvalidSignature(bytes signature, uint8 recoverErrorId, bytes32 recoverErrorArg);
   error InvalidOwnershipLink(address owner, uint256 validityTimestamp, bytes32 proof, bytes signature);
+  error OwnershipProofAlreadyUsed(address caller, bytes32 proof);
 
   // ================================================================
   // |                         Enums                                |
@@ -244,6 +250,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert OwnershipLinkAlreadyExists(msg.sender);
     }
 
+    // Ownership proof must be unique and must not be used for linking more than once
+    if (s_usedProofs[proof]) {
+      revert OwnershipProofAlreadyUsed(msg.sender, proof);
+    }
+
     address signer =
       _recoverSigner(uint8(LinkingRequestType.LINK_OWNER), msg.sender, validityTimestamp, proof, signature);
     if (!s_allowedSigners[signer]) {
@@ -261,6 +272,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     canLinkOwner(validityTimestamp, proof, signature);
 
     s_linkedOwners.set(msg.sender, proof);
+    s_usedProofs[proof] = true;
     emit OwnershipLinkUpdatedV1(msg.sender, proof, true);
   }
 

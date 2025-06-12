@@ -1,3 +1,3 @@
 GETH_VERSION: 1.15.3
 workflow_registry_wrapper_v1: ../../contracts/solc/workflow/v1/WorkflowRegistry/WorkflowRegistry.sol/WorkflowRegistry.abi.json ../../contracts/solc/workflow/v1/WorkflowRegistry/WorkflowRegistry.sol/WorkflowRegistry.bin 5adc185ac7dabf6f75297855adc0d77e0bfe64af6491de944083fb10f6f9fb06
-workflow_registry_wrapper_v2: ../../contracts/solc/workflow/dev/v2/WorkflowRegistry/WorkflowRegistry.sol/WorkflowRegistry.abi.json ../../contracts/solc/workflow/dev/v2/WorkflowRegistry/WorkflowRegistry.sol/WorkflowRegistry.bin b8b1864c0a3183ac8bea0859be6584348f49e0e02e44d0d99f41e6498e717133
+workflow_registry_wrapper_v2: ../../contracts/solc/workflow/dev/v2/WorkflowRegistry/WorkflowRegistry.sol/WorkflowRegistry.abi.json ../../contracts/solc/workflow/dev/v2/WorkflowRegistry/WorkflowRegistry.sol/WorkflowRegistry.bin 0bf04fbff7604d82435c5728b2a3111125c9c6ba1be3aa598399d8267a28ce86
