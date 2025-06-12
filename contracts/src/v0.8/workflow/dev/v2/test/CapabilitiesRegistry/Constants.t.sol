@@ -37,4 +37,5 @@ contract Constants {
   bytes internal constant CONFIG_CAPABILITY_CONFIG = bytes("config-capability-config");
   string internal constant TEST_DON_NAME = "test-don-name";
   bytes internal constant TEST_DON_CONFIG = bytes("test-don-config");
+  bytes internal constant TEST_CAPABILITY_METADATA = bytes("test-capability-metadata");
 }

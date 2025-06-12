@@ -31,15 +31,13 @@ contract BaseTest is Test, Constants {
 
     s_basicCapability = CapabilitiesRegistry.Capability({
       capabilityId: "data-streams-reports@1.0.0",
-      responseType: CapabilitiesRegistry.CapabilityResponseType.REPORT,
       configurationContract: address(0),
-      capabilityType: CapabilitiesRegistry.CapabilityType.TRIGGER
+      metadata: TEST_CAPABILITY_METADATA
     });
     s_capabilityWithConfigurationContract = CapabilitiesRegistry.Capability({
       capabilityId: "read-ethereum-mainnet-gas-price@1.0.2",
-      responseType: CapabilitiesRegistry.CapabilityResponseType.OBSERVATION_IDENTICAL,
       configurationContract: address(s_capabilityConfigurationContract),
-      capabilityType: CapabilitiesRegistry.CapabilityType.ACTION
+      metadata: bytes("")
     });
 
     s_basicCapabilityId = s_basicCapability.capabilityId;

@@ -23,16 +23,12 @@ contract CapabilitiesRegistry_GetCapabilitiesTest is BaseTest {
     assertEq(capabilities.length, 2);
 
     assertEq(capabilities[0].capabilityId, s_basicCapabilityId);
-    assertEq(uint256(capabilities[0].responseType), uint256(CapabilitiesRegistry.CapabilityResponseType.REPORT));
-    assertEq(uint256(capabilities[0].capabilityType), uint256(CapabilitiesRegistry.CapabilityType.TRIGGER));
+    assertEq(capabilities[0].metadata, TEST_CAPABILITY_METADATA);
     assertEq(capabilities[0].configurationContract, address(0));
     assertEq(capabilities[0].isDeprecated, true);
 
     assertEq(capabilities[1].capabilityId, s_capabilityWithConfigurationContractId);
-    assertEq(
-      uint256(capabilities[1].responseType), uint256(CapabilitiesRegistry.CapabilityResponseType.OBSERVATION_IDENTICAL)
-    );
-    assertEq(uint256(capabilities[1].capabilityType), uint256(CapabilitiesRegistry.CapabilityType.ACTION));
+    assertEq(capabilities[1].metadata, bytes(""));
     assertEq(capabilities[1].configurationContract, address(s_capabilityConfigurationContract));
     assertEq(capabilities[1].capabilityId, s_capabilityWithConfigurationContractId);
     assertEq(capabilities[1].isDeprecated, false);

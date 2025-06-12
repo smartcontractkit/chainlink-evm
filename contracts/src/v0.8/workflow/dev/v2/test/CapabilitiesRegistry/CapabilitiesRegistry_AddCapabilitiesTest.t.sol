@@ -78,7 +78,7 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
       s_CapabilitiesRegistry.getCapability(s_basicCapability.capabilityId);
 
     assertEq(storedCapability.capabilityId, s_basicCapability.capabilityId);
-    assertEq(uint256(storedCapability.responseType), uint256(s_basicCapability.responseType));
+    assertEq(storedCapability.metadata, s_basicCapability.metadata);
     assertEq(storedCapability.configurationContract, s_basicCapability.configurationContract);
   }
 
@@ -94,7 +94,7 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
       s_CapabilitiesRegistry.getCapability(s_capabilityWithConfigurationContract.capabilityId);
 
     assertEq(storedCapability.capabilityId, s_capabilityWithConfigurationContract.capabilityId);
-    assertEq(uint256(storedCapability.responseType), uint256(s_capabilityWithConfigurationContract.responseType));
+    assertEq(storedCapability.metadata, s_capabilityWithConfigurationContract.metadata);
     assertEq(storedCapability.configurationContract, s_capabilityWithConfigurationContract.configurationContract);
   }
 }

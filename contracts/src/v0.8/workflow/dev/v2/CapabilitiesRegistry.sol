@@ -24,31 +24,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   using EnumerableSet for EnumerableSet.StringSet;
 
   // ================================================================
-  // |                         Enums                               |
-  // ================================================================
-
-  /// @notice CapabilityResponseType indicates whether remote response requires aggregation or is
-  /// an already aggregated report. There are multiple possible ways to aggregate.
-  /// @dev REPORT response type receives signatures together with the response that is used to verify the data.
-  /// OBSERVATION_IDENTICAL just receives data without signatures and waits for some number of observations before
-  /// proceeding to the next step
-  enum CapabilityResponseType {
-    // No additional aggregation is needed on the remote response.
-    REPORT,
-    // A number of identical observations need to be aggregated.
-    OBSERVATION_IDENTICAL
-  }
-
-  /// @notice CapabilityType indicates the type of capability which determines
-  /// where the capability can be used in a Workflow Spec.
-  enum CapabilityType {
-    TRIGGER,
-    ACTION,
-    CONSENSUS,
-    TARGET
-  }
-
-  // ================================================================
   // |                         Structs                               |
   // ================================================================
 
@@ -109,12 +84,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// @notice The capability ID
     /// @dev Example: "data-streams-reports@1.0.0"
     string capabilityId;
-    /// @notice CapabilityType indicates the type of capability which determines
-    /// where the capability can be used in a Workflow Spec.
-    CapabilityType capabilityType;
-    /// @notice CapabilityResponseType indicates whether remote response requires aggregation or is an
-    /// already aggregated report. There are multiple possible ways to aggregate.
-    CapabilityResponseType responseType;
     /// @notice An address to the capability configuration contract. Having this defined on a capability enforces
     /// consistent configuration across DON instances serving the same capability. Configuration contract MUST implement
     /// CapabilityConfigurationContractInterface.
@@ -125,18 +94,14 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     ///
     /// It is not recommended to store configuration which requires knowledge of the DON membership.
     address configurationContract;
+    /// @notice Metadata for the capability. This is used to store additional information about the capability.
+    bytes metadata;
   }
 
   struct CapabilityInfo {
     /// @notice The capability ID
     /// @dev Example: "data-streams-reports@1.0.0"
     string capabilityId;
-    /// @notice CapabilityType indicates the type of capability which determines
-    /// where the capability can be used in a Workflow Spec.
-    CapabilityType capabilityType;
-    /// @notice CapabilityResponseType indicates whether remote response requires aggregation
-    /// or is an already aggregated report. There are multiple possible ways to aggregate.
-    CapabilityResponseType responseType;
     /// @notice An address to the capability configuration contract. Having this defined on a capability enforces
     /// consistent configuration across DON instances serving the same capability. Configuration contract MUST implement
     /// CapabilityConfigurationContractInterface.
@@ -149,6 +114,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     address configurationContract;
     /// @notice True if the capability is deprecated
     bool isDeprecated;
+    /// @notice Metadata for the capability. This is used to store additional information about the capability.
+    bytes metadata;
   }
 
   /// @notice CapabilityConfiguration is a struct that holds the capability configuration
@@ -818,8 +785,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     return (
       CapabilityInfo({
         capabilityId: capabilityId,
-        capabilityType: s_capabilities[capabilityId].capabilityType,
-        responseType: s_capabilities[capabilityId].responseType,
+        metadata: s_capabilities[capabilityId].metadata,
         configurationContract: s_capabilities[capabilityId].configurationContract,
         isDeprecated: s_deprecatedCapabilityIds.contains(capabilityId)
       })
