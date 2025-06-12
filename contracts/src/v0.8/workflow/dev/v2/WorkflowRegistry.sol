@@ -45,7 +45,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error UnlinkOwnerRequestExpired(address caller, uint256 currentTime, uint256 expiryTimestamp);
   error OwnershipLinkAlreadyExists(address owner);
   error OwnershipLinkDoesNotExist(address owner);
-  error OwnershipLinkProofDoesNotMatch(address owner, bytes32 proof, bytes32 storedProof);
   error InvalidSignature(bytes signature, uint8 recoverErrorId, bytes32 recoverErrorArg);
   error InvalidOwnershipLink(address owner, uint256 validityTimestamp, bytes32 proof, bytes signature);
 
@@ -240,7 +239,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert LinkOwnerRequestExpired(msg.sender, block.timestamp, validityTimestamp);
     }
 
-    // This prevents a different owner address from "hijacking" someone else's off-chain account
+    // Workflow owner address may only be linked once
     if (s_linkedOwners.contains(msg.sender)) {
       revert OwnershipLinkAlreadyExists(msg.sender);
     }
@@ -268,7 +267,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @notice View function to verify if the unlinkOwner() function can be called successfully.
   /// @param owner The address of the owner to be unlinked.
   /// @param validityTimestamp Validity of the ownership proof.
-  /// @param proof The ownership proof to be submitted.
   /// @param signature The signature of the ownership proof metadata.
   /// preUnlinkAction Determines what to do with existing workflows owned by the owner before unlinking.
   /// @dev If preUnlinkAction is NONE, the function will check if there are any active workflows registered to the
@@ -288,7 +286,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function canUnlinkOwner(
     address owner,
     uint256 validityTimestamp,
-    bytes32 proof,
     bytes calldata signature,
     PreUnlinkAction /* preUnlinkAction */
   ) public view {
@@ -304,27 +301,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert OwnershipLinkDoesNotExist(owner);
     }
 
-    // It's very important to check that proof matches the one that was originally submitted from the owner
-    // (where msg.sender == owner). For unlinking, we are not enforcing that the caller is the owner, but we
-    // are expecting that whoever is calling this function must have access to the original proof signed by the
-    // trusted entity. The original proof will be provided only to the ones who has access to the account that
-    // was used for linking the owner address.
+    // The expectation is that the signature must contain the same proof that was originally used for the linking
     bytes32 storedProof = s_linkedOwners.get(owner);
-    if (storedProof != proof) {
-      revert OwnershipLinkProofDoesNotMatch(owner, proof, storedProof);
-    }
 
     // Request type prevents replay attacks, since the same proof can be used for both linking and unlinking
-    address signer = _recoverSigner(uint8(LinkingRequestType.UNLINK_OWNER), owner, validityTimestamp, proof, signature);
+    address signer =
+      _recoverSigner(uint8(LinkingRequestType.UNLINK_OWNER), owner, validityTimestamp, storedProof, signature);
     if (!s_allowedSigners[signer]) {
-      revert InvalidOwnershipLink(owner, validityTimestamp, proof, signature);
+      revert InvalidOwnershipLink(owner, validityTimestamp, storedProof, signature);
     }
   }
 
   /// @notice Transaction sender submits ownership proof for verification and approval. Upon approval, owner is unlinked.
   /// @param owner The address of the owner to be unlinked.
   /// @param validityTimestamp Validity of the ownership proof.
-  /// @param proof The ownership proof to be submitted.
   /// @param signature The signature of the ownership proof metadata.
   /// preUnlinkAction Determines what to do with existing workflows owned by the owner before unlinking.
   /// @dev If preUnlinkAction is NONE, the function will check if there are any active workflows registered to the
@@ -335,17 +325,17 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function unlinkOwner(
     address owner,
     uint256 validityTimestamp,
-    bytes32 proof,
     bytes calldata signature,
     PreUnlinkAction /* preUnlinkAction */
   ) external {
     // TODO: if preUnlinkAction is not NONE, assume that unlinkWorkflowOwner() will remove or pause workflows
     // TODO: if preUnlinkAction is NONE, verify if there are any active workflows, if yes, revert
 
-    canUnlinkOwner(owner, validityTimestamp, proof, signature, PreUnlinkAction.NONE);
+    canUnlinkOwner(owner, validityTimestamp, signature, PreUnlinkAction.NONE);
 
+    bytes32 storedProof = s_linkedOwners.get(owner);
     s_linkedOwners.remove(owner);
-    emit OwnershipLinkUpdatedV1(owner, proof, false);
+    emit OwnershipLinkUpdatedV1(owner, storedProof, false);
   }
 
   // ================================================================

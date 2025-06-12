@@ -60,7 +60,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
         WorkflowRegistry.UnlinkOwnerRequestExpired.selector, owner, block.timestamp, validityTimestamp
       )
     );
-    wr.unlinkOwner(owner, validityTimestamp, proof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
   }
 
@@ -85,7 +85,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
 
     vm.prank(caller); // caller = owner
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkDoesNotExist.selector, unlinkedOwner));
-    wr.unlinkOwner(unlinkedOwner, validityTimestamp, proof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(unlinkedOwner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertFalse(wr.isOwnerLinked(unlinkedOwner), "Owner should not be linked");
   }
 
@@ -114,7 +114,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
     vm.prank(caller); // caller = owner
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, false);
-    wr.unlinkOwner(owner, validityTimestamp, proof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertFalse(wr.isOwnerLinked(owner), "Owner should be unlinked");
   }
 
@@ -140,7 +140,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
       abi.encodeWithSelector(WorkflowRegistry.InvalidOwnershipLink.selector, owner, validityTimestamp, proof, sig)
     );
     // calling with validity timestamp that does not match the one from the signature
-    wr.unlinkOwner(owner, validityTimestamp, proof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
   }
 
@@ -162,9 +162,9 @@ contract WorkflowRegistry_unlinkOwner is Test {
 
     vm.prank(caller); // caller = owner
     vm.expectRevert(
-      abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkProofDoesNotMatch.selector, owner, differentProof, proof)
+      abi.encodeWithSelector(WorkflowRegistry.InvalidOwnershipLink.selector, owner, validityTimestamp, proof, sig)
     );
-    wr.unlinkOwner(owner, validityTimestamp, differentProof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
   }
 
@@ -192,7 +192,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
         WorkflowRegistry.UnlinkOwnerRequestExpired.selector, owner, block.timestamp, validityTimestamp
       )
     );
-    wr.unlinkOwner(owner, validityTimestamp, proof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
   }
 
@@ -213,7 +213,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
 
     vm.prank(caller); // caller = not owner
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkDoesNotExist.selector, unlinkedOwner));
-    wr.unlinkOwner(unlinkedOwner, validityTimestamp, proof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(unlinkedOwner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertFalse(wr.isOwnerLinked(unlinkedOwner), "Owner should not be linked");
   }
 
@@ -234,7 +234,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
     vm.prank(caller); // caller = not owner
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, false);
-    wr.unlinkOwner(owner, validityTimestamp, proof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertFalse(wr.isOwnerLinked(owner), "Owner should be unlinked");
   }
 
@@ -260,7 +260,7 @@ contract WorkflowRegistry_unlinkOwner is Test {
       abi.encodeWithSelector(WorkflowRegistry.InvalidOwnershipLink.selector, owner, validityTimestamp, proof, sig)
     );
     // calling with validity timestamp that does not match the one from the signature
-    wr.unlinkOwner(owner, validityTimestamp, proof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
   }
 
@@ -282,9 +282,9 @@ contract WorkflowRegistry_unlinkOwner is Test {
 
     vm.prank(caller); // caller = not owner
     vm.expectRevert(
-      abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkProofDoesNotMatch.selector, owner, differentProof, proof)
+      abi.encodeWithSelector(WorkflowRegistry.InvalidOwnershipLink.selector, owner, validityTimestamp, proof, sig)
     );
-    wr.unlinkOwner(owner, validityTimestamp, differentProof, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    wr.unlinkOwner(owner, validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
     assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
   }
 }
