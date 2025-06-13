@@ -501,9 +501,6 @@ func (c *Transactions) ValidateConfig() (err error) {
 		if c.AutoPurge.Enabled != nil && !*c.AutoPurge.Enabled {
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "AutoPurge.Enabled", Value: false, Msg: "cannot be false if DualBroadcast is enabled"})
 		}
-		if c.AutoPurge.DetectionApiUrl == nil {
-			err = multierr.Append(err, commonconfig.ErrMissing{Name: "AutoPurge.DetectionApiUrl", Msg: "must be set if DualBroadcast is enabled"})
-		}
 		if c.AutoPurge.Threshold == nil {
 			err = multierr.Append(err, commonconfig.ErrMissing{Name: "AutoPurge.Threshold", Msg: "needs to be set if auto-purge feature is enabled"})
 		} else if *c.AutoPurge.Threshold == 0 {

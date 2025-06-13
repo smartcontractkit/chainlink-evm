@@ -402,6 +402,7 @@ LimitMax = 500_000 # Default
 LimitMultiplier = '1.0' # Default
 LimitTransfer = 21_000 # Default
 EstimateLimit = false # Default
+SenderAddress = '0x00c11c11c11C11c11C11c11c11C11C11c11C11c1' # Example
 BumpMin = '5 gwei' # Default
 BumpPercent = 20 # Default
 BumpThreshold = 3 # Default
@@ -501,6 +502,12 @@ LimitTransfer is the gas limit used for an ordinary ETH transfer.
 EstimateLimit = false # Default
 ```
 EstimateLimit enables estimating gas limits for transactions. This feature respects the gas limit provided during transaction creation as an upper bound.
+
+### SenderAddress
+```toml
+SenderAddress = '0x00c11c11c11C11c11C11c11c11C11C11c11C11c1' # Example
+```
+SenderAddress is optional and can be set to a specific sender address for dynamic gas estimation. If it is not set, the actual "from" address for the transaction is used if available.
 
 ### BumpMin
 ```toml
@@ -984,6 +991,7 @@ TransactionAlreadyMined = '(: |^)transaction already mined' # Example
 Fatal = '(: |^)fatal' # Example
 ServiceUnavailable = '(: |^)service unavailable' # Example
 TooManyResults = '(: |^)too many results' # Example
+MissingBlocks = '(: |^)invalid block range' # Example
 ```
 Errors enable the node to provide custom regex patterns to match against error messages from RPCs.
 
@@ -1076,6 +1084,12 @@ ServiceUnavailable is a regex pattern to match against service unavailable error
 TooManyResults = '(: |^)too many results' # Example
 ```
 TooManyResults is a regex pattern to match an eth_getLogs error indicating the result set is too large to return
+
+### MissingBlocks
+```toml
+MissingBlocks = '(: |^)invalid block range' # Example
+```
+MissingBlocks is a regex pattern to match an eth_getLogs error indicating the rpc server is permanently missing some blocks in the requested block range
 
 ## OCR
 ```toml
