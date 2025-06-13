@@ -30,10 +30,10 @@ importers:
       '@openzeppelin/contracts-upgradeable':
         specifier: 4.9.6
         version: 4.9.6
-      '@openzeppelin/contracts@4_9_6/':
+      '@openzeppelin/contracts@4.9.6/':
         specifier: npm:@openzeppelin/contracts@4.9.6
         version: '@openzeppelin/contracts@4.9.6'
-      '@openzeppelin/contracts@5_1_0/':
+      '@openzeppelin/contracts@5.1.0/':
         specifier: npm:@openzeppelin/contracts@5.1.0
         version: '@openzeppelin/contracts@5.1.0'
       '@scroll-tech/contracts':
