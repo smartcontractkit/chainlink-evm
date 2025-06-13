@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "./openzeppelin-solidity/v4.8.3/contracts/utils/Address.sol";
+import "@openzeppelin/contracts@4.8.3/utils/Address.sol";
 
 /// sourced from: https://github.com/scroll-tech/scroll/blob/develop/contracts/src/libraries/IScrollMessenger.sol
 interface IScrollMessenger {
