@@ -1,6 +1,5 @@
 package gethwrappers
 
-//go:generate go run ./generation/wrap.go automation UpkeepTranscoder upkeep_transcoder
 //go:generate go run ./generation/wrap.go automation VerifiableLoadUpkeep verifiable_load_upkeep_wrapper
 //go:generate go run ./generation/wrap.go automation VerifiableLoadStreamsLookupUpkeep verifiable_load_streams_lookup_upkeep_wrapper
 //go:generate go run ./generation/wrap.go automation StreamsLookupUpkeep streams_lookup_upkeep_wrapper

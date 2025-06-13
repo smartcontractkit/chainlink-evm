@@ -21,8 +21,6 @@ compileContract() {
   $command
 }
 
-compileContract automation-compile-12 upkeeps/CronUpkeepFactory
-compileContract automation-compile-12 UpkeepTranscoder
 compileContract automation-compile-12 mocks/MockAggregatorProxy
 compileContract automation-compile-12 testhelpers/LogUpkeepCounter
 compileContract automation-compile-12 testhelpers/SimpleLogUpkeepCounter

@@ -15,7 +15,6 @@
 ./src/v0.8/automation/upkeeps/LinkAvailableBalanceMonitor.sol
 ./src/v0.8/automation/upkeeps/EthBalanceMonitor.sol
 ./src/v0.8/automation/upkeeps/ERC20BalanceMonitor.sol
-./src/v0.8/automation/upkeeps/CronUpkeepFactory.sol
 ./src/v0.8/automation/upkeeps/CronUpkeepDelegate.sol
 ./src/v0.8/automation/upkeeps/CronUpkeep.sol
 ./src/v0.8/automation/libraries/internal/Cron.sol
