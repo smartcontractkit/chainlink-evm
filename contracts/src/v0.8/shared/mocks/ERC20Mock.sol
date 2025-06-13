@@ -18,7 +18,7 @@ contract ERC20Mock is ERC20 {
     _burn(account, amount);
   }
 
-    function decimals() public view override returns (uint8) {
-        return i_decimals;
-    }
+  function decimals() public view override returns (uint8) {
+    return i_decimals;
+  }
 }
