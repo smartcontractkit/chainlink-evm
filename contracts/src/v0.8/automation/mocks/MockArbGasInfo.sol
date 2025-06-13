@@ -1,4 +1,4 @@
-pragma solidity 0.8.6;
+pragma solidity ^0.8.6;
 
 contract MockArbGasInfo {
   function getCurrentTxL1GasFees() external view returns (uint256) {
