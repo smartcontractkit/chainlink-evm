@@ -1111,6 +1111,9 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 			lp.lggr.Warnw("Unable to query for logs, retrying", "err", err, "block", currentBlockNumber)
 			return nil
 		}
+		for _, log := range logs {
+			lp.lggr.Debugw("Found log", "log", log)
+		}
 		lp.lggr.Debugw("Unfinalized log query", "logs", len(logs), "currentBlockNumber", currentBlockNumber, "blockHash", currentBlock.Hash, "timestamp", currentBlock.Timestamp)
 		block := Block{
 			BlockHash:            h,
