@@ -8,18 +8,16 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/smartcontractkit/chainlink-evm/pkg/client/mocks"
 )
 
-func NewClientWithDefaultChainID(t testing.TB) *mocks.Client {
-	c := mocks.NewClient(t)
+func NewClientWithDefaultChainID(t testing.TB) *Client {
+	c := NewClient(t)
 	c.On("ConfiguredChainID").Return(big.NewInt(0)).Maybe()
 	return c
 }
 
 type MockEth struct {
-	EthClient       *mocks.Client
+	EthClient       *Client
 	CheckFilterLogs func(int64, int64)
 
 	subsMu           sync.RWMutex
