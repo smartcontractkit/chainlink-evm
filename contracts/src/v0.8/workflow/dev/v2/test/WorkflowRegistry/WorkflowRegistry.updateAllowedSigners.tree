@@ -1,0 +1,14 @@
+WorkflowRegistry_updateAllowedSigners
+├── it should only be called by the contract owner
+├── when a new signer is added
+│   ├── given signer is not already added
+│   │   └── it should update the allowed signers
+│   └── given the signer is already added
+│       └── it should not have any effect
+├── when an existing signer is removed
+│   ├── given the signer is not already removed
+│   │   └── it should update the allowed signers
+│   └── given the signer is already removed
+│       └── it should not have any effect
+└── when the signer is the zero address
+    └── it should revert with an error
