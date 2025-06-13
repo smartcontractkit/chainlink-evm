@@ -39,6 +39,7 @@ contract CapabilitiesRegistry_RemoveDONsByNameTest is BaseTest {
       acceptsWorkflows: true,
       f: 1,
       name: TEST_DON_NAME,
+      donFamily: "",
       config: TEST_DON_CONFIG
     });
     s_CapabilitiesRegistry.addDONs(newDONs);

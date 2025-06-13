@@ -57,6 +57,7 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
       acceptsWorkflows: true,
       f: F_VALUE,
       name: TEST_DON_NAME,
+      donFamily: "",
       config: TEST_DON_CONFIG
     });
     s_CapabilitiesRegistry.addDONs(newDONs);

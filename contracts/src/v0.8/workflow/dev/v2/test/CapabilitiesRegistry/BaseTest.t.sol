@@ -87,6 +87,7 @@ contract BaseTest is Test, Constants {
       acceptsWorkflows: true,
       f: 1,
       name: "",
+      donFamily: "",
       config: bytes("")
     });
 
@@ -97,6 +98,7 @@ contract BaseTest is Test, Constants {
       acceptsWorkflows: false,
       f: 1,
       name: TEST_DON_NAME,
+      donFamily: "",
       config: TEST_DON_CONFIG
     });
   }

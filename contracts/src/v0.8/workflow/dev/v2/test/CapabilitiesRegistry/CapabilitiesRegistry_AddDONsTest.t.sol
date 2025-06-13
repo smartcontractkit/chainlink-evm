@@ -35,6 +35,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       acceptsWorkflows: true,
       f: F_VALUE,
       name: "",
+      donFamily: "",
       config: bytes("")
     });
 
@@ -174,6 +175,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       acceptsWorkflows: true,
       f: F_VALUE,
       name: "test-name",
+      donFamily: "",
       config: bytes("abc")
     });
 
@@ -226,6 +228,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       acceptsWorkflows: true,
       f: 0,
       name: "test-name",
+      donFamily: "",
       config: bytes("abc")
     });
 

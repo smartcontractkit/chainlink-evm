@@ -58,6 +58,7 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
       acceptsWorkflows: true,
       f: F_VALUE,
       name: "",
+      donFamily: "",
       config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs);

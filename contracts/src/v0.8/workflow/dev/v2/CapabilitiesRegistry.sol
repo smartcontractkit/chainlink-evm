@@ -17,6 +17,7 @@ import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 /// @dev The contract currently stores the entire state of Node Operators, Nodes, Capabilities and DONs in the
 /// contract and requires a full state migration if an upgrade is ever required. The team acknowledges this and is
 /// fine reconfiguring the upgraded contract in the future so as to not add extra complexity to this current version.
+// solhint-disable-next-line max-states-count
 contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVersion {
   // Add the library methods
   using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -215,6 +216,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   /// @notice NewDONParams is a struct that holds the parameters for a new DON.
   struct NewDONParams {
     string name;
+    string donFamily;
     bytes config;
     CapabilityConfiguration[] capabilityConfigurations;
     bytes32[] nodes;
@@ -426,7 +428,12 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   /// @notice This event is emitted when a DON family is set
   /// @param donId The ID of the DON whose family was set
   /// @param donFamily The family name that was set
-  event DONFamilySet(uint32 indexed donId, string indexed donFamily);
+  event DONAddedToFamily(uint32 indexed donId, string indexed donFamily);
+
+  /// @notice This event is emitted when a DON is removed from a family
+  /// @param donId The ID of the DON that was removed from the family
+  /// @param donFamily The family name that the DON was removed from
+  event DONRemovedFromFamily(uint32 indexed donId, string indexed donFamily);
 
   // ================================================================
   // |                 Internal variables                            |
@@ -454,6 +461,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   /// @notice Set of node P2P IDs
   EnumerableSet.Bytes32Set private s_nodeP2PIds;
 
+  /// @notice Set of active DON family names that have at least one DON in the
+  /// registry with that family name.
+  EnumerableSet.Bytes32Set private s_activeDONFamilyNames;
+
   /// @notice Mapping of node operators
   mapping(uint32 nodeOperatorId => NodeOperator nodeOperator) private s_nodeOperators;
 
@@ -463,11 +474,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   /// @notice Mapping of DON IDs to DONs
   mapping(uint32 donId => DON don) private s_dons;
 
-  /// @notice Mapping of DON ID to DON family
-  mapping(uint32 donId => string donFamily) private s_donFamily;
+  /// @notice Mapping of DON ID to DON family. Empty string is the default
+  /// family.
+  mapping(uint32 donId => string donFamily) private s_donIdToDonFamily;
 
-  /// @notice Mapping of DON families
-  mapping(string donFamily => EnumerableSet.UintSet donIds) private s_donFamilies;
+  /// @notice Mapping of DON family name hashes to DON IDs
+  mapping(bytes32 donFamilyHash => EnumerableSet.UintSet donIds) private s_donFamilyMembers;
+
+  /// @notice Mapping of DON family name hashes to DON family names
+  mapping(bytes32 donFamilyHash => string donFamily) private s_donFamilyHashToDonFamily;
 
   /// @notice Mapping of hash of capability ID to capability ID
   mapping(bytes32 hashedCapabilityId => string capabilityId) private s_hashedCapabilityIdToCapabilityId;
@@ -879,11 +894,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
 
     for (uint256 i; i < newDONs.length; ++i) {
       NewDONParams memory newDON = newDONs[i];
+      uint32 nextDONId = s_nextDONId++;
+
       _setDONConfig(
         newDON.nodes,
         newDON.capabilityConfigurations,
         DONParams({
-          id: s_nextDONId++,
+          id: nextDONId,
           configCount: 1,
           isPublic: newDON.isPublic,
           acceptsWorkflows: newDON.acceptsWorkflows,
@@ -892,6 +909,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
           config: newDON.config
         })
       );
+
+      _addDONToFamily(nextDONId, newDON.donFamily);
     }
   }
 
@@ -972,25 +991,20 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   /// @param donFamily The family name to set for the DON
   function setDONFamily(uint32 donId, string calldata donFamily) external onlyOwner {
     if (s_dons[donId].configCount == 0) revert DONDoesNotExist(donId);
+    bytes32 newDONFamilyHash = _hash(donFamily);
 
-    string memory currentFamily = s_donFamily[donId];
     // If the DON is already in the family, do nothing
     // There is no point in erroring out as this is a no-op and the erroring
     // would not provide any value to the user.
-    if (keccak256(bytes(currentFamily)) == keccak256(bytes(donFamily))) return;
+    if (_hash(s_donIdToDonFamily[donId]) == newDONFamilyHash) return;
 
-    if (bytes(currentFamily).length > 0) {
-      s_donFamilies[currentFamily].remove(donId);
-    }
+    // Set the DON family name hash to the new family name hash so it can be
+    // retrieved by the hash later. We do not need to clean up the old family
+    // name hash as it is only used to retrieve the family name by the hash.
+    s_donFamilyHashToDonFamily[newDONFamilyHash] = donFamily;
 
-    if (bytes(donFamily).length == 0) {
-      delete s_donFamily[donId];
-    } else {
-      s_donFamily[donId] = donFamily;
-      s_donFamilies[donFamily].add(donId);
-    }
-
-    emit DONFamilySet(donId, donFamily);
+    _removeDONFromFamily(donId);
+    _addDONToFamily(donId, donFamily);
   }
 
   // ================================================================
@@ -1085,7 +1099,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   function getDONsInFamily(
     string calldata donFamily
   ) external view returns (uint256[] memory) {
-    return s_donFamilies[donFamily].values();
+    return s_donFamilyMembers[_hash(donFamily)].values();
   }
 
   /// @notice Checks if a DON name is already taken
@@ -1095,6 +1109,19 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
     string calldata donName
   ) external view returns (bool) {
     return s_donNameToId[donName] != 0;
+  }
+
+  /// @notice Returns the list of existing DON families including the default
+  /// family that is an empty string unless there are no DONs in that family.
+  // TODO: Add tests to check for default family if exists and no default family if it doesn't exist
+  /// @return string[] The list of existing DON families
+  function getDONFamilies() external view returns (string[] memory) {
+    bytes32[] memory donFamilyHashes = s_activeDONFamilyNames.values();
+    string[] memory donFamilies = new string[](donFamilyHashes.length);
+    for (uint256 i; i < donFamilyHashes.length; ++i) {
+      donFamilies[i] = s_donFamilyHashToDonFamily[donFamilyHashes[i]];
+    }
+    return donFamilies;
   }
 
   // ================================================================
@@ -1123,18 +1150,52 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
     // DON config count starts at index 1
     if (don.configCount == 0) revert DONDoesNotExist(donId);
 
+    _removeDONFromFamily(donId);
+
     // Free up the DON name for reuse
     delete s_donNameToId[don.config[configCount].name];
 
-    // Clean up DON family mappings
-    string memory donFamily = s_donFamily[donId];
-    if (bytes(donFamily).length > 0) {
-      s_donFamilies[donFamily].remove(donId);
-      delete s_donFamily[donId];
-    }
-
     delete s_dons[donId];
     emit ConfigSet(donId, 0);
+  }
+
+  /// @notice Removes a DON from a family
+  /// @param donId The ID of the DON to remove from the family
+  function _removeDONFromFamily(
+    uint32 donId
+  ) internal {
+    string memory donFamily = s_donIdToDonFamily[donId];
+    bytes32 donFamilyHash = _hash(donFamily);
+
+    // Remove the DON ID from the list of DON IDs in the current family
+    s_donFamilyMembers[donFamilyHash].remove(donId);
+    // If the current family is empty, remove it from the set of family names
+    if (s_donFamilyMembers[donFamilyHash].length() == 0) {
+      s_activeDONFamilyNames.remove(donFamilyHash);
+    }
+
+    // Remove the DON ID from the DON ID to DON family mapping
+    delete s_donIdToDonFamily[donId];
+
+    emit DONRemovedFromFamily(donId, donFamily);
+  }
+
+  /// @notice Adds a DON to a family
+  /// @param donId The ID of the DON to add to the family
+  /// @param donFamily The family name to add the DON to
+  function _addDONToFamily(uint32 donId, string memory donFamily) internal {
+    bytes32 donFamilyHash = _hash(donFamily);
+
+    // Add the DON ID to the list of DON IDs in the new family
+    s_donFamilyMembers[donFamilyHash].add(donId);
+    // Assign the family name to the DON ID
+    s_donIdToDonFamily[donId] = donFamily;
+
+    // Add the new family name to the set of family names. This operation is
+    // idempotent and will not add the family name if it already exists.
+    s_activeDONFamilyNames.add(donFamilyHash);
+
+    emit DONAddedToFamily(donId, donFamily);
   }
 
   /// @notice Sets the configuration for a DON
@@ -1281,7 +1342,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
       id: don.id,
       acceptsWorkflows: don.acceptsWorkflows,
       configCount: configCount,
-      donFamily: s_donFamily[donId],
+      donFamily: s_donIdToDonFamily[donId],
       name: donConfig.name,
       config: donConfig.config,
       f: donConfig.f,

@@ -92,6 +92,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       acceptsWorkflows: false,
       f: F_VALUE,
       name: "",
+      donFamily: "",
       config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
@@ -121,6 +122,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       acceptsWorkflows: true,
       f: F_VALUE,
       name: "",
+      donFamily: "",
       config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
@@ -168,6 +170,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       acceptsWorkflows: true,
       f: F_VALUE,
       name: "",
+      donFamily: "",
       config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs2);

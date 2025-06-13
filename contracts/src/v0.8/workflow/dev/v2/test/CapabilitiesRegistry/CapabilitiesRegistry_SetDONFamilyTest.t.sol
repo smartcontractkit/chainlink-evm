@@ -35,7 +35,9 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
 
   function test_SetDONFamily_EmitsEvent() public {
     vm.expectEmit(true, true, false, true);
-    emit CapabilitiesRegistry.DONFamilySet(DON_ID, FAMILY_NAME_ONE);
+    emit CapabilitiesRegistry.DONRemovedFromFamily(DON_ID, "");
+    vm.expectEmit(true, true, false, true);
+    emit CapabilitiesRegistry.DONAddedToFamily(DON_ID, FAMILY_NAME_ONE);
 
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
   }
@@ -76,13 +78,18 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
 
     CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
     assertEq(donInfo.donFamily, FAMILY_NAME_TWO);
+
+    string[] memory families = s_CapabilitiesRegistry.getDONFamilies();
+    assertEq(families.length, 2);
+    assertEq(families[0], "");
+    assertEq(families[1], FAMILY_NAME_TWO);
   }
 
   function test_SetDONFamily_RemoveFromFamily() public {
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
 
     vm.expectEmit(true, true, false, true);
-    emit CapabilitiesRegistry.DONFamilySet(DON_ID, "");
+    emit CapabilitiesRegistry.DONAddedToFamily(DON_ID, "");
     s_CapabilitiesRegistry.setDONFamily(DON_ID, "");
 
     uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(FAMILY_NAME_ONE);
@@ -100,7 +107,7 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
     vm.recordLogs();
     s_CapabilitiesRegistry.setDONFamily(DON_ID, FAMILY_NAME_ONE);
 
-    // Check that no DONFamilySet event was emitted for the second call
+    // Check that no DONAddedToFamily event was emitted for the second call
     Vm.Log[] memory entries = vm.getRecordedLogs();
     // Should have no logs since it's a no-op
     assertEq(entries.length, 0);
