@@ -6,8 +6,8 @@ import {ERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/ERC20.sol";
 contract ERC20Mock is ERC20 {
   uint8 internal immutable i_decimals;
 
-  constructor(uint8 decimals) ERC20("ERC20Mock", "E20M") {
-    i_decimals = decimals;
+  constructor(uint8 decimals_) ERC20("ERC20Mock", "E20M") {
+    i_decimals = decimals_;
   }
 
   function mint(address account, uint256 amount) external {

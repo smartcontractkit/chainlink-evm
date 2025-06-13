@@ -11,7 +11,7 @@ import {Strings} from "@openzeppelin/contracts@4.9.6/utils/Strings.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {FeeManager} from "../../FeeManager.sol";
 import {Common} from "../../../libraries/Common.sol";
-import {ERC20Mock} from "@openzeppelin/contracts@4.8.3/mocks/ERC20Mock.sol";
+import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
 import {WERC20Mock} from "../../../../shared/mocks/WERC20Mock.sol";
 import {RewardManager} from "../../RewardManager.sol";
 
@@ -310,7 +310,7 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     );
     (, , v3ConfigDigest) = s_verifier.latestConfigDetails(FEED_ID_V3);
 
-    link = new ERC20Mock("LINK", "LINK", ADMIN, 0);
+    link = new ERC20Mock(18);
     native = new WERC20Mock();
 
     rewardManager = new RewardManager(address(link));

@@ -14,7 +14,7 @@ import {Common} from "../../../libraries/Common.sol";
 import {WERC20Mock} from "../../../../shared/mocks/WERC20Mock.sol";
 import {DestinationRewardManager} from "../../DestinationRewardManager.sol";
 import {IDestinationRewardManager} from "../../interfaces/IDestinationRewardManager.sol";
-import {ERC20Mock} from "../../../shared/mocks/ERC20Mock.sol";
+import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
 
 contract BaseTest is Test {
   uint64 internal constant POOL_SCALAR = 1e18;
@@ -37,7 +37,7 @@ contract BaseTest is Test {
   DestinationVerifier internal s_verifier;
   DestinationFeeManager internal feeManager;
   DestinationRewardManager internal rewardManager;
-  IERC20 internal link;
+  ERC20Mock internal link;
   WERC20Mock internal native;
 
   struct Signer {
