@@ -1,8 +1,8 @@
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts@4_9_6/security/Pausable.sol";
-import "@openzeppelin/contracts@4_9_6/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts@4_9_6/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts@4.9.6/security/Pausable.sol";
+import "@openzeppelin/contracts@4.9.6/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 import "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import "../../vendor/@eth-optimism/contracts/v0.8.6/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
 import "../ExecutionPrevention.sol";

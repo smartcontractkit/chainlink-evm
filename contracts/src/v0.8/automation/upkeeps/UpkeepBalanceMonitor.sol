@@ -5,8 +5,8 @@ pragma solidity 0.8.19;
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {IAutomationRegistryConsumer} from "../interfaces/IAutomationRegistryConsumer.sol";
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {Pausable} from "@openzeppelin/contracts@4_9_6/security/Pausable.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4_9_6/utils/structs/EnumerableSet.sol";
+import {Pausable} from "@openzeppelin/contracts@4.9.6/security/Pausable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 /// @title The UpkeepBalanceMonitor contract
 /// @notice A keeper-compatible contract that monitors and funds Chainlink Automation upkeeps.
