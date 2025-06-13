@@ -21,10 +21,6 @@ compileContract() {
   $command
 }
 
-compileContract automation-compile-12 mocks/MockAggregatorProxy
-compileContract automation-compile-12 testhelpers/LogUpkeepCounter
-compileContract automation-compile-12 testhelpers/SimpleLogUpkeepCounter
-
 compileContract automation-compile-21 v2_1/AutomationRegistrar2_1
 compileContract automation-compile-21 v2_1/KeeperRegistry2_1
 compileContract automation-compile-21 v2_1/KeeperRegistryLogicA2_1

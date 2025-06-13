@@ -30,8 +30,6 @@ package gethwrappers
 
 //go:generate go run ./generation/wrap.go automation ILogAutomation i_log_automation
 //go:generate go run ./generation/wrap.go automation AutomationForwarderLogic automation_forwarder_logic
-//go:generate go run ./generation/wrap.go automation LogUpkeepCounter log_upkeep_counter_wrapper
-//go:generate go run ./generation/wrap.go automation SimpleLogUpkeepCounter simple_log_upkeep_counter_wrapper
 //go:generate go run ./generation/wrap.go automation LogTriggeredStreamsLookup log_triggered_streams_lookup_wrapper
 //go:generate go run ./generation/wrap.go automation DummyProtocol dummy_protocol_wrapper
 
