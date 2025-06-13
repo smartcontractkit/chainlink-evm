@@ -14,7 +14,7 @@ import {VRFTypes} from "../VRFTypes.sol";
 import {console} from "forge-std/console.sol";
 import {VmSafe} from "forge-std/Vm.sol";
 import {VRFV2PlusLoadTestWithMetrics} from "../dev/testhelpers/VRFV2PlusLoadTestWithMetrics.sol";
-import "@openzeppelin/contracts/4_9_6/utils/math/Math.sol"; // for Math.ceilDiv
+import "@openzeppelin/contracts@4_9_6/utils/math/Math.sol"; // for Math.ceilDiv
 
 /*
  * USAGE INSTRUCTIONS:
