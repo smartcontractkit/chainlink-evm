@@ -163,8 +163,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     /// @notice The number of times the DON was configured
     uint32 configCount;
     /// @notice True if the DON accepts Workflows. A DON that accepts Workflows
-    /// is called Workflow DON and it can process Workflow Specs. A Workflow
-    /// DON can also support capabilities.
+    /// is called Workflow DON and it can execute Workflows. A Workflow DON can
+    /// also support capabilities.
     bool acceptsWorkflows;
     /// @notice Mapping of config counts to configurations
     mapping(uint32 configCount => MutableDONConfig donConfig) config;
