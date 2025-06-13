@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 import "forge-std/Test.sol";
 
 import {LinkToken} from "../../../shared/token/ERC677/LinkToken.sol";
-import {ERC20Mock6Decimals} from "../../mocks/ERC20Mock6Decimals.sol";
 import {MockV3Aggregator} from "../../../shared/mocks/MockV3Aggregator.sol";
 import {AutomationForwarderLogic} from "../../AutomationForwarderLogic.sol";
 import {UpkeepTranscoder5_0 as Transcoder} from "../../v2_3/UpkeepTranscoder5_0.sol";
@@ -20,8 +19,8 @@ import {MockUpkeep} from "../../mocks/MockUpkeep.sol";
 import {IWrappedNative} from "../../interfaces/v2_3/IWrappedNative.sol";
 import {MockGasBoundCaller} from "../../mocks/MockGasBoundCaller.sol";
 import {MockZKSyncSystemContext} from "../../mocks/MockZKSyncSystemContext.sol";
+import {ERC20Mock} from "../../../shared/mocks/ERC20Mock.sol";
 
-import {ERC20Mock} from "@openzeppelin/contracts@4.8.3/mocks/ERC20Mock.sol";
 import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
 import {WETH9} from "../../../vendor/canonical-weth/WETH9.sol";
 
@@ -44,7 +43,7 @@ contract BaseTest is Test {
 
   // contracts
   LinkToken internal linkToken;
-  ERC20Mock6Decimals internal usdToken6;
+  ERC20Mock internal usdToken6;
   ERC20Mock internal usdToken18;
   ERC20Mock internal usdToken18_2;
   WETH9 internal weth;
@@ -81,9 +80,9 @@ contract BaseTest is Test {
     vm.startPrank(OWNER);
     linkToken = new LinkToken();
     linkToken.grantMintRole(OWNER);
-    usdToken18 = new ERC20Mock("MOCK_ERC20_18Decimals", "MOCK_ERC20_18Decimals", OWNER, 0);
-    usdToken18_2 = new ERC20Mock("Second_MOCK_ERC20_18Decimals", "Second_MOCK_ERC20_18Decimals", OWNER, 0);
-    usdToken6 = new ERC20Mock6Decimals("MOCK_ERC20_6Decimals", "MOCK_ERC20_6Decimals", OWNER, 0);
+    usdToken18 = new ERC20Mock(18);
+    usdToken18_2 = new ERC20Mock(18);
+    usdToken6 = new ERC20Mock(6);
     weth = new WETH9();
 
     LINK_USD_FEED = new MockV3Aggregator(8, 2_000_000_000); // $20
