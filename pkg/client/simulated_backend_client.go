@@ -751,6 +751,16 @@ func (c *SimulatedBackendClient) ethGetHeaderByNumber(ctx context.Context, resul
 	return nil
 }
 
+func (c *SimulatedBackendClient) LatestSafeBlock(ctx context.Context) (*evmtypes.Head, error) {
+	h, err := c.client.HeaderByNumber(ctx, big.NewInt(rpc.SafeBlockNumber.Int64()))
+	if err != nil {
+		return nil, err
+	}
+	head := &evmtypes.Head{EVMChainID: ubig.New(c.chainID)}
+	head.SetFromHeader(h)
+	return head, nil
+}
+
 func (c *SimulatedBackendClient) LatestFinalizedBlock(ctx context.Context) (*evmtypes.Head, error) {
 	h, err := c.client.HeaderByNumber(ctx, big.NewInt(rpc.FinalizedBlockNumber.Int64()))
 	if err != nil {
