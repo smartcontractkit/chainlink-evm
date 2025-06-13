@@ -7,7 +7,7 @@ import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts
 import {IDestinationVerifier} from "../../interfaces/IDestinationVerifier.sol";
 import {IDestinationVerifierProxy} from "../../interfaces/IDestinationVerifierProxy.sol";
 import {DestinationVerifier} from "../../DestinationVerifier.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts/4_9_6/utils/Strings.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {DestinationFeeManager} from "../../DestinationFeeManager.sol";
 import {Common} from "../../../libraries/Common.sol";

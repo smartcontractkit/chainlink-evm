@@ -4,7 +4,7 @@ pragma solidity 0.8.6;
 
 import "../../shared/access/ConfirmedOwner.sol";
 import "../interfaces/KeeperCompatibleInterface.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/4_9_6/security/Pausable.sol";
 
 /**
  * @title The EthBalanceMonitor contract

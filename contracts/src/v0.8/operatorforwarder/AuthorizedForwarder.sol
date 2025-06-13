@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {ConfirmedOwnerWithProposal} from "../shared/access/ConfirmedOwnerWithProposal.sol";
 import {AuthorizedReceiver} from "./AuthorizedReceiver.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/4_9_6/utils/Address.sol";
 
 // solhint-disable gas-custom-errors
 contract AuthorizedForwarder is ConfirmedOwnerWithProposal, AuthorizedReceiver {

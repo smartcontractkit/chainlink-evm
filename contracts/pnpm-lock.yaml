@@ -27,12 +27,15 @@ importers:
       '@eth-optimism/contracts':
         specifier: 0.6.0
         version: 0.6.0(ethers@5.8.0)
-      '@openzeppelin/contracts':
-        specifier: 4.9.6
-        version: 4.9.6
       '@openzeppelin/contracts-upgradeable':
         specifier: 4.9.6
         version: 4.9.6
+      '@openzeppelin/contracts/4_9_6/':
+        specifier: npm:@openzeppelin/contracts@4.9.6
+        version: '@openzeppelin/contracts@4.9.6'
+      '@openzeppelin/contracts/5_1_0/':
+        specifier: npm:@openzeppelin/contracts@5.1.0
+        version: '@openzeppelin/contracts@5.1.0'
       '@scroll-tech/contracts':
         specifier: 2.0.0
         version: 2.0.0
@@ -558,6 +561,9 @@ packages:
 
   '@openzeppelin/contracts@4.9.6':
     resolution: {integrity: sha512-xSmezSupL+y9VkHZJGDoCBpmnB2ogM13ccaYDWqJTfS3dbuHkgjuwDFUmaFauBCboQMGB/S5UqUl2y54X99BmA==}
+
+  '@openzeppelin/contracts@5.1.0':
+    resolution: {integrity: sha512-p1ULhl7BXzjjbha5aqst+QMLY+4/LCWADXOCsmLHRM77AqiPjnd9vvUN9sosUfhL9JGKpZ0TjEGxgvnizmWGSA==}
 
   '@pkgr/core@0.2.4':
     resolution: {integrity: sha512-ROFF39F6ZrnzSUEmQQZUar0Jt4xVoP9WnDRdWwF4NNcXs3xBTLgBUDoOwW141y1jP+S8nahIbdxbFC7IShw9Iw==}
@@ -3541,6 +3547,8 @@ snapshots:
   '@openzeppelin/contracts-upgradeable@4.9.6': {}
 
   '@openzeppelin/contracts@4.9.6': {}
+
+  '@openzeppelin/contracts@5.1.0': {}
 
   '@pkgr/core@0.2.4': {}
 
