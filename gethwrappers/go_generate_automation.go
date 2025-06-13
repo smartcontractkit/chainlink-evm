@@ -1,14 +1,5 @@
 package gethwrappers
 
-//go:generate go run ./generation/generate/wrap.go ../contracts/solc/automation/KeeperRegistrar1_2/KeeperRegistrar1_2.sol/KeeperRegistrar.abi.json ../contracts/solc/automation/KeeperRegistrar1_2/KeeperRegistrar1_2.sol/KeeperRegistrar.bin KeeperRegistrar keeper_registrar_wrapper1_2
-//go:generate go run ./generation/generate_automation/wrap.go KeeperRegistrar1_2Mock KeeperRegistrarMock keeper_registrar_wrapper1_2_mock
-//go:generate go run ./generation/generate_automation/wrap.go KeeperRegistry1_2 KeeperRegistry keeper_registry_wrapper1_2
-//go:generate go run ./generation/generate_automation/wrap.go KeeperRegistryCheckUpkeepGasUsageWrapper1_2Mock KeeperRegistryCheckUpkeepGasUsageWrapperMock gas_wrapper_mock
-//go:generate go run ./generation/generate_automation/wrap.go KeeperRegistry1_3 KeeperRegistry keeper_registry_wrapper1_3
-//go:generate go run ./generation/generate_automation/wrap.go KeeperRegistryLogic1_3 KeeperRegistryLogic keeper_registry_logic1_3
-//go:generate go run ./generation/generate_automation/wrap.go KeeperRegistrar2_0 KeeperRegistrar keeper_registrar_wrapper2_0
-//go:generate go run ./generation/generate_automation/wrap.go KeeperRegistry2_0 KeeperRegistry keeper_registry_wrapper2_0
-//go:generate go run ./generation/generate_automation/wrap.go KeeperRegistryLogic2_0 KeeperRegistryLogic keeper_registry_logic2_0
 //go:generate go run ./generation/wrap.go automation UpkeepTranscoder upkeep_transcoder
 //go:generate go run ./generation/wrap.go automation VerifiableLoadUpkeep verifiable_load_upkeep_wrapper
 //go:generate go run ./generation/wrap.go automation VerifiableLoadStreamsLookupUpkeep verifiable_load_streams_lookup_upkeep_wrapper
