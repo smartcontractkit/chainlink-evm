@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 
-import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
+import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
 
 import {ERC165Checker} from
   "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
@@ -17,7 +17,7 @@ import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 /// @dev The contract currently stores the entire state of Node Operators, Nodes, Capabilities and DONs in the
 /// contract and requires a full state migration if an upgrade is ever required. The team acknowledges this and is
 /// fine reconfiguring the upgraded contract in the future so as to not add extra complexity to this current version.
-contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVersion {
+contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVersion {
   // Add the library methods
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.UintSet;
@@ -233,6 +233,12 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bool isPublic;
   }
 
+  /// @notice ConstructorParams is a struct that holds the parameters for the constructor
+  struct ConstructorParams {
+    /// @notice Whether to allow DONs with a single node. Used only for testing.
+    bool canAddOneNodeDONs;
+  }
+
   // ================================================================
   // |                         Errors                               |
   // ================================================================
@@ -422,11 +428,11 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param donFamily The family name that was set
   event DONFamilySet(uint32 indexed donId, string indexed donFamily);
 
-  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0";
-
   // ================================================================
   // |                 Internal variables                            |
   // ================================================================
+
+  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0";
 
   /// @notice Mapping of DON names to boolean indicating if the name is taken
   mapping(string donName => uint32 donId) private s_donNameToId;
@@ -474,6 +480,19 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice The next ID to assign a new DON to
   /// @dev Starting with 1 to avoid confusion with the zero value
   uint32 private s_nextDONId = 1;
+
+  /// @notice Whether to allow DONs with a single node. Used only for testing.
+  bool private immutable i_canAddOneNodeDONs;
+
+  constructor(
+    ConstructorParams memory params
+  ) ConfirmedOwner(msg.sender) {
+    i_canAddOneNodeDONs = params.canAddOneNodeDONs;
+  }
+
+  // ================================================================
+  // |                   External functions                         |
+  // ================================================================
 
   /// @notice Adds a list of node operators
   /// @param nodeOperators List of node operators to add
@@ -1132,7 +1151,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
     // Validate the f value. We are intentionally relaxing the 3f+1 requirement
     // as not all DONs will run OCR instances.
-    if (donParams.f == 0 || donParams.f + 1 > nodes.length) revert InvalidFaultTolerance(donParams.f, nodes.length);
+    if ((!i_canAddOneNodeDONs && donParams.f == 0) || donParams.f + 1 > nodes.length) {
+      revert InvalidFaultTolerance(donParams.f, nodes.length);
+    }
 
     MutableDONConfig storage prevDONConfig = don.config[donParams.configCount - 1];
 

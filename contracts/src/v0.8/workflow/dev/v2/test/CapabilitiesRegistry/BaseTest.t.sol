@@ -24,7 +24,8 @@ contract BaseTest is Test, Constants {
 
   function setUp() public virtual {
     vm.startPrank(ADMIN);
-    s_CapabilitiesRegistry = new CapabilitiesRegistry();
+    s_CapabilitiesRegistry =
+      new CapabilitiesRegistry(CapabilitiesRegistry.ConstructorParams({canAddOneNodeDONs: false}));
     s_capabilityConfigurationContract = new CapabilityConfigurationContract();
 
     s_basicCapability = CapabilitiesRegistry.Capability({

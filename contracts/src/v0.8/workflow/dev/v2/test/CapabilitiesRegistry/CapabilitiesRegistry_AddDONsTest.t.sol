@@ -207,4 +207,28 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     assertEq(donInfo.nodeP2PIds[0], P2P_ID);
     assertEq(donInfo.nodeP2PIds[1], P2P_ID_TWO);
   }
+
+  function test_AddDONs_OneNodeDON() public {
+    s_CapabilitiesRegistry = new CapabilitiesRegistry(CapabilitiesRegistry.ConstructorParams({canAddOneNodeDONs: true}));
+
+    s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
+    s_CapabilitiesRegistry.addCapabilities(s_capabilities);
+    s_CapabilitiesRegistry.addNodes(s_paramsForTwoNodes);
+
+    bytes32[] memory nodes = new bytes32[](1);
+    nodes[0] = P2P_ID;
+
+    CapabilitiesRegistry.NewDONParams[] memory oneNodeDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    oneNodeDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: nodes,
+      capabilityConfigurations: s_capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: 0,
+      name: "test-name",
+      config: bytes("abc")
+    });
+
+    s_CapabilitiesRegistry.addDONs(oneNodeDONs);
+  }
 }
