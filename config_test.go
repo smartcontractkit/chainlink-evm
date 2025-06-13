@@ -14,7 +14,7 @@ var (
 	configMD string
 )
 
-//go:generate go run ./pkg/scmd/config-docs
+//go:generate go run ./pkg/cmd/config-docs
 func TestConfigDocs(t *testing.T) {
 	cfg, err := toml.GenerateDocs()
 	assert.NoError(t, err, "invalid config docs")

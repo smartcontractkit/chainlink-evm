@@ -29,6 +29,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
+	clientmock "github.com/smartcontractkit/chainlink-evm/pkg/client/mocks"
 	evmconfig "github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/forwarders"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
@@ -394,7 +395,7 @@ func BenchmarkCreateTransaction(b *testing.B) {
 
 	config, dbConfig, evmConfig := txmgr.MakeTestConfigs(b)
 
-	ethClient := clienttest.NewClient(b)
+	ethClient := clientmock.NewClient(b)
 	ethClient.On("ConfiguredChainID").Return(big.NewInt(0)).Maybe()
 
 	estimator, err := gas.NewEstimator(logger.Test(b), ethClient, config.ChainType(), ethClient.ConfiguredChainID(), evmConfig.GasEstimator(), nil)

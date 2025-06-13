@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/smartcontractkit/chainlink-evm/pkg/client/mocks"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/smartcontractkit/chainlink-evm/pkg/client/mocks"
 )
 
 func NewClientWithDefaultChainID(t testing.TB) *mocks.Client {
