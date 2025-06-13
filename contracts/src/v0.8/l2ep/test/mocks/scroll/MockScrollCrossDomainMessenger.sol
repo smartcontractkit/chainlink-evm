@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 
-import {Address} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@4.8.3/utils/Address.sol";
 
 contract MockScrollCrossDomainMessenger is IScrollMessenger {
   address internal s_mockMessageSender;

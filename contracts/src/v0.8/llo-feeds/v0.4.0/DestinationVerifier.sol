@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {IDestinationVerifier} from "./interfaces/IDestinationVerifier.sol";
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {IERC165} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Common} from "../libraries/Common.sol";
 import {IAccessController} from "../../shared/interfaces/IAccessController.sol";
 import {IDestinationVerifierProxy} from "./interfaces/IDestinationVerifierProxy.sol";

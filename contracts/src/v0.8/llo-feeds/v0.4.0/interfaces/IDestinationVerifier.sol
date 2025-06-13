@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Common} from "../../libraries/Common.sol";
-import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IDestinationVerifier is IERC165 {
   /**

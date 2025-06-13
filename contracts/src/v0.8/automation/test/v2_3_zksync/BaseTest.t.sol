@@ -21,8 +21,8 @@ import {IWrappedNative} from "../../interfaces/v2_3/IWrappedNative.sol";
 import {MockGasBoundCaller} from "../../mocks/MockGasBoundCaller.sol";
 import {MockZKSyncSystemContext} from "../../mocks/MockZKSyncSystemContext.sol";
 
-import {ERC20Mock} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
-import {IERC20Metadata as IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {ERC20Mock} from "@openzeppelin/contracts@4.8.3/mocks/ERC20Mock.sol";
+import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
 import {WETH9} from "../../../vendor/canonical-weth/WETH9.sol";
 
 /**

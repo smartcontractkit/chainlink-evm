@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 import {DestinationVerifierProxy} from "../../DestinationVerifierProxy.sol";
-import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {IDestinationVerifier} from "../../interfaces/IDestinationVerifier.sol";
 import {IDestinationVerifierProxy} from "../../interfaces/IDestinationVerifierProxy.sol";
 import {DestinationVerifier} from "../../DestinationVerifier.sol";
@@ -11,7 +11,7 @@ import {Strings} from "@openzeppelin/contracts@4.9.6/utils/Strings.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {DestinationFeeManager} from "../../DestinationFeeManager.sol";
 import {Common} from "../../../libraries/Common.sol";
-import {ERC20Mock} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
+import {ERC20Mock} from "@openzeppelin/contracts@4.8.3/mocks/ERC20Mock.sol";
 import {WERC20Mock} from "../../../../shared/mocks/WERC20Mock.sol";
 import {DestinationRewardManager} from "../../DestinationRewardManager.sol";
 import {IDestinationRewardManager} from "../../interfaces/IDestinationRewardManager.sol";
