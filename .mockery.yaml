@@ -7,3 +7,6 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/client:
     interfaces:
       Client:
+  github.com/smartcontractkit/chainlink-evm/pkg/config:
+    interfaces:
+      ChainScopedConfig:
