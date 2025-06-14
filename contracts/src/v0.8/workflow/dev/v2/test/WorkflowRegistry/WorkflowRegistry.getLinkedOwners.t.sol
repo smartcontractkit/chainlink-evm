@@ -13,7 +13,7 @@ contract WorkflowRegistry_getLinkedOwners is Test {
   uint256 public allowedSignerPrivateKey = 0x200b7adf7bcce82338c9b5d8114629b511e4be583683449d90c60718739b683c;
   address public allowedSigner;
   uint256 public validityTimestamp = uint256(block.timestamp + 1 hours);
-  bytes32 public proof = keccak256("test-proof");
+  bytes32 public proofSeed = keccak256("test-proof");
   address public owner1 = address(0xabcd);
   address public owner2 = address(0x1234);
   address public owner3 = address(0x5678);
@@ -176,12 +176,13 @@ contract WorkflowRegistry_getLinkedOwners is Test {
   function linkOwner(
     address newOwner
   ) public {
+    bytes32 ownerProof = keccak256(abi.encode(proofSeed, newOwner));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
       allowedSignerPrivateKey,
-      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), newOwner, validityTimestamp, proof)
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), newOwner, validityTimestamp, ownerProof)
     );
     bytes memory sig = abi.encodePacked(r, s, v);
     vm.prank(newOwner);
-    wr.linkOwner(validityTimestamp, proof, sig);
+    wr.linkOwner(validityTimestamp, ownerProof, sig);
   }
 }
