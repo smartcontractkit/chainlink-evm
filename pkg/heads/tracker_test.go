@@ -1308,12 +1308,12 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		db := testutils.NewSqlxDB(t)
 		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
 		for i := range opts.Heads {
-			require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), opts.Heads[i]))
+			require.NoError(t, orm.IdempotentInsertHead(t.Context(), opts.Heads[i]))
 		}
 		ethClient := clienttest.NewClient(t)
 		ethClient.On("ConfiguredChainID", mock.Anything).Return(testutils.FixtureChainID, nil)
 		ht := createHeadTracker(t, ethClient, evmcfg.EVM(), evmcfg.EVM().HeadTracker(), orm)
-		_, err := ht.headSaver.Load(tests.Context(t), 0)
+		_, err := ht.headSaver.Load(t.Context(), 0)
 		require.NoError(t, err)
 		return ht
 	}
