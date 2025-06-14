@@ -356,7 +356,7 @@ func TestEthClient_LatestSafeBlock(t *testing.T) {
 
 	ethClient := mustNewChainClient(t, wsURL)
 
-	ctx, cancel := context.WithTimeout(tests.Context(t), 25*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 25*time.Second)
 	defer cancel()
 	result, err := ethClient.LatestSafeBlock(ctx)
 	require.NoError(t, err)
