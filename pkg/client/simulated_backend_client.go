@@ -23,7 +23,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/hex"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
@@ -972,7 +971,7 @@ type HeadReader interface {
 // FinalizeLatest commits new blocks until the latest block is finalized.
 func FinalizeLatest(t *testing.T, backend evmtypes.Backend) {
 	cl := backend.Client()
-	h, err := cl.HeaderByNumber(tests.Context(t), nil)
+	h, err := cl.HeaderByNumber(t.Context(), nil)
 	require.NoError(t, err)
 	FinalizeThroughBlock(t, backend, cl, h.Number.Int64())
 }
@@ -981,7 +980,7 @@ func FinalizeLatest(t *testing.T, backend evmtypes.Backend) {
 // the rest of the blocks in the epoch blockNumber belongs to, where each new epoch
 // ends on a 32-block boundary (blockNumber % 32 == 0)
 func FinalizeThroughBlock(t *testing.T, backend evmtypes.Backend, client HeadReader, blockNumber int64) {
-	ctx := tests.Context(t)
+	ctx := t.Context()
 	targetBlockNumber := blockNumber
 	if targetBlockNumber%32 != 0 {
 		targetBlockNumber = 32 * (blockNumber/32 + 1)
