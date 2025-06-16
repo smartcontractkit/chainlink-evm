@@ -225,8 +225,27 @@ contract WorkflowRegistry_unlinkOwner is Test {
     givenTheProofMatchesTheStoredProof
   {
     // it should unlink the owner
+
+    // remove existing allowed signer
+    vm.prank(owner); // only owner can update allowed signers
+    address[] memory signers = new address[](1);
+    signers[0] = allowedSigner;
+    wr.updateAllowedSigners(signers, false);
+    assertFalse(wr.isAllowedSigner(allowedSigner), "Allowed signer should be removed");
+
+    uint256 newAllowedSignerPrivateKey = 0xedef19ef8a1726b10a10e5b083107ec059705d49b9660adc2a387eb9e10fe944;
+    address newAllowedSigner = vm.addr(newAllowedSignerPrivateKey);
+    assertEq(newAllowedSigner, address(0x5f54F5dDE8533578003f682B93686A5284b5277e));
+
+    // set up new allowed signer
+    vm.prank(owner); // only owner can update allowed signers
+    signers[0] = newAllowedSigner;
+    wr.updateAllowedSigners(signers, true);
+    assertTrue(wr.isAllowedSigner(newAllowedSigner), "Allowed signer should be added");
+
+    // sign the unlink request with the new allowed signer
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-      allowedSignerPrivateKey,
+      newAllowedSignerPrivateKey,
       LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, validityTimestamp, proof)
     );
     bytes memory sig = abi.encodePacked(r, s, v);
