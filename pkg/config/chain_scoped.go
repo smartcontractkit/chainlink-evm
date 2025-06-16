@@ -95,8 +95,8 @@ func (e *EVMConfig) FinalityDepth() uint32 {
 	return *e.C.FinalityDepth
 }
 
-func (e *EVMConfig) SafeBlockDepth() uint32 {
-	return *e.C.SafeBlockDepth
+func (e *EVMConfig) SafeDepth() uint32 {
+	return *e.C.SafeDepth
 }
 
 func (e *EVMConfig) FinalityTagEnabled() bool {

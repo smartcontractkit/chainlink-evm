@@ -1294,7 +1294,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		FinalityTagEnabled   bool
 		FinalizedBlockOffset uint32
 		FinalityDepth        uint32
-		SafeBlockDepth       uint32
+		SafeDepth            uint32
 	}
 
 	newHeadTrackerUniverse := func(t *testing.T, opts opts) *headTrackerUniverse {
@@ -1302,7 +1302,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 			c.FinalityTagEnabled = ptr(opts.FinalityTagEnabled)
 			c.FinalizedBlockOffset = ptr(opts.FinalizedBlockOffset)
 			c.FinalityDepth = ptr(opts.FinalityDepth)
-			c.SafeBlockDepth = ptr(opts.SafeBlockDepth)
+			c.SafeDepth = ptr(opts.SafeDepth)
 		})
 
 		db := testutils.NewSqlxDB(t)
@@ -1349,7 +1349,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		assert.Equal(t, actualS.Number, h11.Number)
 	})
 	t.Run("returns latest safe block with finalityDepth set, and others default", func(t *testing.T) {
-		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: false, FinalityDepth: 2, SafeBlockDepth: 1, Heads: []*evmtypes.Head{h13, h12, h11}})
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: false, FinalityDepth: 2, SafeDepth: 1, Heads: []*evmtypes.Head{h13, h12, h11}})
 		htu.ethClient.On("HeadByNumber", mock.Anything, (*big.Int)(nil)).Return(h13, nil).Once()
 
 		actualS, err := htu.headTracker.LatestSafeBlock(ctx)

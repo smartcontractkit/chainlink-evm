@@ -53,8 +53,8 @@ type config struct {
 	finalizedBlockOffset              uint32
 }
 
-func (c *config) SafeBlockDepth() uint32 { return c.safeBlockDepth }
-func (c *config) FinalityDepth() uint32  { return c.finalityDepth }
+func (c *config) SafeDepth() uint32     { return c.safeBlockDepth }
+func (c *config) FinalityDepth() uint32 { return c.finalityDepth }
 func (c *config) BlockEmissionIdleWarningThreshold() time.Duration {
 	return c.blockEmissionIdleWarningThreshold
 }
