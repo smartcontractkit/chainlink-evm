@@ -3,14 +3,13 @@ pragma solidity 0.8.26;
 
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
+import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 
-import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
+import {Ownable2StepMsgSender} from "../../../shared/access/Ownable2StepMsgSender.sol";
 
 import {ERC165Checker} from
   "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/ERC165Checker.sol";
 import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
-import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
-import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 
 /// @notice CapabilitiesRegistry is used to manage Nodes (including their links to Node Operators), Capabilities,
 /// and DONs (Decentralized Oracle Networks) which are sets of nodes that support those Capabilities.
@@ -18,7 +17,7 @@ import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 /// contract and requires a full state migration if an upgrade is ever required. The team acknowledges this and is
 /// fine reconfiguring the upgraded contract in the future so as to not add extra complexity to this current version.
 // solhint-disable-next-line max-states-count
-contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVersion {
+contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, ITypeAndVersion {
   // Add the library methods
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.UintSet;
@@ -500,7 +499,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
 
   constructor(
     ConstructorParams memory params
-  ) ConfirmedOwner(msg.sender) {
+  ) {
     i_canAddOneNodeDONs = params.canAddOneNodeDONs;
   }
 
@@ -625,7 +624,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
 
       if (node.signer == bytes32("")) revert NodeDoesNotExist(p2pId);
       if (node.capabilitiesDONIds.length() > 0) {
-        revert NodePartOfCapabilitiesDON(uint32(node.capabilitiesDONIds.at(i)), p2pId);
+        // Showing the first DON ID for the node as the node. Users can fetch
+        // node info to get the full list of DONs.
+        revert NodePartOfCapabilitiesDON(uint32(node.capabilitiesDONIds.at(0)), p2pId);
       }
       if (node.workflowDONId != 0) revert NodePartOfWorkflowDON(node.workflowDONId, p2pId);
 
@@ -1122,7 +1123,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
 
   /// @notice Returns the list of existing DON families including the default
   /// family that is an empty string unless there are no DONs in that family.
-  // TODO: Add tests to check for default family if exists and no default family if it doesn't exist
   /// @return string[] The list of existing DON families
   function getDONFamilies() external view returns (string[] memory) {
     bytes32[] memory donFamilyHashes = s_activeDONFamilyNames.values();
