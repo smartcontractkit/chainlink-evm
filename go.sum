@@ -637,6 +637,7 @@ github.com/sirupsen/logrus v1.4.1/go.mod h1:ni0Sbl8bgC9z8RoU9G6nDWqqs/fq4eDPysMB
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 <<<<<<< HEAD
+<<<<<<< HEAD
 github.com/smartcontractkit/chainlink-common v0.7.1-0.20250618162808-a5a42ee8701b h1:nS5njF5W9lY1LnTITt3V2M35dT19JPpuVg6//vlzFiU=
 github.com/smartcontractkit/chainlink-common v0.7.1-0.20250618162808-a5a42ee8701b/go.mod h1:1ntZ0rtQpPx6h+xlcOJp0ccqHFaxTzW2Z62FJG358q0=
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502 h1:WLgEB8/lIfA1vI+7O4RE/PYitO57TRkKUqVllDIgJD4=
@@ -646,6 +647,14 @@ github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-202505221100
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250522110034-65c54665034a/go.mod h1:NVoJQoPYr6BorpaXTusoIH1IYTySCmanQ8Q1yv3mNh4=
 <<<<<<< HEAD
 >>>>>>> 545e5a9129 (PLEX-250 - WriteReport initial implementation)
+=======
+github.com/smartcontractkit/chainlink-common v0.7.1-0.20250617130623-1b825fd1d77e h1:UcF/QDseqx4uwujULxAQ6ai0d3rRXGXU9Vn1LVelils=
+github.com/smartcontractkit/chainlink-common v0.7.1-0.20250617130623-1b825fd1d77e/go.mod h1:1ntZ0rtQpPx6h+xlcOJp0ccqHFaxTzW2Z62FJG358q0=
+github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250522110034-65c54665034a h1:XpT8sAcjUVVD7Tcuxx77rD9g5DXFZu3LFxk59SDmPm0=
+github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250522110034-65c54665034a/go.mod h1:NVoJQoPYr6BorpaXTusoIH1IYTySCmanQ8Q1yv3mNh4=
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> e0f33af5de (fixing compilation issue)
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250616180023-87b70c08d7c0 h1:OpFlG2f+LXsDp3cejSQju2rmoNsxBlhgrwXMIsk72IA=
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250616180023-87b70c08d7c0/go.mod h1:X+a4k2a+2G2/yeAaRQMCTLmlhNdQYAeN6v+ZpLzRZww=
 <<<<<<< HEAD
@@ -654,6 +663,10 @@ github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250618135814-7e
 =======
 =======
 >>>>>>> a1239ddce6 (PLEX-250 - WriteReport initial implementation)
+=======
+github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250617131436-7c15436c29fd h1:7dEEuuLos8YlXI2AsnEfqLwTfUIawSF0WlknsJ4/Eog=
+github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250617131436-7c15436c29fd/go.mod h1:BLEQYCcR2mSSTdUqGxnvJ3bqwzQN7KjTBG1BDJwaXY4=
+>>>>>>> c31efa585b (fixing compilation issue)
 github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250522110034-65c54665034a h1:bFYBcW0cmhq0G8NSjPxSFfL/fVODuhEGluyWOxJTqqk=
 github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250522110034-65c54665034a/go.mod h1:jo+cUqNcHwN8IF7SInQNXDZ8qzBsyMpnLdYbDswviFc=
 >>>>>>> 1ea3fe4233 (PLEX-250 - WriteReport initial implementation)

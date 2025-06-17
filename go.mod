@@ -25,6 +25,7 @@ require (
 	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502
 	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250616180023-87b70c08d7c0
 	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250618135814-7e3f79ab707e
+	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250617131436-7c15436c29fd
 	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250522110034-65c54665034a
 	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
 	github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20250528121202-292529af39df
@@ -205,7 +206,3 @@ require (
 )
 
 replace github.com/fbsobreira/gotron-sdk => github.com/smartcontractkit/chainlink-tron/relayer/gotron-sdk v0.0.5-0.20250528121202-292529af39df
-
-replace github.com/smartcontractkit/chainlink-common => ../chainlink-common
-
-replace github.com/smartcontractkit/chainlink-framework/chains => ../chainlink-framework/chains

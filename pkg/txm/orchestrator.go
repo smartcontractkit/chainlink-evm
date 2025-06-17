@@ -353,7 +353,6 @@ func (o *Orchestrator[BLOCK_HASH, HEAD]) GetTransactionFee(ctx context.Context, 
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) CalculateFee(feeParts txmgr.FeeParts) *big.Int {
-	//unimplemented
 	return big.NewInt(0)
 }
 
