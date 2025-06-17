@@ -2,13 +2,13 @@
 pragma solidity 0.8.19;
 
 import {ZKSyncAutomationRegistryBase2_3} from "./ZKSyncAutomationRegistryBase2_3.sol";
-import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v4.7.3/contracts/utils/structs/EnumerableSet.sol";
-import {Address} from "../../vendor/openzeppelin-solidity/v4.7.3/contracts/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.7.3/utils/structs/EnumerableSet.sol";
+import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
 import {ZKSyncAutomationRegistryLogicC2_3} from "./ZKSyncAutomationRegistryLogicC2_3.sol";
 import {Chainable} from "../Chainable.sol";
-import {IERC20Metadata as IERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
-import {SafeCast} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/math/SafeCast.sol";
+import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/utils/SafeERC20.sol";
+import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
 
 contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, Chainable {
   using Address for address;

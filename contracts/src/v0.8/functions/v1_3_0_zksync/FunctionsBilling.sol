@@ -8,7 +8,7 @@ import {IFunctionsBilling, FunctionsBillingConfig} from "../v1_3_0/interfaces/IF
 import {Routable} from "../v1_0_0/Routable.sol";
 import {FunctionsResponse} from "../v1_0_0/libraries/FunctionsResponse.sol";
 
-import {SafeCast} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/math/SafeCast.sol";
+import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
 
 /// @title Functions Billing contract
 /// @notice Contract that calculates payment from users to the nodes of the Decentralized Oracle Network (DON).

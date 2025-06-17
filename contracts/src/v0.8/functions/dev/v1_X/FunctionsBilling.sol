@@ -8,7 +8,7 @@ import {IFunctionsBilling, FunctionsBillingConfig} from "./interfaces/IFunctions
 import {Routable} from "./Routable.sol";
 import {FunctionsResponse} from "./libraries/FunctionsResponse.sol";
 
-import {SafeCast} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/math/SafeCast.sol";
+import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
 
 import {ChainSpecificUtil} from "./libraries/ChainSpecificUtil.sol";
 

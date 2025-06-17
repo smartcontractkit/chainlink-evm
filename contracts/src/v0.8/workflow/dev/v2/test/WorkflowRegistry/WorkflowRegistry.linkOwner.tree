@@ -1,0 +1,20 @@
+WorkflowRegistry_linkOwner
+├── when the owner is not already linked
+│   ├── when the timestamp has not expired
+│   │   ├── when proof is valid
+│   │   │   └── it should link the owner
+│   │   ├── when the proof is not signed by an allowed signer
+│   │   │   └── it should revert with signature error
+│   │   ├── when the proof contains invalid data
+│   │   │   └── it should revert with invalid signature error
+│   │   ├── when the signature is not valid
+│   │   │   └── it should revert with internal signature error
+│   │   └── when the proof was previously used
+│   │       └── it should revert with already used proof error
+│   └── when the timestamp has expired
+│       └── it should revert with expiration error
+└── when the owner is already linked
+    ├── when the timestamp is still valid
+    │   └── it should revert with already linked error
+    └── when the timestamp is expired
+        └── it should revert with expired error
