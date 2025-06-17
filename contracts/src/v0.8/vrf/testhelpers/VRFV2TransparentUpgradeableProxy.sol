@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@openzeppelin/contracts@4.9.6/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract VRFV2TransparentUpgradeableProxy is TransparentUpgradeableProxy {
   // Nothing special here, this is just to generate the gethwrapper for tests.

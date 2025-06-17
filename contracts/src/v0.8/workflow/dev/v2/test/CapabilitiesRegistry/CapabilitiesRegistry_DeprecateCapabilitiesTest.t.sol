@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 
@@ -19,7 +20,7 @@ contract CapabilitiesRegistry_DeprecateCapabilitiesTest is BaseTest {
     string[] memory deprecatedCapabilities = new string[](1);
     deprecatedCapabilities[0] = s_basicCapabilityId;
 
-    vm.expectRevert("Only callable by owner");
+    vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector));
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
   }
 

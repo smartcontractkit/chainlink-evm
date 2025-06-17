@@ -5,7 +5,7 @@ import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 
 import {LinkingUtils} from "../../testhelpers/LinkingUtils.sol";
 
-import {ECDSA} from "../../../../../vendor/openzeppelin-solidity/v5.0.2/contracts/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "@openzeppelin/contracts@5.1.0/utils/cryptography/ECDSA.sol";
 
 import {Test} from "forge-std/Test.sol";
 
@@ -114,6 +114,54 @@ contract WorkflowRegistry_linkOwner is Test {
     );
     wr.linkOwner(validityTimestamp, proof, invalidSignature);
     assertFalse(wr.isOwnerLinked(owner), "Owner should not be linked");
+  }
+
+  function test_WhenTheProofWasPreviouslyUsed() external whenTheOwnerIsNotAlreadyLinked whenTheTimestampHasNotExpired {
+    // it should revert with already used proof error
+    (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), owner, validityTimestamp, proof)
+    );
+    bytes memory linkSignature = abi.encodePacked(r1, s1, v1);
+
+    // link the owner using a unique proof
+    vm.prank(owner);
+    vm.expectEmit(true, true, true, false);
+    emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, true);
+    wr.linkOwner(validityTimestamp, proof, linkSignature);
+    assertTrue(wr.isOwnerLinked(owner), "Owner should be linked");
+
+    (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_UNLINK, address(wr), owner, validityTimestamp, proof)
+    );
+    bytes memory unlinkSignature = abi.encodePacked(r2, s2, v2);
+
+    // now unlink the owner from the registry
+    vm.prank(owner);
+    vm.expectEmit(true, true, true, false);
+    emit WorkflowRegistry.OwnershipLinkUpdatedV1(owner, proof, false);
+    wr.unlinkOwner(owner, validityTimestamp, unlinkSignature, WorkflowRegistry.PreUnlinkAction.NONE);
+    assertFalse(wr.isOwnerLinked(owner), "Owner should be unlinked");
+
+    // next, attempt to link the owner again using the same proof (this should fail because proof can't be reused)
+    vm.prank(owner);
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipProofAlreadyUsed.selector, owner, proof));
+    wr.linkOwner(validityTimestamp, proof, linkSignature);
+    assertFalse(wr.isOwnerLinked(owner), "Owner should be still unlinked");
+
+    address newOwner = address(0x5678);
+    (uint8 v3, bytes32 r3, bytes32 s3) = vm.sign(
+      allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(LinkingUtils.REQUEST_TYPE_LINK, address(wr), newOwner, validityTimestamp, proof)
+    );
+    bytes memory newLinkSignature = abi.encodePacked(r3, s3, v3);
+
+    // now try to link a different owner with the same proof as before (this should also fail)
+    vm.prank(newOwner);
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipProofAlreadyUsed.selector, newOwner, proof));
+    wr.linkOwner(validityTimestamp, proof, newLinkSignature);
+    assertFalse(wr.isOwnerLinked(newOwner), "Owner should be still unlinked");
   }
 
   function test_linkOwner_WhenTheTimestampHasExpired() external whenTheOwnerIsNotAlreadyLinked {

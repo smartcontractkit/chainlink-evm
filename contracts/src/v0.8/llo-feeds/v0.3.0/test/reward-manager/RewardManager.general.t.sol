@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {BaseRewardManagerTest} from "./BaseRewardManager.t.sol";
 import {RewardManager} from "../../../v0.3.0/RewardManager.sol";
-import {ERC20Mock} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
+import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
 
 /**

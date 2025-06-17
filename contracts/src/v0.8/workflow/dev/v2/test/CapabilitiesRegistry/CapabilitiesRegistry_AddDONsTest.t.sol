@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
 import {BaseTest} from "./BaseTest.t.sol";
@@ -46,7 +47,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
   function test_RevertWhen_CalledByNonAdmin() public {
     vm.stopPrank();
     vm.startPrank(STRANGER);
-    vm.expectRevert("Only callable by owner");
+    vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector));
     s_CapabilitiesRegistry.addDONs(s_DEFAULT_NEW_DON_PARAMS);
   }
 

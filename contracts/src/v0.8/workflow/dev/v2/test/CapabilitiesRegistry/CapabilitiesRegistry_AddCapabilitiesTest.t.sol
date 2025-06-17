@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IERC165} from "../../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
+
 import {BaseTest} from "./BaseTest.t.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
   function test_RevertWhen_CalledByNonAdmin() public {
@@ -13,7 +15,7 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
     CapabilitiesRegistry.Capability[] memory capabilities = new CapabilitiesRegistry.Capability[](1);
     capabilities[0] = s_basicCapability;
 
-    vm.expectRevert("Only callable by owner");
+    vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector));
     s_CapabilitiesRegistry.addCapabilities(capabilities);
   }
 

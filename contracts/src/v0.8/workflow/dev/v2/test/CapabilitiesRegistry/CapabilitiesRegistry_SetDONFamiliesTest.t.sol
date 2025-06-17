@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -20,7 +21,7 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
   function test_RevertWhen_CalledByNonOwner() public {
     vm.stopPrank();
     vm.startPrank(STRANGER);
-    vm.expectRevert("Only callable by owner");
+    vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector));
     string[] memory addToFamilies = new string[](1);
     addToFamilies[0] = TEST_DON_FAMILY_ONE;
     string[] memory removeFromFamilies = new string[](0);

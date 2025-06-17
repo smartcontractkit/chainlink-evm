@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/assets"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 )
@@ -92,6 +93,10 @@ func (e *EVMConfig) LogPollInterval() time.Duration {
 
 func (e *EVMConfig) FinalityDepth() uint32 {
 	return *e.C.FinalityDepth
+}
+
+func (e *EVMConfig) SafeDepth() uint32 {
+	return *e.C.SafeDepth
 }
 
 func (e *EVMConfig) FinalityTagEnabled() bool {

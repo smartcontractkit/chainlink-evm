@@ -7,9 +7,9 @@ import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
 import {IDataFeedsCache} from "./interfaces/IDataFeedsCache.sol";
 import {ITokenRecover} from "./interfaces/ITokenRecover.sol";
 
-import {IERC165} from "../vendor/openzeppelin-solidity/v5.0.2/contracts/interfaces/IERC165.sol";
-import {IERC20} from "../vendor/openzeppelin-solidity/v5.0.2/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "../vendor/openzeppelin-solidity/v5.0.2/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC165} from "@openzeppelin/contracts@5.0.2/interfaces/IERC165.sol";
+import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
 
 contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVersion, OwnerIsCreator {
   using SafeERC20 for IERC20;

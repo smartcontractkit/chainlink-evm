@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {BaseTest} from "./BaseTest.t.sol";
-
+import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
   function setUp() public override {
@@ -49,7 +49,7 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     uint32[] memory donIDs = new uint32[](1);
     donIDs[0] = 1;
     changePrank(STRANGER);
-    vm.expectRevert("Only callable by owner");
+    vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector));
     s_CapabilitiesRegistry.removeDONs(donIDs);
   }
 

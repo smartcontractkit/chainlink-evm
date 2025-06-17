@@ -1,0 +1,29 @@
+ChainID = 129399
+ChainType = "optimismBedrock"
+FinalityTagEnabled = true
+LogPollInterval = "2s"
+MinIncomingConfirmations = 1
+NoNewHeadsThreshold = '1m'
+NoNewFinalizedHeadsThreshold = '45m'
+
+[GasEstimator]
+EIP1559DynamicFees = true
+Mode = 'FeeHistory'
+PriceMax = '120 gwei'
+
+[GasEstimator.DAOracle]
+OracleType = 'opstack'
+OracleAddress = '0x420000000000000000000000000000000000000F'
+
+[GasEstimator.FeeHistory]
+# Blocks rate is on anverage of 1s
+CacheTimeout = '4s'
+
+[GasEstimator.BlockHistory]
+BlockHistorySize = 60
+
+[NodePool]
+SyncThreshold = 10
+
+[Transactions]
+ResendAfterThreshold = "30s"

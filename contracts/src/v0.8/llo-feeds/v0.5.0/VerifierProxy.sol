@@ -6,7 +6,7 @@ import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
 import {IVerifier} from "./interfaces/IVerifier.sol";
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 import {AccessControllerInterface} from "../../shared/interfaces/AccessControllerInterface.sol";
-import {IERC165} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {IVerifierFeeManager} from "./interfaces/IVerifierFeeManager.sol";
 import {Common} from "../libraries/Common.sol";
 

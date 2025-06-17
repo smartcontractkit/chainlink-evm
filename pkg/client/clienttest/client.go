@@ -1300,6 +1300,64 @@ func (_c *Client_LatestFinalizedBlock_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// LatestSafeBlock provides a mock function with given fields: ctx
+func (_m *Client) LatestSafeBlock(ctx context.Context) (*pkgtypes.Head, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LatestSafeBlock")
+	}
+
+	var r0 *pkgtypes.Head
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*pkgtypes.Head, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *pkgtypes.Head); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pkgtypes.Head)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_LatestSafeBlock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LatestSafeBlock'
+type Client_LatestSafeBlock_Call struct {
+	*mock.Call
+}
+
+// LatestSafeBlock is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Client_Expecter) LatestSafeBlock(ctx interface{}) *Client_LatestSafeBlock_Call {
+	return &Client_LatestSafeBlock_Call{Call: _e.mock.On("LatestSafeBlock", ctx)}
+}
+
+func (_c *Client_LatestSafeBlock_Call) Run(run func(ctx context.Context)) *Client_LatestSafeBlock_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Client_LatestSafeBlock_Call) Return(_a0 *pkgtypes.Head, _a1 error) *Client_LatestSafeBlock_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_LatestSafeBlock_Call) RunAndReturn(run func(context.Context) (*pkgtypes.Head, error)) *Client_LatestSafeBlock_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NodeStates provides a mock function with no fields
 func (_m *Client) NodeStates() map[string]string {
 	ret := _m.Called()
