@@ -10,7 +10,7 @@ import {CrossDomainForwarder} from "../CrossDomainForwarder.sol";
 import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
 import {iOVM_CrossDomainMessenger} from "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
-import {Address} from "../../vendor/openzeppelin-solidity/v4.7.3/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
 
 /**
  * @title OptimismCrossDomainForwarder - L1 xDomain account representation

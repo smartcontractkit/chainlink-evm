@@ -3,8 +3,8 @@ auto_detect_solc = true
 optimizer = true
 optimizer_runs = 1_000_000
 
-src = 'src/v0.8'
-test = 'test/v0.8'
+src = 'src/'
+test = 'test/'
 out = 'foundry-artifacts'
 cache_path = 'foundry-cache'
 libs = ['node_modules']

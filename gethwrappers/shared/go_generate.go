@@ -15,6 +15,6 @@ package gethwrappers
 //go:generate go run ../generation/wrap.go shared ITypeAndVersion type_and_version
 //go:generate go run ../generation/wrap.go shared WETH9ZKSync weth9_zksync
 
-//go:generate go run ../generation/wrap.go vendor ERC20 erc20
-//go:generate go run ../generation/wrap.go vendor Multicall3 multicall3
-//go:generate go run ../generation/wrap.go vendor WETH9 weth9
+//go:generate go run ../generation/wrap.go shared ERC20 erc20
+//go:generate go run ../generation/wrap.go shared Multicall3 multicall3
+//go:generate go run ../generation/wrap.go shared WETH9 weth9

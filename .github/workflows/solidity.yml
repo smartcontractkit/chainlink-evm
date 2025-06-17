@@ -122,6 +122,7 @@ jobs:
         run: make wrappers-all
 
       - name: Run zksync compile and generate wrappers
+        if: ${{ needs.tag-check.outputs.is-release-core == 'true' || needs.tag-check.outputs.is-pre-release-core == 'true' }}
         working-directory: ./chainlink/contracts
         run: make wrappers-zksync
 

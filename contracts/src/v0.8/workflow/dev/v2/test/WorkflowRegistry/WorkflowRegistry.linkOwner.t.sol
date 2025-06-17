@@ -5,7 +5,7 @@ import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 
 import {LinkingUtils} from "../../testhelpers/LinkingUtils.sol";
 
-import {ECDSA} from "../../../../../vendor/openzeppelin-solidity/v5.1.0/contracts/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "@openzeppelin/contracts@5.1.0/utils/cryptography/ECDSA.sol";
 
 import {Test} from "forge-std/Test.sol";
 

@@ -10,7 +10,7 @@ import {OperatorInterface} from "./interfaces/OperatorInterface.sol";
 import {IOwnable} from "../shared/interfaces/IOwnable.sol";
 import {IWithdrawal} from "./interfaces/IWithdrawal.sol";
 import {OracleInterface} from "./interfaces/OracleInterface.sol";
-import {SafeCast} from "../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/math/SafeCast.sol";
+import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
 
 // @title The Chainlink Operator contract
 // @notice Node operators can deploy this contract to fulfill requests sent to them

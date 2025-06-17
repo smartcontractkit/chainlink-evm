@@ -5,10 +5,9 @@ import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 
 import {Ownable2StepMsgSender} from "../../../shared/access/Ownable2StepMsgSender.sol";
 
-import {ECDSA} from "../../../vendor/openzeppelin-solidity/v5.1.0/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from
-  "../../../vendor/openzeppelin-solidity/v5.1.0/contracts/utils/cryptography/MessageHashUtils.sol";
-import {EnumerableMap} from "../../../vendor/openzeppelin-solidity/v5.1.0/contracts/utils/structs/EnumerableMap.sol";
+import {ECDSA} from "@openzeppelin/contracts@5.1.0/utils/cryptography/ECDSA.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts@5.1.0/utils/cryptography/MessageHashUtils.sol";
+import {EnumerableMap} from "@openzeppelin/contracts@5.1.0/utils/structs/EnumerableMap.sol";
 
 contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   using EnumerableMap for EnumerableMap.AddressToBytes32Map;

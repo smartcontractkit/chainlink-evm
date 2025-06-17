@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20} from "./../../vendor/openzeppelin-solidity/v5.0.2/contracts/interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 
 /// @notice ITokenRecover
 /// Implements the recoverTokens method, enabling the recovery of ERC-20 or native tokens accidentally sent to a

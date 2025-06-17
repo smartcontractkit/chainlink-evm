@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/proxy/Proxy.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts@4.9.6/proxy/Proxy.sol";
+import "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts@4.9.6/utils/Address.sol";
 import "./KeeperRegistryBase1_3.sol";
 import "./KeeperRegistryLogic1_3.sol";
 import {AutomationRegistryExecutableInterface, State} from "../interfaces/v1_3/AutomationRegistryInterface1_3.sol";

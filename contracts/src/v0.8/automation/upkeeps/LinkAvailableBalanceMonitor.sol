@@ -3,11 +3,11 @@
 pragma solidity 0.8.19;
 
 import {AutomationCompatibleInterface} from "../interfaces/AutomationCompatibleInterface.sol";
-import {AccessControl} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/access/AccessControl.sol";
-import {EnumerableMap} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableMap.sol";
-import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
-import {IERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
-import {Pausable} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/security/Pausable.sol";
+import {AccessControl} from "@openzeppelin/contracts@4.8.3/access/AccessControl.sol";
+import {EnumerableMap} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableMap.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableSet.sol";
+import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
+import {Pausable} from "@openzeppelin/contracts@4.8.3/security/Pausable.sol";
 
 interface IAggregatorProxy {
   function aggregator() external view returns (address);
