@@ -393,6 +393,51 @@ func (_c *EVM_ChainType_Call) RunAndReturn(run func() chaintype.ChainType) *EVM_
 	return _c
 }
 
+// ConfirmationTimeout provides a mock function with no fields
+func (_m *EVM) ConfirmationTimeout() time.Duration {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ConfirmationTimeout")
+	}
+
+	var r0 time.Duration
+	if rf, ok := ret.Get(0).(func() time.Duration); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(time.Duration)
+	}
+
+	return r0
+}
+
+// EVM_ConfirmationTimeout_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConfirmationTimeout'
+type EVM_ConfirmationTimeout_Call struct {
+	*mock.Call
+}
+
+// ConfirmationTimeout is a helper method to define mock.On call
+func (_e *EVM_Expecter) ConfirmationTimeout() *EVM_ConfirmationTimeout_Call {
+	return &EVM_ConfirmationTimeout_Call{Call: _e.mock.On("ConfirmationTimeout")}
+}
+
+func (_c *EVM_ConfirmationTimeout_Call) Run(run func()) *EVM_ConfirmationTimeout_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *EVM_ConfirmationTimeout_Call) Return(_a0 time.Duration) *EVM_ConfirmationTimeout_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *EVM_ConfirmationTimeout_Call) RunAndReturn(run func() time.Duration) *EVM_ConfirmationTimeout_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FinalityDepth provides a mock function with no fields
 func (_m *EVM) FinalityDepth() uint32 {
 	ret := _m.Called()
@@ -1440,6 +1485,51 @@ func (_c *EVM_RPCDefaultBatchSize_Call) RunAndReturn(run func() uint32) *EVM_RPC
 	return _c
 }
 
+// SafeDepth provides a mock function with no fields
+func (_m *EVM) SafeDepth() uint32 {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SafeDepth")
+	}
+
+	var r0 uint32
+	if rf, ok := ret.Get(0).(func() uint32); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(uint32)
+	}
+
+	return r0
+}
+
+// EVM_SafeDepth_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SafeDepth'
+type EVM_SafeDepth_Call struct {
+	*mock.Call
+}
+
+// SafeDepth is a helper method to define mock.On call
+func (_e *EVM_Expecter) SafeDepth() *EVM_SafeDepth_Call {
+	return &EVM_SafeDepth_Call{Call: _e.mock.On("SafeDepth")}
+}
+
+func (_c *EVM_SafeDepth_Call) Run(run func()) *EVM_SafeDepth_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *EVM_SafeDepth_Call) Return(_a0 uint32) *EVM_SafeDepth_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *EVM_SafeDepth_Call) RunAndReturn(run func() uint32) *EVM_SafeDepth_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TOMLString provides a mock function with no fields
 func (_m *EVM) TOMLString() (string, error) {
 	ret := _m.Called()
@@ -1538,96 +1628,6 @@ func (_c *EVM_Transactions_Call) Return(_a0 config.Transactions) *EVM_Transactio
 }
 
 func (_c *EVM_Transactions_Call) RunAndReturn(run func() config.Transactions) *EVM_Transactions_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// TxMaximumWaitTimeForConfirmation provides a mock function with no fields
-func (_m *EVM) TxMaximumWaitTimeForConfirmation() time.Duration {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for TxMaximumWaitTimeForConfirmation")
-	}
-
-	var r0 time.Duration
-	if rf, ok := ret.Get(0).(func() time.Duration); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(time.Duration)
-	}
-
-	return r0
-}
-
-// EVM_TxMaximumWaitTimeForConfirmation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TxMaximumWaitTimeForConfirmation'
-type EVM_TxMaximumWaitTimeForConfirmation_Call struct {
-	*mock.Call
-}
-
-// TxMaximumWaitTimeForConfirmation is a helper method to define mock.On call
-func (_e *EVM_Expecter) TxMaximumWaitTimeForConfirmation() *EVM_TxMaximumWaitTimeForConfirmation_Call {
-	return &EVM_TxMaximumWaitTimeForConfirmation_Call{Call: _e.mock.On("TxMaximumWaitTimeForConfirmation")}
-}
-
-func (_c *EVM_TxMaximumWaitTimeForConfirmation_Call) Run(run func()) *EVM_TxMaximumWaitTimeForConfirmation_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *EVM_TxMaximumWaitTimeForConfirmation_Call) Return(_a0 time.Duration) *EVM_TxMaximumWaitTimeForConfirmation_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *EVM_TxMaximumWaitTimeForConfirmation_Call) RunAndReturn(run func() time.Duration) *EVM_TxMaximumWaitTimeForConfirmation_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// TxMinimumWaitTimeForConfirmation provides a mock function with no fields
-func (_m *EVM) TxMinimumWaitTimeForConfirmation() time.Duration {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for TxMinimumWaitTimeForConfirmation")
-	}
-
-	var r0 time.Duration
-	if rf, ok := ret.Get(0).(func() time.Duration); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(time.Duration)
-	}
-
-	return r0
-}
-
-// EVM_TxMinimumWaitTimeForConfirmation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TxMinimumWaitTimeForConfirmation'
-type EVM_TxMinimumWaitTimeForConfirmation_Call struct {
-	*mock.Call
-}
-
-// TxMinimumWaitTimeForConfirmation is a helper method to define mock.On call
-func (_e *EVM_Expecter) TxMinimumWaitTimeForConfirmation() *EVM_TxMinimumWaitTimeForConfirmation_Call {
-	return &EVM_TxMinimumWaitTimeForConfirmation_Call{Call: _e.mock.On("TxMinimumWaitTimeForConfirmation")}
-}
-
-func (_c *EVM_TxMinimumWaitTimeForConfirmation_Call) Run(run func()) *EVM_TxMinimumWaitTimeForConfirmation_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *EVM_TxMinimumWaitTimeForConfirmation_Call) Return(_a0 time.Duration) *EVM_TxMinimumWaitTimeForConfirmation_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *EVM_TxMinimumWaitTimeForConfirmation_Call) RunAndReturn(run func() time.Duration) *EVM_TxMinimumWaitTimeForConfirmation_Call {
 	_c.Call.Return(run)
 	return _c
 }

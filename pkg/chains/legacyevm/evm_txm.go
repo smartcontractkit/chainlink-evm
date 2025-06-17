@@ -41,7 +41,7 @@ func newEvmTxm(
 		"limitDefault", cfg.GasEstimator().LimitDefault(),
 	)
 
-	err = validateTxWaitTimeForSubmitTransaction(cfg)
+	err = validateConfirmationTimeout(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -86,12 +86,11 @@ func newEvmTxm(
 	return
 }
 
-func validateTxWaitTimeForSubmitTransaction(cfg evmconfig.EVM) error {
-	if cfg.TxMinimumWaitTimeForConfirmation().Seconds() > time.Duration(600).Seconds() {
-		return fmt.Errorf("txMinimumWaitTimeForConfirmation cannot be greater than 10 minutes, got %s", cfg.TxMinimumWaitTimeForConfirmation())
-	}
-	if cfg.TxMinimumWaitTimeForConfirmation()+cfg.TxMaximumWaitTimeForConfirmation() <= time.Duration(600*time.Second) {
-		return fmt.Errorf("txMaximumWaitTimeForConfirmation cannot be greater than 10 minutes, got %s", cfg.TxMaximumWaitTimeForConfirmation())
+const maximumConfirmationTimeout = time.Second * 600
+
+func validateConfirmationTimeout(cfg evmconfig.EVM) error {
+	if cfg.ConfirmationTimeout() > maximumConfirmationTimeout {
+		return fmt.Errorf("ConfirmationTimeout cannot be greater than 10 minutes, got %s", cfg.ConfirmationTimeout())
 	}
 	return nil
 }

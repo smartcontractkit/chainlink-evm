@@ -833,7 +833,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 		require.Equal(t, commontypes.Pending, state)
 	})
 
-	t.Run("returns confirmed for confirmed state", func(t *testing.T) {
+	t.Run("returns unconfirmed for confirmed state", func(t *testing.T) {
 		idempotencyKey := uuid.New().String()
 		fromAddress := memKS.MustCreate(t)
 		nonce := evmtypes.Nonce(0)
@@ -859,7 +859,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 		mustInsertEthReceipt(t, txStore, head.Number, head.Hash, attempt.Hash)
 		state, err := txm.GetTransactionStatus(ctx, idempotencyKey)
 		require.NoError(t, err)
-		require.Equal(t, commontypes.Confirmed, state)
+		require.Equal(t, commontypes.Unconfirmed, state)
 	})
 
 	t.Run("returns finalized for finalized state", func(t *testing.T) {

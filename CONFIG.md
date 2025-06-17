@@ -40,8 +40,6 @@ RPCBlockQueryDelay = 1 # Default
 FinalizedBlockOffset = 0 # Default
 LogBroadcasterEnabled = true # Default
 NoNewFinalizedHeadsThreshold = '0' # Default
-TxMinimumWaitTimeForConfirmation = '60s' # Default
-TxMaximumWaitTimeForConfirmation = '300s' # Default
 ```
 
 
@@ -269,21 +267,10 @@ out-of-sync. Only applicable if `FinalityTagEnabled=true`
 
 Set to zero to disable.
 
-### TxMinimumWaitTimeForConfirmation
-```toml
-TxMinimumWaitTimeForConfirmation = '60s' # Default
-```
-TxMinimumWaitTimeForConfirmation minimum time to wait for a TX to get into a block in the blockchain. This is used for the EVMService.SubmitTransaction operation. It won't check for TX status updates until this time passes
-
-### TxMaximumWaitTimeForConfirmation
-```toml
-TxMaximumWaitTimeForConfirmation = '300s' # Default
-```
-TxMaximumWaitTimeForConfirmation time after TxMinimumWaitTimeForConfirmation to wait for a TX to get into a block. After TxMinimumWaitTimeForConfirmation the operation will check every 100 milliseconds to see if the TX gets into a block and will do it for no longer than TxMaximumWaitTimeForConfirmation. Total wait time will be TxMinimumWaitTimeForConfirmation + TxMaximumWaitTimeForConfirmation
-
 ## Transactions
 ```toml
 [Transactions]
+ConfirmationTimeout = '60s' # Default
 Enabled = true # Default
 ForwardersEnabled = false # Default
 MaxInFlight = 16 # Default
@@ -293,6 +280,12 @@ ReaperThreshold = '168h' # Default
 ResendAfterThreshold = '1m' # Default
 ```
 
+
+### ConfirmationTimeout
+```toml
+ConfirmationTimeout = '60s' # Default
+```
+ConfirmationTimeout time to wait for a TX to get into a block in the blockchain. This is used for the EVMService.SubmitTransaction operation.
 
 ### Enabled
 ```toml

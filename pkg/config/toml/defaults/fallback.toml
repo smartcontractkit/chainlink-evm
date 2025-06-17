@@ -18,10 +18,9 @@ RPCBlockQueryDelay = 1
 FinalizedBlockOffset = 0
 NoNewFinalizedHeadsThreshold = '0'
 LogBroadcasterEnabled = true
-TxMinimumWaitTimeForConfirmation = '1m0s'
-TxMaximumWaitTimeForConfirmation = '5m0s'
 
 [Transactions]
+ConfirmationTimeout = '1m0s'
 Enabled = true
 ForwardersEnabled = false
 MaxInFlight = 16

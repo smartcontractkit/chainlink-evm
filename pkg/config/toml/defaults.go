@@ -263,12 +263,6 @@ func (c *Chain) SetFrom(f *Chain) {
 	if v := f.NoNewFinalizedHeadsThreshold; v != nil {
 		c.NoNewFinalizedHeadsThreshold = v
 	}
-	if v := f.TxMinimumWaitTimeForConfirmation; v != nil {
-		c.TxMinimumWaitTimeForConfirmation = v
-	}
-	if v := f.TxMaximumWaitTimeForConfirmation; v != nil {
-		c.TxMaximumWaitTimeForConfirmation = v
-	}
 
 	c.Transactions.setFrom(&f.Transactions)
 	c.BalanceMonitor.setFrom(&f.BalanceMonitor)

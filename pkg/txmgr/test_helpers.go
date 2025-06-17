@@ -44,31 +44,21 @@ func (d *TestDatabaseConfig) Listener() ListenerConfig {
 
 type TestEvmConfig struct {
 	evmconfig.EVM
-	MaxInFlight                     uint32
-	ReaperInterval                  time.Duration
-	ReaperThreshold                 time.Duration
-	ResendAfterThreshold            time.Duration
-	BumpThreshold                   uint64
-	MaxQueued                       uint64
-	Enabled                         bool
-	Threshold                       uint32
-	MinAttempts                     uint32
-	DetectionApiUrl                 *url.URL
-	RpcDefaultBatchSize             uint32
-	MinimumWaitTimeForConfiguration *time.Duration
-	MaximumWaitTimeForConfiguration *time.Duration
+	MaxInFlight          uint32
+	ReaperInterval       time.Duration
+	ReaperThreshold      time.Duration
+	ResendAfterThreshold time.Duration
+	BumpThreshold        uint64
+	MaxQueued            uint64
+	Enabled              bool
+	Threshold            uint32
+	MinAttempts          uint32
+	DetectionApiUrl      *url.URL
+	RpcDefaultBatchSize  uint32
 }
 
 func (e *TestEvmConfig) Transactions() evmconfig.Transactions {
 	return &transactionsConfig{e: e, autoPurge: &autoPurgeConfig{}}
-}
-
-func (e *TestEvmConfig) TxMaximumWaitTimeForConfiguration() time.Duration {
-	return *e.MaximumWaitTimeForConfiguration
-}
-
-func (e *TestEvmConfig) TxMinimumWaitTimeForConfiguration() time.Duration {
-	return *e.MinimumWaitTimeForConfiguration
 }
 
 func (e *TestEvmConfig) NonceAutoSync() bool { return true }

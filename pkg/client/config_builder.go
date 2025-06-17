@@ -45,7 +45,7 @@ func NewClientConfigs(
 	finalizedBlockPollInterval time.Duration,
 	newHeadsPollInterval time.Duration,
 	txMinimumWaitTimeForConfirmation time.Duration,
-	txMaximumWaitTimeForConfirmation time.Duration,
+	confirmationTimeout time.Duration,
 ) (multinode.ChainConfig, evmconfig.NodePool, []*toml.Node, error) {
 	nodes, err := parseNodeConfigs(nodeCfgs)
 	if err != nil {
@@ -73,8 +73,6 @@ func NewClientConfigs(
 				NoNewHeadsThreshold:          commonconfig.MustNewDuration(noNewHeadsThreshold),
 				FinalizedBlockOffset:         finalizedBlockOffset,
 				NoNewFinalizedHeadsThreshold: commonconfig.MustNewDuration(noNewFinalizedHeadsThreshold),
-				TxMinimumWaitTimeForConfirmation: commonconfig.MustNewDuration(txMinimumWaitTimeForConfirmation),
-				TxMaximumWaitTimeForConfirmation: commonconfig.MustNewDuration(txMaximumWaitTimeForConfirmation),
 			},
 		},
 	}

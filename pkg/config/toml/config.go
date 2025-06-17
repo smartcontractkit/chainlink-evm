@@ -412,8 +412,6 @@ type Chain struct {
 	RPCBlockQueryDelay           *uint16
 	FinalizedBlockOffset         *uint32
 	NoNewFinalizedHeadsThreshold *commonconfig.Duration
-	TxMaximumWaitTimeForConfirmation *commonconfig.Duration
-	TxMinimumWaitTimeForConfirmation *commonconfig.Duration
 
 	Transactions   Transactions      `toml:",omitempty"`
 	BalanceMonitor BalanceMonitor    `toml:",omitempty"`
@@ -528,6 +526,7 @@ type Transactions struct {
 	ReaperInterval       *commonconfig.Duration
 	ReaperThreshold      *commonconfig.Duration
 	ResendAfterThreshold *commonconfig.Duration
+	ConfirmationTimeout  *commonconfig.Duration
 
 	AutoPurge            AutoPurgeConfig            `toml:",omitempty"`
 	TransactionManagerV2 TransactionManagerV2Config `toml:",omitempty"`
@@ -554,6 +553,9 @@ func (t *Transactions) setFrom(f *Transactions) {
 	}
 	if v := f.ResendAfterThreshold; v != nil {
 		t.ResendAfterThreshold = v
+	}
+	if v := f.ConfirmationTimeout; v != nil {
+		t.ConfirmationTimeout = v
 	}
 	t.AutoPurge.setFrom(&f.AutoPurge)
 	t.TransactionManagerV2.setFrom(&f.TransactionManagerV2)
