@@ -2139,7 +2139,7 @@ contract Pause is SetUp {
     registry.pause();
 
     vm.expectRevert(Registry.RegistryPaused.selector);
-    uint256 id = registry.registerUpkeep(
+    registry.registerUpkeep(
       address(TARGET1),
       config.maxPerformGas,
       UPKEEP_ADMIN,
@@ -2203,7 +2203,6 @@ contract CancelUpkeep is SetUp {
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceledByAdmin_CalledByOwner() external {
-    uint256 bn = block.number;
     vm.startPrank(UPKEEP_ADMIN);
     registry.cancelUpkeep(linkUpkeepID);
 
@@ -2213,7 +2212,6 @@ contract CancelUpkeep is SetUp {
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceledByOwner_CalledByAdmin() external {
-    uint256 bn = block.number;
     vm.startPrank(registry.owner());
     registry.cancelUpkeep(linkUpkeepID);
 
@@ -2223,7 +2221,6 @@ contract CancelUpkeep is SetUp {
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceledByAdmin_CalledByAdmin() external {
-    uint256 bn = block.number;
     vm.startPrank(UPKEEP_ADMIN);
     registry.cancelUpkeep(linkUpkeepID);
 
@@ -2232,7 +2229,6 @@ contract CancelUpkeep is SetUp {
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceledByOwner_CalledByOwner() external {
-    uint256 bn = block.number;
     vm.startPrank(registry.owner());
     registry.cancelUpkeep(linkUpkeepID);
 
