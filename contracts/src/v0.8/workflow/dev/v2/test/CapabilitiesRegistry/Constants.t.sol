@@ -38,4 +38,6 @@ contract Constants {
   string internal constant TEST_DON_NAME = "test-don-name";
   bytes internal constant TEST_DON_CONFIG = bytes("test-don-config");
   bytes internal constant TEST_CAPABILITY_METADATA = bytes("test-capability-metadata");
+  string internal constant TEST_DON_FAMILY_ONE = "core";
+  string internal constant TEST_DON_FAMILY_TWO = "backup";
 }

@@ -79,6 +79,9 @@ contract BaseTest is Test, Constants {
     s_nodeIds[0] = s_paramsForTwoNodes[0].p2pId;
     s_nodeIds[1] = s_paramsForTwoNodes[1].p2pId;
 
+    string[] memory donFamilies = new string[](1);
+    donFamilies[0] = TEST_DON_FAMILY_ONE;
+
     s_paramsForTwoDONs = new CapabilitiesRegistry.NewDONParams[](2);
     s_paramsForTwoDONs[0] = CapabilitiesRegistry.NewDONParams({
       nodes: s_nodeIds,
@@ -87,7 +90,7 @@ contract BaseTest is Test, Constants {
       acceptsWorkflows: true,
       f: 1,
       name: "",
-      donFamily: "",
+      donFamilies: donFamilies,
       config: bytes("")
     });
 
@@ -98,7 +101,7 @@ contract BaseTest is Test, Constants {
       acceptsWorkflows: false,
       f: 1,
       name: TEST_DON_NAME,
-      donFamily: "",
+      donFamilies: donFamilies,
       config: TEST_DON_CONFIG
     });
   }

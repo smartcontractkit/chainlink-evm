@@ -27,6 +27,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     defaultCapabilityConfigs[0] =
       CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
 
+    string[] memory donFamilies = new string[](0);
     s_DEFAULT_NEW_DON_PARAMS = new CapabilitiesRegistry.NewDONParams[](1);
     s_DEFAULT_NEW_DON_PARAMS[0] = CapabilitiesRegistry.NewDONParams({
       nodes: newNodes,
@@ -35,7 +36,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       acceptsWorkflows: true,
       f: F_VALUE,
       name: "",
-      donFamily: "",
+      donFamilies: donFamilies,
       config: bytes("")
     });
 
@@ -167,6 +168,9 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       ),
       1
     );
+    string[] memory donFamilies = new string[](2);
+    donFamilies[0] = "basic-family";
+    donFamilies[1] = "test-family";
     CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
     newDONs[0] = CapabilitiesRegistry.NewDONParams({
       nodes: s_nodeIds,
@@ -175,7 +179,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       acceptsWorkflows: true,
       f: F_VALUE,
       name: "test-name",
-      donFamily: "",
+      donFamilies: donFamilies,
       config: bytes("abc")
     });
 
@@ -208,6 +212,10 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     assertEq(donInfo.nodeP2PIds.length, s_nodeIds.length);
     assertEq(donInfo.nodeP2PIds[0], P2P_ID);
     assertEq(donInfo.nodeP2PIds[1], P2P_ID_TWO);
+
+    assertEq(donInfo.donFamilies.length, 2);
+    assertEq(donInfo.donFamilies[0], "basic-family");
+    assertEq(donInfo.donFamilies[1], "test-family");
   }
 
   function test_AddDONs_OneNodeDON() public {
@@ -228,7 +236,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       acceptsWorkflows: true,
       f: 0,
       name: "test-name",
-      donFamily: "",
+      donFamilies: new string[](0),
       config: bytes("abc")
     });
 

@@ -249,7 +249,7 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
       acceptsWorkflows: true,
       f: 1,
       name: "",
-      donFamily: "",
+      donFamilies: new string[](0),
       config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs);
@@ -295,7 +295,7 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
       acceptsWorkflows: false,
       f: 1,
       name: "",
-      donFamily: "",
+      donFamilies: new string[](0),
       config: bytes("")
     });
     s_CapabilitiesRegistry.addDONs(newDONs2);

@@ -60,7 +60,7 @@ contract CapabilitiesRegistry_AddDONsTest_WhenMaliciousCapabilityConfigurationCo
       acceptsWorkflows: true,
       f: F_VALUE,
       name: "",
-      donFamily: "",
+      donFamilies: new string[](0),
       config: bytes("")
     });
 

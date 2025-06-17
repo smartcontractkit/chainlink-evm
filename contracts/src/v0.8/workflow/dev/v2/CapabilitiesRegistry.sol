@@ -187,10 +187,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
     bool acceptsWorkflows;
     /// @notice List of member node P2P Ids
     bytes32[] nodeP2PIds;
-    /// @notice The family of the DON. A DON family is a group of DONs that
-    /// are connected with each other. Can be empty if the DON is not part of
-    /// any family.
-    string donFamily;
+    /// @notice The families the DON belongs to. A DON family is a group of DONs
+    /// that are connected with each other. Empty string is the default family.
+    string[] donFamilies;
     /// @notice The name of the DON. Can be empty. If not empty, must be unique
     /// to the registry.
     string name;
@@ -216,7 +215,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   /// @notice NewDONParams is a struct that holds the parameters for a new DON.
   struct NewDONParams {
     string name;
-    string donFamily;
+    string[] donFamilies;
     bytes config;
     CapabilityConfiguration[] capabilityConfigurations;
     bytes32[] nodes;
@@ -474,9 +473,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   /// @notice Mapping of DON IDs to DONs
   mapping(uint32 donId => DON don) private s_dons;
 
-  /// @notice Mapping of DON ID to DON family. Empty string is the default
-  /// family.
-  mapping(uint32 donId => string donFamily) private s_donIdToDonFamily;
+  /// @notice Mapping of DON ID to DON families. A single DON can belong to
+  /// multiple families. Empty string is the default family.
+  mapping(uint32 donId => EnumerableSet.Bytes32Set donFamilies) private s_donIdToDonFamilyHashes;
 
   /// @notice Mapping of DON family name hashes to DON IDs
   mapping(bytes32 donFamilyHash => EnumerableSet.UintSet donIds) private s_donFamilyMembers;
@@ -564,42 +563,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
         emit NodeOperatorUpdated(nodeOperatorId, nodeOperator.admin, nodeOperator.name);
       }
     }
-  }
-
-  /// @notice Gets a node operator's data
-  /// @param nodeOperatorId The ID of the node operator to query for
-  /// @return NodeOperator The node operator data
-  function getNodeOperator(
-    uint32 nodeOperatorId
-  ) external view returns (NodeOperator memory) {
-    return s_nodeOperators[nodeOperatorId];
-  }
-
-  /// @notice Gets all node operators
-  /// @return NodeOperator[] All node operators
-  function getNodeOperators() external view returns (NodeOperator[] memory) {
-    uint32 nodeOperatorId = s_nextNodeOperatorId;
-    /// Minus one to account for s_nextNodeOperatorId starting at index 1
-    NodeOperator[] memory nodeOperators = new NodeOperator[](s_nextNodeOperatorId - 1);
-    uint256 idx;
-    for (uint32 i = 1; i < nodeOperatorId; ++i) {
-      if (s_nodeOperators[i].admin != address(0)) {
-        nodeOperators[idx] = s_nodeOperators[i];
-        ++idx;
-      }
-    }
-    if (idx != s_nextNodeOperatorId - 1) {
-      assembly {
-        mstore(nodeOperators, idx)
-      }
-    }
-    return nodeOperators;
-  }
-
-  /// @notice Gets the next node DON ID
-  /// @return uint32 The next node DON ID
-  function getNextDONId() external view returns (uint32) {
-    return s_nextDONId;
   }
 
   /// @notice Adds nodes. Nodes can be added with deprecated capabilities to
@@ -748,58 +711,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
     }
   }
 
-  /// @notice Gets a node's data
-  /// @param p2pId The P2P ID of the node to query for
-  /// @return nodeInfo NodeInfo The node data
-  function getNode(
-    bytes32 p2pId
-  ) public view returns (NodeInfo memory nodeInfo) {
-    bytes32[] memory capabilityIds = s_nodes[p2pId].supportedHashedCapabilityIds[s_nodes[p2pId].configCount].values();
-    string[] memory capabilityIdsString = new string[](capabilityIds.length);
-    for (uint256 i; i < capabilityIds.length; ++i) {
-      capabilityIdsString[i] = s_hashedCapabilityIdToCapabilityId[capabilityIds[i]];
-    }
-    return (
-      NodeInfo({
-        nodeOperatorId: s_nodes[p2pId].nodeOperatorId,
-        p2pId: s_nodes[p2pId].p2pId,
-        signer: s_nodes[p2pId].signer,
-        encryptionPublicKey: s_nodes[p2pId].encryptionPublicKey,
-        capabilityIds: capabilityIdsString,
-        configCount: s_nodes[p2pId].configCount,
-        workflowDONId: s_nodes[p2pId].workflowDONId,
-        capabilitiesDONIds: s_nodes[p2pId].capabilitiesDONIds.values()
-      })
-    );
-  }
-
-  /// @notice Gets all nodes
-  /// @return NodeInfo[] All nodes in the capability registry
-  function getNodes() external view returns (NodeInfo[] memory) {
-    bytes32[] memory p2pIds = s_nodeP2PIds.values();
-    NodeInfo[] memory nodesInfo = new NodeInfo[](p2pIds.length);
-
-    for (uint256 i; i < p2pIds.length; ++i) {
-      nodesInfo[i] = getNode(p2pIds[i]);
-    }
-    return nodesInfo;
-  }
-
-  /// @notice Gets nodes by their P2P IDs
-  /// @param p2pIds The P2P IDs of the nodes to query for
-  /// @return NodeInfo[] The nodes data
-  function getNodesByP2PIds(
-    bytes32[] calldata p2pIds
-  ) external view returns (NodeInfo[] memory) {
-    NodeInfo[] memory nodesInfo = new NodeInfo[](p2pIds.length);
-
-    for (uint256 i; i < p2pIds.length; ++i) {
-      nodesInfo[i] = getNode(p2pIds[i]);
-      if (nodesInfo[i].p2pId == bytes32("")) revert NodeDoesNotExist(p2pIds[i]);
-    }
-    return nodesInfo;
-  }
-
   /// @notice Adds a new capability to the capability registry
   /// @param capabilities The capabilities being added
   /// @dev There is no function to update capabilities as this would require
@@ -845,45 +756,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
     }
   }
 
-  /// @notice Returns a Capability by its ID.
-  function getCapability(
-    string memory capabilityId
-  ) public view returns (CapabilityInfo memory) {
-    bytes32 hashedCapabilityId = _hash(capabilityId);
-    return (
-      CapabilityInfo({
-        capabilityId: capabilityId,
-        metadata: s_capabilities[hashedCapabilityId].metadata,
-        configurationContract: s_capabilities[hashedCapabilityId].configurationContract,
-        isDeprecated: s_deprecatedHashedCapabilityIds.contains(hashedCapabilityId)
-      })
-    );
-  }
-
-  /// @notice Returns all capabilities. This operation will copy capabilities
-  /// to memory, which can be quite expensive. This is designed to mostly be
-  /// used by view accessors that are queried without any gas fees.
-  /// @return CapabilityInfo[] List of capabilities
-  function getCapabilities() external view returns (CapabilityInfo[] memory) {
-    bytes32[] memory capabilityIds = s_hashedCapabilityIds.values();
-    CapabilityInfo[] memory capabilitiesInfo = new CapabilityInfo[](capabilityIds.length);
-
-    for (uint256 i; i < capabilityIds.length; ++i) {
-      capabilitiesInfo[i] = getCapability(s_hashedCapabilityIdToCapabilityId[capabilityIds[i]]);
-    }
-    return capabilitiesInfo;
-  }
-
-  /// @notice Returns whether a capability is deprecated
-  /// @param capabilityId The ID of the capability to check
-  /// @return bool True if the capability is deprecated, false otherwise
-  function isCapabilityDeprecated(
-    string calldata capabilityId
-  ) external view returns (bool) {
-    bytes32 hashedCapabilityId = _hash(capabilityId);
-    return s_deprecatedHashedCapabilityIds.contains(hashedCapabilityId);
-  }
-
   /// @notice Adds a list of DONs
   /// @param newDONs The list of DONs to add
   /// @dev The DONs are added in the order they are provided in the `newDONs` array
@@ -910,7 +782,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
         })
       );
 
-      _addDONToFamily(nextDONId, newDON.donFamily);
+      for (uint256 j; j < newDON.donFamilies.length; ++j) {
+        _addDONToFamily(nextDONId, newDON.donFamilies[j]);
+      }
     }
   }
 
@@ -988,32 +862,166 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
 
   /// @notice Sets the DON family for a DON
   /// @param donId The ID of the DON to set the family for
-  /// @param donFamily The family name to set for the DON
-  function setDONFamily(uint32 donId, string calldata donFamily) external onlyOwner {
+  /// @param addToFamilies The families to add the DON to
+  /// @param removeFromFamilies The families to remove the DON from
+  function setDONFamilies(
+    uint32 donId,
+    string[] calldata addToFamilies,
+    string[] calldata removeFromFamilies
+  ) external onlyOwner {
     if (s_dons[donId].configCount == 0) revert DONDoesNotExist(donId);
-    bytes32 newDONFamilyHash = _hash(donFamily);
 
-    // If the DON is already in the family, do nothing
-    // There is no point in erroring out as this is a no-op and the erroring
-    // would not provide any value to the user.
-    if (_hash(s_donIdToDonFamily[donId]) == newDONFamilyHash) return;
+    for (uint256 i; i < addToFamilies.length; ++i) {
+      _addDONToFamily(donId, addToFamilies[i]);
+    }
 
-    // Set the DON family name hash to the new family name hash so it can be
-    // retrieved by the hash later. We do not need to clean up the old family
-    // name hash as it is only used to retrieve the family name by the hash.
-    s_donFamilyHashToDonFamily[newDONFamilyHash] = donFamily;
+    for (uint256 i; i < removeFromFamilies.length; ++i) {
+      bytes32 removeFromFamilyHash = _hash(removeFromFamilies[i]);
 
-    _removeDONFromFamily(donId);
-    _addDONToFamily(donId, donFamily);
+      // If the DON is not in the family, do nothing.
+      // There is no point in erroring out as this is a no-op and the erroring
+      // would not provide any value to the user.
+      if (!s_donIdToDonFamilyHashes[donId].contains(removeFromFamilyHash)) return;
+
+      _removeDONFromFamily(donId, removeFromFamilyHash);
+    }
   }
 
   // ================================================================
   // |                      View functions                          |
   // ================================================================
 
+  /// @notice Returns a Capability by its ID.
+  function getCapability(
+    string memory capabilityId
+  ) public view returns (CapabilityInfo memory) {
+    bytes32 hashedCapabilityId = _hash(capabilityId);
+    return (
+      CapabilityInfo({
+        capabilityId: capabilityId,
+        metadata: s_capabilities[hashedCapabilityId].metadata,
+        configurationContract: s_capabilities[hashedCapabilityId].configurationContract,
+        isDeprecated: s_deprecatedHashedCapabilityIds.contains(hashedCapabilityId)
+      })
+    );
+  }
+
+  /// @notice Returns all capabilities. This operation will copy capabilities
+  /// to memory, which can be quite expensive. This is designed to mostly be
+  /// used by view accessors that are queried without any gas fees.
+  /// @return CapabilityInfo[] List of capabilities
+  function getCapabilities() external view returns (CapabilityInfo[] memory) {
+    bytes32[] memory capabilityIds = s_hashedCapabilityIds.values();
+    CapabilityInfo[] memory capabilitiesInfo = new CapabilityInfo[](capabilityIds.length);
+
+    for (uint256 i; i < capabilityIds.length; ++i) {
+      capabilitiesInfo[i] = getCapability(s_hashedCapabilityIdToCapabilityId[capabilityIds[i]]);
+    }
+    return capabilitiesInfo;
+  }
+
+  /// @notice Returns whether a capability is deprecated
+  /// @param capabilityId The ID of the capability to check
+  /// @return bool True if the capability is deprecated, false otherwise
+  function isCapabilityDeprecated(
+    string calldata capabilityId
+  ) external view returns (bool) {
+    bytes32 hashedCapabilityId = _hash(capabilityId);
+    return s_deprecatedHashedCapabilityIds.contains(hashedCapabilityId);
+  }
+
+  /// @notice Gets a node operator's data
+  /// @param nodeOperatorId The ID of the node operator to query for
+  /// @return NodeOperator The node operator data
+  function getNodeOperator(
+    uint32 nodeOperatorId
+  ) external view returns (NodeOperator memory) {
+    return s_nodeOperators[nodeOperatorId];
+  }
+
+  /// @notice Gets all node operators
+  /// @return NodeOperator[] All node operators
+  function getNodeOperators() external view returns (NodeOperator[] memory) {
+    uint32 nodeOperatorId = s_nextNodeOperatorId;
+    /// Minus one to account for s_nextNodeOperatorId starting at index 1
+    NodeOperator[] memory nodeOperators = new NodeOperator[](s_nextNodeOperatorId - 1);
+    uint256 idx;
+    for (uint32 i = 1; i < nodeOperatorId; ++i) {
+      if (s_nodeOperators[i].admin != address(0)) {
+        nodeOperators[idx] = s_nodeOperators[i];
+        ++idx;
+      }
+    }
+    if (idx != s_nextNodeOperatorId - 1) {
+      assembly {
+        mstore(nodeOperators, idx)
+      }
+    }
+    return nodeOperators;
+  }
+
+  /// @notice Gets the next node DON ID
+  /// @return uint32 The next node DON ID
+  function getNextDONId() external view returns (uint32) {
+    return s_nextDONId;
+  }
+
+  /// @notice Gets a node's data
+  /// @param p2pId The P2P ID of the node to query for
+  /// @return nodeInfo NodeInfo The node data
+  function getNode(
+    bytes32 p2pId
+  ) public view returns (NodeInfo memory nodeInfo) {
+    bytes32[] memory capabilityIds = s_nodes[p2pId].supportedHashedCapabilityIds[s_nodes[p2pId].configCount].values();
+    string[] memory capabilityIdsString = new string[](capabilityIds.length);
+    for (uint256 i; i < capabilityIds.length; ++i) {
+      capabilityIdsString[i] = s_hashedCapabilityIdToCapabilityId[capabilityIds[i]];
+    }
+    return (
+      NodeInfo({
+        nodeOperatorId: s_nodes[p2pId].nodeOperatorId,
+        p2pId: s_nodes[p2pId].p2pId,
+        signer: s_nodes[p2pId].signer,
+        encryptionPublicKey: s_nodes[p2pId].encryptionPublicKey,
+        capabilityIds: capabilityIdsString,
+        configCount: s_nodes[p2pId].configCount,
+        workflowDONId: s_nodes[p2pId].workflowDONId,
+        capabilitiesDONIds: s_nodes[p2pId].capabilitiesDONIds.values()
+      })
+    );
+  }
+
+  /// @notice Gets all nodes
+  /// @return NodeInfo[] All nodes in the capability registry
+  function getNodes() external view returns (NodeInfo[] memory) {
+    bytes32[] memory p2pIds = s_nodeP2PIds.values();
+    NodeInfo[] memory nodesInfo = new NodeInfo[](p2pIds.length);
+
+    for (uint256 i; i < p2pIds.length; ++i) {
+      nodesInfo[i] = getNode(p2pIds[i]);
+    }
+    return nodesInfo;
+  }
+
+  /// @notice Gets nodes by their P2P IDs
+  /// @param p2pIds The P2P IDs of the nodes to query for
+  /// @return NodeInfo[] The nodes data
+  function getNodesByP2PIds(
+    bytes32[] calldata p2pIds
+  ) external view returns (NodeInfo[] memory) {
+    NodeInfo[] memory nodesInfo = new NodeInfo[](p2pIds.length);
+
+    for (uint256 i; i < p2pIds.length; ++i) {
+      nodesInfo[i] = getNode(p2pIds[i]);
+      if (nodesInfo[i].p2pId == bytes32("")) revert NodeDoesNotExist(p2pIds[i]);
+    }
+    return nodesInfo;
+  }
+
   /// @notice Gets DON's info
   /// @param donId The DON ID
   /// @return DONInfo The DON's parameters
+
   function getDON(
     uint32 donId
   ) external view returns (DONInfo memory) {
@@ -1150,7 +1158,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
     // DON config count starts at index 1
     if (don.configCount == 0) revert DONDoesNotExist(donId);
 
-    _removeDONFromFamily(donId);
+    for (uint256 i; i < s_donIdToDonFamilyHashes[donId].length(); ++i) {
+      _removeDONFromFamily(donId, s_donIdToDonFamilyHashes[donId].at(i));
+    }
 
     // Free up the DON name for reuse
     delete s_donNameToId[don.config[configCount].name];
@@ -1161,12 +1171,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
 
   /// @notice Removes a DON from a family
   /// @param donId The ID of the DON to remove from the family
-  function _removeDONFromFamily(
-    uint32 donId
-  ) internal {
-    string memory donFamily = s_donIdToDonFamily[donId];
-    bytes32 donFamilyHash = _hash(donFamily);
-
+  function _removeDONFromFamily(uint32 donId, bytes32 donFamilyHash) internal {
+    // Remove the family hash from the families the DON belongs to
+    s_donIdToDonFamilyHashes[donId].remove(donFamilyHash);
     // Remove the DON ID from the list of DON IDs in the current family
     s_donFamilyMembers[donFamilyHash].remove(donId);
     // If the current family is empty, remove it from the set of family names
@@ -1174,10 +1181,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
       s_activeDONFamilyNames.remove(donFamilyHash);
     }
 
-    // Remove the DON ID from the DON ID to DON family mapping
-    delete s_donIdToDonFamily[donId];
-
-    emit DONRemovedFromFamily(donId, donFamily);
+    emit DONRemovedFromFamily(donId, s_donFamilyHashToDonFamily[donFamilyHash]);
   }
 
   /// @notice Adds a DON to a family
@@ -1186,14 +1190,24 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   function _addDONToFamily(uint32 donId, string memory donFamily) internal {
     bytes32 donFamilyHash = _hash(donFamily);
 
-    // Add the DON ID to the list of DON IDs in the new family
-    s_donFamilyMembers[donFamilyHash].add(donId);
-    // Assign the family name to the DON ID
-    s_donIdToDonFamily[donId] = donFamily;
+    // If the DON is already in the family, do nothing.
+    // There is no point in erroring out as this is a no-op and the erroring
+    // would not provide any value to the user.
+    if (s_donIdToDonFamilyHashes[donId].contains(donFamilyHash)) return;
+
+    // Set the DON family name hash to the new family name hash so it can be
+    // retrieved by the hash later. We do not need to clean up the old family
+    // name hash as it is only used to retrieve the family name by the hash.
+    s_donFamilyHashToDonFamily[donFamilyHash] = donFamily;
 
     // Add the new family name to the set of family names. This operation is
     // idempotent and will not add the family name if it already exists.
     s_activeDONFamilyNames.add(donFamilyHash);
+
+    // Add the DON ID to the list of DON IDs in the new family
+    s_donFamilyMembers[donFamilyHash].add(donId);
+    // Add the family hash to the list of families the DON belongs to
+    s_donIdToDonFamilyHashes[donId].add(donFamilyHash);
 
     emit DONAddedToFamily(donId, donFamily);
   }
@@ -1338,11 +1352,16 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
         CapabilityConfiguration({capabilityId: capabilityId, config: donConfig.capabilityConfigs[capabilityId]});
     }
 
+    string[] memory donFamilies = new string[](s_donIdToDonFamilyHashes[donId].length());
+    for (uint256 i; i < s_donIdToDonFamilyHashes[donId].length(); ++i) {
+      donFamilies[i] = s_donFamilyHashToDonFamily[s_donIdToDonFamilyHashes[donId].at(i)];
+    }
+
     return DONInfo({
       id: don.id,
       acceptsWorkflows: don.acceptsWorkflows,
       configCount: configCount,
-      donFamily: s_donIdToDonFamily[donId],
+      donFamilies: donFamilies,
       name: donConfig.name,
       config: donConfig.config,
       f: donConfig.f,
