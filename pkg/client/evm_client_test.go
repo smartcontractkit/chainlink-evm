@@ -40,7 +40,7 @@ func TestNewEvmClient(t *testing.T) {
 	finalizedBlockPollInterval := time.Second * 4
 	newHeadsPollInterval := time.Second * 4
 	txMinimumWaitTimeForConfirmation := time.Second * 60
-	txMaximumWaitTimeForConfirmation := time.Second * 20
+	txMaximumWaitTimeForConfirmation := time.Second * 300
 	nodeConfigs := []client.NodeConfig{
 		{
 			Name:    ptr("foo"),
@@ -79,7 +79,7 @@ func TestChainClientMetrics(t *testing.T) {
 	}
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(ptr("HighestHead"), time.Duration(0), "", nodeConfigs,
 		ptr[uint32](5), 10*time.Second, ptr[uint32](5), ptr(false), time.Minute, ptr[uint32](5), ptr(false),
-		ptr[uint32](5), ptr(false), 10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second, 60*time.Second, 20*time.Second)
+		ptr[uint32](5), ptr(false), 10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second, 60*time.Second, 300*time.Second)
 	require.NoError(t, err)
 
 	chainID := big.NewInt(68472)

@@ -28,7 +28,7 @@ func TestClientConfigBuilder(t *testing.T) {
 	deathDeclarationDelay := time.Second * 3
 	noNewFinalizedBlocksThreshold := time.Second
 	txMinimumWaitTimeForConfirmation := time.Second * 60
-	txMaximumWaitTimeForConfirmation := time.Second * 20
+	txMaximumWaitTimeForConfirmation := time.Second * 300
 	nodeConfigs := []client.NodeConfig{
 		{
 			Name:    ptr("foo"),

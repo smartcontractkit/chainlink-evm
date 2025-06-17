@@ -54,9 +54,3 @@ func (*nullTracker) LatestSafeBlock(ctx context.Context) (safe *evmtypes.Head, e
 func (*nullTracker) LatestAndFinalizedBlock(ctx context.Context) (latest, finalized *evmtypes.Head, err error) {
 	return nil, nil, nil
 }
-
-func (*nullTracker) LatestSafeBlock(ctx context.Context) (safe *evmtypes.Head, err error) {
-	return nil, nil
-}
-
- 

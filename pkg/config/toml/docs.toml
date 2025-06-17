@@ -118,12 +118,10 @@ LogBroadcasterEnabled = true # Default
 #
 # Set to zero to disable.
 NoNewFinalizedHeadsThreshold = '0' # Default
-# Minimum time to wait for a TX to get into a block in the blockchain. This is used for the EVMService.SubmitTransaction operation. It won't check for TX status updates until this time passes
-TxMinimumWaitTimeForConfirmation = '60s'
-# TODO: Find a proper name
-# Maximum time after TxMinimumWaitTimeForConfirmation to wait for a TX to get into a block. After TxMinimumWaitTimeForConfirmation the operation will check every 100 milliseconds to see if the TX gets into a block and will do it for no longer than TxMaximumWaitTimeForConfirmation. Total wait time will be TxMinimumWaitTimeForConfirmation + TxMaximumWaitTimeForConfirmation
-TxMaximumWaitTimeForConfirmation = '20s'
-
+# TxMinimumWaitTimeForConfirmation minimum time to wait for a TX to get into a block in the blockchain. This is used for the EVMService.SubmitTransaction operation. It won't check for TX status updates until this time passes
+TxMinimumWaitTimeForConfirmation = '60s' # Default
+# TxMaximumWaitTimeForConfirmation time after TxMinimumWaitTimeForConfirmation to wait for a TX to get into a block. After TxMinimumWaitTimeForConfirmation the operation will check every 100 milliseconds to see if the TX gets into a block and will do it for no longer than TxMaximumWaitTimeForConfirmation. Total wait time will be TxMinimumWaitTimeForConfirmation + TxMaximumWaitTimeForConfirmation
+TxMaximumWaitTimeForConfirmation = '300s' # Default
 
 [Transactions]
 # Enabled is a feature flag for the Transaction Manager. This flag also enables or disables the gas estimator since it is dependent on the TXM to start it.

@@ -270,8 +270,8 @@ var fullConfig = EVMConfig{
 		RPCDefaultBatchSize:              ptr[uint32](17),
 		RPCBlockQueryDelay:               ptr[uint16](10),
 		NoNewFinalizedHeadsThreshold:     config.MustNewDuration(time.Hour),
-		TxMinimumWaitTimeForConfirmation: config.MustNewDuration(60 * time.Second),
-		TxMaximumWaitTimeForConfirmation: config.MustNewDuration(20 * time.Second),
+		TxMinimumWaitTimeForConfirmation: config.MustNewDuration(1 * time.Minute),
+		TxMaximumWaitTimeForConfirmation: config.MustNewDuration(5 * time.Minute),
 
 		Transactions: Transactions{
 			Enabled:              ptr(true),

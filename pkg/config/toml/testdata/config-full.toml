@@ -24,7 +24,7 @@ RPCDefaultBatchSize = 17
 RPCBlockQueryDelay = 10
 FinalizedBlockOffset = 16
 NoNewFinalizedHeadsThreshold = '1h0m0s'
-TxMaximumWaitTimeForConfirmation = '20s'
+TxMaximumWaitTimeForConfirmation = '5m0s'
 TxMinimumWaitTimeForConfirmation = '1m0s'
 
 [Transactions]
