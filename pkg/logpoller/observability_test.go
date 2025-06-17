@@ -108,10 +108,11 @@ func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
 	orm := createObservedORM(t, 420)
 	logs := generateRandomLogs(420, 20)
 
+	assert.Equal(t, 0, testutil.CollectAndCount(orm.discoveryLatency))
 	// First insert 10 logs
 	require.NoError(t, orm.InsertLogs(ctx, logs[:10]))
 	assert.Equal(t, 10, int(testutil.ToFloat64(orm.logsInserted.WithLabelValues(network, "420"))))
-
+	assert.Equal(t, 1, testutil.CollectAndCount(orm.discoveryLatency))
 	// Insert 5 more logs with block
 	require.NoError(t, orm.InsertLogsWithBlock(ctx, logs[10:15], Block{
 		BlockHash:            utils.RandomBytes32(),
@@ -177,13 +178,14 @@ func NewTestObservedORM(chainID *big.Int, ds sqlutil.DataSource, lggr logger.Log
 		return nil, err
 	}
 	return &ObservedORM{
-		ORM:            NewORM(chainID, ds, lggr),
-		metrics:        lpMetrics,
-		queryDuration:  metrics.PromLpQueryDuration,
-		datasetSize:    metrics.PromLpQueryDataSets,
-		logsInserted:   metrics.PromLpLogsInserted,
-		blocksInserted: metrics.PromLpBlocksInserted,
-		chainID:        chainID.String(),
+		ORM:              NewORM(chainID, ds, lggr),
+		metrics:          lpMetrics,
+		queryDuration:    metrics.PromLpQueryDuration,
+		datasetSize:      metrics.PromLpQueryDataSets,
+		logsInserted:     metrics.PromLpLogsInserted,
+		blocksInserted:   metrics.PromLpBlocksInserted,
+		discoveryLatency: metrics.PromLpDiscoveryLatency,
+		chainID:          chainID.String(),
 	}, nil
 }
 
@@ -200,6 +202,7 @@ func resetMetrics(lp ObservedORM) {
 	lp.datasetSize.Reset()
 	lp.logsInserted.Reset()
 	lp.blocksInserted.Reset()
+	lp.discoveryLatency.Reset()
 }
 
 func counterFromGaugeByLabels(gaugeVec *prometheus.GaugeVec, labels ...string) int {

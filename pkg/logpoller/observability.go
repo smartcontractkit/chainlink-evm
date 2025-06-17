@@ -20,12 +20,13 @@ import (
 // It doesn't change internal logic, because all calls are delegated to the origin ORM
 type ObservedORM struct {
 	ORM
-	metrics        metrics.GenericLogPollerMetrics
-	queryDuration  *prometheus.HistogramVec
-	datasetSize    *prometheus.GaugeVec
-	logsInserted   *prometheus.CounterVec
-	blocksInserted *prometheus.CounterVec
-	chainID        string
+	metrics          metrics.GenericLogPollerMetrics
+	queryDuration    *prometheus.HistogramVec
+	datasetSize      *prometheus.GaugeVec
+	logsInserted     *prometheus.CounterVec
+	blocksInserted   *prometheus.CounterVec
+	discoveryLatency *prometheus.HistogramVec
+	chainID          string
 }
 
 // NewObservedORM creates an observed version of log poller's ORM created by NewORM
@@ -36,13 +37,14 @@ func NewObservedORM(chainID *big.Int, ds sqlutil.DataSource, lggr logger.Logger)
 		return nil, err
 	}
 	return &ObservedORM{
-		ORM:            NewORM(chainID, ds, lggr),
-		metrics:        lpMetrics,
-		queryDuration:  metrics.PromLpQueryDuration,
-		datasetSize:    metrics.PromLpQueryDataSets,
-		logsInserted:   metrics.PromLpLogsInserted,
-		blocksInserted: metrics.PromLpBlocksInserted,
-		chainID:        chainID.String(),
+		ORM:              NewORM(chainID, ds, lggr),
+		metrics:          lpMetrics,
+		queryDuration:    metrics.PromLpQueryDuration,
+		datasetSize:      metrics.PromLpQueryDataSets,
+		logsInserted:     metrics.PromLpLogsInserted,
+		blocksInserted:   metrics.PromLpBlocksInserted,
+		discoveryLatency: metrics.PromLpQueryDuration,
+		chainID:          chainID.String(),
 	}, nil
 }
 
@@ -51,6 +53,7 @@ func (o *ObservedORM) InsertLogs(ctx context.Context, logs []Log) error {
 		return o.ORM.InsertLogs(ctx, logs)
 	})
 	trackInsertedLogsAndBlock(o, logs, nil, err)
+	trackInsertedBlockLatency(o, logs, err)
 	return err
 }
 
@@ -59,6 +62,7 @@ func (o *ObservedORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block
 		return o.ORM.InsertLogsWithBlock(ctx, logs, block)
 	})
 	trackInsertedLogsAndBlock(o, logs, &block, err)
+	trackInsertedBlockLatency(o, logs, err)
 	return err
 }
 
@@ -296,4 +300,18 @@ func trackInsertedLogsAndBlock(o *ObservedORM, logs []Log, block *Block, err err
 	if block != nil {
 		o.metrics.IncrementBlocksInserted(ctx, 1)
 	}
+}
+
+func trackInsertedBlockLatency(o *ObservedORM, logs []Log, err error) {
+	if err != nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), client.QueryTimeout)
+	defer cancel()
+
+	if len(logs) == 0 {
+		return
+	}
+
+	o.metrics.RecordLogDiscoveryLatency(ctx, float64(time.Since(logs[0].BlockTimestamp)))
 }
