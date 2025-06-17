@@ -63,8 +63,13 @@ func (e *EVMConfig) OCR2() OCR2 {
 	return &ocr2Config{c: e.C.OCR2}
 }
 
+// Deprecated: use WriteCapability() instead
 func (e *EVMConfig) Workflow() Workflow {
-	return &workflowConfig{c: e.C.Workflow}
+	return &writeCapabilityConfig{c: e.C.Workflow}
+}
+
+func (e *EVMConfig) WriteCapability() WriteCapability {
+	return &writeCapabilityConfig{c: e.C.WriteCapability}
 }
 
 func (e *EVMConfig) GasEstimator() GasEstimator {

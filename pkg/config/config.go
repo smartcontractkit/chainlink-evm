@@ -186,12 +186,13 @@ type FeeHistory interface {
 	CacheTimeout() time.Duration
 }
 
-type Workflow interface {
+// Deprecated: use WriteCapability
+type Workflow = WriteCapability
+type WriteCapability interface {
 	FromAddress() *types.EIP55Address
 	ForwarderAddress() *types.EIP55Address
 	GasLimitDefault() *uint64
 }
-
 type NodePool interface {
 	PollFailureThreshold() uint32
 	PollInterval() time.Duration

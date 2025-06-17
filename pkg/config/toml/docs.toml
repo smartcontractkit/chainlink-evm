@@ -313,7 +313,6 @@ FM = 100_000 # Example
 # Keeper overrides LimitDefault for Keeper jobs.
 Keeper = 100_000 # Example
 
-
 # These settings allow you to configure how your node calculates gas prices when using the block history estimator.
 # In most cases, leaving these values at their defaults should give good results.
 [GasEstimator.BlockHistory]
@@ -529,7 +528,11 @@ Order = 100 # Default
 # GasLimit controls the gas limit for transmit transactions from ocr2automation job.
 GasLimit = 5400000 # Default
 
-[Workflow]
+# WriteCapability configures how the node configures the write capability
+# If this section is empty, the node will not have write capability
+# If it is set, the node will have write capability locally
+# Exposing the capability to external systems requires additional configuration in the capability registry contract
+[WriteCapability]
 # FromAddress is Address of the transmitter key to use for workflow writes.
 FromAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 # ForwarderAddress is the keystone forwarder contract address on chain.

@@ -409,16 +409,21 @@ type Chain struct {
 	FinalizedBlockOffset         *uint32
 	NoNewFinalizedHeadsThreshold *commonconfig.Duration
 
-	Transactions   Transactions      `toml:",omitempty"`
-	BalanceMonitor BalanceMonitor    `toml:",omitempty"`
-	GasEstimator   GasEstimator      `toml:",omitempty"`
-	HeadTracker    HeadTracker       `toml:",omitempty"`
-	KeySpecific    KeySpecificConfig `toml:",omitempty"`
-	NodePool       NodePool          `toml:",omitempty"`
-	OCR            OCR               `toml:",omitempty"`
-	OCR2           OCR2              `toml:",omitempty"`
-	Workflow       Workflow          `toml:",omitempty"`
+	Transactions    Transactions      `toml:",omitempty"`
+	BalanceMonitor  BalanceMonitor    `toml:",omitempty"`
+	GasEstimator    GasEstimator      `toml:",omitempty"`
+	HeadTracker     HeadTracker       `toml:",omitempty"`
+	KeySpecific     KeySpecificConfig `toml:",omitempty"`
+	NodePool        NodePool          `toml:",omitempty"`
+	OCR             OCR               `toml:",omitempty"`
+	OCR2            OCR2              `toml:",omitempty"`
+	WriteCapability WriteCapability   `toml:",omitempty"`
+	// Deprecated: use WriteCapability
+	// will be removed in future release
+	Workflow Workflow `toml:",omitempty"`
 }
+
+var ErrConflictingConfig = errors.New("conflicting configuration")
 
 func (c *Chain) ValidateConfig() (err error) {
 	if !c.ChainType.ChainType().IsValid() {
@@ -442,6 +447,11 @@ func (c *Chain) ValidateConfig() (err error) {
 	if *c.FinalizedBlockOffset > *c.HeadTracker.HistoryDepth {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "HeadTracker.HistoryDepth", Value: *c.HeadTracker.HistoryDepth,
 			Msg: "must be greater than or equal to FinalizedBlockOffset"})
+	}
+	var emptyWorkflow Workflow
+	var emptyWriteCapability WriteCapability
+	if c.Workflow != emptyWorkflow && c.WriteCapability != emptyWriteCapability {
+		err = multierr.Append(err, fmt.Errorf("%w: Workflow is depreciated and cannot be set with WriteCapability, use WriteCapability instead", ErrConflictingConfig))
 	}
 
 	// AutoPurge configs depend on ChainType so handling validation on per chain basis
@@ -628,13 +638,16 @@ func (a *Automation) setFrom(f *Automation) {
 	}
 }
 
-type Workflow struct {
+// depreciated: Use `WriteCapability`
+type Workflow = WriteCapability
+
+type WriteCapability struct {
 	FromAddress      *types.EIP55Address `toml:",omitempty"`
 	ForwarderAddress *types.EIP55Address `toml:",omitempty"`
 	GasLimitDefault  *uint64
 }
 
-func (m *Workflow) setFrom(f *Workflow) {
+func (m *WriteCapability) setFrom(f *WriteCapability) {
 	if v := f.FromAddress; v != nil {
 		m.FromAddress = v
 	}

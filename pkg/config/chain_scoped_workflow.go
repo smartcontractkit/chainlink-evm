@@ -5,18 +5,18 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
-type workflowConfig struct {
-	c toml.Workflow
+type writeCapabilityConfig struct {
+	c toml.WriteCapability
 }
 
-func (b *workflowConfig) FromAddress() *types.EIP55Address {
+func (b *writeCapabilityConfig) FromAddress() *types.EIP55Address {
 	return b.c.FromAddress
 }
 
-func (b *workflowConfig) ForwarderAddress() *types.EIP55Address {
+func (b *writeCapabilityConfig) ForwarderAddress() *types.EIP55Address {
 	return b.c.ForwarderAddress
 }
 
-func (b *workflowConfig) GasLimitDefault() *uint64 {
+func (b *writeCapabilityConfig) GasLimitDefault() *uint64 {
 	return b.c.GasLimitDefault
 }

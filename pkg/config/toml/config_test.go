@@ -44,6 +44,31 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 			assert.NoError(t, config.Validate(evmCfg))
 		})
 	}
+	t.Run("invalid both workflow and write capability", func(t *testing.T) {
+		chain := Defaults(big.NewI(42))
+		chain.Workflow = Workflow{
+			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:  ptr[uint64](400000),
+		}
+		chain.WriteCapability = WriteCapability{
+			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:  ptr[uint64](400000),
+		}
+		evmCfg := &EVMConfig{
+			ChainID: big.NewI(42),
+			Chain:   chain,
+			Nodes: EVMNodes{{
+				Name:    &name,
+				WSURL:   config.MustParseURL("wss://foo.test/ws"),
+				HTTPURL: config.MustParseURL("http://foo.test"),
+			}},
+		}
+
+		err := config.Validate(evmCfg)
+		require.ErrorIs(t, err, ErrConflictingConfig)
+	})
 }
 
 func TestDefaults_fieldsNotNil(t *testing.T) {
@@ -104,7 +129,13 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 
 func TestDocs(t *testing.T) {
 	t.Run("complete", func(t *testing.T) {
-		configtest.AssertDocsTOMLComplete[EVMConfig](t, docsTOML)
+		n, err := configtest.DocsTOMLNilFields[EVMConfig](t, docsTOML)
+		// three missing fields, corresponding the deprecated Workflow struct
+		require.Equal(t, 3, n)
+		assert.Contains(t, err.Error(), "Workflow.FromAddress: nil")
+		assert.Contains(t, err.Error(), "Workflow.ForwarderAddress: nil")
+		assert.Contains(t, err.Error(), "Workflow.GasLimitDefault: nil")
+
 	})
 
 	t.Run("aligned", func(t *testing.T) {
@@ -145,14 +176,22 @@ func TestDocs(t *testing.T) {
 		docDefaults.FlagsContractAddress = nil
 		docDefaults.LinkContractAddress = nil
 		docDefaults.OperatorFactoryAddress = nil
+
 		require.Empty(t, docDefaults.Workflow.FromAddress)
 		require.Empty(t, docDefaults.Workflow.ForwarderAddress)
-		gasLimitDefault := uint64(400_000)
-		require.Equal(t, &gasLimitDefault, docDefaults.Workflow.GasLimitDefault)
-
+		require.Empty(t, docDefaults.Workflow.GasLimitDefault)
 		docDefaults.Workflow.FromAddress = nil
 		docDefaults.Workflow.ForwarderAddress = nil
-		docDefaults.Workflow.GasLimitDefault = &gasLimitDefault
+		docDefaults.Workflow.GasLimitDefault = nil
+
+		gasLimitDefault := uint64(400_000)
+		require.Empty(t, docDefaults.WriteCapability.FromAddress)
+		require.Empty(t, docDefaults.WriteCapability.ForwarderAddress)
+		require.Equal(t, gasLimitDefault, *docDefaults.WriteCapability.GasLimitDefault)
+		docDefaults.WriteCapability.FromAddress = nil
+		docDefaults.WriteCapability.ForwarderAddress = nil
+		docDefaults.WriteCapability.GasLimitDefault = &gasLimitDefault
+
 		docDefaults.NodePool.Errors = ClientErrors{}
 
 		// Transactions.AutoPurge configs are only set if the feature is enabled
@@ -344,7 +383,7 @@ var fullConfig = EVMConfig{
 				GasLimit: ptr[uint32](540),
 			},
 		},
-		Workflow: Workflow{
+		WriteCapability: WriteCapability{
 			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
 			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
 			GasLimitDefault:  ptr[uint64](400000),
@@ -363,17 +402,95 @@ var fullConfig = EVMConfig{
 }
 
 func TestTOMLConfig_FullMarshal(t *testing.T) {
-	configtest.AssertFullMarshal(t, fullConfig, fullTOML)
+	b, err := toml.Marshal(fullConfig)
+	require.NoError(t, err)
+	s := string(b)
+	t.Log(s)
+
+	// serialize and deserialize to ensure stable string comparison of marshaling
+	c := EVMConfig{}
+	err = toml.Unmarshal([]byte(fullTOML), &c)
+	require.NoError(t, err)
+	expected, err := toml.Marshal(c)
+	require.NoError(t, err)
+	assert.Equal(t, string(expected), s, diff.Diff(string(expected), s))
 }
 
 func TestTOMLConfig_SetFrom(t *testing.T) {
 	var config EVMConfig
 	config.SetFrom(&fullConfig)
 	require.Equal(t, fullConfig, config)
+
+	t.Run("workflow sets write capability", func(t *testing.T) {
+		// This test ensure that existing configurations that use the deprecated Workflow
+		// set the WriteCapability values, to avoid breaking changes.
+		x := fullConfig
+		x.Chain.Workflow = Workflow{
+			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:  ptr[uint64](400000),
+		}
+		x.Chain.WriteCapability = WriteCapability{}
+		var y EVMConfig
+		y.SetFrom(&x)
+		require.NotNil(t, x.Chain.Workflow.FromAddress)
+		require.NotNil(t, x.Chain.Workflow.ForwarderAddress)
+		require.NotNil(t, x.Chain.Workflow.GasLimitDefault)
+		require.Equal(t, x.Chain.Workflow.FromAddress, y.Chain.WriteCapability.FromAddress)
+		require.Equal(t, x.Chain.Workflow.ForwarderAddress, y.Chain.WriteCapability.ForwarderAddress)
+		require.Equal(t, x.Chain.Workflow.GasLimitDefault, y.Chain.WriteCapability.GasLimitDefault)
+	})
+	t.Run("write capability does not overwrite workflow", func(t *testing.T) {
+		x := fullConfig
+		x.Chain.Workflow = Workflow{}
+		x.Chain.WriteCapability = WriteCapability{
+			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:  ptr[uint64](400000),
+		}
+		var y EVMConfig
+		y.SetFrom(&x)
+		require.Nil(t, x.Chain.Workflow.FromAddress)
+		require.Nil(t, x.Chain.Workflow.ForwarderAddress)
+		require.Nil(t, x.Chain.Workflow.GasLimitDefault)
+	})
 }
 
 func ptr[T any](t T) *T {
 	return &t
+}
+
+// Test marshaling with both field names
+func TestWorkflowWriteCapabilityMarshalAlias(t *testing.T) {
+	t.Parallel()
+
+	// Create a config with Workflow values
+	config := EVMConfig{
+		ChainID: big.NewI(42),
+		Chain: Chain{
+			Workflow: Workflow{
+				FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+				ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+				GasLimitDefault:  ptr[uint64](400000),
+			},
+		},
+	}
+
+	// Marshal to TOML
+	b, err := toml.Marshal(config)
+	require.NoError(t, err)
+
+	tomlContent := string(b)
+
+	// Check that it uses the preferred section name (the first one in the tag)
+	// The fix to the TOML tag would make "Workflow" the preferred name
+	assert.Contains(t, tomlContent, "[Chain.Workflow]", "Should marshal using the preferred section name")
+
+	// Parse again to verify round-trip
+	var parsedConfig EVMConfig
+	require.NoError(t, toml.Unmarshal(b, &parsedConfig))
+
+	assert.Equal(t, config, parsedConfig, "Config should be the same after marshal/unmarshal round trip")
 }
 
 func assertTOML[T any](t *testing.T, fallback, docs T) {

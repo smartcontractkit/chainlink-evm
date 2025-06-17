@@ -1,23 +1,23 @@
 AutoCreateKey = true
+BackupLogPollerBlockDelay = 100
 BlockBackfillDepth = 10
 BlockBackfillSkip = false
-SafeDepth = 0
 FinalityDepth = 50
 FinalityTagEnabled = false
+FinalizedBlockOffset = 0
 LogBackfillBatchSize = 1000
-LogPollInterval = '15s'
+LogBroadcasterEnabled = true
 LogKeepBlocksDepth = 100000
+LogPollInterval = '15s'
 LogPrunePageSize = 0
-BackupLogPollerBlockDelay = 100
 MinContractPayment = '.00001 link'
 MinIncomingConfirmations = 3
-NonceAutoSync = true
-NoNewHeadsThreshold = '3m'
-RPCDefaultBatchSize = 250
-RPCBlockQueryDelay = 1
-FinalizedBlockOffset = 0
 NoNewFinalizedHeadsThreshold = '0'
-LogBroadcasterEnabled = true
+NoNewHeadsThreshold = '3m'
+NonceAutoSync = true
+RPCBlockQueryDelay = 1
+RPCDefaultBatchSize = 250
+SafeDepth = 0
 
 [Transactions]
 Enabled = true
@@ -38,22 +38,22 @@ Enabled = false
 Enabled = true
 
 [GasEstimator]
-Mode = 'BlockHistory'
-PriceDefault = '20 gwei'
-PriceMax = '115792089237316195423570985008687907853269984665.640564039457584007913129639935 tether'
-PriceMin = '1 gwei'
-LimitDefault = 500_000
-LimitMax = 500_000
-LimitMultiplier = '1'
-LimitTransfer = 21_000
 BumpMin = '5 gwei'
 BumpPercent = 20
 BumpThreshold = 3
 EIP1559DynamicFees = false
+EstimateLimit = false
 FeeCapDefault = '100 gwei'
+LimitDefault = 500_000
+LimitMax = 500_000
+LimitMultiplier = '1'
+LimitTransfer = 21_000
+Mode = 'BlockHistory'
+PriceDefault = '20 gwei'
+PriceMax = '115792089237316195423570985008687907853269984665.640564039457584007913129639935 tether'
+PriceMin = '1 gwei'
 TipCapDefault = '1'
 TipCapMin = '1'
-EstimateLimit = false
 
 [GasEstimator.BlockHistory]
 BatchSize = 25
@@ -66,36 +66,36 @@ TransactionPercentile = 60
 CacheTimeout = '10s'
 
 [HeadTracker]
-HistoryDepth = 100
-MaxBufferSize = 3
-SamplingInterval = '1s'
 FinalityTagBypass = true
+HistoryDepth = 100
 MaxAllowedFinalityDepth = 10000
+MaxBufferSize = 3
 PersistenceEnabled = true
+SamplingInterval = '1s'
 
 [NodePool]
+DeathDeclarationDelay = '1m'
+EnforceRepeatableRead = true
+FinalizedBlockPollInterval = '5s'
+LeaseDuration = '0s'
+NewHeadsPollInterval = '0s'
+NodeIsSyncingEnabled = false
 PollFailureThreshold = 5
 PollInterval = '10s'
 SelectionMode = 'HighestHead'
 SyncThreshold = 5
-LeaseDuration = '0s'
-NodeIsSyncingEnabled = false
-FinalizedBlockPollInterval = '5s'
-EnforceRepeatableRead = true
-DeathDeclarationDelay = '1m'
-NewHeadsPollInterval = '0s'
 VerifyChainID = true
 
 [OCR]
 ContractConfirmations = 4
 ContractTransmitterTransmitTimeout = '10s'
 DatabaseTimeout = '10s'
-DeltaCOverride = '168h'
 DeltaCJitterOverride = '1h'
+DeltaCOverride = '168h'
 ObservationGracePeriod = '1s'
 
 [OCR2.Automation]
 GasLimit = 5400000
 
-[Workflow]
+[WriteCapability]
 GasLimitDefault = 400_000

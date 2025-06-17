@@ -283,5 +283,17 @@ func (c *Chain) SetFrom(f *Chain) {
 	c.NodePool.setFrom(&f.NodePool)
 	c.OCR.setFrom(&f.OCR)
 	c.OCR2.setFrom(&f.OCR2)
-	c.Workflow.setFrom(&f.Workflow)
+	// the validation code prevents both being set
+	// so only one of these will be set
+	// apply writeCapability second in case some how both are set since Workflow is deprecated
+	var emptyWorkflow Workflow
+	if f.Workflow != emptyWorkflow {
+		c.Workflow.setFrom(&f.Workflow)
+		c.WriteCapability.setFrom(&f.Workflow)
+	}
+	var emptyWriteCapability WriteCapability
+	if f.WriteCapability != emptyWriteCapability {
+		c.WriteCapability.setFrom(&f.WriteCapability)
+	}
+
 }
