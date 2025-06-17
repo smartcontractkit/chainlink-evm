@@ -638,10 +638,10 @@ github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6Mwd
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/smartcontractkit/chainlink-common v0.7.1-0.20250617133454-9f01f00e6ea8 h1:b9g3M6Re82Kf82eXWL6OafKzQ/DmGt479zrSvdpVRMM=
 github.com/smartcontractkit/chainlink-common v0.7.1-0.20250617133454-9f01f00e6ea8/go.mod h1:1ntZ0rtQpPx6h+xlcOJp0ccqHFaxTzW2Z62FJG358q0=
-github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250617140007-2d049506d93d h1:3qtkjhV76h2KN6zMqZ5/bT0cbWwqYfe8/EGCrFKoh10=
-github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250617140007-2d049506d93d/go.mod h1:VnW3saDDwJNCIjYrcLNNlC2M9Tt478f0rt4lHJVCnUE=
-github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250522110034-65c54665034a h1:1CrY+turGOYaSEs4efA4zJprX0G2Uk+0dcDO1eCsHhk=
-github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250522110034-65c54665034a/go.mod h1:X+a4k2a+2G2/yeAaRQMCTLmlhNdQYAeN6v+ZpLzRZww=
+github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250617144336-d9481ebbe20e h1:XlelWyRv2sC65yNWM+EhqPY+jT+Nzy+zbC4Buua6N+s=
+github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250617144336-d9481ebbe20e/go.mod h1:VnW3saDDwJNCIjYrcLNNlC2M9Tt478f0rt4lHJVCnUE=
+github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250616180023-87b70c08d7c0 h1:OpFlG2f+LXsDp3cejSQju2rmoNsxBlhgrwXMIsk72IA=
+github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250616180023-87b70c08d7c0/go.mod h1:X+a4k2a+2G2/yeAaRQMCTLmlhNdQYAeN6v+ZpLzRZww=
 github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250522110034-65c54665034a h1:bFYBcW0cmhq0G8NSjPxSFfL/fVODuhEGluyWOxJTqqk=
 github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250522110034-65c54665034a/go.mod h1:jo+cUqNcHwN8IF7SInQNXDZ8qzBsyMpnLdYbDswviFc=
 github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250522110034-65c54665034a h1:O28vgyHM7QF1YLg1BwkQSIbOYA+t0RiH9+b+k90GPG8=

@@ -389,6 +389,7 @@ type Chain struct {
 	BlockBackfillSkip            *bool
 	ChainType                    *chaintype.Config
 	FinalityDepth                *uint32
+	SafeDepth                    *uint32
 	FinalityTagEnabled           *bool
 	FlagsContractAddress         *types.EIP55Address
 	LinkContractAddress          *types.EIP55Address

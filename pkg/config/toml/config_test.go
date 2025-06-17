@@ -193,6 +193,7 @@ var fullConfig = EVMConfig{
 		BlockBackfillSkip:    ptr(true),
 		ChainType:            chaintype.NewConfig("Optimism"),
 		FinalityDepth:        ptr[uint32](42),
+		SafeDepth:            ptr[uint32](10),
 		FinalityTagEnabled:   ptr[bool](true),
 		FlagsContractAddress: ptr(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
 		FinalizedBlockOffset: ptr[uint32](16),
