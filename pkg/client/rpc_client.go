@@ -25,14 +25,15 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
+	"github.com/smartcontractkit/chainlink-framework/multinode"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
-	"github.com/smartcontractkit/chainlink-framework/metrics"
-	"github.com/smartcontractkit/chainlink-framework/multinode"
 )
 
 var (
@@ -558,6 +559,24 @@ func (r *RPCClient) HeaderByHash(ctx context.Context, hash common.Hash) (header 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "HeaderByHash",
 		"header", header,
 	)
+
+	return
+}
+
+func (r *RPCClient) LatestSafeBlock(ctx context.Context) (head *evmtypes.Head, err error) {
+	ctx, cancel, _, _, _ := r.acquireQueryCtx(ctx, r.rpcTimeout)
+	defer cancel()
+	err = r.ethGetBlockByNumber(ctx, rpc.SafeBlockNumber.String(), &head)
+	if err != nil {
+		return
+	}
+
+	if head == nil {
+		err = r.wrapRPCClientError(ethereum.NotFound)
+		return
+	}
+
+	head.EVMChainID = ubig.New(r.chainID)
 
 	return
 }

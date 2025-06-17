@@ -10,6 +10,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
+
 	evmheads "github.com/smartcontractkit/chainlink-evm/pkg/heads"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
@@ -45,12 +46,14 @@ func (h *trackerConfig) PersistenceEnabled() bool {
 }
 
 type config struct {
+	safeBlockDepth                    uint32
 	finalityDepth                     uint32
 	blockEmissionIdleWarningThreshold time.Duration
 	finalityTagEnabled                bool
 	finalizedBlockOffset              uint32
 }
 
+func (c *config) SafeDepth() uint32     { return c.safeBlockDepth }
 func (c *config) FinalityDepth() uint32 { return c.finalityDepth }
 func (c *config) BlockEmissionIdleWarningThreshold() time.Duration {
 	return c.blockEmissionIdleWarningThreshold
