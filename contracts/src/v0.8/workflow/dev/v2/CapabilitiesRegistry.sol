@@ -1035,9 +1035,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
   /// @param configCount The config count of the DON
   /// @return DONInfo The DON's parameters
   function getHistoricalDONInfo(uint32 donId, uint32 configCount) external view returns (DONInfo memory) {
-    if (s_dons[donId].configCount == 0) revert DONDoesNotExist(donId);
-    if (configCount > s_dons[donId].configCount) {
-      revert DONConfigDoesNotExist(donId, s_dons[donId].configCount, configCount);
+    uint32 donConfigCount = s_dons[donId].configCount;
+    if (donConfigCount == 0) revert DONDoesNotExist(donId);
+    if (configCount > donConfigCount) {
+      revert DONConfigDoesNotExist(donId, donConfigCount, configCount);
     }
 
     return _getDON(donId, configCount);
@@ -1233,7 +1234,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, ConfirmedOwner, ITypeAndVers
     MutableDONConfig storage prevDONConfig = don.config[donParams.configCount - 1];
 
     // Check if the DON name is changing
-    if (keccak256(bytes(prevDONConfig.name)) != keccak256(bytes(donParams.name))) {
+    if (_hash(prevDONConfig.name) != _hash(donParams.name)) {
       delete s_donNameToId[donConfig.name];
 
       if (bytes(donParams.name).length > 0) {
