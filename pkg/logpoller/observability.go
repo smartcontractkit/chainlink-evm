@@ -249,9 +249,9 @@ func (o *ObservedORM) FilteredLogs(ctx context.Context, filter []query.Expressio
 func withObservedQueryAndResults[T any](ctx context.Context, o *ObservedORM, queryName string, query func() ([]T, error)) ([]T, error) {
 	results, err := withObservedQuery(ctx, o, queryName, query)
 	if err == nil {
-		ctx, cancel := context.WithTimeout(ctx, client.QueryTimeout)
+		ctx2, cancel := context.WithTimeout(ctx, client.QueryTimeout)
 		defer cancel()
-		o.metrics.RecordQueryDatasetSize(ctx, queryName, metrics.Read, int64(len(results)))
+		o.metrics.RecordQueryDatasetSize(ctx2, queryName, metrics.Read, int64(len(results)))
 	}
 	return results, err
 }
@@ -273,9 +273,9 @@ func withObservedExecAndRowsAffected(ctx context.Context, o *ObservedORM, queryN
 func withObservedQuery[T any](ctx context.Context, o *ObservedORM, queryName string, query func() (T, error)) (T, error) {
 	queryStarted := time.Now()
 	defer func() {
-		ctx, cancel := context.WithTimeout(ctx, client.QueryTimeout)
+		ctx2, cancel := context.WithTimeout(ctx, client.QueryTimeout)
 		defer cancel()
-		o.metrics.RecordQueryDuration(ctx, queryName, metrics.Read, float64(time.Since(queryStarted)))
+		o.metrics.RecordQueryDuration(ctx2, queryName, metrics.Read, float64(time.Since(queryStarted)))
 	}()
 	return query()
 }
@@ -283,9 +283,9 @@ func withObservedQuery[T any](ctx context.Context, o *ObservedORM, queryName str
 func withObservedExec(ctx context.Context, o *ObservedORM, query string, queryType metrics.QueryType, exec func() error) error {
 	queryStarted := time.Now()
 	defer func() {
-		ctx, cancel := context.WithTimeout(ctx, client.QueryTimeout)
+		ctx2, cancel := context.WithTimeout(ctx, client.QueryTimeout)
 		defer cancel()
-		o.metrics.RecordQueryDuration(ctx, query, queryType, float64(time.Since(queryStarted)))
+		o.metrics.RecordQueryDuration(ctx2, query, queryType, float64(time.Since(queryStarted)))
 	}()
 	return exec()
 }
