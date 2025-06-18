@@ -36,7 +36,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: "",
+      name: TEST_DON_NAME_ONE,
       donFamilies: donFamilies,
       config: bytes("")
     });
@@ -134,11 +134,25 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
   function test_RevertWhen_NodeAlreadyBelongsToWorkflowDON() public {
     CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](2);
     newDONs[0] = s_DEFAULT_NEW_DON_PARAMS[0];
-    newDONs[0].acceptsWorkflows = true; // This DON accepts workflows
-    newDONs[1] = newDONs[0]; // Make a copy of the first DON
+    newDONs[1] = CapabilitiesRegistry.NewDONParams({
+      nodes: s_nodeIds,
+      capabilityConfigurations: s_capabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: F_VALUE,
+      name: TEST_DON_NAME_TWO,
+      donFamilies: new string[](0),
+      config: bytes("")
+    });
 
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.NodePartOfWorkflowDON.selector, 2, P2P_ID));
     s_CapabilitiesRegistry.addDONs(newDONs);
+  }
+
+  function test_RevertWhen_DONNameCannotBeEmpty() public {
+    s_DEFAULT_NEW_DON_PARAMS[0].name = "";
+    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.DONNameCannotBeEmpty.selector, 1));
+    s_CapabilitiesRegistry.addDONs(s_DEFAULT_NEW_DON_PARAMS);
   }
 
   function test_RevertWhen_DONNameAlreadyTaken() public {
@@ -179,7 +193,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: "test-name",
+      name: TEST_DON_NAME_ONE,
       donFamilies: donFamilies,
       config: bytes("abc")
     });
@@ -197,7 +211,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     );
     assertEq(donInfo.capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
     assertEq(donInfo.capabilityConfigurations[1].capabilityId, s_capabilityWithConfigurationContractId);
-    assertEq(donInfo.name, "test-name");
+    assertEq(donInfo.name, TEST_DON_NAME_ONE);
     assertEq(donInfo.config, bytes("abc"));
 
     (bytes memory CapabilitiesRegistryDONConfig, bytes memory capabilityConfigContractConfig) =
@@ -236,7 +250,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: 0,
-      name: "test-name",
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: bytes("abc")
     });

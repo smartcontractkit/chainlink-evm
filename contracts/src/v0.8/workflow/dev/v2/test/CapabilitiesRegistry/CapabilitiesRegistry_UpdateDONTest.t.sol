@@ -32,7 +32,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -60,7 +60,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -83,7 +83,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -109,7 +109,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -137,7 +137,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -165,7 +165,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -188,7 +188,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -241,7 +241,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: expectedDONIsPublic,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );

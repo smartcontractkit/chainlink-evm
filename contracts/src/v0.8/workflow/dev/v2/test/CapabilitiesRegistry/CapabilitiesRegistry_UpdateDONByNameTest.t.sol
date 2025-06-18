@@ -29,7 +29,7 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: TEST_DON_NAME,
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: TEST_DON_CONFIG
     });
@@ -52,7 +52,7 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -75,7 +75,7 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );
@@ -103,7 +103,7 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
       config: CONFIG_CAPABILITY_CONFIG
     });
 
-    CapabilitiesRegistry.DONInfo memory oldDONInfo = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME);
+    CapabilitiesRegistry.DONInfo memory oldDONInfo = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME_ONE);
 
     bool expectedDONIsPublic = false;
     uint32 expectedConfigCount = oldDONInfo.configCount + 1;
@@ -122,18 +122,18 @@ contract CapabilitiesRegistry_UpdateDONByNameTest is BaseTest {
       1
     );
     s_CapabilitiesRegistry.updateDONByName(
-      TEST_DON_NAME,
+      TEST_DON_NAME_ONE,
       CapabilitiesRegistry.UpdateDONParams({
         nodes: nodes,
         capabilityConfigurations: capabilityConfigs,
         isPublic: expectedDONIsPublic,
         f: F_VALUE,
-        name: TEST_DON_NAME,
+        name: TEST_DON_NAME_ONE,
         config: TEST_DON_CONFIG
       })
     );
 
-    CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME);
+    CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME_ONE);
     assertEq(donInfo.id, DON_ID);
     assertEq(donInfo.configCount, expectedConfigCount);
     assertEq(donInfo.isPublic, false);

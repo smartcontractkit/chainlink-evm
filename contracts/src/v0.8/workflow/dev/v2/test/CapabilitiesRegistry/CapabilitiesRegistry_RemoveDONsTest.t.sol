@@ -38,7 +38,7 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: 1,
-      name: "test-name",
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: bytes("")
     });
@@ -78,7 +78,7 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     assertEq(capabilityConfigContractConfig, bytes(""));
     assertEq(donInfo.nodeP2PIds.length, 0);
 
-    assertEq(s_CapabilitiesRegistry.isDONNameTaken("test-name"), false);
+    assertEq(s_CapabilitiesRegistry.isDONNameTaken(TEST_DON_NAME_ONE), false);
   }
 
   function test_RemovesCapabilitiesDON() public {
@@ -98,7 +98,7 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: false,
       f: 1,
-      name: "",
+      name: TEST_DON_NAME_TWO,
       donFamilies: new string[](0),
       config: bytes("")
     });

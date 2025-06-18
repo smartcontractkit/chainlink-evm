@@ -38,7 +38,7 @@ contract CapabilitiesRegistry_RemoveDONsByNameTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: 1,
-      name: TEST_DON_NAME,
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: TEST_DON_CONFIG
     });
@@ -47,7 +47,7 @@ contract CapabilitiesRegistry_RemoveDONsByNameTest is BaseTest {
 
   function test_RevertWhen_CalledByNonAdmin() public {
     string[] memory donNames = new string[](1);
-    donNames[0] = TEST_DON_NAME;
+    donNames[0] = TEST_DON_NAME_ONE;
     changePrank(STRANGER);
     vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector));
     s_CapabilitiesRegistry.removeDONsByName(donNames);
@@ -58,7 +58,7 @@ contract CapabilitiesRegistry_RemoveDONsByNameTest is BaseTest {
     emit CapabilitiesRegistry.ConfigSet(DON_ID, 0);
 
     string[] memory donNames = new string[](1);
-    donNames[0] = TEST_DON_NAME;
+    donNames[0] = TEST_DON_NAME_ONE;
     s_CapabilitiesRegistry.removeDONsByName(donNames);
 
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.DONDoesNotExist.selector, DON_ID));
@@ -71,6 +71,6 @@ contract CapabilitiesRegistry_RemoveDONsByNameTest is BaseTest {
     assertEq(capabilityConfigContractConfig, bytes(""));
     assertEq(donInfo.nodeP2PIds.length, 0);
 
-    assertEq(s_CapabilitiesRegistry.isDONNameTaken(TEST_DON_NAME), false);
+    assertEq(s_CapabilitiesRegistry.isDONNameTaken(TEST_DON_NAME_ONE), false);
   }
 }

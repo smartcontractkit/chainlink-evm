@@ -91,7 +91,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: false,
       f: F_VALUE,
-      name: "",
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: bytes("")
     });
@@ -121,7 +121,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: "",
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: bytes("")
     });
@@ -169,7 +169,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: "",
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: bytes("")
     });
@@ -192,7 +192,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
         capabilityConfigurations: capabilityConfigs,
         isPublic: true,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_ONE,
         config: bytes("")
       })
     );

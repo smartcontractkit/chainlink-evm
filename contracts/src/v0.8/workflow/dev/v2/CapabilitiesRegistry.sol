@@ -187,8 +187,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     /// @notice The families the DON belongs to. A DON family is a group of DONs
     /// that are connected with each other. Empty string is the default family.
     string[] donFamilies;
-    /// @notice The name of the DON. Can be empty. If not empty, must be unique
-    /// to the registry.
+    /// @notice The name of the DON. Must be unique to the registry.
     string name;
     /// @notice The config for the DON. This holds general DON config that is not
     /// specific to a capability.
@@ -278,6 +277,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @notice This error is emitted when a DON with the given name does not exist
   /// @param donName The name of the nonexistent DON
   error DONWithNameDoesNotExist(string donName);
+
+  /// @notice This error is emitted when trying to set the name of a DON to an empty string
+  /// @param donId The ID of the DON
+  error DONNameCannotBeEmpty(uint32 donId);
 
   /// @notice This error is thrown when trying to set the node's
   /// signer address to zero or if the signer address has already
@@ -1229,19 +1232,20 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       revert InvalidFaultTolerance(donParams.f, nodes.length);
     }
 
+    if (bytes(donParams.name).length == 0) {
+      revert DONNameCannotBeEmpty(donParams.id);
+    }
+
     MutableDONConfig storage prevDONConfig = don.config[donParams.configCount - 1];
 
-    // Check if the DON name is changing
+    // Check if the DON name is changing. If it is, we need to update the mapping.
     if (_hash(prevDONConfig.name) != _hash(donParams.name)) {
-      delete s_donNameToId[donConfig.name];
-
-      if (bytes(donParams.name).length > 0) {
-        // If the new name is not empty, add it to the mapping
-        if (s_donNameToId[donParams.name] != 0) {
-          revert DONNameAlreadyTaken(donParams.name);
-        }
-        s_donNameToId[donParams.name] = donParams.id;
+      if (s_donNameToId[donParams.name] != 0) {
+        revert DONNameAlreadyTaken(donParams.name);
       }
+
+      delete s_donNameToId[donConfig.name];
+      s_donNameToId[donParams.name] = donParams.id;
     }
 
     // Skip removing supported DON Ids from previously configured nodes in DON if

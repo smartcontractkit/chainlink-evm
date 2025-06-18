@@ -89,7 +89,7 @@ contract BaseTest is Test, Constants {
       isPublic: true,
       acceptsWorkflows: true,
       f: 1,
-      name: "",
+      name: TEST_DON_NAME_ONE,
       donFamilies: donFamilies,
       config: bytes("")
     });
@@ -100,7 +100,7 @@ contract BaseTest is Test, Constants {
       isPublic: false,
       acceptsWorkflows: false,
       f: 1,
-      name: TEST_DON_NAME,
+      name: TEST_DON_NAME_TWO,
       donFamilies: donFamilies,
       config: TEST_DON_CONFIG
     });

@@ -28,7 +28,20 @@ contract CapabilitiesRegistry_GetDONByNameTest is BaseTest {
   }
 
   function test_CorrectlyFetchesDONByName() public view {
-    CapabilitiesRegistry.DONInfo memory don = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME);
+    CapabilitiesRegistry.DONInfo memory don = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME_ONE);
+    assertEq(don.id, DON_ID, "DON ID mismatch");
+    assertEq(don.configCount, 1, "Config count mismatch");
+    assertEq(don.isPublic, true, "Is public mismatch");
+    assertEq(don.acceptsWorkflows, true, "Accepts workflows mismatch");
+    assertEq(don.f, 1, "F mismatch");
+    assertEq(don.name, TEST_DON_NAME_ONE, "Name mismatch");
+    assertEq(don.config, bytes(""), "Config mismatch");
+    assertEq(don.donFamilies.length, 1, "Don families length mismatch");
+    assertEq(don.donFamilies[0], TEST_DON_FAMILY_ONE, "Don family mismatch");
+    assertEq(don.capabilityConfigurations.length, s_capabilityConfigs.length, "Capability configs length mismatch");
+    assertEq(don.capabilityConfigurations[0].capabilityId, s_basicCapabilityId, "Capability ID mismatch");
+
+    don = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME_TWO);
     assertEq(don.id, DON_ID_TWO, "DON ID mismatch");
     assertEq(don.configCount, 1, "Config count mismatch");
     assertEq(don.isPublic, false, "Is public mismatch");
@@ -36,7 +49,9 @@ contract CapabilitiesRegistry_GetDONByNameTest is BaseTest {
     assertEq(don.f, 1, "F mismatch");
     assertEq(don.capabilityConfigurations.length, s_capabilityConfigs.length, "Capability configs length mismatch");
     assertEq(don.capabilityConfigurations[0].capabilityId, s_basicCapabilityId, "Capability ID mismatch");
-    assertEq(don.name, TEST_DON_NAME, "Name mismatch");
+    assertEq(don.name, TEST_DON_NAME_TWO, "Name mismatch");
     assertEq(don.config, TEST_DON_CONFIG, "Config mismatch");
+    assertEq(don.donFamilies.length, 1, "Don families length mismatch");
+    assertEq(don.donFamilies[0], TEST_DON_FAMILY_ONE, "Don family mismatch");
   }
 }

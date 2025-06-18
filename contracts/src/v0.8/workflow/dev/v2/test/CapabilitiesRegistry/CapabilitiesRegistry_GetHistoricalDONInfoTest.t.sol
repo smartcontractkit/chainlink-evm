@@ -56,7 +56,7 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: TEST_DON_NAME,
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: TEST_DON_CONFIG
     });
@@ -69,7 +69,7 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
         capabilityConfigurations: s_capabilityConfigs,
         isPublic: false,
         f: F_VALUE,
-        name: "",
+        name: TEST_DON_NAME_TWO,
         config: bytes("")
       })
     );
@@ -94,7 +94,7 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
     assertEq(don.f, 1);
     assertEq(don.capabilityConfigurations.length, s_capabilityConfigs.length);
     assertEq(don.capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
-    assertEq(don.name, TEST_DON_NAME);
+    assertEq(don.name, TEST_DON_NAME_ONE, "DON name mismatch");
     assertEq(don.config, TEST_DON_CONFIG);
 
     don = s_CapabilitiesRegistry.getHistoricalDONInfo(DON_ID, 2);
@@ -105,7 +105,7 @@ contract CapabilitiesRegistry_GetHistoricalDONInfoTest is BaseTest {
     assertEq(don.f, 1);
     assertEq(don.capabilityConfigurations.length, s_capabilityConfigs.length);
     assertEq(don.capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
-    assertEq(don.name, "");
+    assertEq(don.name, TEST_DON_NAME_TWO, "DON name mismatch");
     assertEq(don.config, bytes(""));
   }
 }

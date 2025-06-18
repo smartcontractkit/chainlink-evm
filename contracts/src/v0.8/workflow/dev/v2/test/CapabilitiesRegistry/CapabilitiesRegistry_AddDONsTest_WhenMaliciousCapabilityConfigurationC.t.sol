@@ -59,7 +59,7 @@ contract CapabilitiesRegistry_AddDONsTest_WhenMaliciousCapabilityConfigurationCo
       isPublic: true,
       acceptsWorkflows: true,
       f: F_VALUE,
-      name: "",
+      name: TEST_DON_NAME_ONE,
       donFamilies: new string[](0),
       config: bytes("")
     });
