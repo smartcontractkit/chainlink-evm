@@ -203,23 +203,18 @@ func (c DataStorage) ReadData(
 	runtime sdk.Runtime,
 	args ReadDataInput,
 	options *bindings.ReadOptions,
-) (string, error) {
+) (sdk.Promise[*evm.CallContractReply], error) {
 	calldata, err := c.codec.EncodeReadDataMethodCall(args)
 	if err != nil {
-		return *new(string), err
+		return nil, err
 	}
 	if options == nil {
 		options = &bindings.ReadOptions{BlockNumber: nil}
 	}
-	promise := c.evmClient.CallContract(runtime, &evm.CallContractRequest{
+	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
 		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
 		BlockNumber: pb.NewBigIntFromInt(options.BlockNumber),
-	})
-	reply, err := promise.Await()
-	if err != nil {
-		return *new(string), err
-	}
-	return c.codec.DecodeReadDataMethodOutput(reply.Data)
+	}), nil
 }
 
 type StoreDataInput struct {
@@ -240,13 +235,13 @@ func (c DataStorage) WriteReportDataStorageUserData(
 	runtime sdk.Runtime,
 	input DataStorageUserData,
 	gasConfig *evmcappb.GasConfig,
-) ([]byte, error) {
+) (sdk.Promise[*evmcappb.WriteReportReply], error) {
 	encoded, err := c.codec.EncodeDataStorageUserDataStruct(input)
 	if err != nil {
 		return nil, err
 	}
 	report := bindings.GenerateReport(getChainID(c.evmClient), encoded)
-	writeReportReplyPromise := c.evmClient.WriteReport(runtime, &evmcappb.WriteReportRequest{
+	return c.evmClient.WriteReport(runtime, &evmcappb.WriteReportRequest{
 		Receiver: c.Address,
 		Report: &evmcappb.SignedReport{
 			RawReport:     report.RawReport,
@@ -255,34 +250,7 @@ func (c DataStorage) WriteReportDataStorageUserData(
 			Id:            report.ID,
 		},
 		GasConfig: gasConfig,
-	})
-	reply, err := writeReportReplyPromise.Await()
-	if err != nil {
-		return nil, err
-	}
-	if reply.TxStatus == evm.TxStatus_TX_FATAL {
-		return nil, &bindings.TxFatalError{
-			Message: "Fatal tx execution",
-		}
-	}
-	for {
-		txByHashPromise := c.evmClient.GetTransactionByHash(runtime, &evm.GetTransactionByHashRequest{
-			Hash: reply.TxHash,
-		})
-		getTxResult, err := txByHashPromise.Await()
-		if err != nil {
-			return nil, err
-		}
-		// TODO: wrap in `WaitForConfidence` check when implemented
-		if *reply.ReceiverContractExecutionStatus == evmcappb.ReceiverContractExecutionStatus_REVERTED {
-			return nil, &bindings.ReceiverContractError{
-				Message: "Transaction finalized but receiver contract failed to execute",
-				TxHash:  getTxResult.Transaction.Hash,
-			}
-		}
-		return getTxResult.Transaction.Hash, nil
-
-	}
+	}), nil
 }
 
 // DataNotFound represents the DataNotFound error raised by the DataStorage contract.
@@ -365,8 +333,8 @@ func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime sdk.Runtime) {
 	})
 }
 
-func (c *DataStorage) QueryTrackedLogsAccessLogged(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) ([]bindings.ParsedLog[AccessLogged], any) {
-	promise := c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
+func (c *DataStorage) QueryTrackedLogsAccessLogged(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) sdk.Promise[*evm.QueryTrackedLogsReply] {
+	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
 		Expression: []*evm.Expression{
 			//TODO add proper expression
 			&evm.Expression{Evaluator: &evm.Expression_BooleanExpression{&evm.BooleanExpression{
@@ -374,33 +342,15 @@ func (c *DataStorage) QueryTrackedLogsAccessLogged(runtime sdk.Runtime, options 
 			}}},
 		},
 	})
-	reply, err := promise.Await()
-	if err != nil {
-		return nil, fmt.Errorf("failed to query tracked logs: %w", err)
-	}
-	logs := reply.Logs
-	parsedLogs := make([]bindings.ParsedLog[AccessLogged], len(logs))
-	for i, log := range logs {
-		decodedLog, err := c.codec.DecodeAccessLogged(log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode AccessLogged log: %w", err)
-		}
-		parsedLogs[i] = bindings.ParsedLog[AccessLogged]{
-			LogData: *decodedLog,
-			RawLog:  log,
-		}
-	}
-
-	return parsedLogs, nil
 }
 
-func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindings.FilterOptions) ([]bindings.ParsedLog[AccessLogged], error) {
+func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: big.NewInt(123), //TODO we need a enum / constant
 		}
 	}
-	filterLogsReplyPromise := c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{
@@ -410,24 +360,6 @@ func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindi
 			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
 	})
-	reply, err := filterLogsReplyPromise.Await()
-	if err != nil {
-		return nil, err
-	}
-	logs := reply.Logs
-	parsedLogs := make([]bindings.ParsedLog[AccessLogged], len(logs))
-	for i, log := range logs {
-		decodedLog, err := c.codec.DecodeAccessLogged(log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode AccessLogged log: %w", err)
-		}
-		parsedLogs[i] = bindings.ParsedLog[AccessLogged]{
-			LogData: *decodedLog,
-			RawLog:  log,
-		}
-	}
-
-	return parsedLogs, nil
 }
 
 // DataStored represents a DataStored event raised by the DataStorage contract.
@@ -454,8 +386,8 @@ func (c *DataStorage) UnregisterLogTrackingDataStored(runtime sdk.Runtime) {
 	})
 }
 
-func (c *DataStorage) QueryTrackedLogsDataStored(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) ([]bindings.ParsedLog[DataStored], any) {
-	promise := c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
+func (c *DataStorage) QueryTrackedLogsDataStored(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) sdk.Promise[*evm.QueryTrackedLogsReply] {
+	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
 		Expression: []*evm.Expression{
 			//TODO add proper expression
 			&evm.Expression{Evaluator: &evm.Expression_BooleanExpression{&evm.BooleanExpression{
@@ -463,33 +395,15 @@ func (c *DataStorage) QueryTrackedLogsDataStored(runtime sdk.Runtime, options *b
 			}}},
 		},
 	})
-	reply, err := promise.Await()
-	if err != nil {
-		return nil, fmt.Errorf("failed to query tracked logs: %w", err)
-	}
-	logs := reply.Logs
-	parsedLogs := make([]bindings.ParsedLog[DataStored], len(logs))
-	for i, log := range logs {
-		decodedLog, err := c.codec.DecodeDataStored(log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode DataStored log: %w", err)
-		}
-		parsedLogs[i] = bindings.ParsedLog[DataStored]{
-			LogData: *decodedLog,
-			RawLog:  log,
-		}
-	}
-
-	return parsedLogs, nil
 }
 
-func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *bindings.FilterOptions) ([]bindings.ParsedLog[DataStored], error) {
+func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: big.NewInt(123), //TODO we need a enum / constant
 		}
 	}
-	filterLogsReplyPromise := c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{
@@ -499,24 +413,6 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
 	})
-	reply, err := filterLogsReplyPromise.Await()
-	if err != nil {
-		return nil, err
-	}
-	logs := reply.Logs
-	parsedLogs := make([]bindings.ParsedLog[DataStored], len(logs))
-	for i, log := range logs {
-		decodedLog, err := c.codec.DecodeDataStored(log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode DataStored log: %w", err)
-		}
-		parsedLogs[i] = bindings.ParsedLog[DataStored]{
-			LogData: *decodedLog,
-			RawLog:  log,
-		}
-	}
-
-	return parsedLogs, nil
 }
 
 func getChainID(e evmcappb.Client) uint32 { panic("unimplemented") }

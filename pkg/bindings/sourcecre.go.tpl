@@ -182,23 +182,18 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 	runtime sdk.Runtime,
 	args {{$call.Normalized.Name}}Input,
 	options *bindings.ReadOptions,
-) ({{with index $call.Normalized.Outputs 0}}{{bindtype .Type $.Structs}}{{end}}, error) {
+) (sdk.Promise[*evm.CallContractReply], error) {
 	calldata, err := c.codec.Encode{{$call.Normalized.Name}}MethodCall(args)
 	if err != nil {
-		return {{with index $call.Normalized.Outputs 0}}*new({{bindtype .Type $.Structs}}){{end}}, err
+		return nil, err
 	}
 	if options == nil {
 		options = &bindings.ReadOptions{BlockNumber: nil}
 	}
-	promise := c.evmClient.CallContract(runtime, &evm.CallContractRequest{
+	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
 		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
 		BlockNumber: pb.NewBigIntFromInt(options.BlockNumber),
-	})
-	reply, err := promise.Await()
-	if err != nil {
-		return {{with index $call.Normalized.Outputs 0}}*new({{bindtype .Type $.Structs}}){{end}}, err
-	}
-	return c.codec.Decode{{$call.Normalized.Name}}MethodOutput(reply.Data)
+	}), nil
 }
 {{- end}}
 {{end}}
@@ -215,13 +210,13 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	runtime sdk.Runtime,
 	input {{.Name}},
 	gasConfig *evmcappb.GasConfig,
-) ([]byte, error) {
+) (sdk.Promise[*evmcappb.WriteReportReply], error) {
 	encoded, err := c.codec.Encode{{.Name}}Struct(input)
 	if err != nil {
 		return nil, err
 	}
 	report := bindings.GenerateReport(getChainID(c.evmClient), encoded)
-	writeReportReplyPromise := c.evmClient.WriteReport(runtime, &evmcappb.WriteReportRequest{
+	return c.evmClient.WriteReport(runtime, &evmcappb.WriteReportRequest{
 		Receiver: c.Address,
 		Report: &evmcappb.SignedReport{
 			RawReport:     report.RawReport,
@@ -230,34 +225,7 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 			Id:            report.ID,
 		},
 		GasConfig: gasConfig,
-	})
-	reply, err := writeReportReplyPromise.Await()
-	if err != nil {
-		return nil, err
-	}
-	if reply.TxStatus == evm.TxStatus_TX_FATAL {
-		return nil, &bindings.TxFatalError{
-			Message: "Fatal tx execution",
-		}
-	}
-	for {
-		txByHashPromise := c.evmClient.GetTransactionByHash(runtime, &evm.GetTransactionByHashRequest{
-			Hash: reply.TxHash,
-		})
-		getTxResult, err := txByHashPromise.Await()
-		if err != nil {
-			return nil, err
-		}
-		// TODO: wrap in `WaitForConfidence` check when implemented 
-		if *reply.ReceiverContractExecutionStatus == evmcappb.ReceiverContractExecutionStatus_REVERTED {
-			return nil, &bindings.ReceiverContractError{
-				Message: "Transaction finalized but receiver contract failed to execute",
-				TxHash:  getTxResult.Transaction.Hash,
-			}
-		}
-		return getTxResult.Transaction.Hash, nil
-		
-	}
+	}), nil
 }
 {{end}}
 
@@ -344,8 +312,8 @@ func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime s
 	})
 }
 
-func (c *{{$contract.Type}}) QueryTrackedLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) ([]bindings.ParsedLog[{{.Normalized.Name}}], any) {
-	promise := c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
+func (c *{{$contract.Type}}) QueryTrackedLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) (sdk.Promise[*evm.QueryTrackedLogsReply]) {
+	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
 		Expression: []*evm.Expression{
 			//TODO add proper expression
 			&evm.Expression{Evaluator: &evm.Expression_BooleanExpression{&evm.BooleanExpression{
@@ -353,33 +321,15 @@ func (c *{{$contract.Type}}) QueryTrackedLogs{{.Normalized.Name}}(runtime sdk.Ru
 			}}},
 		},
 	})
-	reply, err := promise.Await()
-	if err != nil {
-		return nil, fmt.Errorf("failed to query tracked logs: %w", err)
-	}
-	logs := reply.Logs
-	parsedLogs := make([]bindings.ParsedLog[{{.Normalized.Name}}], len(logs))
-	for i, log := range logs {
-		decodedLog, err := c.codec.Decode{{.Normalized.Name}}(log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode {{.Normalized.Name}} log: %w", err)
-		}
-		parsedLogs[i] = bindings.ParsedLog[{{.Normalized.Name}}]{
-			LogData: *decodedLog,
-			RawLog: log,
-		}
-	}
-	
-	return parsedLogs, nil
 }
 
-func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.FilterOptions) ([]bindings.ParsedLog[{{.Normalized.Name}}], error) {
+func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.FilterOptions) (sdk.Promise[*evm.FilterLogsReply]) {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: big.NewInt(123), //TODO we need a enum / constant
 		}
 	}
-	filterLogsReplyPromise := c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics:    []*evm.Topics{
@@ -389,24 +339,6 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
 	})
-	reply, err := filterLogsReplyPromise.Await()
-	if err != nil {
-		return nil, err
-	}
-	logs := reply.Logs
-	parsedLogs := make([]bindings.ParsedLog[{{.Normalized.Name}}], len(logs))
-	for i, log := range logs {
-		decodedLog, err := c.codec.Decode{{.Normalized.Name}}(log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode {{.Normalized.Name}} log: %w", err)
-		}
-		parsedLogs[i] = bindings.ParsedLog[{{.Normalized.Name}}]{
-			LogData: *decodedLog,
-			RawLog: log,
-		}
-	}
-	
-	return parsedLogs, nil
 }
 {{end}}
 
