@@ -6,59 +6,18 @@ import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 
 contract CapabilitiesRegistry_GetDONsTest is BaseTest {
-  CapabilitiesRegistry.CapabilityConfiguration[] private s_capabilityConfigs;
-
   function setUp() public override {
     BaseTest.setUp();
 
-    CapabilitiesRegistry.Capability[] memory capabilities = new CapabilitiesRegistry.Capability[](2);
-    capabilities[0] = s_basicCapability;
-    capabilities[1] = s_capabilityWithConfigurationContract;
-
     s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
-    s_CapabilitiesRegistry.addCapabilities(capabilities);
-
-    CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](2);
-    bytes32[] memory capabilityIds = new bytes32[](2);
-    capabilityIds[0] = s_basicHashedCapabilityId;
-    capabilityIds[1] = s_capabilityWithConfigurationContractId;
-
-    nodes[0] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_ONE_ID,
-      p2pId: P2P_ID,
-      signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
-      hashedCapabilityIds: capabilityIds
-    });
-
-    bytes32[] memory nodeTwoCapabilityIds = new bytes32[](1);
-    nodeTwoCapabilityIds[0] = s_basicHashedCapabilityId;
-
-    nodes[1] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: TEST_NODE_OPERATOR_ONE_ID,
-      p2pId: P2P_ID_TWO,
-      signer: NODE_OPERATOR_TWO_SIGNER_ADDRESS,
-      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_TWO,
-      hashedCapabilityIds: nodeTwoCapabilityIds
-    });
+    s_CapabilitiesRegistry.addCapabilities(s_capabilities);
 
     changePrank(NODE_OPERATOR_ONE_ADMIN);
-    s_CapabilitiesRegistry.addNodes(nodes);
-
-    s_capabilityConfigs.push(
-      CapabilitiesRegistry.CapabilityConfiguration({
-        capabilityId: s_basicHashedCapabilityId,
-        config: BASIC_CAPABILITY_CONFIG
-      })
-    );
-
-    bytes32[] memory nodeIds = new bytes32[](2);
-    nodeIds[0] = P2P_ID;
-    nodeIds[1] = P2P_ID_TWO;
+    s_CapabilitiesRegistry.addNodes(s_paramsForTwoNodes);
 
     changePrank(ADMIN);
-    s_CapabilitiesRegistry.addDON(nodeIds, s_capabilityConfigs, true, true, 1);
-    s_CapabilitiesRegistry.addDON(nodeIds, s_capabilityConfigs, false, false, 1);
+
+    s_CapabilitiesRegistry.addDONs(s_paramsForTwoDONs);
   }
 
   function test_CorrectlyFetchesDONs() public view {
@@ -70,13 +29,13 @@ contract CapabilitiesRegistry_GetDONsTest is BaseTest {
     assertEq(dons[0].acceptsWorkflows, true);
     assertEq(dons[0].f, 1);
     assertEq(dons[0].capabilityConfigurations.length, s_capabilityConfigs.length);
-    assertEq(dons[0].capabilityConfigurations[0].capabilityId, s_basicHashedCapabilityId);
+    assertEq(dons[0].capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
 
     assertEq(dons[1].id, DON_ID_TWO);
     assertEq(dons[1].configCount, 1);
     assertEq(dons[1].isPublic, false);
     assertEq(dons[1].capabilityConfigurations.length, s_capabilityConfigs.length);
-    assertEq(dons[1].capabilityConfigurations[0].capabilityId, s_basicHashedCapabilityId);
+    assertEq(dons[1].capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
   }
 
   function test_DoesNotIncludeRemovedDONs() public {
@@ -92,6 +51,6 @@ contract CapabilitiesRegistry_GetDONsTest is BaseTest {
     assertEq(dons[0].acceptsWorkflows, false);
     assertEq(dons[0].f, 1);
     assertEq(dons[0].capabilityConfigurations.length, s_capabilityConfigs.length);
-    assertEq(dons[0].capabilityConfigurations[0].capabilityId, s_basicHashedCapabilityId);
+    assertEq(dons[0].capabilityConfigurations[0].capabilityId, s_basicCapabilityId);
   }
 }
