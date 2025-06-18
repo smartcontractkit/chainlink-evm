@@ -37,12 +37,56 @@ var (
 )
 
 {{range $contract := .Contracts}}
-
 var {{$contract.Type}}MetaData = &bind.MetaData{
 	ABI: "{{.InputABI}}",
 	{{- if .InputBin}}
 	Bin: "0x{{.InputBin}}",
 	{{- end}}
+}
+
+// Structs 
+{{range $.Structs}}type {{.Name}} struct {
+	{{- range .Fields}}
+	{{capitalise .Name}} {{.Type}}
+	{{- end}}
+}
+
+{{end}}
+
+// Contract Method Inputs
+{{range $call := $contract.Calls}}type {{$call.Normalized.Name}}Input struct {
+	{{- range $param := $call.Normalized.Inputs}}
+	{{capitalise $param.Name}} {{bindtype .Type $.Structs}}
+	{{- end}}
+}
+
+{{end}}
+
+// Errors
+{{range $error := $contract.Errors}}type {{.Normalized.Name}} struct {
+	{{- range .Normalized.Inputs}}
+	{{capitalise .Name}} {{bindtype .Type $.Structs}}
+	{{- end}}
+}
+
+{{end}}
+
+// Events
+{{range $event := $contract.Events}}type {{.Normalized.Name}} struct {
+	{{- range .Normalized.Inputs}}
+	{{capitalise .Name}} {{if .Indexed}}{{bindtopictype .Type $.Structs}}{{else}}{{bindtype .Type $.Structs}}{{end}}
+	{{- end}}
+}
+
+{{end}}
+
+// Main Binding Type for {{$contract.Type}}
+type {{$contract.Type}} struct {
+	Address   []byte
+	Options   *bindings.ContractInitOptions
+	ABI       *abi.ABI
+	evmClient evmcappb.Client
+	codec     {{$contract.Type}}Codec
 }
 
 type {{$contract.Type}}Codec interface {
@@ -66,6 +110,28 @@ type {{$contract.Type}}Codec interface {
 	{{.Normalized.Name}}LogHash() []byte
 	Decode{{.Normalized.Name}}(log *evm.Log) (*{{.Normalized.Name}}, error)
 	{{- end}}
+}
+
+func New{{$contract.Type}}(
+	client evmcappb.Client,
+	address []byte,
+	options *bindings.ContractInitOptions,
+) (*{{$contract.Type}}, error) {
+	parsed, err := abi.JSON(strings.NewReader({{$contract.Type}}MetaData.ABI))
+	if err != nil {
+		return nil, err
+	}
+	codec, err := New{{$contract.Type}}Codec()
+	if err != nil {
+		return nil, err
+	}
+	return &{{$contract.Type}}{
+		Address:   address,
+		Options:   options,
+		ABI:       &parsed,
+		evmClient: client,
+		codec:     codec,
+	}, nil
 }
 
 type {{decapitalise $contract.Type}}CodecImpl struct {
@@ -138,43 +204,7 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) Decode{{.Normalized.Name}}(lo
 }
 {{end}}
 
-type {{$contract.Type}} struct {
-	Address   []byte
-	Options   *bindings.ContractInitOptions
-	ABI       *abi.ABI
-	evmClient evmcappb.Client
-	codec     {{$contract.Type}}Codec
-}
-
-func New{{$contract.Type}}(
-	client evmcappb.Client,
-	address []byte,
-	options *bindings.ContractInitOptions,
-) (*{{$contract.Type}}, error) {
-	parsed, err := abi.JSON(strings.NewReader({{$contract.Type}}MetaData.ABI))
-	if err != nil {
-		return nil, err
-	}
-	codec, err := New{{$contract.Type}}Codec()
-	if err != nil {
-		return nil, err
-	}
-	return &{{$contract.Type}}{
-		Address:   address,
-		Options:   options,
-		ABI:       &parsed,
-		evmClient: client,
-		codec:     codec,
-	}, nil
-}
-
 {{range $call := $contract.Calls}}
-
-type {{$call.Normalized.Name}}Input struct {
-	{{- range $param := $call.Normalized.Inputs}}
-	{{capitalise $param.Name}} {{bindtype .Type $.Structs}}
-	{{- end}}
-}
 
 {{- if or $call.Original.Constant (eq $call.Original.StateMutability "view")}}
 
@@ -199,12 +229,6 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 {{end}}
 
 {{range $.Structs}}
-
-type {{.Name}} struct {
-	{{- range .Fields}}
-	{{capitalise .Name}} {{.Type}}
-	{{- end}}
-}
 
 func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	runtime sdk.Runtime,
@@ -231,13 +255,6 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 
 {{range $error := $contract.Errors}}
 
-// {{.Normalized.Name}} represents the {{.Original.Name}} error raised by the {{$contract.Type}} contract.
-type {{.Normalized.Name}} struct {
-	{{- range .Normalized.Inputs}}
-	{{capitalise .Name}} {{bindtype .Type $.Structs}}
-	{{- end}}
-}
-
 // TODO: possibly clean this up
 // Decode{{.Normalized.Name}}Error decodes a {{.Original.Name}} error from revert data.
 func (c *{{$contract.Type}}) Decode{{.Normalized.Name}}Error(data []byte) (*{{.Normalized.Name}}, error) {
@@ -247,7 +264,7 @@ func (c *{{$contract.Type}}) Decode{{.Normalized.Name}}Error(data []byte) (*{{.N
 		return nil, fmt.Errorf("failed to unpack error: %w", err)
 	}
 	if len(values) != {{len .Normalized.Inputs}} {
-		return nil, fmt.Errorf("expected {{len .Normalized.Inputs}} values, got %%d", len(values))
+		return nil, fmt.Errorf("expected {{len .Normalized.Inputs}} values, got %d", len(values))
 	}
 
 	{{$err := .}} {{/* capture outer context */}}
@@ -280,7 +297,7 @@ func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 
 // Error implements the error interface for {{.Normalized.Name}}.
 func (e *{{.Normalized.Name}}) Error() string {
-	return fmt.Sprintf("{{.Normalized.Name}} error:{{range .Normalized.Inputs}} {{.Name}}=%%v;{{end}}"{{range .Normalized.Inputs}}, e.{{capitalise .Name}}{{end}})
+	return fmt.Sprintf("{{.Normalized.Name}} error:{{range .Normalized.Inputs}} {{.Name}}=%v;{{end}}"{{range .Normalized.Inputs}}, e.{{capitalise .Name}}{{end}})
 }
 
 {{end}}
@@ -288,20 +305,19 @@ func (e *{{.Normalized.Name}}) Error() string {
 
 {{range $event := $contract.Events}}
 
-// {{.Normalized.Name}} represents a {{.Original.Name}} event raised by the {{$contract.Type}} contract.
-type {{.Normalized.Name}} struct {
-	{{- range .Normalized.Inputs}}
-	{{capitalise .Name}} {{if .Indexed}}{{bindtopictype .Type $.Structs}}{{else}}{{bindtype .Type $.Structs}}{{end}}
-	{{- end}}
-}
-
 func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
-	//TODO use log tracking options if set
+	bindings.ValidateLogTrackingOptions(options)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:      "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
 			Addresses: [][]byte{c.Address},
 			EventSigs: [][]byte{c.codec.{{.Normalized.Name}}LogHash()},
+			MaxLogsKept: options.MaxLogsKept,
+			RetentionTime: options.RetentionTime,
+			LogsPerBlock: options.LogsPerBlock,
+			Topic2: options.Topic2,
+			Topic3: options.Topic3,
+			Topic4: options.Topic4,
 		},
 	})
 }

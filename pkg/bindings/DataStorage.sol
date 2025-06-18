@@ -49,6 +49,19 @@ contract DataStorage {
         emit DataStored(msg.sender, userData.key, userData.value);
     }
 
+    function updateData(string calldata key, string calldata newValue)
+        external
+        returns (string memory oldValue)
+    {
+        oldValue = data[msg.sender][key];
+        if (bytes(oldValue).length == 0) {
+            revert DataNotFound(msg.sender, key, "No existing data to update");
+        }
+
+        data[msg.sender][key] = newValue;
+        return oldValue;
+    }
+
     function onReport(bytes calldata metadata, bytes calldata payload) external {
         UserData memory user = abi.decode(payload, (UserData));
         // TODO implement logic to handle the report
