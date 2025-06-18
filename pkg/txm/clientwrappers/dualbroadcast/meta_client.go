@@ -114,7 +114,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	} else {
 		fee = hexutil.Big(*attempt.Fee.GasPrice.ToInt())
 	}
-	auctionParams := Parameters{
+	params := Parameters{
 		ChainID:      &cid,
 		ToAddress:    tx.ToAddress,
 		Payload:      tx.Data,
@@ -125,22 +125,22 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	payload := fmt.Sprintf(
 		"%s:%s:%s:%t:%s:%s",
-		auctionParams.ChainID.String(),
-		auctionParams.ToAddress.Hex(),
-		auctionParams.Payload.String(),
-		auctionParams.ER,
-		auctionParams.FromAddress.Hex(),
-		auctionParams.MaxFeePerGas.String(),
+		params.ChainID.String(),
+		params.ToAddress.Hex(),
+		params.Payload.String(),
+		params.ER,
+		params.FromAddress.Hex(),
+		params.MaxFeePerGas.String(),
 	)
 
 	signature, err := a.ks.SignMessage(parentCtx, tx.FromAddress, []byte(payload))
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign message: %w", err)
 	}
-	auctionParams.Signature = signature
-	marshalledParamsExtended, err := json.Marshal(auctionParams)
+	params.Signature = signature
+	marshalledParamsExtended, err := json.Marshal(params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal signed auction params: %w", err)
+		return nil, fmt.Errorf("failed to marshal signed params: %w", err)
 	}
 	body := fmt.Appendf(nil, `{"jsonrpc":"2.0","method":"%s","params":[%s], "id":1}`, string(m), marshalledParamsExtended)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.customURL.String(), bytes.NewBuffer(body))

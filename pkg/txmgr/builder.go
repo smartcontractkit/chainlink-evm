@@ -125,10 +125,14 @@ func NewTxmV2(
 
 	var stuckTxDetector txm.StuckTxDetector
 	if txConfig.AutoPurge().Enabled() {
+		var detectionURL string
+		if txConfig.AutoPurge().DetectionApiUrl() != nil {
+			detectionURL = txConfig.AutoPurge().DetectionApiUrl().String()
+		}
 		stuckTxDetectorConfig := txm.StuckTxDetectorConfig{
 			BlockTime:             *txmV2Config.BlockTime(),
 			StuckTxBlockThreshold: *txConfig.AutoPurge().Threshold(),
-			DetectionURL:          txConfig.AutoPurge().DetectionApiUrl().String(),
+			DetectionURL:          detectionURL,
 		}
 		stuckTxDetector = txm.NewStuckTxDetector(lggr, chainConfig.ChainType(), stuckTxDetectorConfig)
 	}
