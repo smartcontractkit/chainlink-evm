@@ -51,15 +51,15 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   // Secondary indices for iteration / queries
   mapping(address owner => EnumerableSet.Bytes32Set workflowRids) private s_activeOwnerWorkflowRids; // owner -> workflowRid set
-  mapping(bytes32 donLabel => EnumerableSet.Bytes32Set workflowRids) private s_activeDONWorkflowRids; // donLabel -> workflowRid set
+  mapping(bytes32 donHash => EnumerableSet.Bytes32Set workflowRids) private s_activeDONWorkflowRids; // donHash -> workflowRid set
 
-  /// @dev Every workflow ever registered under `donLabel`. Pruned only on delete.
-  mapping(bytes32 donLabel => EnumerableSet.Bytes32Set workflowRids) private s_allDONRids;
+  /// @dev Every workflow ever registered under `donLabel` as donHash. Pruned only on delete.
+  mapping(bytes32 donHash => EnumerableSet.Bytes32Set workflowRids) private s_allDONRids;
   /// @dev Every workflow ever registered for an owner. Pruned only on delete.
   mapping(address owner => EnumerableSet.Bytes32Set workflowRids) private s_allOwnerRids;
   mapping(bytes32 workflowKey => EnumerableSet.Bytes32Set activeRids) private s_activeRidsByWorkflowKey; // workflowKey → active Rids
   // Fast counters for limits enforcement
-  mapping(address owner => mapping(bytes32 donLabel => uint32 workflowCount)) private s_userDONCount; // owner -> (donLabel -> #workflows)
+  mapping(address owner => mapping(bytes32 donHash => uint32 workflowCount)) private s_userDONCount; // owner -> (donHash -> #workflows)
 
   // ================================================================
   // |                         Events                               |
@@ -67,28 +67,22 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   event AllowedSignersUpdated(address[] signers, bool allowed);
   event OwnershipLinkUpdated(address indexed owner, bytes32 indexed proof, bool indexed added);
-  event DONLimitSet(bytes32 indexed donLabel, uint32 limit);
-  event UserDONLimitSet(address indexed user, bytes32 indexed donLabel, uint32 limit);
-  event UserDONLimitUnset(address indexed user, bytes32 indexed donLabel);
+  event DONLimitSet(string donLabel, uint32 limit);
+  event UserDONLimitSet(address indexed user, string donLabel, uint32 limit);
+  event UserDONLimitUnset(address indexed user, string donLabel);
   event WorkflowRegistered(
-    bytes32 indexed workflowId, address indexed owner, bytes32 donLabel, WorkflowStatus status, string workflowName
+    bytes32 indexed workflowId, address indexed owner, string donLabel, WorkflowStatus status, string workflowName
   );
   event WorkflowUpdated(
     bytes32 indexed oldWorkflowId,
     bytes32 indexed newWorkflowId,
     address indexed owner,
-    bytes32 donLabel,
+    string donLabel,
     string workflowName
   );
-  event WorkflowPaused(
-    bytes32 indexed workflowId, address indexed owner, bytes32 indexed donLabel, string workflowName
-  );
-  event WorkflowActivated(
-    bytes32 indexed workflowId, address indexed owner, bytes32 indexed donLabel, string workflowName
-  );
-  event WorkflowDeleted(
-    bytes32 indexed workflowId, address indexed owner, bytes32 indexed donLabel, string workflowName
-  );
+  event WorkflowPaused(bytes32 indexed workflowId, address indexed owner, string donLabel, string workflowName);
+  event WorkflowActivated(bytes32 indexed workflowId, address indexed owner, string donLabel, string workflowName);
+  event WorkflowDeleted(bytes32 indexed workflowId, address indexed owner, string donLabel, string workflowName);
 
   // ================================================================
   // |                         Errors                               |
@@ -104,8 +98,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error OwnershipProofAlreadyUsed(address caller, bytes32 proof);
   error CannotUnlinkWithActiveWorkflows();
   error CallerIsNotWorkflowOwner(address caller);
-  error MaxWorkflowsPerDONExceeded(bytes32 donLabel);
-  error MaxWorkflowsPerUserDONExceeded(address owner, bytes32 donLabel);
+  error MaxWorkflowsPerDONExceeded(string donLabel);
+  error MaxWorkflowsPerUserDONExceeded(address owner, string donLabel);
   error UserDONOverrideExceedsDONLimit();
   error URLTooLong(uint256 provided, uint8 maxAllowed);
   error WorkflowAlreadyInDesiredStatus();
@@ -145,7 +139,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     address owner; // ─────────╮ Workflow owner.
     uint64 createdAt; //       │ block.timestamp when the workflow was first registered.
     WorkflowStatus status; // ─╯ Current status of the workflow (active, paused).
-    bytes32 donLabel; //         Label for the DON (32 chars limit) in bytes32.
+    string donLabel; //          Label for the DON. While there is no chars limit, the donLabel must first be added to Config before workflow metadata can be registered
     string workflowName; //      Human readable string (64 chars limit).
     string binaryUrl; //         URL to the wasm binary (200 chars limit).
     string configUrl; //         URL to the config (200 chars limit).
@@ -164,8 +158,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   /// @dev Configuration struct for maximum active workflows. Paused workflows are ignored.
   struct Config {
-    mapping(bytes32 donLabel => ConfigValue limitValue) donLimit;
-    mapping(address user => mapping(bytes32 donLabel => ConfigValue limitValue)) userDONOverride;
+    mapping(bytes32 donHash => ConfigValue limitValue) donLimit;
+    mapping(address user => mapping(bytes32 donHash => ConfigValue limitValue)) userDONOverride;
   }
 
   Config private s_cfg;
@@ -177,16 +171,17 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         When `enabled` is false, the existing limit is removed.
   ///         When both adding and removing, an event record is created for the event, and the event itself
   ///         is emited in the internal helper.
-  /// @param  donLabel  Bytes32-padded DON label used as the mapping key.
+  /// @param  donLabel  string DON label, converted to hash, used as the mapping key.
   /// @param  limit     New cap to apply when `enabled` is true.
   /// @param  enabled   Flag indicating whether to store (`true`) or delete (`false`)
   ///                   the override entry.
-  function setDONLimit(bytes32 donLabel, uint32 limit, bool enabled) external onlyOwner {
+  function setDONLimit(string calldata donLabel, uint32 limit, bool enabled) external onlyOwner {
+    bytes32 donHash = _donHash(donLabel);
     if (enabled) {
-      s_cfg.donLimit[donLabel] = ConfigValue(limit, true);
+      s_cfg.donLimit[donHash] = ConfigValue(limit, true);
       _pushDONCapacitySet(donLabel, limit);
     } else {
-      delete s_cfg.donLimit[donLabel];
+      delete s_cfg.donLimit[donHash];
       _pushDONCapacitySet(donLabel, 0);
     }
   }
@@ -202,16 +197,17 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param  donLabel  The 32-byte identifier of the DON whose limit is overridden.
   /// @param  limit     The new cap to enforce when the override is enabled.
   /// @param  enabled   True to store the override, false to remove it.
-  function setUserDONOverride(address user, bytes32 donLabel, uint32 limit, bool enabled) external onlyOwner {
+  function setUserDONOverride(address user, string calldata donLabel, uint32 limit, bool enabled) external onlyOwner {
+    bytes32 donHash = _donHash(donLabel);
     if (enabled) {
-      if (limit > s_cfg.donLimit[donLabel].value) {
+      if (limit > s_cfg.donLimit[donHash].value) {
         revert UserDONOverrideExceedsDONLimit();
       }
 
-      s_cfg.userDONOverride[user][donLabel] = ConfigValue(limit, true);
+      s_cfg.userDONOverride[user][donHash] = ConfigValue(limit, true);
       emit UserDONLimitSet(user, donLabel, limit);
     } else {
-      delete s_cfg.userDONOverride[user][donLabel];
+      delete s_cfg.userDONOverride[user][donHash];
       emit UserDONLimitUnset(user, donLabel);
     }
   }
@@ -222,23 +218,25 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @return maxWorkflows The maximum number of workflows allowed for the specified DON, or zero if the DON
   ///                      is not allowlisted or no limit has been explicitly set.
   function getMaxWorkflowsPerDON(
-    bytes32 donLabel
+    string calldata donLabel
   ) public view returns (uint32) {
-    return s_cfg.donLimit[donLabel].value;
+    bytes32 donHash = _donHash(donLabel);
+    return s_cfg.donLimit[donHash].value;
   }
 
   /// @notice Returns the active-workflow cap that applies to a given DON and user.
   /// @dev    If a DON-specific user override is present and enabled, that override value
   ///         is returned; otherwise, the DON’s default limit is used.
   /// @param  user     Address of the user whose override limit is being queried.
-  /// @param  donLabel Bytes32-padded identifier of the DON.
+  /// @param  donLabel String identifier of the DON.
   /// @return maxActive Maximum number of ACTIVE workflows allowed for the user on that DON.
-  function getMaxWorkflowsPerUserDON(address user, bytes32 donLabel) public view returns (uint32) {
-    ConfigValue memory cfgVal = s_cfg.userDONOverride[user][donLabel];
+  function getMaxWorkflowsPerUserDON(address user, string calldata donLabel) public view returns (uint32) {
+    bytes32 donHash = _donHash(donLabel);
+    ConfigValue memory cfgVal = s_cfg.userDONOverride[user][donHash];
     if (cfgVal.enabled) {
       return cfgVal.value;
     }
-    return s_cfg.donLimit[donLabel].value;
+    return s_cfg.donLimit[donHash].value;
   }
 
   // ================================================================
@@ -548,12 +546,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   EventRecord[] private s_events;
 
   /// @notice Emit and save an event recording that the global capacity for a DON label has been set.
-  /// @dev    Called whenever the `s_cfg.donLimit[donLabel]` value is updated in configuration.
+  /// @dev    Called whenever the `s_cfg.donLimit[donHash]` value is updated in configuration.
   ///         Does **not** fire for per-user overrides, since those limits are always constrained
   ///         by the global DON limit and are not considered standalone capacity changes.
-  /// @param  donLabel The `bytes32` identifier of the DON whose capacity was updated.
+  /// @param  donLabel The string identifier of the DON whose capacity was updated.
   /// @param  capacity The new maximum number of workflows allowed for this DON.
-  function _pushDONCapacitySet(bytes32 donLabel, uint32 capacity) internal {
+  function _pushDONCapacitySet(string calldata donLabel, uint32 capacity) internal {
     s_events.push(
       EventRecord({
         eventType: EventType.DONCapacitySet,
@@ -576,7 +574,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function _pushWorkflowAdded(
     bytes32 workflowId,
     address owner,
-    bytes32 donLabel,
+    string storage donLabel,
     string storage workflowName
   ) internal {
     s_events.push(
@@ -601,7 +599,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function _pushWorkflowRemoved(
     bytes32 workflowId,
     address owner,
-    bytes32 donLabel,
+    string storage donLabel,
     string storage workflowName
   ) internal {
     s_events.push(
@@ -653,7 +651,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// for any changes to these workflow fields.
   /// @param workflowName  Human‑readable name (≤64 chars)
   /// @param workflowId    Deterministic hash computed off‑chain (must be unique)
-  /// @param donLabel      Label of the DON (32 chars limit)
+  /// @param donLabel      Label of the DON
   /// @param status        Initial status (ACTIVE / PAUSED)
   /// @param binaryUrl     URL of the wasm binary (required)
   /// @param configUrl     URL of the config (optional)
@@ -665,7 +663,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string calldata tag,
     bytes32 workflowId,
     WorkflowStatus status,
-    bytes32 donLabel,
+    string calldata donLabel,
     string calldata binaryUrl,
     string calldata configUrl,
     bytes calldata attributes,
@@ -693,7 +691,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param tag         Workflow tag (≤32 chars) — part of the primary key.
   /// @param workflowId  Deterministic ID (must be globally unique).
   /// @param status      Initial status (ACTIVE or PAUSED).
-  /// @param donLabel    Bytes32-padded DON label this workflow runs on.
+  /// @param donLabel    String DON label this workflow runs on.
   /// @param binaryUrl   Optional URL of the Wasm binary (≤200 chars).
   /// @param configUrl   Optional URL of the config file  (≤200 chars).
   /// @param attributes  Arbitrary extra data blob.
@@ -705,7 +703,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string calldata tag,
     bytes32 workflowId,
     WorkflowStatus status,
-    bytes32 donLabel,
+    string calldata donLabel,
     string calldata binaryUrl,
     string calldata configUrl,
     bytes calldata attributes,
@@ -720,15 +718,16 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     _validateAttributesLength(attributes.length);
 
     bytes32 wKey = _workflowKey(msg.sender, workflowName);
+    bytes32 donHash = _donHash(donLabel);
 
     /* ───────────────────────── 1. LIMIT CHECKS ───────────────────────── */
     if (status == WorkflowStatus.ACTIVE) {
-      _enforceLimits(msg.sender, donLabel);
+      _enforceLimits(msg.sender, donHash, donLabel);
     }
 
     /* ───────────────────────── 2. HOUSEKEEPING ───────────────────────── */
     if (!keepAlive) {
-      _pauseAllActiveWorkflowsByWorkflowKey(wKey);
+      _pauseAllActiveWorkflowsByWorkflowKey(wKey, donHash);
     }
 
     /* ───────────────────────── 3. WRITE PRIMARY RECORD ───────────────── */
@@ -748,14 +747,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     /* ───────────────────────── 4. UPDATE INDICES ─────────────────────── */
     s_workflowKeyToRids[wKey].add(rid);
     s_idToRid[workflowId] = rid;
-    s_allDONRids[donLabel].add(rid);
+    s_allDONRids[donHash].add(rid);
     s_allOwnerRids[msg.sender].add(rid);
 
     if (status == WorkflowStatus.ACTIVE) {
-      s_activeDONWorkflowRids[donLabel].add(rid);
-      s_activeOwnerWorkflowRids[msg.sender].add(rid);
-      s_userDONCount[msg.sender][donLabel] += 1;
-      s_activeRidsByWorkflowKey[wKey].add(rid);
+      _addActiveIndices(rid, msg.sender, donHash, wKey);
     }
 
     /* ───────────────────────── 5. EVENT LOG ──────────────────────────── */
@@ -884,6 +880,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     // ----- per-DON deltas
     bytes32[] memory dons = new bytes32[](n);
     uint32[] memory inc = new uint32[](n);
+    string[] memory donStrs = new string[](n);
     uint256 unique = 0;
 
     for (uint256 i; i < n; ++i) {
@@ -892,17 +889,18 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       if (rec.status == WorkflowStatus.ACTIVE) continue;
 
       // accumulate
-      bytes32 don = rec.donLabel;
+      bytes32 donHash = _donHash(rec.donLabel);
       bool found = false;
       for (uint256 j; j < unique; ++j) {
-        if (dons[j] == don) {
+        if (dons[j] == donHash) {
           ++inc[j];
           found = true;
           break;
         }
       }
       if (!found) {
-        dons[unique] = don;
+        dons[unique] = donHash;
+        donStrs[unique] = rec.donLabel;
         inc[unique] = 1;
         ++unique;
       }
@@ -910,20 +908,28 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     // ----- cap checks
     for (uint256 k; k < unique; ++k) {
-      bytes32 don = dons[k];
+      bytes32 donHash = dons[k];
       uint32 add = inc[k];
-      if (s_activeDONWorkflowRids[don].length() + add > getMaxWorkflowsPerDON(don)) {
-        revert MaxWorkflowsPerDONExceeded(don);
+      string memory donStr = donStrs[k];
+
+      uint32 donLimit = s_cfg.donLimit[donHash].value;
+      uint32 userLimit = donLimit;
+      if (s_cfg.userDONOverride[msg.sender][donHash].enabled) {
+        userLimit = s_cfg.userDONOverride[msg.sender][donHash].value;
       }
-      if (s_userDONCount[msg.sender][don] + add > getMaxWorkflowsPerUserDON(msg.sender, don)) {
-        revert MaxWorkflowsPerUserDONExceeded(msg.sender, don);
+
+      if (s_activeDONWorkflowRids[donHash].length() + add > donLimit) {
+        revert MaxWorkflowsPerDONExceeded(donStr);
+      }
+      if (s_userDONCount[msg.sender][donHash] + add > userLimit) {
+        revert MaxWorkflowsPerUserDONExceeded(msg.sender, donStr);
       }
     }
 
     // ----- mutations
     for (uint256 i; i < n; ++i) {
       bytes32 rid = s_idToRid[workflowIds[i]];
-      // We are not using _activateWorkflow here because we already ownership, status checks,
+      // We are not using _activateWorkflow here because ownership, status checks,
       // and per-DON/user limits have all been validated.
       WorkflowMetadata storage rec = _getWorkflowFromStorage(msg.sender, rid);
       if (rec.status == WorkflowStatus.PAUSED) {
@@ -960,7 +966,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (rec.status == WorkflowStatus.ACTIVE) {
       revert WorkflowAlreadyInDesiredStatus();
     }
-    _enforceLimits(owner, rec.donLabel);
+    _enforceLimits(owner, _donHash(rec.donLabel), rec.donLabel);
     _applyActivate(rid, rec);
   }
 
@@ -972,11 +978,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         • DON/user caps have been enforced already.
   ///         • Caller can perform action.
   function _applyActivate(bytes32 rid, WorkflowMetadata storage rec) private {
-    s_userDONCount[rec.owner][rec.donLabel] += 1;
-    s_activeDONWorkflowRids[rec.donLabel].add(rid);
-    s_activeOwnerWorkflowRids[rec.owner].add(rid);
-    s_activeRidsByWorkflowKey[_workflowKey(rec.owner, rec.workflowName)].add(rid);
-
+    _addActiveIndices(rid, rec.owner, _donHash(rec.donLabel), _workflowKey(rec.owner, rec.workflowName));
     rec.status = WorkflowStatus.ACTIVE;
     _pushWorkflowAdded(rec.workflowId, rec.owner, rec.donLabel, rec.workflowName);
   }
@@ -988,12 +990,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param  rid   Registry-internal reference ID (owner ∥ name ∥ tag hash).
   /// @param  rec   Storage pointer to the workflow metadata struct.
   function _applyPause(bytes32 rid, WorkflowMetadata storage rec) private {
-    s_userDONCount[rec.owner][rec.donLabel] -= 1;
-    s_activeDONWorkflowRids[rec.donLabel].remove(rid);
-    s_activeOwnerWorkflowRids[rec.owner].remove(rid);
-    s_activeRidsByWorkflowKey[_workflowKey(rec.owner, rec.workflowName)].remove(rid);
-
     rec.status = WorkflowStatus.PAUSED;
+    _removeActiveIndices(rid, rec.owner, _donHash(rec.donLabel), _workflowKey(rec.owner, rec.workflowName));
     _pushWorkflowRemoved(rec.workflowId, rec.owner, rec.donLabel, rec.workflowName);
   }
 
@@ -1008,9 +1006,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///
   /// @param workflowKey keccak256(owner, workflowName) identifying the
   ///                    workflow family.
-  function _pauseAllActiveWorkflowsByWorkflowKey(
-    bytes32 workflowKey
-  ) internal {
+  function _pauseAllActiveWorkflowsByWorkflowKey(bytes32 workflowKey, bytes32 donHash) internal {
     EnumerableSet.Bytes32Set storage activeSet = s_activeRidsByWorkflowKey[workflowKey];
 
     // Walk from the back since EnumerableSet.remove is a swap and pop.
@@ -1021,12 +1017,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
       // Update workflow state
       wf.status = WorkflowStatus.PAUSED;
-      s_userDONCount[wf.owner][wf.donLabel] -= 1;
-
-      // Remove from active indices
-      s_activeOwnerWorkflowRids[wf.owner].remove(rid);
-      s_activeDONWorkflowRids[wf.donLabel].remove(rid);
-      s_activeRidsByWorkflowKey[workflowKey].remove(rid);
+      _removeActiveIndices(rid, wf.owner, donHash, workflowKey);
 
       // Emit event
       emit WorkflowPaused(wf.workflowId, wf.owner, wf.donLabel, wf.workflowName);
@@ -1055,7 +1046,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function _deleteWorkflow(address owner, bytes32 rid) internal {
     WorkflowMetadata storage rec = _getWorkflowFromStorage(owner, rid);
     if (rec.status == WorkflowStatus.ACTIVE) {
-      _deleteActiveIndices(rid, owner, rec.donLabel, _workflowKey(owner, rec.workflowName));
+      _removeActiveIndices(rid, owner, _donHash(rec.donLabel), _workflowKey(owner, rec.workflowName));
     }
     _applyDelete(rid, rec);
   }
@@ -1063,20 +1054,32 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev Removes a workflow’s RID from **all “active” indices** and
   ///      decrements the per-user per-DON counter.
   ///
-  /// @notice Caller **must** ensure the workflow is currently
-  ///         `WorkflowStatus.ACTIVE`; this helper performs no status
-  ///         check on its own.
-  ///
+  ///      Caller **must** ensure the workflow is currently
+  ///      `WorkflowStatus.ACTIVE`; this helper performs no status
+  ///      or validations on its own.
   /// @param rid          Registry-internal reference ID of the workflow.
   /// @param owner        Workflow owner address.
-  /// @param donLabel     DON label the workflow belongs to.
+  /// @param donHash      Hash of the DON label of the workflow.
   /// @param workflowKey  keccak256(owner, workflowName) key used for the
   ///                     active-by-name index.
-  function _deleteActiveIndices(bytes32 rid, address owner, bytes32 donLabel, bytes32 workflowKey) private {
+  function _removeActiveIndices(bytes32 rid, address owner, bytes32 donHash, bytes32 workflowKey) private {
     s_activeOwnerWorkflowRids[owner].remove(rid);
-    s_activeDONWorkflowRids[donLabel].remove(rid);
-    s_userDONCount[owner][donLabel] -= 1;
+    s_activeDONWorkflowRids[donHash].remove(rid);
+    s_userDONCount[owner][donHash] -= 1;
     s_activeRidsByWorkflowKey[workflowKey].remove(rid);
+  }
+
+  /// @dev Adds a workflow RID into all “active” indices and increments the per-user, per-DON counter.
+  ///      This helper performs no validation on its own.
+  /// @param rid          The registry-internal reference ID of the workflow to mark active.
+  /// @param owner        The address of the workflow owner.
+  /// @param donHash      The keccak256 hash of the DON label under which this workflow is registered.
+  /// @param workflowKey  The keccak256(owner, workflowName) key used for name-based active indexing.
+  function _addActiveIndices(bytes32 rid, address owner, bytes32 donHash, bytes32 workflowKey) private {
+    s_userDONCount[owner][donHash] += 1;
+    s_activeDONWorkflowRids[donHash].add(rid);
+    s_activeOwnerWorkflowRids[owner].add(rid);
+    s_activeRidsByWorkflowKey[workflowKey].add(rid);
   }
 
   /// @notice This helper **assumes** all higher-level checks have
@@ -1091,7 +1094,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///             corresponds to `rid`.  Must still be in `PAUSED` state
   ///             (or at least already removed from active counters).
   function _applyDelete(bytes32 rid, WorkflowMetadata storage rec) private {
-    s_allDONRids[rec.donLabel].remove(rid);
+    s_allDONRids[_donHash(rec.donLabel)].remove(rid);
     s_allOwnerRids[rec.owner].remove(rid);
     s_workflowKeyToRids[_workflowKey(rec.owner, rec.workflowName)].remove(rid);
     delete s_idToRid[rec.workflowId];
@@ -1318,11 +1321,17 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     return (start, end - start);
   }
 
-  function _enforceLimits(address owner, bytes32 donLabel) internal view {
-    if (s_activeDONWorkflowRids[donLabel].length() >= getMaxWorkflowsPerDON(donLabel)) {
+  function _enforceLimits(address owner, bytes32 donHash, string memory donLabel) internal view {
+    uint32 donLimit = s_cfg.donLimit[donHash].value;
+    uint32 userLimit = donLimit;
+    if (s_cfg.userDONOverride[owner][donHash].enabled) {
+      userLimit = s_cfg.userDONOverride[owner][donHash].value;
+    }
+
+    if (s_activeDONWorkflowRids[donHash].length() > donLimit) {
       revert MaxWorkflowsPerDONExceeded(donLabel);
     }
-    if (s_userDONCount[owner][donLabel] >= getMaxWorkflowsPerUserDON(owner, donLabel)) {
+    if (s_userDONCount[owner][donHash] > userLimit) {
       revert MaxWorkflowsPerUserDONExceeded(owner, donLabel);
     }
   }
@@ -1351,6 +1360,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
   }
 
+  /// @notice Validates that a workflow tag length is within allowed bounds.
+  /// @param tagLen Length of the workflow tag in bytes.
+  /// @dev    Reverts if `tagLen` is zero or exceeds `MAX_WORKFLOW_TAG_LENGTH`.
   function _validateWorkflowTag(
     uint256 tagLen
   ) private pure {
@@ -1358,6 +1370,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (tagLen > MAX_WORKFLOW_TAG_LENGTH) revert WorkflowTagTooLong(tagLen, MAX_WORKFLOW_TAG_LENGTH);
   }
 
+  /// @notice Validates that attributes byte length does not exceed the maximum allowed.
+  /// @param len Length of the attributes byte array.
+  /// @dev    Reverts if `len` exceeds `MAX_ATTRIBUTES_LENGTH`.
   function _validateAttributesLength(
     uint256 len
   ) private pure {
@@ -1366,11 +1381,29 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
   }
 
-  function _workflowKey(address owner, string memory name) internal pure returns (bytes32) {
+  /// @notice Computes a unique workflow key for indexing by owner and name.
+  /// @param owner Address of the workflow owner.
+  /// @param name  Human-readable name of the workflow.
+  /// @return key   Keccak256 hash combining `owner` and `name`.
+  function _workflowKey(address owner, string memory name) internal pure returns (bytes32 key) {
     return keccak256(abi.encode(owner, name));
   }
 
-  function _workflowRid(address owner, string memory name, string memory tag) internal pure returns (bytes32) {
+  /// @notice Computes the workflow reference ID (RID) from owner, name, and tag.
+  /// @param owner Address of the workflow owner.
+  /// @param name  Human-readable workflow name.
+  /// @param tag   Unique tag for this workflow variant.
+  /// @return rid   Keccak256 hash of `owner`, `name`, and `tag`.
+  function _workflowRid(address owner, string memory name, string memory tag) internal pure returns (bytes32 rid) {
     return keccak256(abi.encode(owner, name, tag));
+  }
+
+  /// @notice Hashes an arbitrary-length DON label string into a fixed-size bytes32.
+  /// @param str   DON label as a UTF-8 string.
+  /// @return hash  Keccak256 hash of `bytes(str)`.
+  function _donHash(
+    string memory str
+  ) internal pure returns (bytes32 hash) {
+    return keccak256(bytes(str));
   }
 }

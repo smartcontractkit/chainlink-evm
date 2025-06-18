@@ -2,7 +2,8 @@
 pragma solidity 0.8.26;
 
 import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
-import "forge-std/Test.sol";
+import {LinkingUtils} from "../../testhelpers/LinkingUtils.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract WorkflowRegistrySetup is Test {
   WorkflowRegistry internal s_registry;
@@ -12,6 +13,7 @@ contract WorkflowRegistrySetup is Test {
   address internal s_allowedSigner;
   uint256 internal s_validityTimestamp;
   bytes32 internal s_proof;
+  bytes32 public s_proofSeed;
 
   bytes32 internal s_donLabel;
   string internal s_binaryURL;
@@ -38,5 +40,21 @@ contract WorkflowRegistrySetup is Test {
     signers[0] = s_allowedSigner;
     s_registry.updateAllowedSigners(signers, true);
     vm.stopPrank();
+  }
+
+  // Helper to link an owner
+  function _linkOwner(
+    address newOwner
+  ) public {
+    bytes32 ownerProof = keccak256(abi.encode(s_proof, newOwner));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      s_allowedSignerPrivateKey,
+      LinkingUtils.getMessageHash(
+        LinkingUtils.REQUEST_TYPE_LINK, address(s_registry), newOwner, s_validityTimestamp, ownerProof
+      )
+    );
+    bytes memory sig = abi.encodePacked(r, s, v);
+    vm.prank(newOwner);
+    s_registry.linkOwner(s_validityTimestamp, ownerProof, sig);
   }
 }

@@ -8,8 +8,6 @@ import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
 import {ECDSA} from "@openzeppelin/contracts@5.1.0/utils/cryptography/ECDSA.sol";
 
-import {Test} from "forge-std/Test.sol";
-
 contract WorkflowRegistry_linkOwner is WorkflowRegistrySetup {
   // whenTheOwnerIsNotAlreadyLinked whenTheTimestampHasNotExpired
   function test_linkOwner_WhenProofIsValid() external {
