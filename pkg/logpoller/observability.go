@@ -306,12 +306,12 @@ func trackInsertedBlockLatency(o *ObservedORM, logs []Log, err error) {
 	if err != nil {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.QueryTimeout)
-	defer cancel()
 
 	if len(logs) == 0 {
 		return
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), client.QueryTimeout)
+	defer cancel()
 
 	o.metrics.RecordLogDiscoveryLatency(ctx, float64(time.Since(logs[0].BlockTimestamp)))
 }
