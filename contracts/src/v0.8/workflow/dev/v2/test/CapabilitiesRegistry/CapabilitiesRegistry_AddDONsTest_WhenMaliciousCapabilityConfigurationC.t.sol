@@ -2,24 +2,39 @@
 pragma solidity ^0.8.26;
 
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
-import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 
-contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
+import {MaliciousConfigurationContract} from "./mocks/MaliciousConfigurationContract.sol";
+
+contract CapabilitiesRegistry_AddDONsTest_WhenMaliciousCapabilityConfigurationConfigured is BaseTest {
   function setUp() public override {
     BaseTest.setUp();
+    MaliciousConfigurationContract maliciousConfigurationContract =
+      new MaliciousConfigurationContract(s_capabilityWithConfigurationContractId);
 
-    s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
+    address maliciousConfigContractAddr = address(maliciousConfigurationContract);
+    s_basicCapability.configurationContract = maliciousConfigContractAddr;
+
+    bytes memory config = maliciousConfigurationContract.getCapabilityConfiguration(DON_ID);
+    assertEq(config, bytes(""));
+
+    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = _getNodeOperators();
+    nodeOperators[0].admin = maliciousConfigContractAddr;
+    nodeOperators[1].admin = maliciousConfigContractAddr;
+    nodeOperators[2].admin = maliciousConfigContractAddr;
+
+    // Set the configuration contract to the malicious contract
+    s_capabilities[0].configurationContract = maliciousConfigContractAddr;
+
+    s_CapabilitiesRegistry.addNodeOperators(nodeOperators);
     s_CapabilitiesRegistry.addCapabilities(s_capabilities);
+
     s_CapabilitiesRegistry.addNodes(s_paramsForTwoNodes);
 
-    changePrank(ADMIN);
+    vm.startPrank(ADMIN);
   }
 
-  function test_CorrectlyFetchesNextDONId() public {
-    uint32 nextDONId = s_CapabilitiesRegistry.getNextDONId();
-    assertEq(nextDONId, 1); // Expecting the first DON ID since no DONs have been added yet
-
+  function test_RevertWhen_MaliciousCapabilitiesConfigContractTriesToRemoveCapabilitiesFromDONNodes() public {
     CapabilitiesRegistry.NodeParams[] memory nodeParams = new CapabilitiesRegistry.NodeParams[](1);
     nodeParams[0].p2pId = P2P_ID_THREE;
     nodeParams[0].capabilityIds = s_twoCapabilitiesArray;
@@ -33,23 +48,10 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
     nodes[1] = P2P_ID_THREE;
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
-      new CapabilitiesRegistry.CapabilityConfiguration[](2);
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] =
       CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
-    capabilityConfigs[1] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_capabilityWithConfigurationContractId,
-      config: CONFIG_CAPABILITY_CONFIG
-    });
 
-    vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
-    emit CapabilitiesRegistry.ConfigSet(DON_ID, 1);
-    vm.expectCall(
-      address(s_capabilityConfigurationContract),
-      abi.encodeWithSelector(
-        ICapabilityConfiguration.beforeCapabilityConfigSet.selector, nodes, CONFIG_CAPABILITY_CONFIG, 1, DON_ID
-      ),
-      1
-    );
     CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
     newDONs[0] = CapabilitiesRegistry.NewDONParams({
       nodes: nodes,
@@ -61,9 +63,10 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
       donFamilies: new string[](0),
       config: bytes("")
     });
-    s_CapabilitiesRegistry.addDONs(newDONs);
 
-    nextDONId = s_CapabilitiesRegistry.getNextDONId();
-    assertEq(nextDONId, 2); // After adding one DON, the next DON ID should be 2
+    vm.expectRevert(
+      abi.encodeWithSelector(CapabilitiesRegistry.CapabilityRequiredByDON.selector, s_basicCapabilityId, DON_ID)
+    );
+    s_CapabilitiesRegistry.addDONs(newDONs);
   }
 }
