@@ -42,9 +42,13 @@ var DataStorageMetaData = &bind.MetaData{
 }
 
 type DataStorageCodec interface {
+	EncodeLogAccessMethodCall(in LogAccessInput) ([]byte, error)
+	EncodeOnReportMethodCall(in OnReportInput) ([]byte, error)
 	EncodeReadDataMethodCall(in ReadDataInput) ([]byte, error)
 	DecodeReadDataMethodOutput(data []byte) (string, error)
-	EncodeDataStorageUserDataStruct(in DataStorageUserDataInput) ([]byte, error)
+	EncodeStoreDataMethodCall(in StoreDataInput) ([]byte, error)
+	EncodeStoreUserDataMethodCall(in StoreUserDataInput) ([]byte, error)
+	EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error)
 	AccessLoggedLogHash() []byte
 	DecodeAccessLogged(log *evm.Log) (*AccessLogged, error)
 	DataStoredLogHash() []byte
@@ -63,9 +67,18 @@ func NewDataStorageCodec() (DataStorageCodec, error) {
 	return &dataStorageCodecImpl{abi: &parsed}, nil
 }
 
+func (c *dataStorageCodecImpl) EncodeLogAccessMethodCall(in LogAccessInput) ([]byte, error) {
+	return c.abi.Pack("logAccess", in.Message)
+}
+
+func (c *dataStorageCodecImpl) EncodeOnReportMethodCall(in OnReportInput) ([]byte, error) {
+	return c.abi.Pack("onReport", in.Metadata, in.Payload)
+}
+
 func (c *dataStorageCodecImpl) EncodeReadDataMethodCall(in ReadDataInput) ([]byte, error) {
 	return c.abi.Pack("readData", in.User, in.Key)
 }
+
 func (c *dataStorageCodecImpl) DecodeReadDataMethodOutput(data []byte) (string, error) {
 	vals, err := c.abi.Methods["readData"].Outputs.Unpack(data)
 	if err != nil {
@@ -74,7 +87,15 @@ func (c *dataStorageCodecImpl) DecodeReadDataMethodOutput(data []byte) (string, 
 	return vals[0].(string), nil
 }
 
-func (c *dataStorageCodecImpl) EncodeDataStorageUserDataStruct(in DataStorageUserDataInput) ([]byte, error) {
+func (c *dataStorageCodecImpl) EncodeStoreDataMethodCall(in StoreDataInput) ([]byte, error) {
+	return c.abi.Pack("storeData", in.Key, in.Value)
+}
+
+func (c *dataStorageCodecImpl) EncodeStoreUserDataMethodCall(in StoreUserDataInput) ([]byte, error) {
+	return c.abi.Pack("storeUserData", in.UserData)
+}
+
+func (c *dataStorageCodecImpl) EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error) {
 	return c.abi.Pack("dataStorageUserData", in)
 }
 
@@ -164,6 +185,15 @@ func NewDataStorage(
 	}, nil
 }
 
+type LogAccessInput struct {
+	Message string
+}
+
+type OnReportInput struct {
+	Metadata []byte
+	Payload  []byte
+}
+
 type ReadDataInput struct {
 	User common.Address
 	Key  string
@@ -183,7 +213,7 @@ func (c DataStorage) ReadData(
 	}
 	promise := c.evmClient.CallContract(runtime, &evm.CallContractRequest{
 		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: toPbBigInt(options.BlockNumber),
+		BlockNumber: pb.NewBigIntFromInt(options.BlockNumber),
 	})
 	reply, err := promise.Await()
 	if err != nil {
@@ -192,14 +222,23 @@ func (c DataStorage) ReadData(
 	return c.codec.DecodeReadDataMethodOutput(reply.Data)
 }
 
-type DataStorageUserDataInput struct {
+type StoreDataInput struct {
+	Key   string
+	Value string
+}
+
+type StoreUserDataInput struct {
+	UserData DataStorageUserData
+}
+
+type DataStorageUserData struct {
 	Key   string
 	Value string
 }
 
 func (c DataStorage) WriteReportDataStorageUserData(
 	runtime sdk.Runtime,
-	input DataStorageUserDataInput,
+	input DataStorageUserData,
 	gasConfig *evmcappb.GasConfig,
 ) ([]byte, error) {
 	encoded, err := c.codec.EncodeDataStorageUserDataStruct(input)
@@ -234,13 +273,15 @@ func (c DataStorage) WriteReportDataStorageUserData(
 		if err != nil {
 			return nil, err
 		}
+		// TODO: wrap in `WaitForConfidence` check when implemented
 		if *reply.ReceiverContractExecutionStatus == evmcappb.ReceiverContractExecutionStatus_REVERTED {
 			return nil, &bindings.ReceiverContractError{
 				Message: "Transaction finalized but receiver contract failed to execute",
-				TxHash:  reply.TxHash,
+				TxHash:  getTxResult.Transaction.Hash,
 			}
 		}
 		return getTxResult.Transaction.Hash, nil
+
 	}
 }
 
@@ -356,7 +397,7 @@ func (c *DataStorage) QueryTrackedLogsAccessLogged(runtime sdk.Runtime, options 
 func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindings.FilterOptions) ([]bindings.ParsedLog[AccessLogged], error) {
 	if options == nil {
 		options = &bindings.FilterOptions{
-			ToBlock: "finalized", //TODO we need a enum / constant
+			ToBlock: big.NewInt(123), //TODO we need a enum / constant
 		}
 	}
 	filterLogsReplyPromise := c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
@@ -365,8 +406,8 @@ func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindi
 			Topics: []*evm.Topics{
 				{Topic: [][]byte{c.codec.AccessLoggedLogHash()}},
 			}, BlockHash: options.BlockHash,
-			FromBlock: toPbBigInt(options.FromBlock),
-			ToBlock:   toPbBigInt(options.ToBlock),
+			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
+			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
 	})
 	reply, err := filterLogsReplyPromise.Await()
@@ -445,7 +486,7 @@ func (c *DataStorage) QueryTrackedLogsDataStored(runtime sdk.Runtime, options *b
 func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *bindings.FilterOptions) ([]bindings.ParsedLog[DataStored], error) {
 	if options == nil {
 		options = &bindings.FilterOptions{
-			ToBlock: "finalized", //TODO we need a enum / constant
+			ToBlock: big.NewInt(123), //TODO we need a enum / constant
 		}
 	}
 	filterLogsReplyPromise := c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
@@ -454,8 +495,8 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 			Topics: []*evm.Topics{
 				{Topic: [][]byte{c.codec.DataStoredLogHash()}},
 			}, BlockHash: options.BlockHash,
-			FromBlock: toPbBigInt(options.FromBlock),
-			ToBlock:   toPbBigInt(options.ToBlock),
+			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
+			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
 	})
 	reply, err := filterLogsReplyPromise.Await()
@@ -478,5 +519,4 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 	return parsedLogs, nil
 }
 
-func toPbBigInt(i *big.Int) *pb.BigInt    { panic("unimplemented") }
 func getChainID(e evmcappb.Client) uint32 { panic("unimplemented") }

@@ -47,14 +47,19 @@ var {{$contract.Type}}MetaData = &bind.MetaData{
 
 type {{$contract.Type}}Codec interface {
 	{{- range $call := $contract.Calls}}
-	{{- if or $call.Original.Constant (eq $call.Original.StateMutability "view")}}
+	
+	{{- if gt (len $call.Normalized.Inputs) 0 }}
 	Encode{{$call.Normalized.Name}}MethodCall(in {{$call.Normalized.Name}}Input) ([]byte, error)
+	{{- end }}
+	
+	{{- if gt (len $call.Normalized.Outputs) 0 }}
 	Decode{{$call.Normalized.Name}}MethodOutput(data []byte) ({{with index $call.Normalized.Outputs 0}}{{bindtype .Type $.Structs}}{{end}}, error)
-	{{- end}}
+	{{- end }}
+	
 	{{- end}}
 
 	{{- range $.Structs}}
-	Encode{{.Name}}Struct(in {{.Name}}Input) ([]byte, error)
+	Encode{{.Name}}Struct(in {{.Name}}) ([]byte, error)
 	{{- end}}
 
 	{{- range $event := .Events}}
@@ -76,22 +81,29 @@ func New{{$contract.Type}}Codec() ({{$contract.Type}}Codec, error) {
 }
 
 {{range $call := $contract.Calls}}
-{{- if or $call.Original.Constant (eq $call.Original.StateMutability "view")}}
-func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{$call.Normalized.Name}}MethodCall(in {{$call.Normalized.Name}}Input) ([]byte, error) {
-	return c.abi.Pack("{{$call.Original.Name}}"{{range .Normalized.Inputs}}, in.{{capitalise .Name}}{{end}})
+
+{{- if gt (len $call.Normalized.Inputs) 0 }}
+
+func (c *{{ decapitalise $contract.Type }}CodecImpl) Encode{{ $call.Normalized.Name }}MethodCall(in {{ $call.Normalized.Name }}Input) ([]byte, error) {
+	return c.abi.Pack("{{ $call.Original.Name }}"{{- range .Normalized.Inputs }}, in.{{ capitalise .Name }}{{- end }})
 }
-func (c *{{decapitalise $contract.Type}}CodecImpl) Decode{{$call.Normalized.Name}}MethodOutput(data []byte) ({{with index $call.Normalized.Outputs 0}}{{bindtype .Type $.Structs}}{{end}}, error) {
-	vals, err := c.abi.Methods["{{$call.Original.Name}}"].Outputs.Unpack(data)
+{{- end }}
+
+{{- if gt (len $call.Normalized.Outputs) 0 }}
+
+func (c *{{ decapitalise $contract.Type }}CodecImpl) Decode{{ $call.Normalized.Name }}MethodOutput(data []byte) ({{ with index $call.Normalized.Outputs 0 }}{{ bindtype .Type $.Structs }}{{ end }}, error) {
+	vals, err := c.abi.Methods["{{ $call.Original.Name }}"].Outputs.Unpack(data)
 	if err != nil {
-		return {{with index $call.Normalized.Outputs 0}}*new({{bindtype .Type $.Structs}}){{end}}, err
+		return {{ with index $call.Normalized.Outputs 0 }}*new({{ bindtype .Type $.Structs }}){{ end }}, err
 	}
-	return vals[0].({{bindtype (index $call.Normalized.Outputs 0).Type $.Structs}}), nil
+	return vals[0].({{ bindtype (index $call.Normalized.Outputs 0).Type $.Structs }}), nil
 }
-{{- end}}
+{{- end }}
+
 {{end}}
 
 {{range $.Structs}}
-func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Name}}Struct(in {{.Name}}Input) ([]byte, error) {
+func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Name}}Struct(in {{.Name}}) ([]byte, error) {
 	return c.abi.Pack("{{decapitalise .Name}}", in)
 }
 {{end}}
@@ -157,13 +169,14 @@ func New{{$contract.Type}}(
 }
 
 {{range $call := $contract.Calls}}
-{{- if or $call.Original.Constant (eq $call.Original.StateMutability "view")}}
 
 type {{$call.Normalized.Name}}Input struct {
 	{{- range $param := $call.Normalized.Inputs}}
 	{{capitalise $param.Name}} {{bindtype .Type $.Structs}}
 	{{- end}}
 }
+
+{{- if or $call.Original.Constant (eq $call.Original.StateMutability "view")}}
 
 func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 	runtime sdk.Runtime,
@@ -179,7 +192,7 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 	}
 	promise := c.evmClient.CallContract(runtime, &evm.CallContractRequest{
 		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: toPbBigInt(options.BlockNumber),
+		BlockNumber: pb.NewBigIntFromInt(options.BlockNumber),
 	})
 	reply, err := promise.Await()
 	if err != nil {
@@ -192,7 +205,7 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 
 {{range $.Structs}}
 
-type {{.Name}}Input struct {
+type {{.Name}} struct {
 	{{- range .Fields}}
 	{{capitalise .Name}} {{.Type}}
 	{{- end}}
@@ -200,7 +213,7 @@ type {{.Name}}Input struct {
 
 func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	runtime sdk.Runtime,
-	input {{.Name}}Input,
+	input {{.Name}},
 	gasConfig *evmcappb.GasConfig,
 ) ([]byte, error) {
 	encoded, err := c.codec.Encode{{.Name}}Struct(input)
@@ -235,15 +248,15 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 		if err != nil {
 			return nil, err
 		}
-		if getTxResult.Transaction.IsFinalized {
-			if *reply.ReceiverContractExecutionStatus == evmcappb.ReceiverContractExecutionStatus_REVERTED {
-				return nil, &bindings.ReceiverContractError{
-					Message: "Transaction finalized but receiver contract failed to execute",
-					TxHash:  reply.TxHash,
-				}
+		// TODO: wrap in `WaitForConfidence` check when implemented 
+		if *reply.ReceiverContractExecutionStatus == evmcappb.ReceiverContractExecutionStatus_REVERTED {
+			return nil, &bindings.ReceiverContractError{
+				Message: "Transaction finalized but receiver contract failed to execute",
+				TxHash:  getTxResult.Transaction.Hash,
 			}
-			return reply.TxHash, nil
 		}
+		return getTxResult.Transaction.Hash, nil
+		
 	}
 }
 {{end}}
@@ -363,7 +376,7 @@ func (c *{{$contract.Type}}) QueryTrackedLogs{{.Normalized.Name}}(runtime sdk.Ru
 func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.FilterOptions) ([]bindings.ParsedLog[{{.Normalized.Name}}], error) {
 	if options == nil {
 		options = &bindings.FilterOptions{
-			ToBlock: "finalized", //TODO we need a enum / constant
+			ToBlock: big.NewInt(123), //TODO we need a enum / constant
 		}
 	}
 	filterLogsReplyPromise := c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
@@ -372,8 +385,8 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 			Topics:    []*evm.Topics{
 				{Topic:[][]byte{c.codec.{{.Normalized.Name}}LogHash()}},
 			},			BlockHash: options.BlockHash,
-			FromBlock: toPbBigInt(options.FromBlock),
-			ToBlock:   toPbBigInt(options.ToBlock),
+			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
+			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
 	})
 	reply, err := filterLogsReplyPromise.Await()
@@ -399,5 +412,4 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 
 {{end}}
 
-func toPbBigInt(i *big.Int) *pb.BigInt   { panic("unimplemented") }
 func getChainID(e evmcappb.Client) uint32 { panic("unimplemented") }

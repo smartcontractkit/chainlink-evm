@@ -1,34 +1,42 @@
 # CRE Generated Bindings (MVP)
 
-## Prerequisites:
-1. Install `go`
-2. Install `solidity`
+This project provides a forked version of `abigen` (from go-ethereum)
+that lets you generate Go bindings for your smart contracts using a custom template.
 
-## Setup instructions:
+## Prerequisites
 
-1. Clone `geth` fork and checkout development branch
-```
-git clone https://github.com/pablolagreca/go-ethereum.git && git checkout abigen-configurable-template
-```
+1. **Go**
+   Install Go 1.18 or later:
+   ```bash
+   brew install go          # macOS (Homebrew)
+   sudo apt install golang  # Ubuntu/Debian
+   ```
+2. **Solidity compiler**
+   Install `solc` to compile or verify your contracts:
+   ```bash
+   npm install -g solc      # via npm
+   brew install solidity    # macOS (Homebrew)
+   ```
 
-2. Build custom abigen binary.
-```
-go build -o "$(go env GOPATH)/bin/abigen-cre" ./cmd/abigen
-```
+## Usage
 
-3. Generate the abi combined json file 
-```
-solc --combined-json abi,bin,metadata {SOLIDITY_FILE_LOCATION} > {ABI_FILE_LOCATION}
-```
+You can generate your Go contract bindings in two ways:
 
-4. Run abigen-cre, passing in the cre source template:
+### Programmatic API
+
+```go
+import "github.com/smartcontractkit/chainlink-evm/pkg/bindings"
+
+func main() {
+  err := bindings.GenerateBindings(
+    "./pkg/bindings/build/MyContract_combined.json", // or "" if using abiPath
+    "./pkg/bindings/MyContract.abi",                 // or "" for combined-json mode
+    "bindings",                                       // Go package name
+    "MyContract",                                     // typeName (single-ABI only)
+    "./pkg/bindings/build/bindings.go",               // output file
+  )
+  if err != nil {
+    log.Fatalf("generate bindings: %v", err)
+  }
+}
 ```
-abigen-cre --v2 \
-  --abi {ABI_FILE_LOCATION} \
-  --pkg bindings \
-  --template ./sourcecre.go.tpl \
-  --out ./build/bindings.go
-```
-
-
-
