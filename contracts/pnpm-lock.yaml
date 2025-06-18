@@ -27,12 +27,24 @@ importers:
       '@eth-optimism/contracts':
         specifier: 0.6.0
         version: 0.6.0(ethers@5.8.0)
-      '@openzeppelin/contracts':
-        specifier: 4.9.6
-        version: 4.9.6
       '@openzeppelin/contracts-upgradeable':
         specifier: 4.9.6
         version: 4.9.6
+      '@openzeppelin/contracts@4.7.3/':
+        specifier: npm:@openzeppelin/contracts@4.7.3
+        version: '@openzeppelin/contracts@4.7.3'
+      '@openzeppelin/contracts@4.8.3/':
+        specifier: npm:@openzeppelin/contracts@4.8.3
+        version: '@openzeppelin/contracts@4.8.3'
+      '@openzeppelin/contracts@4.9.6/':
+        specifier: npm:@openzeppelin/contracts@4.9.6
+        version: '@openzeppelin/contracts@4.9.6'
+      '@openzeppelin/contracts@5.0.2/':
+        specifier: npm:@openzeppelin/contracts@5.0.2
+        version: '@openzeppelin/contracts@5.0.2'
+      '@openzeppelin/contracts@5.1.0/':
+        specifier: npm:@openzeppelin/contracts@5.1.0
+        version: '@openzeppelin/contracts@5.1.0'
       '@scroll-tech/contracts':
         specifier: 2.0.0
         version: 2.0.0
@@ -556,8 +568,20 @@ packages:
   '@openzeppelin/contracts-upgradeable@4.9.6':
     resolution: {integrity: sha512-m4iHazOsOCv1DgM7eD7GupTJ+NFVujRZt1wzddDPSVGpWdKq1SKkla5htKG7+IS4d2XOCtzkUNwRZ7Vq5aEUMA==}
 
+  '@openzeppelin/contracts@4.7.3':
+    resolution: {integrity: sha512-dGRS0agJzu8ybo44pCIf3xBaPQN/65AIXNgK8+4gzKd5kbvlqyxryUYVLJv7fK98Seyd2hDZzVEHSWAh0Bt1Yw==}
+
+  '@openzeppelin/contracts@4.8.3':
+    resolution: {integrity: sha512-bQHV8R9Me8IaJoJ2vPG4rXcL7seB7YVuskr4f+f5RyOStSZetwzkWtoqDMl5erkBJy0lDRUnIR2WIkPiC0GJlg==}
+
   '@openzeppelin/contracts@4.9.6':
     resolution: {integrity: sha512-xSmezSupL+y9VkHZJGDoCBpmnB2ogM13ccaYDWqJTfS3dbuHkgjuwDFUmaFauBCboQMGB/S5UqUl2y54X99BmA==}
+
+  '@openzeppelin/contracts@5.0.2':
+    resolution: {integrity: sha512-ytPc6eLGcHHnapAZ9S+5qsdomhjo6QBHTDRRBFfTxXIpsicMhVPouPgmUPebZZZGX7vt9USA+Z+0M0dSVtSUEA==}
+
+  '@openzeppelin/contracts@5.1.0':
+    resolution: {integrity: sha512-p1ULhl7BXzjjbha5aqst+QMLY+4/LCWADXOCsmLHRM77AqiPjnd9vvUN9sosUfhL9JGKpZ0TjEGxgvnizmWGSA==}
 
   '@pkgr/core@0.2.4':
     resolution: {integrity: sha512-ROFF39F6ZrnzSUEmQQZUar0Jt4xVoP9WnDRdWwF4NNcXs3xBTLgBUDoOwW141y1jP+S8nahIbdxbFC7IShw9Iw==}
@@ -3540,7 +3564,15 @@ snapshots:
 
   '@openzeppelin/contracts-upgradeable@4.9.6': {}
 
+  '@openzeppelin/contracts@4.7.3': {}
+
+  '@openzeppelin/contracts@4.8.3': {}
+
   '@openzeppelin/contracts@4.9.6': {}
+
+  '@openzeppelin/contracts@5.0.2': {}
+
+  '@openzeppelin/contracts@5.1.0': {}
 
   '@pkgr/core@0.2.4': {}
 

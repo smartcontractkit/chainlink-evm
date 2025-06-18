@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {ERC20Mock} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
+import {ERC20Mock} from "../../shared/mocks/ERC20Mock.sol";
 import {IERC20Metadata as IERC20} from
-  "../../vendor/openzeppelin-solidity/v5.0.2/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+  "@openzeppelin/contracts@5.0.2/token/ERC20/extensions/IERC20Metadata.sol";
 import {BundleAggregatorProxy} from "../BundleAggregatorProxy.sol";
 
 import {DataFeedsCache} from "../DataFeedsCache.sol";
@@ -18,7 +18,7 @@ contract DataFeedsCacheTest is BaseTest {
   address internal constant ILLEGAL_CALLER = address(11111); // address used as incorrect caller in tests
   address internal constant REPORT_SENDER = address(12222); // mocks keystone forwarder address
 
-  ERC20Mock internal s_link = new ERC20Mock("LINK", "LINK", OWNER, 0);
+  ERC20Mock internal s_link = new ERC20Mock(18);
 
   bytes32 internal constant WORKFLOWID = hex"6d795f6964000000000000000000000000000000000000000000000000000000";
   bytes10 internal constant WORKFLOWNAME = bytes10("abc");

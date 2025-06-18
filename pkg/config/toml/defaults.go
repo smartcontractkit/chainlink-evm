@@ -206,6 +206,9 @@ func (c *Chain) SetFrom(f *Chain) {
 	if v := f.FinalityDepth; v != nil {
 		c.FinalityDepth = v
 	}
+	if v := f.SafeDepth; v != nil {
+		c.SafeDepth = v
+	}
 	if v := f.FinalityTagEnabled; v != nil {
 		c.FinalityTagEnabled = v
 	}

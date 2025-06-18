@@ -277,6 +277,64 @@ func (_c *Tracker_LatestChain_Call[H, BLOCK_HASH]) RunAndReturn(run func() H) *T
 	return _c
 }
 
+// LatestSafeBlock provides a mock function with given fields: ctx
+func (_m *Tracker[H, BLOCK_HASH]) LatestSafeBlock(ctx context.Context) (H, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LatestSafeBlock")
+	}
+
+	var r0 H
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (H, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) H); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(H)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Tracker_LatestSafeBlock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LatestSafeBlock'
+type Tracker_LatestSafeBlock_Call[H chains.Head[BLOCK_HASH], BLOCK_HASH chains.Hashable] struct {
+	*mock.Call
+}
+
+// LatestSafeBlock is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Tracker_Expecter[H, BLOCK_HASH]) LatestSafeBlock(ctx interface{}) *Tracker_LatestSafeBlock_Call[H, BLOCK_HASH] {
+	return &Tracker_LatestSafeBlock_Call[H, BLOCK_HASH]{Call: _e.mock.On("LatestSafeBlock", ctx)}
+}
+
+func (_c *Tracker_LatestSafeBlock_Call[H, BLOCK_HASH]) Run(run func(ctx context.Context)) *Tracker_LatestSafeBlock_Call[H, BLOCK_HASH] {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Tracker_LatestSafeBlock_Call[H, BLOCK_HASH]) Return(safe H, err error) *Tracker_LatestSafeBlock_Call[H, BLOCK_HASH] {
+	_c.Call.Return(safe, err)
+	return _c
+}
+
+func (_c *Tracker_LatestSafeBlock_Call[H, BLOCK_HASH]) RunAndReturn(run func(context.Context) (H, error)) *Tracker_LatestSafeBlock_Call[H, BLOCK_HASH] {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Name provides a mock function with no fields
 func (_m *Tracker[H, BLOCK_HASH]) Name() string {
 	ret := _m.Called()

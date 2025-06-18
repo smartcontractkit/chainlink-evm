@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
-import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 contract CapabilityConfigurationContract is ICapabilityConfiguration, IERC165 {
   mapping(uint256 => bytes) private s_donConfiguration;

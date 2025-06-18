@@ -60,7 +60,7 @@ type Client interface {
 	// CAUTION: Using this method might cause local finality violations. It's highly recommended
 	// to use HeadTracker to get latest finalized block.
 	LatestFinalizedBlock(ctx context.Context) (head *evmtypes.Head, err error)
-
+	LatestSafeBlock(ctx context.Context) (*evmtypes.Head, error)
 	SendTransactionReturnCode(ctx context.Context, tx *types.Transaction, fromAddress common.Address) (multinode.SendTxReturnCode, error)
 
 	// Wrapped Geth client methods
@@ -352,6 +352,14 @@ func (c *chainClient) LatestBlockHeight(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 	return r.LatestBlockHeight(ctx)
+}
+
+func (c *chainClient) LatestSafeBlock(ctx context.Context) (*evmtypes.Head, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.LatestSafeBlock(ctx)
 }
 
 func (c *chainClient) NodeStates() map[string]string {
