@@ -201,7 +201,7 @@ func (c DataStorage) WriteReportDataStorageUserData(
 	runtime sdk.Runtime,
 	input DataStorageUserDataInput,
 	gasConfig *evmcappb.GasConfig,
-) (*big.Int, error) {
+) ([]byte, error) {
 	encoded, err := c.codec.EncodeDataStorageUserDataStruct(input)
 	if err != nil {
 		return nil, err
@@ -234,15 +234,13 @@ func (c DataStorage) WriteReportDataStorageUserData(
 		if err != nil {
 			return nil, err
 		}
-		if getTxResult.Transaction.IsFinalized {
-			if *reply.ReceiverContractExecutionStatus == evmcappb.ReceiverContractExecutionStatus_REVERTED {
-				return nil, &bindings.ReceiverContractError{
-					Message: "Transaction finalized but receiver contract failed to execute",
-					TxHash:  reply.TxHash,
-				}
+		if *reply.ReceiverContractExecutionStatus == evmcappb.ReceiverContractExecutionStatus_REVERTED {
+			return nil, &bindings.ReceiverContractError{
+				Message: "Transaction finalized but receiver contract failed to execute",
+				TxHash:  reply.TxHash,
 			}
-			return reply.TxHash, nil
 		}
+		return getTxResult.Transaction.Hash, nil
 	}
 }
 

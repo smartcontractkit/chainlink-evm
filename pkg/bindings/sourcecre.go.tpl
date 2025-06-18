@@ -202,7 +202,7 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	runtime sdk.Runtime,
 	input {{.Name}}Input,
 	gasConfig *evmcappb.GasConfig,
-) (*big.Int, error) {
+) ([]byte, error) {
 	encoded, err := c.codec.Encode{{.Name}}Struct(input)
 	if err != nil {
 		return nil, err
