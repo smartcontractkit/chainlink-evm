@@ -177,10 +177,19 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///                   the override entry.
   function setDONLimit(string calldata donLabel, uint32 limit, bool enabled) external onlyOwner {
     bytes32 donHash = _donHash(donLabel);
+    ConfigValue memory current = s_cfg.donLimit[donHash];
     if (enabled) {
+      // if already enabled at exactly this limit, do nothing
+      if (current.enabled && current.value == limit) {
+        return;
+      }
       s_cfg.donLimit[donHash] = ConfigValue(limit, true);
       _pushDONCapacitySet(donLabel, limit);
     } else {
+      // if already disabled, do nothing
+      if (!current.enabled) {
+        return;
+      }
       delete s_cfg.donLimit[donHash];
       _pushDONCapacitySet(donLabel, 0);
     }
@@ -190,6 +199,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev    Only the contract owner may call this.
   ///         - When `enabled` is true, stores the override and emits `UserDONLimitSet(user, donLabel, limit)`.
   ///         - When `enabled` is false, deletes any override and emits `UserDONLimitUnset(user, donLabel)`.
+  ///         - When `enabled` is true and the same limit already exist, it does not write or emit a new event.
+  ///         - When `enabled` is false and there is no limit, it does not remove or emit a new event.
   ///         The per-user override `limit` must not exceed the global DON limit, otherwise it reverts.
   ///         When per-user overrides are added or removed, no event record is added because this does not affect the
   ///         actual capacity of the DON as it is already constrained by the DON capacity.
@@ -199,14 +210,26 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param  enabled   True to store the override, false to remove it.
   function setUserDONOverride(address user, string calldata donLabel, uint32 limit, bool enabled) external onlyOwner {
     bytes32 donHash = _donHash(donLabel);
+    ConfigValue memory current = s_cfg.userDONOverride[user][donHash];
+
     if (enabled) {
+      // enforce global cap
       if (limit > s_cfg.donLimit[donHash].value) {
         revert UserDONOverrideExceedsDONLimit();
       }
-
+      // no-op if the override already exists with the same value
+      if (current.enabled && current.value == limit) {
+        return;
+      }
+      // write new override
       s_cfg.userDONOverride[user][donHash] = ConfigValue(limit, true);
       emit UserDONLimitSet(user, donLabel, limit);
     } else {
+      // no-op if there was no override to delete
+      if (!current.enabled) {
+        return;
+      }
+      // remove existing override
       delete s_cfg.userDONOverride[user][donHash];
       emit UserDONLimitUnset(user, donLabel);
     }
@@ -244,30 +267,50 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   /// @notice  Stores the pointer to the DON Registry this Workflow Registry uses.
   /// @dev     `registry` is the contract address; `chainSelector` identifies the
-  ///          chain where the registry lives (Chainlink CCIP selector style).
+  ///          chain where the registry lives (Chainlink selector).
   struct DONRegistryConfig {
     address registry;
-    uint256 chainSelector;
+    uint64 chainSelector;
   }
 
   /// @dev Stores the current DON Registry reference used by this contract.
   DONRegistryConfig private s_donRegistry;
 
   /// @notice Emitted whenever the registry reference is changed.
-  /// @param oldAddr       Previous registry address (zero if first set).
-  /// @param newAddr       New registry address being stored.
-  /// @param chainSelector CCIP-style chain selector where the registry lives.
-  event DONRegistryUpdated(address indexed oldAddr, address indexed newAddr, uint256 indexed chainSelector);
+  /// @param oldAddr           Previous registry address (zero if first set).
+  /// @param newAddr           New registry address being stored.
+  /// @param oldChainSelector  Old chain selector (zero if first set).
+  /// @param newChainSelector  Chain selector where the registry lives.
+  event DONRegistryUpdated(address oldAddr, address newAddr, uint64 oldChainSelector, uint64 newChainSelector);
 
   /// @notice Sets or replaces the DON Registry that this Workflow Registry points to.
   /// @dev    Owner-only.  Overwrites the previous entry and emits
   ///         {DONRegistryUpdated}.
   /// @param  registry       Address of the DON Registry contract.
-  /// @param  chainSelector  CCIP chain selector for the registry’s chain.
-  function setDONRegistry(address registry, uint256 chainSelector) external onlyOwner {
-    address old = s_donRegistry.registry;
-    s_donRegistry = DONRegistryConfig({registry: registry, chainSelector: chainSelector});
-    emit DONRegistryUpdated(old, registry, chainSelector);
+  /// @param  chainSelector  Chain selector for the registry’s chain.
+  function setDONRegistry(address registry, uint64 chainSelector) external onlyOwner {
+    address oldRegistry = s_donRegistry.registry;
+    uint64 oldChain = s_donRegistry.chainSelector;
+
+    if (registry == oldRegistry && chainSelector == oldChain) {
+      return;
+    }
+
+    if (registry != oldRegistry) {
+      s_donRegistry.registry = registry;
+    }
+    if (chainSelector != oldChain) {
+      s_donRegistry.chainSelector = chainSelector;
+    }
+
+    emit DONRegistryUpdated(oldRegistry, registry, oldChain, chainSelector);
+  }
+
+  /// @notice Returns the current DON Registry reference and its chain selector.
+  /// @return Address of the DON Registry contract.
+  /// @return Chain selector for the registry’s chain.
+  function getDONRegistry() external view returns (address, uint64) {
+    return (s_donRegistry.registry, s_donRegistry.chainSelector);
   }
 
   // ================================================================
@@ -720,14 +763,15 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes32 wKey = _workflowKey(msg.sender, workflowName);
     bytes32 donHash = _donHash(donLabel);
 
-    /* ───────────────────────── 1. LIMIT CHECKS ───────────────────────── */
-    if (status == WorkflowStatus.ACTIVE) {
-      _enforceLimits(msg.sender, donHash, donLabel);
-    }
-
-    /* ───────────────────────── 2. HOUSEKEEPING ───────────────────────── */
+    /* ───────────────────────── 1. HOUSEKEEPING ───────────────────────── */
+    // we need to do this first, or there may be extra workflows occupying the limit
     if (!keepAlive) {
       _pauseAllActiveWorkflowsByWorkflowKey(wKey, donHash);
+    }
+
+    /* ───────────────────────── 2. LIMIT CHECKS ───────────────────────── */
+    if (status == WorkflowStatus.ACTIVE) {
+      _enforceLimits(msg.sender, donHash, donLabel);
     }
 
     /* ───────────────────────── 3. WRITE PRIMARY RECORD ───────────────── */

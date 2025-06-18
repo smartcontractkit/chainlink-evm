@@ -1,62 +1,54 @@
-WorkflowRegistry_upsertWorkflow
-├── When the caller is NOT the workflow owner
-│   └── It should revert with CallerIsNotWorkflowOwner
-├── When the caller IS the workflow owner
-│   ├── When the workflow does not yet exist  // triggers _createWorkflow
-│   │   ├──When the inputs are valid
-│   │   │  ├── When keepAlive is true
-│   │   │  │   └── It should register a new workflow and emit WorkflowRegisteredV2.
-│   │   │  └── When keepAlive is false
-│   │   │      ├── When another active workflow shares the workflowKey
-│   │   │      │   └── It should pause those workflows before registering the new one.
-│   │   │      └── When no active workflow shares the workflowKey
-│   │   │          └── It should register without pausing anything.
-│   │   └── When the inputs are invalid
-│   │       ├── When workflowName is empty
-│   │       │   └── It should revert with WorkflowNameRequired
-│   │       ├── When workflowName length is greater than 64
-│   │       │   └── It should revert with WorkflowNameTooLong
-│   │       ├── When tag is empty
-│   │       │   └── It should revert with WorkflowTagRequired
-│   │       ├── When tag length is greater than 32
-│   │       │   └── It should revert with WorkflowTagTooLong
-│   │       ├── When workflowID is 0
-│   │       │   └── It should revert with InvalidWorkflowID
-│   │       ├── When workflowID is already mapped
-│   │       │   └── It should revert with WorkflowIDAlreadyExists
-│   │       ├── When binaryURL length is greater than 200
-│   │       │   └── It should revert with URLTooLong
-│   │       ├── When configURL length is greater than 200
-│   │       │   └── It should revert with URLTooLong
-│   │       ├── When DON-wide limit is exceeded
-│   │       │   └── It should revert with MaxWorkflowsPerDONExceeded
-│   │       └── When per-user-per-DON limit is exceeded
-│   │           └── It should revert with MaxWorkflowsPerUserDONExceeded
-│   └── When the workflow already exists  // triggers _updateWorkflow
-│       ├── When inputs are invalid
-│       │   ├──When newWorkflowID is 0
-│       │   │  └── It should revert InvalidWorkflowID
-│       │   ├── When newWorkflowID is already mapped
-│       │   │   └── It should revert WorkflowIDAlreadyExists
-│       │   ├── When DON label changes and activation exceeds limits
-│       │   │   ├── When there is too many workflows in the DON
-│       │   │   │   └── It should revert with With MaxWorkflowsPerDONExceeded 
-│       │   │   └── When there is too many workflows for a user in that DON
-│       │   │       └── It should revert with With MaxWorkflowsPerUserDONExceeded 
-│       └── When inputs are valid
-│           ├── DON label is unchanged
-│           │   ├── status is unchanged
-│           │   │   └── It should update mutable fields and emit WorkflowUpdatedV2
-│           │   ├── status changes from active to paused
-│           │   │   └── It should update counters and emit WorkflowUpdatedV2
-│           │   └── status changes from paused to active
-│           │       └── It should enforce limits, update counters and emit WorkflowUpdatedV2
-│           └── DON label changes
-│               ├── Old status is active
-│               │   └── It should remove old DON indices and decrement counters
-│               ├── New status is active
-│               │   └── It should enforce limits, migrate indices and increment counters
-│               └── New status is paused
-│                   └── It should not add the workflow to active counters or limits
-└── When any internal call reverts // Atomicity checks
-    └── It should revert and leave all storage, counters, and indices unchanged.
+WorkflowRegistry.upsertWorkflow
+├── When msg sender is NOT a linked owner
+│   └── It should revert with with OwnershipLinkDoesNotExist
+├── When msg sender IS a linked owner
+    ├── When no existing record for owner name tag combination // _createWorkflow
+    │   ├── When the input is not valid
+    │   │   ├── When workflowName length is 0
+    │   │   │   └── It should It should revert with with WorkflowNameRequired
+    │   │   ├── When workflowName length is greater than 64
+    │   │   │   └── It should revert with WorkflowNameTooLong
+    │   │   ├── When tag length is 0
+    │   │   │   └── It should revert with WorkflowTagRequired
+    │   │   ├── When tag length is greater than 32
+    │   │   │   └── It should revert with WorkflowTagTooLong
+    │   │   ├── When workflowId is 0
+    │   │   │   └── It should revert with ZeroAddressNotAllowed
+    │   │   ├── When workflowId already exists
+    │   │   │   └── It should revert with WorkflowIDAlreadyExists
+    │   │   ├── When binaryUrl is greater than 200
+    │   │   │   └── It should revert with URLTooLong
+    │   │   ├── When configUrl is greater than 200
+    │   │   │   └── It should revert with URLTooLong
+    │   │   └── When attributes is greater than 512
+    │   │       └── It should revert with AttributesTooLong
+    │   └─ When the input is valid
+    │      ├── When keepAlive is true
+    │      │   └── It skip pausing existing workflows with same owner, name
+    │      ├── When keepAlive is false
+    │      │   ├── When ther eare more than one other active workflows with the same workflow key
+    │      │   │   └── It pause each of those before proceeding
+    │      │   └── When none share the key
+    │      │       └── It does not pause any workflows
+    │      ├── When the status is active
+    │      │   ├── When global DON cap reached
+    │      │   │   └── It should revert with MaxWorkflowsPerDONExceeded
+    │      │   └── When user-per-DON cap reached
+    │      │       └── It should revert with MaxWorkflowsPerUserDONExceeded
+    │      └── When creating a new record
+    │          └── It should write the new s_workflows[rid], update all necessary counters, and emit WorkflowRegistered
+    └── When an existing record at rid exists // _updateWorkflow  
+        ├── When the inputs are not valid
+        │   ├── When newWorkflowId is 0  
+        │   │   └── It should revert with  ZeroAddressNotAllowed
+        │   ├── When newWorkflowId already exists
+        │   │   └── It should revert with  WorkflowIDAlreadyExists(newWorkflowId)  
+        │   ├── When newBinaryURL is greater than 200 or configURL is greater than 200
+        │   │   └── It should revert with  URLTooLong
+        │   └── When newAttributes is greater than 512  
+        │       └── It should revert with  AttributesTooLong
+        └── When the inputs are valid 
+            ├── It should update the records and remap the indices
+            └── It should emit WorkflowUpdated
+└── When any of the steps fails
+    └── It should roll back all state changes, indices, and skip event emissions.

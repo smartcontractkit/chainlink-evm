@@ -9,16 +9,22 @@ contract WorkflowRegistrySetup is Test {
   WorkflowRegistry internal s_registry;
   address internal s_owner;
   address internal s_stranger;
+  address internal s_user;
   uint256 internal s_allowedSignerPrivateKey;
   address internal s_allowedSigner;
   uint256 internal s_validityTimestamp;
   bytes32 internal s_proof;
-  bytes32 public s_proofSeed;
-
-  bytes32 internal s_donLabel;
-  string internal s_binaryURL;
-  string internal s_configURL;
+  bytes32 internal s_proofSeed;
+  bytes internal s_signature;
+  string internal s_donLabel;
+  string internal s_binaryUrl;
+  string internal s_configUrl;
   string internal s_tag;
+  string internal s_workflowName;
+  bytes32 internal s_workflowId;
+  bytes internal s_attributes;
+  string internal s_invalidLongString;
+  string internal s_invalidURL;
 
   function setUp() public virtual {
     s_owner = makeAddr("owner");
@@ -29,10 +35,19 @@ contract WorkflowRegistrySetup is Test {
     s_allowedSigner = vm.addr(s_allowedSignerPrivateKey);
     assertEq(s_allowedSigner, address(0x86f2cE81640Fd86e68CF3EB25c2801D6E1C62bd0));
 
-    s_donLabel = bytes32("DON-A");
-    s_binaryURL = "ipfs://bin";
-    s_configURL = "ipfs://cfg";
+    s_user = makeAddr("user");
+    s_donLabel = "DON-A";
+    s_binaryUrl = "ipfs://bin";
+    s_configUrl = "ipfs://cfg";
     s_tag = "alpha";
+
+    s_workflowName = "my-workflow";
+    s_workflowId = keccak256("workflow1");
+    s_attributes = hex"11223344556677889900aabbccddeeff";
+    s_invalidLongString =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd";
+    s_invalidURL =
+      "https://www.example.com/this/is/a/very/long/url/that/keeps/going/on/and/on/to/ensure/that/it/exceeds/two/hundred/and/one/characters/in/length/for/testing/purposes/and/it/should/be/sufficiently/long/to/meet/your/requirements/for/this/test";
 
     vm.startPrank(s_owner);
     s_registry = new WorkflowRegistry();
@@ -53,8 +68,9 @@ contract WorkflowRegistrySetup is Test {
         LinkingUtils.REQUEST_TYPE_LINK, address(s_registry), newOwner, s_validityTimestamp, ownerProof
       )
     );
-    bytes memory sig = abi.encodePacked(r, s, v);
+
+    s_signature = abi.encodePacked(r, s, v);
     vm.prank(newOwner);
-    s_registry.linkOwner(s_validityTimestamp, ownerProof, sig);
+    s_registry.linkOwner(s_validityTimestamp, ownerProof, s_signature);
   }
 }

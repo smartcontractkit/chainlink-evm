@@ -1,0 +1,5 @@
+WorkflowRegistry.getMaxWorkflowsPerDON
+├── When donLabel has never been configured
+│   └── It should return 0
+└── When donLabel was configured to limit
+    └── It should return limit

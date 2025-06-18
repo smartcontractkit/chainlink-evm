@@ -1,0 +1,17 @@
+WorkflowRegistry.setDONLimit
+├── when the caller is NOT the contract owner
+│   └── it should revert with Ownable2StepMsgSender: caller is not the owner
+└── when the caller IS the contract owner
+    ├── when enabled is true
+    │   ├── when no previous limit exists for donLabel
+    │   │   └── it should set s_cfg.donLimit[donHash], append an event record, and emit DONLimitSet
+    │   └── when a previous limit exists for donLabel
+    │       ├── when new limit does not equal existing limit
+    │       │   └── it should overwrite s_cfg.donLimit[donHash] with the new value, append an event record, and emit DONLimitSet
+    │       └── when new limit is equal to existing limit
+    │           └── it should do nothing
+    └── when enabled is false
+        ├── when a previous limit exists for donLabel
+        │   └── it should delete s_cfg.donLimit[donHash], append an event record with capacity set to 0, and emit DONLimitSet
+        └── when no previous limit exists for donLabel
+            └── it should do nothing
