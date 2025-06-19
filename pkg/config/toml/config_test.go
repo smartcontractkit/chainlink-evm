@@ -46,31 +46,6 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 			assert.NoError(t, config.Validate(evmCfg))
 		})
 	}
-	t.Run("invalid both workflow and write capability", func(t *testing.T) {
-		chain := Defaults(big.NewI(42))
-		chain.Workflow = Workflow{
-			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
-			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
-			GasLimitDefault:  ptr[uint64](400000),
-		}
-		chain.WriteCapability = WriteCapability{
-			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
-			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
-			GasLimitDefault:  ptr[uint64](400000),
-		}
-		evmCfg := &EVMConfig{
-			ChainID: big.NewI(42),
-			Chain:   chain,
-			Nodes: EVMNodes{{
-				Name:    &name,
-				WSURL:   config.MustParseURL("wss://foo.test/ws"),
-				HTTPURL: config.MustParseURL("http://foo.test"),
-			}},
-		}
-
-		err := config.Validate(evmCfg)
-		require.ErrorIs(t, err, ErrConflictingConfig)
-	})
 }
 
 func TestDefaults_fieldsNotNil(t *testing.T) {
@@ -451,14 +426,16 @@ func TestTOMLConfig_SetFrom(t *testing.T) {
 		x.Chain.WriteCapability = WriteCapability{}
 		var y EVMConfig
 		y.SetFrom(&x)
-		require.NotNil(t, x.Chain.Workflow.FromAddress)
-		require.NotNil(t, x.Chain.Workflow.ForwarderAddress)
-		require.NotNil(t, x.Chain.Workflow.GasLimitDefault)
 		require.Equal(t, x.Chain.Workflow.FromAddress, y.Chain.WriteCapability.FromAddress)
 		require.Equal(t, x.Chain.Workflow.ForwarderAddress, y.Chain.WriteCapability.ForwarderAddress)
 		require.Equal(t, x.Chain.Workflow.GasLimitDefault, y.Chain.WriteCapability.GasLimitDefault)
+		require.Equal(t, x.Chain.Workflow.TxAcceptanceState, y.Chain.WriteCapability.TxAcceptanceState)
+		require.Equal(t, x.Chain.Workflow.PollPeriod, y.Chain.WriteCapability.PollPeriod)
+		require.Equal(t, x.Chain.Workflow.AcceptanceTimeout, y.Chain.WriteCapability.AcceptanceTimeout)
+		// ensure that the workflow is not set
+		require.Empty(t, y.Chain.Workflow)
 	})
-	t.Run("write capability does not overwrite workflow", func(t *testing.T) {
+	t.Run("write capability does not set workflow", func(t *testing.T) {
 		x := fullConfig
 		x.Chain.Workflow = Workflow{}
 		x.Chain.WriteCapability = WriteCapability{
@@ -468,9 +445,30 @@ func TestTOMLConfig_SetFrom(t *testing.T) {
 		}
 		var y EVMConfig
 		y.SetFrom(&x)
-		require.Nil(t, x.Chain.Workflow.FromAddress)
-		require.Nil(t, x.Chain.Workflow.ForwarderAddress)
-		require.Nil(t, x.Chain.Workflow.GasLimitDefault)
+		require.Empty(t, y.Chain.Workflow)
+		require.Equal(t, x.Chain.WriteCapability.FromAddress, y.Chain.WriteCapability.FromAddress)
+		require.Equal(t, x.Chain.WriteCapability.ForwarderAddress, y.Chain.WriteCapability.ForwarderAddress)
+		require.Equal(t, x.Chain.WriteCapability.GasLimitDefault, y.Chain.WriteCapability.GasLimitDefault)
+	})
+
+	t.Run("write capability takes precedence", func(t *testing.T) {
+		x := fullConfig
+		x.Chain.Workflow = Workflow{
+			FromAddress:      ptr(types.MustEIP55Address("0x396343362be2A4dA1cE0C1C210945346fb82Aa49")),
+			ForwarderAddress: ptr(types.MustEIP55Address("0x51c9A4b99B5C86A8c67243B5a9Ea19ECeF5f3235")),
+			GasLimitDefault:  ptr[uint64](200000),
+		}
+		x.Chain.WriteCapability = WriteCapability{
+			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:  ptr[uint64](400000),
+		}
+		var y EVMConfig
+		y.SetFrom(&x)
+		require.Empty(t, y.Chain.Workflow)
+		require.Equal(t, x.Chain.WriteCapability.FromAddress, y.Chain.WriteCapability.FromAddress)
+		require.Equal(t, x.Chain.WriteCapability.ForwarderAddress, y.Chain.WriteCapability.ForwarderAddress)
+		require.Equal(t, x.Chain.WriteCapability.GasLimitDefault, y.Chain.WriteCapability.GasLimitDefault)
 	})
 }
 

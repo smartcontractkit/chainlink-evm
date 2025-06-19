@@ -1,3 +1,4 @@
+//nolint:staticcheck //SA1019 avoid linter errors about Workflow being deprecated
 package config_test
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
@@ -236,6 +238,74 @@ func TestChainScopedConfig(t *testing.T) {
 			assert.False(t, cfg3.EVM().Transactions().Enabled())
 		})
 	})
+
+	// test for Workflow and WriteCapability c
+	t.Run("Workflow and WriteCapability compatibility", func(t *testing.T) {
+		t.Run("nil ForwarderAddress and FromAddress for both by default", func(t *testing.T) {
+			cfg3 := configtest.NewChainScopedConfig(t, nil)
+
+			assertEqualWriteCapabilityAndWorkflow(t, cfg3, nil, nil)
+		})
+		// non-nil Workflow maintains nil WriteCapability
+		t.Run("Both set from Workflow config", func(t *testing.T) {
+			forwarderAddr := types.MustEIP55Address("0x2a3e23c6f242F5345320814aC8a1b4E58707D292")
+			fromAddr := types.MustEIP55Address("0xeBec795c9c8bBD61FFc14A6662944748F299cAcf")
+			cfg := configtest.DefaultEVMTOMLConfig(t)
+			assert.Empty(t, cfg.Workflow)
+			assert.NotEmpty(t, cfg.WriteCapability)
+			assert.Empty(t, cfg.WriteCapability.ForwarderAddress)
+			assert.Empty(t, cfg.WriteCapability.FromAddress)
+			cfg.Workflow.ForwarderAddress = &forwarderAddr
+			cfg.Workflow.FromAddress = &fromAddr
+			cfg.Chain.SetFrom(&cfg.Chain)
+			assert.NotEmpty(t, cfg.WriteCapability.ForwarderAddress)
+			assert.NotEmpty(t, cfg.WriteCapability.FromAddress)
+			assert.Empty(t, cfg.Workflow.ForwarderAddress)
+			assert.Empty(t, cfg.Workflow.FromAddress)
+			// cfg.Chain = toml.Defaults(cfg.ChainID, &cfg.Chain)
+			cfg3 := config.NewTOMLChainScopedConfig(cfg)
+
+			assertEqualWriteCapabilityAndWorkflow(t, cfg3, &forwarderAddr, &fromAddr)
+		})
+
+		t.Run("Both set from WriteCapability config", func(t *testing.T) {
+			forwarderAddr := types.MustEIP55Address("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5")
+			fromAddr := types.MustEIP55Address("0x1C727a55eA3c11B0ab7D3a361Fe0F3C47cE6de5d")
+			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
+				c.WriteCapability.ForwarderAddress = &forwarderAddr
+				c.WriteCapability.FromAddress = &fromAddr
+			})
+
+			assertEqualWriteCapabilityAndWorkflow(t, cfg3, &forwarderAddr, &fromAddr)
+		})
+		t.Run("WriteCapability takes precedence", func(t *testing.T) {
+			wantForwarderAddr := types.MustEIP55Address("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5")
+			wantFromAddr := types.MustEIP55Address("0x1C727a55eA3c11B0ab7D3a361Fe0F3C47cE6de5d")
+			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
+				c.Workflow.ForwarderAddress = ptr(types.MustEIP55Address("0x2a3e23c6f242F5345320814aC8a1b4E58707D292"))
+				c.Workflow.FromAddress = ptr(types.MustEIP55Address("0xeBec795c9c8bBD61FFc14A6662944748F299cAcf"))
+				c.WriteCapability.ForwarderAddress = &wantForwarderAddr
+				c.WriteCapability.FromAddress = &wantFromAddr
+			})
+			assertEqualWriteCapabilityAndWorkflow(t, cfg3, &wantForwarderAddr, &wantFromAddr)
+		})
+	})
+}
+
+// compare the WriteCapability and Workflow configs
+// to ensure they have equal values for all fields, and the forwarder and from addresses match the input
+func assertEqualWriteCapabilityAndWorkflow(t *testing.T, cfg *config.ChainScoped, forwarder, from *types.EIP55Address) {
+	t.Helper()
+
+	assert.Equal(t, forwarder, cfg.EVM().Workflow().ForwarderAddress())
+	assert.Equal(t, from, cfg.EVM().Workflow().FromAddress())
+	assert.Equal(t, forwarder, cfg.EVM().WriteCapability().ForwarderAddress())
+	assert.Equal(t, from, cfg.EVM().WriteCapability().FromAddress())
+
+	assert.Equal(t, cfg.EVM().Workflow().GasLimitDefault(), cfg.EVM().WriteCapability().GasLimitDefault())
+	assert.Equal(t, cfg.EVM().Workflow().TxAcceptanceState(), cfg.EVM().WriteCapability().TxAcceptanceState())
+	assert.Equal(t, cfg.EVM().Workflow().PollPeriod(), cfg.EVM().WriteCapability().PollPeriod())
+	assert.Equal(t, cfg.EVM().Workflow().AcceptanceTimeout(), cfg.EVM().WriteCapability().AcceptanceTimeout())
 }
 
 func TestChainScopedConfig_BlockHistory(t *testing.T) {

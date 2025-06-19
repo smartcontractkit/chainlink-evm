@@ -25,3 +25,12 @@ func NewChainScopedConfig(t testing.TB, overrideFn func(c *toml.EVMConfig)) *con
 
 	return config.NewTOMLChainScopedConfig(evmCfg)
 }
+
+func DefaultEVMTOMLConfig(t testing.TB) *toml.EVMConfig {
+	t.Helper()
+	chainID := big.NewI(0)
+	return &toml.EVMConfig{
+		ChainID: chainID,
+		Chain:   toml.Defaults(chainID),
+	}
+}

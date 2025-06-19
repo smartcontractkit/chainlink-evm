@@ -283,15 +283,18 @@ func (c *Chain) SetFrom(f *Chain) {
 	c.NodePool.setFrom(&f.NodePool)
 	c.OCR.setFrom(&f.OCR)
 	c.OCR2.setFrom(&f.OCR2)
-	// the validation code prevents both being set
-	var emptyWriteCapability WriteCapability
+	// we want the the WriteCapability to take precedence over the Workflow
+	// and to migrate any values from the Workflow to the WriteCapability
+	c.WriteCapability.setFrom(&f.WriteCapability)
+	if !c.WriteCapability.Equal(&f.Workflow) {
+		if f.WriteCapability.ForwarderAddress != nil && f.WriteCapability.FromAddress != nil { //nolint:revive // empty block is intentional
+			// Intentionally empty - WriteCapability is already set and it precedence over Workflow
+		} else if f.Workflow.ForwarderAddress != nil && f.Workflow.FromAddress != nil {
+			// This is backwards compatibility for the case where only the Workflow was set
+			c.WriteCapability.setFrom(&f.Workflow)
+		}
+	}
+	// clear the Workflow
 	var emptyWorkflow Workflow
-	if f.WriteCapability != emptyWriteCapability {
-		c.WriteCapability.setFrom(&f.WriteCapability)
-	}
-	if f.Workflow != emptyWorkflow {
-		c.Workflow.setFrom(&f.Workflow)
-		c.WriteCapability.setFrom(&f.Workflow)
-	}
-
+	c.Workflow = emptyWorkflow
 }

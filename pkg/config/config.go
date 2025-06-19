@@ -23,7 +23,10 @@ type EVM interface {
 	GasEstimator() GasEstimator
 	OCR() OCR
 	OCR2() OCR2
+	// Deprecated: use WriteCapability
 	Workflow() Workflow
+	WriteCapability() WriteCapability
+
 	NodePool() NodePool
 
 	AutoCreateKey() bool
