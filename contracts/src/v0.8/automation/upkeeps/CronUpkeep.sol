@@ -19,8 +19,8 @@
 pragma solidity ^0.8.6;
 
 import {Pausable} from "@openzeppelin/contracts@4.8.3/security/Pausable.sol";
-import {Proxy} from "@openzeppelin/contracts@4.7.3/proxy/Proxy.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.7.3/utils/structs/EnumerableSet.sol";
+import {Proxy} from "@openzeppelin/contracts@4.9.6/proxy/Proxy.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {KeeperBase as KeeperBase} from "../KeeperBase.sol";
 import {KeeperCompatibleInterface as KeeperCompatibleInterface} from "../interfaces/KeeperCompatibleInterface.sol";
