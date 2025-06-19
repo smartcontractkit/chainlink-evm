@@ -20,7 +20,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   uint8 private constant MAX_WORKFLOW_NAME_LENGTH = 64;
   uint8 private constant MAX_WORKFLOW_TAG_LENGTH = 32;
   uint8 private constant MAX_URL_LENGTH = 200;
-  uint8 private constant MAX_PAGINATION_LIMIT = 100;
   uint16 private constant MAX_ATTRIBUTES_LENGTH = 512; // 0.5 kilobyte
 
   /// @dev The set of allowed signers for ownership proofs. These signers are considered to be trusted entities.
@@ -424,6 +423,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   }
 
   /// @notice Transaction sender submits ownership proof for verification and approval. Upon approval, owner is unlinked.
+  ///         This function can be called by anyone with signatures for the owner.
   /// @param owner The address of the owner to be unlinked.
   /// @param validityTimestamp Validity of the ownership proof.
   /// @param signature The signature of the ownership proof metadata.
@@ -476,11 +476,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         - The list can change between calls; for an immutable snapshot, query at a specific block.
   function getLinkedOwners(uint256 start, uint256 limit) external view returns (address[] memory owners) {
     uint256 total = s_linkedOwners.length();
-    (uint256 offset, uint256 count) = _getPageBounds(total, start, limit);
+    uint256 count = _getPageCount(total, start, limit);
 
     owners = new address[](count);
     for (uint256 i = 0; i < count; ++i) {
-      (owners[i],) = s_linkedOwners.at(offset + i);
+      (owners[i],) = s_linkedOwners.at(start + i);
     }
 
     return owners;
@@ -662,11 +662,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @return list  Array of events in the requested window.
   function getEvents(uint256 start, uint256 limit) external view returns (EventRecord[] memory list) {
     uint256 total = s_events.length;
-    (uint256 offset, uint256 count) = _getPageBounds(total, start, limit);
+    uint256 count = _getPageCount(total, start, limit);
 
     list = new EventRecord[](count);
     for (uint256 i = 0; i < count; i++) {
-      list[i] = s_events[offset + i];
+      list[i] = s_events[start + i];
     }
 
     return list;
@@ -766,7 +766,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     /* ───────────────────────── 1. HOUSEKEEPING ───────────────────────── */
     // we need to do this first, or there may be extra workflows occupying the limit
     if (!keepAlive) {
-      _pauseAllActiveWorkflowsByWorkflowKey(wKey, donHash);
+      _pauseAllActiveWorkflowsByWorkflowKey(wKey);
     }
 
     /* ───────────────────────── 2. LIMIT CHECKS ───────────────────────── */
@@ -887,7 +887,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         may cause the transaction to run out of gas and revert.
   ///         Clients should cap the array length to a safe value based on the current gas limits.
   /// @param  workflowIds Array of workflow IDs to pause; must not be empty.
-  function pauseWorkflows(
+  function batchPauseWorkflows(
     bytes32[] calldata workflowIds
   ) external {
     uint256 n = workflowIds.length;
@@ -958,13 +958,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
       uint32 donLimit = s_cfg.donLimit[donHash].value;
       uint32 userLimit = donLimit;
+      // Set the user limit if it exist. Otherwuse use the DON limit. Since the user limit is
+      // bounded by the DON limit, we don't need to check the donLimit again.
       if (s_cfg.userDONOverride[msg.sender][donHash].enabled) {
         userLimit = s_cfg.userDONOverride[msg.sender][donHash].value;
       }
 
-      if (s_activeDONWorkflowRids[donHash].length() + add > donLimit) {
-        revert MaxWorkflowsPerDONExceeded(donStr);
-      }
       if (s_userDONCount[msg.sender][donHash] + add > userLimit) {
         revert MaxWorkflowsPerUserDONExceeded(msg.sender, donStr);
       }
@@ -1047,24 +1046,23 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///    decrements `s_userDONCount`.
   ///  * Emits `WorkflowPaused` for every workflow paused.
   ///  * No-op when ≤ 1 active workflow exists for the key.
-  ///
+  ///  * The set is guaranteed to be active, and workfow key ensures ownership of the workflow.
+  ///  * Linking checks need to be performed prior to calling this function.
   /// @param workflowKey keccak256(owner, workflowName) identifying the
   ///                    workflow family.
-  function _pauseAllActiveWorkflowsByWorkflowKey(bytes32 workflowKey, bytes32 donHash) internal {
+  function _pauseAllActiveWorkflowsByWorkflowKey(
+    bytes32 workflowKey
+  ) internal {
     EnumerableSet.Bytes32Set storage activeSet = s_activeRidsByWorkflowKey[workflowKey];
 
     // Walk from the back since EnumerableSet.remove is a swap and pop.
     while (activeSet.length() > 1) {
       uint256 lastIdx = activeSet.length() - 1;
       bytes32 rid = activeSet.at(lastIdx);
-      WorkflowMetadata storage wf = s_workflows[rid];
+      WorkflowMetadata storage rec = s_workflows[rid];
 
       // Update workflow state
-      wf.status = WorkflowStatus.PAUSED;
-      _removeActiveIndices(rid, wf.owner, donHash, workflowKey);
-
-      // Emit event
-      emit WorkflowPaused(wf.workflowId, wf.owner, wf.donLabel, wf.workflowName);
+      _applyPause(rid, rec);
     }
   }
 
@@ -1089,9 +1087,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   function _deleteWorkflow(address owner, bytes32 rid) internal {
     WorkflowMetadata storage rec = _getWorkflowFromStorage(owner, rid);
-    if (rec.status == WorkflowStatus.ACTIVE) {
-      _removeActiveIndices(rid, owner, _donHash(rec.donLabel), _workflowKey(owner, rec.workflowName));
-    }
     _applyDelete(rid, rec);
   }
 
@@ -1128,19 +1123,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   /// @notice This helper **assumes** all higher-level checks have
   ///         already been performed.
-  ///         It does **NOT**
-  ///         - verify that `msg.sender` is the workflow owner, nor
-  ///         - touch the “active” secondary indices (`s_active*`)
-  ///           because the caller is expected to handle this separately
-  ///
+  ///         It also removes the workflow from all active indices.
   /// @param rid  Registry-internal reference ID (hash(owner, name, tag)).
   /// @param rec  Storage pointer to the workflow metadata struct that
-  ///             corresponds to `rid`.  Must still be in `PAUSED` state
-  ///             (or at least already removed from active counters).
+  ///             corresponds to `rid`.
   function _applyDelete(bytes32 rid, WorkflowMetadata storage rec) private {
-    s_allDONRids[_donHash(rec.donLabel)].remove(rid);
+    bytes32 wKey = _workflowKey(rec.owner, rec.workflowName);
+    bytes32 donHash = _donHash(rec.donLabel);
+    if (rec.status == WorkflowStatus.ACTIVE) {
+      _removeActiveIndices(rid, rec.owner, donHash, wKey);
+    }
+
+    s_allDONRids[donHash].remove(rid);
     s_allOwnerRids[rec.owner].remove(rid);
-    s_workflowKeyToRids[_workflowKey(rec.owner, rec.workflowName)].remove(rid);
+    s_workflowKeyToRids[wKey].remove(rid);
     delete s_idToRid[rec.workflowId];
 
     emit WorkflowDeleted(rec.workflowId, rec.owner, rec.donLabel, rec.workflowName);
@@ -1178,14 +1174,14 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
   }
 
-  /// @notice Pauses *all* active workflows for a given user, as an administrator.
+  /// @notice Pauses *all* active workflows for a given workflow owner, as an administrator.
   /// @dev    - Only the contract owner may call this (`onlyOwner`).
   ///         - Iterates from the end of the user’s active-workflow set and directly pauses each workflow.
-  /// @param  user The address whose active workflows should be paused.
-  function adminPauseAllByUser(
-    address user
+  /// @param  owner The address whose active workflows should be paused.
+  function adminPauseAllByOwner(
+    address owner
   ) external onlyOwner {
-    EnumerableSet.Bytes32Set storage activeSet = s_activeOwnerWorkflowRids[user];
+    EnumerableSet.Bytes32Set storage activeSet = s_activeOwnerWorkflowRids[owner];
 
     // Loop until the set is empty, always pausing the last element. We also know that all workflows in the list are active.
     while (activeSet.length() > 0) {
@@ -1206,11 +1202,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     // Loop until the set is empty, always pausing the last workflow
     while (activeSet.length() > 0) {
-      // Grab the RID of the last active workflow
       bytes32 rid = activeSet.at(activeSet.length() - 1);
-      // Lookup its external workflowId for the admin pause call
-      WorkflowMetadata storage rec = s_workflows[rid];
-      adminPauseWorkflow(rec.workflowId);
+      WorkflowMetadata storage rec = s_workflows[rid]; // no msg.sender check when fetched directly from mapping
+      _applyPause(rid, rec);
     }
   }
 
@@ -1247,8 +1241,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @notice  Return a paginated list of all versions (active *and* paused)
   ///          of workflows with the same `workflowName` and `owner`.
   /// @dev     Uses the secondary key ⟨owner, workflowName⟩ → RID-set
-  ///          (`s_workflowKeyToRids`).  When `limit` is 0 or exceeds
-  ///          `MAX_PAGINATION_LIMIT`, the call clamps it to that constant.
+  ///          (`s_workflowKeyToRids`).
   ///          Does **not** revert on out-of-range pagination: if `start` is
   ///          beyond the end of the set the function returns an empty array.
   /// @param   owner         Address that registered the workflows.
@@ -1256,7 +1249,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param   start         Zero-based index into the RID set.
   /// @param   limit         Max #records to return (clamped to 100).
   /// @return  list          Array of `WorkflowMetadata`.
-  function getWorkflowMetadataListByOwnerName(
+  function getWorkflowMetadataListByOwnerAndName(
     address owner,
     string calldata workflowName,
     uint256 start,
@@ -1264,11 +1257,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ) external view returns (WorkflowMetadata[] memory list) {
     bytes32 wKey = _workflowKey(owner, workflowName);
     uint256 total = s_workflowKeyToRids[wKey].length();
-    (uint256 offset, uint256 count) = _getPageBounds(total, start, limit);
+    uint256 count = _getPageCount(total, start, limit);
 
     list = new WorkflowMetadata[](count);
     for (uint256 i = 0; i < count; ++i) {
-      bytes32 rid = s_workflowKeyToRids[wKey].at(offset + i);
+      bytes32 rid = s_workflowKeyToRids[wKey].at(start + i);
       list[i] = s_workflows[rid];
     }
 
@@ -1280,16 +1273,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev
   /// - Reads the RID set `s_allOwnerRids[owner]`, which contains every
   ///   workflow ever registered by `owner`, regardless of status.
-  /// - If `start` is ≥ the set’s length the call returns an empty array.
-  /// - `limit` is capped to `MAX_PAGINATION_LIMIT` when zero or greater
-  ///   than that constant.
   /// - Does not revert on out-of-range pagination; it simply returns the
   ///   largest sub-range that fits inside the set.
   /// @param owner  The address whose workflows are requested.
   /// @param start  Zero-based index into the owner’s RID set.
-  /// @param limit  Maximum number of records to return; a value of 0 or
-  ///               > `MAX_PAGINATION_LIMIT` is treated as
-  ///               `MAX_PAGINATION_LIMIT`.
+  /// @param limit  Batch size for the workflows.
   /// @return list Array of `WorkflowMetadata` with length
   ///              `min(limit, total-start)`.
   function getWorkflowMetadataListByOwner(
@@ -1298,11 +1286,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     uint256 limit
   ) external view returns (WorkflowMetadata[] memory list) {
     uint256 total = s_allOwnerRids[owner].length();
-    (uint256 offset, uint256 count) = _getPageBounds(total, start, limit);
+    uint256 count = _getPageCount(total, start, limit);
 
     list = new WorkflowMetadata[](count);
     for (uint256 i = 0; i < count; ++i) {
-      bytes32 rid = s_allOwnerRids[owner].at(offset + i);
+      bytes32 rid = s_allOwnerRids[owner].at(start + i);
       list[i] = s_workflows[rid];
     }
     return list;
@@ -1321,8 +1309,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///
   /// @param donLabel  bytes32-encoded DON label used as the secondary key.
   /// @param start     Zero-based index into the RID set.
-  /// @param limit     Maximum number of records to return; the call will
-  ///                  truncate to `MAX_PAGINATION_LIMIT` if necessary.
+  /// @param limit     Bathc size for the workflows
   /// @return list     Array of `WorkflowMetadata` structs whose length is
   ///                  `min(limit, total-start)`.
   function getWorkflowMetadataListByDON(
@@ -1331,50 +1318,41 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     uint256 limit
   ) external view returns (WorkflowMetadata[] memory list) {
     uint256 total = s_allDONRids[donLabel].length();
-    (uint256 offset, uint256 count) = _getPageBounds(total, start, limit);
+    uint256 count = _getPageCount(total, start, limit);
 
     list = new WorkflowMetadata[](count);
     for (uint256 i = 0; i < count; ++i) {
-      bytes32 rid = s_allDONRids[donLabel].at(offset + i);
+      bytes32 rid = s_allDONRids[donLabel].at(start + i);
       list[i] = s_workflows[rid];
     }
 
     return list;
   }
 
-  /// @dev  Compute a safe `[offset … offset+count)` window over `total` items for pagination.
-  ///       - If `start >= total`, returns `(total, 0)`
-  ///       - If `limit == 0` or `limit > MAX_PAGINATION_LIMIT`, clamps to `MAX_PAGINATION_LIMIT`
-  /// @return offset The (possibly‐clamped) start index
-  /// @return count  How many items fit before hitting `total`
-  function _getPageBounds(
-    uint256 total,
-    uint256 start,
-    uint256 limit
-  ) internal pure returns (uint256 offset, uint256 count) {
+  /// @dev Calculates how many items fit into a page slice.
+  ///      - If `start >= total`, returns `0` to indicate an empty slice.
+  ///      - Otherwise, clamps the page end to `total` when `start + limit` exceeds it.
+  /// @param total The total number of items available.
+  /// @param start The zero-based index at which the page begins.
+  /// @param limit The maximum number of items to include in the page.
+  /// @return count The number of items from `start` before hitting `total` (zero if `start >= total`).
+  function _getPageCount(uint256 total, uint256 start, uint256 limit) internal pure returns (uint256 count) {
     if (start >= total) {
-      return (total, 0);
+      return 0;
     }
-    if (limit == 0 || limit > MAX_PAGINATION_LIMIT) {
-      limit = MAX_PAGINATION_LIMIT;
-    }
-    uint256 end = start + limit;
-    if (end > total) {
-      end = total;
-    }
-    return (start, end - start);
+    uint256 end = start + limit > total ? total : start + limit;
+    return end - start;
   }
 
   function _enforceLimits(address owner, bytes32 donHash, string memory donLabel) internal view {
     uint32 donLimit = s_cfg.donLimit[donHash].value;
     uint32 userLimit = donLimit;
+    // Set the user limit if it exist. Otherwuse use the DON limit. Since the user limit is
+    // bounded by the DON limit, we don't need to check the donLimit again.
     if (s_cfg.userDONOverride[owner][donHash].enabled) {
       userLimit = s_cfg.userDONOverride[owner][donHash].value;
     }
 
-    if (s_activeDONWorkflowRids[donHash].length() > donLimit) {
-      revert MaxWorkflowsPerDONExceeded(donLabel);
-    }
     if (s_userDONCount[owner][donHash] > userLimit) {
       revert MaxWorkflowsPerUserDONExceeded(owner, donLabel);
     }

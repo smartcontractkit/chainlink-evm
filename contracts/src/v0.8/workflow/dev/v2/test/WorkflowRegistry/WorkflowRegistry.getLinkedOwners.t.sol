@@ -31,8 +31,15 @@ contract WorkflowRegistry_getLinkedOwners is WorkflowRegistrySetup {
     _;
   }
 
-  // givenThatStartIndexIsZero
-  function test_getLinkedOwners_GivenThatBatchSizeIsLessThanTotalLinkedOwners() external whenThereAreLinkedOwners {
+  modifier givenThatStartIndexIsZero() {
+    _;
+  }
+
+  function test_getLinkedOwners_GivenThatBatchSizeIsLessThanTotalLinkedOwners()
+    external
+    whenThereAreLinkedOwners
+    givenThatStartIndexIsZero
+  {
     // it should return the first batch of linked owners
     address[] memory owners = s_registry.getLinkedOwners(0, 1);
     assertEq(owners.length, 1, "Expected one linked owner");
@@ -44,8 +51,11 @@ contract WorkflowRegistry_getLinkedOwners is WorkflowRegistrySetup {
     assertEq(owners[1], s_owner2, "Expected second linked owner to be s_owner2");
   }
 
-  // givenThatStartIndexIsZero
-  function test_getLinkedOwners_GivenThatBatchSizeIsEqualToTotalLinkedOwners() external whenThereAreLinkedOwners {
+  function test_getLinkedOwners_GivenThatBatchSizeIsEqualToTotalLinkedOwners()
+    external
+    whenThereAreLinkedOwners
+    givenThatStartIndexIsZero
+  {
     // it should return all linked owners
     address[] memory owners = s_registry.getLinkedOwners(0, 5);
     assertEq(owners.length, 5, "Expected five linked owners");
@@ -56,8 +66,11 @@ contract WorkflowRegistry_getLinkedOwners is WorkflowRegistrySetup {
     assertEq(owners[4], s_owner5, "Expected fifth linked owner to be s_owner5");
   }
 
-  // givenThatStartIndexIsZero
-  function test_getLinkedOwners_GivenThatBatchSizeIsGreaterThanTotalLinkedOwners() external whenThereAreLinkedOwners {
+  function test_getLinkedOwners_GivenThatBatchSizeIsGreaterThanTotalLinkedOwners()
+    external
+    whenThereAreLinkedOwners
+    givenThatStartIndexIsZero
+  {
     // it should return the list of all linked owners
     address[] memory owners = s_registry.getLinkedOwners(0, 10);
     assertEq(owners.length, 5, "Expected five linked owners");
@@ -68,8 +81,15 @@ contract WorkflowRegistry_getLinkedOwners is WorkflowRegistrySetup {
     assertEq(owners[4], s_owner5, "Expected fifth linked owner to be s_owner5");
   }
 
-  // givenThatStartIndexIsGreaterThanZeroAndLessThanTotalLinkedOwners
-  function test_getLinkedOwners_WhenBatchSizeIsLessThanTotalLinkedOwners() external whenThereAreLinkedOwners {
+  modifier whenTheStartIndexIsGreaterThanZeroAndLessThanTotalLinkedOwners() {
+    _;
+  }
+
+  function test_getLinkedOwners_WhenBatchSizeIsLessThanTotalLinkedOwners()
+    external
+    whenThereAreLinkedOwners
+    whenTheStartIndexIsGreaterThanZeroAndLessThanTotalLinkedOwners
+  {
     // it should return some linked owners
     address[] memory owners = s_registry.getLinkedOwners(1, 2);
     assertEq(owners.length, 2, "Expected two linked owners");
@@ -83,8 +103,11 @@ contract WorkflowRegistry_getLinkedOwners is WorkflowRegistrySetup {
     assertEq(owners[2], s_owner5, "Expected third linked owner to be s_owner5");
   }
 
-  // givenThatStartIndexIsGreaterThanZeroAndLessThanTotalLinkedOwners
-  function test_getLinkedOwners_WhenBatchSizeIsEqualToTotalLinkedOwners() external whenThereAreLinkedOwners {
+  function test_getLinkedOwners_WhenBatchSizeIsEqualToTotalLinkedOwners()
+    external
+    whenThereAreLinkedOwners
+    whenTheStartIndexIsGreaterThanZeroAndLessThanTotalLinkedOwners
+  {
     // it should return complete list of linked owners
     address[] memory owners = s_registry.getLinkedOwners(1, 5);
     assertEq(owners.length, 4, "Expected four linked owners");
@@ -94,8 +117,11 @@ contract WorkflowRegistry_getLinkedOwners is WorkflowRegistrySetup {
     assertEq(owners[3], s_owner5, "Expected fourth linked owner to be s_owner5");
   }
 
-  // givenThatStartIndexIsGreaterThanZeroAndLessThanTotalLinkedOwners
-  function test_getLinkedOwners_WhenBatchSizeIsGreaterThanTotalLinkedOwners() external whenThereAreLinkedOwners {
+  function test_getLinkedOwners_WhenBatchSizeIsGreaterThanTotalLinkedOwners()
+    external
+    whenThereAreLinkedOwners
+    whenTheStartIndexIsGreaterThanZeroAndLessThanTotalLinkedOwners
+  {
     // it should return entire list of linked owners
     address[] memory owners = s_registry.getLinkedOwners(1, 10);
     assertEq(owners.length, 4, "Expected four linked owners");
