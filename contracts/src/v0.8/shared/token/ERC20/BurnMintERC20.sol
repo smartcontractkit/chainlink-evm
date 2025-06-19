@@ -99,7 +99,7 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
   /// @inheritdoc ERC20Burnable
   /// @dev Uses OZ ERC20 _burn to disallow burning from address(0).
   /// @dev Decreases the total supply.
-  function burn(uint256 amount) public override(IBurnMintERC20, ERC20Burnable) onlyRole(BURNER_ROLE) {
+  function burn(uint256 amount) public virtual override(IBurnMintERC20, ERC20Burnable) onlyRole(BURNER_ROLE) {
     super.burn(amount);
   }
 
@@ -116,7 +116,7 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
   function burnFrom(
     address account,
     uint256 amount
-  ) public override(IBurnMintERC20, ERC20Burnable) onlyRole(BURNER_ROLE) {
+  ) public virtual override(IBurnMintERC20, ERC20Burnable) onlyRole(BURNER_ROLE) {
     super.burnFrom(account, amount);
   }
 
@@ -124,7 +124,7 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
   /// @dev Uses OZ ERC20 _mint to disallow minting to address(0).
   /// @dev Disallows minting to address(this)
   /// @dev Increases the total supply.
-  function mint(address account, uint256 amount) external override onlyRole(MINTER_ROLE) {
+  function mint(address account, uint256 amount) external virtual override onlyRole(MINTER_ROLE) {
     if (account == address(this)) revert InvalidRecipient(account);
     if (i_maxSupply != 0 && totalSupply() + amount > i_maxSupply) revert MaxSupplyExceeded(totalSupply() + amount);
 
@@ -138,13 +138,13 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
   /// @notice grants both mint and burn roles to `burnAndMinter`.
   /// @dev calls public functions so this function does not require
   /// access controls. This is handled in the inner functions.
-  function grantMintAndBurnRoles(address burnAndMinter) external {
+  function grantMintAndBurnRoles(address burnAndMinter) external virtual {
     grantRole(MINTER_ROLE, burnAndMinter);
     grantRole(BURNER_ROLE, burnAndMinter);
   }
 
   /// @notice Returns the current CCIPAdmin
-  function getCCIPAdmin() external view returns (address) {
+  function getCCIPAdmin() external view virtual returns (address) {
     return s_ccipAdmin;
   }
 
@@ -152,7 +152,7 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
   /// @dev only the owner can call this function, NOT the current ccipAdmin, and 1-step ownership transfer is used.
   /// @param newAdmin The address to transfer the CCIPAdmin role to. Setting to address(0) is a valid way to revoke
   /// the role
-  function setCCIPAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
+  function setCCIPAdmin(address newAdmin) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
     address currentAdmin = s_ccipAdmin;
 
     s_ccipAdmin = newAdmin;
