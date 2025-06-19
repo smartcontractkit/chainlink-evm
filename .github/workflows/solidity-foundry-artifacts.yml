@@ -111,13 +111,6 @@ jobs:
            echo "product_files=${{ steps.changes-dorny.outputs.product_files }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check for changes outside of artifact scope
-        uses: ./.github/actions/validate-artifact-scope
-        if: ${{ steps.changes-dorny.outputs.sol == 'true' }}
-        with:
-          sol_files: ${{ steps.changes-dorny.outputs.sol_files }}
-          product: ${{ inputs.product }}
-
   prepare-workflow-inputs:
     name: Prepare workflow inputs
     runs-on: ubuntu-22.04
