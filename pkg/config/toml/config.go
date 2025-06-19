@@ -642,9 +642,12 @@ func (a *Automation) setFrom(f *Automation) {
 type Workflow = WriteCapability
 
 type WriteCapability struct {
-	FromAddress      *types.EIP55Address `toml:",omitempty"`
-	ForwarderAddress *types.EIP55Address `toml:",omitempty"`
-	GasLimitDefault  *uint64
+	FromAddress       *types.EIP55Address            `toml:",omitempty"`
+	ForwarderAddress  *types.EIP55Address            `toml:",omitempty"`
+	GasLimitDefault   *uint64                        `toml:",omitempty"`
+	TxAcceptanceState *commontypes.TransactionStatus `toml:",omitempty"`
+	PollPeriod        *commonconfig.Duration         `toml:",omitempty"`
+	AcceptanceTimeout *commonconfig.Duration         `toml:",omitempty"`
 }
 
 func (m *WriteCapability) setFrom(f *WriteCapability) {
@@ -657,6 +660,15 @@ func (m *WriteCapability) setFrom(f *WriteCapability) {
 
 	if v := f.GasLimitDefault; v != nil {
 		m.GasLimitDefault = v
+	}
+	if v := f.TxAcceptanceState; v != nil {
+		m.TxAcceptanceState = v
+	}
+	if v := f.PollPeriod; v != nil {
+		m.PollPeriod = v
+	}
+	if v := f.AcceptanceTimeout; v != nil {
+		m.AcceptanceTimeout = v
 	}
 }
 

@@ -19,6 +19,8 @@ import (
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/config/configtest"
+	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
@@ -81,9 +83,9 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.OperatorFactoryAddress = asEIP55Address(t, "0xababab12341234aC8a1b4E58707D29258707D292")
 	addr, err := types.NewEIP55Address("0x2a3e23c6f242F5345320814aC8a1b4E58707D292")
 	require.NoError(t, err)
-	unknown.Workflow.FromAddress = &addr
-	unknown.Workflow.ForwarderAddress = &addr
-	unknown.Workflow.GasLimitDefault = ptr(uint64(400000))
+	unknown.WriteCapability.FromAddress = &addr
+	unknown.WriteCapability.ForwarderAddress = &addr
+	unknown.WriteCapability.GasLimitDefault = ptr(uint64(400000))
 	unknown.Transactions.TransactionManagerV2.BlockTime = new(config.Duration)
 	unknown.Transactions.TransactionManagerV2.CustomURL = new(config.URL)
 	unknown.Transactions.TransactionManagerV2.DualBroadcast = ptr(false)
@@ -124,18 +126,25 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		MissingBlocks:                     ptr("missing"),
 	}
 
-	configtest.AssertFieldsNotNil(t, unknown)
+	n, err := configtest.CheckFieldsNotNil(t, unknown)
+	assertOnlyNilWorkflowConfig(t, n, err)
 }
 
+func assertOnlyNilWorkflowConfig(t *testing.T, n int, err error) {
+	// 6 missing fields, corresponding the deprecated Workflow struct
+	t.Helper()
+	require.Equal(t, 6, n)
+	assert.Contains(t, err.Error(), "Workflow.FromAddress: nil")
+	assert.Contains(t, err.Error(), "Workflow.ForwarderAddress: nil")
+	assert.Contains(t, err.Error(), "Workflow.GasLimitDefault: nil")
+	assert.Contains(t, err.Error(), "Workflow.TxAcceptanceState: nil")
+	assert.Contains(t, err.Error(), "Workflow.PollPeriod: nil")
+	assert.Contains(t, err.Error(), "Workflow.AcceptanceTimeout: nil")
+}
 func TestDocs(t *testing.T) {
 	t.Run("complete", func(t *testing.T) {
-		n, err := configtest.DocsTOMLNilFields[EVMConfig](t, docsTOML)
-		// three missing fields, corresponding the deprecated Workflow struct
-		require.Equal(t, 3, n)
-		assert.Contains(t, err.Error(), "Workflow.FromAddress: nil")
-		assert.Contains(t, err.Error(), "Workflow.ForwarderAddress: nil")
-		assert.Contains(t, err.Error(), "Workflow.GasLimitDefault: nil")
-
+		n, err := configtest.CheckDocsTOMLComplete[EVMConfig](t, docsTOML)
+		assertOnlyNilWorkflowConfig(t, n, err)
 	})
 
 	t.Run("aligned", func(t *testing.T) {
@@ -180,9 +189,15 @@ func TestDocs(t *testing.T) {
 		require.Empty(t, docDefaults.Workflow.FromAddress)
 		require.Empty(t, docDefaults.Workflow.ForwarderAddress)
 		require.Empty(t, docDefaults.Workflow.GasLimitDefault)
+		require.Empty(t, docDefaults.Workflow.TxAcceptanceState)
+		require.Empty(t, docDefaults.Workflow.PollPeriod)
+		require.Empty(t, docDefaults.Workflow.AcceptanceTimeout)
 		docDefaults.Workflow.FromAddress = nil
 		docDefaults.Workflow.ForwarderAddress = nil
 		docDefaults.Workflow.GasLimitDefault = nil
+		docDefaults.Workflow.TxAcceptanceState = nil
+		docDefaults.Workflow.PollPeriod = nil
+		docDefaults.Workflow.AcceptanceTimeout = nil
 
 		gasLimitDefault := uint64(400_000)
 		require.Empty(t, docDefaults.WriteCapability.FromAddress)
@@ -384,9 +399,12 @@ var fullConfig = EVMConfig{
 			},
 		},
 		WriteCapability: WriteCapability{
-			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
-			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
-			GasLimitDefault:  ptr[uint64](400000),
+			FromAddress:       ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress:  ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:   ptr[uint64](400000),
+			TxAcceptanceState: ptr(commontypes.Unconfirmed),
+			PollPeriod:        config.MustNewDuration(2 * time.Second),
+			AcceptanceTimeout: config.MustNewDuration(30 * time.Second),
 		},
 	},
 	Nodes: EVMNodes{
@@ -458,39 +476,6 @@ func TestTOMLConfig_SetFrom(t *testing.T) {
 
 func ptr[T any](t T) *T {
 	return &t
-}
-
-// Test marshaling with both field names
-func TestWorkflowWriteCapabilityMarshalAlias(t *testing.T) {
-	t.Parallel()
-
-	// Create a config with Workflow values
-	config := EVMConfig{
-		ChainID: big.NewI(42),
-		Chain: Chain{
-			Workflow: Workflow{
-				FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
-				ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
-				GasLimitDefault:  ptr[uint64](400000),
-			},
-		},
-	}
-
-	// Marshal to TOML
-	b, err := toml.Marshal(config)
-	require.NoError(t, err)
-
-	tomlContent := string(b)
-
-	// Check that it uses the preferred section name (the first one in the tag)
-	// The fix to the TOML tag would make "Workflow" the preferred name
-	assert.Contains(t, tomlContent, "[Chain.Workflow]", "Should marshal using the preferred section name")
-
-	// Parse again to verify round-trip
-	var parsedConfig EVMConfig
-	require.NoError(t, toml.Unmarshal(b, &parsedConfig))
-
-	assert.Equal(t, config, parsedConfig, "Config should be the same after marshal/unmarshal round trip")
 }
 
 func assertTOML[T any](t *testing.T, fallback, docs T) {
