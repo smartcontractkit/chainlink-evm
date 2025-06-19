@@ -21,22 +21,6 @@ compileContract() {
   $command
 }
 
-compileContract automation-compile-12 upkeeps/CronUpkeepFactory
-compileContract automation-compile-12 v1_2/KeeperRegistrar1_2
-compileContract automation-compile-12 v1_2/KeeperRegistry1_2
-compileContract automation-compile-12 v1_2/KeeperRegistryCheckUpkeepGasUsageWrapper1_2
-compileContract automation-compile-12 v1_3/KeeperRegistry1_3
-compileContract automation-compile-12 v1_3/KeeperRegistryLogic1_3
-compileContract automation-compile-12 v2_0/KeeperRegistrar2_0
-compileContract automation-compile-12 v2_0/KeeperRegistry2_0
-compileContract automation-compile-12 v2_0/KeeperRegistryLogic2_0
-compileContract automation-compile-12 UpkeepTranscoder
-compileContract automation-compile-12 mocks/MockAggregatorProxy
-compileContract automation-compile-12 testhelpers/LogUpkeepCounter
-compileContract automation-compile-12 testhelpers/SimpleLogUpkeepCounter
-compileContract automation-compile-12 mocks/KeeperRegistrar1_2Mock
-compileContract automation-compile-12 mocks/KeeperRegistryCheckUpkeepGasUsageWrapper1_2Mock
-
 compileContract automation-compile-21 v2_1/AutomationRegistrar2_1
 compileContract automation-compile-21 v2_1/KeeperRegistry2_1
 compileContract automation-compile-21 v2_1/KeeperRegistryLogicA2_1

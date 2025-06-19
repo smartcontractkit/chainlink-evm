@@ -2,22 +2,10 @@
 ./**/*.t.sol
 
 # Ignore frozen Automation code
-./src/v0.8/automation/v1_2
-./src/v0.8/automation/interfaces/v1_2
-./src/v0.8/automation/v1_3
-./src/v0.8/automation/interfaces/v1_3
-./src/v0.8/automation/v2_0
-./src/v0.8/automation/interfaces/v2_0
 ./src/v0.8/automation/v2_1
 ./src/v0.8/automation/interfaces/v2_1/
 ./src/v0.8/automation/interfaces/MigratableKeeperRegistryInterface.sol
-./src/v0.8/automation/upkeeps/UpkeepBalanceMonitor.sol
-./src/v0.8/automation/upkeeps/LinkAvailableBalanceMonitor.sol
-./src/v0.8/automation/upkeeps/EthBalanceMonitor.sol
-./src/v0.8/automation/upkeeps/ERC20BalanceMonitor.sol
-./src/v0.8/automation/upkeeps/CronUpkeepFactory.sol
-./src/v0.8/automation/upkeeps/CronUpkeepDelegate.sol
-./src/v0.8/automation/upkeeps/CronUpkeep.sol
+./src/v0.8/automation/upkeeps
 ./src/v0.8/automation/libraries/internal/Cron.sol
 ./src/v0.8/automation/AutomationForwarder.sol
 ./src/v0.8/automation/AutomationForwarderLogic.sol
