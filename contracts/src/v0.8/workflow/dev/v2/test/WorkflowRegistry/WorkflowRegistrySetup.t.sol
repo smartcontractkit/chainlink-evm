@@ -63,7 +63,7 @@ contract WorkflowRegistrySetup is Test {
     address owner
   ) internal {
     (bytes32 ownerProof, bytes memory sig) = _getLinkProofSignature(owner);
-    vm.prank(s_owner);
+    vm.prank(owner);
     s_registry.linkOwner(s_validityTimestamp, ownerProof, sig);
   }
 
@@ -93,7 +93,15 @@ contract WorkflowRegistrySetup is Test {
     return (ownerProof, abi.encodePacked(r, s, v));
   }
 
-  //
+  // helper to upsert one test workflow
+  function _upsertTestWorklow(WorkflowRegistry.WorkflowStatus status, bool keepAlive, address owner) internal {
+    vm.startPrank(owner);
+    s_registry.upsertWorkflow(
+      s_workflowName, s_tag, s_workflowId, status, s_donLabel, s_binaryUrl, s_configUrl, s_attributes, keepAlive
+    );
+  }
+
+  // helper to upsert 5 test workflows
   function _upsertTestWorklows(WorkflowRegistry.WorkflowStatus status, bool keepAlive, address owner) internal {
     // Workflow 1: Price Oracle
     bytes32 workflowId1 = keccak256("workflow1");

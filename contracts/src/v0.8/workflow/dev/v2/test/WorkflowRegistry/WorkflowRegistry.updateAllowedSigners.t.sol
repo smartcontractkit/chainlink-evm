@@ -2,8 +2,9 @@
 pragma solidity 0.8.26;
 
 import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
+
 import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
-import {Test} from "forge-std/Test.sol";
+import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
 contract WorkflowRegistry_updateAllowedSigners is WorkflowRegistrySetup {
   function setUp() public override {
