@@ -344,7 +344,7 @@ jobs:
           python-version: "3.8"
 
       - name: Install Slither
-        uses: smartcontractkit/.github/actions/setup-slither@b6e37806737eef87e8c9137ceeb23ef0bff8b1db # validate-solidity-artifacts@0.1.0
+        uses: smartcontractkit/.github/actions/setup-slither@b6e37806737eef87e8c9137ceeb23ef0bff8b1db
 
       - name: Run Slither
         shell: bash
