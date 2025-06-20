@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import {AutomationRegistryBase2_3} from "./AutomationRegistryBase2_3.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.7.3/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
+import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
 import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
 import {IChainModule} from "../interfaces/IChainModule.sol";
 import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";

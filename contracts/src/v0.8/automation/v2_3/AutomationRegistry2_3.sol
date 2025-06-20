@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {EnumerableSet} from "@openzeppelin/contracts@4.7.3/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
+import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
 import {AutomationRegistryBase2_3} from "./AutomationRegistryBase2_3.sol";
 import {AutomationRegistryLogicA2_3} from "./AutomationRegistryLogicA2_3.sol";
 import {AutomationRegistryLogicC2_3} from "./AutomationRegistryLogicC2_3.sol";
