@@ -40,6 +40,7 @@ compileContract token/ERC677/ERC677
 compileContract token/ERC677/BurnMintERC677
 compileContract token/ERC677/LinkToken
 compileContract token/ERC20/BurnMintERC20
+compileContract test/helpers/BurnMintERC20WithDrip
 compileContract test/helpers/ChainReaderTester
 compileContract test/helpers/LogEmitter
 compileContract test/helpers/VRFLogEmitter

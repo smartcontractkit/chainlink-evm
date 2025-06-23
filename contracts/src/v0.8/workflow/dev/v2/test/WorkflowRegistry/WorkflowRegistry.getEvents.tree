@@ -1,0 +1,13 @@
+WorkflowRegistry.getEvents
+├── when no events have been recorded
+│   └── it should returns an empty array
+└── when there is more than 1 event
+    ├── when start is greater than number of events
+    │   └── it should return an empty array
+    └── when start is less than number of events N
+        ├── when limit is 0
+        │   └── it should return an empty array
+        ├── when 0 is less than limit which is less than N minus start
+        │   └── it should return exactly limit - start number of events
+        └── when limit is greater than N minus start
+            └── it should return the last N – start events beginning at index start

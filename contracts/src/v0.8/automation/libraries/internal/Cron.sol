@@ -31,7 +31,7 @@
     * no words like JAN / FEB or MON / TUES
 */
 
-pragma solidity 0.8.6;
+pragma solidity ^0.8.6;
 
 import "../../../vendor/Strings.sol";
 import "../../../vendor/DateTime.sol";

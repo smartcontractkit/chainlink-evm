@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import {AutomationRegistryBase2_2} from "./AutomationRegistryBase2_2.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.7.3/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
+import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
 import {UpkeepFormat} from "../interfaces/UpkeepTranscoderInterface.sol";
 import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
 import {IChainModule} from "../interfaces/IChainModule.sol";

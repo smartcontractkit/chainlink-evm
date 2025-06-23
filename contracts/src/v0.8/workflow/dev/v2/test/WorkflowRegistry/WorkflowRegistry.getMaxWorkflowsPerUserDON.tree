@@ -1,0 +1,8 @@
+WorkflowRegistry.getMaxWorkflowsPerUserDON
+├── When no user override exists for user DON label
+│   ├── When global DON limit is unset 
+│   │   └── It should return 0
+│   └── When global DON limit is set to L
+│       └── It should return L
+└── When a user override exists and is enabled
+    └── It should return the value

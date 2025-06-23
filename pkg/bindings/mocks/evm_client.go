@@ -122,55 +122,6 @@ func (_c *EVMClient_FilterLogs_Call) RunAndReturn(run func(sdk.Runtime, *evm.Fil
 	return _c
 }
 
-// QueryTrackedLogs provides a mock function with given fields: _a0, _a1
-func (_m *EVMClient) QueryTrackedLogs(_a0 sdk.Runtime, _a1 *evm.QueryTrackedLogsRequest) sdk.Promise[*evm.QueryTrackedLogsReply] {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for QueryTrackedLogs")
-	}
-
-	var r0 sdk.Promise[*evm.QueryTrackedLogsReply]
-	if rf, ok := ret.Get(0).(func(sdk.Runtime, *evm.QueryTrackedLogsRequest) sdk.Promise[*evm.QueryTrackedLogsReply]); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Promise[*evm.QueryTrackedLogsReply])
-		}
-	}
-
-	return r0
-}
-
-// EVMClient_QueryTrackedLogs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryTrackedLogs'
-type EVMClient_QueryTrackedLogs_Call struct {
-	*mock.Call
-}
-
-// QueryTrackedLogs is a helper method to define mock.On call
-//   - _a0 sdk.Runtime
-//   - _a1 *evm.QueryTrackedLogsRequest
-func (_e *EVMClient_Expecter) QueryTrackedLogs(_a0 interface{}, _a1 interface{}) *EVMClient_QueryTrackedLogs_Call {
-	return &EVMClient_QueryTrackedLogs_Call{Call: _e.mock.On("QueryTrackedLogs", _a0, _a1)}
-}
-
-func (_c *EVMClient_QueryTrackedLogs_Call) Run(run func(_a0 sdk.Runtime, _a1 *evm.QueryTrackedLogsRequest)) *EVMClient_QueryTrackedLogs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(sdk.Runtime), args[1].(*evm.QueryTrackedLogsRequest))
-	})
-	return _c
-}
-
-func (_c *EVMClient_QueryTrackedLogs_Call) Return(_a0 sdk.Promise[*evm.QueryTrackedLogsReply]) *EVMClient_QueryTrackedLogs_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *EVMClient_QueryTrackedLogs_Call) RunAndReturn(run func(sdk.Runtime, *evm.QueryTrackedLogsRequest) sdk.Promise[*evm.QueryTrackedLogsReply]) *EVMClient_QueryTrackedLogs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RegisterLogTracking provides a mock function with given fields: _a0, _a1
 func (_m *EVMClient) RegisterLogTracking(_a0 sdk.Runtime, _a1 *evm.RegisterLogTrackingRequest) {
 	_m.Called(_a0, _a1)

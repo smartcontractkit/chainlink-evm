@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 
@@ -13,7 +14,7 @@ contract CapabilitiesRegistry_RemoveNodeOperatorsTest is BaseTest {
 
   function test_RevertWhen_CalledByNonOwner() public {
     changePrank(STRANGER);
-    vm.expectRevert("Only callable by owner");
+    vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector));
     uint32[] memory nodeOperatorsToRemove = new uint32[](2);
     nodeOperatorsToRemove[1] = 1;
     s_CapabilitiesRegistry.removeNodeOperators(nodeOperatorsToRemove);

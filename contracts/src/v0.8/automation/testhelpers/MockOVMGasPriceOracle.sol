@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.6;
+pragma solidity ^0.8.19;
 
 contract MockOVMGasPriceOracle {
   function getL1Fee(bytes memory) public pure returns (uint256) {

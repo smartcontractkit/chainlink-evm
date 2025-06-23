@@ -8,10 +8,10 @@ import {Constants} from "../Constants.t.sol";
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Constants {
-  bytes32 internal s_capabilityWithConfigurationContractId;
+  string internal s_capabilityWithConfigurationContractId;
 
   constructor(
-    bytes32 capabilityWithConfigContractId
+    string memory capabilityWithConfigContractId
   ) {
     s_capabilityWithConfigurationContractId = capabilityWithConfigContractId;
   }
@@ -24,9 +24,9 @@ contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Co
 
   function beforeCapabilityConfigSet(bytes32[] calldata, bytes calldata, uint64, uint32) external {
     CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](2);
-    bytes32[] memory hashedCapabilityIds = new bytes32[](1);
+    string[] memory capabilityIds = new string[](1);
 
-    hashedCapabilityIds[0] = s_capabilityWithConfigurationContractId;
+    capabilityIds[0] = s_capabilityWithConfigurationContractId;
 
     // Set node one's signer to another address
     nodes[0] = CapabilitiesRegistry.NodeParams({
@@ -34,7 +34,7 @@ contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Co
       p2pId: P2P_ID,
       signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
-      hashedCapabilityIds: hashedCapabilityIds
+      capabilityIds: capabilityIds
     });
 
     nodes[1] = CapabilitiesRegistry.NodeParams({
@@ -42,7 +42,7 @@ contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Co
       p2pId: P2P_ID_THREE,
       signer: NODE_OPERATOR_THREE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_THREE,
-      hashedCapabilityIds: hashedCapabilityIds
+      capabilityIds: capabilityIds
     });
 
     CapabilitiesRegistry(msg.sender).updateNodes(nodes);

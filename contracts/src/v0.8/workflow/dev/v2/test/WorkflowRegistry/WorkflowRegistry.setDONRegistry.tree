@@ -1,0 +1,10 @@
+WorkflowRegistry.setDONRegistry
+├── When the caller is NOT the contract owner
+│   └── It should revert with caller is not the owner
+└── When the caller IS the contract owner
+    ├── When there are no existing registries
+    │   └── It should add to s_donRegistry with the new pair and emit DONRegistryUpdated
+    ├── When both registry and chainSelector differ from the current values
+    │   └── It should overwrite s_donRegistry with the new pair and emit DONRegistryUpdated
+    └── When both registry and chainSelector are the same as current
+        └── It should do nothing

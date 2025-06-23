@@ -41,6 +41,10 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/monitor:
     interfaces:
       BalanceMonitor:
+
+  github.com/smartcontractkit/chainlink-evm/pkg/writetarget:
+    interfaces:
+      ProductSpecificProcessor:
   github.com/smartcontractkit/chainlink-framework/multinode:
     config:
       dir: client/clienttest
