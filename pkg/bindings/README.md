@@ -1,6 +1,6 @@
 # CRE Generated Bindings (MVP)
 
-This project provides a forked version of `abigen` (from go-ethereum)
+This project utilizes a [forked](https://github.com/pablolagreca/go-ethereum/tree/abigen-configurable-template) version of `abigen` (from go-ethereum)
 that lets you generate Go bindings for your smart contracts using a custom template.
 
 ## Prerequisites

@@ -15,8 +15,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+
 	evmcappb "github.com/smartcontractkit/chainlink-common/pkg/capabilities/v2/chain-capabilities/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/chains/evm"
+	chain_common "github.com/smartcontractkit/chainlink-common/pkg/loop/chain-common"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
@@ -100,8 +102,8 @@ type DataStorage struct {
 	Address   []byte
 	Options   *bindings.ContractInitOptions
 	ABI       *abi.ABI
-	evmClient evmcappb.Client
-	codec     DataStorageCodec
+	evmClient bindings.EVMClient
+	Codec     DataStorageCodec
 }
 
 type DataStorageCodec interface {
@@ -121,7 +123,7 @@ type DataStorageCodec interface {
 }
 
 func NewDataStorage(
-	client evmcappb.Client,
+	client bindings.EVMClient,
 	address []byte,
 	options *bindings.ContractInitOptions,
 ) (*DataStorage, error) {
@@ -138,7 +140,7 @@ func NewDataStorage(
 		Options:   options,
 		ABI:       &parsed,
 		evmClient: client,
-		codec:     codec,
+		Codec:     codec,
 	}, nil
 }
 
@@ -195,7 +197,21 @@ func (c *dataStorageCodecImpl) DecodeUpdateDataMethodOutput(data []byte) (string
 }
 
 func (c *dataStorageCodecImpl) EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error) {
-	return c.abi.Pack("dataStorageUserData", in)
+	tupleType, err := abi.NewType(
+		"tuple", "",
+		[]abi.ArgumentMarshaling{
+			{Name: "key", Type: "string"},
+			{Name: "value", Type: "string"},
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tuple type for DataStorageUserData: %w", err)
+	}
+	args := abi.Arguments{
+		{Name: "dataStorageUserData", Type: tupleType},
+	}
+
+	return args.Pack(in)
 }
 
 func (c *dataStorageCodecImpl) AccessLoggedLogHash() []byte {
@@ -259,7 +275,7 @@ func (c DataStorage) ReadData(
 	args ReadDataInput,
 	options *bindings.ReadOptions,
 ) (sdk.Promise[*evm.CallContractReply], error) {
-	calldata, err := c.codec.EncodeReadDataMethodCall(args)
+	calldata, err := c.Codec.EncodeReadDataMethodCall(args)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +293,7 @@ func (c DataStorage) WriteReportDataStorageUserData(
 	input DataStorageUserData,
 	gasConfig *evmcappb.GasConfig,
 ) (sdk.Promise[*evmcappb.WriteReportReply], error) {
-	encoded, err := c.codec.EncodeDataStorageUserDataStruct(input)
+	encoded, err := c.Codec.EncodeDataStorageUserDataStruct(input)
 	if err != nil {
 		return nil, err
 	}
@@ -330,10 +346,8 @@ func (c *DataStorage) DecodeDataNotFoundError(data []byte) (*DataNotFound, error
 
 func (c *DataStorage) UnpackError(data []byte) (any, error) {
 	switch common.Bytes2Hex(data[:4]) {
-
-	case common.Bytes2Hex(c.ABI.Errors["DataNotFound"].ID.Bytes()):
+	case common.Bytes2Hex(c.ABI.Errors["DataNotFound"].ID.Bytes()[:4]):
 		return c.DecodeDataNotFoundError(data)
-
 	default:
 		return nil, errors.New("unknown error selector")
 	}
@@ -350,7 +364,7 @@ func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, optio
 		Filter: &evm.LPFilter{
 			Name:          "AccessLogged-" + common.Bytes2Hex(c.Address),
 			Addresses:     [][]byte{c.Address},
-			EventSigs:     [][]byte{c.codec.AccessLoggedLogHash()},
+			EventSigs:     [][]byte{c.Codec.AccessLoggedLogHash()},
 			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
 			LogsPerBlock:  options.LogsPerBlock,
@@ -368,13 +382,21 @@ func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime sdk.Runtime) {
 }
 
 func (c *DataStorage) QueryTrackedLogsAccessLogged(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) sdk.Promise[*evm.QueryTrackedLogsReply] {
+	eventSig := c.Codec.AccessLoggedLogHash()
+	expressions := bindings.GetDefaultQueryExpressions(eventSig, c.Address)
+
+	// additional expressions from user
+	if options != nil && options.Expressions != nil {
+		expressions = append(expressions, options.Expressions...)
+	}
+
 	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
-		Expression: []*evm.Expression{
-			//TODO add proper expression
-			&evm.Expression{Evaluator: &evm.Expression_BooleanExpression{&evm.BooleanExpression{
-				Expression: []*evm.Expression{},
-			}}},
+		Expression: expressions,
+		LimitAndSort: &chain_common.LimitAndSort{
+			Limit:  options.Limit,
+			SortBy: options.SortBy,
 		},
+		ConfidenceLevel: chain_common.Confidence_Finalized,
 	})
 }
 
@@ -388,8 +410,9 @@ func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindi
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{
-				{Topic: [][]byte{c.codec.AccessLoggedLogHash()}},
-			}, BlockHash: options.BlockHash,
+				{Topic: [][]byte{c.Codec.AccessLoggedLogHash()}},
+			},
+			BlockHash: options.BlockHash,
 			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
 			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
@@ -402,7 +425,7 @@ func (c *DataStorage) RegisterLogTrackingDataStored(runtime sdk.Runtime, options
 		Filter: &evm.LPFilter{
 			Name:          "DataStored-" + common.Bytes2Hex(c.Address),
 			Addresses:     [][]byte{c.Address},
-			EventSigs:     [][]byte{c.codec.DataStoredLogHash()},
+			EventSigs:     [][]byte{c.Codec.DataStoredLogHash()},
 			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
 			LogsPerBlock:  options.LogsPerBlock,
@@ -420,13 +443,21 @@ func (c *DataStorage) UnregisterLogTrackingDataStored(runtime sdk.Runtime) {
 }
 
 func (c *DataStorage) QueryTrackedLogsDataStored(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) sdk.Promise[*evm.QueryTrackedLogsReply] {
+	eventSig := c.Codec.DataStoredLogHash()
+	expressions := bindings.GetDefaultQueryExpressions(eventSig, c.Address)
+
+	// additional expressions from user
+	if options != nil && options.Expressions != nil {
+		expressions = append(expressions, options.Expressions...)
+	}
+
 	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
-		Expression: []*evm.Expression{
-			//TODO add proper expression
-			&evm.Expression{Evaluator: &evm.Expression_BooleanExpression{&evm.BooleanExpression{
-				Expression: []*evm.Expression{},
-			}}},
+		Expression: expressions,
+		LimitAndSort: &chain_common.LimitAndSort{
+			Limit:  options.Limit,
+			SortBy: options.SortBy,
 		},
+		ConfidenceLevel: chain_common.Confidence_Finalized,
 	})
 }
 
@@ -440,12 +471,13 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{
-				{Topic: [][]byte{c.codec.DataStoredLogHash()}},
-			}, BlockHash: options.BlockHash,
+				{Topic: [][]byte{c.Codec.DataStoredLogHash()}},
+			},
+			BlockHash: options.BlockHash,
 			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
 			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
 	})
 }
 
-func getChainID(e evmcappb.Client) uint32 { panic("unimplemented") }
+func getChainID(e bindings.EVMClient) uint32 { panic("unimplemented") }

@@ -1,6 +1,7 @@
 package bindings
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -8,8 +9,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/compiler"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings/abigen"
 )
+
+//go:embed sourcecre.go.tpl
+var tpl string
 
 func GenerateBindings(
 	combinedJSONPath string, // path to combined-json, or ""
@@ -74,13 +79,6 @@ func GenerateBindings(
 	default:
 		return fmt.Errorf("must provide either combinedJSONPath or abiPath")
 	}
-
-	// Load default template
-	tplBytes, err := os.ReadFile("sourcecre.go.tpl")
-	if err != nil {
-		return fmt.Errorf("read template sourcecre.go.tpl: %w", err)
-	}
-	tpl := string(tplBytes)
 
 	// Generate w/ forked abigen
 	outSrc, err := abigen.BindV2(types, abis, bins, pkgName, libs, aliases, tpl)

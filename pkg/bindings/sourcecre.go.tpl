@@ -15,11 +15,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
+
 	evmcappb "github.com/smartcontractkit/chainlink-common/pkg/capabilities/v2/chain-capabilities/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/chains/evm"
+	chain_common "github.com/smartcontractkit/chainlink-common/pkg/loop/chain-common"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
+	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 )
 
 var (
@@ -85,8 +87,8 @@ type {{$contract.Type}} struct {
 	Address   []byte
 	Options   *bindings.ContractInitOptions
 	ABI       *abi.ABI
-	evmClient evmcappb.Client
-	codec     {{$contract.Type}}Codec
+	evmClient bindings.EVMClient
+	Codec     {{$contract.Type}}Codec
 }
 
 type {{$contract.Type}}Codec interface {
@@ -113,7 +115,7 @@ type {{$contract.Type}}Codec interface {
 }
 
 func New{{$contract.Type}}(
-	client evmcappb.Client,
+	client bindings.EVMClient,
 	address []byte,
 	options *bindings.ContractInitOptions,
 ) (*{{$contract.Type}}, error) {
@@ -130,7 +132,7 @@ func New{{$contract.Type}}(
 		Options:   options,
 		ABI:       &parsed,
 		evmClient: client,
-		codec:     codec,
+		Codec:     codec,
 	}, nil
 }
 
@@ -170,9 +172,23 @@ func (c *{{ decapitalise $contract.Type }}CodecImpl) Decode{{ $call.Normalized.N
 
 {{range $.Structs}}
 func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Name}}Struct(in {{.Name}}) ([]byte, error) {
-	return c.abi.Pack("{{decapitalise .Name}}", in)
+	tupleType, err := abi.NewType(
+        "tuple", "",
+        []abi.ArgumentMarshaling{
+			{{range $f := .Fields}}{Name: "{{ decapitalise $f.Name }}", Type: "{{ $f.Type }}"},
+			{{end}}
+        },
+    )
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tuple type for {{.Name}}: %w", err)
+	}
+	args := abi.Arguments{
+        {Name: "{{ decapitalise .Name }}", Type: tupleType},
+    }
+
+	return args.Pack(in)
 }
-{{end}}
+{{- end }}
 
 {{range $event := $contract.Events}}
 func (c *{{decapitalise $contract.Type}}CodecImpl) {{.Normalized.Name}}LogHash() []byte {
@@ -213,7 +229,7 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 	args {{$call.Normalized.Name}}Input,
 	options *bindings.ReadOptions,
 ) (sdk.Promise[*evm.CallContractReply], error) {
-	calldata, err := c.codec.Encode{{$call.Normalized.Name}}MethodCall(args)
+	calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall(args)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +251,7 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	input {{.Name}},
 	gasConfig *evmcappb.GasConfig,
 ) (sdk.Promise[*evmcappb.WriteReportReply], error) {
-	encoded, err := c.codec.Encode{{.Name}}Struct(input)
+	encoded, err := c.Codec.Encode{{.Name}}Struct(input)
 	if err != nil {
 		return nil, err
 	}
@@ -286,11 +302,9 @@ func (c *{{$contract.Type}}) Decode{{.Normalized.Name}}Error(data []byte) (*{{.N
 
 func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 	switch common.Bytes2Hex(data[:4]) {
-	{{range $error := $contract.Errors}}
-	case common.Bytes2Hex(c.ABI.Errors["{{$error.Original.Name}}"].ID.Bytes()):
+	{{range $error := $contract.Errors}}case common.Bytes2Hex(c.ABI.Errors["{{$error.Original.Name}}"].ID.Bytes()[:4]):
 		return c.Decode{{$error.Normalized.Name}}Error(data)
-	{{end}}
-	default:
+	{{end}}default:
 		return nil, errors.New("unknown error selector")
 	}
 }
@@ -311,7 +325,7 @@ func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk
 		Filter: &evm.LPFilter{
 			Name:      "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
 			Addresses: [][]byte{c.Address},
-			EventSigs: [][]byte{c.codec.{{.Normalized.Name}}LogHash()},
+			EventSigs: [][]byte{c.Codec.{{.Normalized.Name}}LogHash()},
 			MaxLogsKept: options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
 			LogsPerBlock: options.LogsPerBlock,
@@ -329,13 +343,21 @@ func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime s
 }
 
 func (c *{{$contract.Type}}) QueryTrackedLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) (sdk.Promise[*evm.QueryTrackedLogsReply]) {
+	eventSig := c.Codec.{{.Normalized.Name}}LogHash()
+	expressions := bindings.GetDefaultQueryExpressions(eventSig, c.Address)
+
+	// additional expressions from user
+	if options != nil && options.Expressions != nil {
+		expressions = append(expressions, options.Expressions...)
+	}
+
 	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
-		Expression: []*evm.Expression{
-			//TODO add proper expression
-			&evm.Expression{Evaluator: &evm.Expression_BooleanExpression{&evm.BooleanExpression{
-				Expression: []*evm.Expression{},
-			}}},
+		Expression: expressions,
+		LimitAndSort: &chain_common.LimitAndSort{
+			Limit:  options.Limit,
+			SortBy: options.SortBy,
 		},
+		ConfidenceLevel: chain_common.Confidence_Finalized,
 	})
 }
 
@@ -349,8 +371,9 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics:    []*evm.Topics{
-				{Topic:[][]byte{c.codec.{{.Normalized.Name}}LogHash()}},
-			},			BlockHash: options.BlockHash,
+				{Topic:[][]byte{c.Codec.{{.Normalized.Name}}LogHash()}},
+			},			
+			BlockHash: options.BlockHash,
 			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
 			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
@@ -360,4 +383,4 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 
 {{end}}
 
-func getChainID(e evmcappb.Client) uint32 { panic("unimplemented") }
+func getChainID(e bindings.EVMClient) uint32 { panic("unimplemented") }
