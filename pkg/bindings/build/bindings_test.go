@@ -13,7 +13,6 @@ import (
 
 	evmcappb "github.com/smartcontractkit/chainlink-common/pkg/capabilities/v2/chain-capabilities/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/chains/evm"
-	chain_common "github.com/smartcontractkit/chainlink-common/pkg/loop/chain-common"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
@@ -241,53 +240,6 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 
 	ds.RegisterLogTrackingAccessLogged(mocks.NewRuntime(t), &bindings.LogTrackingOptions{})
 	ds.UnregisterLogTrackingAccessLogged(mocks.NewRuntime(t))
-}
-
-// TODO: remove because it's out of scope
-func TestQueryTrackedLogs(t *testing.T) {
-	client := mocks.NewEVMClient(t)
-	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
-	require.NoError(t, err, "Failed to create DataStorage instance")
-
-	expLimit := &chain_common.Limit{
-		Count: 100,
-	}
-
-	expSort := []*chain_common.SortBy{
-		{
-			SortType: chain_common.SortType_SortTimestamp,
-		},
-	}
-
-	client.EXPECT().QueryTrackedLogs(mock.Anything, mock.Anything).Run(
-		func(_ sdk.Runtime, req *evm.QueryTrackedLogsRequest) {
-			require.Len(t, req.Expression, 2)
-			limit := req.LimitAndSort.Limit
-			sort := req.LimitAndSort.SortBy
-			require.Equal(t, expLimit, limit, "Limit should match expected value")
-			require.Equal(t, expSort, sort, "SortBy should match expected value")
-			require.Equal(t, chain_common.Confidence_Finalized, req.ConfidenceLevel)
-		}).Return(
-		sdk.NewBasicPromise(func() (*evm.QueryTrackedLogsReply, error) {
-			logs := []*evm.Log{
-				{
-					Address: ds.Address,
-					Topics:  [][]byte{ds.Codec.AccessLoggedLogHash()},
-					Data:    []byte("test log data"),
-				},
-			}
-			return &evm.QueryTrackedLogsReply{Logs: logs}, nil
-		})).Once()
-
-	reply := ds.QueryTrackedLogsAccessLogged(mocks.NewRuntime(t), &bindings.QueryTrackedLogsOptions{
-		Limit:  expLimit,
-		SortBy: expSort,
-	})
-	response, err := reply.Await()
-	require.NoError(t, err, "Awaiting QueryTrackedLogsAccessLogged reply should not return an error")
-	require.NotNil(t, response, "Response from QueryTrackedLogsAccessLogged should not be nil")
-	require.Len(t, response.Logs, 1, "Response should contain one log")
-	require.Equal(t, ds.Address, response.Logs[0].Address)
 }
 
 func TestFilterLogs(t *testing.T) {

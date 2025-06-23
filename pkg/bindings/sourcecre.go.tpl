@@ -18,7 +18,6 @@ import (
 
 	evmcappb "github.com/smartcontractkit/chainlink-common/pkg/capabilities/v2/chain-capabilities/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/chains/evm"
-	chain_common "github.com/smartcontractkit/chainlink-common/pkg/loop/chain-common"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
@@ -339,25 +338,6 @@ func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk
 func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
-	})
-}
-
-func (c *{{$contract.Type}}) QueryTrackedLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) (sdk.Promise[*evm.QueryTrackedLogsReply]) {
-	eventSig := c.Codec.{{.Normalized.Name}}LogHash()
-	expressions := bindings.GetDefaultQueryExpressions(eventSig, c.Address)
-
-	// additional expressions from user
-	if options != nil && options.Expressions != nil {
-		expressions = append(expressions, options.Expressions...)
-	}
-
-	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
-		Expression: expressions,
-		LimitAndSort: &chain_common.LimitAndSort{
-			Limit:  options.Limit,
-			SortBy: options.SortBy,
-		},
-		ConfidenceLevel: chain_common.Confidence_Finalized,
 	})
 }
 

@@ -18,7 +18,6 @@ import (
 
 	evmcappb "github.com/smartcontractkit/chainlink-common/pkg/capabilities/v2/chain-capabilities/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/chains/evm"
-	chain_common "github.com/smartcontractkit/chainlink-common/pkg/loop/chain-common"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
@@ -381,25 +380,6 @@ func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime sdk.Runtime) {
 	})
 }
 
-func (c *DataStorage) QueryTrackedLogsAccessLogged(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) sdk.Promise[*evm.QueryTrackedLogsReply] {
-	eventSig := c.Codec.AccessLoggedLogHash()
-	expressions := bindings.GetDefaultQueryExpressions(eventSig, c.Address)
-
-	// additional expressions from user
-	if options != nil && options.Expressions != nil {
-		expressions = append(expressions, options.Expressions...)
-	}
-
-	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
-		Expression: expressions,
-		LimitAndSort: &chain_common.LimitAndSort{
-			Limit:  options.Limit,
-			SortBy: options.SortBy,
-		},
-		ConfidenceLevel: chain_common.Confidence_Finalized,
-	})
-}
-
 func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
@@ -439,25 +419,6 @@ func (c *DataStorage) RegisterLogTrackingDataStored(runtime sdk.Runtime, options
 func (c *DataStorage) UnregisterLogTrackingDataStored(runtime sdk.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "DataStored-" + common.Bytes2Hex(c.Address),
-	})
-}
-
-func (c *DataStorage) QueryTrackedLogsDataStored(runtime sdk.Runtime, options *bindings.QueryTrackedLogsOptions) sdk.Promise[*evm.QueryTrackedLogsReply] {
-	eventSig := c.Codec.DataStoredLogHash()
-	expressions := bindings.GetDefaultQueryExpressions(eventSig, c.Address)
-
-	// additional expressions from user
-	if options != nil && options.Expressions != nil {
-		expressions = append(expressions, options.Expressions...)
-	}
-
-	return c.evmClient.QueryTrackedLogs(runtime, &evm.QueryTrackedLogsRequest{
-		Expression: expressions,
-		LimitAndSort: &chain_common.LimitAndSort{
-			Limit:  options.Limit,
-			SortBy: options.SortBy,
-		},
-		ConfidenceLevel: chain_common.Confidence_Finalized,
 	})
 }
 

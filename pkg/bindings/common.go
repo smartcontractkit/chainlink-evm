@@ -27,8 +27,6 @@ type EVMClient interface {
 	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest)
 	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest)
 
-	// QueryTrackedLogs / FilterLogs mirror the SDK methods
-	QueryTrackedLogs(sdk.Runtime, *evm.QueryTrackedLogsRequest) sdk.Promise[*evm.QueryTrackedLogsReply]
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
 }
 
@@ -95,12 +93,6 @@ type LogTrackingOptions struct {
 	Topic4 [][]byte `protobuf:"bytes,9,rep,name=topic4,proto3" json:"topic4,omitempty"` // list of possible values for topic4
 }
 
-type QueryTrackedLogsOptions struct {
-	SortBy      []*chain_common.SortBy `protobuf:"bytes,1,rep,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"` // A list of sorting criteria.
-	Limit       *chain_common.Limit    `protobuf:"bytes,2,opt,name=limit,proto3" json:"limit,omitempty"`                 // Pagination limit and direction.
-	Expressions []*evm.Expression      `protobuf:"bytes,3,rep,name=expressions,proto3" json:"expressions,omitempty"`     // A list of expressions to filter logs by.
-}
-
 type FilterLogTrigger struct {
 	Confidence chain_common.Confidence
 	BlockDepth uint64
@@ -128,28 +120,4 @@ func ValidateLogTrackingOptions(opts *LogTrackingOptions) {
 	if opts.LogsPerBlock == 0 {
 		opts.LogsPerBlock = 100
 	}
-}
-
-func GetDefaultQueryExpressions(eventSig []byte, address []byte) []*evm.Expression {
-	return []*evm.Expression{
-		{
-			Evaluator: &evm.Expression_Primitive{
-				Primitive: &evm.Primitive{
-					Primitive: &evm.Primitive_EventSig{
-						EventSig: eventSig,
-					},
-				},
-			},
-		},
-		{
-			Evaluator: &evm.Expression_Primitive{
-				Primitive: &evm.Primitive{
-					Primitive: &evm.Primitive_ContractAddress{
-						ContractAddress: address,
-					},
-				},
-			},
-		},
-	}
-
 }
