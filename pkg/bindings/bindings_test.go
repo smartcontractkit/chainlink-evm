@@ -1,7 +1,6 @@
 package bindings_test
 
 import (
-	"log"
 	"math/big"
 	"testing"
 
@@ -16,21 +15,20 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
-	datastorage "github.com/smartcontractkit/chainlink-evm/pkg/bindings/build"
+	datastorage "github.com/smartcontractkit/chainlink-evm/pkg/bindings/testdata"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings/mocks"
 )
 
 func TestGenerateBindings(t *testing.T) {
-	if err := bindings.GenerateBindings(
-		"./DataStorage_combined.json",
+	err := bindings.GenerateBindings(
+		"./testdata/DataStorage_combined.json",
 		"",
 		"bindings",
 		"",
-		"./bindings.go",
-	); err != nil {
-		log.Fatalf("failed to generate: %v", err)
-	}
+		"./testdata/bindings.go",
+	)
+	require.NoError(t, err, "Failed to generate bindings from combined JSON")
 }
 
 func TestGeneratedBindingsCodec(t *testing.T) {

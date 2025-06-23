@@ -270,7 +270,6 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 
 {{range $error := $contract.Errors}}
 
-// TODO: possibly clean this up
 // Decode{{.Normalized.Name}}Error decodes a {{.Original.Name}} error from revert data.
 func (c *{{$contract.Type}}) Decode{{.Normalized.Name}}Error(data []byte) (*{{.Normalized.Name}}, error) {
 	args := c.ABI.Errors["{{.Original.Name}}"].Inputs
@@ -363,4 +362,5 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 
 {{end}}
 
-func getChainID(e bindings.EVMClient) uint32 { panic("unimplemented") }
+// TODO: implement
+func getChainID(e bindings.EVMClient) uint32 { return 123 }

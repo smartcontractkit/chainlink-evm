@@ -3,6 +3,7 @@ package bindings
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -77,7 +78,7 @@ func GenerateBindings(
 		// no libraries in single-ABI mode
 
 	default:
-		return fmt.Errorf("must provide either combinedJSONPath or abiPath")
+		return errors.New("must provide either combinedJSONPath or abiPath")
 	}
 
 	// Generate w/ forked abigen
@@ -87,7 +88,7 @@ func GenerateBindings(
 	}
 
 	// Write file
-	if err := os.WriteFile(outPath, []byte(outSrc), 0o644); err != nil {
+	if err := os.WriteFile(outPath, []byte(outSrc), 0o600); err != nil {
 		return fmt.Errorf("write %q: %w", outPath, err)
 	}
 	return nil

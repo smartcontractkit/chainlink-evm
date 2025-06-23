@@ -1,7 +1,6 @@
 package bindings
 
 import (
-	"fmt"
 	"math/big"
 
 	evmcappb "github.com/smartcontractkit/chainlink-common/pkg/capabilities/v2/chain-capabilities/evm"
@@ -17,16 +16,10 @@ func GenerateReport(chainID uint32, userData []byte) commonReport {
 
 // Minimal Chain Capabilities SDK client interface.
 type EVMClient interface {
-	// CallContract corresponds to evmcappb.Client.CallContract
 	CallContract(sdk.Runtime, *evm.CallContractRequest) sdk.Promise[*evm.CallContractReply]
-
-	// WriteReport corresponds to evmcappb.Client.WriteReport
 	WriteReport(sdk.Runtime, *evmcappb.WriteReportRequest) sdk.Promise[*evmcappb.WriteReportReply]
-
-	// RegisterLogTracking / UnregisterLogTracking mirror the SDK methods
 	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest)
 	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest)
-
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
 }
 
@@ -45,7 +38,7 @@ type TxFatalError struct {
 
 // Implement the error interface
 func (e *TxFatalError) Error() string {
-	return fmt.Sprintf("Error %s", e.Message)
+	return ("Error " + e.Message)
 }
 
 // Define a custom error type
@@ -56,18 +49,12 @@ type ReceiverContractError struct {
 
 // Implement the error interface
 func (e *ReceiverContractError) Error() string {
-	return fmt.Sprintf("Error %s", e.Message)
+	return ("Error " + e.Message)
 }
 
 type ContractInitOptions struct {
 	GasConfig *evmcappb.GasConfig
 }
-
-// type ContractInputs struct {
-// 	EVM     evm.EVM
-// 	Address []byte
-// 	Options *ContractInitOptions
-// }
 
 type ReadOptions struct {
 	BlockNumber *big.Int
@@ -75,11 +62,10 @@ type ReadOptions struct {
 
 type WriteOptions struct {
 	GasConfig  *evmcappb.GasConfig
-	BlockDepth uint16 //0 means finalized, 1 confirmed, positive numbers block depth - TODO to be defined together with all other operations
+	BlockDepth uint16 // 0 means finalized, 1 confirmed, positive numbers block depth - TODO to be defined together with all other operations
 }
 
-//Logs support
-
+// Logs support
 const FINALIZED = 0
 const CONFIRMED = 1
 

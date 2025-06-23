@@ -309,7 +309,6 @@ func (c DataStorage) WriteReportDataStorageUserData(
 	}), nil
 }
 
-// TODO: possibly clean this up
 // DecodeDataNotFoundError decodes a DataNotFound error from revert data.
 func (c *DataStorage) DecodeDataNotFoundError(data []byte) (*DataNotFound, error) {
 	args := c.ABI.Errors["DataNotFound"].Inputs
@@ -441,4 +440,5 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 	})
 }
 
-func getChainID(e bindings.EVMClient) uint32 { panic("unimplemented") }
+// TODO: implement
+func getChainID(e bindings.EVMClient) uint32 { return 123 }
