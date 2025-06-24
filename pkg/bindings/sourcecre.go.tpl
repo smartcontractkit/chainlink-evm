@@ -45,6 +45,7 @@ var {{$contract.Type}}MetaData = &bind.MetaData{
 	{{- end}}
 }
 
+// TODO: remove contract name from structs
 // Structs 
 {{range $.Structs}}type {{.Name}} struct {
 	{{- range .Fields}}
