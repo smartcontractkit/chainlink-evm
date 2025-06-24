@@ -1,6 +1,7 @@
 AutoCreateKey = true
 BlockBackfillDepth = 10
 BlockBackfillSkip = false
+SafeDepth = 0
 FinalityDepth = 50
 FinalityTagEnabled = false
 LogBackfillBatchSize = 1000
@@ -98,3 +99,6 @@ GasLimit = 5400000
 
 [Workflow]
 GasLimitDefault = 400_000
+TxAcceptanceState = 2
+PollPeriod = '2s'
+AcceptanceTimeout = '30s'

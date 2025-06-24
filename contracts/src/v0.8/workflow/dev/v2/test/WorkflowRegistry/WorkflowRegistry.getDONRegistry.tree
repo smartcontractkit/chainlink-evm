@@ -1,0 +1,5 @@
+WorkflowRegistry_getDONRegistry
+├── when the registry hasn not been set yet
+│   └── it should return address 0, 0
+└── when the registry has been set
+    └── it should return the DON registry values

@@ -11,7 +11,7 @@ import {IDestinationRewardManager} from "../../../v0.4.0/interfaces/IDestination
 import {IDestinationVerifierProxy} from "../../../v0.4.0/interfaces/IDestinationVerifierProxy.sol";
 import {Common} from "../../../libraries/Common.sol";
 import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
-import {IERC20} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/interfaces/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts@4.8.3/interfaces/IERC20.sol";
 
 /*
 This test checks the interfaces of destination verifier matches the expectations.

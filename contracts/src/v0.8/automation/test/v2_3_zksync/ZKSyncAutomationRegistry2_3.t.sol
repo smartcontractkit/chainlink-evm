@@ -7,7 +7,7 @@ import {ZKSyncAutomationRegistryBase2_3 as AutoBase} from "../../v2_3_zksync/ZKS
 import {AutomationRegistrar2_3 as Registrar} from "../../v2_3/AutomationRegistrar2_3.sol";
 import {IAutomationRegistryMaster2_3 as Registry, AutomationRegistryBase2_3, IAutomationV21PlusCommon} from "../../interfaces/v2_3/IAutomationRegistryMaster2_3.sol";
 import {ChainModuleBase} from "../../chains/ChainModuleBase.sol";
-import {IERC20Metadata as IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
 import {IWrappedNative} from "../../interfaces/v2_3/IWrappedNative.sol";
 
 // forge test --match-path src/v0.8/automation/test/v2_3_zksync/ZKSyncAutomationRegistry2_3.t.sol --match-test
@@ -2139,7 +2139,7 @@ contract Pause is SetUp {
     registry.pause();
 
     vm.expectRevert(Registry.RegistryPaused.selector);
-    uint256 id = registry.registerUpkeep(
+    registry.registerUpkeep(
       address(TARGET1),
       config.maxPerformGas,
       UPKEEP_ADMIN,
@@ -2203,7 +2203,6 @@ contract CancelUpkeep is SetUp {
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceledByAdmin_CalledByOwner() external {
-    uint256 bn = block.number;
     vm.startPrank(UPKEEP_ADMIN);
     registry.cancelUpkeep(linkUpkeepID);
 
@@ -2213,7 +2212,6 @@ contract CancelUpkeep is SetUp {
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceledByOwner_CalledByAdmin() external {
-    uint256 bn = block.number;
     vm.startPrank(registry.owner());
     registry.cancelUpkeep(linkUpkeepID);
 
@@ -2223,7 +2221,6 @@ contract CancelUpkeep is SetUp {
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceledByAdmin_CalledByAdmin() external {
-    uint256 bn = block.number;
     vm.startPrank(UPKEEP_ADMIN);
     registry.cancelUpkeep(linkUpkeepID);
 
@@ -2232,7 +2229,6 @@ contract CancelUpkeep is SetUp {
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceledByOwner_CalledByOwner() external {
-    uint256 bn = block.number;
     vm.startPrank(registry.owner());
     registry.cancelUpkeep(linkUpkeepID);
 

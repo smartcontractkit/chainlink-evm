@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.6;
+pragma solidity ^0.8.6;
 
 import "../../shared/access/ConfirmedOwner.sol";
 import "../interfaces/KeeperCompatibleInterface.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts@4.9.6/security/Pausable.sol";
 
 /**
  * @title The EthBalanceMonitor contract

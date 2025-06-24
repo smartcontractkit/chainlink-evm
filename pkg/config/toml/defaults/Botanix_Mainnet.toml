@@ -1,0 +1,19 @@
+ChainID = '3637'
+FinalityTagEnabled = true
+LinkContractAddress = '0x30e85A5c9525AD9a7A0FA5C74df4Baf0b01aD241'
+
+[GasEstimator]
+EIP1559DynamicFees = true
+TipCapMin = '0 wei'
+TipCapDefault = '0 wei'
+PriceDefault = '100 wei'
+PriceMax = '800 kwei'
+PriceMin = '1 wei'
+FeeCapDefault = '800 kwei'
+
+[GasEstimator.BlockHistory]
+BlockHistorySize = 4
+TransactionPercentile = 50
+
+[HeadTracker]
+FinalityTagBypass = false

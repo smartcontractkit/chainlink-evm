@@ -1,0 +1,10 @@
+WorkflowRegistry.setWorkflowOwnerConfig
+├── when the caller is NOT the contract owner
+│   └── it should revert with OnlyCallableByOwner
+└── when the caller IS the contract owner
+    ├── when setting a non empty config for the first time
+    │   └── it should store the blob and emit WorkflowOwnerConfigUpdated
+    ├── when updating to a different blob
+    │   └── it should overwrite the blob and emit WorkflowOwnerConfigUpdated
+    └── when setting an empty blob
+        └── it should clear the stored bytes and emit WorkflowOwnerConfigUpdated

@@ -11,8 +11,9 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
+
+	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
 // NullClient satisfies the Client but has no side effects
@@ -228,6 +229,10 @@ func (nc *NullClient) IsL2() bool {
 }
 
 func (nc *NullClient) LatestFinalizedBlock(_ context.Context) (*evmtypes.Head, error) {
+	return nil, nil
+}
+
+func (nc *NullClient) LatestSafeBlock(_ context.Context) (*evmtypes.Head, error) {
 	return nil, nil
 }
 

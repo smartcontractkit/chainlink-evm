@@ -1,54 +1,67 @@
 package datafeeds
 
 import (
-	"fmt"
+	"math/big"
+	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-framework/capabilities/writetarget/monitoring/pb/platform/on-chain/forwarder"
 )
 
-// This is ABI encoding - abi: "(bytes32 FeedID, bytes RawReport)[] Reports" (set in workflow)
-// Encoded with: https://github.com/smartcontractkit/chainlink/blob/develop/core/services/relay/evm/cap_encoder.go
 type FeedReport struct {
-	FeedID [32]byte
-	Data   []byte
+	FeedID    [32]byte
+	Timestamp uint32
+	Price     *big.Int // *big.Int is used because go-ethereum converts large uints to *big.Int.
+}
+
+type CCIPFeedReport struct {
+	FeedID    [32]byte
+	Price     *big.Int
+	Timestamp uint32
+}
+
+type PORReport struct {
+	DataID    [32]byte
+	Timestamp uint32
+	Bundle    []byte
 }
 
 type Reports = []FeedReport
+type CCIPReports = []CCIPFeedReport
+type PORReports = []PORReport
 
-// Define the ABI schema
-var schema = GetSchema()
-
-func GetSchema() abi.Arguments {
-	mustNewType := func(t string, internalType string, components []abi.ArgumentMarshaling) abi.Type {
-		result, err := abi.NewType(t, internalType, components)
-		if err != nil {
-			panic(fmt.Sprintf("Unexpected error during abi.NewType: %s", err))
-		}
-		return result
+func NewEVMTestReport(t *testing.T, ccip bool) []byte {
+	feedReport := FeedReport{
+		FeedID:    [32]byte{0x01},
+		Price:     big.NewInt(1234567890123456789),
+		Timestamp: 1620000000,
 	}
 
-	return abi.Arguments([]abi.Argument{
-		// TODO: why is the workflow encoder_config "(bytes32 FeedID, bytes RawReport)[] Reports"?
-		{
-			Type: mustNewType("tuple(bytes32, bytes)[]", "", []abi.ArgumentMarshaling{
-				{Name: "feedID", Type: "bytes32"},
-				{Name: "data", Type: "bytes"},
-			}),
-		},
-	})
-}
-
-// Decode is made available to external users (i.e. mercury server)
-func Decode(data []byte) (*Reports, error) {
-	values, err := schema.Unpack(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode report: %w", err)
+	reports := &Reports{
+		feedReport,
 	}
 
-	var decoded []FeedReport
-	if err = schema.Copy(&decoded, values); err != nil {
-		return nil, fmt.Errorf("failed to copy report values to struct: %w", err)
+	var schema abi.Arguments
+	if ccip {
+		schema = GetSchema("tuple(bytes32,uint32,uint224)[]", "", []abi.ArgumentMarshaling{
+			{Name: "feedID", Type: "bytes32"},
+			{Name: "price", Type: "uint224"},
+			{Name: "timestamp", Type: "uint32"},
+		})
+	} else {
+		schema = GetSchema("tuple(bytes32,uint32,uint224)[]", "", []abi.ArgumentMarshaling{
+			{Name: "feedID", Type: "bytes32"},
+			{Name: "timestamp", Type: "uint32"},
+			{Name: "price", Type: "uint224"},
+		})
 	}
+	data, err := schema.Pack(reports)
+	require.NoError(t, err)
 
-	return &decoded, nil
+	encoded, err := forwarder.NewTestReport(t, data)
+	require.NoError(t, err)
+
+	return encoded
 }

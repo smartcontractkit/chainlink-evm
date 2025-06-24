@@ -19,6 +19,8 @@ import (
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/config/configtest"
+	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
@@ -66,6 +68,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
 	unknown.GasEstimator.BlockHistory.EIP1559FeeCapBufferBlocks = ptr[uint16](10)
+	unknown.GasEstimator.SenderAddress = asEIP55Address(t, "0xae4E781a6218A8031764928E88d457937A954fC3")
 	oracleType := DAOracleOPStack
 	unknown.GasEstimator.DAOracle.OracleType = &oracleType
 	unknown.GasEstimator.DAOracle.OracleAddress = new(types.EIP55Address)
@@ -167,6 +170,9 @@ func TestDocs(t *testing.T) {
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
 
+		// GasEstimator SendAddress is only set if EstimateLimit is enabled
+		docDefaults.GasEstimator.SenderAddress = nil
+
 		fallbackDefaults := Defaults(nil)
 		assertTOML(t, fallbackDefaults, docDefaults.Chain)
 	})
@@ -187,6 +193,7 @@ var fullConfig = EVMConfig{
 		BlockBackfillSkip:    ptr(true),
 		ChainType:            chaintype.NewConfig("Optimism"),
 		FinalityDepth:        ptr[uint32](42),
+		SafeDepth:            ptr[uint32](10),
 		FinalityTagEnabled:   ptr[bool](true),
 		FlagsContractAddress: ptr(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
 		FinalizedBlockOffset: ptr[uint32](16),
@@ -204,6 +211,7 @@ var fullConfig = EVMConfig{
 			LimitMultiplier:    ptr(decimal.RequireFromString("1.234")),
 			LimitTransfer:      ptr[uint64](100),
 			EstimateLimit:      ptr(false),
+			SenderAddress:      ptr(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
 			TipCapDefault:      assets.NewWeiI(2),
 			TipCapMin:          assets.NewWeiI(1),
 			PriceDefault:       assets.NewWeiI(math.MaxInt64),
@@ -339,9 +347,12 @@ var fullConfig = EVMConfig{
 			},
 		},
 		Workflow: Workflow{
-			FromAddress:      ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
-			ForwarderAddress: ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
-			GasLimitDefault:  ptr[uint64](400000),
+			FromAddress:       ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress:  ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:   ptr[uint64](400000),
+			TxAcceptanceState: ptr(commontypes.Unconfirmed),
+			PollPeriod:        config.MustNewDuration(2 * time.Second),
+			AcceptanceTimeout: config.MustNewDuration(30 * time.Second),
 		},
 	},
 	Nodes: EVMNodes{

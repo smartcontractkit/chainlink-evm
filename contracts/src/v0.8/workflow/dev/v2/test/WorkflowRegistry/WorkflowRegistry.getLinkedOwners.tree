@@ -1,0 +1,22 @@
+WorkflowRegistry_getLinkedOwners
+├── when there are no linked owners
+│   └── it should return an empty result
+└── when there are linked owners
+    ├── given that start index is zero
+    │   ├── given that batch size is less than total linked owners
+    │   │   └── it should return the first batch of linked owners
+    │   ├── given that batch size is equal to total linked owners
+    │   │   └── it should return all linked owners
+    │   └── given that batch size is greater than total linked owners
+    │       └── it should return the list of all linked owners
+    ├── given that start index is greater than zero and less than total linked owners
+    │   ├── when batch size is less than total linked owners
+    │   │   └── it should return some linked owners
+    │   ├── when batch size is equal to total linked owners
+    │   │   └── it should return complete list of linked owners
+    │   └── when batch size is greater than total linked owners
+    │       └── it should return entire list of linked owners
+    ├── given that start index is equal to total linked owners
+    │   └── it should return an empty array
+    └── given that start index is greater than total linked owners
+        └── it should return an empty list

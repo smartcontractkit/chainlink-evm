@@ -3,8 +3,8 @@ auto_detect_solc = true
 optimizer = true
 optimizer_runs = 1_000_000
 
-src = 'src/v0.8'
-test = 'test/v0.8'
+src = 'src/'
+test = 'test/'
 out = 'foundry-artifacts'
 cache_path = 'foundry-cache'
 libs = ['node_modules']
@@ -50,11 +50,6 @@ src = 'src/v0.8/vrf'
 optimizer_runs = 10_000
 src = 'src/v0.8/automation'
 test = 'src/v0.8/automation/test'
-
-[profile.automation-compile-12]
-solc_version = '0.8.6'
-optimizer_runs = 1_000_000
-src = 'src/v0.8/automation'
 
 [profile.automation-compile-21]
 solc_version = '0.8.16'

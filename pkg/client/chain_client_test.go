@@ -305,6 +305,66 @@ func TestReceipt_UnmarshalEmptyBlockHash(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestEthClient_LatestSafeBlock(t *testing.T) {
+	t.Parallel()
+
+	expectedBlockNum := big.NewInt(123)
+	expectedBlockHash := "0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1"
+	expectedChainID := testutils.FixtureChainID
+
+	rpcResp := `{
+		"difficulty":"0x1",
+		"extraData":"0x",
+		"gasLimit":"0x1",
+		"gasUsed":"0x0",
+		"hash":"` + expectedBlockHash + `",
+		"logsBloom":"0x0",
+		"miner":"0x0000000000000000000000000000000000000000",
+		"mixHash":"0x0",
+		"nonce":"0x0",
+		"number":"0x7b",
+		"parentHash":"0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d",
+		"receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+		"sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+		"size":"0x1",
+		"stateRoot":"0xc7b01007a10da045eacb90385887dd0c38fcb5db7393006bdde24b93873c334b",
+		"timestamp":"0x58318da2",
+		"totalDifficulty":"0x1",
+		"transactions":[],
+		"transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+		"uncles":[]
+	}`
+
+	wsURL := testutils.NewWSServer(t, expectedChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+		switch method {
+		case "eth_subscribe":
+			resp.Result = `"0x00"`
+			resp.Notify = headResult
+			return
+		case "eth_unsubscribe":
+			resp.Result = "true"
+			return
+		}
+		if method == "eth_getBlockByNumber" && params.IsArray() {
+			arr := params.Array()
+			if arr[0].String() == "safe" {
+				resp.Result = rpcResp
+			}
+		}
+		return
+	}).WSURL().String()
+
+	ethClient := mustNewChainClient(t, wsURL)
+
+	ctx, cancel := context.WithTimeout(t.Context(), 25*time.Second)
+	defer cancel()
+	result, err := ethClient.LatestSafeBlock(ctx)
+	require.NoError(t, err)
+	require.Equal(t, expectedBlockHash, result.Hash.Hex())
+	require.Equal(t, expectedBlockNum.Int64(), result.Number)
+	require.Zero(t, expectedChainID.Cmp(result.EVMChainID.ToInt()))
+}
+
 func TestEthClient_HeaderByNumber(t *testing.T) {
 	t.Parallel()
 

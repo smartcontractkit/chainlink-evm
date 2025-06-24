@@ -29,6 +29,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox/mailboxtest"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
 
 	"github.com/smartcontractkit/chainlink-framework/chains/heads"
@@ -1271,6 +1272,89 @@ func testHeadTrackerBackfill(t *testing.T, newORM func(t *testing.T) evmheads.OR
 				return errors.Is(e, types.ErrFinalityViolated)
 			})
 		}, 5*time.Second, tests.TestInterval).Should(gomega.BeTrue())
+	})
+}
+
+func TestHeadTracker_LatestSafeBlock(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+
+	h11 := testutils.Head(11)
+	h11.ParentHash = utils.NewHash()
+
+	h12 := testutils.Head(12)
+	h12.ParentHash = h11.Hash
+
+	h13 := testutils.Head(13)
+	h13.ParentHash = h12.Hash
+
+	type opts struct {
+		Heads                []*evmtypes.Head
+		FinalityTagEnabled   bool
+		FinalizedBlockOffset uint32
+		FinalityDepth        uint32
+		SafeDepth            uint32
+	}
+
+	newHeadTrackerUniverse := func(t *testing.T, opts opts) *headTrackerUniverse {
+		evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
+			c.FinalityTagEnabled = ptr(opts.FinalityTagEnabled)
+			c.FinalizedBlockOffset = ptr(opts.FinalizedBlockOffset)
+			c.FinalityDepth = ptr(opts.FinalityDepth)
+			c.SafeDepth = ptr(opts.SafeDepth)
+		})
+
+		db := testutils.NewSqlxDB(t)
+		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+		for i := range opts.Heads {
+			require.NoError(t, orm.IdempotentInsertHead(t.Context(), opts.Heads[i]))
+		}
+		ethClient := clienttest.NewClient(t)
+		ethClient.On("ConfiguredChainID", mock.Anything).Return(testutils.FixtureChainID, nil)
+		ht := createHeadTracker(t, ethClient, evmcfg.EVM(), evmcfg.EVM().HeadTracker(), orm)
+		_, err := ht.headSaver.Load(t.Context(), 0)
+		require.NoError(t, err)
+		return ht
+	}
+	t.Run("returns error if failed to get latest safe block (finality tag)", func(t *testing.T) {
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true})
+		const expectedError = "failed to get latest finalized block"
+		htu.ethClient.On("LatestSafeBlock", mock.Anything).Return(nil, errors.New(expectedError)).Once()
+
+		_, err := htu.headTracker.LatestSafeBlock(ctx)
+		require.ErrorContains(t, err, expectedError)
+	})
+	t.Run("returns error if latest safe block is not valid (finality tag)", func(t *testing.T) {
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true})
+		htu.ethClient.On("LatestSafeBlock", mock.Anything).Return(nil, nil).Once()
+
+		_, err := htu.headTracker.LatestSafeBlock(ctx)
+		require.ErrorContains(t, err, "failed to get valid latest finalized block")
+	})
+	t.Run("returns latest safe block", func(t *testing.T) {
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true})
+		htu.ethClient.On("LatestSafeBlock", mock.Anything).Return(h11, nil).Once()
+
+		actualS, err := htu.headTracker.LatestSafeBlock(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, actualS, h11)
+	})
+	t.Run("returns latest safe block with finalityDepth set, and others default", func(t *testing.T) {
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: false, FinalityDepth: 2, Heads: []*evmtypes.Head{h13, h12, h11}})
+		htu.ethClient.On("HeadByNumber", mock.Anything, (*big.Int)(nil)).Return(h13, nil).Once()
+
+		actualS, err := htu.headTracker.LatestSafeBlock(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, actualS.Number, h11.Number)
+	})
+	t.Run("returns latest safe block with finalityDepth set, and others default", func(t *testing.T) {
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: false, FinalityDepth: 2, SafeDepth: 1, Heads: []*evmtypes.Head{h13, h12, h11}})
+		htu.ethClient.On("HeadByNumber", mock.Anything, (*big.Int)(nil)).Return(h13, nil).Once()
+
+		actualS, err := htu.headTracker.LatestSafeBlock(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, actualS.Number, h12.Number)
 	})
 }
 

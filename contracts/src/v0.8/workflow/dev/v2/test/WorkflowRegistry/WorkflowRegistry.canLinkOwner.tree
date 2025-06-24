@@ -1,0 +1,17 @@
+WorkflowRegistry.canLinkOwner
+├── When block timestamp is greater than validityTimestamp // signature expired
+│   └── It should revert with LinkOwnerRequestExpired
+└── When block timestamp is less or equal to validityTimestamp // signature has not expired  
+    ├── When owner is already linked
+    │   └── It should revert with OwnershipLinkAlreadyExists
+    └── When msg sender is not yet linked  
+        ├── When proof has already been used
+        │   └── It should revert with OwnershipProofAlreadyUsed 
+        └── When proof is unused  
+            ├── When signature recovery fails  
+            │   └── It should revert with InvalidSignature
+            └── When signature recovers to a signer not in s_allowedSigners  
+            │   └── It should revert with  
+            │       InvalidOwnershipLink
+            └── When signature is valid and signer is allowed  
+                └── It should return (no revert)

@@ -41,6 +41,10 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/monitor:
     interfaces:
       BalanceMonitor:
+
+  github.com/smartcontractkit/chainlink-evm/pkg/writetarget:
+    interfaces:
+      ProductSpecificProcessor:
   github.com/smartcontractkit/chainlink-framework/multinode:
     config:
       dir: client/clienttest
@@ -71,3 +75,11 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm:
     interfaces:
       Chain:
+  github.com/smartcontractkit/chainlink-common/pkg/beholder:
+    config:
+      dir: txm/
+      outpkg: txm
+      mockname: "mock{{ .InterfaceName }}"
+      filename: "mock_{{ .InterfaceName | snakecase }}_test.go"
+    interfaces:
+      Emitter:

@@ -1,0 +1,63 @@
+WorkflowRegistry_unlinkOwner_WhenCallerIsOwner
+└── when caller is equal to the owner address
+    ├── when request timestamp has expired
+    │   └── it should revert with expiration error
+    └── when the request timestamp has not expired
+        ├── given the owner is not linked
+        │   └── it should revert with not linked error
+        └── given the owner is linked
+            ├── given the proof matches the stored proof
+            │   ├── when the proof is valid
+            │   │   └── it should unlink the owner
+            │   └── when the proof is not valid
+            │       └── it should revert with signature error
+            └── given the proof does not match the stored proof
+                └── it should revert with proof does not match error
+
+WorkflowRegistry_unlinkOwner_WhenCallerIsNotOwner
+└── when caller is different from the owner address
+    ├── when request timestamp has expired
+    │   └── it should revert with expiration error
+    └── when the request timestamp has not expired
+        ├── given the owner is not linked
+        │   └── it should revert with not linked error
+        └── given the owner is linked
+            ├── given the proof matches the stored proof
+            │   ├── when the proof is valid
+            │   │   └── it should unlink the owner
+            │   └── when the proof is not valid
+            │       └── it should revert with signature error
+            └── given the proof does not match the stored proof
+                └── it should revert with proof does not match error
+
+WorkflowRegistry_unlinkOwner_preUnlinkActions
+├── when the caller is the owner
+│   ├── given that owner has no active workflows
+│   │   ├── when NONE is selected as the unlink action
+│   │   │   └── it should unlink the owner without any additional actions
+│   │   ├── when REMOVE is selected as the unlink action
+│   │   │   └── it should unlink the owner without any additional actions
+│   │   └── when PAUSE is selected as the unlink action
+│   │       └── it should unlink the owner without any additional actions
+│   └── given that owner has active workflows
+│       ├── when NONE is the unlink action
+│       │   └── it should revert with active workflows error
+│       ├── when REMOVE the unlink action
+│       │   └── it should remove the workflows and unlink the owner
+│       └── when PAUSE is the unlink action
+│           └── it should pause the workflows and unlink the owner
+└── when the caller is not the owner
+    ├── given that caller has no active workflows
+    │   ├── when NONE is chosen as the unlink action
+    │   │   └── it should unlink the owner without any additional actions
+    │   ├── when REMOVE is chosen as the unlink action
+    │   │   └── it should unlink the owner without any additional actions
+    │   └── when PAUSE is chosen as the unlink action
+    │       └── it should unlink the owner without any additional actions
+    └── given that caller has active workflows
+        ├── when NONE is equal to the unlink action
+        │   └── it should revert with active workflows error
+        ├── when REMOVE is equal to the  unlink action
+        │   └── it should remove the workflows and unlink the owner
+        └── when PAUSE is equal to the unlink action
+            └── it should pause the workflows and unlink the owner

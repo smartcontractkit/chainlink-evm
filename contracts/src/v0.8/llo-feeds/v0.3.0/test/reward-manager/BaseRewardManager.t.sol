@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
-import {ERC20Mock} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/mocks/ERC20Mock.sol";
+import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
 import {RewardManager} from "../../../v0.3.0/RewardManager.sol";
 import {Common} from "../../../libraries/Common.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
@@ -86,8 +86,8 @@ contract BaseRewardManagerTest is Test {
 
   function _initializeERC20Contracts() internal {
     //create the contracts
-    asset = new ERC20Mock("ASSET", "AST", ADMIN, 0);
-    unsupported = new ERC20Mock("UNSUPPORTED", "UNS", ADMIN, 0);
+    asset = new ERC20Mock(18);
+    unsupported = new ERC20Mock(18);
 
     //mint some tokens to the admin
     asset.mint(ADMIN, DEFAULT_MINT_QUANTITY);

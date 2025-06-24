@@ -26,6 +26,7 @@
 /contracts/**/*data-feeds* @smartcontractkit/data-feeds-engineers
 /contracts/**/*vrf* @smartcontractkit/dev-services
 /contracts/**/*keystone* @smartcontractkit/keystone
+/contracts/**/*workflow* @smartcontractkit/dev-services
 
 /contracts/src/v0.8/automation @smartcontractkit/dev-services
 /contracts/src/v0.8/functions @smartcontractkit/dev-services
