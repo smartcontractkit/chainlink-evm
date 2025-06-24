@@ -296,8 +296,8 @@ type EVMConfig struct {
 	Nodes EVMNodes
 }
 
-func (c *EVMConfig) TxMaximumWaitTimeForConfirmation() time.Duration {
-	panic("unimplemented")
+func (c *EVMConfig) ConfirmationTimeout() time.Duration {
+	return c.Chain.Transactions.ConfirmationTimeout.Duration()
 }
 
 func (c *EVMConfig) IsEnabled() bool {

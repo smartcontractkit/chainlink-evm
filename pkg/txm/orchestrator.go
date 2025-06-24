@@ -353,7 +353,18 @@ func (o *Orchestrator[BLOCK_HASH, HEAD]) GetTransactionFee(ctx context.Context, 
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) CalculateFee(feeParts txmgr.FeeParts) *big.Int {
-	return big.NewInt(0)
+	totalFee := new(big.Int)
+
+	gasUsed := new(big.Int).SetUint64(feeParts.GasUsed)
+	price := feeParts.EffectiveGasPrice
+	if price != nil {
+		totalFee.Mul(gasUsed, price)
+	}
+	l1Fee := feeParts.L1Fee
+	if l1Fee != nil {
+		totalFee.Add(totalFee, l1Fee)
+	}
+	return totalFee
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) GetTransactionReceipt(ctx context.Context, transactionID string) (receipt *txmgrtypes.ChainReceipt[BLOCK_HASH, BLOCK_HASH], err error) {

@@ -1240,6 +1240,9 @@ GasLimit controls the gas limit for transmit transactions from ocr2automation jo
 FromAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 ForwarderAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 GasLimitDefault = 400_000 # Default
+TxAcceptanceState = 2 # Default
+PollPeriod = '2s' # Default
+AcceptanceTimeout = '30s' # Default
 ```
 
 
@@ -1260,4 +1263,22 @@ ForwarderAddress is the keystone forwarder contract address on chain.
 GasLimitDefault = 400_000 # Default
 ```
 GasLimitDefault is the default gas limit for workflow transactions.
+
+### TxAcceptanceState
+```toml
+TxAcceptanceState = 2 # Default
+```
+TxAcceptanceState is the default acceptance state for writer DON tranmissions.
+
+### PollPeriod
+```toml
+PollPeriod = '2s' # Default
+```
+PollPeriod is the default poll period for checking transmission state
+
+### AcceptanceTimeout
+```toml
+AcceptanceTimeout = '30s' # Default
+```
+AcceptanceTimeout is the default timeout for a tranmission to be accepted on chain
 

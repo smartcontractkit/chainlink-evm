@@ -36,7 +36,7 @@ type EVMConfig struct {
 }
 
 func (e *EVMConfig) ConfirmationTimeout() time.Duration {
-	return e.C.TxMaximumWaitTimeForConfirmation()
+	return e.C.ConfirmationTimeout()
 }
 
 func (e *EVMConfig) IsEnabled() bool {
