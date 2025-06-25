@@ -29,9 +29,6 @@ BlockHistorySize = 50
 [Transactions]
 ResendAfterThreshold = '2m'
 
-[HeadTracker]
-FinalityTagBypass = false
-
 [NodePool]
 SyncThreshold = 10
 NewHeadsPollInterval = "4s"

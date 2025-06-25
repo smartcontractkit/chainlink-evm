@@ -16,6 +16,3 @@ PriceDefault = '1 gwei'
 
 [GasEstimator.BlockHistory]
 BlockHistorySize = 24
-
-[HeadTracker]
-FinalityTagBypass = false

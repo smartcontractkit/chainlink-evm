@@ -212,12 +212,10 @@ func TestHeadTracker_Start_NewHeads(t *testing.T) {
 
 func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 	t.Parallel()
-
 	t.Run("Finality violation on block hash mismatch", func(t *testing.T) {
 		db := testutils.NewSqlxDB(t)
 		config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 			c.FinalityTagEnabled = ptr(true)
-			c.FinalityDepth = ptr(uint32(1))
 		})
 		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
 
@@ -231,7 +229,6 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 
 		// for initial load
 		ethClient.On("HeadByNumber", mock.Anything, (*big.Int)(nil)).Return(h0, nil).Once()
-		ethClient.On("HeadByNumber", mock.Anything, mock.Anything).Return(h0, nil).Once()
 		// for backfill
 		ethClient.On("HeadByNumber", mock.Anything, mock.Anything).Return(h0, nil).Maybe()
 		ethClient.On("HeadByHash", mock.Anything, mock.Anything).Return(h0, nil).Maybe()
@@ -241,6 +238,7 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 				close(chStarted)
 			}).
 			Return((<-chan *evmtypes.Head)(ch), sub, nil)
+		ethClient.On("LatestFinalizedBlock", mock.Anything).Return(h0, nil).Maybe()
 
 		ht := createHeadTracker(t, ethClient, config.EVM(), config.EVM().HeadTracker(), orm)
 		ht.Start(t)
@@ -271,6 +269,8 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 		config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 			c.FinalityTagEnabled = ptr(true)
 			c.FinalityDepth = ptr(uint32(0))
+			// finalty violation on old block possible only with finalty tag
+			c.HeadTracker.FinalityTagBypass = ptr(true)
 		})
 		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
 
@@ -310,7 +310,7 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 		h2.ParentHash = h1.Hash
 		h2.Parent.Store(h1)
 		ch <- h2
-		require.NoError(t, ht.headSaver.Save(tests.Context(t), h2))
+		require.NoError(t, ht.headSaver.Save(t.Context(), h2))
 
 		// Send old head
 		ch <- h0
@@ -322,6 +322,65 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 				return errors.Is(e, types.ErrFinalityViolated) && strings.Contains(e.Error(), "got very old block")
 			})
 		}, 5*time.Second, tests.TestInterval).Should(gomega.BeTrue())
+	})
+
+	t.Run("Correctly handled old block with no finalty tag", func(t *testing.T) {
+		db := testutils.NewSqlxDB(t)
+		config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
+			c.FinalityTagEnabled = ptr(true)
+			c.FinalityDepth = ptr(uint32(0))
+		})
+		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+
+		ethClient := clienttest.NewClientWithDefaultChainID(t)
+		chStarted := make(chan struct{})
+		mockEth := &clienttest.MockEth{EthClient: ethClient}
+		sub := mockEth.NewSub(t)
+
+		h0 := testutils.Head(0)
+		h0.IsFinalized.Store(true)
+
+		// for initial load
+		ethClient.On("HeadByNumber", mock.Anything, mock.Anything).Return(h0, nil).Once()
+		// for backfill
+		ethClient.On("HeadByNumber", mock.Anything, mock.Anything).Return(h0, nil).Maybe()
+		ethClient.On("HeadByHash", mock.Anything, mock.Anything).Return(h0, nil).Maybe()
+
+		ethClient.On("LatestFinalizedBlock", mock.Anything).Return(h0, nil).Maybe()
+		ch := make(chan *evmtypes.Head)
+		ethClient.On("SubscribeToHeads", mock.Anything).
+			Run(func(mock.Arguments) {
+				close(chStarted)
+			}).
+			Return((<-chan *evmtypes.Head)(ch), sub, nil)
+
+		ht := createHeadTracker(t, ethClient, config.EVM(), config.EVM().HeadTracker(), orm)
+		ht.Start(t)
+		<-chStarted
+
+		h1 := testutils.Head(1)
+		h1.IsFinalized.Store(true)
+		h1.ParentHash = h0.Hash
+		h1.Parent.Store(h0)
+		ch <- h1
+
+		h2 := testutils.Head(2)
+		h2.IsFinalized.Store(true)
+		h2.ParentHash = h1.Hash
+		h2.Parent.Store(h1)
+		ch <- h2
+		require.NoError(t, ht.headSaver.Save(t.Context(), h2))
+
+		// Send old head
+		ch <- h0
+
+		g := gomega.NewWithT(t)
+		g.Eventually(func() bool {
+			report := ht.headTracker.HealthReport()
+			return slices.ContainsFunc(maps.Values(report), func(e error) bool {
+				return e != nil
+			})
+		}, 5*time.Second, tests.TestInterval).Should(gomega.BeFalse())
 	})
 }
 
