@@ -149,6 +149,19 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes attributes; //         Arbitrary bytes for additional workflow details.
   }
 
+  struct WorkflowMetadataView {
+    bytes32 workflowId;
+    address owner;
+    uint64 createdAt;
+    WorkflowStatus status;
+    string workflowName;
+    string binaryUrl;
+    string configUrl;
+    string tag;
+    bytes attributes;
+    string donFamily;
+  }
+
   // ================================================================
   // |                   Workflow Metadata Config                   |
   // ================================================================
@@ -1130,7 +1143,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// DON family upon activation.
   /// @param workflowId   The workflow to reassign
   /// @param newDonFamily The new human‐readable DON family (must be set via setDONLimit)
-  function updateWorkflowDONLabel(bytes32 workflowId, string calldata newDonFamily) external onlyOwner {
+  function updateWorkflowDONLabel(bytes32 workflowId, string calldata newDonFamily) external {
     if (!s_linkedOwners.contains(msg.sender)) {
       revert OwnershipLinkDoesNotExist(msg.sender);
     }
@@ -1231,20 +1244,17 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///
   /// @param workflowId Globally-unique, immutable identifier of the
   ///                   workflow (hash of owner, name, binary, cfg, …).
-  /// @return workflow      In-memory copy of the workflow’s metadata record.
+  /// @return workflow  In-memory copy of the workflow’s metadata record
+  /// (it also includes the donFamily string for active workflows).
   ///
   /// @custom:revert WorkflowDoesNotExist  If no RID is found for
   ///                                       `workflowId`, or the RID maps
   ///                                       to an empty metadata record.
   function getWorkflowMetadata(
     bytes32 workflowId
-  ) external view returns (WorkflowMetadata memory workflow) {
+  ) external view returns (WorkflowMetadataView memory workflow) {
     bytes32 rid = s_idToRid[workflowId];
-    if (rid == bytes32(0)) revert WorkflowDoesNotExist();
-
-    workflow = s_workflows[rid];
-    if (workflow.owner == address(0)) revert WorkflowDoesNotExist();
-    return workflow;
+    return _workflowMetadataView(rid);
   }
 
   /// @notice  Return a paginated list of all versions (active *and* paused)
@@ -1257,21 +1267,21 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param   workflowName  Case-sensitive name string (≤ 64 chars).
   /// @param   start         Zero-based index into the RID set.
   /// @param   limit         Max #records to return (clamped to 100).
-  /// @return  list          Array of `WorkflowMetadata`.
+  /// @return  list          Array of `WorkflowMetadataView`.
   function getWorkflowMetadataListByOwnerAndName(
     address owner,
     string calldata workflowName,
     uint256 start,
     uint256 limit
-  ) external view returns (WorkflowMetadata[] memory list) {
+  ) external view returns (WorkflowMetadataView[] memory list) {
     bytes32 wKey = _workflowKey(owner, workflowName);
     uint256 total = s_workflowKeyToRids[wKey].length();
     uint256 count = _getPageCount(total, start, limit);
 
-    list = new WorkflowMetadata[](count);
+    list = new WorkflowMetadataView[](count);
     for (uint256 i = 0; i < count; ++i) {
       bytes32 rid = s_workflowKeyToRids[wKey].at(start + i);
-      list[i] = s_workflows[rid];
+      list[i] = _workflowMetadataView(rid);
     }
 
     return list;
@@ -1287,20 +1297,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param owner  The address whose workflows are requested.
   /// @param start  Zero-based index into the owner’s RID set.
   /// @param limit  Batch size for the workflows.
-  /// @return list Array of `WorkflowMetadata` with length
+  /// @return list Array of `WorkflowMetadataView` with length
   ///              `min(limit, total-start)`.
   function getWorkflowMetadataListByOwner(
     address owner,
     uint256 start,
     uint256 limit
-  ) external view returns (WorkflowMetadata[] memory list) {
+  ) external view returns (WorkflowMetadataView[] memory list) {
     uint256 total = s_allOwnerRids[owner].length();
     uint256 count = _getPageCount(total, start, limit);
 
-    list = new WorkflowMetadata[](count);
+    list = new WorkflowMetadataView[](count);
     for (uint256 i = 0; i < count; ++i) {
       bytes32 rid = s_allOwnerRids[owner].at(start + i);
-      list[i] = s_workflows[rid];
+      list[i] = _workflowMetadataView(rid);
     }
     return list;
   }
@@ -1319,20 +1329,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param donFamily  bytes32-encoded DON label used as the secondary key.
   /// @param start     Zero-based index into the RID set.
   /// @param limit     Bathc size for the workflows
-  /// @return list     Array of `WorkflowMetadata` structs whose length is
+  /// @return list     Array of `WorkflowMetadataView` structs whose length is
   ///                  `min(limit, total-start)`.
   function getWorkflowMetadataListByDON(
     bytes32 donFamily,
     uint256 start,
     uint256 limit
-  ) external view returns (WorkflowMetadata[] memory list) {
+  ) external view returns (WorkflowMetadataView[] memory list) {
     uint256 total = s_allDONRids[donFamily].length();
     uint256 count = _getPageCount(total, start, limit);
 
-    list = new WorkflowMetadata[](count);
+    list = new WorkflowMetadataView[](count);
     for (uint256 i = 0; i < count; ++i) {
       bytes32 rid = s_allDONRids[donFamily].at(start + i);
-      list[i] = s_workflows[rid];
+      list[i] = _workflowMetadataView(rid);
     }
 
     return list;
@@ -1375,6 +1385,35 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (s_userDONCount[owner][donHash] > effectiveCap) {
       revert MaxWorkflowsPerUserDONExceeded(owner, donFamily);
     }
+  }
+
+  /// @dev Internal helper that converts a storage record (indexed by RID)
+  ///      into an in‑memory `WorkflowMetadataView`.
+  function _workflowMetadataView(
+    bytes32 rid
+  ) internal view returns (WorkflowMetadataView memory v) {
+    WorkflowMetadata storage rec = s_workflows[rid];
+    if (rec.owner == address(0)) revert WorkflowDoesNotExist();
+
+    // For ACTIVE workflows this will resolve to the correct DON label.
+    // For PAUSED/never‑assigned workflows the label is the empty string.
+    bytes32 donHash = s_donByWorkflowRid[rid];
+    string memory label = s_donConfigs[donHash].label;
+
+    v = WorkflowMetadataView({
+      workflowId: rec.workflowId,
+      owner: rec.owner,
+      createdAt: rec.createdAt,
+      status: rec.status,
+      workflowName: rec.workflowName,
+      binaryUrl: rec.binaryUrl,
+      configUrl: rec.configUrl,
+      tag: rec.tag,
+      attributes: rec.attributes,
+      donFamily: label
+    });
+
+    return v;
   }
 
   /// @notice Computes a unique workflow key for indexing by owner and name.
