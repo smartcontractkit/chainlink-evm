@@ -69,7 +69,7 @@ CacheTimeout = '10s'
 HistoryDepth = 100
 MaxBufferSize = 3
 SamplingInterval = '1s'
-FinalityTagBypass = true
+FinalityTagBypass = false
 MaxAllowedFinalityDepth = 10000
 PersistenceEnabled = true
 
@@ -99,3 +99,6 @@ GasLimit = 5400000
 
 [Workflow]
 GasLimitDefault = 400_000
+TxAcceptanceState = 2
+PollPeriod = '2s'
+AcceptanceTimeout = '30s'

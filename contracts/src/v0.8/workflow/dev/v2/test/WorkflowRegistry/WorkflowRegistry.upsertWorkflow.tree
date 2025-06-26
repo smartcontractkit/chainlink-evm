@@ -1,0 +1,55 @@
+WorkflowRegistry_upsertWorkflow
+├── when msg sender not a linked owner
+│   └── it should revert with OwnershipLinkDoesNotExist
+├── when msg sender is a linked owner
+│   ├── when no existing record for owner name tag combo   // create path
+│   │   ├── when there are invalid metadata inputs
+│   │   │   ├── when workflowName length is zero
+│   │   │   │   └── it should revert with WorkflowNameRequired
+│   │   │   ├── when workflowName length greater than allowed
+│   │   │   │   └── it should revert with WorkflowNameTooLong
+│   │   │   ├── when tag length is zero
+│   │   │   │   └── it should revert with WorkflowTagRequired
+│   │   │   ├── when tag length greater than allowed
+│   │   │   │   └── it should revert with WorkflowTagTooLong
+│   │   │   ├── when workflowId is zero
+│   │   │   │   └── it should revert with ZeroAddressNotAllowed
+│   │   │   ├── when workflowId already exists
+│   │   │   │   └── it should revert with WorkflowIDAlreadyExists
+│   │   │   ├── when binaryUrl length greater than allowed
+│   │   │   │   └── it should revert with URLTooLong
+│   │   │   ├── when configUrl length greater than allowed
+│   │   │   │   └── it should revert with URLTooLong
+│   │   │   └── when attributes length greater than allowed
+│   │   │       └── it should revert with AttributesTooLong
+│   │   └── when all metadata inputs are valid
+│   │       ├── when keepAlive is true
+│   │       │   └── it should not pause other active versions
+│   │       ├── when keepAlive is false
+│   │       │   ├── when there are more than one active workflow that shares the key
+│   │       │   │   └── it should pause each before continuing
+│   │       │   └── when there are no active workflows with the same key
+│   │       │       └── it not pause any other workflows
+│   │       ├── when the new workflow status is active
+│   │       │   ├── when the don has no global cap set
+│   │       │   │   └── it should revert with DonLimitNotSet
+│   │       │   └── when owner would exceed their effective cap
+│   │       │       └── it should revert with MaxWorkflowsPerUserDONExceeded
+│   │       └── when there are no failures
+│   │           └── it should write the new record update all indices and emit WorkflowRegistered
+│   └── when an existing record exists at rid   // update path
+│       ├── when there are validation failures
+│       │   ├── when newWorkflowId is zero
+│       │   │   └── it should revert with ZeroAddressNotAllowed
+│       │   ├── when newWorkflowId already exists
+│       │   │   └── it should revert with WorkflowIDAlreadyExists
+│       │   ├── when newBinaryUrl or newConfigUrl length greater than allowed
+│       │   │   └── it should revert with URLTooLong
+│       │   └── when newAttributes length greater than allowed
+│       │       └── it should revert with AttributesTooLong
+│       └── when there are no validation failures
+│           ├── it should remap id to rid with the new workflowId
+│           ├── it should patch mutable fields
+│           └── it should emit WorkflowUpdated
+└── when any step reverts
+    └── it should roll back state changes and emit no events

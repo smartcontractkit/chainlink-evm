@@ -17,7 +17,15 @@ const COMPILER_SETTINGS = {
   },
 }
 
-const EXCLUDE_DIRS = ['src/v0.8/vendor/forge-std', 'src/v0.8/workflow']
+const EXCLUDE_DIRS = [
+  'src/v0.8/vendor/forge-std',
+  'src/v0.8/workflow',
+  'src/v0.8/vrf',
+  'src/v0.8/llo-feeds',
+  'src/v0.8/keystone',
+  'src/v0.8/functions',
+  'src/v0.8/vendor/@eth-optimism',
+]
 
 // prune forge style tests from hardhat paths
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
@@ -63,10 +71,6 @@ let config = {
   },
   solidity: {
     compilers: [
-      {
-        version: '0.8.6',
-        settings: COMPILER_SETTINGS,
-      },
       {
         version: '0.8.16',
         settings: COMPILER_SETTINGS,

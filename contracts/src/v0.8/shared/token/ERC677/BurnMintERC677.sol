@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import {IBurnMintERC20} from "../ERC20/IBurnMintERC20.sol";
 import {IERC677} from "./IERC677.sol";
@@ -77,12 +77,12 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
   }
 
   /// @dev Exists to be backwards compatible with the older naming convention.
-  function decreaseApproval(address spender, uint256 subtractedValue) external returns (bool success) {
+  function decreaseApproval(address spender, uint256 subtractedValue) external virtual returns (bool success) {
     return decreaseAllowance(spender, subtractedValue);
   }
 
   /// @dev Exists to be backwards compatible with the older naming convention.
-  function increaseApproval(address spender, uint256 addedValue) external {
+  function increaseApproval(address spender, uint256 addedValue) external virtual {
     increaseAllowance(spender, addedValue);
   }
 
@@ -103,7 +103,7 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
   /// @inheritdoc ERC20Burnable
   /// @dev Uses OZ ERC20 _burn to disallow burning from address(0).
   /// @dev Decreases the total supply.
-  function burn(uint256 amount) public override(IBurnMintERC20, ERC20Burnable) onlyBurner {
+  function burn(uint256 amount) public virtual override(IBurnMintERC20, ERC20Burnable) onlyBurner {
     super.burn(amount);
   }
 
@@ -117,7 +117,7 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
   /// @inheritdoc ERC20Burnable
   /// @dev Uses OZ ERC20 _burn to disallow burning from address(0).
   /// @dev Decreases the total supply.
-  function burnFrom(address account, uint256 amount) public override(IBurnMintERC20, ERC20Burnable) onlyBurner {
+  function burnFrom(address account, uint256 amount) public virtual override(IBurnMintERC20, ERC20Burnable) onlyBurner {
     super.burnFrom(account, amount);
   }
 
@@ -125,7 +125,7 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
   /// @dev Uses OZ ERC20 _mint to disallow minting to address(0).
   /// @dev Disallows minting to address(this)
   /// @dev Increases the total supply.
-  function mint(address account, uint256 amount) external override onlyMinter validAddress(account) {
+  function mint(address account, uint256 amount) external virtual override onlyMinter validAddress(account) {
     if (i_maxSupply != 0 && totalSupply() + amount > i_maxSupply) revert MaxSupplyExceeded(totalSupply() + amount);
 
     _mint(account, amount);
@@ -138,14 +138,14 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
   /// @notice grants both mint and burn roles to `burnAndMinter`.
   /// @dev calls public functions so this function does not require
   /// access controls. This is handled in the inner functions.
-  function grantMintAndBurnRoles(address burnAndMinter) external {
+  function grantMintAndBurnRoles(address burnAndMinter) external virtual {
     grantMintRole(burnAndMinter);
     grantBurnRole(burnAndMinter);
   }
 
   /// @notice Grants mint role to the given address.
   /// @dev only the owner can call this function.
-  function grantMintRole(address minter) public onlyOwner {
+  function grantMintRole(address minter) public virtual onlyOwner {
     if (s_minters.add(minter)) {
       emit MintAccessGranted(minter);
     }
@@ -153,7 +153,7 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
 
   /// @notice Grants burn role to the given address.
   /// @dev only the owner can call this function.
-  function grantBurnRole(address burner) public onlyOwner {
+  function grantBurnRole(address burner) public virtual onlyOwner {
     if (s_burners.add(burner)) {
       emit BurnAccessGranted(burner);
     }
@@ -161,7 +161,7 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
 
   /// @notice Revokes mint role for the given address.
   /// @dev only the owner can call this function.
-  function revokeMintRole(address minter) public onlyOwner {
+  function revokeMintRole(address minter) public virtual onlyOwner {
     if (s_minters.remove(minter)) {
       emit MintAccessRevoked(minter);
     }
@@ -169,19 +169,19 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
 
   /// @notice Revokes burn role from the given address.
   /// @dev only the owner can call this function
-  function revokeBurnRole(address burner) public onlyOwner {
+  function revokeBurnRole(address burner) public virtual onlyOwner {
     if (s_burners.remove(burner)) {
       emit BurnAccessRevoked(burner);
     }
   }
 
   /// @notice Returns all permissioned minters
-  function getMinters() public view returns (address[] memory) {
+  function getMinters() public view virtual returns (address[] memory) {
     return s_minters.values();
   }
 
   /// @notice Returns all permissioned burners
-  function getBurners() public view returns (address[] memory) {
+  function getBurners() public view virtual returns (address[] memory) {
     return s_burners.values();
   }
 
@@ -191,13 +191,13 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
 
   /// @notice Checks whether a given address is a minter for this token.
   /// @return true if the address is allowed to mint.
-  function isMinter(address minter) public view returns (bool) {
+  function isMinter(address minter) public view virtual returns (bool) {
     return s_minters.contains(minter);
   }
 
   /// @notice Checks whether a given address is a burner for this token.
   /// @return true if the address is allowed to burn.
-  function isBurner(address burner) public view returns (bool) {
+  function isBurner(address burner) public view virtual returns (bool) {
     return s_burners.contains(burner);
   }
 

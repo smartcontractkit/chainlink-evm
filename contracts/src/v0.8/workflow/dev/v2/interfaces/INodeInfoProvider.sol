@@ -26,7 +26,7 @@ interface INodeInfoProvider {
     /// @notice Public key used to encrypt secrets for this node
     bytes32 encryptionPublicKey;
     /// @notice The list of hashed capability IDs supported by the node
-    bytes32[] hashedCapabilityIds;
+    string[] capabilityIds;
     /// @notice The list of capabilities DON Ids supported by the node. A node
     /// can belong to multiple capabilities DONs. This list does not include a
     /// Workflow DON id if the node belongs to one.
