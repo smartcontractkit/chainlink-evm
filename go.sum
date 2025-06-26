@@ -638,12 +638,15 @@ github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6Mwd
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/smartcontractkit/chainlink-common v0.7.1-0.20250624180831-b3689bcd43a6 h1:ZfUNZQq/SQSjlu4VxIKl1S16H+6qYaLgoQyD09W8m3s=
 github.com/smartcontractkit/chainlink-common v0.7.1-0.20250624180831-b3689bcd43a6/go.mod h1:plVu/MNDcoGbX++P0Dhv8gTtpafG98HqG6BfNj+dfE0=
+github.com/smartcontractkit/chainlink-common v0.7.1-0.20250626111924-65e6802674d9/go.mod h1:plVu/MNDcoGbX++P0Dhv8gTtpafG98HqG6BfNj+dfE0=
 github.com/smartcontractkit/chainlink-common/pkg/values v0.0.0-20250624161023-93f383781b0a h1:AVYA3UTkn2wjdpkTRhtXH0XgVBE25tXmfqxmEZhE+4s=
 github.com/smartcontractkit/chainlink-common/pkg/values v0.0.0-20250624161023-93f383781b0a/go.mod h1:QUEPHdSkH19Or+E1iMGG+rDQ6jpCTIbm//9Osa6MXDE=
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502 h1:WLgEB8/lIfA1vI+7O4RE/PYitO57TRkKUqVllDIgJD4=
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502/go.mod h1:Kb8f+wt2YmBdD0PfbsC9bDhdUG/Y8sqUkzAvC2Dn8/M=
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250624181658-04f654af25ad h1:9OxawQ6/QYx4i5HpWVc9t8goCH6Mptc1VM3Rzxrb3QU=
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250624181658-04f654af25ad/go.mod h1:VdbsHGfPdEv77LOntr++z8tbDi0BFJ2UIEiYpmUFZu4=
+github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250626112324-470b01e94903 h1:1IZYb0vEzqRcXKWmWsUQfh7t2rjO97j1mRYejsJbjAU=
+github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250626112324-470b01e94903/go.mod h1:a7jmbejh4mY+cOuYMbtGLXD4LqunlvH4Z30WP1l9m8o=
 github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250618135814-7e3f79ab707e h1:LRT+PltY99+hxZAJn+4nyTfqGVNEM1S6FJ675B9BtJo=
 github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250618135814-7e3f79ab707e/go.mod h1:jo+cUqNcHwN8IF7SInQNXDZ8qzBsyMpnLdYbDswviFc=
 github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250522110034-65c54665034a h1:O28vgyHM7QF1YLg1BwkQSIbOYA+t0RiH9+b+k90GPG8=
