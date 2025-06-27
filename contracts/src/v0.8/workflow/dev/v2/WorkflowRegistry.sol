@@ -286,7 +286,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       EventRecord({
         eventType: EventType.DONCapacitySet,
         timestamp: uint32(block.timestamp),
-        payload: abi.encode(donFamily, newCapacity)
+        payload: abi.encode(donHash, newCapacity)
       })
     );
 
@@ -796,10 +796,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
         // Walk from the back since EnumerableSet.remove is a swap and pop.
         while (activeSet.length() > 0) {
           uint256 lastIdx = activeSet.length() - 1;
-          bytes32 rid = activeSet.at(lastIdx);
-          WorkflowMetadata storage rec = s_workflows[rid];
+          bytes32 prevRid = activeSet.at(lastIdx);
+          WorkflowMetadata storage prevRec = s_workflows[prevRid];
           // Update workflow state
-          _applyPause(rid, rec);
+          _applyPause(prevRid, prevRec);
         }
       }
 
@@ -1017,7 +1017,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       EventRecord({
         eventType: EventType.WorkflowAdded,
         timestamp: uint32(block.timestamp),
-        payload: abi.encode(rec.workflowId, rec.owner, donFamily, rec.workflowName)
+        payload: abi.encode(donHash, rec.workflowId)
       })
     );
 
@@ -1040,7 +1040,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       EventRecord({
         eventType: EventType.WorkflowRemoved,
         timestamp: uint32(block.timestamp),
-        payload: abi.encode(rec.workflowId, rec.owner, donFamily, rec.workflowName)
+        payload: abi.encode(donHash, rec.workflowId)
       })
     );
 
