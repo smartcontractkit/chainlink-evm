@@ -539,7 +539,23 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert CannotUnlinkWithActiveWorkflows();
     }
 
-    _validateOwnershipLinks(owner, validityTimestamp, signature);
+    if (block.timestamp > validityTimestamp) {
+      revert UnlinkOwnerRequestExpired(owner, block.timestamp, validityTimestamp);
+    }
+
+    if (!s_linkedOwners.contains(owner)) {
+      revert OwnershipLinkDoesNotExist(owner);
+    }
+
+    // The expectation is that the signature must contain the same proof that was originally used for the linking
+    bytes32 storedProof = s_linkedOwners.get(owner);
+
+    // Request type prevents replay attacks, since the same proof can be used for both linking and unlinking
+    address signer =
+      _recoverSigner(uint8(LinkingRequestType.UNLINK_OWNER), owner, validityTimestamp, storedProof, signature);
+    if (!s_allowedSigners[signer]) {
+      revert InvalidOwnershipLink(owner, validityTimestamp, storedProof, signature);
+    }
   }
 
   /// @notice Transaction sender submits ownership proof for verification and approval. Upon approval, owner is unlinked.
@@ -559,11 +575,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes calldata signature,
     PreUnlinkAction action
   ) external {
-    if ((action == PreUnlinkAction.NONE) && (s_activeOwnerWorkflowRids[owner].length() != 0)) {
-      revert CannotUnlinkWithActiveWorkflows();
-    }
+    canUnlinkOwner(owner, validityTimestamp, signature, action);
 
-    _validateOwnershipLinks(owner, validityTimestamp, signature);
     if (action != PreUnlinkAction.NONE) {
       EnumerableSet.Bytes32Set storage active = s_activeOwnerWorkflowRids[owner];
       // ------------- PAUSE or DELETE -------------
@@ -646,26 +659,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
 
     return signer;
-  }
-
-  function _validateOwnershipLinks(address owner, uint256 validityTimestamp, bytes calldata signature) internal view {
-    if (block.timestamp > validityTimestamp) {
-      revert UnlinkOwnerRequestExpired(owner, block.timestamp, validityTimestamp);
-    }
-
-    if (!s_linkedOwners.contains(owner)) {
-      revert OwnershipLinkDoesNotExist(owner);
-    }
-
-    // The expectation is that the signature must contain the same proof that was originally used for the linking
-    bytes32 storedProof = s_linkedOwners.get(owner);
-
-    // Request type prevents replay attacks, since the same proof can be used for both linking and unlinking
-    address signer =
-      _recoverSigner(uint8(LinkingRequestType.UNLINK_OWNER), owner, validityTimestamp, storedProof, signature);
-    if (!s_allowedSigners[signer]) {
-      revert InvalidOwnershipLink(owner, validityTimestamp, storedProof, signature);
-    }
   }
 
   // ================================================================
@@ -789,7 +782,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert WorkflowNameTooLong(nameLen, metaCfg.maxWorkflowNameLength);
     }
 
-    bytes32 rid = _workflowRid(msg.sender, workflowName, tag);
+    bytes32 rid = keccak256(abi.encode(msg.sender, workflowName, tag));
     WorkflowMetadata storage rec = s_workflows[rid];
     // Create workflow path
     if (rec.owner == address(0)) {
@@ -799,7 +792,15 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       /* ───────────────────────── 1. HOUSEKEEPING ───────────────────────── */
       // we need to do this first, or there may be extra workflows occupying the limit
       if (!keepAlive) {
-        _pauseAllActiveWorkflowsByWorkflowKey(wKey);
+        EnumerableSet.Bytes32Set storage activeSet = s_activeRidsByWorkflowKey[wKey];
+        // Walk from the back since EnumerableSet.remove is a swap and pop.
+        while (activeSet.length() > 0) {
+          uint256 lastIdx = activeSet.length() - 1;
+          bytes32 rid = activeSet.at(lastIdx);
+          WorkflowMetadata storage rec = s_workflows[rid];
+          // Update workflow state
+          _applyPause(rid, rec);
+        }
       }
 
       /* ───────────────────────── 2. LIMIT CHECKS ───────────────────────── */
@@ -1046,32 +1047,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     emit WorkflowPaused(rec.workflowId, rec.owner, donFamily, rec.workflowName);
   }
 
-  /// @notice Pause all **active** workflow that shares `workflowKey`.
-  /// @dev
-  ///  * Iterates from the end of `s_activeRidsByWorkflowKey[workflowKey]`
-  ///    so the index is never invalidated by `remove`.
-  ///  * Removes each paused record from all active-tracking indices and
-  ///    decrements `s_userDONCount`.
-  ///  * Emits `WorkflowPaused` for every workflow paused.
-  ///  * No-op when ≤ 1 active workflow exists for the key.
-  ///  * The set is guaranteed to be active, and workfow key ensures ownership of the workflow.
-  ///  * Linking checks need to be performed prior to calling this function.
-  /// @param workflowKey keccak256(owner, workflowName) identifying the
-  ///                    workflow family.
-  function _pauseAllActiveWorkflowsByWorkflowKey(
-    bytes32 workflowKey
-  ) internal {
-    EnumerableSet.Bytes32Set storage activeSet = s_activeRidsByWorkflowKey[workflowKey];
-    // Walk from the back since EnumerableSet.remove is a swap and pop.
-    while (activeSet.length() > 0) {
-      uint256 lastIdx = activeSet.length() - 1;
-      bytes32 rid = activeSet.at(lastIdx);
-      WorkflowMetadata storage rec = s_workflows[rid];
-      // Update workflow state
-      _applyPause(rid, rec);
-    }
-  }
-
   /// @notice Permanently delete a workflow owned by the caller.
   /// @dev Sequence:
   ///  1. Resolve the registry-ID (`rid`) from `workflowId` and verify ownership.
@@ -1088,13 +1063,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes32 workflowId
   ) external {
     bytes32 rid = s_idToRid[workflowId];
-    _deleteWorkflow(msg.sender, rid);
-  }
-
-  function _deleteWorkflow(address owner, bytes32 rid) internal {
     WorkflowMetadata storage rec = s_workflows[rid];
     if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-    if (rec.owner != owner) revert CallerIsNotWorkflowOwner(owner);
+    if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
     _applyDelete(rid, rec);
   }
 
@@ -1412,15 +1383,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @return key  Keccak256 hash combining `owner` and `name`.
   function _workflowKey(address owner, string memory name) internal pure returns (bytes32 key) {
     return keccak256(abi.encode(owner, name));
-  }
-
-  /// @notice Computes the workflow reference ID (RID) from owner, name, and tag.
-  /// @param owner Address of the workflow owner.
-  /// @param name  Human-readable workflow name.
-  /// @param tag   Unique tag for this workflow variant.
-  /// @return rid  Keccak256 hash of `owner`, `name`, and `tag`.
-  function _workflowRid(address owner, string memory name, string memory tag) internal pure returns (bytes32 rid) {
-    return keccak256(abi.encode(owner, name, tag));
   }
 
   /// @notice Hashes an arbitrary-length DON label string into a fixed-size bytes32.
