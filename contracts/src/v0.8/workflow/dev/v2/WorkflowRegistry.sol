@@ -273,36 +273,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes32 donHash = _hash(donFamily);
     DonConfig storage cfg = s_donConfigs[donHash];
 
-    if (bytes(cfg.label).length == 0) {
-      cfg.label = donFamily;
-    }
+    cfg.label = donFamily;
+    cfg.limitValue.enabled = enabled;
+    cfg.limitValue.value = limit;
 
-    ConfigValue storage cv = cfg.limitValue;
-    if (enabled) {
-      if (!cv.enabled) {
-        // → was OFF, now turning ON with new cap
-        cv.enabled = true;
-        cv.value = limit;
-      } else if (cv.value != limit) {
-        // → was ON with a different cap, so update it
-        cv.value = limit;
-      } else {
-        // → already ON at exactly this cap, nothing to do
-        return;
-      }
-    } else {
-      if (!cv.enabled) {
-        // → already OFF, nothing to do
-        return;
-      }
-      // → was ON, now turning OFF (and clearing the value)
-      cv.enabled = false;
-      cv.value = 0;
-    }
+    uint32 capacity = enabled ? limit : 0;
+    s_events.push(
+      EventRecord({
+        eventType: EventType.DONCapacitySet,
+        timestamp: uint32(block.timestamp),
+        payload: abi.encode(donFamily, capacity)
+      })
+    );
 
-    // Push internal event & emit public event
-    // This will fire DONLimitSet(donFamily, enabled ? limit : 0)
-    _pushDONCapacitySet(donFamily, enabled ? limit : 0);
+    emit DONLimitSet(donFamily, capacity);
   }
 
   /// @notice Sets or removes a per-user, per-DON limit for ACTIVE workflows.
@@ -711,17 +695,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         by the global DON limit and are not considered standalone capacity changes.
   /// @param  donFamily The string identifier of the DON whose capacity was updated.
   /// @param  capacity The new maximum number of workflows allowed for this DON.
-  function _pushDONCapacitySet(string calldata donFamily, uint32 capacity) internal {
-    s_events.push(
-      EventRecord({
-        eventType: EventType.DONCapacitySet,
-        timestamp: uint32(block.timestamp),
-        payload: abi.encode(donFamily, capacity)
-      })
-    );
-
-    emit DONLimitSet(donFamily, capacity);
-  }
+  function _pushDONCapacitySet(string calldata donFamily, uint32 capacity) internal {}
 
   /// @notice Record that a workflow has been activated (added to active sets).
   /// @dev    Performs two actions in order:
