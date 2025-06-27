@@ -21,6 +21,8 @@ packages:
     interfaces:
       GasEstimator:
       ChainScopedConfig:
+      EVM:
+      Workflow:
   github.com/smartcontractkit/chainlink-evm/pkg/gas:
     interfaces:
       Config:

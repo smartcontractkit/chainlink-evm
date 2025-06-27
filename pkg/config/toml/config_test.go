@@ -278,6 +278,7 @@ var fullConfig = EVMConfig{
 			ReaperInterval:       config.MustNewDuration(time.Minute),
 			ReaperThreshold:      config.MustNewDuration(time.Minute),
 			ResendAfterThreshold: config.MustNewDuration(time.Hour),
+			ConfirmationTimeout:  config.MustNewDuration(time.Minute),
 			ForwardersEnabled:    ptr(true),
 			AutoPurge: AutoPurgeConfig{
 				Enabled:         ptr(false),

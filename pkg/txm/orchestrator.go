@@ -352,6 +352,25 @@ func (o *Orchestrator[BLOCK_HASH, HEAD]) GetTransactionFee(ctx context.Context, 
 	return nil, errors.New("unimplemented")
 }
 
+func (o *Orchestrator[BLOCK_HASH, HEAD]) CalculateFee(feeParts txmgr.FeeParts) *big.Int {
+	totalFee := new(big.Int)
+
+	gasUsed := new(big.Int).SetUint64(feeParts.GasUsed)
+	price := feeParts.EffectiveGasPrice
+	if price != nil {
+		totalFee.Mul(gasUsed, price)
+	}
+	l1Fee := feeParts.L1Fee
+	if l1Fee != nil {
+		totalFee.Add(totalFee, l1Fee)
+	}
+	return totalFee
+}
+
+func (o *Orchestrator[BLOCK_HASH, HEAD]) GetTransactionReceipt(ctx context.Context, transactionID string) (receipt *txmgrtypes.ChainReceipt[BLOCK_HASH, BLOCK_HASH], err error) {
+	return nil, errors.New("unimplemented")
+}
+
 func (o *Orchestrator[BLOCK_HASH, HEAD]) SendNativeToken(ctx context.Context, chainID *big.Int, from, to common.Address, value big.Int, gasLimit uint64) (tx txmgrtypes.Tx[*big.Int, common.Address, common.Hash, common.Hash, evmtypes.Nonce, gas.EvmFee], err error) {
 	txRequest := txmgrtypes.TxRequest[common.Address, common.Hash]{
 		FromAddress:    from,

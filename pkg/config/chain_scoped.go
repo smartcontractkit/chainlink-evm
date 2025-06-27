@@ -35,6 +35,10 @@ type EVMConfig struct {
 	C *toml.EVMConfig
 }
 
+func (e *EVMConfig) ConfirmationTimeout() time.Duration {
+	return e.C.ConfirmationTimeout()
+}
+
 func (e *EVMConfig) IsEnabled() bool {
 	return e.C.IsEnabled()
 }

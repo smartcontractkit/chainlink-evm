@@ -51,6 +51,8 @@ type EVM interface {
 	NodeNoNewHeadsThreshold() time.Duration
 	FinalizedBlockOffset() uint32
 	NoNewFinalizedHeadsThreshold() time.Duration
+	// Applies to EVMService. This is the maximum amount of time we will wait for a TX to get confirmed in the chain.
+	ConfirmationTimeout() time.Duration
 
 	IsEnabled() bool
 	TOMLString() (string, error)

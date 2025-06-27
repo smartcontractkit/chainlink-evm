@@ -39,6 +39,7 @@ func TestNewEvmClient(t *testing.T) {
 	noNewFinalizedBlocksThreshold := time.Second * 5
 	finalizedBlockPollInterval := time.Second * 4
 	newHeadsPollInterval := time.Second * 4
+	confirmationTimeout := time.Second * 60
 	nodeConfigs := []client.NodeConfig{
 		{
 			Name:    ptr("foo"),
@@ -51,7 +52,7 @@ func TestNewEvmClient(t *testing.T) {
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(selectionMode, leaseDuration, chainTypeStr, nodeConfigs,
 		pollFailureThreshold, pollInterval, syncThreshold, nodeIsSyncingEnabled, noNewHeadsThreshold, finalityDepth,
 		finalityTagEnabled, finalizedBlockOffset, enforceRepeatableRead, deathDeclarationDelay, noNewFinalizedBlocksThreshold,
-		finalizedBlockPollInterval, newHeadsPollInterval)
+		finalizedBlockPollInterval, newHeadsPollInterval, confirmationTimeout)
 	require.NoError(t, err)
 
 	client, err := client.NewEvmClient(nodePool, chainCfg, nil, logger.Test(t), testutils.FixtureChainID, nodes, chaintype.ChainType(chainTypeStr))
@@ -77,7 +78,7 @@ func TestChainClientMetrics(t *testing.T) {
 	}
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(ptr("HighestHead"), time.Duration(0), "", nodeConfigs,
 		ptr[uint32](5), 10*time.Second, ptr[uint32](5), ptr(false), time.Minute, ptr[uint32](5), ptr(false),
-		ptr[uint32](5), ptr(false), 10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second)
+		ptr[uint32](5), ptr(false), 10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second, 60*time.Second)
 	require.NoError(t, err)
 
 	chainID := big.NewInt(68472)

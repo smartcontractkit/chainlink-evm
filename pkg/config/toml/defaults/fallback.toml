@@ -20,6 +20,7 @@ NoNewFinalizedHeadsThreshold = '0'
 LogBroadcasterEnabled = true
 
 [Transactions]
+ConfirmationTimeout = '1m0s'
 Enabled = true
 ForwardersEnabled = false
 MaxInFlight = 16
