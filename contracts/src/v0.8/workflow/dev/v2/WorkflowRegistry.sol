@@ -261,32 +261,36 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @notice Sets or clears a DON-wide limit for the maximum number of
   ///         ACTIVE workflows.
   /// @dev    Only callable by the contract owner.
-  ///         When `enabled` is true, a limit is added for the DON label.
+  ///         When `enabled` is true, a limit is added for the DON family.
   ///         When `enabled` is false, the existing limit is removed.
   ///         When both adding and removing, an event record is created for the event, and the event itself
   ///         is emited in the internal helper.
   /// @notice Sets or clears the DON-wide limit for active workflows.
-  /// @param donFamily Human-readable string DON label/family
+  /// @param donFamily Human-readable string DON family
   /// @param limit     New cap (ignored if `enabled==false`)
   /// @param enabled   Flag indicating whether to store (`true`) or delete (`false`)
   function setDONLimit(string calldata donFamily, uint32 limit, bool enabled) external onlyOwner {
     bytes32 donHash = _hash(donFamily);
+    uint32 newCapacity = enabled ? limit : 0;
     DonConfig storage cfg = s_donConfigs[donHash];
+
+    if (cfg.limitValue.enabled == enabled && cfg.limitValue.value == newCapacity) {
+      return;
+    }
 
     cfg.label = donFamily;
     cfg.limitValue.enabled = enabled;
-    cfg.limitValue.value = limit;
+    cfg.limitValue.value = newCapacity;
 
-    uint32 capacity = enabled ? limit : 0;
     s_events.push(
       EventRecord({
         eventType: EventType.DONCapacitySet,
         timestamp: uint32(block.timestamp),
-        payload: abi.encode(donFamily, capacity)
+        payload: abi.encode(donFamily, newCapacity)
       })
     );
 
-    emit DONLimitSet(donFamily, capacity);
+    emit DONLimitSet(donFamily, newCapacity);
   }
 
   /// @notice Sets or removes a per-user, per-DON limit for ACTIVE workflows.
@@ -561,7 +565,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     _validateOwnershipLinks(owner, validityTimestamp, signature);
     if (action != PreUnlinkAction.NONE) {
-      _handlePreUnlinkAction(owner, action);
+      EnumerableSet.Bytes32Set storage active = s_activeOwnerWorkflowRids[owner];
+      // ------------- PAUSE or DELETE -------------
+      // Iterate from the back since EnumerableSet.remove() swaps-and-pops.
+      while (active.length() > 0) {
+        bytes32 rid = active.at(active.length() - 1);
+        WorkflowMetadata storage rec = s_workflows[rid];
+        if (rec.owner == address(0)) revert WorkflowDoesNotExist();
+        if (rec.owner != owner) revert CallerIsNotWorkflowOwner(owner);
+        if (action == PreUnlinkAction.PAUSE_WORKFLOWS) {
+          _applyPause(rid, rec);
+        } else {
+          _applyDelete(rid, rec);
+        }
+      }
     }
 
     bytes32 storedProof = s_linkedOwners.get(owner);
@@ -631,26 +648,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     return signer;
   }
 
-  /// @dev    Executes the pre-unlink action.
-  /// @param  owner     The owner being unlinked.
-  /// @param  action    NONE / PAUSE_WORKFLOWS / REMOVE_WORKFLOWS (expects action ≠ NONE)
-  function _handlePreUnlinkAction(address owner, PreUnlinkAction action) internal {
-    EnumerableSet.Bytes32Set storage active = s_activeOwnerWorkflowRids[owner];
-    // ------------- PAUSE or DELETE -------------
-    // Iterate from the back since EnumerableSet.remove() swaps-and-pops.
-    while (active.length() > 0) {
-      bytes32 rid = active.at(active.length() - 1);
-      WorkflowMetadata storage rec = s_workflows[rid];
-      if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-      if (rec.owner != owner) revert CallerIsNotWorkflowOwner(owner);
-      if (action == PreUnlinkAction.PAUSE_WORKFLOWS) {
-        _applyPause(rid, rec);
-      } else {
-        _applyDelete(rid, rec);
-      }
-    }
-  }
-
   function _validateOwnershipLinks(address owner, uint256 validityTimestamp, bytes calldata signature) internal view {
     if (block.timestamp > validityTimestamp) {
       revert UnlinkOwnerRequestExpired(owner, block.timestamp, validityTimestamp);
@@ -688,64 +685,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   // Storage of all capacity and workflow life‑cycle events
   EventRecord[] private s_events;
-
-  /// @notice Emit and save an event recording that the global capacity for a DON label has been set.
-  /// @dev    Called whenever the `s_donConfigs[donHash].limitValue` value is updated in configuration.
-  ///         Does **not** fire for per-user overrides, since those limits are always constrained
-  ///         by the global DON limit and are not considered standalone capacity changes.
-  /// @param  donFamily The string identifier of the DON whose capacity was updated.
-  /// @param  capacity The new maximum number of workflows allowed for this DON.
-  function _pushDONCapacitySet(string calldata donFamily, uint32 capacity) internal {}
-
-  /// @notice Record that a workflow has been activated (added to active sets).
-  /// @dev    Performs two actions in order:
-  ///           1. Appends an internal `WorkflowAdded` entry to `s_events` for off-chain history.
-  ///           2. Emits the public `WorkflowActivated` event so on-chain listeners are notified.
-  /// @param  workflowId   The unique `bytes32` identifier of the workflow.
-  /// @param  owner        The address that owns this workflow.
-  /// @param  donFamily     The DON label under which the workflow is registered.
-  /// @param  workflowName The human-readable name of the workflow.
-  function _pushWorkflowAdded(
-    bytes32 workflowId,
-    address owner,
-    string memory donFamily,
-    string storage workflowName
-  ) internal {
-    s_events.push(
-      EventRecord({
-        eventType: EventType.WorkflowAdded,
-        timestamp: uint32(block.timestamp),
-        payload: abi.encode(workflowId, owner, donFamily, workflowName)
-      })
-    );
-
-    emit WorkflowActivated(workflowId, owner, donFamily, workflowName);
-  }
-
-  /// @notice Record that a workflow has been paused (removed from active sets).
-  /// @dev    Performs two actions:
-  ///           1. Appends an internal `WorkflowRemoved` entry to `s_events` for off-chain processing.
-  ///           2. Emits the public `WorkflowPaused` event so on-chain listeners are notified.
-  /// @param  workflowId   The unique `bytes32` ID of the workflow being paused.
-  /// @param  owner        The address that owns this workflow.
-  /// @param  donFamily     The DON label under which the workflow was registered.
-  /// @param  workflowName The human-readable name of the workflow.
-  function _pushWorkflowRemoved(
-    bytes32 workflowId,
-    address owner,
-    string memory donFamily,
-    string storage workflowName
-  ) internal {
-    s_events.push(
-      EventRecord({
-        eventType: EventType.WorkflowRemoved,
-        timestamp: uint32(block.timestamp),
-        payload: abi.encode(workflowId, owner, donFamily, workflowName)
-      })
-    );
-
-    emit WorkflowPaused(workflowId, owner, donFamily, workflowName);
-  }
 
   /// @notice Returns a page of events along with the total event count.
   /// @param start Zero-based index of the first event to include in the page.
@@ -1072,7 +1011,16 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string memory donFamily = s_donConfigs[donHash].label;
     _addActiveIndices(rid, rec.owner, donHash, _workflowKey(rec.owner, rec.workflowName));
     rec.status = WorkflowStatus.ACTIVE;
-    _pushWorkflowAdded(rec.workflowId, rec.owner, donFamily, rec.workflowName);
+
+    s_events.push(
+      EventRecord({
+        eventType: EventType.WorkflowAdded,
+        timestamp: uint32(block.timestamp),
+        payload: abi.encode(rec.workflowId, rec.owner, donFamily, rec.workflowName)
+      })
+    );
+
+    emit WorkflowActivated(rec.workflowId, rec.owner, donFamily, rec.workflowName);
   }
 
   /// @dev   Apply the state transition ACTIVE ➜ PAUSED.
@@ -1086,7 +1034,16 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes32 donHash = s_donByWorkflowRid[rid];
     string memory donFamily = s_donConfigs[donHash].label;
     _removeActiveIndices(rid, rec.owner, donHash, _workflowKey(rec.owner, rec.workflowName));
-    _pushWorkflowRemoved(rec.workflowId, rec.owner, donFamily, rec.workflowName);
+
+    s_events.push(
+      EventRecord({
+        eventType: EventType.WorkflowRemoved,
+        timestamp: uint32(block.timestamp),
+        payload: abi.encode(rec.workflowId, rec.owner, donFamily, rec.workflowName)
+      })
+    );
+
+    emit WorkflowPaused(rec.workflowId, rec.owner, donFamily, rec.workflowName);
   }
 
   /// @notice Pause all **active** workflow that shares `workflowKey`.
