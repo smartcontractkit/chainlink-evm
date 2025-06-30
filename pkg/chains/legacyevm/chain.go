@@ -483,7 +483,7 @@ func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
 		return types.ChainInfo{}, fmt.Errorf("failed to get chain details for chain %d and family %s: %w", chainID, chainFamily, err)
 	}
 
-	networkName, err := chainselectors.ExtractNetworkName(chainDetails.ChainName)
+	envName, err := chainselectors.ExtractNetworkEnvName(chainDetails.ChainName)
 	if err != nil {
 		return types.ChainInfo{}, fmt.Errorf("failed to get network name for chain %d: %w", chainID, err)
 	}
@@ -491,7 +491,7 @@ func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
 	return types.ChainInfo{
 		FamilyName:      chainFamily,
 		ChainID:         chainID.String(),
-		NetworkName:     networkName,
+		NetworkName:     envName,
 		NetworkNameFull: chainDetails.ChainName,
 	}, nil
 }
