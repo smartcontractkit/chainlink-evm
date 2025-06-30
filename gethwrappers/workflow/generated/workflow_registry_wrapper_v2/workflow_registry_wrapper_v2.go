@@ -502,6 +502,94 @@ func (_WorkflowRegistry *WorkflowRegistryCallerSession) GetWorkflowOwnerConfig(o
 	return _WorkflowRegistry.Contract.GetWorkflowOwnerConfig(&_WorkflowRegistry.CallOpts, owner)
 }
 
+func (_WorkflowRegistry *WorkflowRegistryCaller) IDEFAULTATTRIBUTELEN(opts *bind.CallOpts) (uint16, error) {
+	var out []interface{}
+	err := _WorkflowRegistry.contract.Call(opts, &out, "i_DEFAULT_ATTRIBUTE_LEN")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
+}
+
+func (_WorkflowRegistry *WorkflowRegistrySession) IDEFAULTATTRIBUTELEN() (uint16, error) {
+	return _WorkflowRegistry.Contract.IDEFAULTATTRIBUTELEN(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCallerSession) IDEFAULTATTRIBUTELEN() (uint16, error) {
+	return _WorkflowRegistry.Contract.IDEFAULTATTRIBUTELEN(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCaller) IDEFAULTNAMELEN(opts *bind.CallOpts) (uint8, error) {
+	var out []interface{}
+	err := _WorkflowRegistry.contract.Call(opts, &out, "i_DEFAULT_NAME_LEN")
+
+	if err != nil {
+		return *new(uint8), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
+
+	return out0, err
+
+}
+
+func (_WorkflowRegistry *WorkflowRegistrySession) IDEFAULTNAMELEN() (uint8, error) {
+	return _WorkflowRegistry.Contract.IDEFAULTNAMELEN(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCallerSession) IDEFAULTNAMELEN() (uint8, error) {
+	return _WorkflowRegistry.Contract.IDEFAULTNAMELEN(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCaller) IDEFAULTTAGLEN(opts *bind.CallOpts) (uint8, error) {
+	var out []interface{}
+	err := _WorkflowRegistry.contract.Call(opts, &out, "i_DEFAULT_TAG_LEN")
+
+	if err != nil {
+		return *new(uint8), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
+
+	return out0, err
+
+}
+
+func (_WorkflowRegistry *WorkflowRegistrySession) IDEFAULTTAGLEN() (uint8, error) {
+	return _WorkflowRegistry.Contract.IDEFAULTTAGLEN(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCallerSession) IDEFAULTTAGLEN() (uint8, error) {
+	return _WorkflowRegistry.Contract.IDEFAULTTAGLEN(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCaller) IDEFAULTURLLEN(opts *bind.CallOpts) (uint8, error) {
+	var out []interface{}
+	err := _WorkflowRegistry.contract.Call(opts, &out, "i_DEFAULT_URL_LEN")
+
+	if err != nil {
+		return *new(uint8), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
+
+	return out0, err
+
+}
+
+func (_WorkflowRegistry *WorkflowRegistrySession) IDEFAULTURLLEN() (uint8, error) {
+	return _WorkflowRegistry.Contract.IDEFAULTURLLEN(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCallerSession) IDEFAULTURLLEN() (uint8, error) {
+	return _WorkflowRegistry.Contract.IDEFAULTURLLEN(&_WorkflowRegistry.CallOpts)
+}
+
 func (_WorkflowRegistry *WorkflowRegistryCaller) IsAllowedSigner(opts *bind.CallOpts, signer common.Address) (bool, error) {
 	var out []interface{}
 	err := _WorkflowRegistry.contract.Call(opts, &out, "isAllowedSigner", signer)
@@ -566,6 +654,72 @@ func (_WorkflowRegistry *WorkflowRegistrySession) Owner() (common.Address, error
 
 func (_WorkflowRegistry *WorkflowRegistryCallerSession) Owner() (common.Address, error) {
 	return _WorkflowRegistry.Contract.Owner(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCaller) TotalActiveWorkflowsByOwner(opts *bind.CallOpts, owner common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _WorkflowRegistry.contract.Call(opts, &out, "totalActiveWorkflowsByOwner", owner)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+func (_WorkflowRegistry *WorkflowRegistrySession) TotalActiveWorkflowsByOwner(owner common.Address) (*big.Int, error) {
+	return _WorkflowRegistry.Contract.TotalActiveWorkflowsByOwner(&_WorkflowRegistry.CallOpts, owner)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCallerSession) TotalActiveWorkflowsByOwner(owner common.Address) (*big.Int, error) {
+	return _WorkflowRegistry.Contract.TotalActiveWorkflowsByOwner(&_WorkflowRegistry.CallOpts, owner)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCaller) TotalActiveWorkflowsOnDON(opts *bind.CallOpts, donFamily string) (*big.Int, error) {
+	var out []interface{}
+	err := _WorkflowRegistry.contract.Call(opts, &out, "totalActiveWorkflowsOnDON", donFamily)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+func (_WorkflowRegistry *WorkflowRegistrySession) TotalActiveWorkflowsOnDON(donFamily string) (*big.Int, error) {
+	return _WorkflowRegistry.Contract.TotalActiveWorkflowsOnDON(&_WorkflowRegistry.CallOpts, donFamily)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCallerSession) TotalActiveWorkflowsOnDON(donFamily string) (*big.Int, error) {
+	return _WorkflowRegistry.Contract.TotalActiveWorkflowsOnDON(&_WorkflowRegistry.CallOpts, donFamily)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCaller) TotalEvents(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _WorkflowRegistry.contract.Call(opts, &out, "totalEvents")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+func (_WorkflowRegistry *WorkflowRegistrySession) TotalEvents() (*big.Int, error) {
+	return _WorkflowRegistry.Contract.TotalEvents(&_WorkflowRegistry.CallOpts)
+}
+
+func (_WorkflowRegistry *WorkflowRegistryCallerSession) TotalEvents() (*big.Int, error) {
+	return _WorkflowRegistry.Contract.TotalEvents(&_WorkflowRegistry.CallOpts)
 }
 
 func (_WorkflowRegistry *WorkflowRegistryCaller) TotalLinkedOwners(opts *bind.CallOpts) (*big.Int, error) {
@@ -648,15 +802,15 @@ func (_WorkflowRegistry *WorkflowRegistryTransactorSession) AdminBatchPauseWorkf
 	return _WorkflowRegistry.Contract.AdminBatchPauseWorkflows(&_WorkflowRegistry.TransactOpts, workflowIds)
 }
 
-func (_WorkflowRegistry *WorkflowRegistryTransactor) AdminPauseAllByDON(opts *bind.TransactOpts, donFamily [32]byte) (*types.Transaction, error) {
+func (_WorkflowRegistry *WorkflowRegistryTransactor) AdminPauseAllByDON(opts *bind.TransactOpts, donFamily string) (*types.Transaction, error) {
 	return _WorkflowRegistry.contract.Transact(opts, "adminPauseAllByDON", donFamily)
 }
 
-func (_WorkflowRegistry *WorkflowRegistrySession) AdminPauseAllByDON(donFamily [32]byte) (*types.Transaction, error) {
+func (_WorkflowRegistry *WorkflowRegistrySession) AdminPauseAllByDON(donFamily string) (*types.Transaction, error) {
 	return _WorkflowRegistry.Contract.AdminPauseAllByDON(&_WorkflowRegistry.TransactOpts, donFamily)
 }
 
-func (_WorkflowRegistry *WorkflowRegistryTransactorSession) AdminPauseAllByDON(donFamily [32]byte) (*types.Transaction, error) {
+func (_WorkflowRegistry *WorkflowRegistryTransactorSession) AdminPauseAllByDON(donFamily string) (*types.Transaction, error) {
 	return _WorkflowRegistry.Contract.AdminPauseAllByDON(&_WorkflowRegistry.TransactOpts, donFamily)
 }
 
@@ -684,16 +838,16 @@ func (_WorkflowRegistry *WorkflowRegistryTransactorSession) AdminPauseWorkflow(w
 	return _WorkflowRegistry.Contract.AdminPauseWorkflow(&_WorkflowRegistry.TransactOpts, workflowId)
 }
 
-func (_WorkflowRegistry *WorkflowRegistryTransactor) BatchActivateWorkflows(opts *bind.TransactOpts, workflowIds [][32]byte) (*types.Transaction, error) {
-	return _WorkflowRegistry.contract.Transact(opts, "batchActivateWorkflows", workflowIds)
+func (_WorkflowRegistry *WorkflowRegistryTransactor) BatchActivateWorkflows(opts *bind.TransactOpts, workflowIds [][32]byte, donFamily string) (*types.Transaction, error) {
+	return _WorkflowRegistry.contract.Transact(opts, "batchActivateWorkflows", workflowIds, donFamily)
 }
 
-func (_WorkflowRegistry *WorkflowRegistrySession) BatchActivateWorkflows(workflowIds [][32]byte) (*types.Transaction, error) {
-	return _WorkflowRegistry.Contract.BatchActivateWorkflows(&_WorkflowRegistry.TransactOpts, workflowIds)
+func (_WorkflowRegistry *WorkflowRegistrySession) BatchActivateWorkflows(workflowIds [][32]byte, donFamily string) (*types.Transaction, error) {
+	return _WorkflowRegistry.Contract.BatchActivateWorkflows(&_WorkflowRegistry.TransactOpts, workflowIds, donFamily)
 }
 
-func (_WorkflowRegistry *WorkflowRegistryTransactorSession) BatchActivateWorkflows(workflowIds [][32]byte) (*types.Transaction, error) {
-	return _WorkflowRegistry.Contract.BatchActivateWorkflows(&_WorkflowRegistry.TransactOpts, workflowIds)
+func (_WorkflowRegistry *WorkflowRegistryTransactorSession) BatchActivateWorkflows(workflowIds [][32]byte, donFamily string) (*types.Transaction, error) {
+	return _WorkflowRegistry.Contract.BatchActivateWorkflows(&_WorkflowRegistry.TransactOpts, workflowIds, donFamily)
 }
 
 func (_WorkflowRegistry *WorkflowRegistryTransactor) BatchPauseWorkflows(opts *bind.TransactOpts, workflowIds [][32]byte) (*types.Transaction, error) {
@@ -840,16 +994,16 @@ func (_WorkflowRegistry *WorkflowRegistryTransactorSession) UpdateAllowedSigners
 	return _WorkflowRegistry.Contract.UpdateAllowedSigners(&_WorkflowRegistry.TransactOpts, signers, allowed)
 }
 
-func (_WorkflowRegistry *WorkflowRegistryTransactor) UpdateWorkflowDONLabel(opts *bind.TransactOpts, workflowId [32]byte, newDonFamily string) (*types.Transaction, error) {
-	return _WorkflowRegistry.contract.Transact(opts, "updateWorkflowDONLabel", workflowId, newDonFamily)
+func (_WorkflowRegistry *WorkflowRegistryTransactor) UpdateWorkflowDONFamily(opts *bind.TransactOpts, workflowId [32]byte, newDonFamily string) (*types.Transaction, error) {
+	return _WorkflowRegistry.contract.Transact(opts, "updateWorkflowDONFamily", workflowId, newDonFamily)
 }
 
-func (_WorkflowRegistry *WorkflowRegistrySession) UpdateWorkflowDONLabel(workflowId [32]byte, newDonFamily string) (*types.Transaction, error) {
-	return _WorkflowRegistry.Contract.UpdateWorkflowDONLabel(&_WorkflowRegistry.TransactOpts, workflowId, newDonFamily)
+func (_WorkflowRegistry *WorkflowRegistrySession) UpdateWorkflowDONFamily(workflowId [32]byte, newDonFamily string) (*types.Transaction, error) {
+	return _WorkflowRegistry.Contract.UpdateWorkflowDONFamily(&_WorkflowRegistry.TransactOpts, workflowId, newDonFamily)
 }
 
-func (_WorkflowRegistry *WorkflowRegistryTransactorSession) UpdateWorkflowDONLabel(workflowId [32]byte, newDonFamily string) (*types.Transaction, error) {
-	return _WorkflowRegistry.Contract.UpdateWorkflowDONLabel(&_WorkflowRegistry.TransactOpts, workflowId, newDonFamily)
+func (_WorkflowRegistry *WorkflowRegistryTransactorSession) UpdateWorkflowDONFamily(workflowId [32]byte, newDonFamily string) (*types.Transaction, error) {
+	return _WorkflowRegistry.Contract.UpdateWorkflowDONFamily(&_WorkflowRegistry.TransactOpts, workflowId, newDonFamily)
 }
 
 func (_WorkflowRegistry *WorkflowRegistryTransactor) UpsertWorkflow(opts *bind.TransactOpts, workflowName string, tag string, workflowId [32]byte, status uint8, donFamily string, binaryUrl string, configUrl string, attributes []byte, keepAlive bool) (*types.Transaction, error) {
@@ -3143,11 +3297,25 @@ type WorkflowRegistryInterface interface {
 
 	GetWorkflowOwnerConfig(opts *bind.CallOpts, owner common.Address) ([]byte, error)
 
+	IDEFAULTATTRIBUTELEN(opts *bind.CallOpts) (uint16, error)
+
+	IDEFAULTNAMELEN(opts *bind.CallOpts) (uint8, error)
+
+	IDEFAULTTAGLEN(opts *bind.CallOpts) (uint8, error)
+
+	IDEFAULTURLLEN(opts *bind.CallOpts) (uint8, error)
+
 	IsAllowedSigner(opts *bind.CallOpts, signer common.Address) (bool, error)
 
 	IsOwnerLinked(opts *bind.CallOpts, owner common.Address) (bool, error)
 
 	Owner(opts *bind.CallOpts) (common.Address, error)
+
+	TotalActiveWorkflowsByOwner(opts *bind.CallOpts, owner common.Address) (*big.Int, error)
+
+	TotalActiveWorkflowsOnDON(opts *bind.CallOpts, donFamily string) (*big.Int, error)
+
+	TotalEvents(opts *bind.CallOpts) (*big.Int, error)
 
 	TotalLinkedOwners(opts *bind.CallOpts) (*big.Int, error)
 
@@ -3159,13 +3327,13 @@ type WorkflowRegistryInterface interface {
 
 	AdminBatchPauseWorkflows(opts *bind.TransactOpts, workflowIds [][32]byte) (*types.Transaction, error)
 
-	AdminPauseAllByDON(opts *bind.TransactOpts, donFamily [32]byte) (*types.Transaction, error)
+	AdminPauseAllByDON(opts *bind.TransactOpts, donFamily string) (*types.Transaction, error)
 
 	AdminPauseAllByOwner(opts *bind.TransactOpts, owner common.Address) (*types.Transaction, error)
 
 	AdminPauseWorkflow(opts *bind.TransactOpts, workflowId [32]byte) (*types.Transaction, error)
 
-	BatchActivateWorkflows(opts *bind.TransactOpts, workflowIds [][32]byte) (*types.Transaction, error)
+	BatchActivateWorkflows(opts *bind.TransactOpts, workflowIds [][32]byte, donFamily string) (*types.Transaction, error)
 
 	BatchPauseWorkflows(opts *bind.TransactOpts, workflowIds [][32]byte) (*types.Transaction, error)
 
@@ -3191,7 +3359,7 @@ type WorkflowRegistryInterface interface {
 
 	UpdateAllowedSigners(opts *bind.TransactOpts, signers []common.Address, allowed bool) (*types.Transaction, error)
 
-	UpdateWorkflowDONLabel(opts *bind.TransactOpts, workflowId [32]byte, newDonFamily string) (*types.Transaction, error)
+	UpdateWorkflowDONFamily(opts *bind.TransactOpts, workflowId [32]byte, newDonFamily string) (*types.Transaction, error)
 
 	UpsertWorkflow(opts *bind.TransactOpts, workflowName string, tag string, workflowId [32]byte, status uint8, donFamily string, binaryUrl string, configUrl string, attributes []byte, keepAlive bool) (*types.Transaction, error)
 

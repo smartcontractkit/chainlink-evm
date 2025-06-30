@@ -1,0 +1,26 @@
+WorkflowRegistry.canUnlinkOwner
+├── when pre unlink action is NONE
+│   ├── when owner has active workflows
+│   │   └── it should revert with CannotUnlinkWithActiveWorkflows
+│   └── when owner has no active workflows
+│       ├── when valid timestamp is less than block timestamp
+│       │   └── it should revert with UnlinkOwnerRequestExpired
+│       └── when valid timestamp greater than or equal to block timestamp
+│           ├── when owner is not yet linked
+│           │   └── it should revert with OwnershipLinkDoesNotExist
+│           └── when owner is already linked
+│               ├── when the signature does not recover an allowed signer
+│               │   └── it should revert with InvalidOwnershipLink
+│               └── when the signature recovers an allowed signer
+│                   └── it should return (no revert)
+└── when pre unlinke action is PAUSE_WORKFLOWS or REMOVE_WORKFLOWS
+    ├── when validityTimestamp is less than block timestamp
+    │   └── it should revert with UnlinkOwnerRequestExpired
+    └── when validityTimestamp greater than or equal to block timestamp
+        ├── when owner is not linked
+        │   └── it should revert with OwnershipLinkDoesNotExist(owner)
+        └── when owner is linked
+            ├── when signature does not recover an allowed signer
+            │   └── it should revert with InvalidOwnershipLink
+            └── when signature recovers an allowed signer
+                └── it should return with no errors 

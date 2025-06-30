@@ -17,6 +17,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   using EnumerableMap for EnumerableMap.AddressToBytes32Map;
 
   string public constant override typeAndVersion = "WorkflowRegistry 2.0.0-dev";
+  uint8 public immutable i_DEFAULT_NAME_LEN = 64;
+  uint8 public immutable i_DEFAULT_TAG_LEN = 32;
+  uint8 public immutable i_DEFAULT_URL_LEN = 200;
+  uint16 public immutable i_DEFAULT_ATTRIBUTE_LEN = 1024;
 
   /// @dev The set of allowed signers for ownership proofs. These signers are considered to be trusted entities.
   /// If the ownership proof is not signed by one of the allowed signers, signature will be rejected.
@@ -58,8 +62,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // The don family (as a hash) that the workflow is assigned to. Only active workflows are assigned don families.
   // When a workflow is paused it is removed from the don family.
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
-  /// Maps donHash → donFamily string
-  mapping(bytes32 donHash => string donFamily) private s_donFamilyByHash;
 
   // ================================================================
   // |                         Events                               |
@@ -114,6 +116,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error WorkflowTagTooLong(uint256 provided, uint8 maxAllowed);
   error AttributesTooLong(uint256 provided, uint256 maxAllowed);
   error EmptyUpdateBatch();
+  error BinaryURLRequired();
+  error CannotUpdateDONFamilyForPausedWorkflows();
 
   // ================================================================
   // |                         Enums                                |
@@ -195,10 +199,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @notice Initializes the contract with default metadata length limits
   constructor() {
     s_metadataConfig = MetadataConfig({
-      maxWorkflowNameLength: 64,
-      maxWorkflowTagLength: 32,
-      maxUrlLength: 200,
-      maxAttributesLength: 1024
+      maxWorkflowNameLength: i_DEFAULT_NAME_LEN,
+      maxWorkflowTagLength: i_DEFAULT_TAG_LEN,
+      maxUrlLength: i_DEFAULT_URL_LEN,
+      maxAttributesLength: i_DEFAULT_ATTRIBUTE_LEN
     });
   }
 
@@ -708,6 +712,13 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     return list;
   }
 
+  /// @notice Returns the total number of capacity- and workflow-lifecycle events ever recorded.
+  /// @dev    Use this in tandem with `getEvents(start, limit)` to page through the event stream.
+  /// @return count The total count of EventRecord entries stored in `s_events`.
+  function totalEvents() external view returns (uint256 count) {
+    return s_events.length;
+  }
+
   // ================================================================
   // |                       Workflow Management                    |
   // ================================================================
@@ -760,10 +771,13 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (s_idToRid[workflowId] != bytes32(0)) {
       revert WorkflowIDAlreadyExists(workflowId);
     }
-    // 3) check URLs (optional; 0 = unlimited)
+    // 3) check URLs (binary url is required. config url is optional; 0 = unlimited)
     MetadataConfig memory metaCfg = s_metadataConfig;
     uint256 binaryLen = bytes(binaryUrl).length;
     uint256 configLen = bytes(configUrl).length;
+    if (binaryLen == 0) {
+      revert BinaryURLRequired();
+    }
     if (metaCfg.maxUrlLength > 0) {
       if (binaryLen > metaCfg.maxUrlLength) {
         revert URLTooLong(binaryLen, metaCfg.maxUrlLength);
@@ -819,7 +833,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
       /* ───────────────────────── 2. LIMIT CHECKS ───────────────────────── */
       if (status == WorkflowStatus.ACTIVE) {
-        _enforceLimits(msg.sender, donHash, donFamily);
+        _enforceLimits(msg.sender, donHash, donFamily, 1);
         // update indices necessary for active workflows
         _addActiveIndices(rid, msg.sender, donHash, wKey);
       }
@@ -896,8 +910,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       return;
     }
     bytes32 donHash = _hash(donFamily);
-    _enforceLimits(msg.sender, donHash, donFamily);
-    _applyActivate(rid, rec);
+    _enforceLimits(msg.sender, donHash, donFamily, 1);
+    _applyActivate(rid, rec, donHash);
   }
 
   /// @notice Pauses multiple workflows owned by `msg.sender`.
@@ -926,90 +940,43 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
   }
 
-  /// @notice Activate many paused workflows owned by `msg.sender`.
-  /// @dev    Performs a full dry-run first:
-  ///         - Checks ownership and that each workflow is currently PAUSED.
-  ///         - Skips already-ACTIVE IDs when calculating deltas.
-  ///         - Calculates net per-DON increments and enforces the global DON cap
-  ///           and the per-user-per-DON cap.
-  ///         If any check fails, the entire call reverts with no state changes.
-
-  ///         There is no enforced batch size limit here.
-  ///         Supplying a very large `workflowIds` array may exhaust block gas limits and cause the transaction to revert.
-  ///         Clients should cap the array length to a safe value based on current gas constraints.
-  /// @param  workflowIds Array of workflow IDs to activate; must not be empty.
-  function batchActivateWorkflows(
-    bytes32[] calldata workflowIds
-  ) external {
+  /// @notice Activate many paused workflows owned by the caller,
+  ///        assigning *all* of them to a single DON family.
+  ///        If the list contains some workflows that are already ACTIVE on another DON, they are
+  ///        silently ignored; the rest are activated on the new DON.
+  /// @param workflowIds  Array of workflow IDs to activate (must not be empty).
+  /// @param donFamily    Target DON label; must already have a global limit.
+  function batchActivateWorkflows(bytes32[] calldata workflowIds, string calldata donFamily) external {
     uint256 n = workflowIds.length;
     if (n == 0) revert EmptyUpdateBatch();
-
     if (!s_linkedOwners.contains(msg.sender)) {
       revert OwnershipLinkDoesNotExist(msg.sender);
     }
 
-    // ----- per-DON deltas
-    bytes32[] memory dons = new bytes32[](n);
-    uint32[] memory inc = new uint32[](n);
-    uint256 unique = 0;
+    /* ──────────────────────── 1. PRE‑CHECKS & COUNT ───────────────────── */
+    bytes32 donHash = _hash(donFamily);
+    uint32 pending = 0; // # workflows that will become ACTIVE
 
     for (uint256 i; i < n; ++i) {
       bytes32 rid = s_idToRid[workflowIds[i]];
       WorkflowMetadata storage rec = s_workflows[rid];
       if (rec.owner == address(0)) revert WorkflowDoesNotExist();
       if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
-      if (rec.status == WorkflowStatus.ACTIVE) continue;
-
-      // accumulate
-      bytes32 donHash = s_donByWorkflowRid[rid];
-      bool found = false;
-      for (uint256 j; j < unique; ++j) {
-        if (dons[j] == donHash) {
-          ++inc[j];
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        dons[unique] = donHash;
-        inc[unique] = 1;
-        ++unique;
-      }
+      if (rec.status == WorkflowStatus.ACTIVE) continue; // already active, ignore
+      ++pending;
     }
 
-    // ----- cap checks
-    for (uint256 k; k < unique; ++k) {
-      bytes32 donHash = dons[k];
-      uint32 add = inc[k];
-      DonConfig storage cfg = s_donConfigs[donHash];
+    if (pending == 0) return; // nothing to do
 
-      // Global limit must be explicitly enabled (zero or missing = disallowed)
-      ConfigValue memory globalCfg = cfg.limitValue;
-      if (!globalCfg.enabled) {
-        revert DonLimitNotSet(cfg.label);
-      }
+    /* ───────────────────────── 2. CAP ENFORCEMENT ─────────────────────── */
+    _enforceLimits(msg.sender, donHash, donFamily, pending);
 
-      // Determine the effective cap: start with the global cap...
-      uint32 effectiveCap = globalCfg.value;
-
-      // ...but if this user has an override, use that instead
-      ConfigValue memory userCfg = cfg.userOverride[msg.sender];
-      if (userCfg.enabled) {
-        effectiveCap = userCfg.value;
-      }
-
-      // Finally, compare the owner’s current count against the cap
-      if (s_userDONCount[msg.sender][donHash] + add > effectiveCap) {
-        revert MaxWorkflowsPerUserDONExceeded(msg.sender, cfg.label);
-      }
-    }
-
-    // ----- mutations
+    /* ───────────────────────── 3. STATE MUTATIONS ─────────────────────── */
     for (uint256 i; i < n; ++i) {
       bytes32 rid = s_idToRid[workflowIds[i]];
       WorkflowMetadata storage rec = s_workflows[rid];
       if (rec.status == WorkflowStatus.PAUSED) {
-        _applyActivate(rid, rec);
+        _applyActivate(rid, rec, donHash); // updates indices & emits WorkflowActivated
       }
     }
   }
@@ -1021,9 +988,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         • `rec.status == WorkflowStatus.PAUSED`
   ///         • DON/user caps have been enforced already.
   ///         • Caller can perform action.
-  function _applyActivate(bytes32 rid, WorkflowMetadata storage rec) private {
-    bytes32 donHash = s_donByWorkflowRid[rid];
-    string memory donFamily = s_donConfigs[donHash].label;
+  function _applyActivate(bytes32 rid, WorkflowMetadata storage rec, bytes32 donHash) private {
     _addActiveIndices(rid, rec.owner, donHash, _workflowKey(rec.owner, rec.workflowName));
     rec.status = WorkflowStatus.ACTIVE;
 
@@ -1035,7 +1000,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       })
     );
 
-    emit WorkflowActivated(rec.workflowId, rec.owner, donFamily, rec.workflowName);
+    emit WorkflowActivated(rec.workflowId, rec.owner, s_donConfigs[donHash].label, rec.workflowName);
   }
 
   /// @dev   Apply the state transition ACTIVE ➜ PAUSED.
@@ -1047,7 +1012,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function _applyPause(bytes32 rid, WorkflowMetadata storage rec) private {
     rec.status = WorkflowStatus.PAUSED;
     bytes32 donHash = s_donByWorkflowRid[rid];
-    string memory donFamily = s_donConfigs[donHash].label;
     _removeActiveIndices(rid, rec.owner, donHash, _workflowKey(rec.owner, rec.workflowName));
 
     s_events.push(
@@ -1058,7 +1022,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       })
     );
 
-    emit WorkflowPaused(rec.workflowId, rec.owner, donFamily, rec.workflowName);
+    emit WorkflowPaused(rec.workflowId, rec.owner, s_donConfigs[donHash].label, rec.workflowName);
   }
 
   /// @notice Permanently delete a workflow owned by the caller.
@@ -1144,7 +1108,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// DON family upon activation.
   /// @param workflowId   The workflow to reassign
   /// @param newDonFamily The new human‐readable DON family (must be set via setDONLimit)
-  function updateWorkflowDONLabel(bytes32 workflowId, string calldata newDonFamily) external {
+  function updateWorkflowDONFamily(bytes32 workflowId, string calldata newDonFamily) external {
     if (!s_linkedOwners.contains(msg.sender)) {
       revert OwnershipLinkDoesNotExist(msg.sender);
     }
@@ -1153,17 +1117,19 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     WorkflowMetadata storage rec = s_workflows[rid];
     if (rec.owner == address(0)) revert WorkflowDoesNotExist();
     if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
-    if (rec.status != WorkflowStatus.ACTIVE) return;
+    if (rec.status != WorkflowStatus.ACTIVE) revert CannotUpdateDONFamilyForPausedWorkflows();
 
     bytes32 oldDonHash = s_donByWorkflowRid[rid];
+    string memory oldDonFamily = s_donConfigs[oldDonHash].label;
     bytes32 newDonHash = _hash(newDonFamily);
     if (oldDonHash == newDonHash) return;
 
     // remove and pause active indices first for the old don family
     _applyPause(rid, rec);
-    _enforceLimits(msg.sender, newDonHash, newDonFamily);
+    _enforceLimits(msg.sender, newDonHash, newDonFamily, 1);
     // activate with the new don Label
-    _applyActivate(rid, rec);
+    _applyActivate(rid, rec, newDonHash);
+    emit WorkflowDonFamilyUpdated(workflowId, msg.sender, oldDonFamily, newDonFamily);
   }
 
   // ================================================================
@@ -1217,11 +1183,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @notice Pauses *all* active workflows under a specific DON label, as an administrator.
   /// @dev    - Only the contract owner may call this (`onlyOwner`).
   ///         - Iterates from the end of the DON’s active-workflow set and directly pauses each workflow.
-  /// @param  donFamily The `bytes32` identifier of the DON whose active workflows should be paused.
+  /// @param  donFamily The string identifier of the DON whose active workflows should be paused.
   function adminPauseAllByDON(
-    bytes32 donFamily
+    string calldata donFamily
   ) external onlyOwner {
-    EnumerableSet.Bytes32Set storage activeSet = s_activeDONWorkflowRids[donFamily];
+    bytes32 donHash = _hash(donFamily);
+    EnumerableSet.Bytes32Set storage activeSet = s_activeDONWorkflowRids[donHash];
 
     // Loop until the set is empty, always pausing the last workflow
     while (activeSet.length() > 0) {
@@ -1376,6 +1343,25 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     return list;
   }
 
+  /// @notice Returns the number of ACTIVE workflows on a given DON.
+  /// @param donFamily The human-readable DON label (must have been configured via `setDONLimit`).
+  /// @return count The total number of active workflows on that DON.
+  function totalActiveWorkflowsOnDON(
+    string calldata donFamily
+  ) external view returns (uint256 count) {
+    bytes32 donHash = _hash(donFamily);
+    return s_activeDONWorkflowRids[donHash].length();
+  }
+
+  /// @notice Returns the number of ACTIVE workflows the owner has over all DONs.
+  /// @param owner The owner of the workflows
+  /// @return count The total number of active workflows owned by the address in the param.
+  function totalActiveWorkflowsByOwner(
+    address owner
+  ) external view returns (uint256 count) {
+    return s_activeOwnerWorkflowRids[owner].length();
+  }
+
   /// @dev Calculates how many items fit into a page slice.
   ///      - If `start >= total`, returns `0` to indicate an empty slice.
   ///      - Otherwise, clamps the page end to `total` when `start + limit` exceeds it.
@@ -1391,26 +1377,16 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     return end - start;
   }
 
-  function _enforceLimits(address owner, bytes32 donHash, string memory donFamily) internal view {
+  function _enforceLimits(address owner, bytes32 donHash, string memory donFamily, uint32 pending) internal view {
     DonConfig storage cfg = s_donConfigs[donHash];
-
     // Global limit must be explicitly enabled (zero or missing = disallowed)
-    ConfigValue memory globalCfg = cfg.limitValue;
-    if (!globalCfg.enabled) {
-      revert DonLimitNotSet(donFamily);
-    }
+    if (!cfg.limitValue.enabled) revert DonLimitNotSet(donFamily);
 
-    // Determine the effective cap: start with the global cap...
-    uint32 effectiveCap = globalCfg.value;
+    // Determine the effective cap: start with the global cap, but if this user has an override, use that instead
+    uint32 cap = cfg.userOverride[owner].enabled ? cfg.userOverride[owner].value : cfg.limitValue.value;
 
-    // ...but if this user has an override, use that instead
-    ConfigValue memory userCfg = cfg.userOverride[owner];
-    if (userCfg.enabled) {
-      effectiveCap = userCfg.value;
-    }
-
-    // Finally, compare the owner’s current count against the cap
-    if (s_userDONCount[owner][donHash] > effectiveCap) {
+    // <= to include the pending addition(s)
+    if (s_userDONCount[owner][donHash] + pending > cap) {
       revert MaxWorkflowsPerUserDONExceeded(owner, donFamily);
     }
   }

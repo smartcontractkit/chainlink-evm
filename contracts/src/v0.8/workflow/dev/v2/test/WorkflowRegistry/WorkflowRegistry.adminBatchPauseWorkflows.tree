@@ -1,0 +1,8 @@
+WorkflowRegistry.adminBatchPauseWorkflows
+├── when caller is NOT the contract owner
+│   └── it reverts with Ownable2StepMsgSender caller is not the owner
+└── when caller is the contract owner
+    ├── when workflowIds length is 0
+    │   └── it reverts EmptyUpdateBatch
+    └── when workflowIds is not zero
+        └── it pauses each workflow in workflowIds

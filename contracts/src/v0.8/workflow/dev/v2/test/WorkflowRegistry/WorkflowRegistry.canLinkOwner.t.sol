@@ -81,7 +81,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
   }
 
   // whenSignatureHasNotExpired whenMsgSenderIsNotYetLinked whenProofIsUnused
-  function test_WhenSignatureRecoversToASignerNotInS_allowedSigners() external {
+  function test_WhenSignatureRecoversToASignerNotInAllowedSigners() external {
     // It should revert with InvalidOwnershipLink
     uint256 randomPrivateKey = 0x7f3c2a9b5d4e1f8c0b2d3a4e5f6c7d8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d;
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
