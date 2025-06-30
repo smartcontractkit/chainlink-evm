@@ -213,6 +213,7 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 	const finalityDepth = 2
 
 	head := &evmtypes.Head{Number: latestBlock}
+	safeHead := &evmtypes.Head{Number: latestBlock - finalityDepth - 1} //forcing safe head to be lower than finalized head
 	finalizedHead := &evmtypes.Head{Number: latestBlock - finalityDepth}
 	events := []common.Hash{EmitterABI.Events["Log1"].ID}
 	log1 := types.Log{
@@ -231,6 +232,7 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 
 	headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
 	headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalizedHead, nil)
+	headTracker.On("LatestSafeBlock", mock.Anything).Return(safeHead, nil)
 
 	ctx := testutils.Context(t)
 	lpOpts := Opts{
@@ -251,6 +253,7 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 	lastProcessed, err := lp.orm.SelectLatestBlock(ctx)
 	require.NoError(t, err)
 	require.Equal(t, latestBlock, lastProcessed.BlockNumber)
+	require.Equal(t, finalizedHead.Number, lastProcessed.SafeBlockNumber)
 
 	require.NoError(t, lp.BackupPollAndSaveLogs(ctx))
 	assert.Equal(t, int64(2), lp.backupPollerNextBlock)
@@ -343,6 +346,8 @@ func TestLogPoller_Replay(t *testing.T) {
 		finalized := newHead(h.Number - lpOpts.FinalityDepth)
 		return h, finalized, nil
 	})
+	safe := newHead(5)
+	headTracker.EXPECT().LatestSafeBlock(mock.Anything).Return(safe, nil)
 	lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
 
 	{
@@ -551,7 +556,7 @@ func TestLogPoller_Replay(t *testing.T) {
 		require.NoError(t, err)
 
 		h := head.Load()
-		err = lp.orm.InsertBlock(ctx, common.BigToHash(big.NewInt(h.Number)), h.Number, h.Timestamp, h.Number)
+		err = lp.orm.InsertBlock(ctx, common.BigToHash(big.NewInt(h.Number)), h.Number, h.Timestamp, h.Number, h.Number)
 		require.NoError(t, err)
 
 		ec.On("FilterLogs", mock.Anything, mock.Anything).Return([]types.Log{log1}, nil)
@@ -599,6 +604,40 @@ func Test_latestBlockAndFinalityDepth(t *testing.T) {
 		require.NotNil(t, latestBlock)
 		assert.Equal(t, head.BlockNumber(), latestBlock.BlockNumber())
 		assert.Equal(t, finalizedBlock.Number, finalizedBlockNumber)
+	})
+}
+
+func Test_latestSafeBlocks(t *testing.T) {
+	lggr := logger.Test(t)
+
+	lpOpts := Opts{
+		PollPeriod:               time.Hour,
+		BackfillBatchSize:        3,
+		RPCBatchSize:             3,
+		KeepFinalizedBlocksDepth: 20,
+	}
+
+	t.Run("headTracker returns an error", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		const expectedError = "safe block is not available yet"
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(&evmtypes.Head{}, errors.New(expectedError))
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		_, _, err := lp.latestSafeBlocks(tests.Context(t))
+		require.ErrorContains(t, err, expectedError)
+	})
+	t.Run("headTracker returns valid chain", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		safeBlock := &evmtypes.Head{Number: 2}
+		//safeBlock.IsFinalized.Store(true)
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(safeBlock, nil)
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		actualSafeBlock, safeBlockNumber, err := lp.latestSafeBlocks(tests.Context(t))
+		require.NoError(t, err)
+		require.NotNil(t, safeBlock)
+		assert.Equal(t, safeBlock.BlockNumber(), actualSafeBlock.BlockNumber())
+		assert.Equal(t, safeBlock.Number, safeBlockNumber)
 	})
 }
 
@@ -695,6 +734,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		headTracker.EXPECT().LatestAndFinalizedBlock(mock.Anything).RunAndReturn(func(ctx context.Context) (*evmtypes.Head, *evmtypes.Head, error) {
 			return latest, finalized, nil
 		}).Once()
+		headTracker.EXPECT().LatestSafeBlock(mock.Anything).Return(finalized, nil).Once()
 		ec := clienttest.NewClient(t)
 		ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, number *big.Int) (*evmtypes.Head, error) {
 			return newHead(number.Int64()), nil
@@ -702,7 +742,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5}}, nil).Once()
 		mockBatchCallContext(t, ec)
 		// insert finalized block with different hash than in RPC
-		require.NoError(t, orm.InsertBlock(tests.Context(t), common.HexToHash("0x123"), 2, time.Unix(10, 0), 2))
+		require.NoError(t, orm.InsertBlock(tests.Context(t), common.HexToHash("0x123"), 2, time.Unix(10, 0), 2, 2))
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
 		lp.PollAndSaveLogs(tests.Context(t), 4)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
@@ -714,6 +754,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		finalized := newHead(5)
 		latest := newHead(16)
 		headTracker.EXPECT().LatestAndFinalizedBlock(mock.Anything).Return(latest, finalized, nil).Once()
+		headTracker.EXPECT().LatestSafeBlock(mock.Anything).Return(finalized, nil).Once()
 		ec := clienttest.NewClient(t)
 		ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, number *big.Int) (*evmtypes.Head, error) {
 			return newHead(number.Int64()), nil
@@ -734,6 +775,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		finalized := newHead(5)
 		latest := newHead(16)
 		headTracker.EXPECT().LatestAndFinalizedBlock(mock.Anything).Return(latest, finalized, nil).Once()
+		headTracker.EXPECT().LatestSafeBlock(mock.Anything).Return(finalized, nil).Once()
 		ec := clienttest.NewClient(t)
 		ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, number *big.Int) (*evmtypes.Head, error) {
 			return newHead(number.Int64()), nil
@@ -752,6 +794,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		finalized := newHead(5)
 		latest := newHead(16)
 		headTracker.EXPECT().LatestAndFinalizedBlock(mock.Anything).Return(latest, finalized, nil).Once()
+		headTracker.EXPECT().LatestSafeBlock(mock.Anything).Return(finalized, nil).Once()
 		ec := clienttest.NewClient(t)
 		ec.EXPECT().ConfiguredChainID().Return(chainID)
 		ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, number *big.Int) (*evmtypes.Head, error) {

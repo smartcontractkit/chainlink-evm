@@ -803,7 +803,7 @@ the prices and end up in stale values.
 HistoryDepth = 100 # Default
 MaxBufferSize = 3 # Default
 SamplingInterval = '1s' # Default
-FinalityTagBypass = true # Default
+FinalityTagBypass = false # Default
 MaxAllowedFinalityDepth = 10000 # Default
 PersistenceEnabled = true # Default
 ```
@@ -838,11 +838,10 @@ SamplingInterval means that head tracker callbacks will at maximum be made once 
 
 ### FinalityTagBypass
 ```toml
-FinalityTagBypass = true # Default
+FinalityTagBypass = false # Default
 ```
 FinalityTagBypass disables FinalityTag support in HeadTracker and makes it track blocks up to FinalityDepth from the most recent head.
-It should only be used on chains with an extremely large actual finality depth (the number of blocks between the most recent head and the latest finalized block).
-Has no effect if `FinalityTagsEnabled` = false
+This param is considered deprecated, and should be set to false on all chains
 
 ### MaxAllowedFinalityDepth
 ```toml

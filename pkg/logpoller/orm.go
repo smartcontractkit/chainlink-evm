@@ -32,7 +32,7 @@ type ORM interface {
 	DeleteFilter(ctx context.Context, name string) error
 
 	DeleteLogsByRowID(ctx context.Context, rowIDs []uint64) (int64, error)
-	InsertBlock(ctx context.Context, blockHash common.Hash, blockNumber int64, blockTimestamp time.Time, finalizedBlock int64) error
+	InsertBlock(ctx context.Context, blockHash common.Hash, blockNumber int64, blockTimestamp time.Time, finalizedBlock int64, safeBlock int64) error
 	DeleteBlocksBefore(ctx context.Context, end int64, limit int64) (int64, error)
 	DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error
 	SelectUnmatchedLogIDs(ctx context.Context, limit int64) (ids []uint64, err error)
@@ -94,19 +94,20 @@ func (o *DSORM) Transact(ctx context.Context, fn func(*DSORM) error) (err error)
 func (o *DSORM) new(ds sqlutil.DataSource) *DSORM { return NewORM(o.chainID, ds, o.lggr) }
 
 // InsertBlock is idempotent to support replays.
-func (o *DSORM) InsertBlock(ctx context.Context, blockHash common.Hash, blockNumber int64, blockTimestamp time.Time, finalizedBlock int64) error {
+func (o *DSORM) InsertBlock(ctx context.Context, blockHash common.Hash, blockNumber int64, blockTimestamp time.Time, finalizedBlock int64, safeBlock int64) error {
 	args, err := newQueryArgs(o.chainID).
 		withField("block_hash", blockHash).
 		withField("block_number", blockNumber).
 		withField("block_timestamp", blockTimestamp).
 		withField("finalized_block_number", finalizedBlock).
+		withField("safe_block_number", safeBlock).
 		toArgs()
 	if err != nil {
 		return err
 	}
 	query := `INSERT INTO evm.log_poller_blocks
-				(evm_chain_id, block_hash, block_number, block_timestamp, finalized_block_number, created_at)
-      		VALUES (:evm_chain_id, :block_hash, :block_number, :block_timestamp, :finalized_block_number, NOW())
+				(evm_chain_id, block_hash, block_number, block_timestamp, finalized_block_number, created_at, safe_block_number)
+      		VALUES (:evm_chain_id, :block_hash, :block_number, :block_timestamp, :finalized_block_number, NOW(), :finalized_block_number)
 			ON CONFLICT DO NOTHING`
 	_, err = o.ds.NamedExecContext(ctx, query, args)
 	return err
@@ -545,7 +546,7 @@ func (o *DSORM) InsertLogs(ctx context.Context, logs []Log) error {
 func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block) error {
 	// Optimization, don't open TX when there is only a block to be persisted
 	if len(logs) == 0 {
-		return o.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber)
+		return o.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber)
 	}
 
 	if err := o.validateLogs(logs); err != nil {
@@ -554,7 +555,7 @@ func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block
 
 	// Block and logs goes with the same TX to ensure atomicity
 	return o.Transact(ctx, func(orm *DSORM) error {
-		err := orm.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber)
+		err := orm.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber)
 		if err != nil {
 			return err
 		}

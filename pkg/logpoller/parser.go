@@ -31,7 +31,7 @@ var (
 	logsFields                = [...]string{"evm_chain_id", "log_index", "block_hash", "block_number",
 		"address", "event_sig", "topics", "tx_hash", "data", "created_at", "block_timestamp"}
 	blocksFields = [...]string{"evm_chain_id", "block_hash", "block_number", "block_timestamp",
-		"finalized_block_number", "created_at"}
+		"finalized_block_number", "created_at", "safe_block_number"}
 )
 
 // The parser builds SQL expressions piece by piece for each Accept function call and resets the error and expression
@@ -72,6 +72,9 @@ func (v *pgDSLParser) Confidence(p primitives.Confidence) {
 		v.expression = v.nestedConfQuery(true, 0)
 	case primitives.Unconfirmed:
 		v.expression = v.nestedConfQuery(false, 0)
+	case primitives.Safe:
+		v.expression = v.nestedConfQuery(false, 0)
+
 	default:
 		v.err = errors.New("unrecognized confidence level; use confidence to confirmations mappings instead")
 
