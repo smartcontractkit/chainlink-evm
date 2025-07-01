@@ -23,10 +23,8 @@ func ConstructTxm(logger logger.Logger, nodes []*toml.Node, keystore keys.Store)
 	}
 
 	return trontxm.New(logger, tronkeystore.NewLoopKeystoreAdapter(keystore), tronClient, trontxm.TronTxmConfig{
-		// From testing, this multiplier ensures all exec messages are fully executed.
-		// Energy estimation doesn't seem to account for more complex smart contract execution.
-		// Given that Tron has static gas prices, we don't expect this to be a problem as this multiplier is sufficiently high.
-		EnergyMultiplier: 3,
+		// Overrides the energy estimator to always use the fixed energy
+		FixedEnergyValue: 6_000_000,
 		// Maximum number of transactions to buffer in the broadcast channel.
 		BroadcastChanSize: 100,
 		// Number of seconds to wait between polling the blockchain for transaction confirmation.
