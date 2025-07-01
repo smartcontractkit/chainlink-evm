@@ -1257,6 +1257,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     return _workflowMetadataView(rid);
   }
 
+  /// @notice Retrieves the metadata for a workflow identified by its owner address, name, and tag.
+  /// @param owner The address of the workflow’s owner.
+  /// @param workflowName The human-readable name of the workflow (case-sensitive).
+  /// @param tag The unique tag for this workflow variant.
+  /// @return workflow A view struct containing the workflow’s metadata (ID, status, DON label, URLs, attributes, etc.).
+  function getWorkflowMetadataByOwnerAndNameAndTag(
+    address owner,
+    string calldata workflowName,
+    string calldata tag
+  ) external view returns (WorkflowMetadataView memory workflow) {
+    bytes32 rid = keccak256(abi.encode(owner, workflowName, tag));
+    return _workflowMetadataView(rid);
+  }
+
   /// @notice  Return a paginated list of all versions (active *and* paused)
   ///          of workflows with the same `workflowName` and `owner`.
   /// @dev     Uses the secondary key ⟨owner, workflowName⟩ → RID-set
