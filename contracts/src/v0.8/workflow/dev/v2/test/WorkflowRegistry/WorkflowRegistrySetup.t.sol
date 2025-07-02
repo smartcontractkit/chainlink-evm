@@ -58,6 +58,11 @@ contract WorkflowRegistrySetup is Test {
     vm.stopPrank();
   }
 
+  function _setDONLimit() internal {
+    vm.prank(s_owner);
+    s_registry.setDONLimit(s_donFamily, 100, true);
+  }
+
   // Helper to link an owner
   function _linkOwner(
     address owner

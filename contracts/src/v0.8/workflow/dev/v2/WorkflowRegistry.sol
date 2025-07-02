@@ -730,6 +730,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// Status and donFamily cannot be updated via upsert. They must use their own separate functions
   /// for any changes to these workflow fields.
   /// @param workflowName  Human‑readable name (≤64 chars)
+  /// @param tag           Unique tag for the workflow (if the same workflowName has been used)
   /// @param workflowId    Deterministic hash computed off‑chain (must be unique)
   /// @param donFamily      Label of the DON
   /// @param status        Initial status (ACTIVE / PAUSED)
@@ -1250,10 +1251,37 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @custom:revert WorkflowDoesNotExist  If no RID is found for
   ///                                       `workflowId`, or the RID maps
   ///                                       to an empty metadata record.
-  function getWorkflowMetadata(
+  function getWorkflowById(
     bytes32 workflowId
   ) external view returns (WorkflowMetadataView memory workflow) {
     bytes32 rid = s_idToRid[workflowId];
+    return _workflowMetadataView(rid);
+  }
+
+  /// @notice Return the full on-chain metadata for a given workflow.
+  /// @dev
+  /// 1. Calculates registry-internal reference‐ID (RID) from
+  ///    using the caller-supplied parameters.
+  /// 2. Uses that RID to fetch the packed `WorkflowMetadata` struct.
+  /// 3. Reverts with `WorkflowDoesNotExist` if either mapping slot is
+  ///    empty (i.e. the workflow was never registered or has been
+  ///    deleted).
+  ///
+  /// @param   owner         Address that registered the workflows.
+  /// @param   workflowName  Case-sensitive name string (≤ 64 chars).
+  /// @param   tag           Unique tag for the workflow.
+  /// @return workflow  In-memory copy of the workflow’s metadata record
+  /// (it also includes the donFamily string for active workflows).
+  ///
+  /// @custom:revert WorkflowDoesNotExist  If no RID is found for
+  ///                                       `workflowId`, or the RID maps
+  ///                                       to an empty metadata record.
+  function getWorkflow(
+    address owner,
+    string calldata workflowName,
+    string calldata tag
+  ) external view returns (WorkflowMetadataView memory workflow) {
+    bytes32 rid = keccak256(abi.encode(owner, workflowName, tag));
     return _workflowMetadataView(rid);
   }
 
@@ -1268,7 +1296,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param   start         Zero-based index into the RID set.
   /// @param   limit         Max #records to return (clamped to 100).
   /// @return  list          Array of `WorkflowMetadataView`.
-  function getWorkflowMetadataListByOwnerAndName(
+  function getWorkflowListByOwnerAndName(
     address owner,
     string calldata workflowName,
     uint256 start,
@@ -1299,7 +1327,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param limit  Batch size for the workflows.
   /// @return list Array of `WorkflowMetadataView` with length
   ///              `min(limit, total-start)`.
-  function getWorkflowMetadataListByOwner(
+  function getWorkflowListByOwner(
     address owner,
     uint256 start,
     uint256 limit
@@ -1331,7 +1359,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param limit     Bathc size for the workflows
   /// @return list     Array of `WorkflowMetadataView` structs whose length is
   ///                  `min(limit, total-start)`.
-  function getWorkflowMetadataListByDON(
+  function getWorkflowListByDON(
     bytes32 donFamily,
     uint256 start,
     uint256 limit

@@ -269,7 +269,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should unlink the s_owner without any additional actions
     (bytes32 storedProof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = s_owner
@@ -287,7 +287,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should unlink the s_owner without any additional actions
     (bytes32 storedProof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = s_owner
@@ -305,7 +305,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should unlink the s_owner without any additional actions
     (bytes32 storedProof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = s_owner
@@ -330,7 +330,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should revert with active workflows error
     (, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = s_owner
@@ -347,7 +347,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should remove the workflows and unlink the s_owner
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = s_owner
@@ -356,7 +356,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.REMOVE_WORKFLOWS);
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
 
-    wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 0, "There should be 0 workflows for the s_owner");
   }
 
@@ -368,7 +368,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should pause the workflows and unlink the s_owner
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = s_owner
@@ -377,7 +377,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.PAUSE_WORKFLOWS);
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
 
-    wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be still 5 workflows for the s_owner");
 
     for (uint256 i = 0; i < wrs.length; ++i) {
@@ -405,7 +405,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should unlink the s_owner without any additional actions
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = not s_owner
@@ -423,7 +423,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should unlink the s_owner without any additional actions
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = not s_owner
@@ -441,7 +441,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should unlink the s_owner without any additional actions
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = not s_owner
@@ -466,7 +466,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should revert with active workflows error
     (, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = not s_owner
@@ -483,7 +483,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should remove the workflows and unlink the s_owner
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = not s_owner
@@ -492,7 +492,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.REMOVE_WORKFLOWS);
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
 
-    wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 0, "There should be 0 workflows for the s_owner");
   }
 
@@ -504,7 +504,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     // it should pause the workflows and unlink the s_owner
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
 
     vm.prank(s_user); // s_user = s_owner
@@ -513,7 +513,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.PAUSE_WORKFLOWS);
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
 
-    wrs = s_registry.getWorkflowMetadataListByOwner(s_owner, 0, 100);
+    wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
     assertEq(wrs.length, 5, "There should be still 5 workflows for the s_owner");
 
     for (uint256 i = 0; i < wrs.length; ++i) {
