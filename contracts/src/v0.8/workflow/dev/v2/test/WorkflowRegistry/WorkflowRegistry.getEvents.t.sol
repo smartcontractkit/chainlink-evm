@@ -4,8 +4,8 @@ pragma solidity 0.8.26;
 import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
-contract WorkflowRegistrygetEvents is WorkflowRegistrySetup {
-  function test_WhenNoEventsHaveBeenRecorded() external view {
+contract WorkflowRegistry_getEvents is WorkflowRegistrySetup {
+  function test_getEvents_WhenNoEventsHaveBeenRecorded() external view {
     // it should returns an empty array
     WorkflowRegistry.EventRecord[] memory events = s_registry.getEvents(0, 100);
     assertEq(events.length, 0);
@@ -21,7 +21,7 @@ contract WorkflowRegistrygetEvents is WorkflowRegistrySetup {
   }
 
   // when start ≥ N
-  function test_WhenStartIsGreaterThanNumberOfEvents() external whenThereIsMoreThan1Event {
+  function test_getEvents_WhenStartIsGreaterThanNumberOfEvents() external whenThereIsMoreThan1Event {
     // it should return an empty array
     WorkflowRegistry.EventRecord[] memory events = s_registry.getEvents(3, 100);
     assertEq(events.length, 0);
@@ -33,14 +33,14 @@ contract WorkflowRegistrygetEvents is WorkflowRegistrySetup {
   }
 
   // when limit = 0
-  function test_WhenLimitIs0() external whenThereIsMoreThan1Event whenStartIsLessThanNumberOfEventsN {
+  function test_getEvents_WhenLimitIs0() external whenThereIsMoreThan1Event whenStartIsLessThanNumberOfEventsN {
     // it should return an empty array
     WorkflowRegistry.EventRecord[] memory events = s_registry.getEvents(1, 0);
     assertEq(events.length, 0);
   }
 
   // when 0 < limit < (N – start)
-  function test_When0IsLessThanLimitWhichIsLessThanNMinusStart()
+  function test_getEvents_When0IsLessThanLimitWhichIsLessThanNMinusStart()
     external
     whenThereIsMoreThan1Event
     whenStartIsLessThanNumberOfEventsN
@@ -50,7 +50,7 @@ contract WorkflowRegistrygetEvents is WorkflowRegistrySetup {
     assertEq(events.length, 2);
   }
 
-  function test_WhenLimitIsGreaterThanNMinusStart()
+  function test_getEvents_WhenLimitIsGreaterThanNMinusStart()
     external
     whenThereIsMoreThan1Event
     whenStartIsLessThanNumberOfEventsN

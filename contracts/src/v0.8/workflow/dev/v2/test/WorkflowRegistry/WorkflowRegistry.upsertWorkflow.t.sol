@@ -6,7 +6,7 @@ import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
 contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // whenMsgSenderNotLinked
-  function test_WhenMsgSenderNotALinkedOwner() external {
+  function test_upsertWorkflow_WhenMsgSenderNotALinkedOwner() external {
     // it should revert with OwnershipLinkDoesNotExist
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkDoesNotExist.selector, s_user));
@@ -29,7 +29,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   }
 
   // whenNoExistingRecord
-  function test_WhenWorkflowNameLengthIsZero() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenWorkflowNameLengthIsZero() external whenMsgSenderIsALinkedOwner {
     // it should revert with WorkflowNameRequired
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.WorkflowNameRequired.selector));
@@ -51,14 +51,12 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // ================================================================
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenThereAreInvalidMetadataInputs
-  function test_WhenWorkflowNameLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenWorkflowNameLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with WorkflowNameTooLong
-    WorkflowRegistry.MetadataConfig memory cfg = s_registry.getMetadataConfig();
+    uint8 cap = s_registry.maxNameLen();
     vm.prank(s_user);
     vm.expectRevert(
-      abi.encodeWithSelector(
-        WorkflowRegistry.WorkflowNameTooLong.selector, bytes(s_invalidLongString).length, cfg.maxWorkflowNameLength
-      )
+      abi.encodeWithSelector(WorkflowRegistry.WorkflowNameTooLong.selector, bytes(s_invalidLongString).length, cap)
     );
     s_registry.upsertWorkflow(
       s_invalidLongString,
@@ -75,7 +73,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenThereAreInvalidMetadataInputs
-  function test_WhenTagLengthIsZero() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenTagLengthIsZero() external whenMsgSenderIsALinkedOwner {
     // it should revert with WorkflowTagRequired
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.WorkflowTagRequired.selector));
@@ -94,14 +92,12 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenThereAreInvalidMetadataInputs
-  function test_WhenTagLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenTagLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with WorkflowTagTooLong
-    WorkflowRegistry.MetadataConfig memory cfg = s_registry.getMetadataConfig();
+    uint8 cap = s_registry.maxTagLen();
     vm.prank(s_user);
     vm.expectRevert(
-      abi.encodeWithSelector(
-        WorkflowRegistry.WorkflowTagTooLong.selector, bytes(s_invalidLongString).length, cfg.maxWorkflowTagLength
-      )
+      abi.encodeWithSelector(WorkflowRegistry.WorkflowTagTooLong.selector, bytes(s_invalidLongString).length, cap)
     );
     s_registry.upsertWorkflow(
       s_workflowName,
@@ -118,10 +114,10 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenThereAreInvalidMetadataInputs
-  function test_WhenWorkflowIdIsZero() external whenMsgSenderIsALinkedOwner {
-    // it should revert with ZeroAddressNotAllowed
+  function test_upsertWorkflow_WhenWorkflowIdIsZero() external whenMsgSenderIsALinkedOwner {
+    // it should revert with ZeroWorkflowIDNotAllowed
     vm.prank(s_user);
-    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.ZeroAddressNotAllowed.selector));
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.ZeroWorkflowIDNotAllowed.selector));
     s_registry.upsertWorkflow(
       s_workflowName,
       s_tag,
@@ -137,7 +133,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   //   whenNoExistingRecordForOwnerNameTagCombo
   //   whenThereAreInvalidMetadataInputs
-  function test_WhenWorkflowIdAlreadyExists() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenWorkflowIdAlreadyExists() external whenMsgSenderIsALinkedOwner {
     // it should revert with WorkflowIDAlreadyExists
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.PAUSED, false, s_user);
     // upser the same workflow again
@@ -147,13 +143,11 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenThereAreInvalidMetadataInputs
-  function test_WhenBinaryUrlLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenBinaryUrlLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with URLTooLong
-    WorkflowRegistry.MetadataConfig memory cfg = s_registry.getMetadataConfig();
+    uint8 cap = s_registry.maxUrlLen();
     vm.prank(s_user);
-    vm.expectRevert(
-      abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cfg.maxUrlLength)
-    );
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cap));
     s_registry.upsertWorkflow(
       s_workflowName,
       s_tag,
@@ -169,7 +163,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenThereAreInvalidMetadataInputs
-  function test_WhenBinaryUrlIsMissing() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenBinaryUrlIsMissing() external whenMsgSenderIsALinkedOwner {
     // it should revert with BinaryURLRequired
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.BinaryURLRequired.selector));
@@ -188,13 +182,11 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenThereAreInvalidMetadataInputs
-  function test_WhenConfigUrlLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenConfigUrlLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with URLTooLong
-    WorkflowRegistry.MetadataConfig memory cfg = s_registry.getMetadataConfig();
+    uint8 cap = s_registry.maxUrlLen();
     vm.prank(s_user);
-    vm.expectRevert(
-      abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cfg.maxUrlLength)
-    );
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cap));
     s_registry.upsertWorkflow(
       s_workflowName,
       s_tag,
@@ -210,20 +202,15 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   //   whenNoExistingRecordForOwnerNameTagCombo
   //   whenThereAreInvalidMetadataInputs
-  function test_WhenAttributesLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenAttributesLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with AttributesTooLong
     bytes memory tooBigAttrs = new bytes(1025);
     for (uint256 i = 0; i < tooBigAttrs.length; i++) {
       tooBigAttrs[i] = bytes1(uint8(i % 256));
     }
-
-    WorkflowRegistry.MetadataConfig memory cfg = s_registry.getMetadataConfig();
+    uint16 cap = s_registry.maxAttrLen();
     vm.prank(s_user);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        WorkflowRegistry.AttributesTooLong.selector, bytes(tooBigAttrs).length, cfg.maxAttributesLength
-      )
-    );
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.AttributesTooLong.selector, bytes(tooBigAttrs).length, cap));
     s_registry.upsertWorkflow(
       s_workflowName,
       s_tag,
@@ -238,14 +225,13 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   }
 
   modifier whenDONLimtisAreSet() {
-    vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
+    _setDONLimit();
     _;
   }
 
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenAllMetadataInputsAreValid
-  function test_WhenKeepAliveIsTrue() external whenMsgSenderIsALinkedOwner whenDONLimtisAreSet {
+  function test_upsertWorkflow_WhenKeepAliveIsTrue() external whenMsgSenderIsALinkedOwner whenDONLimtisAreSet {
     // it should not pause other active versions
     // deploy a workflow first
     bytes32 workflowId1 = keccak256("workflow1");
@@ -267,7 +253,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       attributes1,
       true
     );
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_user, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
     assertEq(wrs.length, 1, "There should be 1 workflow for the s_user");
 
     // deploy another workflow with the same name but a different tag
@@ -285,7 +271,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       attributes1,
       true
     );
-    wrs = s_registry.getWorkflowMetadataListByOwner(s_user, 0, 100);
+    wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
     assertEq(wrs.length, 2, "There should be 2 workflows for the s_user");
 
     // now assert both are ACTIVE
@@ -303,7 +289,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   //   whenNoExistingRecordForOwnerNameTagCombo
   //   whenAllMetadataInputsAreValid
   //   whenKeepAliveIsFalse
-  function test_WhenThereAreMoreThanOneActiveWorkflowThatSharesTheKey()
+  function test_upsertWorkflow_WhenThereAreMoreThanOneActiveWorkflowThatSharesTheKey()
     external
     whenMsgSenderIsALinkedOwner
     whenDONLimtisAreSet
@@ -329,7 +315,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       attributes1,
       true
     );
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_user, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
     assertEq(wrs.length, 1, "There should be 1 workflow for the s_user");
 
     // deploy another workflow with the same name but a different tag
@@ -347,11 +333,11 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       attributes1,
       false
     );
-    wrs = s_registry.getWorkflowMetadataListByOwner(s_user, 0, 100);
+    wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
     assertEq(wrs.length, 2, "There should be 2 workflows for the s_user");
 
-    WorkflowRegistry.WorkflowMetadataView memory wf1 = s_registry.getWorkflowMetadata(workflowId1);
-    WorkflowRegistry.WorkflowMetadataView memory wf2 = s_registry.getWorkflowMetadata(workflowId2);
+    WorkflowRegistry.WorkflowMetadataView memory wf1 = s_registry.getWorkflowById(workflowId1);
+    WorkflowRegistry.WorkflowMetadataView memory wf2 = s_registry.getWorkflowById(workflowId2);
     // the first one should be paused now, the second one should be active
     assertTrue(wf1.status == WorkflowRegistry.WorkflowStatus.PAUSED);
     assertTrue(wf2.status == WorkflowRegistry.WorkflowStatus.ACTIVE);
@@ -362,7 +348,11 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   //   whenNoExistingRecordForOwnerNameTagCombo
   //   whenAllMetadataInputsAreValid
   //   whenKeepAliveIsFalse
-  function test_WhenThereAreNoActiveWorkflowsWithTheSameKey() external whenMsgSenderIsALinkedOwner whenDONLimtisAreSet {
+  function test_upsertWorkflow_WhenThereAreNoActiveWorkflowsWithTheSameKey()
+    external
+    whenMsgSenderIsALinkedOwner
+    whenDONLimtisAreSet
+  {
     // it does not pause any other workflows
     // deploy a workflow first
     bytes32 workflowId1 = keccak256("workflow1");
@@ -384,7 +374,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       attributes1,
       true
     );
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_user, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
     assertEq(wrs.length, 1, "There should be 1 workflow for the s_user");
 
     // deploy another workflow with different name
@@ -402,11 +392,11 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       attributes1,
       false
     );
-    wrs = s_registry.getWorkflowMetadataListByOwner(s_user, 0, 100);
+    wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
     assertEq(wrs.length, 2, "There should be 2 workflows for the s_user");
 
-    WorkflowRegistry.WorkflowMetadataView memory wf1 = s_registry.getWorkflowMetadata(workflowId1);
-    WorkflowRegistry.WorkflowMetadataView memory wf2 = s_registry.getWorkflowMetadata(workflowId2);
+    WorkflowRegistry.WorkflowMetadataView memory wf1 = s_registry.getWorkflowById(workflowId1);
+    WorkflowRegistry.WorkflowMetadataView memory wf2 = s_registry.getWorkflowById(workflowId2);
     // they should both be active as they have different names
     assertTrue(wf1.status == WorkflowRegistry.WorkflowStatus.ACTIVE);
     assertTrue(wf2.status == WorkflowRegistry.WorkflowStatus.ACTIVE);
@@ -421,7 +411,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenAllMetadataInputsAreValid
   // whenTheNewWorkflowStatusIsActive
-  function test_WhenTheDonHasNoGlobalCapSet() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenTheDonHasNoGlobalCapSet() external whenMsgSenderIsALinkedOwner {
     // it should revert with DonLimitNotSet
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.DonLimitNotSet.selector, s_donFamily));
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_user);
@@ -430,7 +420,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenAllMetadataInputsAreValid
   // whenTheNewWorkflowStatusIsActive
-  function test_WhenOwnerWouldExceedTheirEffectiveCap() external whenMsgSenderIsALinkedOwner {
+  function test_upsertWorkflow_WhenOwnerWouldExceedTheirEffectiveCap() external whenMsgSenderIsALinkedOwner {
     // it should revert with MaxWorkflowsPerUserDONExceeded
     // set the don limit to 1
     vm.prank(s_owner);
@@ -438,7 +428,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_user);
 
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowMetadataListByOwner(s_user, 0, 100);
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
     assertEq(wrs.length, 1, "There should be 1 workflow for the s_user");
 
     // upsert another workflow in the same donFamily
@@ -461,7 +451,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenNoExistingRecordForOwnerNameTagCombo
   // whenAllMetadataInputsAreValid
-  function test_WhenThereAreNoFailures() external whenMsgSenderIsALinkedOwner whenDONLimtisAreSet {
+  function test_upsertWorkflow_WhenThereAreNoFailures() external whenMsgSenderIsALinkedOwner whenDONLimtisAreSet {
     // it should write the new record update all indices and emit WorkflowRegistered
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.WorkflowRegistered(
@@ -475,8 +465,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // ================================================================
   modifier whenAnExistingRecordExistsAtRid() {
     _linkOwner(s_user);
-    vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
+    _setDONLimit();
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_user);
     _;
   }
@@ -487,10 +476,10 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenAnExistingRecordExistsAtRid
   // whenThereAreValidationFailures
-  function test_WhenNewWorkflowIdIsZero() external whenAnExistingRecordExistsAtRid {
-    // it should revert with ZeroAddressNotAllowed
+  function test_upsertWorkflow_WhenNewWorkflowIdIsZero() external whenAnExistingRecordExistsAtRid {
+    // it should revert with ZeroWorkflowIDNotAllowed
     vm.prank(s_user);
-    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.ZeroAddressNotAllowed.selector));
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.ZeroWorkflowIDNotAllowed.selector));
     s_registry.upsertWorkflow(
       s_workflowName,
       s_tag,
@@ -506,7 +495,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
 
   // whenAnExistingRecordExistsAtRid
   // whenThereAreValidationFailures
-  function test_WhenNewWorkflowIdAlreadyExists() external whenAnExistingRecordExistsAtRid {
+  function test_upsertWorkflow_WhenNewWorkflowIdAlreadyExists() external whenAnExistingRecordExistsAtRid {
     // it should revert with WorkflowIDAlreadyExists
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.WorkflowIDAlreadyExists.selector, s_workflowId));
@@ -523,13 +512,14 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
     );
   }
 
-  function test_WhenNewBinaryUrlOrNewConfigUrlLengthGreaterThanAllowed() external whenAnExistingRecordExistsAtRid {
+  function test_upsertWorkflow_WhenNewBinaryUrlOrNewConfigUrlLengthGreaterThanAllowed()
+    external
+    whenAnExistingRecordExistsAtRid
+  {
     // it should revert with URLTooLong
-    WorkflowRegistry.MetadataConfig memory cfg = s_registry.getMetadataConfig();
+    uint8 cap = s_registry.maxUrlLen();
     vm.prank(s_user);
-    vm.expectRevert(
-      abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cfg.maxUrlLength)
-    );
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cap));
     s_registry.upsertWorkflow(
       s_workflowName,
       s_tag,
@@ -543,7 +533,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
     );
   }
 
-  function test_WhenNewBinaryUrlIsMissing() external whenAnExistingRecordExistsAtRid {
+  function test_upsertWorkflow_WhenNewBinaryUrlIsMissing() external whenAnExistingRecordExistsAtRid {
     // it should revert with BinaryURLRequired
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.BinaryURLRequired.selector));
@@ -560,20 +550,16 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
     );
   }
 
-  function test_WhenNewAttributesLengthGreaterThanAllowed() external whenAnExistingRecordExistsAtRid {
+  function test_upsertWorkflow_WhenNewAttributesLengthGreaterThanAllowed() external whenAnExistingRecordExistsAtRid {
     // it should revert with AttributesTooLong
     bytes memory tooBigAttrs = new bytes(1025);
     for (uint256 i = 0; i < tooBigAttrs.length; i++) {
       tooBigAttrs[i] = bytes1(uint8(i % 256));
     }
 
-    WorkflowRegistry.MetadataConfig memory cfg = s_registry.getMetadataConfig();
+    uint16 cap = s_registry.maxAttrLen();
     vm.prank(s_user);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        WorkflowRegistry.AttributesTooLong.selector, bytes(tooBigAttrs).length, cfg.maxAttributesLength
-      )
-    );
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.AttributesTooLong.selector, bytes(tooBigAttrs).length, cap));
     s_registry.upsertWorkflow(
       s_workflowName,
       s_tag,
@@ -587,7 +573,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
     );
   }
 
-  function test_WhenThereAreNoValidationFailures() external whenAnExistingRecordExistsAtRid {
+  function test_upsertWorkflow_WhenThereAreNoValidationFailures() external whenAnExistingRecordExistsAtRid {
     // it should remap id to rid with the new workflowId
     // it should patch mutable fields
     // it should emit WorkflowUpdated
@@ -607,7 +593,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       true
     );
 
-    WorkflowRegistry.WorkflowMetadataView memory wf = s_registry.getWorkflowMetadata(newWorkflowName);
+    WorkflowRegistry.WorkflowMetadataView memory wf = s_registry.getWorkflowById(newWorkflowName);
     assertEq(wf.workflowName, s_workflowName);
   }
 }

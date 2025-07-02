@@ -17,6 +17,15 @@ contract WorkflowRegistry_setUserDONOverride is WorkflowRegistrySetup {
 
   // whenTheCallerISTheContractOwner
   // whenEnabledIsTrue
+  function test_setUserDONOverride_WhenGlobalDONLimitIsNotSet() external {
+    // It should revert with DonLimitNotSet
+    vm.startPrank(s_owner);
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.DonLimitNotSet.selector, s_donFamily));
+    s_registry.setUserDONOverride(s_user, s_donFamily, 5, true);
+  }
+
+  // whenTheCallerISTheContractOwner
+  // whenEnabledIsTrue
   // whenLimitLessThanOrEqualToGlobalDONLimit
   function test_setUserDONOverride_WhenNoPriorOverrideExistsForUserDonLabel() external {
     // It should set s_cfg.userDONOverride[user][donHash] = ConfigValue(limit, true) and emit UserDONLimitSet

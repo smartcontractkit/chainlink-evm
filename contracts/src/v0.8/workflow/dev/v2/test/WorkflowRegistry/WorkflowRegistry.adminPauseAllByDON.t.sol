@@ -6,8 +6,8 @@ import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
-contract WorkflowRegistryadminPauseAllByDON is WorkflowRegistrySetup {
-  function test_WhenCallerIsNOTTheContractOwner() external {
+contract WorkflowRegistry_adminPauseAllByDON is WorkflowRegistrySetup {
+  function test_adminPauseAllByDON_WhenCallerIsNOTTheContractOwner() external {
     // it reverts with Ownable2StepMsgSender caller is not the owner
     vm.prank(s_stranger);
     vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector, s_stranger));
@@ -15,7 +15,7 @@ contract WorkflowRegistryadminPauseAllByDON is WorkflowRegistrySetup {
   }
 
   // whenCallerIsTheContractOwner
-  function test_WhenThereAreActiveWorkflows() external {
+  function test_adminPauseAllByDON_WhenThereAreActiveWorkflows() external {
     // it pauses all of the workflows
     bytes32 wfId2 = keccak256("workflow-id2");
     vm.prank(s_owner);
@@ -51,18 +51,18 @@ contract WorkflowRegistryadminPauseAllByDON is WorkflowRegistrySetup {
     vm.stopPrank();
 
     // check the workflows are active
-    WorkflowRegistry.WorkflowMetadataView memory wf1 = s_registry.getWorkflowMetadata(s_workflowId);
+    WorkflowRegistry.WorkflowMetadataView memory wf1 = s_registry.getWorkflowById(s_workflowId);
     assertEq(uint8(wf1.status), uint8(WorkflowRegistry.WorkflowStatus.ACTIVE));
-    WorkflowRegistry.WorkflowMetadataView memory wf2 = s_registry.getWorkflowMetadata(wfId2);
+    WorkflowRegistry.WorkflowMetadataView memory wf2 = s_registry.getWorkflowById(wfId2);
     assertEq(uint8(wf2.status), uint8(WorkflowRegistry.WorkflowStatus.ACTIVE));
 
     vm.prank(s_owner);
     s_registry.adminPauseAllByDON(s_donFamily);
 
     // confirm the workflows are now paused
-    wf1 = s_registry.getWorkflowMetadata(s_workflowId);
+    wf1 = s_registry.getWorkflowById(s_workflowId);
     assertEq(uint8(wf1.status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED));
-    wf2 = s_registry.getWorkflowMetadata(wfId2);
+    wf2 = s_registry.getWorkflowById(wfId2);
     assertEq(uint8(wf2.status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED));
   }
 }

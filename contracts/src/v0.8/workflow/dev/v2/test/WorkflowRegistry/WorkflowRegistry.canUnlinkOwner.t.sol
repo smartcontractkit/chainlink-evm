@@ -5,7 +5,7 @@ import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {LinkingUtils} from "../../testhelpers/LinkingUtils.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
-contract WorkflowRegistrycanUnlinkOwner is WorkflowRegistrySetup {
+contract WorkflowRegistry_canUnlinkOwner is WorkflowRegistrySetup {
   modifier whenOwnerIsLinked() {
     _linkOwner(s_owner);
     _;
@@ -14,8 +14,7 @@ contract WorkflowRegistrycanUnlinkOwner is WorkflowRegistrySetup {
   // whenPreUnlinkActionIsNONE
   function test_canUnlinkOwner_WhenOwnerHasActiveWorkflows() external whenOwnerIsLinked {
     // it should revert with CannotUnlinkWithActiveWorkflows
-    vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
+    _setDONLimit();
     _upsertTestWorklows(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_owner);
 
     (, bytes memory sig) = _getUnlinkProofSignature(s_owner);

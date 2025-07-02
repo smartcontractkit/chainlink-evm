@@ -6,8 +6,8 @@ import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
-contract WorkflowRegistryadminBatchPauseWorkflows is WorkflowRegistrySetup {
-  function test_WhenCallerIsNOTTheContractOwner() external {
+contract WorkflowRegistry_adminBatchPauseWorkflows is WorkflowRegistrySetup {
+  function test_adminBatchPauseWorkflows_WhenCallerIsNOTTheContractOwner() external {
     // it reverts with OnlyOwner
     bytes32[] memory workflowIds = new bytes32[](2);
     workflowIds[0] = s_workflowId;
@@ -18,7 +18,7 @@ contract WorkflowRegistryadminBatchPauseWorkflows is WorkflowRegistrySetup {
   }
 
   // whenCallerIsTheContractOwner
-  function test_WhenWorkflowIdsLengthIs0() external {
+  function test_adminBatchPauseWorkflows_WhenWorkflowIdsLengthIs0() external {
     // it reverts EmptyUpdateBatch
     bytes32[] memory workflowIds = new bytes32[](0);
     vm.prank(s_owner);
@@ -27,7 +27,7 @@ contract WorkflowRegistryadminBatchPauseWorkflows is WorkflowRegistrySetup {
   }
 
   // whenCallerIsTheContractOwner
-  function test_WhenWorkflowIdsIsNotZero() external {
+  function test_adminBatchPauseWorkflows_WhenWorkflowIdsIsNotZero() external {
     // it pauses each workflow in workflowIds
     bytes32[] memory workflowIds = new bytes32[](2);
     bytes32 wfId2 = keccak256("workflow-id2");
@@ -38,7 +38,7 @@ contract WorkflowRegistryadminBatchPauseWorkflows is WorkflowRegistrySetup {
     s_registry.setDONLimit(s_donFamily, 10, true);
     _linkOwner(s_user);
 
-    // add a workflow for a different user
+    // add some workflows for a different user
     vm.startPrank(s_user);
     s_registry.upsertWorkflow(
       s_workflowName,
@@ -69,9 +69,9 @@ contract WorkflowRegistryadminBatchPauseWorkflows is WorkflowRegistrySetup {
     vm.prank(s_owner);
     s_registry.adminBatchPauseWorkflows(workflowIds);
 
-    WorkflowRegistry.WorkflowMetadataView memory wf1 = s_registry.getWorkflowMetadata(s_workflowId);
+    WorkflowRegistry.WorkflowMetadataView memory wf1 = s_registry.getWorkflowById(s_workflowId);
     assertEq(uint8(wf1.status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED));
-    WorkflowRegistry.WorkflowMetadataView memory wf2 = s_registry.getWorkflowMetadata(wfId2);
+    WorkflowRegistry.WorkflowMetadataView memory wf2 = s_registry.getWorkflowById(wfId2);
     assertEq(uint8(wf2.status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED));
   }
 }

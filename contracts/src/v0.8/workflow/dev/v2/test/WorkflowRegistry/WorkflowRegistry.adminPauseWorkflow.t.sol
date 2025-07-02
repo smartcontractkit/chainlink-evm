@@ -7,7 +7,7 @@ import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
 contract WorkflowRegistry_adminPauseWorkflow is WorkflowRegistrySetup {
-  function test_WhenCallerIsNOTTheContractOwner() external {
+  function test_adminPauseWorkflow_WhenCallerIsNOTTheContractOwner() external {
     // when caller is NOT the contract owner
     // it reverts with Ownable
     vm.prank(s_stranger);
@@ -16,7 +16,7 @@ contract WorkflowRegistry_adminPauseWorkflow is WorkflowRegistrySetup {
   }
 
   // whenCallerIsTheContractOwner
-  function test_WhenWorkflowStatusIsPAUSED() external {
+  function test_adminPauseWorkflow_WhenWorkflowStatusIsPAUSED() external {
     // setup: configure a DON limit and register a workflow as PAUSED
     vm.startPrank(s_owner);
     s_registry.setDONLimit(s_donFamily, 10, true);
@@ -36,19 +36,19 @@ contract WorkflowRegistry_adminPauseWorkflow is WorkflowRegistrySetup {
     );
 
     // precondition check
-    WorkflowRegistry.WorkflowMetadataView memory before = s_registry.getWorkflowMetadata(s_workflowId);
+    WorkflowRegistry.WorkflowMetadataView memory before = s_registry.getWorkflowById(s_workflowId);
     assertEq(uint8(before.status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED));
 
     // when workflow is already PAUSED
     // it returns immediately, no change
     s_registry.adminPauseWorkflow(s_workflowId);
-    WorkflowRegistry.WorkflowMetadataView memory wf = s_registry.getWorkflowMetadata(s_workflowId);
+    WorkflowRegistry.WorkflowMetadataView memory wf = s_registry.getWorkflowById(s_workflowId);
     assertEq(uint8(wf.status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED));
     vm.stopPrank();
   }
 
   // whenCallerIsTheContractOwner
-  function test_WhenWorkflowStatusIsACTIVE() external {
+  function test_adminPauseWorkflow_WhenWorkflowStatusIsACTIVE() external {
     // setup: configure a DON limit and register a workflow as ACTIVE
     vm.startPrank(s_owner);
     s_registry.setDONLimit(s_donFamily, 10, true);
@@ -68,13 +68,13 @@ contract WorkflowRegistry_adminPauseWorkflow is WorkflowRegistrySetup {
     );
 
     // precondition check
-    WorkflowRegistry.WorkflowMetadataView memory before = s_registry.getWorkflowMetadata(s_workflowId);
+    WorkflowRegistry.WorkflowMetadataView memory before = s_registry.getWorkflowById(s_workflowId);
     assertEq(uint8(before.status), uint8(WorkflowRegistry.WorkflowStatus.ACTIVE));
 
     // when workflow is ACTIVE
     // it pauses the workflow
     s_registry.adminPauseWorkflow(s_workflowId);
-    WorkflowRegistry.WorkflowMetadataView memory wf = s_registry.getWorkflowMetadata(s_workflowId);
+    WorkflowRegistry.WorkflowMetadataView memory wf = s_registry.getWorkflowById(s_workflowId);
     assertEq(uint8(wf.status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED));
     vm.stopPrank();
   }

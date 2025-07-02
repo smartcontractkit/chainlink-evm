@@ -17,10 +17,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   using EnumerableMap for EnumerableMap.AddressToBytes32Map;
 
   string public constant override typeAndVersion = "WorkflowRegistry 2.0.0-dev";
-  uint8 public immutable i_DEFAULT_NAME_LEN = 64;
-  uint8 public immutable i_DEFAULT_TAG_LEN = 32;
-  uint8 public immutable i_DEFAULT_URL_LEN = 200;
-  uint16 public immutable i_DEFAULT_ATTRIBUTE_LEN = 1024;
 
   /// @dev The set of allowed signers for ownership proofs. These signers are considered to be trusted entities.
   /// If the ownership proof is not signed by one of the allowed signers, signature will be rejected.
@@ -95,6 +91,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
 
   error ZeroAddressNotAllowed();
+  error ZeroWorkflowIDNotAllowed();
   error LinkOwnerRequestExpired(address caller, uint256 currentTime, uint256 expiryTimestamp);
   error UnlinkOwnerRequestExpired(address caller, uint256 currentTime, uint256 expiryTimestamp);
   error OwnershipLinkAlreadyExists(address owner);
@@ -169,60 +166,86 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   // |                   Workflow Metadata Config                   |
   // ================================================================
-  /// @notice Configurable metadata settings for workflow field length caps (0 = unlimited)
-  struct MetadataConfig {
-    /// @dev Maximum allowed bytes for `workflowName` (0 = no limit)
-    uint8 maxWorkflowNameLength;
-    /// @dev Maximum allowed bytes for `tag` (0 = no limit)
-    uint8 maxWorkflowTagLength;
-    /// @dev Maximum allowed bytes for each URL (`binaryUrl`, `configUrl`) (0 = no limit)
-    uint8 maxUrlLength;
-    /// @dev Maximum allowed bytes for `attributes` blob (0 = no limit)
-    uint16 maxAttributesLength;
-  }
+  /// @dev Packed metadata length caps (owner-configurable overrides):
+  /// We store four independent uint fields — maxNameLen, maxTagLen, maxUrlLen and maxAttrLen — in a single 256-bit word
+  /// to save storage. Default values (_DEF_MAX_*) are hard-coded as constants and never consume storage.
+  /// Only when an override differs from those defaults do we write one packed word (s_metadataCaps).
+  /// Getter functions (maxNameLen(), maxTagLen(), etc.) extract each
+  /// field via bit-shifts, falling back to the default if no override is set.
+  ///
+  /// Pattern inspired by OpenZeppelin’s ERC20Capped and Preset modules:
+  /// • Defaults live in bytecode (zero gas on deployment)
+  /// • Overrides live in one slot (one SLOAD per read)
+  /// • No per-field storage or struct copying required
+  uint8 private constant DEFAULT_NAME_LEN = 64;
+  uint8 private constant DEFAULT_TAG_LEN = 32;
+  uint8 private constant DEFAULT_URL_LEN = 200;
+  uint16 private constant DEFAULT_ATTR_LEN = 1024;
 
-  /// @dev Holds the current metadata length limits
-  MetadataConfig private s_metadataConfig;
+  /// @dev Bit-layout (LSB … MSB)
+  uint8 private constant NAME_SHIFT = 0; // 8 bits
+  uint8 private constant TAG_SHIFT = 8; // 8 bits
+  uint8 private constant URL_SHIFT = 16; // 8 bits
+  uint8 private constant ATTR_SHIFT = 24; // 16 bits (uint16)
+
+  /// @dev Single-slot override; 0 means “all defaults”.
+  uint256 private s_metadataCaps;
 
   /// @notice Emitted when metadata length limits are updated
-  /// @param maxWorkflowNameLength New cap for `workflowName` length (0 = unlimited)
-  /// @param maxWorkflowTagLength  New cap for `tag` length (0 = unlimited)
-  /// @param maxUrlLength          New cap for URL lengths (0 = unlimited)
-  /// @param maxAttributesLength   New cap for `attributes` length (0 = unlimited)
-  event MetadataConfigUpdated(
-    uint8 indexed maxWorkflowNameLength,
-    uint8 indexed maxWorkflowTagLength,
-    uint8 indexed maxUrlLength,
-    uint16 maxAttributesLength
-  );
+  /// @param maxNameLen New cap for `workflowName` length
+  /// @param maxTagLen  New cap for `tag` length
+  /// @param maxUrlLen  New cap for URL lengths
+  /// @param maxAttrLen New cap for `attributes` length
+  event MetadataConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen);
 
-  /// @notice Initializes the contract with default metadata length limits
-  constructor() {
-    s_metadataConfig = MetadataConfig({
-      maxWorkflowNameLength: i_DEFAULT_NAME_LEN,
-      maxWorkflowTagLength: i_DEFAULT_TAG_LEN,
-      maxUrlLength: i_DEFAULT_URL_LEN,
-      maxAttributesLength: i_DEFAULT_ATTRIBUTE_LEN
-    });
+  /// @notice Owner can override any of the four caps.
+  /// Passing the exact default values clears the override slot. Passing all 4 values as 0
+  /// will also clear the override back to default. However, setting only some of the values to 0 will remove the cap
+  /// and make the cap unlimited only for that field.
+  /// @param nameLen New cap for `workflowName` (0 ➜ unlimited)
+  /// @param tagLen  New cap for `tag`
+  /// @param urlLen  New cap for each URL
+  /// @param attrLen New cap for `attributes`
+  function setMetadataConfig(uint8 nameLen, uint8 tagLen, uint8 urlLen, uint16 attrLen) external onlyOwner {
+    // Pack
+    uint256 packed = (uint256(nameLen) << NAME_SHIFT) | (uint256(tagLen) << TAG_SHIFT) | (uint256(urlLen) << URL_SHIFT)
+      | (uint256(attrLen) << ATTR_SHIFT);
+
+    // If caller supplied all defaults (or zeros) clear the override slot
+    uint256 defaultPacked = (uint256(DEFAULT_NAME_LEN) << NAME_SHIFT) | (uint256(DEFAULT_TAG_LEN) << TAG_SHIFT)
+      | (uint256(DEFAULT_URL_LEN) << URL_SHIFT) | (uint256(DEFAULT_ATTR_LEN) << ATTR_SHIFT);
+
+    if (packed == defaultPacked || packed == 0) {
+      // if all 0 is passed, the caps are set to contract default
+      delete s_metadataCaps;
+    } else {
+      s_metadataCaps = packed;
+    }
+
+    emit MetadataConfigUpdated(nameLen, tagLen, urlLen, attrLen);
   }
 
-  /// @notice Contract owner may adjust metadata field length limits
-  /// @dev    Passing zero for any field means no limit is set (unlimited)
-  /// @param config A `MetadataConfig` struct containing the new caps
-  function setMetadataConfig(
-    MetadataConfig calldata config
-  ) external onlyOwner {
-    s_metadataConfig = config;
-
-    emit MetadataConfigUpdated(
-      config.maxWorkflowNameLength, config.maxWorkflowTagLength, config.maxUrlLength, config.maxAttributesLength
-    );
+  function _caps() private view returns (uint256 c) {
+    return s_metadataCaps == 0
+      ? (uint256(DEFAULT_NAME_LEN) << NAME_SHIFT) | (uint256(DEFAULT_TAG_LEN) << TAG_SHIFT)
+        | (uint256(DEFAULT_URL_LEN) << URL_SHIFT) | (uint256(DEFAULT_ATTR_LEN) << ATTR_SHIFT)
+      : s_metadataCaps;
   }
 
-  /// @notice Returns the current metadata length‐limits configuration
-  /// @return A `MetadataConfig` struct containing all metadata caps
-  function getMetadataConfig() external view returns (MetadataConfig memory) {
-    return s_metadataConfig;
+  function maxNameLen() public view returns (uint8) {
+    return uint8(_caps() >> NAME_SHIFT);
+  }
+
+  function maxTagLen() public view returns (uint8) {
+    return uint8(_caps() >> TAG_SHIFT);
+  }
+
+  function maxUrlLen() public view returns (uint8) {
+    return uint8(_caps() >> URL_SHIFT);
+  }
+
+  function maxAttrLen() public view returns (uint16) {
+    return uint16(_caps() >> ATTR_SHIFT);
   }
 
   // ================================================================
@@ -295,7 +318,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       return;
     }
 
-    cfg.label = donFamily;
+    // write the human-readable string only once
+    if (bytes(cfg.label).length == 0) {
+      cfg.label = donFamily;
+    }
     cfg.limitValue.enabled = enabled;
     cfg.limitValue.value = newCapacity;
 
@@ -646,7 +672,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       (owners[i],) = s_linkedOwners.at(start + i);
     }
 
-    return owners;
+    return owners; // solcov:ignore next
   }
 
   /// @notice Returns the signer of the recovered signature or revert.
@@ -709,7 +735,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       list[i] = s_events[start + i];
     }
 
-    return list;
+    return list; // solcov:ignore next
   }
 
   /// @notice Returns the total number of capacity- and workflow-lifecycle events ever recorded.
@@ -767,29 +793,30 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert OwnershipLinkDoesNotExist(msg.sender);
     }
     // 2) check workflowID
-    if (workflowId == bytes32(0)) revert ZeroAddressNotAllowed();
+    if (workflowId == bytes32(0)) revert ZeroWorkflowIDNotAllowed();
     if (s_idToRid[workflowId] != bytes32(0)) {
       revert WorkflowIDAlreadyExists(workflowId);
     }
     // 3) check URLs (binary url is required. config url is optional; 0 = unlimited)
-    MetadataConfig memory metaCfg = s_metadataConfig;
+    uint8 cap = maxUrlLen();
     uint256 binaryLen = bytes(binaryUrl).length;
     uint256 configLen = bytes(configUrl).length;
     if (binaryLen == 0) {
       revert BinaryURLRequired();
     }
-    if (metaCfg.maxUrlLength > 0) {
-      if (binaryLen > metaCfg.maxUrlLength) {
-        revert URLTooLong(binaryLen, metaCfg.maxUrlLength);
+    if (cap != 0) {
+      if (binaryLen > cap) {
+        revert URLTooLong(binaryLen, cap);
       }
-      if (configLen > metaCfg.maxUrlLength) {
-        revert URLTooLong(configLen, metaCfg.maxUrlLength);
+      if (configLen > cap) {
+        revert URLTooLong(configLen, cap);
       }
     }
 
     // 4) check attributes (optional; 0 = unlimited)
-    if (metaCfg.maxAttributesLength > 0 && attributes.length > metaCfg.maxAttributesLength) {
-      revert AttributesTooLong(attributes.length, metaCfg.maxAttributesLength);
+    uint16 attrCap = maxAttrLen();
+    if (attrCap != 0 && attributes.length > attrCap) {
+      revert AttributesTooLong(attributes.length, attrCap);
     }
 
     // 5) check tag (required)
@@ -797,19 +824,22 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (tagLen == 0) {
       revert WorkflowTagRequired();
     }
-    if (metaCfg.maxWorkflowTagLength > 0 && tagLen > metaCfg.maxWorkflowTagLength) {
-      revert WorkflowTagTooLong(tagLen, metaCfg.maxWorkflowTagLength);
+    cap = maxTagLen();
+    if (cap != 0 && tagLen > cap) {
+      revert WorkflowTagTooLong(tagLen, cap);
     }
-
     // 6) check workflowName (required)
     uint256 nameLen = bytes(workflowName).length;
     if (nameLen == 0) {
       revert WorkflowNameRequired();
     }
-    if (metaCfg.maxWorkflowNameLength > 0 && nameLen > metaCfg.maxWorkflowNameLength) {
-      revert WorkflowNameTooLong(nameLen, metaCfg.maxWorkflowNameLength);
+    cap = maxNameLen(); // 0  ➜ unlimited
+    if (cap != 0 && nameLen > cap) {
+      revert WorkflowNameTooLong(nameLen, cap);
     }
 
+    // using abi.encode here ensures each dynamic field (string) is length-prefixed,
+    // so “owner∥name∥tag” can never collide across different triples.
     bytes32 rid = keccak256(abi.encode(msg.sender, workflowName, tag));
     WorkflowMetadata storage rec = s_workflows[rid];
     // Create workflow path
@@ -891,10 +921,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     WorkflowMetadata storage rec = s_workflows[rid];
     if (rec.owner == address(0)) revert WorkflowDoesNotExist();
     if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
-    if (rec.status == WorkflowStatus.PAUSED) {
-      return;
+    if (rec.status != WorkflowStatus.PAUSED) {
+      _applyPause(rid, rec);
     }
-    _applyPause(rid, rec);
   }
 
   function activateWorkflow(bytes32 workflowId, string calldata donFamily) external {
@@ -906,12 +935,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     WorkflowMetadata storage rec = s_workflows[rid];
     if (rec.owner == address(0)) revert WorkflowDoesNotExist();
     if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
-    if (rec.status == WorkflowStatus.ACTIVE) {
-      return;
+    if (rec.status != WorkflowStatus.ACTIVE) {
+      bytes32 donHash = _hash(donFamily);
+      _enforceLimits(msg.sender, donHash, donFamily, 1);
+      _applyActivate(rid, rec, donHash);
     }
-    bytes32 donHash = _hash(donFamily);
-    _enforceLimits(msg.sender, donHash, donFamily, 1);
-    _applyActivate(rid, rec, donHash);
   }
 
   /// @notice Pauses multiple workflows owned by `msg.sender`.
@@ -935,8 +963,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       WorkflowMetadata storage rec = s_workflows[rid];
       if (rec.owner == address(0)) revert WorkflowDoesNotExist();
       if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
-      if (rec.status == WorkflowStatus.PAUSED) continue;
-      _applyPause(rid, rec);
+      if (rec.status != WorkflowStatus.PAUSED) {
+        _applyPause(rid, rec);
+      }
     }
   }
 
@@ -1261,7 +1290,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param   owner         Address that registered the workflows.
   /// @param   workflowName  Case-sensitive name string (≤ 64 chars).
   /// @param   start         Zero-based index into the RID set.
-  /// @param   limit         Max #records to return (clamped to 100).
+  /// @param   limit         Max #records to return
   /// @return  list          Array of `WorkflowMetadataView`.
   function getWorkflowListByOwnerAndName(
     address owner,

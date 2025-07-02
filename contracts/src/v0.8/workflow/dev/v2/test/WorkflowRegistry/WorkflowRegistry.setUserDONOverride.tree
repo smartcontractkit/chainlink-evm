@@ -3,6 +3,8 @@ WorkflowRegistry.setUserDONOverride
 │   └── it should revert with Ownable2StepMsgSender: caller is not the owner
 └── when the caller IS the contract owner
     ├── when enabled is true
+    │   ├── when global DON limit is not set
+    │   │   └── it should revert with DonLimitNotSet
     │   ├── when limit less than or equal to global DON limit
     │   │   ├── when no prior override exists for user donFamily
     │   │   │   └── it should set s_cfg.userDONOverride[user][donHash] = ConfigValue(limit, true) and emit UserDONLimitSet

@@ -13,7 +13,7 @@ WorkflowRegistry_upsertWorkflow
     │   │   ├── when tag length greater than allowed
     │   │   │   └── it should revert with WorkflowTagTooLong
     │   │   ├── when workflowId is zero
-    │   │   │   └── it should revert with ZeroAddressNotAllowed
+    │   │   │   └── it should revert with ZeroWorkflowIDNotAllowed
     │   │   ├── when workflowId already exists
     │   │   │   └── it should revert with WorkflowIDAlreadyExists
     │   │   ├── when binaryUrl is missing
@@ -42,7 +42,7 @@ WorkflowRegistry_upsertWorkflow
     └── when an existing record exists at rid   // update path
         ├── when there are validation failures
         │   ├── when newWorkflowId is zero
-        │   │   └── it should revert with ZeroAddressNotAllowed
+        │   │   └── it should revert with ZeroWorkflowIDNotAllowed
         │   ├── when newWorkflowId already exists
         │   │   └── it should revert with WorkflowIDAlreadyExists
         │   ├── when newBinaryUrl or newConfigUrl length greater than allowed
