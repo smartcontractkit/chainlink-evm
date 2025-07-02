@@ -70,6 +70,16 @@ interface VmSafe {
         Unknown
     }
 
+    /// The transaction type (`txType`) of the broadcast.
+    enum BroadcastTxType {
+        // Represents a CALL broadcast tx.
+        Call,
+        // Represents a CREATE broadcast tx.
+        Create,
+        // Represents a CREATE2 broadcast tx.
+        Create2
+    }
+
     /// An Ethereum log. Returned by `getRecordedLogs`.
     struct Log {
         // The topics of the log, including the signature, if any.
@@ -175,6 +185,18 @@ interface VmSafe {
         uint256 chainId;
     }
 
+    /// Information about a blockchain.
+    struct Chain {
+        // The chain name.
+        string name;
+        // The chain's Chain ID.
+        uint256 chainId;
+        // The chain's alias. (i.e. what gets specified in `foundry.toml`).
+        string chainAlias;
+        // A default RPC endpoint for this chain.
+        string rpcUrl;
+    }
+
     /// The result of a `stopAndReturnStateDiff` call.
     struct AccountAccess {
         // The chain and fork the access occurred.
@@ -264,6 +286,57 @@ interface VmSafe {
         address contractAddr;
     }
 
+    /// Represents a transaction's broadcast details.
+    struct BroadcastTxSummary {
+        // The hash of the transaction that was broadcasted
+        bytes32 txHash;
+        // Represent the type of transaction among CALL, CREATE, CREATE2
+        BroadcastTxType txType;
+        // The address of the contract that was called or created.
+        // This is address of the contract that is created if the txType is CREATE or CREATE2.
+        address contractAddress;
+        // The block number the transaction landed in.
+        uint64 blockNumber;
+        // Status of the transaction, retrieved from the transaction receipt.
+        bool success;
+    }
+
+    /// Holds a signed EIP-7702 authorization for an authority account to delegate to an implementation.
+    struct SignedDelegation {
+        // The y-parity of the recovered secp256k1 signature (0 or 1).
+        uint8 v;
+        // First 32 bytes of the signature.
+        bytes32 r;
+        // Second 32 bytes of the signature.
+        bytes32 s;
+        // The current nonce of the authority account at signing time.
+        // Used to ensure signature can't be replayed after account nonce changes.
+        uint64 nonce;
+        // Address of the contract implementation that will be delegated to.
+        // Gets encoded into delegation code: 0xef0100 || implementation.
+        address implementation;
+    }
+
+    /// Represents a "potential" revert reason from a single subsequent call when using `vm.assumeNoReverts`.
+    /// Reverts that match will result in a FOUNDRY::ASSUME rejection, whereas unmatched reverts will be surfaced
+    /// as normal.
+    struct PotentialRevert {
+        // The allowed origin of the revert opcode; address(0) allows reverts from any address
+        address reverter;
+        // When true, only matches on the beginning of the revert data, otherwise, matches on entire revert data
+        bool partialMatch;
+        // The data to use to match encountered reverts
+        bytes revertData;
+    }
+
+    /// An EIP-2930 access list item.
+    struct AccessListItem {
+        // The address to be added in access list.
+        address target;
+        // The storage keys to be added in access list.
+        bytes32[] storageKeys;
+    }
+
     // ======== Crypto ========
 
     /// Derives a private key from the name, labels the account with that name, and returns the wallet.
@@ -307,14 +380,12 @@ interface VmSafe {
     function rememberKey(uint256 privateKey) external returns (address keyAddr);
 
     /// Derive a set number of wallets from a mnemonic at the derivation path `m/44'/60'/0'/0/{0..count}`.
-    ///
     /// The respective private keys are saved to the local forge wallet for later use and their addresses are returned.
     function rememberKeys(string calldata mnemonic, string calldata derivationPath, uint32 count)
         external
         returns (address[] memory keyAddrs);
 
     /// Derive a set number of wallets from a mnemonic in the specified language at the derivation path `m/44'/60'/0'/0/{0..count}`.
-    ///
     /// The respective private keys are saved to the local forge wallet for later use and their addresses are returned.
     function rememberKeys(
         string calldata mnemonic,
@@ -582,6 +653,12 @@ interface VmSafe {
     /// Gets all the recorded logs.
     function getRecordedLogs() external returns (Log[] memory logs);
 
+    /// Returns state diffs from current `vm.startStateDiffRecording` session.
+    function getStateDiff() external view returns (string memory diff);
+
+    /// Returns state diffs from current `vm.startStateDiffRecording` session, in json format.
+    function getStateDiffJson() external view returns (string memory diff);
+
     /// Gets the gas used in the last call from the callee perspective.
     function lastCallGas() external view returns (Gas memory gas);
 
@@ -660,8 +737,45 @@ interface VmSafe {
         external
         returns (address deployedAddress);
 
+    /// Deploys a contract from an artifact file. Takes in the relative path to the json file or the path to the
+    /// artifact in the form of <path>:<contract>:<version> where <contract> and <version> parts are optional.
+    /// Additionally accepts `msg.value`.
+    function deployCode(string calldata artifactPath, uint256 value) external returns (address deployedAddress);
+
+    /// Deploys a contract from an artifact file. Takes in the relative path to the json file or the path to the
+    /// artifact in the form of <path>:<contract>:<version> where <contract> and <version> parts are optional.
+    /// Additionally accepts abi-encoded constructor arguments and `msg.value`.
+    function deployCode(string calldata artifactPath, bytes calldata constructorArgs, uint256 value)
+        external
+        returns (address deployedAddress);
+
+    /// Deploys a contract from an artifact file, using the CREATE2 salt. Takes in the relative path to the json file or the path to the
+    /// artifact in the form of <path>:<contract>:<version> where <contract> and <version> parts are optional.
+    function deployCode(string calldata artifactPath, bytes32 salt) external returns (address deployedAddress);
+
+    /// Deploys a contract from an artifact file, using the CREATE2 salt. Takes in the relative path to the json file or the path to the
+    /// artifact in the form of <path>:<contract>:<version> where <contract> and <version> parts are optional.
+    /// Additionally accepts abi-encoded constructor arguments.
+    function deployCode(string calldata artifactPath, bytes calldata constructorArgs, bytes32 salt)
+        external
+        returns (address deployedAddress);
+
+    /// Deploys a contract from an artifact file, using the CREATE2 salt. Takes in the relative path to the json file or the path to the
+    /// artifact in the form of <path>:<contract>:<version> where <contract> and <version> parts are optional.
+    /// Additionally accepts `msg.value`.
+    function deployCode(string calldata artifactPath, uint256 value, bytes32 salt)
+        external
+        returns (address deployedAddress);
+
+    /// Deploys a contract from an artifact file, using the CREATE2 salt. Takes in the relative path to the json file or the path to the
+    /// artifact in the form of <path>:<contract>:<version> where <contract> and <version> parts are optional.
+    /// Additionally accepts abi-encoded constructor arguments and `msg.value`.
+    function deployCode(string calldata artifactPath, bytes calldata constructorArgs, uint256 value, bytes32 salt)
+        external
+        returns (address deployedAddress);
+
     /// Returns true if the given path points to an existing entity, else returns false.
-    function exists(string calldata path) external returns (bool result);
+    function exists(string calldata path) external view returns (bool result);
 
     /// Performs a foreign function call via the terminal.
     function ffi(string[] calldata commandInput) external returns (bytes memory result);
@@ -675,6 +789,29 @@ interface VmSafe {
     /// Gets the artifact path from deployed code (aka. runtime code).
     function getArtifactPathByDeployedCode(bytes calldata deployedCode) external view returns (string memory path);
 
+    /// Returns the most recent broadcast for the given contract on `chainId` matching `txType`.
+    /// For example:
+    /// The most recent deployment can be fetched by passing `txType` as `CREATE` or `CREATE2`.
+    /// The most recent call can be fetched by passing `txType` as `CALL`.
+    function getBroadcast(string calldata contractName, uint64 chainId, BroadcastTxType txType)
+        external
+        view
+        returns (BroadcastTxSummary memory);
+
+    /// Returns all broadcasts for the given contract on `chainId` with the specified `txType`.
+    /// Sorted such that the most recent broadcast is the first element, and the oldest is the last. i.e descending order of BroadcastTxSummary.blockNumber.
+    function getBroadcasts(string calldata contractName, uint64 chainId, BroadcastTxType txType)
+        external
+        view
+        returns (BroadcastTxSummary[] memory);
+
+    /// Returns all broadcasts for the given contract on `chainId`.
+    /// Sorted such that the most recent broadcast is the first element, and the oldest is the last. i.e descending order of BroadcastTxSummary.blockNumber.
+    function getBroadcasts(string calldata contractName, uint64 chainId)
+        external
+        view
+        returns (BroadcastTxSummary[] memory);
+
     /// Gets the creation bytecode from an artifact file. Takes in the relative path to the json file or the path to the
     /// artifact in the form of <path>:<contract>:<version> where <contract> and <version> parts are optional.
     function getCode(string calldata artifactPath) external view returns (bytes memory creationBytecode);
@@ -683,11 +820,28 @@ interface VmSafe {
     /// artifact in the form of <path>:<contract>:<version> where <contract> and <version> parts are optional.
     function getDeployedCode(string calldata artifactPath) external view returns (bytes memory runtimeBytecode);
 
+    /// Returns the most recent deployment for the current `chainId`.
+    function getDeployment(string calldata contractName) external view returns (address deployedAddress);
+
+    /// Returns the most recent deployment for the given contract on `chainId`
+    function getDeployment(string calldata contractName, uint64 chainId)
+        external
+        view
+        returns (address deployedAddress);
+
+    /// Returns all deployments for the given contract on `chainId`
+    /// Sorted in descending order of deployment time i.e descending order of BroadcastTxSummary.blockNumber.
+    /// The most recent deployment is the first element, and the oldest is the last.
+    function getDeployments(string calldata contractName, uint64 chainId)
+        external
+        view
+        returns (address[] memory deployedAddresses);
+
     /// Returns true if the path exists on disk and is pointing at a directory, else returns false.
-    function isDir(string calldata path) external returns (bool result);
+    function isDir(string calldata path) external view returns (bool result);
 
     /// Returns true if the path exists on disk and is pointing at a regular file, else returns false.
-    function isFile(string calldata path) external returns (bool result);
+    function isFile(string calldata path) external view returns (bool result);
 
     /// Get the path of the current project root.
     function projectRoot() external view returns (string memory path);
@@ -757,7 +911,7 @@ interface VmSafe {
     function tryFfi(string[] calldata commandInput) external returns (FfiResult memory result);
 
     /// Returns the time since unix epoch in milliseconds.
-    function unixTime() external returns (uint256 milliseconds);
+    function unixTime() external view returns (uint256 milliseconds);
 
     /// Writes data to file, creating a file if it does not exist, and entirely replacing its contents if it does.
     /// `path` is relative to the project root.
@@ -957,6 +1111,12 @@ interface VmSafe {
 
     // ======== Scripting ========
 
+    /// Attach an EIP-4844 blob to the next call
+    function attachBlob(bytes calldata blob) external;
+
+    /// Designate the next call as an EIP-7702 transaction
+    function attachDelegation(SignedDelegation calldata signedDelegation) external;
+
     /// Takes a signed transaction and broadcasts it to the network.
     function broadcastRawTransaction(bytes calldata data) external;
 
@@ -976,7 +1136,27 @@ interface VmSafe {
     function broadcast(uint256 privateKey) external;
 
     /// Returns addresses of available unlocked wallets in the script environment.
-    function getScriptWallets() external returns (address[] memory wallets);
+    function getWallets() external returns (address[] memory wallets);
+
+    /// Sign an EIP-7702 authorization and designate the next call as an EIP-7702 transaction
+    function signAndAttachDelegation(address implementation, uint256 privateKey)
+        external
+        returns (SignedDelegation memory signedDelegation);
+
+    /// Sign an EIP-7702 authorization and designate the next call as an EIP-7702 transaction for specific nonce
+    function signAndAttachDelegation(address implementation, uint256 privateKey, uint64 nonce)
+        external
+        returns (SignedDelegation memory signedDelegation);
+
+    /// Sign an EIP-7702 authorization for delegation
+    function signDelegation(address implementation, uint256 privateKey)
+        external
+        returns (SignedDelegation memory signedDelegation);
+
+    /// Sign an EIP-7702 authorization for delegation for specific nonce
+    function signDelegation(address implementation, uint256 privateKey, uint64 nonce)
+        external
+        returns (SignedDelegation memory signedDelegation);
 
     /// Has all subsequent calls (at this call depth only) create transactions that can later be signed and sent onchain.
     /// Broadcasting address is determined by checking the following in order:
@@ -996,10 +1176,10 @@ interface VmSafe {
     /// Stops collecting onchain transactions.
     function stopBroadcast() external;
 
-    /// Returns addresses of available unlocked wallets in the script environment.
-    function getWallets() external returns (address[] memory wallets);
-
     // ======== String ========
+
+    /// Returns true if `search` is found in `subject`, false otherwise.
+    function contains(string calldata subject, string calldata search) external returns (bool result);
 
     /// Returns the index of the first occurrence of a `key` in an `input` string.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `key` is not found.
@@ -1496,17 +1676,45 @@ interface VmSafe {
     /// Discard this run's fuzz inputs and generate new ones if next call reverted.
     function assumeNoRevert() external pure;
 
+    /// Discard this run's fuzz inputs and generate new ones if next call reverts with the potential revert parameters.
+    function assumeNoRevert(PotentialRevert calldata potentialRevert) external pure;
+
+    /// Discard this run's fuzz inputs and generate new ones if next call reverts with the any of the potential revert parameters.
+    function assumeNoRevert(PotentialRevert[] calldata potentialReverts) external pure;
+
     /// Writes a breakpoint to jump to in the debugger.
     function breakpoint(string calldata char) external pure;
 
     /// Writes a conditional breakpoint to jump to in the debugger.
     function breakpoint(string calldata char, bool value) external pure;
 
+    /// Returns true if the current Foundry version is greater than or equal to the given version.
+    /// The given version string must be in the format `major.minor.patch`.
+    /// This is equivalent to `foundryVersionCmp(version) >= 0`.
+    function foundryVersionAtLeast(string calldata version) external view returns (bool);
+
+    /// Compares the current Foundry version with the given version string.
+    /// The given version string must be in the format `major.minor.patch`.
+    /// Returns:
+    /// -1 if current Foundry version is less than the given version
+    /// 0 if current Foundry version equals the given version
+    /// 1 if current Foundry version is greater than the given version
+    /// This result can then be used with a comparison operator against `0`.
+    /// For example, to check if the current Foundry version is greater than or equal to `1.0.0`:
+    /// `if (foundryVersionCmp("1.0.0") >= 0) { ... }`
+    function foundryVersionCmp(string calldata version) external view returns (int256);
+
+    /// Returns a Chain struct for specific alias
+    function getChain(string calldata chainAlias) external view returns (Chain memory chain);
+
+    /// Returns a Chain struct for specific chainId
+    function getChain(uint256 chainId) external view returns (Chain memory chain);
+
     /// Returns the Foundry version.
-    /// Format: <cargo_version>+<git_sha>+<build_timestamp>
-    /// Sample output: 0.2.0+faa94c384+202407110019
+    /// Format: <cargo_version>-<tag>+<git_sha_short>.<unix_build_timestamp>.<profile>
+    /// Sample output: 0.3.0-nightly+3cb96bde9b.1737036656.debug
     /// Note: Build timestamps may vary slightly across platforms due to separate CI jobs.
-    /// For reliable version comparisons, use YYYYMMDD0000 format (e.g., >= 202407110000)
+    /// For reliable version comparisons, use UNIX format (e.g., >= 1700000000)
     /// to compare timestamps while ignoring minor time differences.
     function getFoundryVersion() external view returns (string memory version);
 
@@ -1675,6 +1883,16 @@ interface VmSafe {
     /// Utility cheatcode to set arbitrary storage for given target address.
     function setArbitraryStorage(address target) external;
 
+    /// Utility cheatcode to set arbitrary storage for given target address and overwrite
+    /// any storage slots that have been previously set.
+    function setArbitraryStorage(address target, bool overwrite) external;
+
+    /// Randomly shuffles an array.
+    function shuffle(uint256[] calldata array) external returns (uint256[] memory);
+
+    /// Sorts an array in ascending order.
+    function sort(uint256[] calldata array) external returns (uint256[] memory);
+
     /// Encodes a `bytes` value to a base64url string.
     function toBase64URL(bytes calldata data) external pure returns (string memory);
 
@@ -1692,6 +1910,9 @@ interface VmSafe {
 /// in tests, but it is not recommended to use these cheats in scripts.
 interface Vm is VmSafe {
     // ======== EVM ========
+
+    /// Utility cheatcode to set an EIP-2930 access list for all subsequent transactions.
+    function accessList(AccessListItem[] calldata access) external;
 
     /// Returns the identifier of the currently active fork. Reverts if no fork is currently active.
     function activeFork() external view returns (uint256 forkId);
@@ -1718,6 +1939,12 @@ interface Vm is VmSafe {
 
     /// Sets `block.coinbase`.
     function coinbase(address newCoinbase) external;
+
+    /// Marks the slots of an account and the account address as cold.
+    function cool(address target) external;
+
+    /// Utility cheatcode to mark specific storage slot as cold, simulating no prior read.
+    function coolSlot(address target, bytes32 slot) external;
 
     /// Creates a new fork with the given endpoint and the _latest_ block and returns the identifier of the fork.
     function createFork(string calldata urlOrAlias) external returns (uint256 forkId);
@@ -1796,6 +2023,14 @@ interface Vm is VmSafe {
     function mockCallRevert(address callee, uint256 msgValue, bytes calldata data, bytes calldata revertData)
         external;
 
+    /// Reverts a call to an address with specified revert data.
+    /// Overload to pass the function selector directly `token.approve.selector` instead of `abi.encodeWithSelector(token.approve.selector)`.
+    function mockCallRevert(address callee, bytes4 data, bytes calldata revertData) external;
+
+    /// Reverts a call to an address with a specific `msg.value`, with specified revert data.
+    /// Overload to pass the function selector directly `token.approve.selector` instead of `abi.encodeWithSelector(token.approve.selector)`.
+    function mockCallRevert(address callee, uint256 msgValue, bytes4 data, bytes calldata revertData) external;
+
     /// Mocks a call to an address, returning specified data.
     /// Calldata can either be strict or a partial match, e.g. if you only
     /// pass a Solidity selector to the expected calldata, then the entire Solidity
@@ -1805,6 +2040,18 @@ interface Vm is VmSafe {
     /// Mocks a call to an address with a specific `msg.value`, returning specified data.
     /// Calldata match takes precedence over `msg.value` in case of ambiguity.
     function mockCall(address callee, uint256 msgValue, bytes calldata data, bytes calldata returnData) external;
+
+    /// Mocks a call to an address, returning specified data.
+    /// Calldata can either be strict or a partial match, e.g. if you only
+    /// pass a Solidity selector to the expected calldata, then the entire Solidity
+    /// function will be mocked.
+    /// Overload to pass the function selector directly `token.approve.selector` instead of `abi.encodeWithSelector(token.approve.selector)`.
+    function mockCall(address callee, bytes4 data, bytes calldata returnData) external;
+
+    /// Mocks a call to an address with a specific `msg.value`, returning specified data.
+    /// Calldata match takes precedence over `msg.value` in case of ambiguity.
+    /// Overload to pass the function selector directly `token.approve.selector` instead of `abi.encodeWithSelector(token.approve.selector)`.
+    function mockCall(address callee, uint256 msgValue, bytes4 data, bytes calldata returnData) external;
 
     /// Mocks multiple calls to an address, returning specified data for each call.
     function mockCalls(address callee, bytes calldata data, bytes[] calldata returnData) external;
@@ -1820,11 +2067,20 @@ interface Vm is VmSafe {
     /// If calldata is not a strict match then partial match by selector is attempted.
     function mockFunction(address callee, address target, bytes calldata data) external;
 
+    /// Utility cheatcode to remove any EIP-2930 access list set by `accessList` cheatcode.
+    function noAccessList() external;
+
     /// Sets the *next* call's `msg.sender` to be the input address.
     function prank(address msgSender) external;
 
     /// Sets the *next* call's `msg.sender` to be the input address, and the `tx.origin` to be the second input.
     function prank(address msgSender, address txOrigin) external;
+
+    /// Sets the *next* delegate call's `msg.sender` to be the input address.
+    function prank(address msgSender, bool delegateCall) external;
+
+    /// Sets the *next* delegate call's `msg.sender` to be the input address, and the `tx.origin` to be the second input.
+    function prank(address msgSender, address txOrigin, bool delegateCall) external;
 
     /// Sets `block.prevrandao`.
     /// Not available on EVM versions before Paris. Use `difficulty` instead.
@@ -1915,6 +2171,12 @@ interface Vm is VmSafe {
     /// Sets all subsequent calls' `msg.sender` to be the input address until `stopPrank` is called, and the `tx.origin` to be the second input.
     function startPrank(address msgSender, address txOrigin) external;
 
+    /// Sets all subsequent delegate calls' `msg.sender` to be the input address until `stopPrank` is called.
+    function startPrank(address msgSender, bool delegateCall) external;
+
+    /// Sets all subsequent delegate calls' `msg.sender` to be the input address until `stopPrank` is called, and the `tx.origin` to be the second input.
+    function startPrank(address msgSender, address txOrigin, bool delegateCall) external;
+
     /// Start a snapshot capture of the current gas usage by name.
     /// The group name is derived from the contract name.
     function startSnapshotGas(string calldata name) external;
@@ -1946,6 +2208,9 @@ interface Vm is VmSafe {
 
     /// Sets `tx.gasprice`.
     function txGasPrice(uint256 newGasPrice) external;
+
+    /// Utility cheatcode to mark specific storage slot as warm, simulating a prior read.
+    function warmSlot(address target, bytes32 slot) external;
 
     /// Sets `block.timestamp`.
     function warp(uint256 newTimestamp) external;
@@ -1993,6 +2258,12 @@ interface Vm is VmSafe {
     /// Expects given number of calls to an address with the specified `msg.value`, gas, and calldata.
     function expectCall(address callee, uint256 msgValue, uint64 gas, bytes calldata data, uint64 count) external;
 
+    /// Expects the deployment of the specified bytecode by the specified address using the CREATE opcode
+    function expectCreate(bytes calldata bytecode, address deployer) external;
+
+    /// Expects the deployment of the specified bytecode by the specified address using the CREATE2 opcode
+    function expectCreate2(bytes calldata bytecode, address deployer) external;
+
     /// Prepare an expected anonymous log with (bool checkTopic1, bool checkTopic2, bool checkTopic3, bool checkData.).
     /// Call this function, then emit an anonymous event, then call a function. Internally after the call, we check if
     /// logs were emitted in the expected order with the expected topics and data (as specified by the booleans).
@@ -2034,6 +2305,25 @@ interface Vm is VmSafe {
     /// Same as the previous method, but also checks supplied address against emitting contract.
     function expectEmit(address emitter) external;
 
+    /// Expect a given number of logs with the provided topics.
+    function expectEmit(bool checkTopic1, bool checkTopic2, bool checkTopic3, bool checkData, uint64 count) external;
+
+    /// Expect a given number of logs from a specific emitter with the provided topics.
+    function expectEmit(
+        bool checkTopic1,
+        bool checkTopic2,
+        bool checkTopic3,
+        bool checkData,
+        address emitter,
+        uint64 count
+    ) external;
+
+    /// Expect a given number of logs with all topic and data checks enabled.
+    function expectEmit(uint64 count) external;
+
+    /// Expect a given number of logs from a specific emitter with all topic and data checks enabled.
+    function expectEmit(address emitter, uint64 count) external;
+
     /// Expects an error on next call that starts with the revert data.
     function expectPartialRevert(bytes4 revertData) external;
 
@@ -2046,6 +2336,12 @@ interface Vm is VmSafe {
     /// Expects an error on next call that exactly matches the revert data.
     function expectRevert(bytes4 revertData) external;
 
+    /// Expects a `count` number of reverts from the upcoming calls from the reverter address that match the revert data.
+    function expectRevert(bytes4 revertData, address reverter, uint64 count) external;
+
+    /// Expects a `count` number of reverts from the upcoming calls from the reverter address that exactly match the revert data.
+    function expectRevert(bytes calldata revertData, address reverter, uint64 count) external;
+
     /// Expects an error on next call that exactly matches the revert data.
     function expectRevert(bytes calldata revertData) external;
 
@@ -2057,6 +2353,18 @@ interface Vm is VmSafe {
 
     /// Expects an error from reverter address on next call, that exactly matches the revert data.
     function expectRevert(bytes calldata revertData, address reverter) external;
+
+    /// Expects a `count` number of reverts from the upcoming calls with any revert data or reverter.
+    function expectRevert(uint64 count) external;
+
+    /// Expects a `count` number of reverts from the upcoming calls that match the revert data.
+    function expectRevert(bytes4 revertData, uint64 count) external;
+
+    /// Expects a `count` number of reverts from the upcoming calls that exactly match the revert data.
+    function expectRevert(bytes calldata revertData, uint64 count) external;
+
+    /// Expects a `count` number of reverts from the upcoming calls from the reverter address.
+    function expectRevert(address reverter, uint64 count) external;
 
     /// Only allows memory writes to offsets [0x00, 0x60) ∪ [min, max) in the current subcontext. If any other
     /// memory is written to, the test will fail. Can be called multiple times to add more ranges to the set.
@@ -2075,4 +2383,15 @@ interface Vm is VmSafe {
 
     /// Stops all safe memory expectation in the current subcontext.
     function stopExpectSafeMemory() external;
+
+    // ======== Utilities ========
+
+    /// Causes the next contract creation (via new) to fail and return its initcode in the returndata buffer.
+    /// This allows type-safe access to the initcode payload that would be used for contract creation.
+    /// Example usage:
+    /// vm.interceptInitcode();
+    /// bytes memory initcode;
+    /// try new MyContract(param1, param2) { assert(false); }
+    /// catch (bytes memory interceptedInitcode) { initcode = interceptedInitcode; }
+    function interceptInitcode() external;
 }
