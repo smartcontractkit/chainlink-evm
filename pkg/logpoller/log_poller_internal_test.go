@@ -2,6 +2,7 @@ package logpoller
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"math/big"
@@ -204,22 +205,50 @@ func TestFilterName(t *testing.T) {
 }
 
 func TestLogPoller_BackupPollerStartup(t *testing.T) {
+	t.Parallel()
+
+	t.Run("assert backup poller (safe tag < finalized < latest)", func(t *testing.T) {
+		latestBlock := int64(4)
+		const finalityDepth = 2
+		head := &evmtypes.Head{Number: latestBlock}
+		finalizedHead := &evmtypes.Head{Number: latestBlock - finalityDepth}
+		safeHead := &evmtypes.Head{Number: latestBlock - finalityDepth - 1} //forcing safe head to be lower than finalized head
+		expectedSafeBlockNumber := sql.NullInt64{Int64: finalizedHead.Number, Valid: true}
+		assertBackupPollerStartup(t, head, finalizedHead, safeHead, finalityDepth, expectedSafeBlockNumber)
+	})
+
+	t.Run("assert backup poller (finalized < safe tag < latest)", func(t *testing.T) {
+		latestBlock := int64(4)
+		const finalityDepth = 2
+		head := &evmtypes.Head{Number: latestBlock}
+		safeHead := &evmtypes.Head{Number: latestBlock - 1} //forcing safe head to be lower than latest head but higher than finalized head
+		finalizedHead := &evmtypes.Head{Number: latestBlock - finalityDepth}
+		expectedSafeBlockNumber := sql.NullInt64{Int64: safeHead.Number, Valid: true}
+		assertBackupPollerStartup(t, head, finalizedHead, safeHead, finalityDepth, expectedSafeBlockNumber)
+	})
+
+	//latestBlockAA := int64(4)
+	//const finalityDepth = 2
+	//head := &evmtypes.Head{Number: latestBlockAA}
+	//safeHead := &evmtypes.Head{Number: latestBlockAA - finalityDepth - 1} //forcing safe head to be lower than finalized head
+	//finalizedHead := &evmtypes.Head{Number: latestBlockAA - finalityDepth}
+	//expectedSafeBlockNumber := finalizedHead.Number
+	//
+	//assertLogPoller_BackupPollerStartup(t, head, finalizedHead, safeHead, finalityDepth, expectedSafeBlockNumber)
+}
+
+func assertBackupPollerStartup(t *testing.T, head *evmtypes.Head, finalizedHead *evmtypes.Head, safeHead *evmtypes.Head, finalityDepth int64, expectedSafeBlockNumber sql.NullInt64) {
 	addr := common.HexToAddress("0x2ab9a2dc53736b361b72d900cdf9f78f9406fbbc")
 	lggr, observedLogs := logger.TestObserved(t, zapcore.WarnLevel)
 	chainID := testutils.FixtureChainID
 	db := testutils.NewSqlxDB(t)
 	orm := NewORM(chainID, db, lggr)
-	latestBlock := int64(4)
-	const finalityDepth = 2
 
-	head := &evmtypes.Head{Number: latestBlock}
-	safeHead := &evmtypes.Head{Number: latestBlock - finalityDepth - 1} //forcing safe head to be lower than finalized head
-	finalizedHead := &evmtypes.Head{Number: latestBlock - finalityDepth}
 	events := []common.Hash{EmitterABI.Events["Log1"].ID}
 	log1 := types.Log{
 		Index:       0,
 		BlockHash:   common.Hash{},
-		BlockNumber: uint64(latestBlock),
+		BlockNumber: uint64(head.Number),
 		Topics:      events,
 		Address:     addr,
 		TxHash:      common.HexToHash("0x1234"),
@@ -248,12 +277,12 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 	assert.Equal(t, int64(0), lp.backupPollerNextBlock)
 	assert.Equal(t, 1, observedLogs.FilterMessageSnippet("ran before first successful log poller run").Len())
 
-	lp.PollAndSaveLogs(ctx, latestBlock)
+	lp.PollAndSaveLogs(ctx, head.Number)
 
 	lastProcessed, err := lp.orm.SelectLatestBlock(ctx)
 	require.NoError(t, err)
-	require.Equal(t, latestBlock, lastProcessed.BlockNumber)
-	require.Equal(t, finalizedHead.Number, lastProcessed.SafeBlockNumber)
+	require.Equal(t, head.Number, lastProcessed.BlockNumber)
+	require.Equal(t, expectedSafeBlockNumber, lastProcessed.SafeBlockNumber)
 
 	require.NoError(t, lp.BackupPollAndSaveLogs(ctx))
 	assert.Equal(t, int64(2), lp.backupPollerNextBlock)

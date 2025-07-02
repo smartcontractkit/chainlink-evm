@@ -1,6 +1,7 @@
 package logpoller
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -19,7 +20,7 @@ type Block struct {
 	BlockNumber          int64
 	BlockTimestamp       time.Time
 	FinalizedBlockNumber int64
-	SafeBlockNumber      int64
+	SafeBlockNumber      sql.NullInt64
 	CreatedAt            time.Time
 }
 

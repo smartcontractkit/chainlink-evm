@@ -107,7 +107,7 @@ func (o *DSORM) InsertBlock(ctx context.Context, blockHash common.Hash, blockNum
 	}
 	query := `INSERT INTO evm.log_poller_blocks
 				(evm_chain_id, block_hash, block_number, block_timestamp, finalized_block_number, created_at, safe_block_number)
-      		VALUES (:evm_chain_id, :block_hash, :block_number, :block_timestamp, :finalized_block_number, NOW(), :finalized_block_number)
+      		VALUES (:evm_chain_id, :block_hash, :block_number, :block_timestamp, :finalized_block_number, NOW(), :safe_block_number)
 			ON CONFLICT DO NOTHING`
 	_, err = o.ds.NamedExecContext(ctx, query, args)
 	return err
@@ -546,7 +546,7 @@ func (o *DSORM) InsertLogs(ctx context.Context, logs []Log) error {
 func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block) error {
 	// Optimization, don't open TX when there is only a block to be persisted
 	if len(logs) == 0 {
-		return o.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber)
+		return o.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber.Int64)
 	}
 
 	if err := o.validateLogs(logs); err != nil {
@@ -555,7 +555,7 @@ func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block
 
 	// Block and logs goes with the same TX to ensure atomicity
 	return o.Transact(ctx, func(orm *DSORM) error {
-		err := orm.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber)
+		err := orm.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber.Int64)
 		if err != nil {
 			return err
 		}

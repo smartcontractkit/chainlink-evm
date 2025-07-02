@@ -1130,7 +1130,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 			BlockNumber:          currentBlockNumber,
 			BlockTimestamp:       currentBlock.Timestamp,
 			FinalizedBlockNumber: latestFinalizedBlockNumber,
-			SafeBlockNumber:      safeBlockNumber,
+			SafeBlockNumber:      sql.NullInt64{Int64: safeBlockNumber, Valid: true},
 		}
 		err = lp.orm.InsertLogsWithBlock(
 			ctx,
@@ -1608,7 +1608,7 @@ func (lp *logPoller) batchFetchBlocks(ctx context.Context, blocksRequested []uin
 				BlockNumber:          head.Number,
 				BlockTimestamp:       head.Timestamp,
 				FinalizedBlockNumber: head.Number, // always finalized; only matters if this block is returned by LatestBlock()
-				SafeBlockNumber:      head.Number,
+				SafeBlockNumber:      sql.NullInt64{Int64: head.Number, Valid: true},
 				CreatedAt:            head.CreatedAt,
 			}
 			logPollerBlocks[uint64(head.Number)] = lpBlock //nolint:gosec // G115
