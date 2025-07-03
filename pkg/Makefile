@@ -14,7 +14,7 @@ protoc: ## Install protoc
 .PHONY: generate
 generate: codecgen mockery protoc
 	export PATH="$(HOME)/.local/bin:$(PATH)"; go generate ./...
-	mockery
+	find . -type f -name .mockery.yaml -execdir mockery \; ## Execute mockery for all .mockery.yaml files
 
 .PHONY: rm-mocked
 rm-mocked:

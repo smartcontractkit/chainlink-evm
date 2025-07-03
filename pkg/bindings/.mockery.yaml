@@ -1,0 +1,8 @@
+dir: "{{ .InterfaceDir }}/mocks"
+mockname: "{{ .InterfaceName }}"
+outpkg: mocks
+filename: "{{ .InterfaceName | snakecase }}.go"
+packages:
+  github.com/smartcontractkit/chainlink-evm/pkg/bindings:
+      interfaces:
+        EVMClient:
