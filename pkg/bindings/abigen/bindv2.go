@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+// Copyright 2025 SmartContract ChainLink Limited SEZC
+// SPDX-License-Identifier: LGPL-3.0-or-later
+
 package abigen
 
 import (

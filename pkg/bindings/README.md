@@ -1,3 +1,13 @@
+## License
+
+This repository contains two separate license regimes:
+
+1. **LGPL-3.0-or-later** for all code in `./abigen` (the forked go-ethereum abigen).  
+   See the full text in `LICENSE` under “GNU LESSER…”  
+2. **MIT** for everything else in this repo.  
+   See the full text in `LICENSE` under “MIT License”.
+
+
 # CRE Generated Bindings (MVP)
 
 This project utilizes a forked version of `abigen` (from go-ethereum)
