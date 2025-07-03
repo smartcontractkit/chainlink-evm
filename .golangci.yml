@@ -179,3 +179,4 @@ issues:
         - gosec
   exclude-files:
     - evm/ # need to move files here for evm extraction that have outstanding issues
+    - pkg/bindings/abigen
