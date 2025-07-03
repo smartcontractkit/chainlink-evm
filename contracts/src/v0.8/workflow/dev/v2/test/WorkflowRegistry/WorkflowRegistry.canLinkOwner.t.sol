@@ -7,7 +7,7 @@ import {LinkingUtils} from "../../testhelpers/LinkingUtils.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
 contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
-  function test_WhenBlockTimestampIsGreaterThanValidityTimestamp() external {
+  function test_canLinkOwner_WhenBlockTimestampIsGreaterThanValidityTimestamp() external {
     // It should revert with LinkOwnerRequestExpired
     // block time has advanced by 24 hours so the validity timestamp is in the past
     (bytes32 ownerProof, bytes memory sig) = _getLinkProofSignature(s_owner);
@@ -22,7 +22,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
   }
 
   // whenSignatureHasNotExpired
-  function test_WhenMsgSenderIsAlreadyLinked() external {
+  function test_canLinkOwner_WhenMsgSenderIsAlreadyLinked() external {
     // It should revert with OwnershipLinkAlreadyExists
     _linkOwner(s_owner);
     (bytes32 ownerProof, bytes memory sig) = _getLinkProofSignature(s_owner);
@@ -32,7 +32,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
   }
 
   // whenSignatureHasNotExpired whenMsgSenderIsNotYetLinked
-  function test_WhenProofHasAlreadyBeenUsed() external {
+  function test_canLinkOwner_WhenProofHasAlreadyBeenUsed() external {
     // It should revert with OwnershipProofAlreadyUsed
     address anotherUser = makeAddr("another-user");
     (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(
@@ -64,7 +64,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
   // whenBlockTimestampIsLessOrEqualToValidityTimestamp
   // whenMsgSenderIsNotYetLinked
   // whenProofIsUnused
-  function test_WhenSignatureRecoveryFails() external {
+  function test_canLinkOwner_WhenSignatureRecoveryFails() external {
     // It should revert with InvalidSignature
     // build a garbage signature that's too short
     bytes memory badSig = hex"abcd";
@@ -81,7 +81,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
   }
 
   // whenSignatureHasNotExpired whenMsgSenderIsNotYetLinked whenProofIsUnused
-  function test_WhenSignatureRecoversToASignerNotInS_allowedSigners() external {
+  function test_canLinkOwner_WhenSignatureRecoversToASignerNotInAllowedSigners() external {
     // It should revert with InvalidOwnershipLink
     uint256 randomPrivateKey = 0x7f3c2a9b5d4e1f8c0b2d3a4e5f6c7d8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d;
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
@@ -100,7 +100,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
   }
 
   // whenSignatureHasNotExpired whenMsgSenderIsNotYetLinked whenProofIsUnused
-  function test_WhenSignatureIsValidAndSignerIsAllowed() external {
+  function test_canLinkOwner_WhenSignatureIsValidAndSignerIsAllowed() external {
     // It should return (no revert)
     (bytes32 ownerProof, bytes memory sig) = _getLinkProofSignature(s_owner);
     vm.prank(s_owner);

@@ -1,0 +1,16 @@
+WorkflowRegistry.batchPauseWorkflows
+├── when caller is NOT a linked owner
+│   └── it reverts with OwnershipLinkDoesNotExist
+└── when caller IS a linked owner
+    ├── when workflowIds length is 0
+    │   └── it reverts with EmptyUpdateBatch
+    ├── when workflowIds contains an unknown ID
+    │   └── it reverts with WorkflowDoesNotExist
+    ├── when workflowIds contains an ID not owned by caller
+    │   └── it reverts with CallerIsNotWorkflowOwner
+    ├── when every listed workflow is already PAUSED
+    │   └── it emits no WorkflowPaused events and leaves state unchanged
+    ├── when every listed workflow is ACTIVE
+    │   └── it pauses each workflow and emits a WorkflowPaused event for each
+    └── when the list mixes PAUSED and ACTIVE workflows
+        └── it pauses only the ACTIVE ones and emits events just for them

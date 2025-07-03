@@ -1,0 +1,6 @@
+WorkflowRegistry.adminPauseAllByDON
+├── when caller is NOT the contract owner
+│   └── it reverts with Ownable2StepMsgSender caller is not the owner
+└── when caller is the contract owner
+    └── when there are active workflows
+        └── it pauses all of the workflows
