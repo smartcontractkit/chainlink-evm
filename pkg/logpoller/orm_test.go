@@ -1811,6 +1811,14 @@ func TestSelectLatestBlockNumberEventSigsAddrsWithConfs(t *testing.T) {
 			expectedBlockNumber: 1,
 		},
 		{
+			name:                "only safe log is picked",
+			events:              []common.Hash{event1, event2},
+			addrs:               []common.Address{address1, address2},
+			confs:               types.Safe,
+			fromBlock:           0,
+			expectedBlockNumber: 1,
+		},
+		{
 			name:                "picks max block from two events",
 			events:              []common.Hash{event1, event2},
 			addrs:               []common.Address{address1, address2},
@@ -1925,6 +1933,15 @@ func TestSelectLogsCreatedAfter(t *testing.T) {
 		{
 			name:  "returns only finalized log",
 			confs: types.Finalized,
+			after: block1ts,
+			expectedLogs: []expectedLog{
+				{block: 2, log: 1},
+				{block: 2, log: 2},
+			},
+		},
+		{
+			name:  "returns only safe log",
+			confs: types.Safe,
 			after: block1ts,
 			expectedLogs: []expectedLog{
 				{block: 2, log: 1},

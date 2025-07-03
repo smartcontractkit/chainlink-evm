@@ -215,6 +215,8 @@ func withConfs(query string, tableAlias string, confs evmtypes.Confirmations) st
 	}
 	if confs == evmtypes.Finalized {
 		lastConfirmedBlock = `finalized_block_number`
+	} else if confs == evmtypes.Safe {
+		lastConfirmedBlock = `safe_block_number`
 	} else {
 		lastConfirmedBlock = `block_number - :confs`
 	}
@@ -546,7 +548,7 @@ func (o *DSORM) InsertLogs(ctx context.Context, logs []Log) error {
 func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block) error {
 	// Optimization, don't open TX when there is only a block to be persisted
 	if len(logs) == 0 {
-		return o.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber.Int64)
+		return o.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber)
 	}
 
 	if err := o.validateLogs(logs); err != nil {
@@ -555,7 +557,7 @@ func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block
 
 	// Block and logs goes with the same TX to ensure atomicity
 	return o.Transact(ctx, func(orm *DSORM) error {
-		err := orm.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber.Int64)
+		err := orm.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber)
 		if err != nil {
 			return err
 		}

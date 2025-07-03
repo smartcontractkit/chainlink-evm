@@ -1057,15 +1057,10 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		return nil
 	}
 
-	_, safeBlockNumber, err := lp.latestSafeBlocks(ctx)
+	safeBlockNumber, err := lp.latestSafeBlocks(ctx, latestFinalizedBlockNumber)
 	if err != nil {
 		lp.lggr.Warnw("Unable to get latest safe block", "err", err, "currentBlockNumber", currentBlockNumber)
 		return nil
-	}
-	// if safe block is lower than finalized block, it doesn't make sense to use it
-	if safeBlockNumber < latestFinalizedBlockNumber {
-		safeBlockNumber = latestFinalizedBlockNumber
-		//safeBlock = latestBlock
 	}
 
 	latestBlockNumber := latestBlock.Number
@@ -1130,7 +1125,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 			BlockNumber:          currentBlockNumber,
 			BlockTimestamp:       currentBlock.Timestamp,
 			FinalizedBlockNumber: latestFinalizedBlockNumber,
-			SafeBlockNumber:      sql.NullInt64{Int64: safeBlockNumber, Valid: true},
+			SafeBlockNumber:      safeBlockNumber,
 		}
 		err = lp.orm.InsertLogsWithBlock(
 			ctx,
@@ -1172,17 +1167,21 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, e
 }
 
 // Returns information about safe latestSafeBlocks, LatestSafeBlock provided by HeadTracker
-func (lp *logPoller) latestSafeBlocks(ctx context.Context) (*evmtypes.Head, int64, error) {
+func (lp *logPoller) latestSafeBlocks(ctx context.Context, latestFinalizedBlockNumber int64) (int64, error) {
 	safe, err := lp.headTracker.LatestSafeBlock(ctx)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get safe block from HeadTracker: %w", err)
+		return 0, fmt.Errorf("failed to get safe block from HeadTracker: %w", err)
 	}
 	safeBlockNumber := safe.BlockNumber()
 	if safeBlockNumber == 0 {
 		safeBlockNumber = 1
 	}
+	// if safe block is lower than finalized block, it doesn't make sense to use it
+	if safeBlockNumber < latestFinalizedBlockNumber {
+		safeBlockNumber = latestFinalizedBlockNumber
+	}
 	lp.lggr.Debugw("Latest safe blocks read from chain", "safe", safe.Number)
-	return safe, safeBlockNumber, nil
+	return safeBlockNumber, nil
 }
 
 // Find the first place where our chain and their chain have the same block,
@@ -1608,7 +1607,7 @@ func (lp *logPoller) batchFetchBlocks(ctx context.Context, blocksRequested []uin
 				BlockNumber:          head.Number,
 				BlockTimestamp:       head.Timestamp,
 				FinalizedBlockNumber: head.Number, // always finalized; only matters if this block is returned by LatestBlock()
-				SafeBlockNumber:      sql.NullInt64{Int64: head.Number, Valid: true},
+				SafeBlockNumber:      head.Number,
 				CreatedAt:            head.CreatedAt,
 			}
 			logPollerBlocks[uint64(head.Number)] = lpBlock //nolint:gosec // G115

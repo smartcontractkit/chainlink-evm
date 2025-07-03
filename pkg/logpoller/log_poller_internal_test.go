@@ -2,7 +2,6 @@ package logpoller
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"math/big"
@@ -213,7 +212,7 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 		head := &evmtypes.Head{Number: latestBlock}
 		finalizedHead := &evmtypes.Head{Number: latestBlock - finalityDepth}
 		safeHead := &evmtypes.Head{Number: latestBlock - finalityDepth - 1} //forcing safe head to be lower than finalized head
-		expectedSafeBlockNumber := sql.NullInt64{Int64: finalizedHead.Number, Valid: true}
+		expectedSafeBlockNumber := finalizedHead.Number
 		assertBackupPollerStartup(t, head, finalizedHead, safeHead, finalityDepth, expectedSafeBlockNumber)
 	})
 
@@ -223,21 +222,12 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 		head := &evmtypes.Head{Number: latestBlock}
 		safeHead := &evmtypes.Head{Number: latestBlock - 1} //forcing safe head to be lower than latest head but higher than finalized head
 		finalizedHead := &evmtypes.Head{Number: latestBlock - finalityDepth}
-		expectedSafeBlockNumber := sql.NullInt64{Int64: safeHead.Number, Valid: true}
+		expectedSafeBlockNumber := safeHead.Number
 		assertBackupPollerStartup(t, head, finalizedHead, safeHead, finalityDepth, expectedSafeBlockNumber)
 	})
-
-	//latestBlockAA := int64(4)
-	//const finalityDepth = 2
-	//head := &evmtypes.Head{Number: latestBlockAA}
-	//safeHead := &evmtypes.Head{Number: latestBlockAA - finalityDepth - 1} //forcing safe head to be lower than finalized head
-	//finalizedHead := &evmtypes.Head{Number: latestBlockAA - finalityDepth}
-	//expectedSafeBlockNumber := finalizedHead.Number
-	//
-	//assertLogPoller_BackupPollerStartup(t, head, finalizedHead, safeHead, finalityDepth, expectedSafeBlockNumber)
 }
 
-func assertBackupPollerStartup(t *testing.T, head *evmtypes.Head, finalizedHead *evmtypes.Head, safeHead *evmtypes.Head, finalityDepth int64, expectedSafeBlockNumber sql.NullInt64) {
+func assertBackupPollerStartup(t *testing.T, head *evmtypes.Head, finalizedHead *evmtypes.Head, safeHead *evmtypes.Head, finalityDepth int64, expectedSafeBlockNumber int64) {
 	addr := common.HexToAddress("0x2ab9a2dc53736b361b72d900cdf9f78f9406fbbc")
 	lggr, observedLogs := logger.TestObserved(t, zapcore.WarnLevel)
 	chainID := testutils.FixtureChainID
@@ -652,21 +642,29 @@ func Test_latestSafeBlocks(t *testing.T) {
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(&evmtypes.Head{}, errors.New(expectedError))
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, _, err := lp.latestSafeBlocks(tests.Context(t))
+		_, err := lp.latestSafeBlocks(tests.Context(t), 0)
 		require.ErrorContains(t, err, expectedError)
 	})
 	t.Run("headTracker returns valid chain", func(t *testing.T) {
 		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
 		safeBlock := &evmtypes.Head{Number: 2}
-		//safeBlock.IsFinalized.Store(true)
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(safeBlock, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		actualSafeBlock, safeBlockNumber, err := lp.latestSafeBlocks(tests.Context(t))
+		safeBlockNumber, err := lp.latestSafeBlocks(tests.Context(t), 1)
 		require.NoError(t, err)
-		require.NotNil(t, safeBlock)
-		assert.Equal(t, safeBlock.BlockNumber(), actualSafeBlock.BlockNumber())
 		assert.Equal(t, safeBlock.Number, safeBlockNumber)
+	})
+	t.Run("headTracker returns valid chain but safe is lower than finalized", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		safeBlock := &evmtypes.Head{Number: 2}
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(safeBlock, nil)
+		latestFinalizedBlockNumber := int64(3)
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		safeBlockNumber, err := lp.latestSafeBlocks(tests.Context(t), latestFinalizedBlockNumber)
+		require.NoError(t, err)
+		assert.Equal(t, latestFinalizedBlockNumber, safeBlockNumber)
 	})
 }
 

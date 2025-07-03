@@ -1763,6 +1763,17 @@ func Test_PollAndQueryFinalizedBlocks(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, finalizedLogs, firstBatchLen, "len(finalizedLogs) = %d, should have been %d", len(finalizedLogs), firstBatchLen)
 
+	safeLogs, err := th.LogPoller.LogsDataWordGreaterThan(
+		ctx,
+		eventSig,
+		th.EmitterAddress1,
+		0,
+		common.Hash{},
+		evmtypes.Safe,
+	)
+	require.NoError(t, err)
+	require.Len(t, safeLogs, firstBatchLen, "len(safeLogs) = %d, should have been %d", len(safeLogs), firstBatchLen)
+
 	numberOfConfirmations := 1
 	logsByConfs, err := th.LogPoller.LogsDataWordGreaterThan(
 		ctx,
