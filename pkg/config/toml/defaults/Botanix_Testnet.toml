@@ -14,6 +14,3 @@ FeeCapDefault = '800 kwei'
 [GasEstimator.BlockHistory]
 BlockHistorySize = 4
 TransactionPercentile = 50
-
-[HeadTracker]
-FinalityTagBypass = false

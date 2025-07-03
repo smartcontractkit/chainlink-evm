@@ -303,7 +303,7 @@ func (c DataStorage) WriteReportDataStorageUserData(
 			RawReport:     report.RawReport,
 			ReportContext: report.ReportContext,
 			Signatures:    report.Signatures,
-			Id:            report.ID,
+			Id:            report.Id,
 		},
 		GasConfig: gasConfig,
 	}), nil
@@ -424,7 +424,7 @@ func (c *DataStorage) UnregisterLogTrackingDataStored(runtime sdk.Runtime) {
 func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
-			ToBlock: big.NewInt(options.ToBlock),
+			ToBlock: options.ToBlock,
 		}
 	}
 	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{

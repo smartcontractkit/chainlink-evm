@@ -44,6 +44,7 @@ func NewClientConfigs(
 	noNewFinalizedHeadsThreshold time.Duration,
 	finalizedBlockPollInterval time.Duration,
 	newHeadsPollInterval time.Duration,
+	confirmationTimeout time.Duration,
 ) (multinode.ChainConfig, evmconfig.NodePool, []*toml.Node, error) {
 	nodes, err := parseNodeConfigs(nodeCfgs)
 	if err != nil {

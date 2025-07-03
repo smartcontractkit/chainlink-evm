@@ -296,6 +296,10 @@ type EVMConfig struct {
 	Nodes EVMNodes
 }
 
+func (c *EVMConfig) ConfirmationTimeout() time.Duration {
+	return c.Chain.Transactions.ConfirmationTimeout.Duration()
+}
+
 func (c *EVMConfig) IsEnabled() bool {
 	return c.Enabled == nil || *c.Enabled
 }
@@ -522,6 +526,7 @@ type Transactions struct {
 	ReaperInterval       *commonconfig.Duration
 	ReaperThreshold      *commonconfig.Duration
 	ResendAfterThreshold *commonconfig.Duration
+	ConfirmationTimeout  *commonconfig.Duration
 
 	AutoPurge            AutoPurgeConfig            `toml:",omitempty"`
 	TransactionManagerV2 TransactionManagerV2Config `toml:",omitempty"`
@@ -548,6 +553,9 @@ func (t *Transactions) setFrom(f *Transactions) {
 	}
 	if v := f.ResendAfterThreshold; v != nil {
 		t.ResendAfterThreshold = v
+	}
+	if v := f.ConfirmationTimeout; v != nil {
+		t.ConfirmationTimeout = v
 	}
 	t.AutoPurge.setFrom(&f.AutoPurge)
 	t.TransactionManagerV2.setFrom(&f.TransactionManagerV2)

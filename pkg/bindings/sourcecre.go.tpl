@@ -261,7 +261,7 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 			RawReport:     report.RawReport,
 			ReportContext: report.ReportContext,
 			Signatures:    report.Signatures,
-			Id:            report.ID,
+			Id:            report.Id,
 		},
 		GasConfig: gasConfig,
 	}), nil
@@ -343,7 +343,7 @@ func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime s
 func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.FilterOptions) (sdk.Promise[*evm.FilterLogsReply]) {
 	if options == nil {
 		options = &bindings.FilterOptions{
-			ToBlock: big.NewInt(options.ToBlock),
+			ToBlock: options.ToBlock,
 		}
 	}
 	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{

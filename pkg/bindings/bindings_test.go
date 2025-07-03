@@ -158,7 +158,7 @@ func TestWriteReportMethods(t *testing.T) {
 		sdk.NewBasicPromise(func() (*evmcappb.WriteReportReply, error) {
 			// Simulate a successful write report
 			return &evmcappb.WriteReportReply{
-				TxStatus: evm.TxStatus_TX_SUCCESS,
+				TxStatus: evmcappb.TxStatus_TX_SUCCESS,
 				TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
 			}, nil
 		})).Once()
@@ -172,7 +172,7 @@ func TestWriteReportMethods(t *testing.T) {
 	require.NoError(t, err, "Awaiting WriteReportDataStorageUserData reply should not return an error")
 	require.NotNil(t, response, "Response from WriteReportDataStorageUserData should not be nil")
 	require.Equal(t, &evmcappb.WriteReportReply{
-		TxStatus: evm.TxStatus_TX_SUCCESS,
+		TxStatus: evmcappb.TxStatus_TX_SUCCESS,
 		TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
 	}, response, "Response should match expected WriteReportReply")
 }

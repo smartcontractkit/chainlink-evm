@@ -98,6 +98,12 @@ func (s *testChainService) LatestHead(_ context.Context) (head types.Head, err e
 func (s *testChainService) GetChainStatus(ctx context.Context) (stat types.ChainStatus, err error) {
 	return
 }
+
+// Implement [types.ChainService] interface
+func (s *testChainService) GetChainInfo(ctx context.Context) (stat types.ChainInfo, err error) {
+	return
+}
+
 func (s *testChainService) ListNodeStatuses(ctx context.Context, pageSize int32, pageToken string) (stats []types.NodeStatus, nextPageToken string, total int, err error) {
 	return
 }

@@ -17,7 +17,7 @@ contract WorkflowRegistrySetup is Test {
   uint256 internal s_validityTimestamp;
   bytes32 internal s_proof;
 
-  string internal s_donLabel;
+  string internal s_donFamily;
   string internal s_binaryUrl;
   string internal s_configUrl;
   string internal s_tag;
@@ -37,7 +37,7 @@ contract WorkflowRegistrySetup is Test {
     assertEq(s_allowedSigner, address(0x86f2cE81640Fd86e68CF3EB25c2801D6E1C62bd0));
 
     s_user = makeAddr("user");
-    s_donLabel = "DON-A";
+    s_donFamily = "DON-A";
     s_binaryUrl = "ipfs://bin";
     s_configUrl = "ipfs://cfg";
     s_tag = "alpha";
@@ -56,6 +56,11 @@ contract WorkflowRegistrySetup is Test {
     signers[0] = s_allowedSigner;
     s_registry.updateAllowedSigners(signers, true);
     vm.stopPrank();
+  }
+
+  function _setDONLimit() internal {
+    vm.prank(s_owner);
+    s_registry.setDONLimit(s_donFamily, 100, true);
   }
 
   // Helper to link an owner
@@ -95,9 +100,9 @@ contract WorkflowRegistrySetup is Test {
 
   // helper to upsert one test workflow
   function _upsertTestWorklow(WorkflowRegistry.WorkflowStatus status, bool keepAlive, address owner) internal {
-    vm.startPrank(owner);
+    vm.prank(owner);
     s_registry.upsertWorkflow(
-      s_workflowName, s_tag, s_workflowId, status, s_donLabel, s_binaryUrl, s_configUrl, s_attributes, keepAlive
+      s_workflowName, s_tag, s_workflowId, status, s_donFamily, s_binaryUrl, s_configUrl, s_attributes, keepAlive
     );
   }
 
@@ -113,7 +118,7 @@ contract WorkflowRegistrySetup is Test {
 
     vm.startPrank(owner);
     s_registry.upsertWorkflow(
-      workflowName1, tag1, workflowId1, status, s_donLabel, binaryUrl1, configUrl1, attributes1, keepAlive
+      workflowName1, tag1, workflowId1, status, s_donFamily, binaryUrl1, configUrl1, attributes1, keepAlive
     );
 
     // Workflow 2: Weather Data Feeder
@@ -125,7 +130,7 @@ contract WorkflowRegistrySetup is Test {
     bytes memory attributes2 = abi.encode("Weather Data v2.1");
 
     s_registry.upsertWorkflow(
-      workflowName2, tag2, workflowId2, status, s_donLabel, binaryUrl2, configUrl2, attributes2, keepAlive
+      workflowName2, tag2, workflowId2, status, s_donFamily, binaryUrl2, configUrl2, attributes2, keepAlive
     );
 
     // Workflow 3: NFT Metadata Service
@@ -137,7 +142,7 @@ contract WorkflowRegistrySetup is Test {
     bytes memory attributes3 = abi.encode("NFT Metadata Service v1.2");
 
     s_registry.upsertWorkflow(
-      workflowName3, tag3, workflowId3, status, s_donLabel, binaryUrl3, configUrl3, attributes3, keepAlive
+      workflowName3, tag3, workflowId3, status, s_donFamily, binaryUrl3, configUrl3, attributes3, keepAlive
     );
 
     // Workflow 4: Cross-Chain Bridge Monitor
@@ -149,7 +154,7 @@ contract WorkflowRegistrySetup is Test {
     bytes memory attributes4 = abi.encode("Bridge Monitor v3.0");
 
     s_registry.upsertWorkflow(
-      workflowName4, tag4, workflowId4, status, s_donLabel, binaryUrl4, configUrl4, attributes4, keepAlive
+      workflowName4, tag4, workflowId4, status, s_donFamily, binaryUrl4, configUrl4, attributes4, keepAlive
     );
 
     // Workflow 5: Sports Data Feed
@@ -161,7 +166,7 @@ contract WorkflowRegistrySetup is Test {
     bytes memory attributes5 = abi.encode("Sports Data Feed v1.5");
 
     s_registry.upsertWorkflow(
-      workflowName5, tag5, workflowId5, status, s_donLabel, binaryUrl5, configUrl5, attributes5, keepAlive
+      workflowName5, tag5, workflowId5, status, s_donFamily, binaryUrl5, configUrl5, attributes5, keepAlive
     );
 
     vm.stopPrank();

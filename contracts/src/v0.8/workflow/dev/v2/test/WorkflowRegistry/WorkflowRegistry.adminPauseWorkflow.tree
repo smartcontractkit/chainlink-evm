@@ -1,0 +1,8 @@
+WorkflowRegistry.adminPauseWorkflow
+├── when caller is NOT the contract owner
+│   └── it reverts with OnlyOwner
+└── when caller is the contract owner
+    ├── when workflow status is PAUSED
+    │   └── it returns immediately no change
+    └── when workflow status is ACTIVE
+        └── it calls pauses the workflow
