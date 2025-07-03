@@ -45,7 +45,6 @@ var {{$contract.Type}}MetaData = &bind.MetaData{
 	{{- end}}
 }
 
-// TODO: remove contract name from structs
 // Structs 
 {{range $.Structs}}type {{.Name}} struct {
 	{{- range .Fields}}
@@ -344,7 +343,7 @@ func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime s
 func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.FilterOptions) (sdk.Promise[*evm.FilterLogsReply]) {
 	if options == nil {
 		options = &bindings.FilterOptions{
-			ToBlock: big.NewInt(123), //TODO we need a enum / constant
+			ToBlock: big.NewInt(options.ToBlock),
 		}
 	}
 	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{

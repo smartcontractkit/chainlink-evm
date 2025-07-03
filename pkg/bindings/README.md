@@ -29,9 +29,6 @@ that lets you generate Go bindings for your smart contracts using a custom templ
    ```
 
 ## Usage
-
-You can generate your Go contract bindings in two ways:
-
 ### Programmatic API
 
 ```go
