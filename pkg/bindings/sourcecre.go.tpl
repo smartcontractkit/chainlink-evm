@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
 
+	evmcappb "github.com/smartcontractkit/chainlink-common/pkg/capabilities/v2/chain-capabilities/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/chains/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
@@ -240,6 +241,31 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 	}), nil
 }
 {{- end}}
+{{end}}
+
+{{range $.Structs}}
+
+func (c {{$contract.Type}}) WriteReport{{.Name}}(
+	runtime sdk.Runtime,
+	input {{.Name}},
+	gasConfig *evmcappb.GasConfig,
+) (sdk.Promise[*evmcappb.WriteReportReply], error) {
+	encoded, err := c.Codec.Encode{{.Name}}Struct(input)
+	if err != nil {
+		return nil, err
+	}
+	report := bindings.GenerateReport(getChainID(c.evmClient), encoded)
+	return c.evmClient.WriteReport(runtime, &evmcappb.WriteReportRequest{
+		Receiver: c.Address,
+		Report: &evmcappb.SignedReport{
+			RawReport:     report.RawReport,
+			ReportContext: report.ReportContext,
+			Signatures:    report.Signatures,
+			Id:            report.Id,
+		},
+		GasConfig: gasConfig,
+	}), nil
+}
 {{end}}
 
 {{range $error := $contract.Errors}}
