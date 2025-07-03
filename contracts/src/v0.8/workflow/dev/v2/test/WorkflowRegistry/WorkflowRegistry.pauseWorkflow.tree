@@ -1,0 +1,12 @@
+WorkflowRegistry.pauseWorkflow
+├── When caller is not linked as an owner
+│   └── It reverts with OwnershipLinkDoesNotExist
+└── When caller is linked
+    ├── When no workflow exists for the given workflowId
+    │   └── It reverts with WorkflowDoesNotExist
+    ├── When the workflow exists but owner is not caller
+    │   └── It reverts with CallerIsNotWorkflowOwner
+    ├── When the workflow exists owner matches but status is PAUSED
+    │   └── It returns immediately (no state change, no event)
+    └── When the workflow exists owner matches and status is ACTIVE
+        └── It calls pauses the workflow and emits WorkflowPaused  

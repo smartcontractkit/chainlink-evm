@@ -4,6 +4,8 @@ WorkflowRegistry.setMetadataConfig
 └── when the caller IS the contract owner
     ├── when config fields are non-zero 
     │   └── it should emit MetadataConfigUpdated and store the new config values
+    ├── when some config fields are zero
+    │   └── it should emit MetadataConfigUpdated and store the new config values
     └── when all config fields are zero
-        └── it should emit MetadataConfigUpdated and store zero (unlimited) values
+        └── it should emit MetadataConfigUpdated and restore default immutable values
 

@@ -10,6 +10,8 @@ import (
 	gotoml "github.com/pelletier/go-toml/v2"
 	"go.uber.org/multierr"
 
+	chainselectors "github.com/smartcontractkit/chain-selectors"
+
 	common "github.com/smartcontractkit/chainlink-common/pkg/chains"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -464,6 +466,33 @@ func (c *chain) GetChainStatus(ctx context.Context) (types.ChainStatus, error) {
 		ID:      c.ID().String(),
 		Enabled: c.cfg.EVM().IsEnabled(),
 		Config:  toml,
+	}, nil
+}
+
+func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
+	chainID := c.cfg.EVM().ChainID()
+
+	chainSelector := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	chainFamily, err := chainselectors.GetSelectorFamily(chainSelector)
+	if err != nil {
+		return types.ChainInfo{}, fmt.Errorf("failed to get chain family for selector %d: %w", chainSelector, err)
+	}
+
+	chainDetails, err := chainselectors.GetChainDetailsByChainIDAndFamily(chainID.String(), chainFamily)
+	if err != nil {
+		return types.ChainInfo{}, fmt.Errorf("failed to get chain details for chain %d and family %s: %w", chainID, chainFamily, err)
+	}
+
+	envName, err := chainselectors.ExtractNetworkEnvName(chainDetails.ChainName)
+	if err != nil {
+		return types.ChainInfo{}, fmt.Errorf("failed to get network name for chain %d: %w", chainID, err)
+	}
+
+	return types.ChainInfo{
+		FamilyName:      chainFamily,
+		ChainID:         chainID.String(),
+		NetworkName:     envName,
+		NetworkNameFull: chainDetails.ChainName,
 	}, nil
 }
 

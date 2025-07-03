@@ -1,0 +1,17 @@
+WorkflowRegistry.activateWorkflow
+├── When caller is not linked as an owner
+│   └── It reverts with OwnershipLinkDoesNotExist
+└── When caller is linked
+    ├── When no workflow exists for the given workflowId
+    │   └── It reverts with WorkflowDoesNotExist
+    ├── When the workflow exists but owner does not equal caller
+    │   └── It reverts with CallerIsNotWorkflowOwner
+    ├── When the workflow exists owner matches but status is ACTIVE
+    │   └── It returns immediately (no state change, no event)  
+    └── When the workflow exists owner matches and status is PAUSED
+        ├── When there are already too many workflows in the DON
+        │   └── It reverts with MaxWorkflowsPerUserDONExceeded
+        ├── When no DON limit is set globally for the don family
+        │   └── It reverts with DonLimitNotSet
+        └── When there is enough space for the workflow in the DON
+            └── It activates the workflow and emits WorkflowActivated  
