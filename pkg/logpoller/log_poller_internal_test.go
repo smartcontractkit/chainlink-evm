@@ -211,7 +211,7 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 		const finalityDepth = 2
 		head := &evmtypes.Head{Number: latestBlock}
 		finalizedHead := &evmtypes.Head{Number: latestBlock - finalityDepth}
-		safeHead := &evmtypes.Head{Number: latestBlock - finalityDepth - 1} //forcing safe head to be lower than finalized head
+		safeHead := &evmtypes.Head{Number: latestBlock - finalityDepth - 1} // forcing safe head to be lower than finalized head
 		expectedSafeBlockNumber := finalizedHead.Number
 		assertBackupPollerStartup(t, head, finalizedHead, safeHead, finalityDepth, expectedSafeBlockNumber)
 	})
@@ -220,7 +220,7 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 		latestBlock := int64(4)
 		const finalityDepth = 2
 		head := &evmtypes.Head{Number: latestBlock}
-		safeHead := &evmtypes.Head{Number: latestBlock - 1} //forcing safe head to be lower than latest head but higher than finalized head
+		safeHead := &evmtypes.Head{Number: latestBlock - 1} // forcing safe head to be lower than latest head but higher than finalized head
 		finalizedHead := &evmtypes.Head{Number: latestBlock - finalityDepth}
 		expectedSafeBlockNumber := safeHead.Number
 		assertBackupPollerStartup(t, head, finalizedHead, safeHead, finalityDepth, expectedSafeBlockNumber)

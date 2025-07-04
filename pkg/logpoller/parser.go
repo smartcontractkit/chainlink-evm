@@ -137,7 +137,7 @@ func (v *pgDSLParser) nestedConfQuery(confidenceLevel primitives.ConfidenceLevel
 		selector = "SELECT finalized_block_number "
 	case primitives.Safe:
 		selector = "SELECT safe_block_number "
-	default: //primitives.Unconfirmed scenario, as we won't fail in this function it will be the default case
+	default: // primitives.Unconfirmed scenario, as we won't fail in this function, it will be the default case
 		selector = fmt.Sprintf("SELECT greatest(block_number - :%s, 0) ",
 			v.args.withIndexedField("confs", confs),
 		)
