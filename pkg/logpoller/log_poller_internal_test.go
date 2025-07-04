@@ -26,8 +26,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/heads/headstest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller/internal/log_emitter"
@@ -607,7 +605,7 @@ func Test_latestBlockAndFinalityDepth(t *testing.T) {
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(&evmtypes.Head{}, &evmtypes.Head{}, errors.New(expectedError))
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, _, err := lp.latestBlocks(tests.Context(t))
+		_, _, err := lp.latestBlocks(t.Context())
 		require.ErrorContains(t, err, expectedError)
 	})
 	t.Run("headTracker returns valid chain", func(t *testing.T) {
@@ -618,7 +616,7 @@ func Test_latestBlockAndFinalityDepth(t *testing.T) {
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalizedBlock, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		latestBlock, finalizedBlockNumber, err := lp.latestBlocks(tests.Context(t))
+		latestBlock, finalizedBlockNumber, err := lp.latestBlocks(t.Context())
 		require.NoError(t, err)
 		require.NotNil(t, latestBlock)
 		assert.Equal(t, head.BlockNumber(), latestBlock.BlockNumber())
@@ -642,7 +640,7 @@ func Test_latestSafeBlocks(t *testing.T) {
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(&evmtypes.Head{}, errors.New(expectedError))
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, err := lp.latestSafeBlocks(tests.Context(t), 0)
+		_, err := lp.latestSafeBlocks(t.Context(), 0)
 		require.ErrorContains(t, err, expectedError)
 	})
 	t.Run("headTracker returns valid chain", func(t *testing.T) {
@@ -651,7 +649,7 @@ func Test_latestSafeBlocks(t *testing.T) {
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(safeBlock, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		safeBlockNumber, err := lp.latestSafeBlocks(tests.Context(t), 1)
+		safeBlockNumber, err := lp.latestSafeBlocks(t.Context(), 1)
 		require.NoError(t, err)
 		assert.Equal(t, safeBlock.Number, safeBlockNumber)
 	})
@@ -662,7 +660,7 @@ func Test_latestSafeBlocks(t *testing.T) {
 		latestFinalizedBlockNumber := int64(3)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		safeBlockNumber, err := lp.latestSafeBlocks(tests.Context(t), latestFinalizedBlockNumber)
+		safeBlockNumber, err := lp.latestSafeBlocks(t.Context(), latestFinalizedBlockNumber)
 		require.NoError(t, err)
 		assert.Equal(t, latestFinalizedBlockNumber, safeBlockNumber)
 	})
@@ -769,9 +767,9 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5}}, nil).Once()
 		mockBatchCallContext(t, ec)
 		// insert finalized block with different hash than in RPC
-		require.NoError(t, orm.InsertBlock(tests.Context(t), common.HexToHash("0x123"), 2, time.Unix(10, 0), 2, 2))
+		require.NoError(t, orm.InsertBlock(t.Context(), common.HexToHash("0x123"), 2, time.Unix(10, 0), 2, 2))
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(tests.Context(t), 4)
+		lp.PollAndSaveLogs(t.Context(), 4)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("RPCs contradict each other and return different finalized blocks", func(t *testing.T) {
@@ -792,7 +790,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 			return evmtypes.Head{Number: num, Hash: utils.NewHash()}
 		})
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(tests.Context(t), 4)
+		lp.PollAndSaveLogs(t.Context(), 4)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("Log's hash does not match block's", func(t *testing.T) {
@@ -810,7 +808,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5, BlockHash: common.HexToHash("0x123")}}, nil).Once()
 		mockBatchCallContext(t, ec)
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(tests.Context(t), 4)
+		lp.PollAndSaveLogs(t.Context(), 4)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("Happy path", func(t *testing.T) {
@@ -830,7 +828,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5, BlockHash: common.BigToHash(big.NewInt(5)), Topics: []common.Hash{{}}}}, nil).Once()
 		mockBatchCallContext(t, ec)
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(tests.Context(t), 4)
+		lp.PollAndSaveLogs(t.Context(), 4)
 		require.NoError(t, lp.HealthReport()[lp.Name()])
 	})
 }
