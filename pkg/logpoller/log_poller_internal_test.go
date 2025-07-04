@@ -236,7 +236,7 @@ func assertBackupPollerStartup(t *testing.T, head *evmtypes.Head, finalizedHead 
 	log1 := types.Log{
 		Index:       0,
 		BlockHash:   common.Hash{},
-		BlockNumber: uint64(head.Number),
+		BlockNumber: uint64(head.Number), //nolint:gosec // G115
 		Topics:      events,
 		Address:     addr,
 		TxHash:      common.HexToHash("0x1234"),

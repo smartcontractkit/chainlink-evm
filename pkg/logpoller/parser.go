@@ -217,7 +217,7 @@ func (v *pgDSLParser) VisitConfirmationsFilter(p *confirmationsFilter) {
 	case evmtypes.Safe:
 		v.expression = v.nestedConfQuery(primitives.Safe, 0)
 	default:
-		v.expression = v.nestedConfQuery(primitives.Unconfirmed, uint64(p.Confirmations))
+		v.expression = v.nestedConfQuery(primitives.Unconfirmed, uint64(p.Confirmations)) //nolint:gosec // G115
 	}
 }
 
