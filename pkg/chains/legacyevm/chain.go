@@ -308,7 +308,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 	// Construct the Tron TXM, will be nil if the chaintype is not tron
 	var tronTxm *trontxm.TronTxm
 	if cfg.EVM().ChainType() == chaintype.ChainTron {
-		tronTxm, err = tron.ConstructTxm(l, nodes, opts.KeyStore)
+		tronTxm, err = tron.ConstructTxm(l, cfg.EVM().GasEstimator(), nodes, opts.KeyStore)
 		if err != nil {
 			return nil, fmt.Errorf("failed to construct tron txm: %w", err)
 		}
@@ -510,9 +510,7 @@ func (c *chain) listNodeStatuses(start, end int) ([]types.NodeStatus, int, error
 
 	states := c.Client().NodeStates()
 	for _, n := range nodes[start:end] {
-		var (
-			nodeState string
-		)
+		var nodeState string
 		toml, err := gotoml.Marshal(n)
 		if err != nil {
 			return nil, -1, err

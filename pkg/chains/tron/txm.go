@@ -2,6 +2,7 @@ package tron
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
@@ -11,7 +12,11 @@ import (
 	trontxm "github.com/smartcontractkit/chainlink-tron/relayer/txm"
 )
 
-func ConstructTxm(logger logger.Logger, nodes []*toml.Node, keystore keys.Store) (*trontxm.TronTxm, error) {
+type TxmConfig interface {
+	LimitDefault() uint64
+}
+
+func ConstructTxm(logger logger.Logger, cfg TxmConfig, nodes []*toml.Node, keystore keys.Store) (*trontxm.TronTxm, error) {
 	if len(nodes) == 0 {
 		return nil, fmt.Errorf("Tron chain requires at least one node")
 	}
@@ -22,11 +27,11 @@ func ConstructTxm(logger logger.Logger, nodes []*toml.Node, keystore keys.Store)
 		return nil, fmt.Errorf("failed to create tron client: %w", err)
 	}
 
+	fixedEnergyValue := new(big.Int).SetUint64(cfg.LimitDefault()).Int64()
+
 	return trontxm.New(logger, tronkeystore.NewLoopKeystoreAdapter(keystore), tronClient, trontxm.TronTxmConfig{
-		// From testing, this multiplier ensures all exec messages are fully executed.
-		// Energy estimation doesn't seem to account for more complex smart contract execution.
-		// Given that Tron has static gas prices, we don't expect this to be a problem as this multiplier is sufficiently high.
-		EnergyMultiplier: 3,
+		// Overrides the energy estimator to always use the fixed energy
+		FixedEnergyValue: fixedEnergyValue,
 		// Maximum number of transactions to buffer in the broadcast channel.
 		BroadcastChanSize: 100,
 		// Number of seconds to wait between polling the blockchain for transaction confirmation.
