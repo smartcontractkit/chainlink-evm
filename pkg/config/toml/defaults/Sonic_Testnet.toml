@@ -20,6 +20,7 @@ BlockHistorySize = 100
 
 [HeadTracker]
 HistoryDepth = 50
+PersistenceEnabled = false
 
 [NodePool]
 SyncThreshold = 10
