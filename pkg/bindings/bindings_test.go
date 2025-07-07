@@ -160,6 +160,34 @@ func TestReadMethods(t *testing.T) {
 	require.Equal(t, []byte{0x01, 0x02, 0x03, 0x04}, response.Data, "Response data should match expected dummy data")
 }
 
+func TestWriteReportMethods(t *testing.T) {
+	client := mocks.NewEVMClient(t)
+	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
+	require.NoError(t, err, "Failed to create DataStorage instance")
+
+	client.EXPECT().WriteReport(mock.Anything, mock.Anything).Return(
+		sdk.NewBasicPromise(func() (*evmcappb.WriteReportReply, error) {
+			// Simulate a successful write report
+			return &evmcappb.WriteReportReply{
+				TxStatus: evmcappb.TxStatus_TX_SUCCESS,
+				TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
+			}, nil
+		})).Once()
+
+	reply, err := ds.WriteReportDataStorageUserData(nil, datastorage.DataStorageUserData{
+		Key:   "testKey",
+		Value: "testValue",
+	}, nil)
+	require.NoError(t, err, "WriteReportDataStorageUserData should not return an error")
+	response, err := reply.Await()
+	require.NoError(t, err, "Awaiting WriteReportDataStorageUserData reply should not return an error")
+	require.NotNil(t, response, "Response from WriteReportDataStorageUserData should not be nil")
+	require.Equal(t, &evmcappb.WriteReportReply{
+		TxStatus: evmcappb.TxStatus_TX_SUCCESS,
+		TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
+	}, response, "Response should match expected WriteReportReply")
+}
+
 func TestErrorHandling(t *testing.T) {
 	ds := newDataStorage(t)
 
