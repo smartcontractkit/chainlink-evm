@@ -22,5 +22,5 @@ rm-mocked:
 
 .PHONY: testdb
 testdb:
-	cd $(shell go mod download -json github.com/smartcontractkit/chainlink/v2@d0bcaaeadbe0268fac24395f29169aa879a653f3 | jq -r .Dir) && \
+	cd $(shell go mod download -json github.com/smartcontractkit/chainlink/v2@3c19b6070649152e5e89759b654b1970889119b3 | jq -r .Dir) && \
 	go run ./core/store/cmd/preparetest

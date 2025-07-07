@@ -270,6 +270,7 @@ func (r *Receipt) GetRevertReason() *string {
 type Confirmations int
 
 const (
+	Safe        = Confirmations(-2)
 	Finalized   = Confirmations(-1)
 	Unconfirmed = Confirmations(0)
 )

@@ -94,6 +94,7 @@ type Client interface {
 type HeadTracker interface {
 	services.Service
 	LatestAndFinalizedBlock(ctx context.Context) (latest, finalized *evmtypes.Head, err error)
+	LatestSafeBlock(ctx context.Context) (safe *evmtypes.Head, err error)
 }
 
 var (
@@ -1055,6 +1056,13 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		lp.lggr.Warnw("Unable to get latestBlockNumber block", "err", err, "currentBlockNumber", currentBlockNumber)
 		return nil
 	}
+
+	safeBlockNumber, err := lp.latestSafeBlock(ctx, latestFinalizedBlockNumber)
+	if err != nil {
+		lp.lggr.Warnw("Unable to get latest safe block", "err", err, "currentBlockNumber", currentBlockNumber)
+		return nil
+	}
+
 	latestBlockNumber := latestBlock.Number
 	if currentBlockNumber > latestBlockNumber {
 		// Note there can also be a reorg "shortening" i.e. chain height decreases but TDD increases. In that case
@@ -1117,6 +1125,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 			BlockNumber:          currentBlockNumber,
 			BlockTimestamp:       currentBlock.Timestamp,
 			FinalizedBlockNumber: latestFinalizedBlockNumber,
+			SafeBlockNumber:      safeBlockNumber,
 		}
 		err = lp.orm.InsertLogsWithBlock(
 			ctx,
@@ -1155,6 +1164,24 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, e
 	}
 	lp.lggr.Debugw("Latest blocks read from chain", "latest", latest.Number, "finalized", finalizedBN)
 	return latest, finalizedBN, nil
+}
+
+// Returns information about safe latestSafeBlock, LatestSafeBlock provided by HeadTracker
+func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNumber int64) (int64, error) {
+	safe, err := lp.headTracker.LatestSafeBlock(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get safe block from HeadTracker: %w", err)
+	}
+	safeBlockNumber := safe.BlockNumber()
+	if safeBlockNumber == 0 {
+		safeBlockNumber = 1
+	}
+	// if safe block is lower than finalized block, it doesn't make sense to use it
+	if safeBlockNumber < latestFinalizedBlockNumber {
+		safeBlockNumber = latestFinalizedBlockNumber
+	}
+	lp.lggr.Debugw("Latest safe blocks read from chain", "safe", safe.Number)
+	return safeBlockNumber, nil
 }
 
 // Find the first place where our chain and their chain have the same block,
@@ -1580,6 +1607,7 @@ func (lp *logPoller) batchFetchBlocks(ctx context.Context, blocksRequested []uin
 				BlockNumber:          head.Number,
 				BlockTimestamp:       head.Timestamp,
 				FinalizedBlockNumber: head.Number, // always finalized; only matters if this block is returned by LatestBlock()
+				SafeBlockNumber:      head.Number,
 				CreatedAt:            head.CreatedAt,
 			}
 			logPollerBlocks[uint64(head.Number)] = lpBlock //nolint:gosec // G115

@@ -19,6 +19,7 @@ type Block struct {
 	BlockNumber          int64
 	BlockTimestamp       time.Time
 	FinalizedBlockNumber int64
+	SafeBlockNumber      int64
 	CreatedAt            time.Time
 }
 
