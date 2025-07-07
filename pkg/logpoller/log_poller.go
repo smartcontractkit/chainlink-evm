@@ -1057,7 +1057,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		return nil
 	}
 
-	safeBlockNumber, err := lp.latestSafeBlocks(ctx, latestFinalizedBlockNumber)
+	safeBlockNumber, err := lp.latestSafeBlock(ctx, latestFinalizedBlockNumber)
 	if err != nil {
 		lp.lggr.Warnw("Unable to get latest safe block", "err", err, "currentBlockNumber", currentBlockNumber)
 		return nil
@@ -1166,8 +1166,8 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, e
 	return latest, finalizedBN, nil
 }
 
-// Returns information about safe latestSafeBlocks, LatestSafeBlock provided by HeadTracker
-func (lp *logPoller) latestSafeBlocks(ctx context.Context, latestFinalizedBlockNumber int64) (int64, error) {
+// Returns information about safe latestSafeBlock, LatestSafeBlock provided by HeadTracker
+func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNumber int64) (int64, error) {
 	safe, err := lp.headTracker.LatestSafeBlock(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get safe block from HeadTracker: %w", err)

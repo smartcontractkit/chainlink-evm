@@ -640,7 +640,7 @@ func Test_latestSafeBlocks(t *testing.T) {
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(&evmtypes.Head{}, errors.New(expectedError))
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, err := lp.latestSafeBlocks(t.Context(), 0)
+		_, err := lp.latestSafeBlock(t.Context(), 0)
 		require.ErrorContains(t, err, expectedError)
 	})
 	t.Run("headTracker returns valid chain", func(t *testing.T) {
@@ -649,7 +649,7 @@ func Test_latestSafeBlocks(t *testing.T) {
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(safeBlock, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		safeBlockNumber, err := lp.latestSafeBlocks(t.Context(), 1)
+		safeBlockNumber, err := lp.latestSafeBlock(t.Context(), 1)
 		require.NoError(t, err)
 		assert.Equal(t, safeBlock.Number, safeBlockNumber)
 	})
@@ -660,7 +660,7 @@ func Test_latestSafeBlocks(t *testing.T) {
 		latestFinalizedBlockNumber := int64(3)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		safeBlockNumber, err := lp.latestSafeBlocks(t.Context(), latestFinalizedBlockNumber)
+		safeBlockNumber, err := lp.latestSafeBlock(t.Context(), latestFinalizedBlockNumber)
 		require.NoError(t, err)
 		assert.Equal(t, latestFinalizedBlockNumber, safeBlockNumber)
 	})
