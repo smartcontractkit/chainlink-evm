@@ -81,6 +81,7 @@ type Client interface {
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
+	FilterLogsWithConfidence(ctx context.Context, q ethereum.FilterQuery, confidence primitives.ConfidenceLevel) ([]types.Log, error)
 	SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error)
 	EstimateGas(ctx context.Context, call ethereum.CallMsg) (uint64, error)
 	SuggestGasPrice(ctx context.Context) (*big.Int, error)
@@ -328,7 +329,7 @@ func (c *chainClient) FilterLogsWithConfidence(ctx context.Context, q ethereum.F
 		return nil, err
 	}
 
-	return c.FilterLogsWithConfidence(ctx, q, confidence)
+	return r.FilterLogsWithConfidence(ctx, q, confidence)
 }
 
 func (c *chainClient) HeaderByHash(ctx context.Context, h common.Hash) (head *types.Header, err error) {
@@ -363,7 +364,7 @@ func (c *chainClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.H
 	return r.BlockByNumber(ctx, n)
 }
 
-func (c *chainClient) BlockByNumberWithConfidence(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel) (*evmtypes.Head, error) {
+func (c *chainClient) HeadByNumberWithConfidence(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel) (*evmtypes.Head, error) {
 	r, err := c.multiNode.SelectRPC(ctx)
 	if err != nil {
 		return nil, err

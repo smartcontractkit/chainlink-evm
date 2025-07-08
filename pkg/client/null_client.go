@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -15,6 +16,8 @@ import (
 
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
+
+var _ Client = (*NullClient)(nil)
 
 // NullClient satisfies the Client but has no side effects
 type NullClient struct {
@@ -241,5 +244,21 @@ func (nc *NullClient) CheckTxValidity(_ context.Context, _ common.Address, _ com
 }
 
 func (nc *NullClient) FeeHistory(ctx context.Context, blockCount uint64, lastBlock *big.Int, rewardPercentiles []float64) (feeHistory *ethereum.FeeHistory, err error) {
+	return nil, nil
+}
+
+func (nc *NullClient) BalanceAtWithConfidence(ctx context.Context, account common.Address, blockNumber *big.Int, confidence primitives.ConfidenceLevel) (*big.Int, error) {
+	return nil, nil
+}
+
+func (nc *NullClient) HeadByNumberWithConfidence(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel) (*evmtypes.Head, error) {
+	return nil, nil
+}
+
+func (nc *NullClient) CallContractWithConfidence(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, confidence primitives.ConfidenceLevel) ([]byte, error) {
+	return nil, nil
+}
+
+func (nc *NullClient) FilterLogsWithConfidence(ctx context.Context, q ethereum.FilterQuery, confidence primitives.ConfidenceLevel) ([]types.Log, error) {
 	return nil, nil
 }

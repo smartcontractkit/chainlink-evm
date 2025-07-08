@@ -21,6 +21,8 @@ import (
 
 	pkgtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 
+	primitives "github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
+
 	rpc "github.com/ethereum/go-ethereum/rpc"
 
 	types "github.com/ethereum/go-ethereum/core/types"
@@ -95,6 +97,67 @@ func (_c *Client_BalanceAt_Call) Return(_a0 *big.Int, _a1 error) *Client_Balance
 }
 
 func (_c *Client_BalanceAt_Call) RunAndReturn(run func(context.Context, common.Address, *big.Int) (*big.Int, error)) *Client_BalanceAt_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// BalanceAtWithConfidence provides a mock function with given fields: ctx, account, blockNumber, confidence
+func (_m *Client) BalanceAtWithConfidence(ctx context.Context, account common.Address, blockNumber *big.Int, confidence primitives.ConfidenceLevel) (*big.Int, error) {
+	ret := _m.Called(ctx, account, blockNumber, confidence)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BalanceAtWithConfidence")
+	}
+
+	var r0 *big.Int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address, *big.Int, primitives.ConfidenceLevel) (*big.Int, error)); ok {
+		return rf(ctx, account, blockNumber, confidence)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address, *big.Int, primitives.ConfidenceLevel) *big.Int); ok {
+		r0 = rf(ctx, account, blockNumber, confidence)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*big.Int)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, common.Address, *big.Int, primitives.ConfidenceLevel) error); ok {
+		r1 = rf(ctx, account, blockNumber, confidence)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_BalanceAtWithConfidence_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BalanceAtWithConfidence'
+type Client_BalanceAtWithConfidence_Call struct {
+	*mock.Call
+}
+
+// BalanceAtWithConfidence is a helper method to define mock.On call
+//   - ctx context.Context
+//   - account common.Address
+//   - blockNumber *big.Int
+//   - confidence primitives.ConfidenceLevel
+func (_e *Client_Expecter) BalanceAtWithConfidence(ctx interface{}, account interface{}, blockNumber interface{}, confidence interface{}) *Client_BalanceAtWithConfidence_Call {
+	return &Client_BalanceAtWithConfidence_Call{Call: _e.mock.On("BalanceAtWithConfidence", ctx, account, blockNumber, confidence)}
+}
+
+func (_c *Client_BalanceAtWithConfidence_Call) Run(run func(ctx context.Context, account common.Address, blockNumber *big.Int, confidence primitives.ConfidenceLevel)) *Client_BalanceAtWithConfidence_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Address), args[2].(*big.Int), args[3].(primitives.ConfidenceLevel))
+	})
+	return _c
+}
+
+func (_c *Client_BalanceAtWithConfidence_Call) Return(_a0 *big.Int, _a1 error) *Client_BalanceAtWithConfidence_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_BalanceAtWithConfidence_Call) RunAndReturn(run func(context.Context, common.Address, *big.Int, primitives.ConfidenceLevel) (*big.Int, error)) *Client_BalanceAtWithConfidence_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -426,6 +489,67 @@ func (_c *Client_CallContract_Call) Return(_a0 []byte, _a1 error) *Client_CallCo
 }
 
 func (_c *Client_CallContract_Call) RunAndReturn(run func(context.Context, ethereum.CallMsg, *big.Int) ([]byte, error)) *Client_CallContract_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CallContractWithConfidence provides a mock function with given fields: ctx, msg, blockNumber, confidence
+func (_m *Client) CallContractWithConfidence(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, confidence primitives.ConfidenceLevel) ([]byte, error) {
+	ret := _m.Called(ctx, msg, blockNumber, confidence)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CallContractWithConfidence")
+	}
+
+	var r0 []byte
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ethereum.CallMsg, *big.Int, primitives.ConfidenceLevel) ([]byte, error)); ok {
+		return rf(ctx, msg, blockNumber, confidence)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ethereum.CallMsg, *big.Int, primitives.ConfidenceLevel) []byte); ok {
+		r0 = rf(ctx, msg, blockNumber, confidence)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ethereum.CallMsg, *big.Int, primitives.ConfidenceLevel) error); ok {
+		r1 = rf(ctx, msg, blockNumber, confidence)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_CallContractWithConfidence_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CallContractWithConfidence'
+type Client_CallContractWithConfidence_Call struct {
+	*mock.Call
+}
+
+// CallContractWithConfidence is a helper method to define mock.On call
+//   - ctx context.Context
+//   - msg ethereum.CallMsg
+//   - blockNumber *big.Int
+//   - confidence primitives.ConfidenceLevel
+func (_e *Client_Expecter) CallContractWithConfidence(ctx interface{}, msg interface{}, blockNumber interface{}, confidence interface{}) *Client_CallContractWithConfidence_Call {
+	return &Client_CallContractWithConfidence_Call{Call: _e.mock.On("CallContractWithConfidence", ctx, msg, blockNumber, confidence)}
+}
+
+func (_c *Client_CallContractWithConfidence_Call) Run(run func(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, confidence primitives.ConfidenceLevel)) *Client_CallContractWithConfidence_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(ethereum.CallMsg), args[2].(*big.Int), args[3].(primitives.ConfidenceLevel))
+	})
+	return _c
+}
+
+func (_c *Client_CallContractWithConfidence_Call) Return(_a0 []byte, _a1 error) *Client_CallContractWithConfidence_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_CallContractWithConfidence_Call) RunAndReturn(run func(context.Context, ethereum.CallMsg, *big.Int, primitives.ConfidenceLevel) ([]byte, error)) *Client_CallContractWithConfidence_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -843,6 +967,66 @@ func (_c *Client_FilterLogs_Call) RunAndReturn(run func(context.Context, ethereu
 	return _c
 }
 
+// FilterLogsWithConfidence provides a mock function with given fields: ctx, q, confidence
+func (_m *Client) FilterLogsWithConfidence(ctx context.Context, q ethereum.FilterQuery, confidence primitives.ConfidenceLevel) ([]types.Log, error) {
+	ret := _m.Called(ctx, q, confidence)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FilterLogsWithConfidence")
+	}
+
+	var r0 []types.Log
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ethereum.FilterQuery, primitives.ConfidenceLevel) ([]types.Log, error)); ok {
+		return rf(ctx, q, confidence)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ethereum.FilterQuery, primitives.ConfidenceLevel) []types.Log); ok {
+		r0 = rf(ctx, q, confidence)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]types.Log)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ethereum.FilterQuery, primitives.ConfidenceLevel) error); ok {
+		r1 = rf(ctx, q, confidence)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_FilterLogsWithConfidence_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FilterLogsWithConfidence'
+type Client_FilterLogsWithConfidence_Call struct {
+	*mock.Call
+}
+
+// FilterLogsWithConfidence is a helper method to define mock.On call
+//   - ctx context.Context
+//   - q ethereum.FilterQuery
+//   - confidence primitives.ConfidenceLevel
+func (_e *Client_Expecter) FilterLogsWithConfidence(ctx interface{}, q interface{}, confidence interface{}) *Client_FilterLogsWithConfidence_Call {
+	return &Client_FilterLogsWithConfidence_Call{Call: _e.mock.On("FilterLogsWithConfidence", ctx, q, confidence)}
+}
+
+func (_c *Client_FilterLogsWithConfidence_Call) Run(run func(ctx context.Context, q ethereum.FilterQuery, confidence primitives.ConfidenceLevel)) *Client_FilterLogsWithConfidence_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(ethereum.FilterQuery), args[2].(primitives.ConfidenceLevel))
+	})
+	return _c
+}
+
+func (_c *Client_FilterLogsWithConfidence_Call) Return(_a0 []types.Log, _a1 error) *Client_FilterLogsWithConfidence_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_FilterLogsWithConfidence_Call) RunAndReturn(run func(context.Context, ethereum.FilterQuery, primitives.ConfidenceLevel) ([]types.Log, error)) *Client_FilterLogsWithConfidence_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HeadByHash provides a mock function with given fields: ctx, n
 func (_m *Client) HeadByHash(ctx context.Context, n common.Hash) (*pkgtypes.Head, error) {
 	ret := _m.Called(ctx, n)
@@ -957,6 +1141,66 @@ func (_c *Client_HeadByNumber_Call) Return(_a0 *pkgtypes.Head, _a1 error) *Clien
 }
 
 func (_c *Client_HeadByNumber_Call) RunAndReturn(run func(context.Context, *big.Int) (*pkgtypes.Head, error)) *Client_HeadByNumber_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HeadByNumberWithConfidence provides a mock function with given fields: ctx, number, confidence
+func (_m *Client) HeadByNumberWithConfidence(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel) (*pkgtypes.Head, error) {
+	ret := _m.Called(ctx, number, confidence)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HeadByNumberWithConfidence")
+	}
+
+	var r0 *pkgtypes.Head
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *big.Int, primitives.ConfidenceLevel) (*pkgtypes.Head, error)); ok {
+		return rf(ctx, number, confidence)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *big.Int, primitives.ConfidenceLevel) *pkgtypes.Head); ok {
+		r0 = rf(ctx, number, confidence)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pkgtypes.Head)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *big.Int, primitives.ConfidenceLevel) error); ok {
+		r1 = rf(ctx, number, confidence)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_HeadByNumberWithConfidence_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HeadByNumberWithConfidence'
+type Client_HeadByNumberWithConfidence_Call struct {
+	*mock.Call
+}
+
+// HeadByNumberWithConfidence is a helper method to define mock.On call
+//   - ctx context.Context
+//   - number *big.Int
+//   - confidence primitives.ConfidenceLevel
+func (_e *Client_Expecter) HeadByNumberWithConfidence(ctx interface{}, number interface{}, confidence interface{}) *Client_HeadByNumberWithConfidence_Call {
+	return &Client_HeadByNumberWithConfidence_Call{Call: _e.mock.On("HeadByNumberWithConfidence", ctx, number, confidence)}
+}
+
+func (_c *Client_HeadByNumberWithConfidence_Call) Run(run func(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel)) *Client_HeadByNumberWithConfidence_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*big.Int), args[2].(primitives.ConfidenceLevel))
+	})
+	return _c
+}
+
+func (_c *Client_HeadByNumberWithConfidence_Call) Return(_a0 *pkgtypes.Head, _a1 error) *Client_HeadByNumberWithConfidence_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_HeadByNumberWithConfidence_Call) RunAndReturn(run func(context.Context, *big.Int, primitives.ConfidenceLevel) (*pkgtypes.Head, error)) *Client_HeadByNumberWithConfidence_Call {
 	_c.Call.Return(run)
 	return _c
 }
