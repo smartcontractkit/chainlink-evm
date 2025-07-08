@@ -5,6 +5,7 @@ import (
 
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Minimal Chain Capabilities SDK client interface.
@@ -13,6 +14,7 @@ type EVMClient interface {
 	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest)
 	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest)
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
+	LatestAndFinalizedHead(runtime sdk.Runtime, input *emptypb.Empty) sdk.Promise[*evm.LatestAndFinalizedHeadReply]
 }
 
 type ContractInitOptions struct {
