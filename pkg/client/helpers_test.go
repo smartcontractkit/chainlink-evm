@@ -160,14 +160,23 @@ func NewChainClientWithTestNode(
 	multiNodeMetrics, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
 	require.NoError(t, err)
 
-	lggr := logger.Test(t)
 	nodePoolCfg := TestNodePoolConfig{
 		NodeFinalizedBlockPollInterval: 1 * time.Second,
 	}
-	rpc := NewRPCClient(nodePoolCfg, lggr, parsed, rpcHTTPURL, "eth-primary-rpc-0", id, chainID, multinode.Primary, client.QueryTimeout, client.QueryTimeout, "")
+	rpc := NewTestRPCClient(t, RPCClientOpts{
+		Cfg:                    nodePoolCfg,
+		WS:                     parsed,
+		HTTP:                   rpcHTTPURL,
+		Name:                   "eth-primary-rpc-0",
+		ID:                     id,
+		ChainID:                chainID,
+		Tier:                   multinode.Primary,
+		RpcTimeout:             ptr(client.QueryTimeout),
+		LargePayloadRPCTimeout: ptr(client.QueryTimeout),
+	})
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
-		nodeCfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, lggr, multiNodeMetrics, parsed, rpcHTTPURL, "eth-primary-node-0", id, chainID, 1, rpc, "EVM")
+		nodeCfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, logger.Test(t), multiNodeMetrics, parsed, rpcHTTPURL, "eth-primary-node-0", id, chainID, 1, rpc, "EVM")
 	primaries := []multinode.Node[*big.Int, *RPCClient]{n}
 
 	sendonlys := make([]multinode.SendOnlyNode[*big.Int, *RPCClient], len(sendonlyRPCURLs))
@@ -175,14 +184,23 @@ func NewChainClientWithTestNode(
 		if u.Scheme != "http" && u.Scheme != "https" {
 			return nil, pkgerrors.Errorf("sendonly ethereum rpc url scheme must be http(s): %s", u.String())
 		}
-		rpc := NewRPCClient(nodePoolCfg, lggr, nil, &sendonlyRPCURLs[i], fmt.Sprintf("eth-sendonly-rpc-%d", i), id, chainID, multinode.Secondary, client.QueryTimeout, client.QueryTimeout, "")
+		rpc := NewTestRPCClient(t, RPCClientOpts{
+			Cfg:                    nodePoolCfg,
+			HTTP:                   &sendonlyRPCURLs[i],
+			Name:                   fmt.Sprintf("eth-sendonly-rpc-%d", i),
+			ID:                     id,
+			ChainID:                chainID,
+			Tier:                   multinode.Secondary,
+			RpcTimeout:             ptr(client.QueryTimeout),
+			LargePayloadRPCTimeout: ptr(client.QueryTimeout),
+		})
 		s := multinode.NewSendOnlyNode[*big.Int, *RPCClient](
-			lggr, multiNodeMetrics, u, fmt.Sprintf("eth-sendonly-%d", i), chainID, rpc)
+			logger.Test(t), multiNodeMetrics, u, fmt.Sprintf("eth-sendonly-%d", i), chainID, rpc)
 		sendonlys[i] = s
 	}
 
 	clientErrors := NewTestClientErrors()
-	c := NewChainClient(lggr, multiNodeMetrics, nodeCfg.SelectionMode(), leaseDuration, primaries, sendonlys, chainID, &clientErrors, 0, "")
+	c := NewChainClient(logger.Test(t), multiNodeMetrics, nodeCfg.SelectionMode(), leaseDuration, primaries, sendonlys, chainID, &clientErrors, 0, "")
 	t.Cleanup(c.Close)
 	return c, nil
 }

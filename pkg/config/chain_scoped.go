@@ -100,7 +100,12 @@ func (e *EVMConfig) FinalityDepth() uint32 {
 }
 
 func (e *EVMConfig) SafeDepth() uint32 {
-	return *e.C.SafeDepth
+	safeDepth := *e.C.SafeDepth
+	if safeDepth > 0 {
+		return safeDepth
+	}
+
+	return e.FinalityDepth()
 }
 
 func (e *EVMConfig) FinalityTagEnabled() bool {

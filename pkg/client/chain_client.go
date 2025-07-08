@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -38,6 +39,7 @@ type Client interface {
 
 	TokenBalance(ctx context.Context, address common.Address, contractAddress common.Address) (*big.Int, error)
 	BalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error)
+	BalanceAtWithConfidence(ctx context.Context, account common.Address, blockNumber *big.Int, confidence primitives.ConfidenceLevel) (*big.Int, error)
 	LINKBalance(ctx context.Context, address common.Address, linkAddress common.Address) (*commonassets.Link, error)
 
 	// Wrapped RPC methods
@@ -54,6 +56,7 @@ type Client interface {
 	// running on Kovan, Avalanche and potentially others. We have to return our own wrapper type to capture the
 	// correct hash from the RPC response.
 	HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error)
+	HeadByNumberWithConfidence(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel) (*evmtypes.Head, error)
 	HeadByHash(ctx context.Context, n common.Hash) (*evmtypes.Head, error)
 	SubscribeToHeads(ctx context.Context) (<-chan *evmtypes.Head, ethereum.Subscription, error)
 	// LatestFinalizedBlock - returns the latest finalized block as it's returned from an RPC.
@@ -89,6 +92,7 @@ type Client interface {
 	HeaderByHash(ctx context.Context, h common.Hash) (*types.Header, error)
 
 	CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
+	CallContractWithConfidence(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, confidence primitives.ConfidenceLevel) ([]byte, error)
 	PendingCallContract(ctx context.Context, msg ethereum.CallMsg) ([]byte, error)
 
 	IsL2() bool
@@ -158,6 +162,14 @@ func (c *chainClient) BalanceAt(ctx context.Context, account common.Address, blo
 		return nil, err
 	}
 	return r.BalanceAt(ctx, account, blockNumber)
+}
+
+func (c *chainClient) BalanceAtWithConfidence(ctx context.Context, account common.Address, blockNumber *big.Int, confidence primitives.ConfidenceLevel) (*big.Int, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.BalanceAtWithConfidence(ctx, account, blockNumber, confidence)
 }
 
 // BatchCallContext - sends all given requests as a single batch.
@@ -254,6 +266,14 @@ func (c *chainClient) CallContract(ctx context.Context, msg ethereum.CallMsg, bl
 	return r.CallContract(ctx, msg, blockNumber)
 }
 
+func (c *chainClient) CallContractWithConfidence(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, confidence primitives.ConfidenceLevel) ([]byte, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.CallContractWithConfidence(ctx, msg, blockNumber, confidence)
+}
+
 func (c *chainClient) PendingCallContract(ctx context.Context, msg ethereum.CallMsg) ([]byte, error) {
 	r, err := c.multiNode.SelectRPC(ctx)
 	if err != nil {
@@ -302,6 +322,15 @@ func (c *chainClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([
 	return r.FilterEvents(ctx, q)
 }
 
+func (c *chainClient) FilterLogsWithConfidence(ctx context.Context, q ethereum.FilterQuery, confidence primitives.ConfidenceLevel) ([]types.Log, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.FilterLogsWithConfidence(ctx, q, confidence)
+}
+
 func (c *chainClient) HeaderByHash(ctx context.Context, h common.Hash) (head *types.Header, err error) {
 	r, err := c.multiNode.SelectRPC(ctx)
 	if err != nil {
@@ -332,6 +361,14 @@ func (c *chainClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.H
 		return nil, err
 	}
 	return r.BlockByNumber(ctx, n)
+}
+
+func (c *chainClient) BlockByNumberWithConfidence(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel) (*evmtypes.Head, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.BlockByNumberWithConfidence(ctx, number, confidence)
 }
 
 func (c *chainClient) IsL2() bool {
