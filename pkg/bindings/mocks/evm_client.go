@@ -120,54 +120,6 @@ func (_c *EVMClient_FilterLogs_Call) RunAndReturn(run func(sdk.Runtime, *evm.Fil
 	return _c
 }
 
-// LogTrigger provides a mock function with given fields: config
-func (_m *EVMClient) LogTrigger(config *evm.FilterLogTriggerRequest) sdk.Trigger[*evm.Log, *evm.Log] {
-	ret := _m.Called(config)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LogTrigger")
-	}
-
-	var r0 sdk.Trigger[*evm.Log, *evm.Log]
-	if rf, ok := ret.Get(0).(func(*evm.FilterLogTriggerRequest) sdk.Trigger[*evm.Log, *evm.Log]); ok {
-		r0 = rf(config)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Trigger[*evm.Log, *evm.Log])
-		}
-	}
-
-	return r0
-}
-
-// EVMClient_LogTrigger_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LogTrigger'
-type EVMClient_LogTrigger_Call struct {
-	*mock.Call
-}
-
-// LogTrigger is a helper method to define mock.On call
-//   - config *evm.FilterLogTriggerRequest
-func (_e *EVMClient_Expecter) LogTrigger(config interface{}) *EVMClient_LogTrigger_Call {
-	return &EVMClient_LogTrigger_Call{Call: _e.mock.On("LogTrigger", config)}
-}
-
-func (_c *EVMClient_LogTrigger_Call) Run(run func(config *evm.FilterLogTriggerRequest)) *EVMClient_LogTrigger_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*evm.FilterLogTriggerRequest))
-	})
-	return _c
-}
-
-func (_c *EVMClient_LogTrigger_Call) Return(_a0 sdk.Trigger[*evm.Log, *evm.Log]) *EVMClient_LogTrigger_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *EVMClient_LogTrigger_Call) RunAndReturn(run func(*evm.FilterLogTriggerRequest) sdk.Trigger[*evm.Log, *evm.Log]) *EVMClient_LogTrigger_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RegisterLogTracking provides a mock function with given fields: _a0, _a1
 func (_m *EVMClient) RegisterLogTracking(_a0 sdk.Runtime, _a1 *evm.RegisterLogTrackingRequest) {
 	_m.Called(_a0, _a1)

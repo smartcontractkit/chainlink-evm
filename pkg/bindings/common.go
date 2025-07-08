@@ -13,7 +13,6 @@ type EVMClient interface {
 	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest)
 	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest)
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
-	LogTrigger(config *evm.FilterLogTriggerRequest) sdk.Trigger[*evm.Log, *evm.Log]
 }
 
 type ContractInitOptions struct {

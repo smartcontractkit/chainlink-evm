@@ -291,16 +291,6 @@ func (e *{{.Normalized.Name}}) Error() string {
 
 {{range $event := $contract.Events}}
 
-func (ds *DataStorage) LogTrigger{{.Normalized.Name}}Log() sdk.Trigger[*evm.Log, *evm.Log] {
-	return ds.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
-		Addresses: [][]byte{ds.Address},
-		Topics: []*evm.TopicValues{
-			{Values: [][]byte{ds.Codec.{{.Normalized.Name}}LogHash()}},
-		},
-		Confidence: evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED,
-	})
-}
-
 func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
 	bindings.ValidateLogTrackingOptions(options)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
