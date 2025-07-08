@@ -1,6 +1,7 @@
 package bindings_test
 
 import (
+	"bytes"
 	"math/big"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
@@ -21,8 +23,9 @@ import (
 
 func TestGenerateBindings(t *testing.T) {
 	err := bindings.GenerateBindings(
-		"./testdata/DataStorage_combined.json",
 		"",
+		"./testdata/DataStorage.abi",
+
 		"bindings",
 		"",
 		"./testdata/bindings.go",
@@ -249,6 +252,29 @@ func TestFilterLogs(t *testing.T) {
 	require.NotNil(t, response, "Response from FilteredLogsAccessLogged should not be nil")
 	require.Len(t, response.Logs, 1, "Response should contain one log")
 	require.Equal(t, ds.Address, response.Logs[0].Address)
+}
+
+func TestEncodeTopics(t *testing.T) {
+	ds := newDataStorage(t)
+	ev := ds.ABI.Events["AccessLogged"]
+
+	eventInstance := datastorage.AccessLogged{
+		Caller: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
+	}
+
+	topics, err := bindings.EncodeTopics(ev, eventInstance.Caller)
+	require.NoError(t, err, "Failed to encode topics")
+
+	require.Len(t, topics, 2, "wrong topic count: got %d, want %d", len(topics), 2)
+	require.True(t, bytes.Equal(topics[0], ev.ID.Bytes()), "topic[0] = %x, want %x", topics[0], ev.ID.Bytes())
+
+	packedCaller, _ := abi.Arguments{ev.Inputs[0]}.Pack(eventInstance.Caller)
+	expected := crypto.Keccak256Hash(packedCaller).Bytes()
+	require.True(t, bytes.Equal(topics[1], expected), "topic[1] = %x, want %x", topics[1], expected)
+
+	for i, tpic := range topics {
+		require.Len(t, tpic, 32, "topic[%d] len = %d, want 32", i, len(tpic))
+	}
 }
 
 func newDataStorage(t *testing.T) *datastorage.DataStorage {

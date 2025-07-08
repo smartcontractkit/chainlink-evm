@@ -291,6 +291,25 @@ func (e *{{.Normalized.Name}}) Error() string {
 
 {{range $event := $contract.Events}}
 
+func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, values []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+	event := ds.ABI.Events["{{.Normalized.Name}}"]
+	var topicValues []*evm.TopicValues
+	for _, v := range values {
+		encoded, err := bindings.EncodeTopics(event, v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encode {{.Normalized.Name}} topics: %w", err)
+		}
+		topicValues = append(topicValues, &evm.TopicValues{
+			Values: encoded,
+		})
+	}
+	return ds.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+		Addresses:  [][]byte{ds.Address},
+		Topics:     topicValues,
+		Confidence: confidence,
+	}), nil
+}
+
 func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
 	bindings.ValidateLogTrackingOptions(options)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
