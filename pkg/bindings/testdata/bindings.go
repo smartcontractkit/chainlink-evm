@@ -333,6 +333,16 @@ func (e *DataNotFound) Error() string {
 	return fmt.Sprintf("DataNotFound error: requester=%v; key=%v; reason=%v;", e.Requester, e.Key, e.Reason)
 }
 
+func (ds *DataStorage) LogTriggerAccessLoggedLog() sdk.Trigger[*evm.Log, *evm.Log] {
+	return ds.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+		Addresses: [][]byte{ds.Address},
+		Topics: []*evm.TopicValues{
+			{Values: [][]byte{ds.Codec.AccessLoggedLogHash()}},
+		},
+		Confidence: evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED,
+	})
+}
+
 func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
 	bindings.ValidateLogTrackingOptions(options)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
@@ -372,6 +382,16 @@ func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindi
 			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
 			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
 		},
+	})
+}
+
+func (ds *DataStorage) LogTriggerDataStoredLog() sdk.Trigger[*evm.Log, *evm.Log] {
+	return ds.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+		Addresses: [][]byte{ds.Address},
+		Topics: []*evm.TopicValues{
+			{Values: [][]byte{ds.Codec.DataStoredLogHash()}},
+		},
+		Confidence: evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED,
 	})
 }
 
