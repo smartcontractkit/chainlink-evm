@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/chains/evm"
-	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
+	"github.com/smartcontractkit/cre-sdk-go/sdk"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	datastorage "github.com/smartcontractkit/chainlink-evm/pkg/bindings/testdata"
