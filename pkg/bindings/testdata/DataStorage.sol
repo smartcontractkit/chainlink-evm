@@ -38,6 +38,11 @@ contract DataStorage {
         return value;
     }
 
+    function getValue() external view returns (string memory) {
+        // This method is not used anymore, but we keep it for compatibility
+        return "test";
+    }
+
     // New method: Emits a different event
     function logAccess(string calldata message) external {
         emit AccessLogged(msg.sender, message);

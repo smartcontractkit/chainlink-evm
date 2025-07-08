@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
@@ -34,6 +35,12 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = abi.ConvertType
+	_ = emptypb.Empty{}
+	_ = pb.NewBigIntFromInt
+	_ = bindings.ValidateLogTrackingOptions
+	_ = evm.FilterLogTriggerRequest{}
+	_ = sdk.ConsensusResponseMapKeyPayload
 )
 
 {{range $contract := .Contracts}}
@@ -53,14 +60,16 @@ var {{$contract.Type}}MetaData = &bind.MetaData{
 
 {{end}}
 
-// Contract Method Inputs
-{{range $call := $contract.Calls}}type {{$call.Normalized.Name}}Input struct {
+// Contract Method Inputs{{- range $call := $contract.Calls}}
+{{- if gt (len $call.Normalized.Inputs) 0 }}
+type {{$call.Normalized.Name}}Input struct {
 	{{- range $param := $call.Normalized.Inputs}}
 	{{capitalise $param.Name}} {{bindtype .Type $.Structs}}
 	{{- end}}
 }
-
 {{end}}
+
+{{- end}}
 
 // Errors
 {{range $error := $contract.Errors}}type {{.Normalized.Name}} struct {
@@ -94,8 +103,9 @@ type {{$contract.Type}}Codec interface {
 	
 	{{- if gt (len $call.Normalized.Inputs) 0 }}
 	Encode{{$call.Normalized.Name}}MethodCall(in {{$call.Normalized.Name}}Input) ([]byte, error)
+	{{- else }}
+	Encode{{$call.Normalized.Name}}MethodCall() ([]byte, error)
 	{{- end }}
-	
 	{{- if gt (len $call.Normalized.Outputs) 0 }}
 	Decode{{$call.Normalized.Name}}MethodOutput(data []byte) ({{with index $call.Normalized.Outputs 0}}{{bindtype .Type $.Structs}}{{end}}, error)
 	{{- end }}
@@ -153,6 +163,11 @@ func New{{$contract.Type}}Codec() ({{$contract.Type}}Codec, error) {
 func (c *{{ decapitalise $contract.Type }}CodecImpl) Encode{{ $call.Normalized.Name }}MethodCall(in {{ $call.Normalized.Name }}Input) ([]byte, error) {
 	return c.abi.Pack("{{ $call.Original.Name }}"{{- range .Normalized.Inputs }}, in.{{ capitalise .Name }}{{- end }})
 }
+{{- else }}
+func (c *{{ decapitalise $contract.Type }}CodecImpl) Encode{{ $call.Normalized.Name }}MethodCall() ([]byte, error) {
+	return c.abi.Pack("{{ $call.Original.Name }}")
+}
+
 {{- end }}
 
 {{- if gt (len $call.Normalized.Outputs) 0 }}
@@ -219,28 +234,42 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) Decode{{.Normalized.Name}}(lo
 {{end}}
 
 {{range $call := $contract.Calls}}
-
-{{- if or $call.Original.Constant (eq $call.Original.StateMutability "view")}}
+  {{- if or $call.Original.Constant (eq $call.Original.StateMutability "view")}}
 
 func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
-	runtime sdk.Runtime,
-	args {{$call.Normalized.Name}}Input,
-	options *bindings.ReadOptions,
+    runtime sdk.Runtime,
+    {{- if gt (len $call.Normalized.Inputs) 0}}
+    args {{$call.Normalized.Name}}Input,
+    {{- end}}
+    options *bindings.ReadOptions,
 ) (sdk.Promise[*evm.CallContractReply], error) {
-	calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall(args)
-	if err != nil {
-		return nil, err
+    {{- if gt (len $call.Normalized.Inputs) 0}}
+    calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall(args)
+	{{- else }}
+	calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall()
+	{{- end}}
+    if err != nil {
+        return nil, err
+    }
+	var blockNumber *pb.BigInt
+    if options == nil {
+		promise := c.evmClient.LatestAndFinalizedHead(runtime, &emptypb.Empty{})
+		result, err := promise.Await()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get latest and finalized head: %w", err)
+		}
+		blockNumber = result.Finalized.BlockNumber
+	} else {
+		blockNumber = pb.NewBigIntFromInt(options.BlockNumber)
 	}
-	if options == nil {
-		options = &bindings.ReadOptions{BlockNumber: nil}
-	}
-	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
-		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: pb.NewBigIntFromInt(options.BlockNumber),
-	}), nil
+    return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
+        Call:        &evm.CallMsg{To: c.Address, Data: calldata},
+        BlockNumber: blockNumber,
+    }), nil
 }
-{{- end}}
+  {{- end}}
 {{end}}
+
 
 {{range $error := $contract.Errors}}
 
@@ -292,7 +321,7 @@ func (e *{{.Normalized.Name}}) Error() string {
 {{range $event := $contract.Events}}
 
 func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, values []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
-	event := ds.ABI.Events["{{.Normalized.Name}}"]
+	event := c.ABI.Events["{{.Normalized.Name}}"]
 	var topicValues []*evm.TopicValues
 	for _, v := range values {
 		encoded, err := bindings.EncodeTopics(event, v)
@@ -303,8 +332,8 @@ func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.Co
 			Values: encoded,
 		})
 	}
-	return ds.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
-		Addresses:  [][]byte{ds.Address},
+	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+		Addresses:  [][]byte{c.Address},
 		Topics:     topicValues,
 		Confidence: confidence,
 	}), nil

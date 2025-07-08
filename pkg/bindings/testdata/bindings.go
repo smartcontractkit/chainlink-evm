@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
@@ -34,10 +35,16 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = abi.ConvertType
+	_ = emptypb.Empty{}
+	_ = pb.NewBigIntFromInt
+	_ = bindings.ValidateLogTrackingOptions
+	_ = evm.FilterLogTriggerRequest{}
+	_ = sdk.ConsensusResponseMapKeyPayload
 )
 
-var BindingsMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"AccessLogged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"DataStored\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"logAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"name\":\"onReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"}],\"name\":\"readData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"storeData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"}],\"name\":\"storeUserData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+var DataStorageMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"AccessLogged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"DataStored\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getValue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"logAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"name\":\"onReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"}],\"name\":\"readData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"storeData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"}],\"name\":\"storeUserData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"newValue\",\"type\":\"string\"}],\"name\":\"updateData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"oldValue\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // Structs
@@ -70,6 +77,11 @@ type StoreUserDataInput struct {
 	UserData DataStorageUserData
 }
 
+type UpdateDataInput struct {
+	Key      string
+	NewValue string
+}
+
 // Errors
 type DataNotFound struct {
 	Requester common.Address
@@ -89,22 +101,26 @@ type DataStored struct {
 	Value  string
 }
 
-// Main Binding Type for Bindings
-type Bindings struct {
+// Main Binding Type for DataStorage
+type DataStorage struct {
 	Address   []byte
 	Options   *bindings.ContractInitOptions
 	ABI       *abi.ABI
 	evmClient bindings.EVMClient
-	Codec     BindingsCodec
+	Codec     DataStorageCodec
 }
 
-type BindingsCodec interface {
+type DataStorageCodec interface {
+	EncodeGetValueMethodCall() ([]byte, error)
+	DecodeGetValueMethodOutput(data []byte) (string, error)
 	EncodeLogAccessMethodCall(in LogAccessInput) ([]byte, error)
 	EncodeOnReportMethodCall(in OnReportInput) ([]byte, error)
 	EncodeReadDataMethodCall(in ReadDataInput) ([]byte, error)
 	DecodeReadDataMethodOutput(data []byte) (string, error)
 	EncodeStoreDataMethodCall(in StoreDataInput) ([]byte, error)
 	EncodeStoreUserDataMethodCall(in StoreUserDataInput) ([]byte, error)
+	EncodeUpdateDataMethodCall(in UpdateDataInput) ([]byte, error)
+	DecodeUpdateDataMethodOutput(data []byte) (string, error)
 	EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error)
 	AccessLoggedLogHash() []byte
 	DecodeAccessLogged(log *evm.Log) (*AccessLogged, error)
@@ -112,20 +128,20 @@ type BindingsCodec interface {
 	DecodeDataStored(log *evm.Log) (*DataStored, error)
 }
 
-func NewBindings(
+func NewDataStorage(
 	client bindings.EVMClient,
 	address []byte,
 	options *bindings.ContractInitOptions,
-) (*Bindings, error) {
-	parsed, err := abi.JSON(strings.NewReader(BindingsMetaData.ABI))
+) (*DataStorage, error) {
+	parsed, err := abi.JSON(strings.NewReader(DataStorageMetaData.ABI))
 	if err != nil {
 		return nil, err
 	}
-	codec, err := NewBindingsCodec()
+	codec, err := NewDataStorageCodec()
 	if err != nil {
 		return nil, err
 	}
-	return &Bindings{
+	return &DataStorage{
 		Address:   address,
 		Options:   options,
 		ABI:       &parsed,
@@ -134,31 +150,43 @@ func NewBindings(
 	}, nil
 }
 
-type bindingsCodecImpl struct {
+type dataStorageCodecImpl struct {
 	abi *abi.ABI
 }
 
-func NewBindingsCodec() (BindingsCodec, error) {
-	parsed, err := abi.JSON(strings.NewReader(BindingsMetaData.ABI))
+func NewDataStorageCodec() (DataStorageCodec, error) {
+	parsed, err := abi.JSON(strings.NewReader(DataStorageMetaData.ABI))
 	if err != nil {
 		return nil, err
 	}
-	return &bindingsCodecImpl{abi: &parsed}, nil
+	return &dataStorageCodecImpl{abi: &parsed}, nil
 }
 
-func (c *bindingsCodecImpl) EncodeLogAccessMethodCall(in LogAccessInput) ([]byte, error) {
+func (c *dataStorageCodecImpl) EncodeGetValueMethodCall() ([]byte, error) {
+	return c.abi.Pack("getValue")
+}
+
+func (c *dataStorageCodecImpl) DecodeGetValueMethodOutput(data []byte) (string, error) {
+	vals, err := c.abi.Methods["getValue"].Outputs.Unpack(data)
+	if err != nil {
+		return *new(string), err
+	}
+	return vals[0].(string), nil
+}
+
+func (c *dataStorageCodecImpl) EncodeLogAccessMethodCall(in LogAccessInput) ([]byte, error) {
 	return c.abi.Pack("logAccess", in.Message)
 }
 
-func (c *bindingsCodecImpl) EncodeOnReportMethodCall(in OnReportInput) ([]byte, error) {
+func (c *dataStorageCodecImpl) EncodeOnReportMethodCall(in OnReportInput) ([]byte, error) {
 	return c.abi.Pack("onReport", in.Metadata, in.Payload)
 }
 
-func (c *bindingsCodecImpl) EncodeReadDataMethodCall(in ReadDataInput) ([]byte, error) {
+func (c *dataStorageCodecImpl) EncodeReadDataMethodCall(in ReadDataInput) ([]byte, error) {
 	return c.abi.Pack("readData", in.User, in.Key)
 }
 
-func (c *bindingsCodecImpl) DecodeReadDataMethodOutput(data []byte) (string, error) {
+func (c *dataStorageCodecImpl) DecodeReadDataMethodOutput(data []byte) (string, error) {
 	vals, err := c.abi.Methods["readData"].Outputs.Unpack(data)
 	if err != nil {
 		return *new(string), err
@@ -166,15 +194,27 @@ func (c *bindingsCodecImpl) DecodeReadDataMethodOutput(data []byte) (string, err
 	return vals[0].(string), nil
 }
 
-func (c *bindingsCodecImpl) EncodeStoreDataMethodCall(in StoreDataInput) ([]byte, error) {
+func (c *dataStorageCodecImpl) EncodeStoreDataMethodCall(in StoreDataInput) ([]byte, error) {
 	return c.abi.Pack("storeData", in.Key, in.Value)
 }
 
-func (c *bindingsCodecImpl) EncodeStoreUserDataMethodCall(in StoreUserDataInput) ([]byte, error) {
+func (c *dataStorageCodecImpl) EncodeStoreUserDataMethodCall(in StoreUserDataInput) ([]byte, error) {
 	return c.abi.Pack("storeUserData", in.UserData)
 }
 
-func (c *bindingsCodecImpl) EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error) {
+func (c *dataStorageCodecImpl) EncodeUpdateDataMethodCall(in UpdateDataInput) ([]byte, error) {
+	return c.abi.Pack("updateData", in.Key, in.NewValue)
+}
+
+func (c *dataStorageCodecImpl) DecodeUpdateDataMethodOutput(data []byte) (string, error) {
+	vals, err := c.abi.Methods["updateData"].Outputs.Unpack(data)
+	if err != nil {
+		return *new(string), err
+	}
+	return vals[0].(string), nil
+}
+
+func (c *dataStorageCodecImpl) EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error) {
 	tupleType, err := abi.NewType(
 		"tuple", "",
 		[]abi.ArgumentMarshaling{
@@ -192,12 +232,12 @@ func (c *bindingsCodecImpl) EncodeDataStorageUserDataStruct(in DataStorageUserDa
 	return args.Pack(in)
 }
 
-func (c *bindingsCodecImpl) AccessLoggedLogHash() []byte {
+func (c *dataStorageCodecImpl) AccessLoggedLogHash() []byte {
 	return c.abi.Events["AccessLogged"].ID.Bytes()
 }
 
 // DecodeAccessLogged decodes a log into a AccessLogged struct.
-func (c *bindingsCodecImpl) DecodeAccessLogged(log *evm.Log) (*AccessLogged, error) {
+func (c *dataStorageCodecImpl) DecodeAccessLogged(log *evm.Log) (*AccessLogged, error) {
 	event := new(AccessLogged)
 	if err := c.abi.UnpackIntoInterface(event, "AccessLogged", log.Data); err != nil {
 		return nil, err
@@ -220,12 +260,12 @@ func (c *bindingsCodecImpl) DecodeAccessLogged(log *evm.Log) (*AccessLogged, err
 	return event, nil
 }
 
-func (c *bindingsCodecImpl) DataStoredLogHash() []byte {
+func (c *dataStorageCodecImpl) DataStoredLogHash() []byte {
 	return c.abi.Events["DataStored"].ID.Bytes()
 }
 
 // DecodeDataStored decodes a log into a DataStored struct.
-func (c *bindingsCodecImpl) DecodeDataStored(log *evm.Log) (*DataStored, error) {
+func (c *dataStorageCodecImpl) DecodeDataStored(log *evm.Log) (*DataStored, error) {
 	event := new(DataStored)
 	if err := c.abi.UnpackIntoInterface(event, "DataStored", log.Data); err != nil {
 		return nil, err
@@ -248,7 +288,32 @@ func (c *bindingsCodecImpl) DecodeDataStored(log *evm.Log) (*DataStored, error) 
 	return event, nil
 }
 
-func (c Bindings) ReadData(
+func (c DataStorage) GetValue(
+	runtime sdk.Runtime,
+	options *bindings.ReadOptions,
+) (sdk.Promise[*evm.CallContractReply], error) {
+	calldata, err := c.Codec.EncodeGetValueMethodCall()
+	if err != nil {
+		return nil, err
+	}
+	var blockNumber *pb.BigInt
+	if options == nil {
+		promise := c.evmClient.LatestAndFinalizedHead(runtime, &emptypb.Empty{})
+		result, err := promise.Await()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get latest and finalized head: %w", err)
+		}
+		blockNumber = result.Finalized.BlockNumber
+	} else {
+		blockNumber = pb.NewBigIntFromInt(options.BlockNumber)
+	}
+	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
+		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
+		BlockNumber: blockNumber,
+	}), nil
+}
+
+func (c DataStorage) ReadData(
 	runtime sdk.Runtime,
 	args ReadDataInput,
 	options *bindings.ReadOptions,
@@ -257,17 +322,25 @@ func (c Bindings) ReadData(
 	if err != nil {
 		return nil, err
 	}
+	var blockNumber *pb.BigInt
 	if options == nil {
-		options = &bindings.ReadOptions{BlockNumber: nil}
+		promise := c.evmClient.LatestAndFinalizedHead(runtime, &emptypb.Empty{})
+		result, err := promise.Await()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get latest and finalized head: %w", err)
+		}
+		blockNumber = result.Finalized.BlockNumber
+	} else {
+		blockNumber = pb.NewBigIntFromInt(options.BlockNumber)
 	}
 	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
 		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: pb.NewBigIntFromInt(options.BlockNumber),
+		BlockNumber: blockNumber,
 	}), nil
 }
 
 // DecodeDataNotFoundError decodes a DataNotFound error from revert data.
-func (c *Bindings) DecodeDataNotFoundError(data []byte) (*DataNotFound, error) {
+func (c *DataStorage) DecodeDataNotFoundError(data []byte) (*DataNotFound, error) {
 	args := c.ABI.Errors["DataNotFound"].Inputs
 	values, err := args.Unpack(data[4:])
 	if err != nil {
@@ -299,7 +372,7 @@ func (c *Bindings) DecodeDataNotFoundError(data []byte) (*DataNotFound, error) {
 	}, nil
 }
 
-func (c *Bindings) UnpackError(data []byte) (any, error) {
+func (c *DataStorage) UnpackError(data []byte) (any, error) {
 	switch common.Bytes2Hex(data[:4]) {
 	case common.Bytes2Hex(c.ABI.Errors["DataNotFound"].ID.Bytes()[:4]):
 		return c.DecodeDataNotFoundError(data)
@@ -313,8 +386,8 @@ func (e *DataNotFound) Error() string {
 	return fmt.Sprintf("DataNotFound error: requester=%v; key=%v; reason=%v;", e.Requester, e.Key, e.Reason)
 }
 
-func (c *Bindings) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, values []AccessLogged) (sdk.Trigger[*evm.Log, *evm.Log], error) {
-	event := ds.ABI.Events["AccessLogged"]
+func (c *DataStorage) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, values []AccessLogged) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+	event := c.ABI.Events["AccessLogged"]
 	var topicValues []*evm.TopicValues
 	for _, v := range values {
 		encoded, err := bindings.EncodeTopics(event, v)
@@ -325,14 +398,14 @@ func (c *Bindings) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, val
 			Values: encoded,
 		})
 	}
-	return ds.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
-		Addresses:  [][]byte{ds.Address},
+	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+		Addresses:  [][]byte{c.Address},
 		Topics:     topicValues,
 		Confidence: confidence,
 	}), nil
 }
 
-func (c *Bindings) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
+func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
 	bindings.ValidateLogTrackingOptions(options)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
@@ -349,13 +422,13 @@ func (c *Bindings) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, options 
 	})
 }
 
-func (c *Bindings) UnregisterLogTrackingAccessLogged(runtime sdk.Runtime) {
+func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime sdk.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "AccessLogged-" + common.Bytes2Hex(c.Address),
 	})
 }
 
-func (c *Bindings) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
+func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: options.ToBlock,
@@ -374,8 +447,8 @@ func (c *Bindings) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindings
 	})
 }
 
-func (c *Bindings) LogTriggerDataStoredLog(confidence evm.ConfidenceLevel, values []DataStored) (sdk.Trigger[*evm.Log, *evm.Log], error) {
-	event := ds.ABI.Events["DataStored"]
+func (c *DataStorage) LogTriggerDataStoredLog(confidence evm.ConfidenceLevel, values []DataStored) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+	event := c.ABI.Events["DataStored"]
 	var topicValues []*evm.TopicValues
 	for _, v := range values {
 		encoded, err := bindings.EncodeTopics(event, v)
@@ -386,14 +459,14 @@ func (c *Bindings) LogTriggerDataStoredLog(confidence evm.ConfidenceLevel, value
 			Values: encoded,
 		})
 	}
-	return ds.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
-		Addresses:  [][]byte{ds.Address},
+	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+		Addresses:  [][]byte{c.Address},
 		Topics:     topicValues,
 		Confidence: confidence,
 	}), nil
 }
 
-func (c *Bindings) RegisterLogTrackingDataStored(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
+func (c *DataStorage) RegisterLogTrackingDataStored(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
 	bindings.ValidateLogTrackingOptions(options)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
@@ -410,13 +483,13 @@ func (c *Bindings) RegisterLogTrackingDataStored(runtime sdk.Runtime, options *b
 	})
 }
 
-func (c *Bindings) UnregisterLogTrackingDataStored(runtime sdk.Runtime) {
+func (c *DataStorage) UnregisterLogTrackingDataStored(runtime sdk.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "DataStored-" + common.Bytes2Hex(c.Address),
 	})
 }
 
-func (c *Bindings) FilterLogsDataStored(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
+func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: options.ToBlock,
