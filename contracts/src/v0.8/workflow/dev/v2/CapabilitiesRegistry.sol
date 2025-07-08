@@ -70,7 +70,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     bytes32 p2pId;
     /// @notice Public key used to encrypt secrets for this node
     bytes32 encryptionPublicKey;
-    /// @notice CSA (Centralized Server Authentication) public key used as identity for the node
+    /// @notice CSA (Centralized Server Authentication) public key used as identity to non-P2P networks.
     bytes32 csaKey;
     /// @notice The node's supported capabilities
     /// @dev This is stored as a map so that we can easily update to a set of new capabilities by
