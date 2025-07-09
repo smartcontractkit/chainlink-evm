@@ -669,7 +669,8 @@ func (r *RPCClient) BlockByNumber(ctx context.Context, number *big.Int) (head *e
 }
 
 func (r *RPCClient) BlockByNumberWithConfidence(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel) (*evmtypes.Head, error) {
-	if number == nil || !number.IsInt64() || number.Int64() < 0 {
+	if number == nil || number.Sign() <= 0 {
+		// caller is expected to use Header Tracker instead of direct calls to RPC
 		return nil, fmt.Errorf("invalid block number: %v", number)
 	}
 
@@ -1014,7 +1015,32 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 	return
 }
 
+// CallContractWithConfidence executes a message call transaction, which is directly executed in the VM of the node,
+// but never mined into the blockchain.
+//
+// blockNumber - defines block at which call will be executed:
+//
+//	nil - execute at latest block of specified confidence level (e.g. latest finalized, latest safe, etc.);
+//	positive value - execute as specified height with confidence level;
+//
+// confidenceLevel - defines at which confidence level request will be executed:
+//
+//	Unconfirmed - returns the most recent data;
+//	Finalized - returned data was finalized;
+//	Safe - returned data is highly unlikely to be reorged;
 func (r *RPCClient) CallContractWithConfidence(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, confidence primitives.ConfidenceLevel) ([]byte, error) {
+	if blockNumber == nil {
+		blockNumber, err := confidenceLevelToBlockNumber(confidence)
+		if err != nil {
+			return nil, err
+		}
+		return r.CallContract(ctx, msg, blockNumber)
+	}
+
+	if blockNumber.Sign() <= 0 {
+		return nil, fmt.Errorf("blockNumber must be positive or nil")
+	}
+
 	if confidence == primitives.Unconfirmed {
 		return r.CallContract(ctx, msg, blockNumber)
 	}
@@ -1110,10 +1136,44 @@ func (r *RPCClient) BalanceAt(ctx context.Context, account common.Address, block
 	return
 }
 
+func confidenceLevelToBlockNumber(confidence primitives.ConfidenceLevel) (*big.Int, error) {
+	switch confidence {
+	case primitives.Unconfirmed:
+		return big.NewInt(rpc.LatestBlockNumber.Int64()), nil
+	case primitives.Safe:
+		return big.NewInt(rpc.SafeBlockNumber.Int64()), nil
+	case primitives.Finalized:
+		return big.NewInt(rpc.FinalizedBlockNumber.Int64()), nil
+	default:
+		return nil, fmt.Errorf("unknown confidence level: %v", confidence)
+	}
+}
+
+// BalanceAtWithConfidence returns the wei balance of the given account.
+//
+// blockNumber - defines block at which call will be executed:
+//
+//	nil - execute at latest block of specified confidence level (e.g. latest finalized, latest safe, etc.);
+//	positive value - execute as specified height with confidence level;
+//
+// confidenceLevel - defines at which confidence level request will be executed:
+//
+//	Unconfirmed - returns the most recent data
+//	Finalized - returned data was finalized;
+//	Safe - returned data is highly unlikely to be reorged;
 func (r *RPCClient) BalanceAtWithConfidence(ctx context.Context, account common.Address, blockNumber *big.Int, confidence primitives.ConfidenceLevel) (*big.Int, error) {
-	if confidence == primitives.Unconfirmed {
+	if blockNumber == nil {
+		blockNumber, err := confidenceLevelToBlockNumber(confidence)
+		if err != nil {
+			return nil, err
+		}
 		return r.BalanceAt(ctx, account, blockNumber)
 	}
+
+	if blockNumber.Sign() <= 0 {
+		return nil, fmt.Errorf("blockNumber must be positive or nil")
+	}
+
 	var result hexutil.Big
 	err := r.doWithConfidence(ctx, rpc.BatchElem{
 		Method: "eth_getBalance",
@@ -1217,6 +1277,14 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 	return
 }
 
+// FilterLogsWithConfidence executes a filter query.
+// filterQuery.FromBlock and filterQuery.ToBlock must be positive values or 0. Nil only allowed if BlockHash is set.
+//
+// confidenceLevel - defines at which confidence level request will be executed:
+//
+//	Unconfirmed - returns the most recent data;
+//	Finalized - returned data was finalized;
+//	Safe - returned data is highly unlikely to be reorged;
 func (r *RPCClient) FilterLogsWithConfidence(ctx context.Context, q ethereum.FilterQuery, confidence primitives.ConfidenceLevel) ([]types.Log, error) {
 	if confidence == primitives.Unconfirmed {
 		return r.FilterLogs(ctx, q)
@@ -1224,11 +1292,21 @@ func (r *RPCClient) FilterLogsWithConfidence(ctx context.Context, q ethereum.Fil
 	if q.BlockHash != nil {
 		return nil, errors.New("confidence level not supported for block hash filters")
 	}
+
+	if q.FromBlock == nil || q.FromBlock.Sign() < 0 {
+		return nil, fmt.Errorf("confidence level %s not supported for nil or negative block numbers", confidence)
+	}
+
+	if q.ToBlock == nil || q.ToBlock.Sign() < 0 {
+		return nil, fmt.Errorf("confidence level %s not supported for nil or negative block numbers", confidence)
+	}
+
 	var result []types.Log
 	arg, err := toFilterArg(q)
 	if err != nil {
 		return nil, err
 	}
+
 	err = r.doWithConfidence(ctx, rpc.BatchElem{
 		Method: "eth_getLogs",
 		Args:   []interface{}{arg},

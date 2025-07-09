@@ -1053,7 +1053,8 @@ func TestRPCClient_FilterLogsWithConfidence(t *testing.T) {
 			return
 		}).WSURL()
 		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true})
-		result, err := rpcClient.FilterLogsWithConfidence(t.Context(), ethereum.FilterQuery{ToBlock: big.NewInt(10), Topics: [][]common.Hash{topics}}, primitives.Finalized)
+		filter := ethereum.FilterQuery{FromBlock: big.NewInt(0), ToBlock: big.NewInt(10), Topics: [][]common.Hash{topics}}
+		result, err := rpcClient.FilterLogsWithConfidence(t.Context(), filter, primitives.Finalized)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	})
