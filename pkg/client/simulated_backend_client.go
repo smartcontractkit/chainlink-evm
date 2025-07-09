@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/assets"
@@ -64,6 +65,8 @@ var (
 
 	balanceOfABI abi.ABI
 )
+
+var _ Client = (*SimulatedBackendClient)(nil)
 
 // SimulatedBackendClient is an Client implementation using a simulated
 // blockchain backend. Note that not all RPC methods are implemented here.
@@ -768,6 +771,22 @@ func (c *SimulatedBackendClient) LatestFinalizedBlock(ctx context.Context) (*evm
 	head := &evmtypes.Head{EVMChainID: ubig.New(c.chainID)}
 	head.SetFromHeader(h)
 	return head, nil
+}
+
+func (c *SimulatedBackendClient) BalanceAtWithConfidence(ctx context.Context, account common.Address, blockNumber *big.Int, confidence primitives.ConfidenceLevel) (*big.Int, error) {
+	return c.BalanceAt(ctx, account, blockNumber)
+}
+
+func (c *SimulatedBackendClient) HeadByNumberWithConfidence(ctx context.Context, number *big.Int, confidence primitives.ConfidenceLevel) (*evmtypes.Head, error) {
+	return c.HeadByNumber(ctx, number)
+}
+
+func (c *SimulatedBackendClient) FilterLogsWithConfidence(ctx context.Context, q ethereum.FilterQuery, confidence primitives.ConfidenceLevel) ([]types.Log, error) {
+	return c.FilterLogs(ctx, q)
+}
+
+func (c *SimulatedBackendClient) CallContractWithConfidence(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, confidence primitives.ConfidenceLevel) ([]byte, error) {
+	return c.CallContract(ctx, msg, blockNumber)
 }
 
 func (c *SimulatedBackendClient) ethGetLogs(ctx context.Context, result interface{}, args ...interface{}) error {
