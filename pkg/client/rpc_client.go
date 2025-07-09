@@ -1030,7 +1030,8 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 //	Safe - returned data is highly unlikely to be reorged;
 func (r *RPCClient) CallContractWithConfidence(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, confidence primitives.ConfidenceLevel) ([]byte, error) {
 	if blockNumber == nil {
-		blockNumber, err := confidenceLevelToBlockNumber(confidence)
+		var err error
+		blockNumber, err = confidenceLevelToBlockNumber(confidence)
 		if err != nil {
 			return nil, err
 		}
@@ -1038,7 +1039,7 @@ func (r *RPCClient) CallContractWithConfidence(ctx context.Context, msg ethereum
 	}
 
 	if blockNumber.Sign() <= 0 {
-		return nil, fmt.Errorf("blockNumber must be positive or nil")
+		return nil, errors.New("blockNumber must be positive or nil")
 	}
 
 	if confidence == primitives.Unconfirmed {
@@ -1163,7 +1164,8 @@ func confidenceLevelToBlockNumber(confidence primitives.ConfidenceLevel) (*big.I
 //	Safe - returned data is highly unlikely to be reorged;
 func (r *RPCClient) BalanceAtWithConfidence(ctx context.Context, account common.Address, blockNumber *big.Int, confidence primitives.ConfidenceLevel) (*big.Int, error) {
 	if blockNumber == nil {
-		blockNumber, err := confidenceLevelToBlockNumber(confidence)
+		var err error
+		blockNumber, err = confidenceLevelToBlockNumber(confidence)
 		if err != nil {
 			return nil, err
 		}
@@ -1171,7 +1173,7 @@ func (r *RPCClient) BalanceAtWithConfidence(ctx context.Context, account common.
 	}
 
 	if blockNumber.Sign() <= 0 {
-		return nil, fmt.Errorf("blockNumber must be positive or nil")
+		return nil, errors.New("blockNumber must be positive or nil")
 	}
 
 	var result hexutil.Big
