@@ -3,9 +3,9 @@ package bindings
 import (
 	"math/big"
 
-	evmcappb "github.com/smartcontractkit/chainlink-common/pkg/capabilities/v2/chain-capabilities/evm"
-	"github.com/smartcontractkit/chainlink-common/pkg/chains/evm"
-	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
+	"github.com/smartcontractkit/cre-sdk-go/sdk"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Minimal Chain Capabilities SDK client interface.
@@ -14,10 +14,11 @@ type EVMClient interface {
 	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest)
 	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest)
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
+	LatestAndFinalizedHead(runtime sdk.Runtime, input *emptypb.Empty) sdk.Promise[*evm.LatestAndFinalizedHeadReply]
 }
 
 type ContractInitOptions struct {
-	GasConfig *evmcappb.GasConfig
+	GasConfig *evm.GasConfig
 }
 
 type ReadOptions struct {

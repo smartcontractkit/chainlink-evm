@@ -85,12 +85,4 @@ packages:
       filename: "mock_{{ .InterfaceName | snakecase }}_test.go"
     interfaces:
       Emitter:
-  github.com/smartcontractkit/chainlink-evm/pkg/bindings:
-    interfaces:
-      EVMClient:
-  github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2:
-    config:
-      dir: bindings/mocks
-    interfaces:
-      Runtime:
 

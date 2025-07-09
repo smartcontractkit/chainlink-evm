@@ -6,3 +6,8 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/bindings:
       interfaces:
         EVMClient:
+  github.com/smartcontractkit/cre-sdk-go/sdk:
+    config:
+      dir: mocks
+    interfaces:
+      Runtime:

@@ -8,7 +8,7 @@ import (
 	pb "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 	mock "github.com/stretchr/testify/mock"
 
-	sdk "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2"
+	sdk "github.com/smartcontractkit/cre-sdk-go/sdk"
 
 	values "github.com/smartcontractkit/chainlink-common/pkg/values"
 )
