@@ -43,6 +43,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     bytes32 p2pId;
     /// @notice Public key used to encrypt secrets for this node
     bytes32 encryptionPublicKey;
+    /// @notice CSA (Centralized Server Authentication) public key used as identity to non-P2P networks.
+    bytes32 csaKey;
     /// @notice The list of capability IDs supported by the node
     string[] capabilityIds;
   }
@@ -68,6 +70,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     bytes32 p2pId;
     /// @notice Public key used to encrypt secrets for this node
     bytes32 encryptionPublicKey;
+    /// @notice CSA (Centralized Server Authentication) public key used as identity to non-P2P networks.
+    bytes32 csaKey;
     /// @notice The node's supported capabilities
     /// @dev This is stored as a map so that we can easily update to a set of new capabilities by
     /// incrementing the configCount and creating a new set of supported capability IDs
@@ -264,6 +268,11 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// including the encryption public key bytes.
   /// @param encryptionPublicKey The encryption public key bytes
   error InvalidNodeEncryptionPublicKey(bytes32 encryptionPublicKey);
+
+  /// @notice This error is thrown when trying to add a node without
+  /// including the CSA public key bytes.
+  /// @param csaKey The CSA public key bytes
+  error InvalidNodeCSAKey(bytes32 csaKey);
 
   /// @notice This error is thrown when trying to add a node without
   /// capabilities or with capabilities that do not exist.
@@ -585,7 +594,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
 
       if (node.signer == bytes32("") || s_nodeSigners.contains(node.signer)) revert InvalidNodeSigner();
 
-      if (node.encryptionPublicKey == bytes32("")) revert InvalidNodeEncryptionPublicKey(node.encryptionPublicKey);
+      if (node.encryptionPublicKey == bytes32("")) {
+        revert InvalidNodeEncryptionPublicKey(node.encryptionPublicKey);
+      }
+
+      if (node.csaKey == bytes32("")) {
+        revert InvalidNodeCSAKey(node.csaKey);
+      }
 
       string[] memory capabilityIds = node.capabilityIds;
       if (capabilityIds.length == 0) revert InvalidNodeCapabilities(capabilityIds);
@@ -602,6 +617,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       }
 
       storedNode.encryptionPublicKey = node.encryptionPublicKey;
+      storedNode.csaKey = node.csaKey;
       storedNode.nodeOperatorId = node.nodeOperatorId;
       storedNode.p2pId = node.p2pId;
       storedNode.signer = node.signer;
@@ -631,7 +647,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       }
       if (node.workflowDONId != 0) revert NodePartOfWorkflowDON(node.workflowDONId, p2pId);
 
-      if (!isOwner && msg.sender != s_nodeOperators[node.nodeOperatorId].admin) revert AccessForbidden(msg.sender);
+      if (!isOwner && msg.sender != s_nodeOperators[node.nodeOperatorId].admin) {
+        revert AccessForbidden(msg.sender);
+      }
       s_nodeSigners.remove(node.signer);
       s_nodeP2PIds.remove(node.p2pId);
       delete s_nodes[p2pId];
@@ -664,7 +682,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         s_nodeSigners.add(node.signer);
       }
 
-      if (node.encryptionPublicKey == bytes32("")) revert InvalidNodeEncryptionPublicKey(node.encryptionPublicKey);
+      if (node.encryptionPublicKey == bytes32("")) {
+        revert InvalidNodeEncryptionPublicKey(node.encryptionPublicKey);
+      }
+
+      if (node.csaKey == bytes32("")) {
+        revert InvalidNodeCSAKey(node.csaKey);
+      }
 
       string[] memory capabilityIds = node.capabilityIds;
       if (capabilityIds.length == 0) revert InvalidNodeCapabilities(capabilityIds);
@@ -708,6 +732,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       storedNode.nodeOperatorId = node.nodeOperatorId;
       storedNode.p2pId = node.p2pId;
       storedNode.encryptionPublicKey = node.encryptionPublicKey;
+      storedNode.csaKey = node.csaKey;
 
       emit NodeUpdated(node.p2pId, node.nodeOperatorId, node.signer);
     }
@@ -985,6 +1010,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         p2pId: s_nodes[p2pId].p2pId,
         signer: s_nodes[p2pId].signer,
         encryptionPublicKey: s_nodes[p2pId].encryptionPublicKey,
+        csaKey: s_nodes[p2pId].csaKey,
         capabilityIds: capabilityIdsString,
         configCount: s_nodes[p2pId].configCount,
         workflowDONId: s_nodes[p2pId].workflowDONId,

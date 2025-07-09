@@ -11,6 +11,7 @@ contract Constants {
   bytes32 internal constant NODE_OPERATOR_ONE_SIGNER_ADDRESS = bytes32(abi.encodePacked(address(3333)));
   bytes32 internal constant P2P_ID = hex"e42415859707d90ed4dc534ad730f187a17b0c368e1beec2e9b995587c4b0a05";
   bytes32 internal constant TEST_ENCRYPTION_PUBLIC_KEY = bytes32("test-encryption-public-key");
+  bytes32 internal constant TEST_CSA_KEY = bytes32("test-csa-key");
 
   uint32 internal constant TEST_NODE_OPERATOR_TWO_ID = 2;
   address internal constant NODE_OPERATOR_TWO_ADMIN = address(4);
@@ -18,6 +19,7 @@ contract Constants {
   bytes32 internal constant NODE_OPERATOR_TWO_SIGNER_ADDRESS = bytes32(abi.encodePacked(address(4444)));
   bytes32 internal constant P2P_ID_TWO = hex"f53415859707d90ed4dc534ad730f187a17b0c368e1beec2e9b995587c4b0a05";
   bytes32 internal constant TEST_ENCRYPTION_PUBLIC_KEY_TWO = bytes32("test-encryption-public-key-2");
+  bytes32 internal constant TEST_CSA_KEY_TWO = bytes32("test-csa-key-2");
 
   uint32 internal constant TEST_NODE_OPERATOR_THREE_ID = 3;
   address internal constant NODE_OPERATOR_THREE = address(4);
@@ -25,6 +27,7 @@ contract Constants {
   bytes32 internal constant NODE_OPERATOR_THREE_SIGNER_ADDRESS = bytes32(abi.encodePacked(address(5555)));
   bytes32 internal constant P2P_ID_THREE = hex"f53415859707d90ed4dc534ad730f187a17b0c368e1beec2e9b995587c4b0a06";
   bytes32 internal constant TEST_ENCRYPTION_PUBLIC_KEY_THREE = bytes32("test-encryption-public-key-3");
+  bytes32 internal constant TEST_CSA_KEY_THREE = bytes32("test-csa-key-3");
 
   uint8 internal constant F_VALUE = 1;
   uint32 internal constant DON_ID = 1;
