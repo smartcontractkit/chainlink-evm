@@ -19,7 +19,7 @@ type ORM interface {
 	// No advisory lock required because this is thread safe.
 	IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error
 	// TrimOldHeads deletes heads such that only blocks >= minBlockNumber remain
-	TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error)
+	TrimOldHeads(ctx context.Context, minBlockNumber int64, batchSize int64) (err error)
 	// LatestHead returns the highest seen head
 	LatestHead(ctx context.Context) (head *evmtypes.Head, err error)
 	// LatestHeads returns the latest heads with blockNumbers >= minBlockNumber
@@ -31,15 +31,17 @@ type ORM interface {
 var _ ORM = &DbORM{}
 
 type DbORM struct {
-	chainID ubig.Big
-	ds      sqlutil.DataSource
+	chainID                ubig.Big
+	ds                     sqlutil.DataSource
+	lastTrimmedBlockNumber int64
 }
 
 // NewORM creates an ORM scoped to chainID.
 func NewORM(chainID big.Int, ds sqlutil.DataSource) *DbORM {
 	return &DbORM{
-		chainID: ubig.Big(chainID),
-		ds:      ds,
+		chainID:                ubig.Big(chainID),
+		ds:                     ds,
+		lastTrimmedBlockNumber: -1,
 	}
 }
 
@@ -53,7 +55,14 @@ func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head)
 	return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert head")
 }
 
-func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
+func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64, batchSize int64) (err error) {
+	if orm.lastTrimmedBlockNumber == -1 {
+		orm.lastTrimmedBlockNumber = minBlockNumber
+		return nil
+	} else if orm.lastTrimmedBlockNumber+batchSize > minBlockNumber {
+		return nil
+	}
+	orm.lastTrimmedBlockNumber = minBlockNumber
 	query := `DELETE FROM evm.heads WHERE evm_chain_id = $1 AND number < $2`
 	_, err = orm.ds.ExecContext(ctx, query, orm.chainID, minBlockNumber)
 	return err
@@ -94,7 +103,7 @@ func (orm *nullORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Hea
 	return nil
 }
 
-func (orm *nullORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
+func (orm *nullORM) TrimOldHeads(ctx context.Context, minBlockNumber int64, batchSize int64) (err error) {
 	return nil
 }
 

@@ -44,6 +44,9 @@ func (h *trackerConfig) MaxAllowedFinalityDepth() uint32 {
 func (h *trackerConfig) PersistenceEnabled() bool {
 	return true
 }
+func (h *trackerConfig) PersistenceBatchSize() int64 {
+	return 0
+}
 
 type config struct {
 	safeBlockDepth                    uint32
