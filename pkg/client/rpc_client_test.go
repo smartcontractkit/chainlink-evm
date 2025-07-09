@@ -51,7 +51,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
 	defer cancel()
 
-	chainId := big.NewInt(123456)
+	chainID := big.NewInt(123456)
 
 	nodePoolCfgHeadPolling := client.TestNodePoolConfig{
 		NodeNewHeadsPollInterval:       1 * time.Second,
@@ -98,7 +98,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 	})
 
 	t.Run("Updates chain info on new blocks", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, serverCallBack)
+		server := testutils.NewWSServer(t, chainID, serverCallBack)
 		wsURL := server.WSURL()
 
 		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgWSSub, WS: wsURL})
@@ -147,7 +147,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		assertHighestUserObservations(highestUserObservations)
 	})
 	t.Run("App layer observations are not affected by new block if health check flag is present", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, serverCallBack)
+		server := testutils.NewWSServer(t, chainID, serverCallBack)
 		wsURL := server.WSURL()
 
 		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgWSSub, WS: wsURL})
@@ -177,7 +177,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		}
 		createRPCServer := func() *rpcServer {
 			server := &rpcServer{}
-			server.URL = testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			server.URL = testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 				assert.Equal(t, "eth_getBlockByNumber", method)
 				if assert.True(t, params.IsArray()) && assert.Equal(t, "latest", params.Array()[0].String()) {
 					head := server.Head
@@ -229,7 +229,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 	})
 	t.Run("Concurrent Unsubscribe and onNewHead calls do not lead to a deadlock", func(t *testing.T) {
 		const numberOfAttempts = 1000 // need a large number to increase the odds of reproducing the issue
-		server := testutils.NewWSServer(t, chainId, serverCallBack)
+		server := testutils.NewWSServer(t, chainID, serverCallBack)
 		wsURL := server.WSURL()
 
 		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgWSSub, WS: wsURL})
@@ -253,9 +253,9 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		}
 	})
 	t.Run("Block's chain ID matched configured", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, serverCallBack)
+		server := testutils.NewWSServer(t, chainID, serverCallBack)
 		wsURL := server.WSURL()
-		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgWSSub, WS: wsURL, ChainID: chainId})
+		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgWSSub, WS: wsURL, ChainID: chainID})
 		defer rpc.Close()
 		require.NoError(t, rpc.Dial(ctx))
 		ch, sub, err := rpc.SubscribeToHeads(tests.Context(t))
@@ -263,10 +263,10 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		defer sub.Unsubscribe()
 		go server.MustWriteBinaryMessageSync(t, makeNewHeadWSMessage(&evmtypes.Head{Number: 256}))
 		head := <-ch
-		require.Equal(t, chainId, head.ChainID())
+		require.Equal(t, chainID, head.ChainID())
 	})
 	t.Run("Failed SubscribeToHeads returns and logs proper error", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, func(reqMethod string, reqParams gjson.Result) (resp testutils.JSONRPCResponse) {
+		server := testutils.NewWSServer(t, chainID, func(reqMethod string, reqParams gjson.Result) (resp testutils.JSONRPCResponse) {
 			return resp
 		})
 		wsURL := server.WSURL()
@@ -279,7 +279,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		tests.AssertLogEventually(t, observed, "evmclient.Client#EthSubscribe RPC call failure")
 	})
 	t.Run("Closed rpc client should remove existing SubscribeToHeads subscription with WS", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, serverCallBack)
+		server := testutils.NewWSServer(t, chainID, serverCallBack)
 		wsURL := server.WSURL()
 		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgWSSub, WS: wsURL})
 		defer rpc.Close()
@@ -290,7 +290,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		checkClosedRPCClientShouldRemoveExistingSub(t, ctx, sub, rpc)
 	})
 	t.Run("Closed rpc client should remove existing SubscribeToHeads subscription with HTTP polling", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, serverCallBack)
+		server := testutils.NewWSServer(t, chainID, serverCallBack)
 		wsURL := server.WSURL()
 
 		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgHeadPolling, WS: wsURL})
@@ -302,7 +302,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		checkClosedRPCClientShouldRemoveExistingSub(t, ctx, sub, rpc)
 	})
 	t.Run("Closed rpc client should remove existing SubscribeToFinalizedHeads subscription", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, serverCallBack)
+		server := testutils.NewWSServer(t, chainID, serverCallBack)
 		wsURL := server.WSURL()
 
 		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgHeadPolling, WS: wsURL})
@@ -314,7 +314,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		checkClosedRPCClientShouldRemoveExistingSub(t, ctx, sub, rpc)
 	})
 	t.Run("Subscription error is properly wrapper", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, serverCallBack)
+		server := testutils.NewWSServer(t, chainID, serverCallBack)
 		wsURL := server.WSURL()
 		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{Cfg: nodePoolCfgWSSub, WS: wsURL})
 		defer rpc.Close()
@@ -334,7 +334,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 	t.Parallel()
 
-	chainId := big.NewInt(123456)
+	chainID := big.NewInt(123456)
 	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
 	defer cancel()
 	t.Run("Failed SubscribeFilterLogs when WSURL is empty", func(t *testing.T) {
@@ -346,7 +346,7 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 		require.Equal(t, errors.New("SubscribeFilterLogs is not allowed without ws url"), err)
 	})
 	t.Run("Failed SubscribeFilterLogs logs and returns proper error", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, func(reqMethod string, reqParams gjson.Result) (resp testutils.JSONRPCResponse) {
+		server := testutils.NewWSServer(t, chainID, func(reqMethod string, reqParams gjson.Result) (resp testutils.JSONRPCResponse) {
 			return resp
 		})
 		wsURL := server.WSURL()
@@ -359,7 +359,7 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 		tests.AssertLogEventually(t, observed, "evmclient.Client#SubscribeFilterLogs RPC call failure")
 	})
 	t.Run("Subscription error is properly wrapper", func(t *testing.T) {
-		server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+		server := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			assert.Equal(t, "eth_subscribe", method)
 			if assert.True(t, params.IsArray()) && assert.Equal(t, "logs", params.Array()[0].String()) {
 				resp.Result = `"0x00"`
@@ -417,7 +417,7 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 
 		for _, ct := range chainTypes {
 			t.Run(ct.Name, func(t *testing.T) {
-				server := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+				server := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 					if method == "eth_unsubscribe" {
 						resp.Result = "true"
 						return
@@ -544,7 +544,7 @@ func TestRPCClient_LatestFinalizedBlock(t *testing.T) {
 	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
 	defer cancel()
 
-	chainId := big.NewInt(123456)
+	chainID := big.NewInt(123456)
 
 	type rpcServer struct {
 		Head atomic.Pointer[evmtypes.Head]
@@ -552,7 +552,7 @@ func TestRPCClient_LatestFinalizedBlock(t *testing.T) {
 	}
 	createRPCServer := func() *rpcServer {
 		server := &rpcServer{}
-		server.URL = testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+		server.URL = testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			assert.Equal(t, "eth_getBlockByNumber", method)
 			if assert.True(t, params.IsArray()) && assert.Equal(t, "finalized", params.Array()[0].String()) {
 				head := server.Head.Load()
@@ -702,8 +702,8 @@ func TestRpcClientLargePayloadTimeout(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			chainId := big.NewInt(123456)
-			rpcURL := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			chainID := big.NewInt(123456)
+			rpcURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 				// block until test is done
 				<-ctx.Done()
 				return
@@ -712,7 +712,7 @@ func TestRpcClientLargePayloadTimeout(t *testing.T) {
 			// use something unreasonably large for RPC timeout to ensure that we use largePayloadRPCTimeout
 			const rpcTimeout = time.Hour
 			const largePayloadRPCTimeout = tests.TestInterval
-			rpc := client.NewTestRPCClient(t, client.RPCClientOpts{WS: rpcURL, LargePayloadRPCTimeout: ptr(largePayloadRPCTimeout), RpcTimeout: ptr(rpcTimeout)})
+			rpc := client.NewTestRPCClient(t, client.RPCClientOpts{WS: rpcURL, LargePayloadRPCTimeout: ptr(largePayloadRPCTimeout), RPCTimeout: ptr(rpcTimeout)})
 			require.NoError(t, rpc.Dial(ctx))
 			defer rpc.Close()
 			err := testCase.Fn(ctx, rpc)
@@ -781,9 +781,9 @@ func TestRPCClient_Tron(t *testing.T) {
 func TestAstarCustomFinality(t *testing.T) {
 	t.Parallel()
 
-	chainId := big.NewInt(123456)
+	chainID := big.NewInt(123456)
 	// create new server that returns 4 block for Astar custom finality and 8 block for finality tag.
-	wsURL := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+	wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 		switch method {
 		case "chain_getFinalizedHead":
 			resp.Result = `"0xf14c499253fd7bbcba142e5dd77dad8b5ad598c1dc414a66bacdd8dae14a6759"`
@@ -878,7 +878,7 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 	t.Parallel()
 
 	const stubErr = "stub error as we do not care about returned result here, but do not want server to close connection"
-	chainId := big.NewInt(1234567)
+	chainID := big.NewInt(1234567)
 	var filterQuery = ethereum.FilterQuery{
 		FromBlock: big.NewInt(10),
 		ToBlock:   big.NewInt(20),
@@ -936,18 +936,16 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 		},
 	}
 
-	newRpcClient := func(t *testing.T) *client.RPCClient {
+	newRPCClient := func(t *testing.T) *client.RPCClient {
 		var expectedMethod string
 		var expectedParams string
 		// handler captures original method and params and ensures they are identical on the second call.
-		wsURL := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
-			switch method {
-			case "eth_getBlockByNumber":
-				if params.IsArray() && params.Array()[0].String() == rpc.FinalizedBlockNumber.String() {
-					resp.Error.Message = stubErr
-					resp.Error.Code = -32000
-					return
-				}
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			if method == "eth_getBlockByNumber" && params.IsArray() &&
+				params.Array()[0].String() == rpc.FinalizedBlockNumber.String() {
+				resp.Error.Message = stubErr
+				resp.Error.Code = -32000
+				return
 			}
 
 			if expectedMethod == "" {
@@ -973,7 +971,7 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			rpcClient := newRpcClient(t)
+			rpcClient := newRPCClient(t)
 			err := tc.OriginalCall(t, rpcClient)
 			require.ErrorContains(t, err, stubErr)
 			err = tc.WithConfidenceCall(t, rpcClient)
@@ -1016,7 +1014,7 @@ func TestRPCClient_BalanceAtWithConfidence(t *testing.T) {
 				resp.Result = fmt.Sprintf(`"%s"`, hexutil.EncodeBig(expectedResult))
 			case "eth_getBlockByNumber":
 				require.True(t, params.IsArray())
-				require.Equal(t, params.Array()[0].String(), "finalized")
+				require.Equal(t, "finalized", params.Array()[0].String())
 				resp.Result = client.MakeHeadMsgForNumber(10)
 			default:
 				require.Fail(t, "unexpected method: "+method)
@@ -1043,10 +1041,10 @@ func TestRPCClient_FilterLogsWithConfidence(t *testing.T) {
 			case "eth_getLogs":
 				logsAsJSON, err := json.Marshal(expectedResult)
 				require.NoError(t, err)
-				resp.Result = fmt.Sprintf(`%s`, logsAsJSON)
+				resp.Result = string(logsAsJSON)
 			case "eth_getBlockByNumber":
 				require.True(t, params.IsArray())
-				require.Equal(t, params.Array()[0].String(), "finalized")
+				require.Equal(t, "finalized", params.Array()[0].String())
 				resp.Result = client.MakeHeadMsgForNumber(10)
 			default:
 				require.Fail(t, "unexpected method: "+method)
@@ -1073,7 +1071,7 @@ func TestRPCClient_BlockByNumberWithConfidence(t *testing.T) {
 			}
 			asJSON, err := json.Marshal(head)
 			require.NoError(t, err)
-			resp.Result = fmt.Sprintf(`%s`, asJSON)
+			resp.Result = string(asJSON)
 			return
 		}).WSURL()
 		chainID := big.NewInt(1234567)

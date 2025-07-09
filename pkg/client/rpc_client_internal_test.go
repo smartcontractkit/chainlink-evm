@@ -141,7 +141,7 @@ func MakeHeadMsgForNumber(number uint64) string {
 
 func TestRPCClient_doWithConfidence(t *testing.T) {
 	t.Parallel()
-	chainId := big.NewInt(1234567)
+	chainID := big.NewInt(1234567)
 
 	testCases := []struct {
 		Name string
@@ -220,7 +220,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			wsURL := testutils.NewWSServer(t, chainId, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 				switch method {
 				case "eth_call":
 					resp.Result = fmt.Sprintf(`"%s"`, tc.EthCallResult)
@@ -235,7 +235,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 				}
 				return
 			}).WSURL()
-			rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true})
+			rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true, ChainID: chainID})
 			var result hexutil.Bytes
 			err := rpcClient.doWithConfidence(t.Context(), rpc.BatchElem{Method: "eth_call", Result: &result}, tc.CallBlockNumber, tc.Confidence)
 			if tc.ExpectedError != "" {
@@ -380,7 +380,7 @@ type RPCClientOpts struct {
 	ChainID                *big.Int
 	Tier                   multinode.NodeTier
 	LargePayloadRPCTimeout *time.Duration
-	RpcTimeout             *time.Duration
+	RPCTimeout             *time.Duration
 	ChainType              chaintype.ChainType
 	FinalityTagsEnabled    bool
 	FinalityDepth          uint32
@@ -403,8 +403,8 @@ func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
 		}
 	}
 
-	if opts.RpcTimeout == nil {
-		opts.RpcTimeout = ptr(QueryTimeout)
+	if opts.RPCTimeout == nil {
+		opts.RPCTimeout = ptr(QueryTimeout)
 	}
 
 	if opts.LargePayloadRPCTimeout == nil {
@@ -416,7 +416,7 @@ func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
 	}
 
 	return NewRPCClient(opts.Cfg, opts.Lggr, opts.WS, opts.HTTP, opts.Name, opts.ID, opts.ChainID, opts.Tier,
-		*opts.LargePayloadRPCTimeout, *opts.RpcTimeout, opts.ChainType, opts.FinalityTagsEnabled, opts.FinalityDepth,
+		*opts.LargePayloadRPCTimeout, *opts.RPCTimeout, opts.ChainType, opts.FinalityTagsEnabled, opts.FinalityDepth,
 		opts.SafeDepth)
 }
 

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -82,7 +83,7 @@ func toFilterArg(q ethereum.FilterQuery) (interface{}, error) {
 	if q.BlockHash != nil {
 		arg["blockHash"] = *q.BlockHash
 		if q.FromBlock != nil || q.ToBlock != nil {
-			return nil, fmt.Errorf("cannot specify both BlockHash and FromBlock/ToBlock")
+			return nil, errors.New("cannot specify both BlockHash and FromBlock/ToBlock")
 		}
 	} else {
 		if q.FromBlock == nil {

@@ -1495,7 +1495,7 @@ func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem,
 		return err
 	}
 
-	lggr := r.newRqLggr().With(request.Method+"WithConfidence", "request", request, "blockNumber", blockNumber, "confidence", confidence)
+	lggr := r.newRqLggr().With("method", request.Method+"WithConfidence", "request", request, "blockNumber", blockNumber, "confidence", confidence)
 
 	lggr.Debug("Starting RPC call")
 	start := time.Now()
