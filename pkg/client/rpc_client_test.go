@@ -19,11 +19,12 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"

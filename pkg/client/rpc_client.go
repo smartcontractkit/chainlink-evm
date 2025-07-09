@@ -22,6 +22,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"

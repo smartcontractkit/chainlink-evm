@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"

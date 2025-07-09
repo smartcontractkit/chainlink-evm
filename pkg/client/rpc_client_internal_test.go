@@ -13,12 +13,13 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
-	"github.com/smartcontractkit/chainlink-framework/multinode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
+	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
