@@ -51,13 +51,14 @@ func TestORM_TrimOldHeads(t *testing.T) {
 	uncleHead := testutils.Head(5)
 	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), uncleHead))
 
-	err := orm.TrimOldHeads(tests.Context(t), 5, 2)
+	batchSize := int64(2)
+	err := orm.TrimOldHeads(tests.Context(t), 5, batchSize)
 	require.NoError(t, err)
 
-	err = orm.TrimOldHeads(tests.Context(t), 6, 2)
+	err = orm.TrimOldHeads(tests.Context(t), 6, batchSize)
 	require.NoError(t, err)
 
-	err = orm.TrimOldHeads(tests.Context(t), 7, 2)
+	err = orm.TrimOldHeads(tests.Context(t), 7, batchSize)
 	require.NoError(t, err)
 
 	heads, err := orm.LatestHeads(tests.Context(t), 0)
