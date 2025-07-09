@@ -21,11 +21,14 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
     assertEq(nextDONId, 1); // Expecting the first DON ID since no DONs have been added yet
 
     CapabilitiesRegistry.NodeParams[] memory nodeParams = new CapabilitiesRegistry.NodeParams[](1);
-    nodeParams[0].p2pId = P2P_ID_THREE;
-    nodeParams[0].capabilityIds = s_twoCapabilitiesArray;
-    nodeParams[0].nodeOperatorId = TEST_NODE_OPERATOR_THREE_ID;
-    nodeParams[0].signer = NODE_OPERATOR_THREE_SIGNER_ADDRESS;
-    nodeParams[0].encryptionPublicKey = TEST_ENCRYPTION_PUBLIC_KEY_THREE;
+    nodeParams[0] = CapabilitiesRegistry.NodeParams({
+      nodeOperatorId: TEST_NODE_OPERATOR_THREE_ID,
+      p2pId: P2P_ID_THREE,
+      signer: NODE_OPERATOR_THREE_SIGNER_ADDRESS,
+      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_THREE,
+      csaKey: TEST_CSA_KEY_THREE,
+      capabilityIds: s_twoCapabilitiesArray
+    });
     s_CapabilitiesRegistry.addNodes(nodeParams);
 
     bytes32[] memory nodes = new bytes32[](2);

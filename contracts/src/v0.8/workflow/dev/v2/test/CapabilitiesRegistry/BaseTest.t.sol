@@ -64,6 +64,7 @@ contract BaseTest is Test, Constants {
       p2pId: P2P_ID,
       signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
+      csaKey: TEST_CSA_KEY,
       capabilityIds: s_twoCapabilitiesArray
     });
 
@@ -72,6 +73,7 @@ contract BaseTest is Test, Constants {
       p2pId: P2P_ID_TWO,
       signer: NODE_OPERATOR_TWO_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_TWO,
+      csaKey: TEST_CSA_KEY_TWO,
       capabilityIds: s_twoCapabilitiesArray
     });
 
