@@ -82,6 +82,7 @@ type HeadTracker interface {
 	FinalityTagBypass() bool
 	MaxAllowedFinalityDepth() uint32
 	PersistenceEnabled() bool
+	PersistenceBatchSize() int64
 }
 
 type BalanceMonitor interface {
