@@ -576,8 +576,15 @@ func (o *DSORM) insertLogsWithinTx(ctx context.Context, logs []Log, tx sqlutil.D
 		query := `INSERT INTO evm.logs
 					(evm_chain_id, log_index, block_hash, block_number, block_timestamp, address, event_sig, topics, tx_hash, data, created_at)
 				VALUES
-					(:evm_chain_id, :log_index, :block_hash, :block_number, :block_timestamp, :address, :event_sig, :topics, :tx_hash, :data, NOW())
+					(:evm_chain_id, :log_index, :block_hash, :block_number, :block_timestamp, :address, :event_sig, :topics, :tx_hash, :data, :created_at)
 				ON CONFLICT DO NOTHING`
+
+		// explicitly set created_at to now()
+		// as now() does not work with batch inserts
+		createdAt := time.Now().UTC()
+		for _, log := range logs[start:end] {
+			log.CreatedAt = createdAt
+		}
 
 		_, err := tx.NamedExecContext(ctx, query, logs[start:end])
 		if err != nil {
