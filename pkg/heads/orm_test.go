@@ -45,19 +45,19 @@ func TestORM_IdempotentInsertHead_Batch(t *testing.T) {
 
 	// Returns nil when inserting first head
 	head := testutils.Head(0)
-	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
 
 	// But does not really insert head as batch size is 2
-	foundHead, err := orm.LatestHead(tests.Context(t))
+	foundHead, err := orm.LatestHead(t.Context())
 	require.NoError(t, err)
 	require.Nil(t, foundHead)
 
 	// Returns nil when inserting same head again
-	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
 
-	// Inserts the head as batch size is 2
-	// But maintains dup check
-	heads, err := orm.LatestHeads(tests.Context(t), 0)
+	// Inserts the head as in memorybatch size is 2
+	// But maintains dup check and ends up with only one head
+	heads, err := orm.LatestHeads(t.Context(), 0)
 	require.NoError(t, err)
 	require.Len(t, heads, 1)
 	assert.Equal(t, head.Hash, heads[0].Hash)
