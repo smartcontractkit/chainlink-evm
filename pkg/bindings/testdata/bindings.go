@@ -372,16 +372,16 @@ func (c DataStorage) ReadData(
 func (c DataStorage) WriteReportDataStorageUserData(
 	runtime sdk.Runtime,
 	input DataStorageUserData,
-	gasConfig *evmcappb.GasConfig,
-) (sdk.Promise[*evmcappb.WriteReportReply], error) {
+	gasConfig *evm.GasConfig,
+) (sdk.Promise[*evm.WriteReportReply], error) {
 	encoded, err := c.Codec.EncodeDataStorageUserDataStruct(input)
 	if err != nil {
 		return nil, err
 	}
 	report := bindings.GenerateReport(getChainID(c.evmClient), encoded)
-	return c.evmClient.WriteReport(runtime, &evmcappb.WriteReportRequest{
+	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
 		Receiver: c.Address,
-		Report: &evmcappb.SignedReport{
+		Report: &evm.SignedReport{
 			RawReport:     report.RawReport,
 			ReportContext: report.ReportContext,
 			Signatures:    report.Signatures,

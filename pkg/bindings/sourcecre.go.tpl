@@ -294,16 +294,16 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	runtime sdk.Runtime,
 	input {{.Name}},
-	gasConfig *evmcappb.GasConfig,
-) (sdk.Promise[*evmcappb.WriteReportReply], error) {
+	gasConfig *evm.GasConfig,
+) (sdk.Promise[*evm.WriteReportReply], error) {
 	encoded, err := c.Codec.Encode{{.Name}}Struct(input)
 	if err != nil {
 		return nil, err
 	}
 	report := bindings.GenerateReport(getChainID(c.evmClient), encoded)
-	return c.evmClient.WriteReport(runtime, &evmcappb.WriteReportRequest{
+	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
 		Receiver: c.Address,
-		Report: &evmcappb.SignedReport{
+		Report: &evm.SignedReport{
 			RawReport:     report.RawReport,
 			ReportContext: report.ReportContext,
 			Signatures:    report.Signatures,

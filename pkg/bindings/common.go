@@ -10,14 +10,14 @@ import (
 
 // This function is not EVM specific, it's generic and should be provided by CRE
 // TO BE REPLACED BY SDK FUNCTION
-func GenerateReport(chainID uint32, userData []byte) evmcappb.SignedReport {
-	return evmcappb.SignedReport{}
+func GenerateReport(chainID uint32, userData []byte) evm.SignedReport {
+	return evm.SignedReport{}
 }
 
 // Minimal Chain Capabilities SDK client interface.
 type EVMClient interface {
 	CallContract(sdk.Runtime, *evm.CallContractRequest) sdk.Promise[*evm.CallContractReply]
-	WriteReport(sdk.Runtime, *evmcappb.WriteReportRequest) sdk.Promise[*evmcappb.WriteReportReply]
+	WriteReport(sdk.Runtime, *evm.WriteReportRequest) sdk.Promise[*evm.WriteReportReply]
 	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest)
 	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest)
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
@@ -34,7 +34,7 @@ type ReadOptions struct {
 }
 
 type WriteOptions struct {
-	GasConfig  *evmcappb.GasConfig
+	GasConfig  *evm.GasConfig
 	BlockDepth uint16 // 0 means finalized, 1 confirmed, positive numbers block depth - TODO to be defined together with all other operations
 }
 

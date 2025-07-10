@@ -166,10 +166,10 @@ func TestWriteReportMethods(t *testing.T) {
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
 	client.EXPECT().WriteReport(mock.Anything, mock.Anything).Return(
-		sdk.NewBasicPromise(func() (*evmcappb.WriteReportReply, error) {
+		sdk.NewBasicPromise(func() (*evm.WriteReportReply, error) {
 			// Simulate a successful write report
-			return &evmcappb.WriteReportReply{
-				TxStatus: evmcappb.TxStatus_TX_SUCCESS,
+			return &evm.WriteReportReply{
+				TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
 				TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
 			}, nil
 		})).Once()
@@ -182,8 +182,8 @@ func TestWriteReportMethods(t *testing.T) {
 	response, err := reply.Await()
 	require.NoError(t, err, "Awaiting WriteReportDataStorageUserData reply should not return an error")
 	require.NotNil(t, response, "Response from WriteReportDataStorageUserData should not be nil")
-	require.Equal(t, &evmcappb.WriteReportReply{
-		TxStatus: evmcappb.TxStatus_TX_SUCCESS,
+	require.Equal(t, &evm.WriteReportReply{
+		TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
 		TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
 	}, response, "Response should match expected WriteReportReply")
 }

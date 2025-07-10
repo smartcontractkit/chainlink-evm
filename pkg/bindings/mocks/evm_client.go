@@ -287,19 +287,19 @@ func (_c *EVMClient_UnregisterLogTracking_Call) RunAndReturn(run func(sdk.Runtim
 }
 
 // WriteReport provides a mock function with given fields: _a0, _a1
-func (_m *EVMClient) WriteReport(_a0 sdk.Runtime, _a1 *chain_capabilitiesevm.WriteReportRequest) sdk.Promise[*chain_capabilitiesevm.WriteReportReply] {
+func (_m *EVMClient) WriteReport(_a0 sdk.Runtime, _a1 *evm.WriteReportRequest) sdk.Promise[*evm.WriteReportReply] {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for WriteReport")
 	}
 
-	var r0 sdk.Promise[*chain_capabilitiesevm.WriteReportReply]
-	if rf, ok := ret.Get(0).(func(sdk.Runtime, *chain_capabilitiesevm.WriteReportRequest) sdk.Promise[*chain_capabilitiesevm.WriteReportReply]); ok {
+	var r0 sdk.Promise[*evm.WriteReportReply]
+	if rf, ok := ret.Get(0).(func(sdk.Runtime, *evm.WriteReportRequest) sdk.Promise[*evm.WriteReportReply]); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Promise[*chain_capabilitiesevm.WriteReportReply])
+			r0 = ret.Get(0).(sdk.Promise[*evm.WriteReportReply])
 		}
 	}
 
@@ -313,24 +313,24 @@ type EVMClient_WriteReport_Call struct {
 
 // WriteReport is a helper method to define mock.On call
 //   - _a0 sdk.Runtime
-//   - _a1 *chain_capabilitiesevm.WriteReportRequest
+//   - _a1 *evm.WriteReportRequest
 func (_e *EVMClient_Expecter) WriteReport(_a0 interface{}, _a1 interface{}) *EVMClient_WriteReport_Call {
 	return &EVMClient_WriteReport_Call{Call: _e.mock.On("WriteReport", _a0, _a1)}
 }
 
-func (_c *EVMClient_WriteReport_Call) Run(run func(_a0 sdk.Runtime, _a1 *chain_capabilitiesevm.WriteReportRequest)) *EVMClient_WriteReport_Call {
+func (_c *EVMClient_WriteReport_Call) Run(run func(_a0 sdk.Runtime, _a1 *evm.WriteReportRequest)) *EVMClient_WriteReport_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(sdk.Runtime), args[1].(*chain_capabilitiesevm.WriteReportRequest))
+		run(args[0].(sdk.Runtime), args[1].(*evm.WriteReportRequest))
 	})
 	return _c
 }
 
-func (_c *EVMClient_WriteReport_Call) Return(_a0 sdk.Promise[*chain_capabilitiesevm.WriteReportReply]) *EVMClient_WriteReport_Call {
+func (_c *EVMClient_WriteReport_Call) Return(_a0 sdk.Promise[*evm.WriteReportReply]) *EVMClient_WriteReport_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *EVMClient_WriteReport_Call) RunAndReturn(run func(sdk.Runtime, *chain_capabilitiesevm.WriteReportRequest) sdk.Promise[*chain_capabilitiesevm.WriteReportReply]) *EVMClient_WriteReport_Call {
+func (_c *EVMClient_WriteReport_Call) RunAndReturn(run func(sdk.Runtime, *evm.WriteReportRequest) sdk.Promise[*evm.WriteReportReply]) *EVMClient_WriteReport_Call {
 	_c.Call.Return(run)
 	return _c
 }
