@@ -115,8 +115,8 @@ func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err e
 	defer orm.mu.Unlock()
 	if orm.lastTrimmedBlockNumber == -1 {
 		orm.lastTrimmedBlockNumber = minBlockNumber
-		return nil
-	} else if orm.lastTrimmedBlockNumber+orm.batchSize > minBlockNumber {
+	}
+	if orm.lastTrimmedBlockNumber+orm.batchSize > minBlockNumber {
 		// Batch not big enough to trim yet
 		return nil
 	}
