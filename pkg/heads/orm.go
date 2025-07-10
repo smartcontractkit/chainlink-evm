@@ -3,10 +3,9 @@ package heads
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"math/big"
-	"strings"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
@@ -57,35 +56,24 @@ func (orm *DbORM) batchInsertHeads(ctx context.Context, heads []*evmtypes.Head) 
 	if len(heads) == 0 {
 		return nil
 	}
-
-	var (
-		query = `
+	// explicitly set created_at to now()
+	// as now() does not work with batch inserts
+	createdAt := time.Now().UTC()
+	for _, head := range heads {
+		head.CreatedAt = createdAt
+	}
+	query := `
 			INSERT INTO evm.heads 
 				(hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
-			VALUES `
-		placeholders = make([]string, 0, len(heads))
-		args         = make([]interface{}, 0, len(heads)*7)
-	)
+			VALUES (:hash, :number, :parent_hash, :created_at, :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas)
+				ON CONFLICT DO NOTHING`
 
-	for i, head := range heads {
-		offset := i * 7
-		placeholders = append(placeholders,
-			fmt.Sprintf("($%d, $%d, $%d, now(), $%d, $%d, $%d, $%d)",
-				offset+1, offset+2, offset+3, offset+4, offset+5, offset+6, offset+7))
-		args = append(args,
-			head.Hash,
-			head.Number,
-			head.ParentHash,
-			head.Timestamp,
-			head.L1BlockNumber,
-			orm.chainID,
-			head.BaseFeePerGas,
-		)
+	_, err := orm.ds.NamedExecContext(ctx, query, heads)
+	if err != nil {
+		return err
 	}
 
-	query += strings.Join(placeholders, ",\n") + "\nON CONFLICT (evm_chain_id, hash) DO NOTHING"
-	_, err := orm.ds.ExecContext(ctx, query, args...)
-	return err
+	return nil
 }
 
 func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error {
