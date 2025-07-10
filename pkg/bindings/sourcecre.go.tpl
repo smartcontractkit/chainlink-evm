@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"

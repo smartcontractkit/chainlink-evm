@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
+	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
@@ -378,14 +379,23 @@ func (c DataStorage) WriteReportDataStorageUserData(
 	if err != nil {
 		return nil, err
 	}
-	report := bindings.GenerateReport(getChainID(c.evmClient), encoded)
+	promise := runtime.GenerateReport(&pb2.ReportRequest{
+		EncodedPayload: encoded,
+		EncoderName:    "EVM",
+		SigningAlgo:    "ECDSA",
+		HashingAlgo:    "KECCAK256",
+	})
+	report, err := promise.Await()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate report: %w", err)
+	}
 	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
 		Receiver: c.Address,
 		Report: &evm.SignedReport{
 			RawReport:     report.RawReport,
 			ReportContext: report.ReportContext,
-			Signatures:    report.Signatures,
-			Id:            report.Id,
+			Signatures:    report.Sigs,
+			Id:            report.,
 		},
 		GasConfig: gasConfig,
 	}), nil
@@ -559,6 +569,3 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 		},
 	})
 }
-
-// TODO: implement
-func getChainID(e bindings.EVMClient) uint32 { return 123 }
