@@ -277,17 +277,15 @@ func TestLogTrigger(t *testing.T) {
 	client.EXPECT().LogTrigger(mock.Anything).Run(
 		func(req *evm.FilterLogTriggerRequest) {
 			require.Equal(t, [][]byte{ds.Address}, req.Addresses)
-			require.Len(t, req.Topics, 1, "Trigger should have one topic")
+			require.Len(t, req.Topics, 2, "Trigger should have two topics")
 			require.Equal(t, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, req.Confidence)
-			for _, topic := range req.Topics {
-				require.Len(t, topic.Values, 2, "Each topic should have two values")
-				require.Equal(t, ds.Codec.AccessLoggedLogHash(), topic.Values[0], "First topic value should be AccessLogged log hash")
-				expected, err := abi.Arguments{ev.Inputs[0]}.Pack(event.Caller)
-				require.NoError(t, err, "packing caller")
-				require.Equal(t, expected, topic.Values[1], "Second topic value should be the caller address")
-			}
-		}).Return(nil).Once()
+			require.Equal(t, ds.Codec.AccessLoggedLogHash(), req.Topics[0].Values[0], "First topic value should be AccessLogged log hash")
+			require.Len(t, req.Topics[1].Values, 1, "Second topic should have one value")
+			expected, err := abi.Arguments{ev.Inputs[0]}.Pack(event.Caller)
+			require.NoError(t, err, "packing caller")
+			require.Equal(t, expected, req.Topics[1].Values[0], "Second topic value should be the caller address")
 
+		}).Return(nil).Once()
 	_, err = ds.LogTriggerAccessLoggedLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, []datastorage.AccessLogged{event})
 	require.NoError(t, err)
 }

@@ -118,7 +118,7 @@ type {{$contract.Type}}Codec interface {
 
 	{{- range $event := .Events}}
 	{{.Normalized.Name}}LogHash() []byte
-	Encode{{.Normalized.Name}}Topics(evt abi.Event, v {{.Normalized.Name}}) ([][]byte, error)
+	Encode{{.Normalized.Name}}Topics(evt abi.Event, values []{{.Normalized.Name}}) ([]*evm.TopicValues, error)
 	Decode{{.Normalized.Name}}(log *evm.Log) (*{{.Normalized.Name}}, error)
 	{{- end}}
 }
@@ -209,22 +209,32 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) {{.Normalized.Name}}LogHash()
 	return c.abi.Events["{{.Original.Name}}"].ID.Bytes()
 }
 
-func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Normalized.Name}}Topics(evt abi.Event, v {{.Normalized.Name}}) ([][]byte, error) {
-    // 1) start with the 32-byte event signature
-    topics := [][]byte{evt.ID.Bytes()}
+func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Normalized.Name}}Topics(evt abi.Event, values []{{.Normalized.Name}}) ([]*evm.TopicValues, error) {
+   	// 1) start with the 32-byte event signature
+	var topicValues []*evm.TopicValues
+	{{- range $i, $inp := .Normalized.Inputs}}
+	{{- if $inp.Indexed}}
+	topicValues = append(topicValues, &evm.TopicValues{Values: make([][]byte, len(values))})
+	{{- end}}
+	{{- end}}
+	for i, v := range values {
+    	{{- range $i, $inp := .Normalized.Inputs}}
+    	{{- if $inp.Indexed}}
+		// 2) pack each indexed input
+		packed{{$i}}, err := abi.Arguments{evt.Inputs[{{$i}}]}.Pack(v.{{capitalise $inp.Name}})
+		if err != nil {
+			return nil, fmt.Errorf("packing {{$inp.Name}}: %w", err)
+		}
+		topicValues[{{$i}}].Values[i] = packed{{$i}}
+		{{- end}}
+		{{- end}}
+	}
 
-    // 2) pack each indexed input
-    {{- range $i, $inp := .Normalized.Inputs}}
-    {{- if $inp.Indexed}}
-    packed{{$i}}, err := abi.Arguments{evt.Inputs[{{$i}}]}.Pack(v.{{capitalise $inp.Name}})
-    if err != nil {
-        return nil, fmt.Errorf("packing {{$inp.Name}}: %w", err)
+    result := []*evm.TopicValues{
+        {Values: [][]byte{evt.ID.Bytes()}},
     }
-    topics = append(topics, packed{{$i}})
-    {{- end}}
-    {{- end}}
-
-    return topics, nil
+    result = append(result, topicValues...)
+    return result, nil
 }
 
 // Decode{{.Normalized.Name}} decodes a log into a {{.Normalized.Name}} struct.
@@ -341,19 +351,14 @@ func (e *{{.Normalized.Name}}) Error() string {
 
 func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, values []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["{{.Normalized.Name}}"]
-	var topicValues []*evm.TopicValues
-	for _, v := range values {
-		encoded, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, v)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode {{.Normalized.Name}} topics: %w", err)
-		}
-		topicValues = append(topicValues, &evm.TopicValues{
-			Values: encoded,
-		})
+	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
 	}
+
 	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
-		Topics:     topicValues,
+		Topics:     topics,
 		Confidence: confidence,
 	}), nil
 }

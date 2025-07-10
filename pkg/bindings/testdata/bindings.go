@@ -123,10 +123,10 @@ type DataStorageCodec interface {
 	DecodeUpdateDataMethodOutput(data []byte) (string, error)
 	EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error)
 	AccessLoggedLogHash() []byte
-	EncodeAccessLoggedTopics(evt abi.Event, v AccessLogged) ([][]byte, error)
+	EncodeAccessLoggedTopics(evt abi.Event, values []AccessLogged) ([]*evm.TopicValues, error)
 	DecodeAccessLogged(log *evm.Log) (*AccessLogged, error)
 	DataStoredLogHash() []byte
-	EncodeDataStoredTopics(evt abi.Event, v DataStored) ([][]byte, error)
+	EncodeDataStoredTopics(evt abi.Event, values []DataStored) ([]*evm.TopicValues, error)
 	DecodeDataStored(log *evm.Log) (*DataStored, error)
 }
 
@@ -238,18 +238,24 @@ func (c *dataStorageCodecImpl) AccessLoggedLogHash() []byte {
 	return c.abi.Events["AccessLogged"].ID.Bytes()
 }
 
-func (c *dataStorageCodecImpl) EncodeAccessLoggedTopics(evt abi.Event, v AccessLogged) ([][]byte, error) {
+func (c *dataStorageCodecImpl) EncodeAccessLoggedTopics(evt abi.Event, values []AccessLogged) ([]*evm.TopicValues, error) {
 	// 1) start with the 32-byte event signature
-	topics := [][]byte{evt.ID.Bytes()}
-
-	// 2) pack each indexed input
-	packed0, err := abi.Arguments{evt.Inputs[0]}.Pack(v.Caller)
-	if err != nil {
-		return nil, fmt.Errorf("packing caller: %w", err)
+	var topicValues []*evm.TopicValues
+	topicValues = append(topicValues, &evm.TopicValues{Values: make([][]byte, len(values))})
+	for i, v := range values {
+		// 2) pack each indexed input
+		packed0, err := abi.Arguments{evt.Inputs[0]}.Pack(v.Caller)
+		if err != nil {
+			return nil, fmt.Errorf("packing caller: %w", err)
+		}
+		topicValues[0].Values[i] = packed0
 	}
-	topics = append(topics, packed0)
 
-	return topics, nil
+	result := []*evm.TopicValues{
+		{Values: [][]byte{evt.ID.Bytes()}},
+	}
+	result = append(result, topicValues...)
+	return result, nil
 }
 
 // DecodeAccessLogged decodes a log into a AccessLogged struct.
@@ -280,18 +286,24 @@ func (c *dataStorageCodecImpl) DataStoredLogHash() []byte {
 	return c.abi.Events["DataStored"].ID.Bytes()
 }
 
-func (c *dataStorageCodecImpl) EncodeDataStoredTopics(evt abi.Event, v DataStored) ([][]byte, error) {
+func (c *dataStorageCodecImpl) EncodeDataStoredTopics(evt abi.Event, values []DataStored) ([]*evm.TopicValues, error) {
 	// 1) start with the 32-byte event signature
-	topics := [][]byte{evt.ID.Bytes()}
-
-	// 2) pack each indexed input
-	packed0, err := abi.Arguments{evt.Inputs[0]}.Pack(v.Sender)
-	if err != nil {
-		return nil, fmt.Errorf("packing sender: %w", err)
+	var topicValues []*evm.TopicValues
+	topicValues = append(topicValues, &evm.TopicValues{Values: make([][]byte, len(values))})
+	for i, v := range values {
+		// 2) pack each indexed input
+		packed0, err := abi.Arguments{evt.Inputs[0]}.Pack(v.Sender)
+		if err != nil {
+			return nil, fmt.Errorf("packing sender: %w", err)
+		}
+		topicValues[0].Values[i] = packed0
 	}
-	topics = append(topics, packed0)
 
-	return topics, nil
+	result := []*evm.TopicValues{
+		{Values: [][]byte{evt.ID.Bytes()}},
+	}
+	result = append(result, topicValues...)
+	return result, nil
 }
 
 // DecodeDataStored decodes a log into a DataStored struct.
@@ -418,19 +430,14 @@ func (e *DataNotFound) Error() string {
 
 func (c *DataStorage) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, values []AccessLogged) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["AccessLogged"]
-	var topicValues []*evm.TopicValues
-	for _, v := range values {
-		encoded, err := c.Codec.EncodeAccessLoggedTopics(event, v)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode AccessLogged topics: %w", err)
-		}
-		topicValues = append(topicValues, &evm.TopicValues{
-			Values: encoded,
-		})
+	topics, err := c.Codec.EncodeAccessLoggedTopics(event, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode topics for AccessLogged: %w", err)
 	}
+
 	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
-		Topics:     topicValues,
+		Topics:     topics,
 		Confidence: confidence,
 	}), nil
 }
@@ -479,19 +486,14 @@ func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindi
 
 func (c *DataStorage) LogTriggerDataStoredLog(confidence evm.ConfidenceLevel, values []DataStored) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["DataStored"]
-	var topicValues []*evm.TopicValues
-	for _, v := range values {
-		encoded, err := c.Codec.EncodeDataStoredTopics(event, v)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode DataStored topics: %w", err)
-		}
-		topicValues = append(topicValues, &evm.TopicValues{
-			Values: encoded,
-		})
+	topics, err := c.Codec.EncodeDataStoredTopics(event, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode topics for DataStored: %w", err)
 	}
+
 	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
-		Topics:     topicValues,
+		Topics:     topics,
 		Confidence: confidence,
 	}), nil
 }
