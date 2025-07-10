@@ -53,7 +53,7 @@ func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
 	}
 }
 
-func (orm *DbORM) batchInsertHeadsLocked(ctx context.Context, heads []*evmtypes.Head) error {
+func (orm *DbORM) batchInsertHeads(ctx context.Context, heads []*evmtypes.Head) error {
 	if len(heads) == 0 {
 		return nil
 	}
@@ -63,8 +63,8 @@ func (orm *DbORM) batchInsertHeadsLocked(ctx context.Context, heads []*evmtypes.
 			INSERT INTO evm.heads 
 				(hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
 			VALUES `
-		placeholders []string
-		args         []interface{}
+		placeholders = make([]string, 0, len(heads))
+		args         = make([]interface{}, 0, len(heads)*7)
 	)
 
 	for i, head := range heads {
@@ -100,7 +100,7 @@ func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head)
 	}
 
 	// Batch insert
-	err := orm.batchInsertHeadsLocked(ctx, orm.headsBatch)
+	err := orm.batchInsertHeads(ctx, orm.headsBatch)
 	if err != nil {
 		return pkgerrors.Wrap(err, "IdempotentInsertHead failed to batch insert heads")
 	}
