@@ -36,10 +36,10 @@ var _ ORM = &DbORM{}
 type DbORM struct {
 	chainID                ubig.Big
 	ds                     sqlutil.DataSource
-	lastTrimmedBlockNumber int64
 	mu                     sync.RWMutex
-	batchSize              int64 // 0 works as no batching
-	headsBatch             []*evmtypes.Head
+	batchSize              int64            // 0 works as no batching
+	lastTrimmedBlockNumber int64            // used to trim in batches
+	headsBatch             []*evmtypes.Head // used to batch insert heads
 }
 
 // NewORM creates an ORM scoped to chainID.
@@ -60,9 +60,9 @@ func (orm *DbORM) batchInsertHeadsLocked(ctx context.Context, heads []*evmtypes.
 
 	var (
 		query = `
-INSERT INTO evm.heads 
-  (hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
-VALUES `
+			INSERT INTO evm.heads 
+				(hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
+			VALUES `
 		placeholders []string
 		args         []interface{}
 	)
@@ -84,7 +84,6 @@ VALUES `
 	}
 
 	query += strings.Join(placeholders, ",\n") + "\nON CONFLICT (evm_chain_id, hash) DO NOTHING"
-	fmt.Println(query)
 	_, err := orm.ds.ExecContext(ctx, query, args...)
 	return err
 }
