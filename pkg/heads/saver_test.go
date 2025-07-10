@@ -81,7 +81,7 @@ func configureSaver(t *testing.T, opts saverOpts) (evmheads.HeadSaver, evmheads.
 	db := testutils.NewSqlxDB(t)
 	lggr := logger.Test(t)
 	htCfg := &config{finalityDepth: uint32(1)}
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 	saver := evmheads.NewSaver(lggr, orm, htCfg, opts.headTrackerConfig)
 	return saver, orm
 }

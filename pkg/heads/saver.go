@@ -84,7 +84,7 @@ func (hs *saver) MarkFinalized(ctx context.Context, finalized *evmtypes.Head) er
 		return fmt.Errorf("failed to find %s block in the canonical chain to mark it as finalized", finalized)
 	}
 
-	return hs.orm.TrimOldHeads(ctx, minBlockToKeep, hs.htConfig.PersistenceBatchSize())
+	return hs.orm.TrimOldHeads(ctx, minBlockToKeep)
 }
 
 var NullSaver HeadSaver = &nullSaver{}

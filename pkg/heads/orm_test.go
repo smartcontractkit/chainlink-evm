@@ -17,7 +17,7 @@ func TestORM_IdempotentInsertHead(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	// Returns nil when inserting first head
 	head := testutils.Head(0)
@@ -37,31 +37,56 @@ func TestORM_IdempotentInsertHead(t *testing.T) {
 	assert.Equal(t, head.Hash, foundHead.Hash)
 }
 
+func TestORM_IdempotentInsertHead_Batch(t *testing.T) {
+	t.Parallel()
+
+	db := testutils.NewSqlxDB(t)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 2)
+
+	// Returns nil when inserting first head
+	head := testutils.Head(0)
+	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
+
+	// But does not really insert head as batch size is 2
+	foundHead, err := orm.LatestHead(tests.Context(t))
+	require.NoError(t, err)
+	require.Nil(t, foundHead)
+
+	// Returns nil when inserting same head again
+	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
+
+	// Inserts the head as batch size is 2
+	// But maintains dup check
+	heads, err := orm.LatestHeads(tests.Context(t), 0)
+	require.NoError(t, err)
+	require.Len(t, heads, 1)
+	assert.Equal(t, head.Hash, heads[0].Hash)
+}
+
 func TestORM_TrimOldHeads(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 2)
 
 	for i := 0; i < 10; i++ {
 		head := testutils.Head(i)
-		require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
+		require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
 	}
 
 	uncleHead := testutils.Head(5)
-	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), uncleHead))
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), uncleHead))
 
-	batchSize := int64(2)
-	err := orm.TrimOldHeads(tests.Context(t), 5, batchSize)
+	err := orm.TrimOldHeads(t.Context(), 5)
 	require.NoError(t, err)
 
-	err = orm.TrimOldHeads(tests.Context(t), 6, batchSize)
+	err = orm.TrimOldHeads(t.Context(), 6)
 	require.NoError(t, err)
 
-	err = orm.TrimOldHeads(tests.Context(t), 7, batchSize)
+	err = orm.TrimOldHeads(t.Context(), 7)
 	require.NoError(t, err)
 
-	heads, err := orm.LatestHeads(tests.Context(t), 0)
+	heads, err := orm.LatestHeads(t.Context(), 0)
 	require.NoError(t, err)
 
 	// uncle block was loaded too
@@ -75,7 +100,7 @@ func TestORM_HeadByHash(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	var hash common.Hash
 	for i := 0; i < 10; i++ {
@@ -96,7 +121,7 @@ func TestORM_HeadByHash_NotFound(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	hash := testutils.Head(123).Hash
 	head, err := orm.HeadByHash(tests.Context(t), hash)
@@ -109,7 +134,7 @@ func TestORM_LatestHeads_NoRows(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	heads, err := orm.LatestHeads(tests.Context(t), 100)
 

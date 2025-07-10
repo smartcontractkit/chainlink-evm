@@ -3,7 +3,10 @@ package heads
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"math/big"
+	"strings"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
@@ -19,7 +22,7 @@ type ORM interface {
 	// No advisory lock required because this is thread safe.
 	IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error
 	// TrimOldHeads deletes heads such that only blocks >= minBlockNumber remain
-	TrimOldHeads(ctx context.Context, minBlockNumber int64, batchSize int64) (err error)
+	TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error)
 	// LatestHead returns the highest seen head
 	LatestHead(ctx context.Context) (head *evmtypes.Head, err error)
 	// LatestHeads returns the latest heads with blockNumbers >= minBlockNumber
@@ -34,32 +37,88 @@ type DbORM struct {
 	chainID                ubig.Big
 	ds                     sqlutil.DataSource
 	lastTrimmedBlockNumber int64
+	mu                     sync.RWMutex
+	batchSize              int64 // 0 works as no batching
+	headsBatch             []*evmtypes.Head
 }
 
 // NewORM creates an ORM scoped to chainID.
-func NewORM(chainID big.Int, ds sqlutil.DataSource) *DbORM {
+func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
 	return &DbORM{
 		chainID:                ubig.Big(chainID),
 		ds:                     ds,
 		lastTrimmedBlockNumber: -1,
+		batchSize:              batchSize,
+		headsBatch:             make([]*evmtypes.Head, 0, batchSize),
 	}
 }
 
-func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error {
-	// listener guarantees head.EVMChainID to be equal to DbORM.chainID
-	query := `
-	INSERT INTO evm.heads (hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas) VALUES (
-	$1, $2, $3, now(), $4, $5, $6, $7)
-	ON CONFLICT (evm_chain_id, hash) DO NOTHING`
-	_, err := orm.ds.ExecContext(ctx, query, head.Hash, head.Number, head.ParentHash, head.Timestamp, head.L1BlockNumber, orm.chainID, head.BaseFeePerGas)
-	return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert head")
+func (orm *DbORM) batchInsertHeadsLocked(ctx context.Context, heads []*evmtypes.Head) error {
+	if len(heads) == 0 {
+		return nil
+	}
+
+	var (
+		query = `
+INSERT INTO evm.heads 
+  (hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
+VALUES `
+		placeholders []string
+		args         []interface{}
+	)
+
+	for i, head := range heads {
+		offset := i * 7
+		placeholders = append(placeholders,
+			fmt.Sprintf("($%d, $%d, $%d, now(), $%d, $%d, $%d, $%d)",
+				offset+1, offset+2, offset+3, offset+4, offset+5, offset+6, offset+7))
+		args = append(args,
+			head.Hash,
+			head.Number,
+			head.ParentHash,
+			head.Timestamp,
+			head.L1BlockNumber,
+			orm.chainID,
+			head.BaseFeePerGas,
+		)
+	}
+
+	query += strings.Join(placeholders, ",\n") + "\nON CONFLICT (evm_chain_id, hash) DO NOTHING"
+	fmt.Println(query)
+	_, err := orm.ds.ExecContext(ctx, query, args...)
+	return err
 }
 
-func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64, batchSize int64) (err error) {
+func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error {
+	orm.mu.Lock()
+	defer orm.mu.Unlock()
+
+	orm.headsBatch = append(orm.headsBatch, head)
+
+	if len(orm.headsBatch) < int(orm.batchSize) {
+		// Not enough to batch insert yet
+		return nil
+	}
+
+	// Batch insert
+	err := orm.batchInsertHeadsLocked(ctx, orm.headsBatch)
+	if err != nil {
+		return pkgerrors.Wrap(err, "IdempotentInsertHead failed to batch insert heads")
+	}
+
+	// Clear buffer
+	orm.headsBatch = orm.headsBatch[:0]
+	return nil
+}
+
+func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
+	orm.mu.Lock()
+	defer orm.mu.Unlock()
 	if orm.lastTrimmedBlockNumber == -1 {
 		orm.lastTrimmedBlockNumber = minBlockNumber
 		return nil
-	} else if orm.lastTrimmedBlockNumber+batchSize > minBlockNumber {
+	} else if orm.lastTrimmedBlockNumber+orm.batchSize > minBlockNumber {
+		// Batch not big enough to trim yet
 		return nil
 	}
 	orm.lastTrimmedBlockNumber = minBlockNumber
@@ -103,7 +162,7 @@ func (orm *nullORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Hea
 	return nil
 }
 
-func (orm *nullORM) TrimOldHeads(ctx context.Context, minBlockNumber int64, batchSize int64) (err error) {
+func (orm *nullORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
 	return nil
 }
 
