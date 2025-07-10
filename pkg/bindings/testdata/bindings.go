@@ -123,8 +123,10 @@ type DataStorageCodec interface {
 	DecodeUpdateDataMethodOutput(data []byte) (string, error)
 	EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error)
 	AccessLoggedLogHash() []byte
+	EncodeAccessLoggedTopics(evt abi.Event, v AccessLogged) ([][]byte, error)
 	DecodeAccessLogged(log *evm.Log) (*AccessLogged, error)
 	DataStoredLogHash() []byte
+	EncodeDataStoredTopics(evt abi.Event, v DataStored) ([][]byte, error)
 	DecodeDataStored(log *evm.Log) (*DataStored, error)
 }
 
@@ -236,6 +238,20 @@ func (c *dataStorageCodecImpl) AccessLoggedLogHash() []byte {
 	return c.abi.Events["AccessLogged"].ID.Bytes()
 }
 
+func (c *dataStorageCodecImpl) EncodeAccessLoggedTopics(evt abi.Event, v AccessLogged) ([][]byte, error) {
+	// 1) start with the 32-byte event signature
+	topics := [][]byte{evt.ID.Bytes()}
+
+	// 2) pack each indexed input
+	packed0, err := abi.Arguments{evt.Inputs[0]}.Pack(v.Caller)
+	if err != nil {
+		return nil, fmt.Errorf("packing caller: %w", err)
+	}
+	topics = append(topics, packed0)
+
+	return topics, nil
+}
+
 // DecodeAccessLogged decodes a log into a AccessLogged struct.
 func (c *dataStorageCodecImpl) DecodeAccessLogged(log *evm.Log) (*AccessLogged, error) {
 	event := new(AccessLogged)
@@ -262,6 +278,20 @@ func (c *dataStorageCodecImpl) DecodeAccessLogged(log *evm.Log) (*AccessLogged, 
 
 func (c *dataStorageCodecImpl) DataStoredLogHash() []byte {
 	return c.abi.Events["DataStored"].ID.Bytes()
+}
+
+func (c *dataStorageCodecImpl) EncodeDataStoredTopics(evt abi.Event, v DataStored) ([][]byte, error) {
+	// 1) start with the 32-byte event signature
+	topics := [][]byte{evt.ID.Bytes()}
+
+	// 2) pack each indexed input
+	packed0, err := abi.Arguments{evt.Inputs[0]}.Pack(v.Sender)
+	if err != nil {
+		return nil, fmt.Errorf("packing sender: %w", err)
+	}
+	topics = append(topics, packed0)
+
+	return topics, nil
 }
 
 // DecodeDataStored decodes a log into a DataStored struct.
@@ -390,7 +420,7 @@ func (c *DataStorage) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, 
 	event := c.ABI.Events["AccessLogged"]
 	var topicValues []*evm.TopicValues
 	for _, v := range values {
-		encoded, err := bindings.EncodeTopics(event, v)
+		encoded, err := c.Codec.EncodeAccessLoggedTopics(event, v)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode AccessLogged topics: %w", err)
 		}
@@ -451,7 +481,7 @@ func (c *DataStorage) LogTriggerDataStoredLog(confidence evm.ConfidenceLevel, va
 	event := c.ABI.Events["DataStored"]
 	var topicValues []*evm.TopicValues
 	for _, v := range values {
-		encoded, err := bindings.EncodeTopics(event, v)
+		encoded, err := c.Codec.EncodeDataStoredTopics(event, v)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode DataStored topics: %w", err)
 		}

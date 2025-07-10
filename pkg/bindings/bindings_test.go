@@ -1,7 +1,6 @@
 package bindings_test
 
 import (
-	"bytes"
 	"math/big"
 	"testing"
 
@@ -10,7 +9,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
@@ -265,27 +263,33 @@ func TestFilterLogs(t *testing.T) {
 	require.Equal(t, ds.Address, response.Logs[0].Address)
 }
 
-func TestEncodeTopics(t *testing.T) {
-	ds := newDataStorage(t)
+func TestLogTrigger(t *testing.T) {
+	client := mocks.NewEVMClient(t)
+	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
+	require.NoError(t, err, "Failed to create DataStorage instance")
+
 	ev := ds.ABI.Events["AccessLogged"]
-
-	eventInstance := datastorage.AccessLogged{
-		Caller: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
+	event := datastorage.AccessLogged{
+		Caller:  common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
+		Message: "Test access log",
 	}
 
-	topics, err := bindings.EncodeTopics(ev, eventInstance.Caller)
-	require.NoError(t, err, "Failed to encode topics")
+	client.EXPECT().LogTrigger(mock.Anything).Run(
+		func(req *evm.FilterLogTriggerRequest) {
+			require.Equal(t, [][]byte{ds.Address}, req.Addresses)
+			require.Len(t, req.Topics, 1, "Trigger should have one topic")
+			require.Equal(t, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, req.Confidence)
+			for _, topic := range req.Topics {
+				require.Len(t, topic.Values, 2, "Each topic should have two values")
+				require.Equal(t, ds.Codec.AccessLoggedLogHash(), topic.Values[0], "First topic value should be AccessLogged log hash")
+				expected, err := abi.Arguments{ev.Inputs[0]}.Pack(event.Caller)
+				require.NoError(t, err, "packing caller")
+				require.Equal(t, expected, topic.Values[1], "Second topic value should be the caller address")
+			}
+		}).Return(nil).Once()
 
-	require.Len(t, topics, 2, "wrong topic count: got %d, want %d", len(topics), 2)
-	require.True(t, bytes.Equal(topics[0], ev.ID.Bytes()), "topic[0] = %x, want %x", topics[0], ev.ID.Bytes())
-
-	packedCaller, _ := abi.Arguments{ev.Inputs[0]}.Pack(eventInstance.Caller)
-	expected := crypto.Keccak256Hash(packedCaller).Bytes()
-	require.True(t, bytes.Equal(topics[1], expected), "topic[1] = %x, want %x", topics[1], expected)
-
-	for i, tpic := range topics {
-		require.Len(t, tpic, 32, "topic[%d] len = %d, want 32", i, len(tpic))
-	}
+	_, err = ds.LogTriggerAccessLoggedLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, []datastorage.AccessLogged{event})
+	require.NoError(t, err)
 }
 
 func newDataStorage(t *testing.T) *datastorage.DataStorage {

@@ -1,12 +1,8 @@
 package bindings
 
 import (
-	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -55,29 +51,4 @@ func ValidateLogTrackingOptions(opts *LogTrackingOptions) {
 	if opts.LogsPerBlock == 0 {
 		opts.LogsPerBlock = 100
 	}
-}
-
-func EncodeTopics(evt abi.Event, values ...interface{}) ([][]byte, error) {
-	var indexed []abi.Argument
-	for _, arg := range evt.Inputs {
-		if arg.Indexed {
-			indexed = append(indexed, arg)
-		}
-	}
-	if len(values) != len(indexed) {
-		return nil, fmt.Errorf("wrong arg count: %d values vs %d indexed params",
-			len(values), len(indexed))
-	}
-	topics := make([][]byte, 0, len(values)+1)
-	topics = append(topics, evt.ID.Bytes())
-
-	for i, arg := range indexed {
-		packed, err := abi.Arguments{arg}.Pack(values[i])
-		if err != nil {
-			return nil, err
-		}
-
-		topics = append(topics, common.BytesToHash(crypto.Keccak256(packed)).Bytes())
-	}
-	return topics, nil
 }

@@ -118,6 +118,7 @@ type {{$contract.Type}}Codec interface {
 
 	{{- range $event := .Events}}
 	{{.Normalized.Name}}LogHash() []byte
+	Encode{{.Normalized.Name}}Topics(evt abi.Event, v {{.Normalized.Name}}) ([][]byte, error)
 	Decode{{.Normalized.Name}}(log *evm.Log) (*{{.Normalized.Name}}, error)
 	{{- end}}
 }
@@ -206,6 +207,24 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Name}}Struct(in {{.N
 {{range $event := $contract.Events}}
 func (c *{{decapitalise $contract.Type}}CodecImpl) {{.Normalized.Name}}LogHash() []byte {
 	return c.abi.Events["{{.Original.Name}}"].ID.Bytes()
+}
+
+func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Normalized.Name}}Topics(evt abi.Event, v {{.Normalized.Name}}) ([][]byte, error) {
+    // 1) start with the 32-byte event signature
+    topics := [][]byte{evt.ID.Bytes()}
+
+    // 2) pack each indexed input
+    {{- range $i, $inp := .Normalized.Inputs}}
+    {{- if $inp.Indexed}}
+    packed{{$i}}, err := abi.Arguments{evt.Inputs[{{$i}}]}.Pack(v.{{capitalise $inp.Name}})
+    if err != nil {
+        return nil, fmt.Errorf("packing {{$inp.Name}}: %w", err)
+    }
+    topics = append(topics, packed{{$i}})
+    {{- end}}
+    {{- end}}
+
+    return topics, nil
 }
 
 // Decode{{.Normalized.Name}} decodes a log into a {{.Normalized.Name}} struct.
@@ -324,7 +343,7 @@ func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.Co
 	event := c.ABI.Events["{{.Normalized.Name}}"]
 	var topicValues []*evm.TopicValues
 	for _, v := range values {
-		encoded, err := bindings.EncodeTopics(event, v)
+		encoded, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, v)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode {{.Normalized.Name}} topics: %w", err)
 		}
