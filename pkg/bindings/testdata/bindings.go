@@ -469,6 +469,3 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 		},
 	})
 }
-
-// TODO: implement
-func getChainID(e bindings.EVMClient) uint32 { return 123 }

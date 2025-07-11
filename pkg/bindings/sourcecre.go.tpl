@@ -364,6 +364,3 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 {{end}}
 
 {{end}}
-
-// TODO: implement
-func getChainID(e bindings.EVMClient) uint32 { return 123 }

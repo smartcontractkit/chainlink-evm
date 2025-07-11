@@ -13,6 +13,8 @@ import (
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	datastorage "github.com/smartcontractkit/chainlink-evm/pkg/bindings/testdata"
 
@@ -125,6 +127,17 @@ func TestReadMethods(t *testing.T) {
 	client := mocks.NewEVMClient(t)
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
+
+	client.EXPECT().LatestAndFinalizedHead(mock.Anything, mock.Anything).Return(
+		sdk.NewBasicPromise(func() (*evm.LatestAndFinalizedHeadReply, error) {
+			// Simulate a successful call with dummy data
+			reply := &evm.LatestAndFinalizedHeadReply{
+				Finalized: &evm.Head{
+					BlockNumber: pb.NewBigIntFromInt(big.NewInt(123)),
+				},
+			}
+			return reply, nil
+		})).Once()
 
 	client.EXPECT().CallContract(mock.Anything, mock.Anything).Return(
 		sdk.NewBasicPromise(func() (*evm.CallContractReply, error) {
