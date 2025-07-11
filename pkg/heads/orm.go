@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
@@ -56,16 +55,11 @@ func (orm *DbORM) batchInsertHeads(ctx context.Context, heads []*evmtypes.Head) 
 	if len(heads) == 0 {
 		return nil
 	}
-	// explicitly set created_at to now()
-	// as now() does not work with batch inserts
-	createdAt := time.Now().UTC()
-	for _, head := range heads {
-		head.CreatedAt = createdAt
-	}
+
 	query := `
 			INSERT INTO evm.heads 
-				(hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
-			VALUES (:hash, :number, :parent_hash, :created_at, :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas)
+				(hash, number, parent_hash, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas, created_at)
+			VALUES (:hash, :number, :parent_hash, :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas, NOW())
 				ON CONFLICT DO NOTHING`
 
 	_, err := orm.ds.NamedExecContext(ctx, query, heads)
