@@ -207,9 +207,7 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 			require.Equal(t, req.Filter.Name, "AccessLogged-"+common.Bytes2Hex(ds.Address))
 			require.Equal(t, [][]byte{ds.Address}, req.Filter.Addresses)
 			require.Equal(t, [][]byte{ds.Codec.AccessLoggedLogHash()}, req.Filter.EventSigs)
-		}).
-		Return().
-		Once()
+		}).Return(nil).Once()
 
 	client.
 		EXPECT().
@@ -217,8 +215,7 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 		Run(func(_ sdk.Runtime, req *evm.UnregisterLogTrackingRequest) {
 			require.Equal(t, req.FilterName, "AccessLogged-"+common.Bytes2Hex(ds.Address))
 		}).
-		Return().
-		Once()
+		Return(nil).Once()
 
 	ds.RegisterLogTrackingAccessLogged(mocks.NewRuntime(t), &bindings.LogTrackingOptions{})
 	ds.UnregisterLogTrackingAccessLogged(mocks.NewRuntime(t))
