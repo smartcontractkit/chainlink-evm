@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
@@ -267,27 +268,106 @@ func TestLogTrigger(t *testing.T) {
 	client := mocks.NewEVMClient(t)
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
+	t.Run("simple event", func(t *testing.T) {
+		ev := ds.ABI.Events["DataStored"]
+		events := []datastorage.DataStored{
+			{
+				Sender: common.HexToAddress("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"),
+				Key:    "testKey",
+				Value:  "testValue",
+			},
+			{
+				Sender: common.HexToAddress("0xBb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"),
+				Key:    "testKey",
+				Value:  "testValue",
+			},
+		}
 
-	ev := ds.ABI.Events["AccessLogged"]
-	event := datastorage.AccessLogged{
-		Caller:  common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
-		Message: "Test access log",
-	}
+		client.EXPECT().LogTrigger(mock.Anything).Run(
+			func(req *evm.FilterLogTriggerRequest) {
+				require.Equal(t, [][]byte{ds.Address}, req.Addresses)
+				require.Len(t, req.Topics, 2, "Trigger should have two topics")
+				require.Equal(t, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, req.Confidence)
+				require.Equal(t, ds.Codec.DataStoredLogHash(), req.Topics[0].Values[0], "First topic value should be AccessLogged log hash")
+				require.Len(t, req.Topics[1].Values, 2, "Second topic should have two values")
+				expected1, err := abi.Arguments{ev.Inputs[0]}.Pack(events[0].Sender)
+				require.NoError(t, err)
+				require.Equal(t, expected1, req.Topics[1].Values[0])
+				expected2, err := abi.Arguments{ev.Inputs[0]}.Pack(events[1].Sender)
+				require.NoError(t, err)
+				require.Equal(t, expected2, req.Topics[1].Values[1])
+			}).Return(nil).Once()
+		_, err = ds.LogTriggerDataStoredLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
+		require.NoError(t, err)
+	})
+	t.Run("dynamic event", func(t *testing.T) {
+		ev := ds.ABI.Events["DynamicEvent"]
+		events := []datastorage.DynamicEvent{
+			{
+				Key: "testKey1",
+				UserData: datastorage.DataStorageUserData{
+					Key:   "userKey1",
+					Value: "userValue1",
+				},
+				Sender:   "testSender1",
+				Metadata: common.HexToHash("metadata1"),
+				MetadataArray: [][]byte{
+					[]byte("meta1"),
+					[]byte("meta2"),
+				},
+			},
+			{
+				Key: "testKey2",
+				UserData: datastorage.DataStorageUserData{
+					Key:   "userKey2",
+					Value: "userValue2",
+				},
+				Sender:   "testSender2",
+				Metadata: common.HexToHash("metadata2"),
+				MetadataArray: [][]byte{
+					[]byte("meta3"),
+					[]byte("meta4"),
+				},
+			},
+		}
 
-	client.EXPECT().LogTrigger(mock.Anything).Run(
-		func(req *evm.FilterLogTriggerRequest) {
-			require.Equal(t, [][]byte{ds.Address}, req.Addresses)
-			require.Len(t, req.Topics, 2, "Trigger should have two topics")
-			require.Equal(t, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, req.Confidence)
-			require.Equal(t, ds.Codec.AccessLoggedLogHash(), req.Topics[0].Values[0], "First topic value should be AccessLogged log hash")
-			require.Len(t, req.Topics[1].Values, 1, "Second topic should have one value")
-			expected, err := abi.Arguments{ev.Inputs[0]}.Pack(event.Caller)
-			require.NoError(t, err, "packing caller")
-			require.Equal(t, expected, req.Topics[1].Values[0], "Second topic value should be the caller address")
+		client.EXPECT().LogTrigger(mock.Anything).Run(
+			func(req *evm.FilterLogTriggerRequest) {
+				require.Equal(t, [][]byte{ds.Address}, req.Addresses)
+				require.Len(t, req.Topics, 4, "Trigger should have four topics")
+				require.Equal(t, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, req.Confidence)
+				require.Equal(t, ds.Codec.DynamicEventLogHash(), req.Topics[0].Values[0], "First topic value should be DynamicEvent log hash")
+				require.Len(t, req.Topics[1].Values, 2, "Second topic should have two values")
+				packed1, err := abi.Arguments{ev.Inputs[1]}.Pack(events[0].UserData)
 
-		}).Return(nil).Once()
-	_, err = ds.LogTriggerAccessLoggedLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, []datastorage.AccessLogged{event})
-	require.NoError(t, err)
+				expected1 := crypto.Keccak256(packed1)
+				require.NoError(t, err)
+				require.Equal(t, expected1, req.Topics[1].Values[0])
+				packed2, err := abi.Arguments{ev.Inputs[1]}.Pack(events[1].UserData)
+
+				expected2 := crypto.Keccak256(packed2)
+				require.NoError(t, err)
+				require.Equal(t, expected2, req.Topics[1].Values[1])
+
+				expected3 := events[0].Metadata.Bytes()
+				require.Equal(t, expected3, req.Topics[2].Values[0])
+
+				expected4 := events[1].Metadata.Bytes()
+				require.Equal(t, expected4, req.Topics[2].Values[1])
+
+				packed3, err := abi.Arguments{ev.Inputs[4]}.Pack(events[0].MetadataArray)
+				expected5 := crypto.Keccak256(packed3)
+				require.NoError(t, err)
+				require.Equal(t, expected5, req.Topics[3].Values[0])
+
+				packed4, err := abi.Arguments{ev.Inputs[4]}.Pack(events[1].MetadataArray)
+				require.NoError(t, err)
+				expected6 := crypto.Keccak256(packed4)
+				require.Equal(t, expected6, req.Topics[3].Values[1])
+			}).Return(nil).Once()
+		_, err = ds.LogTriggerDynamicEventLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
+		require.NoError(t, err)
+	})
 }
 
 func newDataStorage(t *testing.T) *datastorage.DataStorage {

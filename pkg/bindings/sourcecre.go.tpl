@@ -209,33 +209,48 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) {{.Normalized.Name}}LogHash()
 	return c.abi.Events["{{.Original.Name}}"].ID.Bytes()
 }
 
-func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Normalized.Name}}Topics(evt abi.Event, values []{{.Normalized.Name}}) ([]*evm.TopicValues, error) {
-   	// 1) start with the 32-byte event signature
-	var topicValues []*evm.TopicValues
-	{{- range $i, $inp := .Normalized.Inputs}}
-	{{- if $inp.Indexed}}
-	topicValues = append(topicValues, &evm.TopicValues{Values: make([][]byte, len(values))})
-	{{- end}}
-	{{- end}}
-	for i, v := range values {
-    	{{- range $i, $inp := .Normalized.Inputs}}
-    	{{- if $inp.Indexed}}
-		// 2) pack each indexed input
-		packed{{$i}}, err := abi.Arguments{evt.Inputs[{{$i}}]}.Pack(v.{{capitalise $inp.Name}})
+func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Normalized.Name}}Topics(
+    evt abi.Event,
+    values []{{.Normalized.Name}},
+) ([]*evm.TopicValues, error) {
+    {{- range $idx, $inp := .Normalized.Inputs }}
+    {{- if $inp.Indexed }}
+    var {{ decapitalise $inp.Name }}Rule []interface{}
+    for _, v := range values {
+		fieldVal, err := bindings.PrepareTopicArg(evt.Inputs[{{$idx}}], v.{{capitalise $inp.Name}})
 		if err != nil {
-			return nil, fmt.Errorf("packing {{$inp.Name}}: %w", err)
+			return nil, err
 		}
-		topicValues[{{$i}}].Values[i] = packed{{$i}}
-		{{- end}}
-		{{- end}}
+		{{ decapitalise $inp.Name }}Rule = append({{ decapitalise $inp.Name }}Rule, fieldVal)
 	}
+    {{- end }}
+    {{- end }}
 
-    result := []*evm.TopicValues{
-        {Values: [][]byte{evt.ID.Bytes()}},
+    rawTopics, err := abi.MakeTopics(
+        {{- range $inp := .Normalized.Inputs }}
+        {{- if $inp.Indexed }}
+        {{ decapitalise $inp.Name }}Rule,
+        {{- end }}
+        {{- end }}
+    )
+    if err != nil {
+        return nil, err
     }
-    result = append(result, topicValues...)
-    return result, nil
+
+	topics := make([]*evm.TopicValues, len(rawTopics)+1)
+	topics[0] = &evm.TopicValues{
+		Values: [][]byte{evt.ID.Bytes()},
+	}
+    for i, hashList := range rawTopics {
+        bs := make([][]byte, len(hashList))
+        for j, h := range hashList {
+            bs[j] = h.Bytes()
+        }
+        topics[i+1] = &evm.TopicValues{Values: bs}
+    }
+    return topics, nil
 }
+
 
 // Decode{{.Normalized.Name}} decodes a log into a {{.Normalized.Name}} struct.
 func (c *{{decapitalise $contract.Type}}CodecImpl) Decode{{.Normalized.Name}}(log *evm.Log) (*{{.Normalized.Name}}, error) {
@@ -407,6 +422,3 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 {{end}}
 
 {{end}}
-
-// TODO: implement
-func getChainID(e bindings.EVMClient) uint32 { return 123 }

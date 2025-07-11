@@ -1,7 +1,12 @@
 package bindings
 
 import (
+	"fmt"
 	"math/big"
+	"reflect"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
@@ -51,4 +56,26 @@ func ValidateLogTrackingOptions(opts *LogTrackingOptions) {
 	if opts.LogsPerBlock == 0 {
 		opts.LogsPerBlock = 100
 	}
+}
+
+func PrepareTopicArg(arg abi.Argument, value interface{}) (interface{}, error) {
+	t := reflect.TypeOf(value)
+
+	// only pre-hash:
+	//  - dynamic slices that aren't []byte
+	//  - fixed arrays that aren't [N]byte
+	//  - structs (i.e. tuple types)
+	if (t.Kind() == reflect.Slice && t.Elem().Kind() != reflect.Uint8) ||
+		(t.Kind() == reflect.Array && t.Elem().Kind() != reflect.Uint8) ||
+		t.Kind() == reflect.Struct {
+
+		packed, err := abi.Arguments{arg}.Pack(value)
+		if err != nil {
+			return nil, fmt.Errorf("packing %q for topic: %w", arg.Name, err)
+		}
+		// hash the packed bytes:
+		return crypto.Keccak256Hash(packed), nil
+	}
+
+	return value, nil
 }
