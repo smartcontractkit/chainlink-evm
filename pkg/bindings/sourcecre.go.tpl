@@ -241,7 +241,7 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
     {{- if gt (len $call.Normalized.Inputs) 0}}
     args {{$call.Normalized.Name}}Input,
     {{- end}}
-    options *bindings.ReadOptions,
+    blockNumber *big.Int,
 ) (sdk.Promise[*evm.CallContractReply], error) {
     {{- if gt (len $call.Normalized.Inputs) 0}}
     calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall(args)
@@ -251,20 +251,14 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
     if err != nil {
         return nil, err
     }
-	var blockNumber *pb.BigInt
-    if options == nil {
-		promise := c.evmClient.LatestAndFinalizedHead(runtime, &emptypb.Empty{})
-		result, err := promise.Await()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get latest and finalized head: %w", err)
-		}
-		blockNumber = result.Finalized.BlockNumber
-	} else {
-		blockNumber = pb.NewBigIntFromInt(options.BlockNumber)
-	}
+    if blockNumber == nil {
+		return nil, fmt.Errorf("block number must be specified for read calls")
+	} 
+	bn := pb.NewBigIntFromInt(blockNumber)
+	
     return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
         Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-        BlockNumber: blockNumber,
+        BlockNumber: bn,
     }), nil
 }
   {{- end}}

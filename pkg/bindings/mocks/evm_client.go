@@ -121,55 +121,6 @@ func (_c *EVMClient_FilterLogs_Call) RunAndReturn(run func(sdk.Runtime, *evm.Fil
 	return _c
 }
 
-// LatestAndFinalizedHead provides a mock function with given fields: runtime, input
-func (_m *EVMClient) LatestAndFinalizedHead(runtime sdk.Runtime, input *emptypb.Empty) sdk.Promise[*evm.LatestAndFinalizedHeadReply] {
-	ret := _m.Called(runtime, input)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LatestAndFinalizedHead")
-	}
-
-	var r0 sdk.Promise[*evm.LatestAndFinalizedHeadReply]
-	if rf, ok := ret.Get(0).(func(sdk.Runtime, *emptypb.Empty) sdk.Promise[*evm.LatestAndFinalizedHeadReply]); ok {
-		r0 = rf(runtime, input)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Promise[*evm.LatestAndFinalizedHeadReply])
-		}
-	}
-
-	return r0
-}
-
-// EVMClient_LatestAndFinalizedHead_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LatestAndFinalizedHead'
-type EVMClient_LatestAndFinalizedHead_Call struct {
-	*mock.Call
-}
-
-// LatestAndFinalizedHead is a helper method to define mock.On call
-//   - runtime sdk.Runtime
-//   - input *emptypb.Empty
-func (_e *EVMClient_Expecter) LatestAndFinalizedHead(runtime interface{}, input interface{}) *EVMClient_LatestAndFinalizedHead_Call {
-	return &EVMClient_LatestAndFinalizedHead_Call{Call: _e.mock.On("LatestAndFinalizedHead", runtime, input)}
-}
-
-func (_c *EVMClient_LatestAndFinalizedHead_Call) Run(run func(runtime sdk.Runtime, input *emptypb.Empty)) *EVMClient_LatestAndFinalizedHead_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(sdk.Runtime), args[1].(*emptypb.Empty))
-	})
-	return _c
-}
-
-func (_c *EVMClient_LatestAndFinalizedHead_Call) Return(_a0 sdk.Promise[*evm.LatestAndFinalizedHeadReply]) *EVMClient_LatestAndFinalizedHead_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *EVMClient_LatestAndFinalizedHead_Call) RunAndReturn(run func(sdk.Runtime, *emptypb.Empty) sdk.Promise[*evm.LatestAndFinalizedHeadReply]) *EVMClient_LatestAndFinalizedHead_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RegisterLogTracking provides a mock function with given fields: _a0, _a1
 func (_m *EVMClient) RegisterLogTracking(_a0 sdk.Runtime, _a1 *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty] {
 	ret := _m.Called(_a0, _a1)
