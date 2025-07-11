@@ -1609,7 +1609,7 @@ func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem,
 	}
 
 	if referencedHead == nil {
-		return fmt.Errorf("referenced block request returned nil. RPC is unhealthy or chain does not support specified tag")
+		return errors.New("referenced block request returned nil. RPC is unhealthy or chain does not support specified tag")
 	}
 
 	maxAvailableHeight, err := r.referenceHeadToMaxAvailableHeight(confidence, referencedHead.Number)
