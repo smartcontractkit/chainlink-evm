@@ -19,6 +19,8 @@ contract DataStorage {
     // New event emitted by a different method
     event AccessLogged(address indexed caller, string message);
 
+    event NoFields();
+
     // Custom error for when a key is not found
     error DataNotFound(address requester, string key, string reason);
 

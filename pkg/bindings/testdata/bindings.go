@@ -44,7 +44,7 @@ var (
 )
 
 var DataStorageMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"AccessLogged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"DataStored\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"indexed\":true,\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"indexed\":true,\"internalType\":\"bytes[]\",\"name\":\"metadataArray\",\"type\":\"bytes[]\"}],\"name\":\"DynamicEvent\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getValue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"logAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"name\":\"onReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"}],\"name\":\"readData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"storeData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"}],\"name\":\"storeUserData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"newValue\",\"type\":\"string\"}],\"name\":\"updateData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"oldValue\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"AccessLogged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"DataStored\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"indexed\":true,\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"indexed\":true,\"internalType\":\"bytes[]\",\"name\":\"metadataArray\",\"type\":\"bytes[]\"}],\"name\":\"DynamicEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"NoFields\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getValue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"logAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"name\":\"onReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"}],\"name\":\"readData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"storeData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"}],\"name\":\"storeUserData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"newValue\",\"type\":\"string\"}],\"name\":\"updateData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"oldValue\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // Structs
@@ -109,6 +109,9 @@ type DynamicEvent struct {
 	MetadataArray [][]byte
 }
 
+type NoFields struct {
+}
+
 // Main Binding Type for DataStorage
 type DataStorage struct {
 	Address   []byte
@@ -139,6 +142,9 @@ type DataStorageCodec interface {
 	DynamicEventLogHash() []byte
 	EncodeDynamicEventTopics(evt abi.Event, values []DynamicEvent) ([]*evm.TopicValues, error)
 	DecodeDynamicEvent(log *evm.Log) (*DynamicEvent, error)
+	NoFieldsLogHash() []byte
+	EncodeNoFieldsTopics(evt abi.Event, values []NoFields) ([]*evm.TopicValues, error)
+	DecodeNoFields(log *evm.Log) (*NoFields, error)
 }
 
 func NewDataStorage(
@@ -449,6 +455,58 @@ func (c *dataStorageCodecImpl) DecodeDynamicEvent(log *evm.Log) (*DynamicEvent, 
 	return event, nil
 }
 
+func (c *dataStorageCodecImpl) NoFieldsLogHash() []byte {
+	return c.abi.Events["NoFields"].ID.Bytes()
+}
+
+func (c *dataStorageCodecImpl) EncodeNoFieldsTopics(
+	evt abi.Event,
+	values []NoFields,
+) ([]*evm.TopicValues, error) {
+
+	rawTopics, err := abi.MakeTopics()
+	if err != nil {
+		return nil, err
+	}
+
+	topics := make([]*evm.TopicValues, len(rawTopics)+1)
+	topics[0] = &evm.TopicValues{
+		Values: [][]byte{evt.ID.Bytes()},
+	}
+	for i, hashList := range rawTopics {
+		bs := make([][]byte, len(hashList))
+		for j, h := range hashList {
+			bs[j] = h.Bytes()
+		}
+		topics[i+1] = &evm.TopicValues{Values: bs}
+	}
+	return topics, nil
+}
+
+// DecodeNoFields decodes a log into a NoFields struct.
+func (c *dataStorageCodecImpl) DecodeNoFields(log *evm.Log) (*NoFields, error) {
+	event := new(NoFields)
+	if err := c.abi.UnpackIntoInterface(event, "NoFields", log.Data); err != nil {
+		return nil, err
+	}
+	var indexed abi.Arguments
+	for _, arg := range c.abi.Events["NoFields"].Inputs {
+		if arg.Indexed {
+			indexed = append(indexed, arg)
+		}
+	}
+	// Convert [][]byte → []common.Hash
+	topics := make([]common.Hash, len(log.Topics))
+	for i, t := range log.Topics {
+		topics[i] = common.BytesToHash(t)
+	}
+
+	if err := abi.ParseTopics(event, indexed, topics[1:]); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 func (c DataStorage) GetValue(
 	runtime sdk.Runtime,
 	options *bindings.ReadOptions,
@@ -707,6 +765,62 @@ func (c *DataStorage) FilterLogsDynamicEvent(runtime sdk.Runtime, options *bindi
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{
 				{Topic: [][]byte{c.Codec.DynamicEventLogHash()}},
+			},
+			BlockHash: options.BlockHash,
+			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
+			ToBlock:   pb.NewBigIntFromInt(options.ToBlock),
+		},
+	})
+}
+
+func (c *DataStorage) LogTriggerNoFieldsLog(confidence evm.ConfidenceLevel, values []NoFields) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+	event := c.ABI.Events["NoFields"]
+	topics, err := c.Codec.EncodeNoFieldsTopics(event, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode topics for NoFields: %w", err)
+	}
+
+	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+		Addresses:  [][]byte{c.Address},
+		Topics:     topics,
+		Confidence: confidence,
+	}), nil
+}
+
+func (c *DataStorage) RegisterLogTrackingNoFields(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
+	bindings.ValidateLogTrackingOptions(options)
+	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
+		Filter: &evm.LPFilter{
+			Name:          "NoFields-" + common.Bytes2Hex(c.Address),
+			Addresses:     [][]byte{c.Address},
+			EventSigs:     [][]byte{c.Codec.NoFieldsLogHash()},
+			MaxLogsKept:   options.MaxLogsKept,
+			RetentionTime: options.RetentionTime,
+			LogsPerBlock:  options.LogsPerBlock,
+			Topic2:        options.Topic2,
+			Topic3:        options.Topic3,
+			Topic4:        options.Topic4,
+		},
+	})
+}
+
+func (c *DataStorage) UnregisterLogTrackingNoFields(runtime sdk.Runtime) {
+	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
+		FilterName: "NoFields-" + common.Bytes2Hex(c.Address),
+	})
+}
+
+func (c *DataStorage) FilterLogsNoFields(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
+	if options == nil {
+		options = &bindings.FilterOptions{
+			ToBlock: options.ToBlock,
+		}
+	}
+	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+		FilterQuery: &evm.FilterQuery{
+			Addresses: [][]byte{c.Address},
+			Topics: []*evm.Topics{
+				{Topic: [][]byte{c.Codec.NoFieldsLogHash()}},
 			},
 			BlockHash: options.BlockHash,
 			FromBlock: pb.NewBigIntFromInt(options.FromBlock),
