@@ -301,14 +301,27 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	if err != nil {
 		return nil, err
 	}
-	report := bindings.GenerateReport(getChainID(c.evmClient), encoded)
+	promise := runtime.GenerateReport(&pb2.ReportRequest{
+		EncodedPayload: encoded,
+		EncoderName:    "EVM",
+		SigningAlgo:    "ECDSA",
+		HashingAlgo:    "KECCAK256",
+	})
+	report, err := promise.Await()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate report: %w", err)
+	}
+	id, err := bindings.ExtractID(report.RawReport)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract ID from report: %w", err)
+	}
 	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
 		Receiver: c.Address,
 		Report: &evm.SignedReport{
 			RawReport:     report.RawReport,
 			ReportContext: report.ReportContext,
-			Signatures:    report.Signatures,
-			Id:            report.Id,
+			Signatures:    bindings.ExtractSigs(report.Sigs),
+			Id:            id,
 		},
 		GasConfig: gasConfig,
 	}), nil

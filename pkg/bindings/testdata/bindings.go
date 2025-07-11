@@ -389,13 +389,17 @@ func (c DataStorage) WriteReportDataStorageUserData(
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate report: %w", err)
 	}
+	id, err := bindings.ExtractID(report.RawReport)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract ID from report: %w", err)
+	}
 	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
 		Receiver: c.Address,
 		Report: &evm.SignedReport{
 			RawReport:     report.RawReport,
 			ReportContext: report.ReportContext,
-			Signatures:    report.Sigs,
-			Id:            report.,
+			Signatures:    bindings.ExtractSigs(report.Sigs),
+			Id:            id,
 		},
 		GasConfig: gasConfig,
 	}), nil
@@ -569,3 +573,6 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 		},
 	})
 }
+
+// TODO: implement
+func getChainID(e bindings.EVMClient) uint32 { return 123 }

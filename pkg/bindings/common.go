@@ -3,9 +3,13 @@ package bindings
 import (
 	"math/big"
 
+	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
+
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 )
 
 // This function is not EVM specific, it's generic and should be provided by CRE
@@ -63,4 +67,20 @@ func ValidateLogTrackingOptions(opts *LogTrackingOptions) {
 	if opts.LogsPerBlock == 0 {
 		opts.LogsPerBlock = 100
 	}
+}
+
+func ExtractID(report []byte) ([]byte, error) {
+	metadata, _, err := ocr3types.Decode(report)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(metadata.ReportID), nil
+}
+
+func ExtractSigs(attrSigs []*pb2.AttributedSignature) [][]byte {
+	sigs := make([][]byte, len(attrSigs))
+	for i, sig := range attrSigs {
+		sigs[i] = sig.Signature
+	}
+	return sigs
 }

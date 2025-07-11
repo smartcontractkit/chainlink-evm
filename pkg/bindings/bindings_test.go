@@ -13,7 +13,8 @@ import (
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
+	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
+	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings/mocks"
@@ -127,17 +128,6 @@ func TestReadMethods(t *testing.T) {
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
-	client.EXPECT().LatestAndFinalizedHead(mock.Anything, mock.Anything).Return(
-		sdk.NewBasicPromise(func() (*evm.LatestAndFinalizedHeadReply, error) {
-			// Simulate a successful call with dummy data
-			reply := &evm.LatestAndFinalizedHeadReply{
-				Finalized: &evm.Head{
-					BlockNumber: pb.NewBigIntFromInt(big.NewInt(123)),
-				},
-			}
-			return reply, nil
-		})).Once()
-
 	client.EXPECT().CallContract(mock.Anything, mock.Anything).Return(
 		sdk.NewBasicPromise(func() (*evm.CallContractReply, error) {
 			// Simulate a successful call with dummy data
@@ -165,16 +155,44 @@ func TestWriteReportMethods(t *testing.T) {
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
-	client.EXPECT().WriteReport(mock.Anything, mock.Anything).Return(
-		sdk.NewBasicPromise(func() (*evm.WriteReportReply, error) {
-			// Simulate a successful write report
-			return &evm.WriteReportReply{
-				TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
-				TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
+	runtime := mocks.NewRuntime(t)
+
+	report := ocr3types.Metadata{
+		Version:          1,
+		ExecutionID:      "1234567890123456789012345678901234567890123456789012345678901234",
+		Timestamp:        1620000000,
+		DONID:            1,
+		DONConfigVersion: 1,
+		WorkflowID:       "1234567890123456789012345678901234567890123456789012345678901234",
+		WorkflowName:     "12",
+		WorkflowOwner:    "1234567890123456789012345678901234567890",
+		ReportID:         "1234",
+	}
+
+	rawReport, err := report.Encode()
+	require.NoError(t, err)
+
+	runtime.EXPECT().GenerateReport(mock.Anything).Return(
+		sdk.NewBasicPromise(func() (*pb.ReportResponse, error) {
+			return &pb.ReportResponse{
+				RawReport: rawReport,
 			}, nil
 		})).Once()
 
-	reply, err := ds.WriteReportDataStorageUserData(nil, datastorage.DataStorageUserData{
+	client.EXPECT().WriteReport(mock.Anything, mock.Anything).
+		Run(func(_ sdk.Runtime, req *evm.WriteReportRequest) {
+			require.Equal(t, []byte("1234"), req.Report.Id)
+		}).
+		Return(
+			sdk.NewBasicPromise(func() (*evm.WriteReportReply, error) {
+				// Simulate a successful write report
+				return &evm.WriteReportReply{
+					TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
+					TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
+				}, nil
+			})).Once()
+
+	reply, err := ds.WriteReportDataStorageUserData(runtime, datastorage.DataStorageUserData{
 		Key:   "testKey",
 		Value: "testValue",
 	}, nil)
