@@ -153,7 +153,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 		EthCallResult       string
 		EthCallError        string
 		ExpectedTag         string
-		BlockByNumberResult uint64
+		BlockByNumberResult string
 		BlockByNumberError  string
 		// expectations
 		ExpectedError  string
@@ -177,7 +177,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 			EthCallResult:       "0x00",
 			EthCallError:        "call_contract failed",
 			ExpectedTag:         "finalized",
-			BlockByNumberResult: 4,
+			BlockByNumberResult: MakeHeadMsgForNumber(4),
 			ExpectedError:       "RPCClient returned error (rpc): caller request failed: call_contract failed",
 		},
 		{
@@ -186,7 +186,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 			CallBlockNumber:     big.NewInt(5),
 			EthCallResult:       "0x00",
 			ExpectedTag:         "finalized",
-			BlockByNumberResult: 4,
+			BlockByNumberResult: MakeHeadMsgForNumber(4),
 			BlockByNumberError:  "failed to get finalized block number",
 			ExpectedError:       "RPCClient returned error (rpc): referenced block request failed: failed to get finalized block number",
 		},
@@ -196,7 +196,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 			CallBlockNumber:     big.NewInt(5),
 			EthCallResult:       "0x00",
 			ExpectedTag:         "finalized",
-			BlockByNumberResult: 4,
+			BlockByNumberResult: MakeHeadMsgForNumber(4),
 			ExpectedError:       "data was requested at block 5 while max available height with confidence level finalized is 4",
 		},
 		{
@@ -205,8 +205,17 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 			CallBlockNumber:     big.NewInt(9),
 			EthCallResult:       "0x00",
 			ExpectedTag:         "safe",
-			BlockByNumberResult: 8,
+			BlockByNumberResult: MakeHeadMsgForNumber(8),
 			ExpectedError:       "data was requested at block 9 while max available height with confidence level safe is 8",
+		},
+		{
+			Name:                "Returns error if requested tag is not supported",
+			Confidence:          primitives.Safe,
+			CallBlockNumber:     big.NewInt(9),
+			EthCallResult:       "0x00",
+			ExpectedTag:         "safe",
+			BlockByNumberResult: "null",
+			ExpectedError:       "referenced block request returned nil. RPC is unhealthy or chain does not support specified tag",
 		},
 		{
 			Name:                "Happy path",
@@ -214,7 +223,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 			CallBlockNumber:     big.NewInt(8),
 			EthCallResult:       "0x" + hex.EncodeToString([]byte("happy path result")),
 			ExpectedTag:         "safe",
-			BlockByNumberResult: 8,
+			BlockByNumberResult: MakeHeadMsgForNumber(8),
 			ExpectedResult:      "happy path result",
 		},
 	}
@@ -229,7 +238,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 				case "eth_getBlockByNumber":
 					require.True(t, params.IsArray())
 					require.Equal(t, params.Array()[0].String(), tc.ExpectedTag)
-					resp.Result = MakeHeadMsgForNumber(tc.BlockByNumberResult)
+					resp.Result = tc.BlockByNumberResult
 					resp.Error.Message = tc.BlockByNumberError
 				default:
 					require.Fail(t, "unexpected method: "+method)

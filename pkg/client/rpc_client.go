@@ -1588,12 +1588,12 @@ func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem,
 		)
 	}()
 
-	referencedHead := new(evmtypes.Head)
+	var referencedHead *evmtypes.Head
 	// BatchElems are copied, so request and blockRequest values wont change, but requests[0] and requests[1] will
 	requests := []rpc.BatchElem{request, {
 		Method: "eth_getBlockByNumber",
 		Args:   []interface{}{ToBackwardCompatibleBlockNumArg(big.NewInt(referencedBlockNumber.Int64())), false},
-		Result: referencedHead,
+		Result: &referencedHead,
 	}}
 	err = r.BatchCallContext(ctx, requests)
 	if err != nil {
@@ -1606,6 +1606,10 @@ func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem,
 
 	if requests[1].Error != nil {
 		return r.wrapRPCClientError(fmt.Errorf("referenced block request failed: %w", requests[1].Error))
+	}
+
+	if referencedHead == nil {
+		return fmt.Errorf("referenced block request returned nil. RPC is unhealthy or chain does not support specified tag")
 	}
 
 	maxAvailableHeight, err := r.referenceHeadToMaxAvailableHeight(confidence, referencedHead.Number)
