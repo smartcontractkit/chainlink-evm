@@ -64,8 +64,8 @@ func (orm *DbORM) batchInsertHeads(ctx context.Context, heads []*evmtypes.Head) 
 	}
 	query := `
 			INSERT INTO evm.heads 
-				(hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
-			VALUES (:hash, :number, :parent_hash, :created_at, :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas)
+				(hash, number, parent_hash, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas, created_at)
+			VALUES (:hash, :number, :parent_hash, :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas, NOW())
 				ON CONFLICT DO NOTHING`
 
 	_, err := orm.ds.NamedExecContext(ctx, query, heads)
