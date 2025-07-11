@@ -300,6 +300,12 @@ func (c *{{$contract.Type}}) Decode{{.Normalized.Name}}Error(data []byte) (*{{.N
 	}, nil
 }
 
+// Error implements the error interface for {{.Normalized.Name}}.
+func (e *{{.Normalized.Name}}) Error() string {
+	return fmt.Sprintf("{{.Normalized.Name}} error:{{range .Normalized.Inputs}} {{.Name}}=%v;{{end}}"{{range .Normalized.Inputs}}, e.{{capitalise .Name}}{{end}})
+}
+
+{{end}}
 
 func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 	switch common.Bytes2Hex(data[:4]) {
@@ -309,14 +315,6 @@ func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 		return nil, errors.New("unknown error selector")
 	}
 }
-
-// Error implements the error interface for {{.Normalized.Name}}.
-func (e *{{.Normalized.Name}}) Error() string {
-	return fmt.Sprintf("{{.Normalized.Name}} error:{{range .Normalized.Inputs}} {{.Name}}=%v;{{end}}"{{range .Normalized.Inputs}}, e.{{capitalise .Name}}{{end}})
-}
-
-{{end}}
-
 
 {{range $event := $contract.Events}}
 

@@ -13,7 +13,9 @@ contract DataStorage {
 
     // Custom error for when a key is not found
     error DataNotFound(address requester, string key, string reason);
-
+    // duplicate error for testing
+    error DataNotFound2(address requester, string key, string reason);
+    
     // Struct definition
     struct UserData {
         string key;
