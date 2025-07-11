@@ -1592,7 +1592,7 @@ func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem,
 	// BatchElems are copied, so request and blockRequest values wont change, but requests[0] and requests[1] will
 	requests := []rpc.BatchElem{request, {
 		Method: "eth_getBlockByNumber",
-		Args:   []interface{}{ToBackwardCompatibleBlockNumArg(big.NewInt(referencedBlockNumber.Int64()))},
+		Args:   []interface{}{ToBackwardCompatibleBlockNumArg(big.NewInt(referencedBlockNumber.Int64())), false},
 		Result: referencedHead,
 	}}
 	err = r.BatchCallContext(ctx, requests)
