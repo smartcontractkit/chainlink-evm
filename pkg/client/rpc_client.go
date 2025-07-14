@@ -683,8 +683,8 @@ func isUnconfirmed(confidence primitives.ConfidenceLevel) bool {
 //
 // confidence - determines if additional verification is required (only applicable for positive blockNumber values):
 //   - "Unconfirmed" or empty string: no additional verification
-//   - "Finalized": returns error if the block at specified height is not finalized
-//   - "Safe": returns error if the block at specified height is not safe
+//   - "Finalized": returns error if requested is not finalized
+//   - "Safe": returns error if requested block is not safe
 func (r *RPCClient) HeaderByNumberWithOpts(ctx context.Context, blockNumber *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
 	if isUnconfirmed(opts.ConfidenceLevel) || blockNumber == nil || blockNumber.Sign() < 0 {
 		result, err := r.BlockByNumber(ctx, blockNumber)
@@ -1039,8 +1039,8 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 //
 // opts.confidence - determines if additional verification is required (only applicable for positive blockNumber values):
 //   - "Unconfirmed" or empty string: no additional verification
-//   - "Finalized": returns error if the block at specified height is not finalized
-//   - "Safe": returns error if the block at specified height is not safe
+//   - "Finalized": returns error if call is executed at block that is not safe
+//   - "Safe": returns error if call is executed at block that is not safe
 func (r *RPCClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, opts evmtypes.CallContractOpts) ([]byte, error) {
 	if isUnconfirmed(opts.ConfidenceLevel) || blockNumber == nil || blockNumber.Sign() < 0 {
 		return r.CallContract(ctx, msg, blockNumber)
@@ -1149,8 +1149,8 @@ func (r *RPCClient) BalanceAt(ctx context.Context, account common.Address, block
 //
 // opts.confidence - determines if additional verification is required (only applicable for positive blockNumber values):
 //   - "Unconfirmed" or empty string: no additional verification
-//   - "Finalized": returns error if the block at specified height is not finalized
-//   - "Safe": returns error if the block at specified height is not safe
+//   - "Finalized": returns error if specified blockNumber is not finalized
+//   - "Safe": returns error if specified blockNumber is not safe
 func (r *RPCClient) BalanceAtWithOpts(ctx context.Context, account common.Address, blockNumber *big.Int, opts evmtypes.BalanceAtOpts) (*big.Int, error) {
 	if isUnconfirmed(opts.ConfidenceLevel) || blockNumber == nil || blockNumber.Sign() < 0 {
 		return r.BalanceAt(ctx, account, blockNumber)
@@ -1263,8 +1263,8 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 //
 // opts.ConfidenceLevel - determines if additional verification is required (only applicable if both q.FromBlock and q.ToBlock are positive values):
 //   - "Unconfirmed" or empty string: no additional verification
-//   - "Finalized": returns error if the block at specified height is not finalized
-//   - "Safe": returns error if the block at specified height is not safe
+//   - "Finalized": returns error if specified q.ToBlockNumber is not finalized
+//   - "Safe": returns error if specified q.ToBlockNumber is not safe
 func (r *RPCClient) FilterLogsWithOpts(ctx context.Context, q ethereum.FilterQuery, opts evmtypes.FilterLogsOpts) ([]types.Log, error) {
 	if isUnconfirmed(opts.ConfidenceLevel) || q.FromBlock == nil || q.FromBlock.Sign() < 0 || q.ToBlock == nil || q.ToBlock.Sign() < 0 {
 		return r.FilterEvents(ctx, q)
