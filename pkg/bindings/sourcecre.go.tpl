@@ -356,9 +356,9 @@ func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 
 {{range $event := $contract.Events}}
 
-func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, values []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, filters []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["{{.Normalized.Name}}"]
-	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, values)
+	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
 	}
