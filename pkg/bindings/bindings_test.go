@@ -193,6 +193,8 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 			require.Equal(t, req.Filter.Name, "AccessLogged-"+common.Bytes2Hex(ds.Address))
 			require.Equal(t, [][]byte{ds.Address}, req.Filter.Addresses)
 			require.Equal(t, [][]byte{ds.Codec.AccessLoggedLogHash()}, req.Filter.EventSigs)
+			require.Len(t, req.Filter.Topic2, 1)
+			require.Equal(t, req.Filter.Topic2[0], common.HexToHash("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2").Bytes())
 		}).Return(nil).Once()
 
 	client.
@@ -203,7 +205,14 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 		}).
 		Return(nil).Once()
 
-	ds.RegisterLogTrackingAccessLogged(mocks.NewRuntime(t), &bindings.LogTrackingOptions{})
+	err = ds.RegisterLogTrackingAccessLogged(mocks.NewRuntime(t), &bindings.LogTrackingOptions[datastorage.AccessLogged]{
+		Filters: []datastorage.AccessLogged{
+			{
+				Caller: common.HexToAddress("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"),
+			},
+		},
+	})
+	require.NoError(t, err)
 	ds.UnregisterLogTrackingAccessLogged(mocks.NewRuntime(t))
 }
 

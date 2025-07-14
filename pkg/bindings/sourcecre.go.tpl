@@ -38,7 +38,7 @@ var (
 	_ = abi.ConvertType
 	_ = emptypb.Empty{}
 	_ = pb.NewBigIntFromInt
-	_ = bindings.ValidateLogTrackingOptions
+	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
 	_ = sdk.ConsensusResponseMapKeyPayload
 )
@@ -370,21 +370,27 @@ func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.Co
 	}), nil
 }
 
-func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
-	bindings.ValidateLogTrackingOptions(options)
+func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions[{{.Normalized.Name}}]) error {
+	bindings.ValidateLogTrackingOptions[{{.Normalized.Name}}](options)
+	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(c.ABI.Events["{{.Normalized.Name}}"], options.Filters)
+	if err != nil {
+		return fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
+	}
+	padded := bindings.PadTopics(topics)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
-			Name:      "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
-			Addresses: [][]byte{c.Address},
-			EventSigs: [][]byte{c.Codec.{{.Normalized.Name}}LogHash()},
-			MaxLogsKept: options.MaxLogsKept,
+			Name:          "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
+			Addresses:     [][]byte{c.Address},
+			EventSigs:     [][]byte{c.Codec.{{.Normalized.Name}}LogHash()},
+			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
-			LogsPerBlock: options.LogsPerBlock,
-			Topic2: options.Topic2,
-			Topic3: options.Topic3,
-			Topic4: options.Topic4,
+			LogsPerBlock:  options.LogsPerBlock,
+			Topic2:        padded[1].Values,
+			Topic3:        padded[2].Values,
+			Topic4:        padded[3].Values,
 		},
 	})
+	return nil
 }
 
 func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime) {

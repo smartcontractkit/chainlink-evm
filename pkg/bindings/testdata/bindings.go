@@ -38,7 +38,7 @@ var (
 	_ = abi.ConvertType
 	_ = emptypb.Empty{}
 	_ = pb.NewBigIntFromInt
-	_ = bindings.ValidateLogTrackingOptions
+	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
 	_ = sdk.ConsensusResponseMapKeyPayload
 )
@@ -653,8 +653,13 @@ func (c *DataStorage) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, 
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
-	bindings.ValidateLogTrackingOptions(options)
+func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, options *bindings.LogTrackingOptions[AccessLogged]) error {
+	bindings.ValidateLogTrackingOptions[AccessLogged](options)
+	topics, err := c.Codec.EncodeAccessLoggedTopics(c.ABI.Events["AccessLogged"], options.Filters)
+	if err != nil {
+		return fmt.Errorf("failed to encode topics for AccessLogged: %w", err)
+	}
+	padded := bindings.PadTopics(topics)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "AccessLogged-" + common.Bytes2Hex(c.Address),
@@ -663,11 +668,12 @@ func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, optio
 			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
 			LogsPerBlock:  options.LogsPerBlock,
-			Topic2:        options.Topic2,
-			Topic3:        options.Topic3,
-			Topic4:        options.Topic4,
+			Topic2:        padded[1].Values,
+			Topic3:        padded[2].Values,
+			Topic4:        padded[3].Values,
 		},
 	})
+	return nil
 }
 
 func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime sdk.Runtime) {
@@ -709,8 +715,13 @@ func (c *DataStorage) LogTriggerDataStoredLog(confidence evm.ConfidenceLevel, va
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingDataStored(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
-	bindings.ValidateLogTrackingOptions(options)
+func (c *DataStorage) RegisterLogTrackingDataStored(runtime sdk.Runtime, options *bindings.LogTrackingOptions[DataStored]) error {
+	bindings.ValidateLogTrackingOptions[DataStored](options)
+	topics, err := c.Codec.EncodeDataStoredTopics(c.ABI.Events["DataStored"], options.Filters)
+	if err != nil {
+		return fmt.Errorf("failed to encode topics for DataStored: %w", err)
+	}
+	padded := bindings.PadTopics(topics)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "DataStored-" + common.Bytes2Hex(c.Address),
@@ -719,11 +730,12 @@ func (c *DataStorage) RegisterLogTrackingDataStored(runtime sdk.Runtime, options
 			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
 			LogsPerBlock:  options.LogsPerBlock,
-			Topic2:        options.Topic2,
-			Topic3:        options.Topic3,
-			Topic4:        options.Topic4,
+			Topic2:        padded[1].Values,
+			Topic3:        padded[2].Values,
+			Topic4:        padded[3].Values,
 		},
 	})
+	return nil
 }
 
 func (c *DataStorage) UnregisterLogTrackingDataStored(runtime sdk.Runtime) {
@@ -765,8 +777,13 @@ func (c *DataStorage) LogTriggerDynamicEventLog(confidence evm.ConfidenceLevel, 
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
-	bindings.ValidateLogTrackingOptions(options)
+func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime sdk.Runtime, options *bindings.LogTrackingOptions[DynamicEvent]) error {
+	bindings.ValidateLogTrackingOptions[DynamicEvent](options)
+	topics, err := c.Codec.EncodeDynamicEventTopics(c.ABI.Events["DynamicEvent"], options.Filters)
+	if err != nil {
+		return fmt.Errorf("failed to encode topics for DynamicEvent: %w", err)
+	}
+	padded := bindings.PadTopics(topics)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "DynamicEvent-" + common.Bytes2Hex(c.Address),
@@ -775,11 +792,12 @@ func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime sdk.Runtime, optio
 			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
 			LogsPerBlock:  options.LogsPerBlock,
-			Topic2:        options.Topic2,
-			Topic3:        options.Topic3,
-			Topic4:        options.Topic4,
+			Topic2:        padded[1].Values,
+			Topic3:        padded[2].Values,
+			Topic4:        padded[3].Values,
 		},
 	})
+	return nil
 }
 
 func (c *DataStorage) UnregisterLogTrackingDynamicEvent(runtime sdk.Runtime) {
@@ -821,8 +839,13 @@ func (c *DataStorage) LogTriggerNoFieldsLog(confidence evm.ConfidenceLevel, valu
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingNoFields(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
-	bindings.ValidateLogTrackingOptions(options)
+func (c *DataStorage) RegisterLogTrackingNoFields(runtime sdk.Runtime, options *bindings.LogTrackingOptions[NoFields]) error {
+	bindings.ValidateLogTrackingOptions[NoFields](options)
+	topics, err := c.Codec.EncodeNoFieldsTopics(c.ABI.Events["NoFields"], options.Filters)
+	if err != nil {
+		return fmt.Errorf("failed to encode topics for NoFields: %w", err)
+	}
+	padded := bindings.PadTopics(topics)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "NoFields-" + common.Bytes2Hex(c.Address),
@@ -831,11 +854,12 @@ func (c *DataStorage) RegisterLogTrackingNoFields(runtime sdk.Runtime, options *
 			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
 			LogsPerBlock:  options.LogsPerBlock,
-			Topic2:        options.Topic2,
-			Topic3:        options.Topic3,
-			Topic4:        options.Topic4,
+			Topic2:        padded[1].Values,
+			Topic3:        padded[2].Values,
+			Topic4:        padded[3].Values,
 		},
 	})
+	return nil
 }
 
 func (c *DataStorage) UnregisterLogTrackingNoFields(runtime sdk.Runtime) {
