@@ -13,14 +13,14 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+var _ EVMClient = &evm.Client{}
+
 // Minimal Chain Capabilities SDK client interface.
 type EVMClient interface {
 	CallContract(sdk.Runtime, *evm.CallContractRequest) sdk.Promise[*evm.CallContractReply]
-	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest)
-	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest)
+	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]
+	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
-	LogTrigger(config *evm.FilterLogTriggerRequest) sdk.Trigger[*evm.Log, *evm.Log]
-	LatestAndFinalizedHead(runtime sdk.Runtime, input *emptypb.Empty) sdk.Promise[*evm.LatestAndFinalizedHeadReply]
 }
 
 type ContractInitOptions struct {

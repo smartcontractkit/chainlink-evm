@@ -11,14 +11,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
-	"github.com/smartcontractkit/cre-sdk-go/sdk"
-
-	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings/mocks"
 	datastorage "github.com/smartcontractkit/chainlink-evm/pkg/bindings/testdata"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
+	"github.com/smartcontractkit/cre-sdk-go/sdk"
 )
 
 func TestGenerateBindings(t *testing.T) {
@@ -128,17 +125,6 @@ func TestReadMethods(t *testing.T) {
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
-	client.EXPECT().LatestAndFinalizedHead(mock.Anything, mock.Anything).Return(
-		sdk.NewBasicPromise(func() (*evm.LatestAndFinalizedHeadReply, error) {
-			// Simulate a successful call with dummy data
-			reply := &evm.LatestAndFinalizedHeadReply{
-				Finalized: &evm.Head{
-					BlockNumber: pb.NewBigIntFromInt(big.NewInt(123)),
-				},
-			}
-			return reply, nil
-		})).Once()
-
 	client.EXPECT().CallContract(mock.Anything, mock.Anything).Return(
 		sdk.NewBasicPromise(func() (*evm.CallContractReply, error) {
 			// Simulate a successful call with dummy data
@@ -151,7 +137,7 @@ func TestReadMethods(t *testing.T) {
 	reply, err := ds.ReadData(nil, datastorage.ReadDataInput{
 		User: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
 		Key:  "testKey",
-	}, nil)
+	}, big.NewInt(123))
 	require.NoError(t, err)
 	require.NotNil(t, reply, "ReadData should return a non-nil reply")
 
@@ -207,9 +193,7 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 			require.Equal(t, req.Filter.Name, "AccessLogged-"+common.Bytes2Hex(ds.Address))
 			require.Equal(t, [][]byte{ds.Address}, req.Filter.Addresses)
 			require.Equal(t, [][]byte{ds.Codec.AccessLoggedLogHash()}, req.Filter.EventSigs)
-		}).
-		Return().
-		Once()
+		}).Return(nil).Once()
 
 	client.
 		EXPECT().
@@ -217,8 +201,7 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 		Run(func(_ sdk.Runtime, req *evm.UnregisterLogTrackingRequest) {
 			require.Equal(t, req.FilterName, "AccessLogged-"+common.Bytes2Hex(ds.Address))
 		}).
-		Return().
-		Once()
+		Return(nil).Once()
 
 	ds.RegisterLogTrackingAccessLogged(mocks.NewRuntime(t), &bindings.LogTrackingOptions{})
 	ds.UnregisterLogTrackingAccessLogged(mocks.NewRuntime(t))
@@ -283,21 +266,20 @@ func TestLogTrigger(t *testing.T) {
 			},
 		}
 
-		client.EXPECT().LogTrigger(mock.Anything).Run(
-			func(req *evm.FilterLogTriggerRequest) {
-				require.Equal(t, [][]byte{ds.Address}, req.Addresses)
-				require.Len(t, req.Topics, 2, "Trigger should have two topics")
-				require.Equal(t, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, req.Confidence)
-				require.Equal(t, ds.Codec.DataStoredLogHash(), req.Topics[0].Values[0], "First topic value should be AccessLogged log hash")
-				require.Len(t, req.Topics[1].Values, 2, "Second topic should have two values")
-				expected1, err := abi.Arguments{ev.Inputs[0]}.Pack(events[0].Sender)
-				require.NoError(t, err)
-				require.Equal(t, expected1, req.Topics[1].Values[0])
-				expected2, err := abi.Arguments{ev.Inputs[0]}.Pack(events[1].Sender)
-				require.NoError(t, err)
-				require.Equal(t, expected2, req.Topics[1].Values[1])
-			}).Return(nil).Once()
-		_, err = ds.LogTriggerDataStoredLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
+		encoded, err := ds.Codec.EncodeDataStoredTopics(ev, events)
+		require.NoError(t, err, "Encoding DataStored topics should not return an error")
+
+		require.Equal(t, ds.Codec.DataStoredLogHash(), encoded[0].Values[0], "First topic value should be AccessLogged log hash")
+		require.Len(t, encoded[1].Values, 2, "Second topic should have two values")
+		expected1, err := abi.Arguments{ev.Inputs[0]}.Pack(events[0].Sender)
+		require.NoError(t, err)
+		require.Equal(t, expected1, encoded[1].Values[0])
+		expected2, err := abi.Arguments{ev.Inputs[0]}.Pack(events[1].Sender)
+		require.NoError(t, err)
+		require.Equal(t, expected2, encoded[1].Values[1])
+
+		trigger, err := ds.LogTriggerDataStoredLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
+		require.NotNil(t, trigger)
 		require.NoError(t, err)
 	})
 	t.Run("dynamic event", func(t *testing.T) {
@@ -331,41 +313,41 @@ func TestLogTrigger(t *testing.T) {
 			},
 		}
 
-		client.EXPECT().LogTrigger(mock.Anything).Run(
-			func(req *evm.FilterLogTriggerRequest) {
-				require.Equal(t, [][]byte{ds.Address}, req.Addresses)
-				require.Len(t, req.Topics, 4, "Trigger should have four topics")
-				require.Equal(t, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, req.Confidence)
-				require.Equal(t, ds.Codec.DynamicEventLogHash(), req.Topics[0].Values[0], "First topic value should be DynamicEvent log hash")
-				require.Len(t, req.Topics[1].Values, 2, "Second topic should have two values")
-				packed1, err := abi.Arguments{ev.Inputs[1]}.Pack(events[0].UserData)
+		encoded, err := ds.Codec.EncodeDynamicEventTopics(ev, events)
+		require.NoError(t, err, "Encoding DynamicEvent topics should not return an error")
 
-				expected1 := crypto.Keccak256(packed1)
-				require.NoError(t, err)
-				require.Equal(t, expected1, req.Topics[1].Values[0])
-				packed2, err := abi.Arguments{ev.Inputs[1]}.Pack(events[1].UserData)
+		require.Len(t, encoded, 4, "Trigger should have four topics")
+		require.Equal(t, ds.Codec.DynamicEventLogHash(), encoded[0].Values[0], "First topic value should be DynamicEvent log hash")
+		require.Len(t, encoded[1].Values, 2, "Second topic should have two values")
+		packed1, err := abi.Arguments{ev.Inputs[1]}.Pack(events[0].UserData)
 
-				expected2 := crypto.Keccak256(packed2)
-				require.NoError(t, err)
-				require.Equal(t, expected2, req.Topics[1].Values[1])
+		expected1 := crypto.Keccak256(packed1)
+		require.NoError(t, err)
+		require.Equal(t, expected1, encoded[1].Values[0])
+		packed2, err := abi.Arguments{ev.Inputs[1]}.Pack(events[1].UserData)
 
-				expected3 := events[0].Metadata.Bytes()
-				require.Equal(t, expected3, req.Topics[2].Values[0])
+		expected2 := crypto.Keccak256(packed2)
+		require.NoError(t, err)
+		require.Equal(t, expected2, encoded[1].Values[1])
 
-				expected4 := events[1].Metadata.Bytes()
-				require.Equal(t, expected4, req.Topics[2].Values[1])
+		expected3 := events[0].Metadata.Bytes()
+		require.Equal(t, expected3, encoded[2].Values[0])
 
-				packed3, err := abi.Arguments{ev.Inputs[4]}.Pack(events[0].MetadataArray)
-				expected5 := crypto.Keccak256(packed3)
-				require.NoError(t, err)
-				require.Equal(t, expected5, req.Topics[3].Values[0])
+		expected4 := events[1].Metadata.Bytes()
+		require.Equal(t, expected4, encoded[2].Values[1])
 
-				packed4, err := abi.Arguments{ev.Inputs[4]}.Pack(events[1].MetadataArray)
-				require.NoError(t, err)
-				expected6 := crypto.Keccak256(packed4)
-				require.Equal(t, expected6, req.Topics[3].Values[1])
-			}).Return(nil).Once()
-		_, err = ds.LogTriggerDynamicEventLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
+		packed3, err := abi.Arguments{ev.Inputs[4]}.Pack(events[0].MetadataArray)
+		expected5 := crypto.Keccak256(packed3)
+		require.NoError(t, err)
+		require.Equal(t, expected5, encoded[3].Values[0])
+
+		packed4, err := abi.Arguments{ev.Inputs[4]}.Pack(events[1].MetadataArray)
+		require.NoError(t, err)
+		expected6 := crypto.Keccak256(packed4)
+		require.Equal(t, expected6, encoded[3].Values[1])
+
+		trigger, err := ds.LogTriggerDynamicEventLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
+		require.NotNil(t, trigger)
 		require.NoError(t, err)
 	})
 }

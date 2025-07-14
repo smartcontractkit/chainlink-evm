@@ -44,7 +44,7 @@ var (
 )
 
 var DataStorageMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"AccessLogged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"DataStored\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"indexed\":true,\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"indexed\":true,\"internalType\":\"bytes[]\",\"name\":\"metadataArray\",\"type\":\"bytes[]\"}],\"name\":\"DynamicEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"NoFields\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getValue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"logAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"name\":\"onReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"}],\"name\":\"readData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"storeData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"}],\"name\":\"storeUserData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"newValue\",\"type\":\"string\"}],\"name\":\"updateData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"oldValue\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound2\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"AccessLogged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"DataStored\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"indexed\":true,\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"indexed\":true,\"internalType\":\"bytes[]\",\"name\":\"metadataArray\",\"type\":\"bytes[]\"}],\"name\":\"DynamicEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"NoFields\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getValue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"logAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"name\":\"onReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"}],\"name\":\"readData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"storeData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"}],\"name\":\"storeUserData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"newValue\",\"type\":\"string\"}],\"name\":\"updateData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"oldValue\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // Structs
@@ -84,6 +84,12 @@ type UpdateDataInput struct {
 
 // Errors
 type DataNotFound struct {
+	Requester common.Address
+	Key       string
+	Reason    string
+}
+
+type DataNotFound2 struct {
 	Requester common.Address
 	Key       string
 	Reason    string
@@ -509,52 +515,40 @@ func (c *dataStorageCodecImpl) DecodeNoFields(log *evm.Log) (*NoFields, error) {
 
 func (c DataStorage) GetValue(
 	runtime sdk.Runtime,
-	options *bindings.ReadOptions,
+	blockNumber *big.Int,
 ) (sdk.Promise[*evm.CallContractReply], error) {
 	calldata, err := c.Codec.EncodeGetValueMethodCall()
 	if err != nil {
 		return nil, err
 	}
-	var blockNumber *pb.BigInt
-	if options == nil {
-		promise := c.evmClient.LatestAndFinalizedHead(runtime, &emptypb.Empty{})
-		result, err := promise.Await()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get latest and finalized head: %w", err)
-		}
-		blockNumber = result.Finalized.BlockNumber
-	} else {
-		blockNumber = pb.NewBigIntFromInt(options.BlockNumber)
+	if blockNumber == nil {
+		return nil, fmt.Errorf("block number must be specified for read calls")
 	}
+	bn := pb.NewBigIntFromInt(blockNumber)
+
 	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
 		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: blockNumber,
+		BlockNumber: bn,
 	}), nil
 }
 
 func (c DataStorage) ReadData(
 	runtime sdk.Runtime,
 	args ReadDataInput,
-	options *bindings.ReadOptions,
+	blockNumber *big.Int,
 ) (sdk.Promise[*evm.CallContractReply], error) {
 	calldata, err := c.Codec.EncodeReadDataMethodCall(args)
 	if err != nil {
 		return nil, err
 	}
-	var blockNumber *pb.BigInt
-	if options == nil {
-		promise := c.evmClient.LatestAndFinalizedHead(runtime, &emptypb.Empty{})
-		result, err := promise.Await()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get latest and finalized head: %w", err)
-		}
-		blockNumber = result.Finalized.BlockNumber
-	} else {
-		blockNumber = pb.NewBigIntFromInt(options.BlockNumber)
+	if blockNumber == nil {
+		return nil, fmt.Errorf("block number must be specified for read calls")
 	}
+	bn := pb.NewBigIntFromInt(blockNumber)
+
 	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
 		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: blockNumber,
+		BlockNumber: bn,
 	}), nil
 }
 
@@ -591,18 +585,58 @@ func (c *DataStorage) DecodeDataNotFoundError(data []byte) (*DataNotFound, error
 	}, nil
 }
 
+// Error implements the error interface for DataNotFound.
+func (e *DataNotFound) Error() string {
+	return fmt.Sprintf("DataNotFound error: requester=%v; key=%v; reason=%v;", e.Requester, e.Key, e.Reason)
+}
+
+// DecodeDataNotFound2Error decodes a DataNotFound2 error from revert data.
+func (c *DataStorage) DecodeDataNotFound2Error(data []byte) (*DataNotFound2, error) {
+	args := c.ABI.Errors["DataNotFound2"].Inputs
+	values, err := args.Unpack(data[4:])
+	if err != nil {
+		return nil, fmt.Errorf("failed to unpack error: %w", err)
+	}
+	if len(values) != 3 {
+		return nil, fmt.Errorf("expected 3 values, got %d", len(values))
+	}
+
+	requester, ok0 := values[0].(common.Address)
+	if !ok0 {
+		return nil, fmt.Errorf("unexpected type for requester in DataNotFound2 error")
+	}
+
+	key, ok1 := values[1].(string)
+	if !ok1 {
+		return nil, fmt.Errorf("unexpected type for key in DataNotFound2 error")
+	}
+
+	reason, ok2 := values[2].(string)
+	if !ok2 {
+		return nil, fmt.Errorf("unexpected type for reason in DataNotFound2 error")
+	}
+
+	return &DataNotFound2{
+		Requester: requester,
+		Key:       key,
+		Reason:    reason,
+	}, nil
+}
+
+// Error implements the error interface for DataNotFound2.
+func (e *DataNotFound2) Error() string {
+	return fmt.Sprintf("DataNotFound2 error: requester=%v; key=%v; reason=%v;", e.Requester, e.Key, e.Reason)
+}
+
 func (c *DataStorage) UnpackError(data []byte) (any, error) {
 	switch common.Bytes2Hex(data[:4]) {
 	case common.Bytes2Hex(c.ABI.Errors["DataNotFound"].ID.Bytes()[:4]):
 		return c.DecodeDataNotFoundError(data)
+	case common.Bytes2Hex(c.ABI.Errors["DataNotFound2"].ID.Bytes()[:4]):
+		return c.DecodeDataNotFound2Error(data)
 	default:
 		return nil, errors.New("unknown error selector")
 	}
-}
-
-// Error implements the error interface for DataNotFound.
-func (e *DataNotFound) Error() string {
-	return fmt.Sprintf("DataNotFound error: requester=%v; key=%v; reason=%v;", e.Requester, e.Key, e.Reason)
 }
 
 func (c *DataStorage) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, values []AccessLogged) (sdk.Trigger[*evm.Log, *evm.Log], error) {
@@ -612,7 +646,7 @@ func (c *DataStorage) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, 
 		return nil, fmt.Errorf("failed to encode topics for AccessLogged: %w", err)
 	}
 
-	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
@@ -668,7 +702,7 @@ func (c *DataStorage) LogTriggerDataStoredLog(confidence evm.ConfidenceLevel, va
 		return nil, fmt.Errorf("failed to encode topics for DataStored: %w", err)
 	}
 
-	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
@@ -724,7 +758,7 @@ func (c *DataStorage) LogTriggerDynamicEventLog(confidence evm.ConfidenceLevel, 
 		return nil, fmt.Errorf("failed to encode topics for DynamicEvent: %w", err)
 	}
 
-	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
@@ -780,7 +814,7 @@ func (c *DataStorage) LogTriggerNoFieldsLog(confidence evm.ConfidenceLevel, valu
 		return nil, fmt.Errorf("failed to encode topics for NoFields: %w", err)
 	}
 
-	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
