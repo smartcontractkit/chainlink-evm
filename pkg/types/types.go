@@ -14,8 +14,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/jackc/pgtype"
 	pkgerrors "github.com/pkg/errors"
-	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"gopkg.in/guregu/null.v4"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
 
