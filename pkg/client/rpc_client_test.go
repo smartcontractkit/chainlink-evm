@@ -887,9 +887,9 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 		Topics:    [][]common.Hash{{common.BigToHash(big.NewInt(128))}},
 	}
 	testCases := []struct {
-		Name               string
-		OriginalCall       func(t *testing.T, rpcClient *client.RPCClient) error
-		WithConfidenceCall func(t *testing.T, rpcClient *client.RPCClient) error
+		Name         string
+		OriginalCall func(t *testing.T, rpcClient *client.RPCClient) error
+		WithOptsCall func(t *testing.T, rpcClient *client.RPCClient) error
 	}{
 		{
 			Name: "CallContract",
@@ -897,8 +897,8 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 				_, err := rpcClient.CallContract(t.Context(), ethereum.CallMsg{Gas: 123}, big.NewInt(10))
 				return err
 			},
-			WithConfidenceCall: func(t *testing.T, rpcClient *client.RPCClient) error {
-				_, err := rpcClient.CallContractWithConfidence(t.Context(), ethereum.CallMsg{Gas: 123}, big.NewInt(10), primitives.Finalized)
+			WithOptsCall: func(t *testing.T, rpcClient *client.RPCClient) error {
+				_, err := rpcClient.CallContractWithOpts(t.Context(), ethereum.CallMsg{Gas: 123}, big.NewInt(10), evmtypes.CallContractOpts{ConfidenceLevel: primitives.Finalized})
 				return err
 			},
 		},
@@ -908,8 +908,8 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 				_, err := rpcClient.BalanceAt(t.Context(), common.BigToAddress(big.NewInt(42)), big.NewInt(10))
 				return err
 			},
-			WithConfidenceCall: func(t *testing.T, rpcClient *client.RPCClient) error {
-				_, err := rpcClient.BalanceAtWithConfidence(t.Context(), common.BigToAddress(big.NewInt(42)), big.NewInt(10), primitives.Finalized)
+			WithOptsCall: func(t *testing.T, rpcClient *client.RPCClient) error {
+				_, err := rpcClient.BalanceAtWithOpts(t.Context(), common.BigToAddress(big.NewInt(42)), big.NewInt(10), evmtypes.BalanceAtOpts{ConfidenceLevel: primitives.Finalized})
 				return err
 			},
 		},
@@ -919,8 +919,8 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 				_, err := rpcClient.FilterLogs(t.Context(), filterQuery)
 				return err
 			},
-			WithConfidenceCall: func(t *testing.T, rpcClient *client.RPCClient) error {
-				_, err := rpcClient.FilterLogsWithConfidence(t.Context(), filterQuery, primitives.Finalized)
+			WithOptsCall: func(t *testing.T, rpcClient *client.RPCClient) error {
+				_, err := rpcClient.FilterLogsWithOpts(t.Context(), filterQuery, evmtypes.FilterLogsOpts{ConfidenceLevel: primitives.Finalized})
 				return err
 			},
 		},
@@ -930,8 +930,8 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 				_, err := rpcClient.BlockByNumber(t.Context(), big.NewInt(10))
 				return err
 			},
-			WithConfidenceCall: func(t *testing.T, rpcClient *client.RPCClient) error {
-				_, err := rpcClient.BlockByNumberWithConfidence(t.Context(), big.NewInt(10), primitives.Finalized)
+			WithOptsCall: func(t *testing.T, rpcClient *client.RPCClient) error {
+				_, err := rpcClient.HeaderByNumberWithOpts(t.Context(), big.NewInt(10), evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized})
 				return err
 			},
 		},
@@ -975,13 +975,13 @@ func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 			rpcClient := newRPCClient(t)
 			err := tc.OriginalCall(t, rpcClient)
 			require.ErrorContains(t, err, stubErr)
-			err = tc.WithConfidenceCall(t, rpcClient)
+			err = tc.WithOptsCall(t, rpcClient)
 			require.ErrorContains(t, err, stubErr)
 		})
 	}
 }
 
-func TestRPCClient_CallContractWithConfidence(t *testing.T) {
+func TestRPCClient_CallContractWithOpts(t *testing.T) {
 	t.Parallel()
 	t.Run("Happy path", func(t *testing.T) {
 		const expectedResult = "call contract happy path result"
@@ -999,13 +999,13 @@ func TestRPCClient_CallContractWithConfidence(t *testing.T) {
 			return
 		}).WSURL()
 		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true})
-		result, err := rpcClient.CallContractWithConfidence(t.Context(), ethereum.CallMsg{}, big.NewInt(9), primitives.Finalized)
+		result, err := rpcClient.CallContractWithOpts(t.Context(), ethereum.CallMsg{}, big.NewInt(9), evmtypes.CallContractOpts{ConfidenceLevel: primitives.Finalized})
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, string(result))
 	})
 }
 
-func TestRPCClient_BalanceAtWithConfidence(t *testing.T) {
+func TestRPCClient_BalanceAtWithOpts(t *testing.T) {
 	t.Parallel()
 	t.Run("Happy path", func(t *testing.T) {
 		expectedResult := big.NewInt(1234)
@@ -1023,13 +1023,13 @@ func TestRPCClient_BalanceAtWithConfidence(t *testing.T) {
 			return
 		}).WSURL()
 		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true})
-		result, err := rpcClient.BalanceAtWithConfidence(t.Context(), common.BigToAddress(big.NewInt(42)), big.NewInt(9), primitives.Finalized)
+		result, err := rpcClient.BalanceAtWithOpts(t.Context(), common.BigToAddress(big.NewInt(42)), big.NewInt(9), evmtypes.BalanceAtOpts{ConfidenceLevel: primitives.Finalized})
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	})
 }
 
-func TestRPCClient_FilterLogsWithConfidence(t *testing.T) {
+func TestRPCClient_FilterLogsWithOpts(t *testing.T) {
 	t.Parallel()
 	t.Run("Happy path", func(t *testing.T) {
 		topics := []common.Hash{common.BigToHash(big.NewInt(10))}
@@ -1054,13 +1054,13 @@ func TestRPCClient_FilterLogsWithConfidence(t *testing.T) {
 		}).WSURL()
 		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true})
 		filter := ethereum.FilterQuery{FromBlock: big.NewInt(0), ToBlock: big.NewInt(10), Topics: [][]common.Hash{topics}}
-		result, err := rpcClient.FilterLogsWithConfidence(t.Context(), filter, primitives.Finalized)
+		result, err := rpcClient.FilterLogsWithOpts(t.Context(), filter, evmtypes.FilterLogsOpts{ConfidenceLevel: primitives.Finalized})
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	})
 }
 
-func TestRPCClient_BlockByNumberWithConfidence(t *testing.T) {
+func TestRPCClient_HeaderByNumberWithOpts(t *testing.T) {
 	t.Parallel()
 	t.Run("Happy path", func(t *testing.T) {
 		head := &evmtypes.Head{Number: 10, Timestamp: time.Unix(1000, 0).UTC()}
@@ -1078,9 +1078,9 @@ func TestRPCClient_BlockByNumberWithConfidence(t *testing.T) {
 		}).WSURL()
 		chainID := big.NewInt(1234567)
 		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true, ChainID: chainID})
-		result, err := rpcClient.BlockByNumberWithConfidence(t.Context(), big.NewInt(10), primitives.Finalized)
+		result, err := rpcClient.HeaderByNumberWithOpts(t.Context(), big.NewInt(10), evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized})
 		require.NoError(t, err)
 		head.EVMChainID = ubig.New(chainID)
-		require.Equal(t, head, result)
+		require.Equal(t, (*evmtypes.Header)(head), result)
 	})
 }

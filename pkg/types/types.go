@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/jackc/pgtype"
 	pkgerrors "github.com/pkg/errors"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"gopkg.in/guregu/null.v4"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
@@ -454,4 +455,20 @@ type Backend interface {
 	Fork(parentHash common.Hash) error
 	AdjustTime(adjustment time.Duration) error
 	Client() simulated.Client
+}
+
+type BalanceAtOpts struct {
+	ConfidenceLevel primitives.ConfidenceLevel
+}
+
+type CallContractOpts struct {
+	ConfidenceLevel primitives.ConfidenceLevel
+}
+
+type FilterLogsOpts struct {
+	ConfidenceLevel primitives.ConfidenceLevel
+}
+
+type HeaderByNumberOpts struct {
+	ConfidenceLevel primitives.ConfidenceLevel
 }
