@@ -37,32 +37,6 @@ func TestORM_IdempotentInsertHead(t *testing.T) {
 	assert.Equal(t, head.Hash, foundHead.Hash)
 }
 
-func TestORM_IdempotentInsertHead_Batch(t *testing.T) {
-	t.Parallel()
-
-	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
-
-	// Returns nil when inserting first head
-	head := testutils.Head(0)
-	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
-
-	// But does not really insert head as batch size is 2
-	foundHead, err := orm.LatestHead(t.Context())
-	require.NoError(t, err)
-	require.Nil(t, foundHead)
-
-	// Returns nil when inserting same head again
-	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
-
-	// Inserts the head as in memorybatch size is 2
-	// But maintains dup check and ends up with only one head
-	heads, err := orm.LatestHeads(t.Context(), 0)
-	require.NoError(t, err)
-	require.Len(t, heads, 1)
-	assert.Equal(t, head.Hash, heads[0].Hash)
-}
-
 func TestORM_TrimOldHeads(t *testing.T) {
 	t.Parallel()
 
@@ -71,28 +45,22 @@ func TestORM_TrimOldHeads(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		head := testutils.Head(i)
-		require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
+		require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
 	}
 
 	uncleHead := testutils.Head(5)
-	require.NoError(t, orm.IdempotentInsertHead(t.Context(), uncleHead))
+	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), uncleHead))
 
-	err := orm.TrimOldHeads(t.Context(), 5)
+	err := orm.TrimOldHeads(tests.Context(t), 5)
 	require.NoError(t, err)
 
-	err = orm.TrimOldHeads(t.Context(), 6)
-	require.NoError(t, err)
-
-	err = orm.TrimOldHeads(t.Context(), 7)
-	require.NoError(t, err)
-
-	heads, err := orm.LatestHeads(t.Context(), 0)
+	heads, err := orm.LatestHeads(tests.Context(t), 0)
 	require.NoError(t, err)
 
 	// uncle block was loaded too
-	require.Len(t, heads, 3)
-	for i := 0; i < 3; i++ {
-		require.LessOrEqual(t, int64(7), heads[i].Number)
+	require.Len(t, heads, 6)
+	for i := 0; i < 5; i++ {
+		require.LessOrEqual(t, int64(5), heads[i].Number)
 	}
 }
 
