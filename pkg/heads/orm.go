@@ -51,58 +51,27 @@ func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
 	}
 }
 
-func (orm *DbORM) batchInsertHeads(ctx context.Context, heads []*evmtypes.Head) error {
-	if len(heads) == 0 {
-		return nil
-	}
-
-	query := `
-			INSERT INTO evm.heads 
-				(hash, number, parent_hash, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas, created_at)
-			VALUES (:hash, :number, :parent_hash, :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas, NOW())
-				ON CONFLICT DO NOTHING`
-
-	_, err := orm.ds.NamedExecContext(ctx, query, heads)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error {
-	orm.mu.Lock()
-	defer orm.mu.Unlock()
-
-	orm.headsBatch = append(orm.headsBatch, head)
-
-	if len(orm.headsBatch) < int(orm.batchSize) {
-		// Not enough to batch insert yet
-		return nil
-	}
-
-	// Batch insert
-	err := orm.batchInsertHeads(ctx, orm.headsBatch)
-	if err != nil {
-		return pkgerrors.Wrap(err, "IdempotentInsertHead failed to batch insert heads")
-	}
-
-	// Clear buffer
-	orm.headsBatch = orm.headsBatch[:0]
-	return nil
+	// listener guarantees head.EVMChainID to be equal to DbORM.chainID
+	query := `
+	INSERT INTO evm.heads (hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas) VALUES (
+	$1, $2, $3, now(), $4, $5, $6, $7)
+	ON CONFLICT (evm_chain_id, hash) DO NOTHING`
+	_, err := orm.ds.ExecContext(ctx, query, head.Hash, head.Number, head.ParentHash, head.Timestamp, head.L1BlockNumber, orm.chainID, head.BaseFeePerGas)
+	return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert head")
 }
 
 func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
-	orm.mu.Lock()
-	defer orm.mu.Unlock()
-	if orm.lastTrimmedBlockNumber == -1 {
-		orm.lastTrimmedBlockNumber = minBlockNumber
-	}
-	if orm.lastTrimmedBlockNumber+orm.batchSize > minBlockNumber {
-		// Batch not big enough to trim yet
-		return nil
-	}
-	orm.lastTrimmedBlockNumber = minBlockNumber
+	// orm.mu.Lock()
+	// defer orm.mu.Unlock()
+	// if orm.lastTrimmedBlockNumber == -1 {
+	// 	orm.lastTrimmedBlockNumber = minBlockNumber
+	// }
+	// if orm.lastTrimmedBlockNumber+orm.batchSize > minBlockNumber {
+	// 	// Batch not big enough to trim yet
+	// 	return nil
+	// }
+	// orm.lastTrimmedBlockNumber = minBlockNumber
 	query := `DELETE FROM evm.heads WHERE evm_chain_id = $1 AND number < $2`
 	_, err = orm.ds.ExecContext(ctx, query, orm.chainID, minBlockNumber)
 	return err
