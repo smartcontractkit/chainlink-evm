@@ -23,7 +23,6 @@ var _ EVMClient = &evm.Client{}
 type EVMClient interface {
 	CallContract(sdk.Runtime, *evm.CallContractRequest) sdk.Promise[*evm.CallContractReply]
 	WriteReport(sdk.Runtime, *evm.WriteReportRequest) sdk.Promise[*evm.WriteReportReply]
-	LatestAndFinalizedHead(runtime sdk.Runtime, input *emptypb.Empty) sdk.Promise[*evm.LatestAndFinalizedHeadReply]
 	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]
 	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
