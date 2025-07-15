@@ -38,7 +38,7 @@ var (
 	_ = abi.ConvertType
 	_ = emptypb.Empty{}
 	_ = pb.NewBigIntFromInt
-	_ = bindings.ValidateLogTrackingOptions
+	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
 	_ = sdk.ConsensusResponseMapKeyPayload
 )
@@ -118,6 +118,7 @@ type {{$contract.Type}}Codec interface {
 
 	{{- range $event := .Events}}
 	{{.Normalized.Name}}LogHash() []byte
+	Encode{{.Normalized.Name}}Topics(evt abi.Event, values []{{.Normalized.Name}}) ([]*evm.TopicValues, error)
 	Decode{{.Normalized.Name}}(log *evm.Log) (*{{.Normalized.Name}}, error)
 	{{- end}}
 }
@@ -207,6 +208,49 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Name}}Struct(in {{.N
 func (c *{{decapitalise $contract.Type}}CodecImpl) {{.Normalized.Name}}LogHash() []byte {
 	return c.abi.Events["{{.Original.Name}}"].ID.Bytes()
 }
+
+func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Normalized.Name}}Topics(
+    evt abi.Event,
+    values []{{.Normalized.Name}},
+) ([]*evm.TopicValues, error) {
+    {{- range $idx, $inp := .Normalized.Inputs }}
+    {{- if $inp.Indexed }}
+    var {{ decapitalise $inp.Name }}Rule []interface{}
+    for _, v := range values {
+		fieldVal, err := bindings.PrepareTopicArg(evt.Inputs[{{$idx}}], v.{{capitalise $inp.Name}})
+		if err != nil {
+			return nil, err
+		}
+		{{ decapitalise $inp.Name }}Rule = append({{ decapitalise $inp.Name }}Rule, fieldVal)
+	}
+    {{- end }}
+    {{- end }}
+
+    rawTopics, err := abi.MakeTopics(
+        {{- range $inp := .Normalized.Inputs }}
+        {{- if $inp.Indexed }}
+        {{ decapitalise $inp.Name }}Rule,
+        {{- end }}
+        {{- end }}
+    )
+    if err != nil {
+        return nil, err
+    }
+
+	topics := make([]*evm.TopicValues, len(rawTopics)+1)
+	topics[0] = &evm.TopicValues{
+		Values: [][]byte{evt.ID.Bytes()},
+	}
+    for i, hashList := range rawTopics {
+        bs := make([][]byte, len(hashList))
+        for j, h := range hashList {
+            bs[j] = h.Bytes()
+        }
+        topics[i+1] = &evm.TopicValues{Values: bs}
+    }
+    return topics, nil
+}
+
 
 // Decode{{.Normalized.Name}} decodes a log into a {{.Normalized.Name}} struct.
 func (c *{{decapitalise $contract.Type}}CodecImpl) Decode{{.Normalized.Name}}(log *evm.Log) (*{{.Normalized.Name}}, error) {
@@ -312,21 +356,41 @@ func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 
 {{range $event := $contract.Events}}
 
-func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
-	bindings.ValidateLogTrackingOptions(options)
+func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, filters []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+	event := c.ABI.Events["{{.Normalized.Name}}"]
+	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, filters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
+	}
+
+	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
+		Addresses:  [][]byte{c.Address},
+		Topics:     topics,
+		Confidence: confidence,
+	}), nil
+}
+
+func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions[{{.Normalized.Name}}]) error {
+	bindings.ValidateLogTrackingOptions[{{.Normalized.Name}}](options)
+	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(c.ABI.Events["{{.Normalized.Name}}"], options.Filters)
+	if err != nil {
+		return fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
+	}
+	padded := bindings.PadTopics(topics)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
-			Name:      "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
-			Addresses: [][]byte{c.Address},
-			EventSigs: [][]byte{c.Codec.{{.Normalized.Name}}LogHash()},
-			MaxLogsKept: options.MaxLogsKept,
+			Name:          "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
+			Addresses:     [][]byte{c.Address},
+			EventSigs:     [][]byte{c.Codec.{{.Normalized.Name}}LogHash()},
+			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
-			LogsPerBlock: options.LogsPerBlock,
-			Topic2: options.Topic2,
-			Topic3: options.Topic3,
-			Topic4: options.Topic4,
+			LogsPerBlock:  options.LogsPerBlock,
+			Topic2:        padded[1].Values,
+			Topic3:        padded[2].Values,
+			Topic4:        padded[3].Values,
 		},
 	})
+	return nil
 }
 
 func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime) {
