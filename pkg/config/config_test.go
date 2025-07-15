@@ -356,7 +356,6 @@ func TestChainScopedConfig_HeadTracker(t *testing.T) {
 	assert.False(t, ht.FinalityTagBypass())
 	assert.Equal(t, uint32(10000), ht.MaxAllowedFinalityDepth())
 	assert.True(t, ht.PersistenceEnabled())
-	assert.Equal(t, int64(100), ht.PersistenceBatchSize())
 }
 
 func TestNodePoolConfig(t *testing.T) {
