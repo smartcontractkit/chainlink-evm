@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"math/big"
-	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
@@ -33,82 +31,29 @@ type ORM interface {
 var _ ORM = &DbORM{}
 
 type DbORM struct {
-	chainID                ubig.Big
-	ds                     sqlutil.DataSource
-	mu                     sync.RWMutex
-	batchSize              int64            // 0 works as no batching
-	lastTrimmedBlockNumber int64            // used to trim in batches
-	headsBatch             []*evmtypes.Head // used to batch insert heads
+	chainID ubig.Big
+	ds      sqlutil.DataSource
 }
 
 // NewORM creates an ORM scoped to chainID.
-func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
+func NewORM(chainID big.Int, ds sqlutil.DataSource) *DbORM {
 	return &DbORM{
-		chainID:                ubig.Big(chainID),
-		ds:                     ds,
-		lastTrimmedBlockNumber: -1,
-		batchSize:              batchSize,
-		headsBatch:             make([]*evmtypes.Head, 0, batchSize),
+		chainID: ubig.Big(chainID),
+		ds:      ds,
 	}
-}
-
-func (orm *DbORM) batchInsertHeads(ctx context.Context, heads []*evmtypes.Head) error {
-	if len(heads) == 0 {
-		return nil
-	}
-	// explicitly set created_at to now()
-	// as now() does not work with batch inserts
-	createdAt := time.Now().UTC()
-	for _, head := range heads {
-		head.CreatedAt = createdAt
-	}
-	query := `
-			INSERT INTO evm.heads 
-				(hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
-			VALUES (:hash, :number, :parent_hash, :created_at, :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas)
-				ON CONFLICT DO NOTHING`
-
-	_, err := orm.ds.NamedExecContext(ctx, query, heads)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error {
-	orm.mu.Lock()
-	defer orm.mu.Unlock()
-
-	orm.headsBatch = append(orm.headsBatch, head)
-
-	if len(orm.headsBatch) < int(orm.batchSize) {
-		// Not enough to batch insert yet
-		return nil
-	}
-
-	// Batch insert
-	err := orm.batchInsertHeads(ctx, orm.headsBatch)
-	if err != nil {
-		return pkgerrors.Wrap(err, "IdempotentInsertHead failed to batch insert heads")
-	}
-
-	// Clear buffer
-	orm.headsBatch = orm.headsBatch[:0]
-	return nil
+	// listener guarantees head.EVMChainID to be equal to DbORM.chainID
+	query := `
+	INSERT INTO evm.heads (hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas) VALUES (
+	$1, $2, $3, now(), $4, $5, $6, $7)
+	ON CONFLICT (evm_chain_id, hash) DO NOTHING`
+	_, err := orm.ds.ExecContext(ctx, query, head.Hash, head.Number, head.ParentHash, head.Timestamp, head.L1BlockNumber, orm.chainID, head.BaseFeePerGas)
+	return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert head")
 }
 
 func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
-	orm.mu.Lock()
-	defer orm.mu.Unlock()
-	if orm.lastTrimmedBlockNumber == -1 {
-		orm.lastTrimmedBlockNumber = minBlockNumber
-	}
-	if orm.lastTrimmedBlockNumber+orm.batchSize > minBlockNumber {
-		// Batch not big enough to trim yet
-		return nil
-	}
-	orm.lastTrimmedBlockNumber = minBlockNumber
 	query := `DELETE FROM evm.heads WHERE evm_chain_id = $1 AND number < $2`
 	_, err = orm.ds.ExecContext(ctx, query, orm.chainID, minBlockNumber)
 	return err

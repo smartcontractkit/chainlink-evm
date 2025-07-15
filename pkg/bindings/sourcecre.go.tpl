@@ -39,7 +39,7 @@ var (
 	_ = abi.ConvertType
 	_ = emptypb.Empty{}
 	_ = pb.NewBigIntFromInt
-	_ = bindings.ValidateLogTrackingOptions
+	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
 	_ = sdk.ConsensusResponseMapKeyPayload
 )
@@ -119,7 +119,7 @@ type {{$contract.Type}}Codec interface {
 
 	{{- range $event := .Events}}
 	{{.Normalized.Name}}LogHash() []byte
-	Encode{{.Normalized.Name}}Topics(evt abi.Event, v {{.Normalized.Name}}) ([][]byte, error)
+	Encode{{.Normalized.Name}}Topics(evt abi.Event, values []{{.Normalized.Name}}) ([]*evm.TopicValues, error)
 	Decode{{.Normalized.Name}}(log *evm.Log) (*{{.Normalized.Name}}, error)
 	{{- end}}
 }
@@ -210,23 +210,48 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) {{.Normalized.Name}}LogHash()
 	return c.abi.Events["{{.Original.Name}}"].ID.Bytes()
 }
 
-func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Normalized.Name}}Topics(evt abi.Event, v {{.Normalized.Name}}) ([][]byte, error) {
-    // 1) start with the 32-byte event signature
-    topics := [][]byte{evt.ID.Bytes()}
+func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Normalized.Name}}Topics(
+    evt abi.Event,
+    values []{{.Normalized.Name}},
+) ([]*evm.TopicValues, error) {
+    {{- range $idx, $inp := .Normalized.Inputs }}
+    {{- if $inp.Indexed }}
+    var {{ decapitalise $inp.Name }}Rule []interface{}
+    for _, v := range values {
+		fieldVal, err := bindings.PrepareTopicArg(evt.Inputs[{{$idx}}], v.{{capitalise $inp.Name}})
+		if err != nil {
+			return nil, err
+		}
+		{{ decapitalise $inp.Name }}Rule = append({{ decapitalise $inp.Name }}Rule, fieldVal)
+	}
+    {{- end }}
+    {{- end }}
 
-    // 2) pack each indexed input
-    {{- range $i, $inp := .Normalized.Inputs}}
-    {{- if $inp.Indexed}}
-    packed{{$i}}, err := abi.Arguments{evt.Inputs[{{$i}}]}.Pack(v.{{capitalise $inp.Name}})
+    rawTopics, err := abi.MakeTopics(
+        {{- range $inp := .Normalized.Inputs }}
+        {{- if $inp.Indexed }}
+        {{ decapitalise $inp.Name }}Rule,
+        {{- end }}
+        {{- end }}
+    )
     if err != nil {
-        return nil, fmt.Errorf("packing {{$inp.Name}}: %w", err)
+        return nil, err
     }
-    topics = append(topics, packed{{$i}})
-    {{- end}}
-    {{- end}}
 
+	topics := make([]*evm.TopicValues, len(rawTopics)+1)
+	topics[0] = &evm.TopicValues{
+		Values: [][]byte{evt.ID.Bytes()},
+	}
+    for i, hashList := range rawTopics {
+        bs := make([][]byte, len(hashList))
+        for j, h := range hashList {
+            bs[j] = h.Bytes()
+        }
+        topics[i+1] = &evm.TopicValues{Values: bs}
+    }
     return topics, nil
 }
+
 
 // Decode{{.Normalized.Name}} decodes a log into a {{.Normalized.Name}} struct.
 func (c *{{decapitalise $contract.Type}}CodecImpl) Decode{{.Normalized.Name}}(log *evm.Log) (*{{.Normalized.Name}}, error) {
@@ -261,7 +286,7 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
     {{- if gt (len $call.Normalized.Inputs) 0}}
     args {{$call.Normalized.Name}}Input,
     {{- end}}
-    options *bindings.ReadOptions,
+    blockNumber *big.Int,
 ) (sdk.Promise[*evm.CallContractReply], error) {
     {{- if gt (len $call.Normalized.Inputs) 0}}
     calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall(args)
@@ -271,20 +296,14 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
     if err != nil {
         return nil, err
     }
-	var blockNumber *pb.BigInt
-    if options == nil {
-		promise := c.evmClient.LatestAndFinalizedHead(runtime, &emptypb.Empty{})
-		result, err := promise.Await()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get latest and finalized head: %w", err)
-		}
-		blockNumber = result.Finalized.BlockNumber
-	} else {
-		blockNumber = pb.NewBigIntFromInt(options.BlockNumber)
-	}
+    if blockNumber == nil {
+		return nil, fmt.Errorf("block number must be specified for read calls")
+	} 
+	bn := pb.NewBigIntFromInt(blockNumber)
+	
     return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
         Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-        BlockNumber: blockNumber,
+        BlockNumber: bn,
     }), nil
 }
   {{- end}}
@@ -357,6 +376,12 @@ func (c *{{$contract.Type}}) Decode{{.Normalized.Name}}Error(data []byte) (*{{.N
 	}, nil
 }
 
+// Error implements the error interface for {{.Normalized.Name}}.
+func (e *{{.Normalized.Name}}) Error() string {
+	return fmt.Sprintf("{{.Normalized.Name}} error:{{range .Normalized.Inputs}} {{.Name}}=%v;{{end}}"{{range .Normalized.Inputs}}, e.{{capitalise .Name}}{{end}})
+}
+
+{{end}}
 
 func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 	switch common.Bytes2Hex(data[:4]) {
@@ -367,50 +392,43 @@ func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 	}
 }
 
-// Error implements the error interface for {{.Normalized.Name}}.
-func (e *{{.Normalized.Name}}) Error() string {
-	return fmt.Sprintf("{{.Normalized.Name}} error:{{range .Normalized.Inputs}} {{.Name}}=%v;{{end}}"{{range .Normalized.Inputs}}, e.{{capitalise .Name}}{{end}})
-}
-
-{{end}}
-
-
 {{range $event := $contract.Events}}
 
-func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, values []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, filters []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["{{.Normalized.Name}}"]
-	var topicValues []*evm.TopicValues
-	for _, v := range values {
-		encoded, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, v)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode {{.Normalized.Name}} topics: %w", err)
-		}
-		topicValues = append(topicValues, &evm.TopicValues{
-			Values: encoded,
-		})
+	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, filters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
 	}
-	return c.evmClient.LogTrigger(&evm.FilterLogTriggerRequest{
+
+	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
-		Topics:     topicValues,
+		Topics:     topics,
 		Confidence: confidence,
 	}), nil
 }
 
-func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions) {
-	bindings.ValidateLogTrackingOptions(options)
+func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions[{{.Normalized.Name}}]) error {
+	bindings.ValidateLogTrackingOptions[{{.Normalized.Name}}](options)
+	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(c.ABI.Events["{{.Normalized.Name}}"], options.Filters)
+	if err != nil {
+		return fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
+	}
+	padded := bindings.PadTopics(topics)
 	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
-			Name:      "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
-			Addresses: [][]byte{c.Address},
-			EventSigs: [][]byte{c.Codec.{{.Normalized.Name}}LogHash()},
-			MaxLogsKept: options.MaxLogsKept,
+			Name:          "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
+			Addresses:     [][]byte{c.Address},
+			EventSigs:     [][]byte{c.Codec.{{.Normalized.Name}}LogHash()},
+			MaxLogsKept:   options.MaxLogsKept,
 			RetentionTime: options.RetentionTime,
-			LogsPerBlock: options.LogsPerBlock,
-			Topic2: options.Topic2,
-			Topic3: options.Topic3,
-			Topic4: options.Topic4,
+			LogsPerBlock:  options.LogsPerBlock,
+			Topic2:        padded[1].Values,
+			Topic3:        padded[2].Values,
+			Topic4:        padded[3].Values,
 		},
 	})
+	return nil
 }
 
 func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime) {
@@ -440,6 +458,3 @@ func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime,
 {{end}}
 
 {{end}}
-
-// TODO: implement
-func getChainID(e bindings.EVMClient) uint32 { return 123 }

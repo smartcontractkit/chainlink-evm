@@ -170,57 +170,24 @@ func (_c *EVMClient_LatestAndFinalizedHead_Call) RunAndReturn(run func(sdk.Runti
 	return _c
 }
 
-// LogTrigger provides a mock function with given fields: config
-func (_m *EVMClient) LogTrigger(config *evm.FilterLogTriggerRequest) sdk.Trigger[*evm.Log, *evm.Log] {
-	ret := _m.Called(config)
+// RegisterLogTracking provides a mock function with given fields: _a0, _a1
+func (_m *EVMClient) RegisterLogTracking(_a0 sdk.Runtime, _a1 *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty] {
+	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for LogTrigger")
+		panic("no return value specified for RegisterLogTracking")
 	}
 
-	var r0 sdk.Trigger[*evm.Log, *evm.Log]
-	if rf, ok := ret.Get(0).(func(*evm.FilterLogTriggerRequest) sdk.Trigger[*evm.Log, *evm.Log]); ok {
-		r0 = rf(config)
+	var r0 sdk.Promise[*emptypb.Empty]
+	if rf, ok := ret.Get(0).(func(sdk.Runtime, *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Trigger[*evm.Log, *evm.Log])
+			r0 = ret.Get(0).(sdk.Promise[*emptypb.Empty])
 		}
 	}
 
 	return r0
-}
-
-// EVMClient_LogTrigger_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LogTrigger'
-type EVMClient_LogTrigger_Call struct {
-	*mock.Call
-}
-
-// LogTrigger is a helper method to define mock.On call
-//   - config *evm.FilterLogTriggerRequest
-func (_e *EVMClient_Expecter) LogTrigger(config interface{}) *EVMClient_LogTrigger_Call {
-	return &EVMClient_LogTrigger_Call{Call: _e.mock.On("LogTrigger", config)}
-}
-
-func (_c *EVMClient_LogTrigger_Call) Run(run func(config *evm.FilterLogTriggerRequest)) *EVMClient_LogTrigger_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*evm.FilterLogTriggerRequest))
-	})
-	return _c
-}
-
-func (_c *EVMClient_LogTrigger_Call) Return(_a0 sdk.Trigger[*evm.Log, *evm.Log]) *EVMClient_LogTrigger_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *EVMClient_LogTrigger_Call) RunAndReturn(run func(*evm.FilterLogTriggerRequest) sdk.Trigger[*evm.Log, *evm.Log]) *EVMClient_LogTrigger_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RegisterLogTracking provides a mock function with given fields: _a0, _a1
-func (_m *EVMClient) RegisterLogTracking(_a0 sdk.Runtime, _a1 *evm.RegisterLogTrackingRequest) {
-	_m.Called(_a0, _a1)
 }
 
 // EVMClient_RegisterLogTracking_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RegisterLogTracking'
@@ -242,19 +209,34 @@ func (_c *EVMClient_RegisterLogTracking_Call) Run(run func(_a0 sdk.Runtime, _a1 
 	return _c
 }
 
-func (_c *EVMClient_RegisterLogTracking_Call) Return() *EVMClient_RegisterLogTracking_Call {
-	_c.Call.Return()
+func (_c *EVMClient_RegisterLogTracking_Call) Return(_a0 sdk.Promise[*emptypb.Empty]) *EVMClient_RegisterLogTracking_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *EVMClient_RegisterLogTracking_Call) RunAndReturn(run func(sdk.Runtime, *evm.RegisterLogTrackingRequest)) *EVMClient_RegisterLogTracking_Call {
-	_c.Run(run)
+func (_c *EVMClient_RegisterLogTracking_Call) RunAndReturn(run func(sdk.Runtime, *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]) *EVMClient_RegisterLogTracking_Call {
+	_c.Call.Return(run)
 	return _c
 }
 
 // UnregisterLogTracking provides a mock function with given fields: _a0, _a1
-func (_m *EVMClient) UnregisterLogTracking(_a0 sdk.Runtime, _a1 *evm.UnregisterLogTrackingRequest) {
-	_m.Called(_a0, _a1)
+func (_m *EVMClient) UnregisterLogTracking(_a0 sdk.Runtime, _a1 *evm.UnregisterLogTrackingRequest) sdk.Promise[*emptypb.Empty] {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnregisterLogTracking")
+	}
+
+	var r0 sdk.Promise[*emptypb.Empty]
+	if rf, ok := ret.Get(0).(func(sdk.Runtime, *evm.UnregisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(sdk.Promise[*emptypb.Empty])
+		}
+	}
+
+	return r0
 }
 
 // EVMClient_UnregisterLogTracking_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UnregisterLogTracking'
@@ -276,13 +258,13 @@ func (_c *EVMClient_UnregisterLogTracking_Call) Run(run func(_a0 sdk.Runtime, _a
 	return _c
 }
 
-func (_c *EVMClient_UnregisterLogTracking_Call) Return() *EVMClient_UnregisterLogTracking_Call {
-	_c.Call.Return()
+func (_c *EVMClient_UnregisterLogTracking_Call) Return(_a0 sdk.Promise[*emptypb.Empty]) *EVMClient_UnregisterLogTracking_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *EVMClient_UnregisterLogTracking_Call) RunAndReturn(run func(sdk.Runtime, *evm.UnregisterLogTrackingRequest)) *EVMClient_UnregisterLogTracking_Call {
-	_c.Run(run)
+func (_c *EVMClient_UnregisterLogTracking_Call) RunAndReturn(run func(sdk.Runtime, *evm.UnregisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]) *EVMClient_UnregisterLogTracking_Call {
+	_c.Call.Return(run)
 	return _c
 }
 

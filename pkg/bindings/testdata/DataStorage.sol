@@ -8,12 +8,24 @@ contract DataStorage {
     // Event emitted when data is stored
     event DataStored(address indexed sender, string key, string value);
 
+    event DynamicEvent(
+        string key,
+        UserData indexed userData,
+        string sender,
+        bytes indexed metadata,
+        bytes[] indexed metadataArray
+    );
+
     // New event emitted by a different method
     event AccessLogged(address indexed caller, string message);
 
+    event NoFields();
+
     // Custom error for when a key is not found
     error DataNotFound(address requester, string key, string reason);
-
+    // duplicate error for testing
+    error DataNotFound2(address requester, string key, string reason);
+    
     // Struct definition
     struct UserData {
         string key;

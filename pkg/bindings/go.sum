@@ -183,10 +183,10 @@ github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb v0.0.0-2025
 github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb v0.0.0-20250709113658-8690ed48d976/go.mod h1:0B4c6GEcnm67Q/E8vwpxTpdjL8elQkh8pVzxGhXkVsM=
 github.com/smartcontractkit/chainlink-evm/pkg/bindings/abigen v0.0.0-20250707140145-45280ea11f19 h1:2F1bTDt1Vj9k/DCFxXN1L/FTGS3CEco6/CZl28SMKKY=
 github.com/smartcontractkit/chainlink-evm/pkg/bindings/abigen v0.0.0-20250707140145-45280ea11f19/go.mod h1:Fj+zSdd47kK6a8TZhzgnFz0n/3VIuOW42QSMKGncM+I=
-github.com/smartcontractkit/cre-sdk-go v0.1.1-0.20250710144641-9d156c73f4f3 h1:Q/LVkFCjqIa1Rrp7uorVtJoaK1MFkwjnAA+2ezZ457M=
-github.com/smartcontractkit/cre-sdk-go v0.1.1-0.20250710144641-9d156c73f4f3/go.mod h1:KbqMNSnKlHKnpFHjb6BJaNWwevq/lOFNqyw6MYmOqBs=
-github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm v0.0.0-20250707153600-4506f1b6b342 h1:KMdD8JtsrMemiJj8mCRAs0199GhVKbJRN1MQfNimYBg=
-github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm v0.0.0-20250707153600-4506f1b6b342/go.mod h1:z2aZe7MEEHMqDTg5yXzqTorFqX+IMHc2bc4SJIqWPJ0=
+github.com/smartcontractkit/cre-sdk-go v0.1.1-0.20250709203740-9197d929abcd h1:3+lBtINMzqUHA4Tc3rHTmy/088+BQE7j/E+etFOQ6Ug=
+github.com/smartcontractkit/cre-sdk-go v0.1.1-0.20250709203740-9197d929abcd/go.mod h1:KbqMNSnKlHKnpFHjb6BJaNWwevq/lOFNqyw6MYmOqBs=
+github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm v0.1.0 h1:2a1ZPN1YQM21Nih5ejCNdrYnkRhCmWANy5/z1VrDnYU=
+github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm v0.1.0/go.mod h1:z2aZe7MEEHMqDTg5yXzqTorFqX+IMHc2bc4SJIqWPJ0=
 github.com/smartcontractkit/libocr v0.0.0-20250220133800-f3b940c4f298 h1:PKiqnVOTChlH4a4ljJKL3OKGRgYfIpJS4YD1daAIKks=
 github.com/smartcontractkit/libocr v0.0.0-20250220133800-f3b940c4f298/go.mod h1:Mb7+/LC4edz7HyHxX4QkE42pSuov4AV68+AxBXAap0o=
 github.com/stretchr/objx v0.5.2 h1:xuMeJ0Sdp5ZMRXx/aWO6RZxdr3beISkG5/G/aIRr3pY=
