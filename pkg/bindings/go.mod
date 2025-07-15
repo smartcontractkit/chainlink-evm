@@ -7,7 +7,7 @@ require (
 	github.com/smartcontractkit/chainlink-common/pkg/values v0.0.0-20250707214334-e164c13b2f32
 	github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb v0.0.0-20250709113658-8690ed48d976
 	github.com/smartcontractkit/chainlink-evm/pkg/bindings/abigen v0.0.0-20250707140145-45280ea11f19
-	github.com/smartcontractkit/cre-sdk-go v0.1.1-0.20250711181549-4b4b97e4d7b1
+	github.com/smartcontractkit/cre-sdk-go v0.1.0
 	github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm v0.0.0-20250707153600-4506f1b6b342
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/protobuf v1.36.6

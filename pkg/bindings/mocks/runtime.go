@@ -74,54 +74,6 @@ func (_c *Runtime_CallCapability_Call) RunAndReturn(run func(*pb.CapabilityReque
 	return _c
 }
 
-// GenerateReport provides a mock function with given fields: _a0
-func (_m *Runtime) GenerateReport(_a0 *pb.ReportRequest) sdk.Promise[*pb.ReportResponse] {
-	ret := _m.Called(_a0)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GenerateReport")
-	}
-
-	var r0 sdk.Promise[*pb.ReportResponse]
-	if rf, ok := ret.Get(0).(func(*pb.ReportRequest) sdk.Promise[*pb.ReportResponse]); ok {
-		r0 = rf(_a0)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Promise[*pb.ReportResponse])
-		}
-	}
-
-	return r0
-}
-
-// Runtime_GenerateReport_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateReport'
-type Runtime_GenerateReport_Call struct {
-	*mock.Call
-}
-
-// GenerateReport is a helper method to define mock.On call
-//   - _a0 *pb.ReportRequest
-func (_e *Runtime_Expecter) GenerateReport(_a0 interface{}) *Runtime_GenerateReport_Call {
-	return &Runtime_GenerateReport_Call{Call: _e.mock.On("GenerateReport", _a0)}
-}
-
-func (_c *Runtime_GenerateReport_Call) Run(run func(_a0 *pb.ReportRequest)) *Runtime_GenerateReport_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*pb.ReportRequest))
-	})
-	return _c
-}
-
-func (_c *Runtime_GenerateReport_Call) Return(_a0 sdk.Promise[*pb.ReportResponse]) *Runtime_GenerateReport_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Runtime_GenerateReport_Call) RunAndReturn(run func(*pb.ReportRequest) sdk.Promise[*pb.ReportResponse]) *Runtime_GenerateReport_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Rand provides a mock function with no fields
 func (_m *Runtime) Rand() (*rand.Rand, error) {
 	ret := _m.Called()
