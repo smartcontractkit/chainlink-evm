@@ -4,10 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"math/big"
-<<<<<<< HEAD
-	"sync"
-=======
->>>>>>> parent of ea9dd766e9 (Insert and Trim in Batches for HeadTracker ORM (#141))
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
