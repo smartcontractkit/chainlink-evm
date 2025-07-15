@@ -683,7 +683,7 @@ func isUnconfirmed(confidence primitives.ConfidenceLevel) bool {
 //
 // confidence - determines if additional verification is required (only applicable for positive blockNumber values):
 //   - "Unconfirmed" or empty string: no additional verification
-//   - "Finalized": returns error if requested is not finalized
+//   - "Finalized": returns error if requested block is not finalized
 //   - "Safe": returns error if requested block is not safe
 func (r *RPCClient) HeaderByNumberWithOpts(ctx context.Context, blockNumber *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
 	if isUnconfirmed(opts.ConfidenceLevel) || blockNumber == nil || blockNumber.Sign() < 0 {
