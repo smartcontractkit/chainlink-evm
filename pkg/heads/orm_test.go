@@ -17,7 +17,7 @@ func TestORM_IdempotentInsertHead(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
+	orm := heads.NewORM(*testutils.FixtureChainID, db)
 
 	// Returns nil when inserting first head
 	head := testutils.Head(0)
@@ -41,7 +41,7 @@ func TestORM_IdempotentInsertHead_Batch(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db, 2)
+	orm := heads.NewORM(*testutils.FixtureChainID, db)
 
 	// Returns nil when inserting first head
 	head := testutils.Head(0)
@@ -67,7 +67,7 @@ func TestORM_TrimOldHeads(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db, 2)
+	orm := heads.NewORM(*testutils.FixtureChainID, db)
 
 	for i := 0; i < 10; i++ {
 		head := testutils.Head(i)
@@ -100,7 +100,7 @@ func TestORM_HeadByHash(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
+	orm := heads.NewORM(*testutils.FixtureChainID, db)
 
 	var hash common.Hash
 	for i := 0; i < 10; i++ {
@@ -121,7 +121,7 @@ func TestORM_HeadByHash_NotFound(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
+	orm := heads.NewORM(*testutils.FixtureChainID, db)
 
 	hash := testutils.Head(123).Hash
 	head, err := orm.HeadByHash(tests.Context(t), hash)
@@ -134,7 +134,7 @@ func TestORM_LatestHeads_NoRows(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
+	orm := heads.NewORM(*testutils.FixtureChainID, db)
 
 	heads, err := orm.LatestHeads(tests.Context(t), 100)
 
