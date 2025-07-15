@@ -220,7 +220,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 	} else if opts.GenHeadTracker == nil {
 		var orm heads.ORM
 		if cfg.EVM().HeadTracker().PersistenceEnabled() {
-			orm = heads.NewORM(*chainID, opts.DS, cfg.EVM().HeadTracker().PersistenceBatchSize())
+			orm = heads.NewORM(*chainID, opts.DS)
 		} else {
 			orm = heads.NewNullORM()
 		}
