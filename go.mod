@@ -24,7 +24,7 @@ require (
 	github.com/smartcontractkit/chain-selectors v1.0.62
 	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250704140446-cdafb991802c
 	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502
-	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250715131930-a0c058b56773
+	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250715134218-10b17f312eae
 	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250618135814-7e3f79ab707e
 	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250522110034-65c54665034a
 	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
