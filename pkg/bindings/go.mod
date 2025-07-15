@@ -4,11 +4,11 @@ go 1.24.4
 
 require (
 	github.com/ethereum/go-ethereum v1.15.11
-	github.com/smartcontractkit/chainlink-common/pkg/values v0.0.0-20250707214334-e164c13b2f32
-	github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb v0.0.0-20250709113658-8690ed48d976
+	github.com/smartcontractkit/chainlink-common/pkg/values v0.0.0-20250707133321-27faefc9ce45
+	github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb v0.0.0-20250707133321-27faefc9ce45
 	github.com/smartcontractkit/chainlink-evm/pkg/bindings/abigen v0.0.0-20250707140145-45280ea11f19
 	github.com/smartcontractkit/cre-sdk-go v0.1.0
-	github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm v0.0.0-20250707153600-4506f1b6b342
+	github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm v0.1.0
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/protobuf v1.36.6
 )
