@@ -21,18 +21,18 @@ func TestORM_IdempotentInsertHead(t *testing.T) {
 
 	// Returns nil when inserting first head
 	head := testutils.Head(0)
-	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
 
 	// Head is inserted
-	foundHead, err := orm.LatestHead(tests.Context(t))
+	foundHead, err := orm.LatestHead(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, head.Hash, foundHead.Hash)
 
 	// Returns nil when inserting same head again
-	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
 
 	// Head is still inserted
-	foundHead, err = orm.LatestHead(tests.Context(t))
+	foundHead, err = orm.LatestHead(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, head.Hash, foundHead.Hash)
 }
@@ -45,16 +45,16 @@ func TestORM_TrimOldHeads(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		head := testutils.Head(i)
-		require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), head))
+		require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
 	}
 
 	uncleHead := testutils.Head(5)
-	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), uncleHead))
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), uncleHead))
 
-	err := orm.TrimOldHeads(tests.Context(t), 5)
+	err := orm.TrimOldHeads(t.Context(), 5)
 	require.NoError(t, err)
 
-	heads, err := orm.LatestHeads(tests.Context(t), 0)
+	heads, err := orm.LatestHeads(t.Context(), 0)
 	require.NoError(t, err)
 
 	// uncle block was loaded too
