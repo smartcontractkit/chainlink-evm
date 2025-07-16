@@ -30,16 +30,20 @@ type ORM interface {
 
 var _ ORM = &DbORM{}
 
+const BatchSize = 0
+
 type DbORM struct {
-	chainID ubig.Big
-	ds      sqlutil.DataSource
+	chainID                ubig.Big
+	ds                     sqlutil.DataSource
+	lastTrimmedBlockNumber int64
 }
 
 // NewORM creates an ORM scoped to chainID.
 func NewORM(chainID big.Int, ds sqlutil.DataSource) *DbORM {
 	return &DbORM{
-		chainID: ubig.Big(chainID),
-		ds:      ds,
+		chainID:                ubig.Big(chainID),
+		ds:                     ds,
+		lastTrimmedBlockNumber: -1,
 	}
 }
 
@@ -54,6 +58,13 @@ func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head)
 }
 
 func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
+	if orm.lastTrimmedBlockNumber == -1 {
+		orm.lastTrimmedBlockNumber = minBlockNumber
+	}
+	if orm.lastTrimmedBlockNumber+BatchSize > minBlockNumber {
+		// Batch not big enough to trim yet
+		return nil
+	}
 	query := `DELETE FROM evm.heads WHERE evm_chain_id = $1 AND number < $2`
 	_, err = orm.ds.ExecContext(ctx, query, orm.chainID, minBlockNumber)
 	return err
