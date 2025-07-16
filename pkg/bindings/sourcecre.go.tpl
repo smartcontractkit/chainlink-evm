@@ -41,7 +41,7 @@ var (
 	_ = pb.NewBigIntFromInt
 	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
-	_ = sdk.ConsensusResponseMapKeyPayload
+	_ = sdk.ResponseBufferTooSmall
 )
 
 {{range $contract := .Contracts}}
