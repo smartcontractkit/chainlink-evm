@@ -59,8 +59,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // When a workflow is paused it is removed from the don family.
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
-  // Tracking approved operations for the owner address, required to enable MSIGs to verify off-chain requests.
-  mapping(address owner => mapping(bytes32 operationDigest => uint256 expiryTimestamp)) private s_approvedOperations;
+  // Tracking allowlisted requests for the owner address, required to enable anyone to verify off-chain requests.
+  mapping(address owner => mapping(bytes32 requestDigest => uint256 expiryTimestamp)) private s_requestsAllowlist;
 
   // ================================================================
   // |                         Events                               |
@@ -88,7 +88,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   event WorkflowDonFamilyUpdated(
     bytes32 indexed workflowId, address indexed owner, string oldDonFamily, string newDonFamily
   );
-  event OperationApproved(address indexed owner, bytes32 indexed operationDigest, uint256 expiryTimestamp);
+  event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint256 expiryTimestamp);
 
   // ================================================================
   // |                         Errors                               |
@@ -119,6 +119,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error EmptyUpdateBatch();
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
+  error RequestExpired(bytes32 requestDigest, uint256 expiryTimestamp);
 
   // ================================================================
   // |                         Enums                                |
@@ -1232,36 +1233,37 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   }
 
   // ================================================================
-  // |                  Approved operations                         |
+  // |           Allowlisting requests (off-chain)                  |
   // ================================================================
-  /// @notice Approves an operation for a specific owner, allowing MSIGs to verify off-chain requests.
-  /// @dev    - This function is used to approve operations that can be executed by the Vault DON.
-  ///         - The operation is identified by a unique `operationDigest` (hash of the operation payload).
-  ///         - The `expiryTimestamp` defines until when the operation is valid.
-  ///         - Only owners that have linked their ownership proof can approve operations.
-  /// @param operationDigest  Unique identifier for the operation (hash of the operation payload).
-  /// @param expiryTimestamp   Timestamp until which the operation is valid (must be in the future).
+  /// @notice Allowlists request for a specific owner, allowing anyone to verify off-chain requests.
+  /// @dev    - This function is used to approve requests that can be executed by the Vault DON.
+  ///         - The request is identified by a unique `requestDigest` (hash of the request payload).
+  ///         - The `expiryTimestamp` defines until when the request is valid.
+  ///         - Only owners that have linked their ownership proof can allowlist requests.
+  /// @param requestDigest     Unique identifier for the request (hash of the request payload).
+  /// @param expiryTimestamp   Timestamp until which the request is valid (must be in the future).
   /// @custom:revert OwnershipLinkDoesNotExist  If the caller is not a linked owner.
   /// @dev User flow:
-  /// - User generates the digest of the operation.
-  /// - User calls approveOperation(operationDigest) on the Workflow Registry.
-  /// - Any user can then send the operation payload to the Vault DON.
+  /// - User generates the digest of the request.
+  /// - User calls allowlistRequest(requestDigest) on the Workflow Registry.
+  /// - Any user can then send the request payload to the Vault DON.
   /// - Vault DON checks if the digest is on-chain for verification purposes.
-  function approveOperation(bytes32 operationDigest, uint256 expiryTimestamp) external {
+  function allowlistRequest(bytes32 requestDigest, uint256 expiryTimestamp) external {
+    if (expiryTimestamp <= block.timestamp) revert RequestExpired(requestDigest, expiryTimestamp);
     if (!s_linkedOwners.contains(msg.sender)) revert OwnershipLinkDoesNotExist(msg.sender);
 
-    s_approvedOperations[msg.sender][operationDigest] = expiryTimestamp;
-    emit OperationApproved(msg.sender, operationDigest, expiryTimestamp);
+    s_requestsAllowlist[msg.sender][requestDigest] = expiryTimestamp;
+    emit RequestAllowlisted(msg.sender, requestDigest, expiryTimestamp);
   }
 
-  /// @notice Checks if an operation is approved for a specific owner.
-  /// @dev    - Returns true if the operation is approved and not expired.
-  ///         - The operation is considered approved if the current block timestamp is less than the expiry timestamp.
-  /// @param owner            The address of the linked owner who approved the operation.
-  /// @param operationDigest  Unique identifier for the operation (hash of the operation payload).
-  /// @return bool            True if the operation is approved and not expired, false otherwise.
-  function isOperationApproved(address owner, bytes32 operationDigest) external view returns (bool) {
-    return s_approvedOperations[owner][operationDigest] > block.timestamp;
+  /// @notice Checks if a request is allowlisted for a specific owner.
+  /// @dev    - Returns true if the request is allowlisted and not expired.
+  ///         - The request is considered allowlisted if the current block timestamp is less than the expiry timestamp.
+  /// @param owner            The address of the linked owner who allowlisted the request.
+  /// @param requestDigest    Unique identifier for the request (hash of the request payload).
+  /// @return bool            True if the request is allowlisted and not expired, false otherwise.
+  function isRequestAllowlisted(address owner, bytes32 requestDigest) external view returns (bool) {
+    return s_requestsAllowlist[owner][requestDigest] > block.timestamp;
   }
 
   // ================================================================
