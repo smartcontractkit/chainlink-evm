@@ -16,7 +16,7 @@ import (
 
 func TestORM_IdempotentInsertHead(t *testing.T) {
 	t.Parallel()
-
+	heads.BatchSize = 0
 	db := testutils.NewSqlxDB(t)
 	orm := heads.NewORM(*testutils.FixtureChainID, db)
 
@@ -36,6 +36,33 @@ func TestORM_IdempotentInsertHead(t *testing.T) {
 	foundHead, err = orm.LatestHead(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, head.Hash, foundHead.Hash)
+}
+
+func TestORM_IdempotentInsertHead_Batch(t *testing.T) {
+	t.Parallel()
+	heads.BatchSize = 2
+	db := testutils.NewSqlxDB(t)
+	orm := heads.NewORM(*testutils.FixtureChainID, db)
+
+	// Returns nil when inserting first head
+	head := testutils.Head(0)
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
+
+	head2 := testutils.Head(1)
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head2))
+
+	// Head is inserted
+	foundHead, err := orm.LatestHead(t.Context())
+	require.NoError(t, err)
+	assert.Equal(t, head2.Hash, foundHead.Hash)
+
+	// Returns nil when inserting same head again
+	require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
+
+	// Head is still inserted
+	foundHead, err = orm.LatestHead(t.Context())
+	require.NoError(t, err)
+	assert.Equal(t, head2.Hash, foundHead.Hash)
 }
 
 func TestORM_TrimOldHeads(t *testing.T) {
@@ -67,7 +94,7 @@ func TestORM_TrimOldHeads(t *testing.T) {
 
 func TestORM_TrimOldHeads_Batch(t *testing.T) {
 	t.Parallel()
-
+	heads.BatchSize = 2
 	db := testutils.NewSqlxDB(t)
 	orm := heads.NewORM(*testutils.FixtureChainID, db)
 

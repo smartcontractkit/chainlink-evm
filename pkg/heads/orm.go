@@ -36,7 +36,8 @@ var BatchSize int64 = 2
 type DbORM struct {
 	chainID                ubig.Big
 	ds                     sqlutil.DataSource
-	lastTrimmedBlockNumber int64
+	lastTrimmedBlockNumber int64            // the last block number that was trimmed
+	headsBatch             []*evmtypes.Head // used to batch insert heads
 	mu                     sync.RWMutex
 }
 
@@ -46,17 +47,38 @@ func NewORM(chainID big.Int, ds sqlutil.DataSource) *DbORM {
 		chainID:                ubig.Big(chainID),
 		ds:                     ds,
 		lastTrimmedBlockNumber: -1,
+		headsBatch:             make([]*evmtypes.Head, 0),
 	}
 }
 
 func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error {
+	orm.mu.Lock()
+	defer orm.mu.Unlock()
+
+	orm.headsBatch = append(orm.headsBatch, head)
+	if len(orm.headsBatch) < int(BatchSize) {
+		// Not enough to batch insert yet
+		return nil
+	}
+	query := `INSERT INTO evm.heads 
+				(hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
+			VALUES (:hash, :number, :parent_hash, NOW(), :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas)
+				ON CONFLICT DO NOTHING`
+
 	// listener guarantees head.EVMChainID to be equal to DbORM.chainID
-	query := `
-	INSERT INTO evm.heads (hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas) VALUES (
-	$1, $2, $3, now(), $4, $5, $6, $7)
-	ON CONFLICT (evm_chain_id, hash) DO NOTHING`
-	_, err := orm.ds.ExecContext(ctx, query, head.Hash, head.Number, head.ParentHash, head.Timestamp, head.L1BlockNumber, orm.chainID, head.BaseFeePerGas)
-	return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert head")
+	// query := `
+	// INSERT INTO evm.heads (hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas) VALUES (
+	// $1, $2, $3, now(), $4, $5, $6, $7)
+	// ON CONFLICT (evm_chain_id, hash) DO NOTHING`
+	// _, err := orm.ds.ExecContext(ctx, query, head.Hash, head.Number, head.ParentHash, head.Timestamp, head.L1BlockNumber, orm.chainID, head.BaseFeePerGas)
+	// return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert head")
+	_, err := orm.ds.NamedExecContext(ctx, query, orm.headsBatch)
+	if err != nil {
+		return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert heads")
+	}
+	orm.headsBatch = make([]*evmtypes.Head, 0)
+
+	return nil
 }
 
 func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
