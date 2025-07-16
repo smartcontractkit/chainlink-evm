@@ -59,6 +59,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // When a workflow is paused it is removed from the don family.
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
+  // Tracking approved operations for the owner address, required to enable MSIGs to verify off-chain requests.
+  mapping(address owner => mapping(bytes32 operationDigest => uint256 expiryTimestamp)) private s_approvedOperations;
+
   // ================================================================
   // |                         Events                               |
   // ================================================================
@@ -85,6 +88,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   event WorkflowDonFamilyUpdated(
     bytes32 indexed workflowId, address indexed owner, string oldDonFamily, string newDonFamily
   );
+  event OperationApproved(address indexed owner, bytes32 indexed operationDigest, uint256 expiryTimestamp);
 
   // ================================================================
   // |                         Errors                               |
@@ -1225,6 +1229,39 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       WorkflowMetadata storage rec = s_workflows[rid]; // no msg.sender check when fetched directly from mapping
       _applyPause(rid, rec);
     }
+  }
+
+  // ================================================================
+  // |                  Approved operations                         |
+  // ================================================================
+  /// @notice Approves an operation for a specific owner, allowing MSIGs to verify off-chain requests.
+  /// @dev    - This function is used to approve operations that can be executed by the Vault DON.
+  ///         - The operation is identified by a unique `operationDigest` (hash of the operation payload).
+  ///         - The `expiryTimestamp` defines until when the operation is valid.
+  ///         - Only owners that have linked their ownership proof can approve operations.
+  /// @param operationDigest  Unique identifier for the operation (hash of the operation payload).
+  /// @param expiryTimestamp   Timestamp until which the operation is valid (must be in the future).
+  /// @custom:revert OwnershipLinkDoesNotExist  If the caller is not a linked owner.
+  /// @dev User flow:
+  /// - User generates the digest of the operation.
+  /// - User calls approveOperation(operationDigest) on the Workflow Registry.
+  /// - Any user can then send the operation payload to the Vault DON.
+  /// - Vault DON checks if the digest is on-chain for verification purposes.
+  function approveOperation(bytes32 operationDigest, uint256 expiryTimestamp) external {
+    if (!s_linkedOwners.contains(msg.sender)) revert OwnershipLinkDoesNotExist(msg.sender);
+
+    s_approvedOperations[msg.sender][operationDigest] = expiryTimestamp;
+    emit OperationApproved(msg.sender, operationDigest, expiryTimestamp);
+  }
+
+  /// @notice Checks if an operation is approved for a specific owner.
+  /// @dev    - Returns true if the operation is approved and not expired.
+  ///         - The operation is considered approved if the current block timestamp is less than the expiry timestamp.
+  /// @param owner            The address of the linked owner who approved the operation.
+  /// @param operationDigest  Unique identifier for the operation (hash of the operation payload).
+  /// @return bool            True if the operation is approved and not expired, false otherwise.
+  function isOperationApproved(address owner, bytes32 operationDigest) external view returns (bool) {
+    return s_approvedOperations[owner][operationDigest] > block.timestamp;
   }
 
   // ================================================================
