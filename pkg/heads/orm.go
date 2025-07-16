@@ -30,7 +30,7 @@ type ORM interface {
 
 var _ ORM = &DbORM{}
 
-const BatchSize = 0
+var BatchSize int64 = 2
 
 type DbORM struct {
 	chainID                ubig.Big
@@ -62,7 +62,7 @@ func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err e
 		// we delete everything before the minBlockNumber, so we need to set the lastTrimmedBlockNumber to the block before the minBlockNumber
 		orm.lastTrimmedBlockNumber = minBlockNumber - 1
 	}
-	if orm.lastTrimmedBlockNumber+BatchSize > minBlockNumber {
+	if minBlockNumber-orm.lastTrimmedBlockNumber <= int64(BatchSize) {
 		// Batch not big enough to trim yet
 		return nil
 	}
