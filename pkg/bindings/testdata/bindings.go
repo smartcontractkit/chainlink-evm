@@ -45,10 +45,15 @@ var (
 )
 
 var DataStorageMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound2\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"AccessLogged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"DataStored\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"indexed\":true,\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"indexed\":true,\"internalType\":\"bytes[]\",\"name\":\"metadataArray\",\"type\":\"bytes[]\"}],\"name\":\"DynamicEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"NoFields\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getValue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"logAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"name\":\"onReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"}],\"name\":\"readData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"storeData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"}],\"name\":\"storeUserData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"newValue\",\"type\":\"string\"}],\"name\":\"updateData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"oldValue\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"reason\",\"type\":\"string\"}],\"name\":\"DataNotFound2\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"AccessLogged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"DataStored\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"indexed\":true,\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"indexed\":true,\"internalType\":\"bytes[]\",\"name\":\"metadataArray\",\"type\":\"bytes[]\"}],\"name\":\"DynamicEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"NoFields\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getReserves\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"totalMinted\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"totalReserve\",\"type\":\"uint256\"}],\"internalType\":\"structDataStorage.UpdateReserves\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getValue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"message\",\"type\":\"string\"}],\"name\":\"logAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\"}],\"name\":\"onReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"}],\"name\":\"readData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"storeData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"internalType\":\"structDataStorage.UserData\",\"name\":\"userData\",\"type\":\"tuple\"}],\"name\":\"storeUserData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"newValue\",\"type\":\"string\"}],\"name\":\"updateData\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"oldValue\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // Structs
+type DataStorageUpdateReserves struct {
+	TotalMinted  *big.Int
+	TotalReserve *big.Int
+}
+
 type DataStorageUserData struct {
 	Key   string
 	Value string
@@ -129,6 +134,8 @@ type DataStorage struct {
 }
 
 type DataStorageCodec interface {
+	EncodeGetReservesMethodCall() ([]byte, error)
+	DecodeGetReservesMethodOutput(data []byte) (DataStorageUpdateReserves, error)
 	EncodeGetValueMethodCall() ([]byte, error)
 	DecodeGetValueMethodOutput(data []byte) (string, error)
 	EncodeLogAccessMethodCall(in LogAccessInput) ([]byte, error)
@@ -139,6 +146,7 @@ type DataStorageCodec interface {
 	EncodeStoreUserDataMethodCall(in StoreUserDataInput) ([]byte, error)
 	EncodeUpdateDataMethodCall(in UpdateDataInput) ([]byte, error)
 	DecodeUpdateDataMethodOutput(data []byte) (string, error)
+	EncodeDataStorageUpdateReservesStruct(in DataStorageUpdateReserves) ([]byte, error)
 	EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error)
 	AccessLoggedLogHash() []byte
 	EncodeAccessLoggedTopics(evt abi.Event, values []AccessLogged) ([]*evm.TopicValues, error)
@@ -186,6 +194,18 @@ func NewDataStorageCodec() (DataStorageCodec, error) {
 		return nil, err
 	}
 	return &dataStorageCodecImpl{abi: &parsed}, nil
+}
+
+func (c *dataStorageCodecImpl) EncodeGetReservesMethodCall() ([]byte, error) {
+	return c.abi.Pack("getReserves")
+}
+
+func (c *dataStorageCodecImpl) DecodeGetReservesMethodOutput(data []byte) (DataStorageUpdateReserves, error) {
+	vals, err := c.abi.Methods["getReserves"].Outputs.Unpack(data)
+	if err != nil {
+		return *new(DataStorageUpdateReserves), err
+	}
+	return vals[0].(DataStorageUpdateReserves), nil
 }
 
 func (c *dataStorageCodecImpl) EncodeGetValueMethodCall() ([]byte, error) {
@@ -240,6 +260,23 @@ func (c *dataStorageCodecImpl) DecodeUpdateDataMethodOutput(data []byte) (string
 	return vals[0].(string), nil
 }
 
+func (c *dataStorageCodecImpl) EncodeDataStorageUpdateReservesStruct(in DataStorageUpdateReserves) ([]byte, error) {
+	tupleType, err := abi.NewType(
+		"tuple", "",
+		[]abi.ArgumentMarshaling{
+			{Name: "totalMinted", Type: "uint256"},
+			{Name: "totalReserve", Type: "uint256"},
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tuple type for DataStorageUpdateReserves: %w", err)
+	}
+	args := abi.Arguments{
+		{Name: "dataStorageUpdateReserves", Type: tupleType},
+	}
+
+	return args.Pack(in)
+}
 func (c *dataStorageCodecImpl) EncodeDataStorageUserDataStruct(in DataStorageUserData) ([]byte, error) {
 	tupleType, err := abi.NewType(
 		"tuple", "",
@@ -514,6 +551,25 @@ func (c *dataStorageCodecImpl) DecodeNoFields(log *evm.Log) (*NoFields, error) {
 	return event, nil
 }
 
+func (c DataStorage) GetReserves(
+	runtime sdk.Runtime,
+	blockNumber *big.Int,
+) (sdk.Promise[*evm.CallContractReply], error) {
+	calldata, err := c.Codec.EncodeGetReservesMethodCall()
+	if err != nil {
+		return nil, err
+	}
+	if blockNumber == nil {
+		return nil, fmt.Errorf("block number must be specified for read calls")
+	}
+	bn := pb.NewBigIntFromInt(blockNumber)
+
+	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
+		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
+		BlockNumber: bn,
+	}), nil
+}
+
 func (c DataStorage) GetValue(
 	runtime sdk.Runtime,
 	blockNumber *big.Int,
@@ -550,6 +606,41 @@ func (c DataStorage) ReadData(
 	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
 		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
 		BlockNumber: bn,
+	}), nil
+}
+
+func (c DataStorage) WriteReportDataStorageUpdateReserves(
+	runtime sdk.Runtime,
+	input DataStorageUpdateReserves,
+	gasConfig *evm.GasConfig,
+) (sdk.Promise[*evm.WriteReportReply], error) {
+	encoded, err := c.Codec.EncodeDataStorageUpdateReservesStruct(input)
+	if err != nil {
+		return nil, err
+	}
+	promise := runtime.GenerateReport(&pb2.ReportRequest{
+		EncodedPayload: encoded,
+		EncoderName:    "evm",
+		SigningAlgo:    "ecdsa",
+		HashingAlgo:    "keccak256",
+	})
+	report, err := promise.Await()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate report: %w", err)
+	}
+	id, err := bindings.ExtractID(report.RawReport)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract ID from report: %w", err)
+	}
+	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
+		Receiver: c.Address,
+		Report: &evm.SignedReport{
+			RawReport:     report.RawReport,
+			ReportContext: report.ReportContext,
+			Signatures:    bindings.ExtractSigs(report.Sigs),
+			Id:            id,
+		},
+		GasConfig: gasConfig,
 	}), nil
 }
 

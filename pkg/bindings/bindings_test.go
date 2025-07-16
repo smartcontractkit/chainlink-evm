@@ -206,6 +206,19 @@ func TestWriteReportMethods(t *testing.T) {
 	}, response, "Response should match expected WriteReportReply")
 }
 
+func TestEncodeStruct(t *testing.T) {
+	ds := newDataStorage(t)
+
+	str := datastorage.DataStorageUpdateReserves{
+		TotalMinted:  big.NewInt(100),
+		TotalReserve: big.NewInt(200),
+	}
+
+	encoded, err := ds.Codec.EncodeDataStorageUpdateReservesStruct(str)
+	require.NoError(t, err, "Encoding DataStorageUpdateReserves should not return an error")
+	require.NotNil(t, encoded, "Encoded data should not be nil")
+}
+
 func TestErrorHandling(t *testing.T) {
 	ds := newDataStorage(t)
 

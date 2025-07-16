@@ -32,6 +32,16 @@ contract DataStorage {
         string value;
     }
 
+    // Data expected to update reserves
+    struct UpdateReserves {
+        uint256 totalMinted;
+        uint256 totalReserve;
+    }
+
+    function getReserves() external view returns (UpdateReserves memory) {
+        return UpdateReserves(100, 200);
+    }
+
     // Write method: Stores a key-value pair
     function storeData(string calldata key, string calldata value) external {
         data[msg.sender][key] = value;

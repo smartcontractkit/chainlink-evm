@@ -190,7 +190,7 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Name}}Struct(in {{.N
 	tupleType, err := abi.NewType(
         "tuple", "",
         []abi.ArgumentMarshaling{
-			{{range $f := .Fields}}{Name: "{{ decapitalise $f.Name }}", Type: "{{ $f.Type }}"},
+			{{range $f := .Fields}}{Name: "{{ decapitalise $f.Name }}", Type: "{{ $f.SolKind }}"},
 			{{end}}
         },
     )
