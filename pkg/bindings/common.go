@@ -32,15 +32,6 @@ type ContractInitOptions struct {
 	GasConfig *evm.GasConfig
 }
 
-type ReadOptions struct {
-	BlockNumber *big.Int
-}
-
-type WriteOptions struct {
-	GasConfig  *evm.GasConfig
-	BlockDepth uint16 // 0 means finalized, 1 confirmed, positive numbers block depth - TODO to be defined together with all other operations
-}
-
 type LogTrackingOptions[T any] struct {
 	MaxLogsKept   uint64 `protobuf:"varint,1,opt,name=max_logs_kept,json=maxLogsKept,proto3" json:"max_logs_kept,omitempty"`     // maximum number of logs to retain ( 0 = unlimited )
 	RetentionTime int64  `protobuf:"varint,2,opt,name=retention_time,json=retentionTime,proto3" json:"retention_time,omitempty"` // maximum amount of time to retain logs in seconds
