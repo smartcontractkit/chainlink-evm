@@ -25,6 +25,7 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
@@ -100,6 +101,9 @@ type RPCClient struct {
 	rpcTimeout                 time.Duration
 	chainType                  chaintype.ChainType
 	clientErrors               config.ClientErrors
+	finalityTagEnabled         bool
+	finalityDepth              uint32
+	safeDepth                  uint32
 
 	ws   atomic.Pointer[rawclient]
 	http atomic.Pointer[rawclient]
@@ -122,12 +126,18 @@ func NewRPCClient(
 	largePayloadRPCTimeout time.Duration,
 	rpcTimeout time.Duration,
 	chainType chaintype.ChainType,
+	supportsFinalityTags bool,
+	finalityDepth uint32,
+	safeDepth uint32,
 ) *RPCClient {
 	r := &RPCClient{
 		largePayloadRPCTimeout: largePayloadRPCTimeout,
 		rpcTimeout:             rpcTimeout,
 		chainType:              chainType,
 		clientErrors:           cfg.Errors(),
+		finalityTagEnabled:     supportsFinalityTags,
+		finalityDepth:          finalityDepth,
+		safeDepth:              safeDepth,
 	}
 	r.cfg = cfg
 	r.name = name
@@ -658,6 +668,47 @@ func (r *RPCClient) BlockByNumber(ctx context.Context, number *big.Int) (head *e
 	return
 }
 
+func isUnconfirmed(confidence primitives.ConfidenceLevel) bool {
+	return confidence == primitives.Unconfirmed || confidence == ""
+}
+
+// HeaderByNumberWithOpts returns a block header from the current canonical chain with the specified block number.
+//
+// Parameters:
+// blockNumber - specifies which block to fetch:
+//   - nil or -2: latest block
+//   - -3: finalized block
+//   - -4: safe block
+//   - positive value: specific block at that height
+//
+// confidence - determines if additional verification is required (only applicable for positive blockNumber values):
+//   - "Unconfirmed" or empty string: no additional verification
+//   - "Finalized": returns error if requested block is not finalized
+//   - "Safe": returns error if requested block is not safe
+func (r *RPCClient) HeaderByNumberWithOpts(ctx context.Context, blockNumber *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
+	if isUnconfirmed(opts.ConfidenceLevel) || blockNumber == nil || blockNumber.Sign() < 0 {
+		result, err := r.BlockByNumber(ctx, blockNumber)
+		return (*evmtypes.Header)(result), err
+	}
+
+	var head *evmtypes.Head
+	err := r.doWithConfidence(ctx, rpc.BatchElem{
+		Method: "eth_getBlockByNumber",
+		Args:   []interface{}{ToBackwardCompatibleBlockNumArg(blockNumber), false},
+		Result: &head, // double point so that head can be initialized
+	}, blockNumber, opts.ConfidenceLevel)
+	if err != nil {
+		return nil, err
+	}
+
+	if head == nil {
+		return nil, r.wrapRPCClientError(ethereum.NotFound)
+	}
+
+	head.EVMChainID = ubig.New(r.chainID)
+	return (*evmtypes.Header)(head), nil
+}
+
 func (r *RPCClient) ethGetBlockByNumber(ctx context.Context, number string, result interface{}) (err error) {
 	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
 	defer cancel()
@@ -977,6 +1028,36 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 	return
 }
 
+// CallContractWithOpts executes a message call transaction, which is directly executed in the VM of the node,
+// but never mined into the blockchain.
+//
+// blockNumber - defines block at which call will be executed:
+//   - nil or -2: latest block
+//   - -3: finalized block
+//   - -4: safe block
+//   - positive value: specific block at that height
+//
+// opts.confidence - determines if additional verification is required (only applicable for positive blockNumber values):
+//   - "Unconfirmed" or empty string: no additional verification
+//   - "Finalized": returns error if call is executed at block that is not safe
+//   - "Safe": returns error if call is executed at block that is not safe
+func (r *RPCClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, opts evmtypes.CallContractOpts) ([]byte, error) {
+	if isUnconfirmed(opts.ConfidenceLevel) || blockNumber == nil || blockNumber.Sign() < 0 {
+		return r.CallContract(ctx, msg, blockNumber)
+	}
+
+	var hex hexutil.Bytes
+	err := r.doWithConfidence(ctx, rpc.BatchElem{
+		Method: "eth_call",
+		Args:   []interface{}{r.prepareCallArgs(msg), ToBackwardCompatibleBlockNumArg(blockNumber)},
+		Result: &hex,
+	}, blockNumber, opts.ConfidenceLevel)
+	if err != nil {
+		return nil, err
+	}
+	return hex, nil
+}
+
 func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (val []byte, err error) {
 	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
@@ -1055,6 +1136,36 @@ func (r *RPCClient) BalanceAt(ctx context.Context, account common.Address, block
 	)
 
 	return
+}
+
+// BalanceAtWithOpts returns the wei balance of the given account.
+//
+// Parameters:
+// number - specifies at which block height to fetch the balance:
+//   - nil or -2: latest block
+//   - -3: finalized block
+//   - -4: safe block
+//   - positive value: specific block at that height
+//
+// opts.confidence - determines if additional verification is required (only applicable for positive blockNumber values):
+//   - "Unconfirmed" or empty string: no additional verification
+//   - "Finalized": returns error if specified blockNumber is not finalized
+//   - "Safe": returns error if specified blockNumber is not safe
+func (r *RPCClient) BalanceAtWithOpts(ctx context.Context, account common.Address, blockNumber *big.Int, opts evmtypes.BalanceAtOpts) (*big.Int, error) {
+	if isUnconfirmed(opts.ConfidenceLevel) || blockNumber == nil || blockNumber.Sign() < 0 {
+		return r.BalanceAt(ctx, account, blockNumber)
+	}
+
+	var result hexutil.Big
+	err := r.doWithConfidence(ctx, rpc.BatchElem{
+		Method: "eth_getBalance",
+		Args:   []interface{}{account, ToBackwardCompatibleBlockNumArg(blockNumber)},
+		Result: &result,
+	}, blockNumber, opts.ConfidenceLevel)
+	if err != nil {
+		return nil, err
+	}
+	return result.ToInt(), nil
 }
 
 func (r *RPCClient) FeeHistory(ctx context.Context, blockCount uint64, lastBlock *big.Int, rewardPercentiles []float64) (feeHistory *ethereum.FeeHistory, err error) {
@@ -1146,6 +1257,34 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 	)
 
 	return
+}
+
+// FilterLogsWithOpts executes a filter query.
+//
+// opts.ConfidenceLevel - determines if additional verification is required (only applicable if both q.FromBlock and q.ToBlock are positive values):
+//   - "Unconfirmed" or empty string: no additional verification
+//   - "Finalized": returns error if specified q.ToBlockNumber is not finalized
+//   - "Safe": returns error if specified q.ToBlockNumber is not safe
+func (r *RPCClient) FilterLogsWithOpts(ctx context.Context, q ethereum.FilterQuery, opts evmtypes.FilterLogsOpts) ([]types.Log, error) {
+	if isUnconfirmed(opts.ConfidenceLevel) || q.FromBlock == nil || q.FromBlock.Sign() < 0 || q.ToBlock == nil || q.ToBlock.Sign() < 0 {
+		return r.FilterEvents(ctx, q)
+	}
+
+	var result []types.Log
+	arg, err := toFilterArg(q)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.doWithConfidence(ctx, rpc.BatchElem{
+		Method: "eth_getLogs",
+		Args:   []interface{}{arg},
+		Result: &result,
+	}, q.ToBlock, opts.ConfidenceLevel)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (r *RPCClient) SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (_ ethereum.Subscription, err error) {
@@ -1359,4 +1498,97 @@ func (r *RPCClient) makeLogValid(log types.Log) (types.Log, error) {
 	newIndex := uint64(log.TxIndex<<32) | uint64(log.Index)
 	log.Index = uint(newIndex)
 	return log, nil
+}
+
+func (r *RPCClient) confidenceToBlockNumber(confidence primitives.ConfidenceLevel) (rpc.BlockNumber, error) {
+	var referencedBlockNumber rpc.BlockNumber
+	switch confidence {
+	case primitives.Finalized:
+		referencedBlockNumber = rpc.FinalizedBlockNumber
+	case primitives.Safe:
+		referencedBlockNumber = rpc.SafeBlockNumber
+	default:
+		return 0, fmt.Errorf("confidence level %s not supported", confidence)
+	}
+
+	if !r.finalityTagEnabled {
+		return rpc.LatestBlockNumber, nil
+	}
+
+	return referencedBlockNumber, nil
+}
+
+func (r *RPCClient) referenceHeadToMaxAvailableHeight(confidence primitives.ConfidenceLevel, referenceHeadHeight int64) (int64, error) {
+	if r.finalityTagEnabled {
+		return referenceHeadHeight, nil
+	}
+
+	switch confidence {
+	case primitives.Finalized:
+		return max(0, referenceHeadHeight-int64(r.finalityDepth)), nil
+	case primitives.Safe:
+		return max(0, referenceHeadHeight-int64(r.safeDepth)), nil
+	default:
+		return 0, fmt.Errorf("confidence level %s not supported", confidence)
+	}
+}
+
+func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem, blockNumber *big.Int, confidence primitives.ConfidenceLevel) (err error) {
+	if blockNumber == nil || !blockNumber.IsInt64() {
+		return fmt.Errorf("blockNumber must be non nil and fit into int64. Got: %v", blockNumber)
+	}
+
+	referencedBlockNumber, err := r.confidenceToBlockNumber(confidence)
+	if err != nil {
+		return err
+	}
+
+	lggr := r.newRqLggr().With("method", request.Method+"WithConfidence", "request", request, "blockNumber", blockNumber, "confidence", confidence)
+
+	lggr.Debug("Starting RPC call")
+	start := time.Now()
+
+	defer func() {
+		duration := time.Since(start)
+		r.logResult(lggr, err, duration, r.getRPCDomain(), request.Method+"WithConfidence",
+			"result", request.Result,
+		)
+	}()
+
+	var referencedHead *evmtypes.Head
+	// BatchElems are copied, so request and blockRequest values wont change, but requests[0] and requests[1] will
+	requests := []rpc.BatchElem{request, {
+		Method: "eth_getBlockByNumber",
+		Args:   []interface{}{ToBackwardCompatibleBlockNumArg(big.NewInt(referencedBlockNumber.Int64())), false},
+		Result: &referencedHead,
+	}}
+	err = r.BatchCallContext(ctx, requests)
+	if err != nil {
+		return fmt.Errorf("failed to execute batch call: %w", err)
+	}
+
+	if requests[0].Error != nil {
+		return r.wrapRPCClientError(fmt.Errorf("caller request failed: %w", requests[0].Error))
+	}
+
+	if requests[1].Error != nil {
+		return r.wrapRPCClientError(fmt.Errorf("referenced block request failed: %w", requests[1].Error))
+	}
+
+	if referencedHead == nil {
+		return errors.New("referenced block request returned nil. RPC is unhealthy or chain does not support specified tag")
+	}
+
+	maxAvailableHeight, err := r.referenceHeadToMaxAvailableHeight(confidence, referencedHead.Number)
+	if err != nil {
+		return err
+	}
+
+	if maxAvailableHeight < blockNumber.Int64() {
+		err = fmt.Errorf("data was requested at block %d while max available height with confidence level %s is %d",
+			blockNumber.Int64(), confidence, maxAvailableHeight)
+		return r.wrapRPCClientError(err)
+	}
+
+	return nil
 }

@@ -16,6 +16,8 @@ import (
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
+var _ Client = (*NullClient)(nil)
+
 // NullClient satisfies the Client but has no side effects
 type NullClient struct {
 	cid  *big.Int
@@ -60,6 +62,11 @@ func (nc *NullClient) CallContext(ctx context.Context, result interface{}, metho
 
 func (nc *NullClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error) {
 	nc.lggr.Debug("HeadByNumber")
+	return nil, nil
+}
+
+func (nc *NullClient) HeaderByNumberWithOpts(ctx context.Context, n *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
+	nc.lggr.Debug("HeaderByNumberWithOpts")
 	return nil, nil
 }
 
@@ -176,9 +183,18 @@ func (nc *NullClient) BalanceAt(ctx context.Context, account common.Address, blo
 	nc.lggr.Debug("BalanceAt")
 	return big.NewInt(0), nil
 }
+func (nc *NullClient) BalanceAtWithOpts(ctx context.Context, account common.Address, blockNumber *big.Int, opts evmtypes.BalanceAtOpts) (*big.Int, error) {
+	nc.lggr.Debug("BalanceAtWithOpts")
+	return big.NewInt(0), nil
+}
 
 func (nc *NullClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error) {
 	nc.lggr.Debug("FilterLogs")
+	return nil, nil
+}
+
+func (nc *NullClient) FilterLogsWithOpts(ctx context.Context, q ethereum.FilterQuery, opts evmtypes.FilterLogsOpts) ([]types.Log, error) {
+	nc.lggr.Debug("FilterLogsWithOpts")
 	return nil, nil
 }
 
@@ -194,6 +210,11 @@ func (nc *NullClient) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
 
 func (nc *NullClient) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
 	nc.lggr.Debug("CallContract")
+	return nil, nil
+}
+
+func (nc *NullClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, opts evmtypes.CallContractOpts) ([]byte, error) {
+	nc.lggr.Debug("CallContractWithOpts")
 	return nil, nil
 }
 

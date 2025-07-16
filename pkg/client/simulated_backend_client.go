@@ -65,6 +65,8 @@ var (
 	balanceOfABI abi.ABI
 )
 
+var _ Client = (*SimulatedBackendClient)(nil)
+
 // SimulatedBackendClient is an Client implementation using a simulated
 // blockchain backend. Note that not all RPC methods are implemented here.
 type SimulatedBackendClient struct {
@@ -138,6 +140,10 @@ func (c *SimulatedBackendClient) FilterLogs(ctx context.Context, q ethereum.Filt
 	}
 
 	return logs, err
+}
+
+func (c *SimulatedBackendClient) FilterLogsWithOpts(ctx context.Context, q ethereum.FilterQuery, opts evmtypes.FilterLogsOpts) (logs []types.Log, err error) {
+	return c.FilterLogs(ctx, q)
 }
 
 // SubscribeFilterLogs registers a subscription for push notifications of logs
@@ -264,6 +270,11 @@ func (c *SimulatedBackendClient) HeadByNumber(ctx context.Context, n *big.Int) (
 	return head, nil
 }
 
+func (c *SimulatedBackendClient) HeaderByNumberWithOpts(ctx context.Context, n *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
+	result, err := c.HeadByNumber(ctx, n)
+	return (*evmtypes.Header)(result), err
+}
+
 // HeadByHash returns our own header type.
 func (c *SimulatedBackendClient) HeadByHash(ctx context.Context, h common.Hash) (*evmtypes.Head, error) {
 	header, err := c.client.HeaderByHash(ctx, h)
@@ -314,6 +325,10 @@ func (c *SimulatedBackendClient) NonceAt(ctx context.Context, account common.Add
 
 // BalanceAt gets balance as of a specified block.
 func (c *SimulatedBackendClient) BalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error) {
+	return c.client.BalanceAt(ctx, account, blockNumber)
+}
+
+func (c *SimulatedBackendClient) BalanceAtWithOpts(ctx context.Context, account common.Address, blockNumber *big.Int, opts evmtypes.BalanceAtOpts) (*big.Int, error) {
 	return c.client.BalanceAt(ctx, account, blockNumber)
 }
 
@@ -473,6 +488,10 @@ func (c *SimulatedBackendClient) CallContract(ctx context.Context, msg ethereum.
 		return nil, &JsonError{Data: []byte{}, Message: err.Error(), Code: 3}
 	}
 	return res, nil
+}
+
+func (c *SimulatedBackendClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, opts evmtypes.CallContractOpts) ([]byte, error) {
+	return c.CallContract(ctx, msg, blockNumber)
 }
 
 func (c *SimulatedBackendClient) PendingCallContract(ctx context.Context, msg ethereum.CallMsg) ([]byte, error) {
