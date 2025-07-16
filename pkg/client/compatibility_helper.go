@@ -1,12 +1,14 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 )
 
@@ -70,4 +72,26 @@ func toBackwardCompatibleCallArgWithChainTypeSupport(msg ethereum.CallMsg, chain
 	}
 
 	return callArgs
+}
+
+// COPIED FROM go-ethereum/ethclient/gethclient - must be kept up to date!
+func toFilterArg(q ethereum.FilterQuery) (interface{}, error) {
+	arg := map[string]interface{}{
+		"address": q.Addresses,
+		"topics":  q.Topics,
+	}
+	if q.BlockHash != nil {
+		arg["blockHash"] = *q.BlockHash
+		if q.FromBlock != nil || q.ToBlock != nil {
+			return nil, errors.New("cannot specify both BlockHash and FromBlock/ToBlock")
+		}
+	} else {
+		if q.FromBlock == nil {
+			arg["fromBlock"] = "0x0"
+		} else {
+			arg["fromBlock"] = ToBackwardCompatibleBlockNumArg(q.FromBlock)
+		}
+		arg["toBlock"] = ToBackwardCompatibleBlockNumArg(q.ToBlock)
+	}
+	return arg, nil
 }
