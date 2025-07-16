@@ -30,7 +30,7 @@ type ORM interface {
 
 var _ ORM = &DbORM{}
 
-var BatchSize int64 = 2
+var BatchSize int64 = 1
 
 type DbORM struct {
 	chainID                ubig.Big
