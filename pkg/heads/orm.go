@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
@@ -36,6 +37,7 @@ type DbORM struct {
 	chainID                ubig.Big
 	ds                     sqlutil.DataSource
 	lastTrimmedBlockNumber int64
+	mu                     sync.RWMutex
 }
 
 // NewORM creates an ORM scoped to chainID.
@@ -58,6 +60,9 @@ func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head)
 }
 
 func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
+	orm.mu.Lock()
+	defer orm.mu.Unlock()
+
 	if orm.lastTrimmedBlockNumber == -1 {
 		// we delete everything before the minBlockNumber, so we need to set the lastTrimmedBlockNumber to the block before the minBlockNumber
 		orm.lastTrimmedBlockNumber = minBlockNumber - 1

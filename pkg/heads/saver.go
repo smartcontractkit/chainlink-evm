@@ -83,7 +83,7 @@ func (hs *saver) MarkFinalized(ctx context.Context, finalized *evmtypes.Head) er
 	if !hs.heads.MarkFinalized(finalized.BlockHash(), minBlockToKeep) {
 		return fmt.Errorf("failed to find %s block in the canonical chain to mark it as finalized", finalized)
 	}
-
+	hs.logger.Debugw("CALLING ORM.TrimOldHeads", "minBlockToKeep", minBlockToKeep)
 	return hs.orm.TrimOldHeads(ctx, minBlockToKeep)
 }
 
