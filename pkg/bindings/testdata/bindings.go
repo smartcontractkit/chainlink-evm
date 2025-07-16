@@ -564,9 +564,9 @@ func (c DataStorage) WriteReportDataStorageUserData(
 	}
 	promise := runtime.GenerateReport(&pb2.ReportRequest{
 		EncodedPayload: encoded,
-		EncoderName:    "EVM",
-		SigningAlgo:    "ECDSA",
-		HashingAlgo:    "KECCAK256",
+		EncoderName:    "evm",
+		SigningAlgo:    "ecdsa",
+		HashingAlgo:    "keccak256",
 	})
 	report, err := promise.Await()
 	if err != nil {
