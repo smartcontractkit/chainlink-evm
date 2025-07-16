@@ -59,12 +59,15 @@ func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head)
 
 func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
 	if orm.lastTrimmedBlockNumber == -1 {
-		orm.lastTrimmedBlockNumber = minBlockNumber
+		// we delete everything before the minBlockNumber, so we need to set the lastTrimmedBlockNumber to the block before the minBlockNumber
+		orm.lastTrimmedBlockNumber = minBlockNumber - 1
 	}
 	if orm.lastTrimmedBlockNumber+BatchSize > minBlockNumber {
 		// Batch not big enough to trim yet
 		return nil
 	}
+	// we delete everything before the minBlockNumber, so we need to set the lastTrimmedBlockNumber to the block before the minBlockNumber
+	orm.lastTrimmedBlockNumber = minBlockNumber - 1
 	query := `DELETE FROM evm.heads WHERE evm_chain_id = $1 AND number < $2`
 	_, err = orm.ds.ExecContext(ctx, query, orm.chainID, minBlockNumber)
 	return err
