@@ -433,22 +433,28 @@ func (lp *logPoller) Replay(ctx context.Context, fromBlock int64) (err error) {
 
 	lp.lggr.Debugf("Replaying from block %d", fromBlock)
 	latest, err := lp.latencyMonitor.HeadByNumber(ctx, nil)
+	lp.lggr.Debugw("Latest head 1", "latest", latest)
 	if err != nil {
 		return err
 	}
 	if fromBlock < 1 || fromBlock > latest.Number {
 		return pkgerrors.Errorf("Invalid replay block number %v, acceptable range [1, %v]", fromBlock, latest.Number)
 	}
+	lp.lggr.Debugw("Latest head 2", "latest", latest)
 
 	// Backfill all logs up to the latest saved finalized block outside the LogPoller's main loop.
 	// This is safe, because chain cannot be rewinded deeper than that, so there must not be any race conditions.
 	savedFinalizedBlockNumber, err := lp.savedFinalizedBlockNumber(ctx)
+	lp.lggr.Debugw("Saved finalized block number", "savedFinalizedBlockNumber", savedFinalizedBlockNumber)
 	if err != nil {
+		lp.lggr.Debugw("Saved finalized block number failed", "err", err)
 		return err
 	}
 	if fromBlock <= savedFinalizedBlockNumber {
 		err = lp.backfill(ctx, fromBlock, savedFinalizedBlockNumber)
+		lp.lggr.Debugw("Backfill", "err", err)
 		if err != nil {
+			lp.lggr.Debugw("Backfill failed", "err", err)
 			return err
 		}
 	}
@@ -458,20 +464,24 @@ func (lp *logPoller) Replay(ctx context.Context, fromBlock int64) (err error) {
 	fromBlock = mathutil.Max(fromBlock, savedFinalizedBlockNumber+1)
 	// Don't continue if latest block number is the same as saved finalized block number
 	if fromBlock > latest.Number {
+		lp.lggr.Debugw("Latest block number is the same as saved finalized block number", "fromBlock", fromBlock, "latest", latest)
 		return nil
 	}
 	// Block until replay notification accepted or cancelled.
 	select {
 	case lp.replayStart <- fromBlock:
 	case <-ctx.Done():
+		lp.lggr.Debugw("Replay request aborted", "err", ctx.Err())
 		return pkgerrors.Wrap(ErrReplayRequestAborted, ctx.Err().Error())
 	}
 	// Block until replay complete or cancelled.
 	select {
 	case err = <-lp.replayComplete:
+		lp.lggr.Debugw("Replay complete", "err", err)
 		return err
 	case <-ctx.Done():
 		// Note: this will not abort the actual replay, it just means the client gave up on waiting for it to complete
+		lp.lggr.Debugw("Replay request cancelled", "err", ctx.Err())
 		lp.wg.Add(1)
 		go lp.recvReplayComplete()
 		return ErrReplayInProgress
