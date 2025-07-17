@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -20,8 +21,7 @@ import (
 
 func NewSqlxDB(t testing.TB) *sqlx.DB {
 	SkipShortDB(t)
-	// dbURL := os.Getenv("CL_DATABASE_URL")
-	dbURL := "postgresql://chainlink_dev:insecurepassword@localhost:5432/chainlink_development_test?sslmode=disable"
+	dbURL := os.Getenv("CL_DATABASE_URL")
 	if dbURL == "" {
 		t.Errorf("you must provide a CL_DATABASE_URL environment variable")
 		return nil
