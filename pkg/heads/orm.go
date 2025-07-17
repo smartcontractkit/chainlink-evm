@@ -31,23 +31,23 @@ type ORM interface {
 
 var _ ORM = &DbORM{}
 
-var BatchSize int64 = 100
-
 type DbORM struct {
 	chainID                ubig.Big
 	ds                     sqlutil.DataSource
 	lastTrimmedBlockNumber int64            // the last block number that was trimmed
 	headsBatch             []*evmtypes.Head // used to batch insert heads
 	mu                     sync.RWMutex
+	batchSize              int64 // the number of heads to batch insert/delete
 }
 
 // NewORM creates an ORM scoped to chainID.
-func NewORM(chainID big.Int, ds sqlutil.DataSource) *DbORM {
+func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
 	return &DbORM{
 		chainID:                ubig.Big(chainID),
 		ds:                     ds,
 		lastTrimmedBlockNumber: -1,
 		headsBatch:             make([]*evmtypes.Head, 0),
+		batchSize:              batchSize,
 	}
 }
 
@@ -55,7 +55,7 @@ func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head)
 	orm.mu.Lock()
 
 	orm.headsBatch = append(orm.headsBatch, head)
-	if len(orm.headsBatch) < int(BatchSize) {
+	if len(orm.headsBatch) < int(orm.batchSize) {
 		// Not enough to batch insert yet
 		orm.mu.Unlock()
 		return nil
@@ -87,7 +87,7 @@ func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err e
 		// we delete everything before the minBlockNumber, so we need to set the lastTrimmedBlockNumber to the block before the minBlockNumber
 		orm.lastTrimmedBlockNumber = minBlockNumber - 1
 	}
-	if minBlockNumber-orm.lastTrimmedBlockNumber <= int64(BatchSize) {
+	if minBlockNumber-orm.lastTrimmedBlockNumber <= orm.batchSize {
 		// Batch not big enough to trim yet
 		orm.mu.Unlock()
 		return nil

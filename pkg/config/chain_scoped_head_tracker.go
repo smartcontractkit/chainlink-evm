@@ -33,3 +33,7 @@ func (h *headTrackerConfig) MaxAllowedFinalityDepth() uint32 {
 func (h *headTrackerConfig) PersistenceEnabled() bool {
 	return *h.c.PersistenceEnabled
 }
+
+func (h *headTrackerConfig) PersistenceBatchSize() int64 {
+	return *h.c.PersistenceBatchSize
+}

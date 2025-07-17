@@ -16,9 +16,8 @@ import (
 
 func TestORM_IdempotentInsertHead(t *testing.T) {
 	t.Parallel()
-	heads.BatchSize = 0
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	// Returns nil when inserting first head
 	head := testutils.Head(0)
@@ -40,9 +39,8 @@ func TestORM_IdempotentInsertHead(t *testing.T) {
 
 func TestORM_IdempotentInsertHead_Batch(t *testing.T) {
 	t.Parallel()
-	heads.BatchSize = 2
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 2)
 
 	// Returns nil when inserting first head
 	head := testutils.Head(0)
@@ -67,9 +65,8 @@ func TestORM_IdempotentInsertHead_Batch(t *testing.T) {
 
 func TestORM_TrimOldHeads(t *testing.T) {
 	t.Parallel()
-	heads.BatchSize = 0
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	for i := 0; i < 10; i++ {
 		head := testutils.Head(i)
@@ -94,9 +91,8 @@ func TestORM_TrimOldHeads(t *testing.T) {
 
 func TestORM_TrimOldHeads_Batch(t *testing.T) {
 	t.Parallel()
-	heads.BatchSize = 2
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 2)
 
 	for i := 0; i < 10; i++ {
 		head := testutils.Head(i)
@@ -175,7 +171,7 @@ func TestORM_HeadByHash(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	var hash common.Hash
 	for i := 0; i < 10; i++ {
@@ -196,7 +192,7 @@ func TestORM_HeadByHash_NotFound(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	hash := testutils.Head(123).Hash
 	head, err := orm.HeadByHash(tests.Context(t), hash)
@@ -209,7 +205,7 @@ func TestORM_LatestHeads_NoRows(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	orm := heads.NewORM(*testutils.FixtureChainID, db)
+	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	heads, err := orm.LatestHeads(tests.Context(t), 100)
 

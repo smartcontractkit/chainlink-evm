@@ -389,6 +389,8 @@ MaxAllowedFinalityDepth = 10000 # Default
 # On chains with fast finality, the persistence layer does not improve the chain's load time and only consumes database resources (mainly IO).
 # NOTE: persistence should not be disabled for products that use LogBroadcaster, as it might lead to missed on-chain events.
 PersistenceEnabled = true # Default
+# PersistenceBatchSize is the batch size for head tracker db inserts/deletes
+PersistenceBatchSize = 100 # Default
 
 [[KeySpecific]]
 # Key is the account to apply these settings to
