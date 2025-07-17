@@ -396,6 +396,7 @@ PersistenceEnabled = true # Default
 # To limit that initial fetch while also improving db usage, 100 is the default for now.
 PersistenceBatchSize = 100 # Default
 
+
 [[KeySpecific]]
 # Key is the account to apply these settings to
 Key = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
