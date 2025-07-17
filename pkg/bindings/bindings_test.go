@@ -22,14 +22,31 @@ import (
 )
 
 func TestGenerateBindings(t *testing.T) {
-	err := bindings.GenerateBindings(
-		"./testdata/DataStorage_combined.json",
-		"",
-		"bindings",
-		"",
-		"./testdata/bindings.go",
-	)
-	require.NoError(t, err, "Failed to generate bindings from combined JSON")
+	t.Run("real contract", func(t *testing.T) {
+		err := bindings.GenerateBindings(
+			"./testdata/DataStorage_combined.json",
+			"",
+			"bindings",
+			"",
+			"./testdata/bindings.go",
+		)
+		require.NoError(t, err, "Failed to generate bindings from combined JSON")
+	})
+
+	t.Run("empty contract", func(t *testing.T) {
+		err := bindings.GenerateBindings(
+			"./testdata/EmptyContract_combined.json",
+			"",
+			"bindings",
+			"",
+			"./testdata/emptybindings.go",
+		)
+		require.NoError(t, err, "Failed to generate bindings from combined JSON")
+
+		// just verify it compiles
+		_, err = datastorage.NewEmptyContract(nil, nil, nil)
+		require.NoError(t, err)
+	})
 }
 
 func TestGeneratedBindingsCodec(t *testing.T) {
