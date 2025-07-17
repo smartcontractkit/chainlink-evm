@@ -36,9 +36,9 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
-	_ = abi.ConvertType
 	_ = emptypb.Empty{}
 	_ = pb.NewBigIntFromInt
+	_ = pb2.AggregationType_AGGREGATION_TYPE_COMMON_PREFIX
 	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
 	_ = sdk.ResponseBufferTooSmall
