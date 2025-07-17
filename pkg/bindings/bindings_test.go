@@ -359,7 +359,7 @@ func TestLogTrigger(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expected2, encoded[1].Values[1])
 
-		trigger, err := ds.LogTriggerDataStoredLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
+		trigger, err := ds.LogTriggerDataStoredLog(1, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
 		require.NotNil(t, trigger)
 		require.NoError(t, err)
 	})
@@ -427,7 +427,7 @@ func TestLogTrigger(t *testing.T) {
 		expected6 := crypto.Keccak256(packed4)
 		require.Equal(t, expected6, encoded[3].Values[1])
 
-		trigger, err := ds.LogTriggerDynamicEventLog(evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
+		trigger, err := ds.LogTriggerDynamicEventLog(1, evm.ConfidenceLevel_CONFIDENCE_LEVEL_FINALIZED, events)
 		require.NotNil(t, trigger)
 		require.NoError(t, err)
 	})

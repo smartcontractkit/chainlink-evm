@@ -766,14 +766,14 @@ func (c *DataStorage) UnpackError(data []byte) (any, error) {
 	}
 }
 
-func (c *DataStorage) LogTriggerAccessLoggedLog(confidence evm.ConfidenceLevel, filters []AccessLogged) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *DataStorage) LogTriggerAccessLoggedLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []AccessLogged) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["AccessLogged"]
 	topics, err := c.Codec.EncodeAccessLoggedTopics(event, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode topics for AccessLogged: %w", err)
 	}
 
-	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(chainSelector, &evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
@@ -828,14 +828,14 @@ func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindi
 	})
 }
 
-func (c *DataStorage) LogTriggerDataStoredLog(confidence evm.ConfidenceLevel, filters []DataStored) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *DataStorage) LogTriggerDataStoredLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []DataStored) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["DataStored"]
 	topics, err := c.Codec.EncodeDataStoredTopics(event, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode topics for DataStored: %w", err)
 	}
 
-	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(chainSelector, &evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
@@ -890,14 +890,14 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 	})
 }
 
-func (c *DataStorage) LogTriggerDynamicEventLog(confidence evm.ConfidenceLevel, filters []DynamicEvent) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *DataStorage) LogTriggerDynamicEventLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []DynamicEvent) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["DynamicEvent"]
 	topics, err := c.Codec.EncodeDynamicEventTopics(event, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode topics for DynamicEvent: %w", err)
 	}
 
-	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(chainSelector, &evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
@@ -952,14 +952,14 @@ func (c *DataStorage) FilterLogsDynamicEvent(runtime sdk.Runtime, options *bindi
 	})
 }
 
-func (c *DataStorage) LogTriggerNoFieldsLog(confidence evm.ConfidenceLevel, filters []NoFields) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *DataStorage) LogTriggerNoFieldsLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []NoFields) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["NoFields"]
 	topics, err := c.Codec.EncodeNoFieldsTopics(event, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode topics for NoFields: %w", err)
 	}
 
-	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(chainSelector, &evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
