@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/cre-sdk-go/sdk"
@@ -40,7 +41,7 @@ var (
 	_ = pb.NewBigIntFromInt
 	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
-	_ = sdk.ConsensusResponseMapKeyPayload
+	_ = sdk.ResponseBufferTooSmall
 )
 
 {{range $contract := .Contracts}}
@@ -189,7 +190,7 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) Encode{{.Name}}Struct(in {{.N
 	tupleType, err := abi.NewType(
         "tuple", "",
         []abi.ArgumentMarshaling{
-			{{range $f := .Fields}}{Name: "{{ decapitalise $f.Name }}", Type: "{{ $f.Type }}"},
+			{{range $f := .Fields}}{Name: "{{ decapitalise $f.Name }}", Type: "{{ $f.SolKind }}"},
 			{{end}}
         },
     )
@@ -308,6 +309,43 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
   {{- end}}
 {{end}}
 
+{{range $.Structs}}
+
+func (c {{$contract.Type}}) WriteReport{{.Name}}(
+	runtime sdk.Runtime,
+	input {{.Name}},
+	gasConfig *evm.GasConfig,
+) (sdk.Promise[*evm.WriteReportReply], error) {
+	encoded, err := c.Codec.Encode{{.Name}}Struct(input)
+	if err != nil {
+		return nil, err
+	}
+	promise := runtime.GenerateReport(&pb2.ReportRequest{
+		EncodedPayload: encoded,
+		EncoderName:    "evm",
+		SigningAlgo:    "ecdsa",
+		HashingAlgo:    "keccak256",
+	})
+	report, err := promise.Await()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate report: %w", err)
+	}
+	id, err := bindings.ExtractID(report.RawReport)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract ID from report: %w", err)
+	}
+	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
+		Receiver: c.Address,
+		Report: &evm.SignedReport{
+			RawReport:     report.RawReport,
+			ReportContext: report.ReportContext,
+			Signatures:    bindings.ExtractSigs(report.Sigs),
+			Id:            id,
+		},
+		GasConfig: gasConfig,
+	}), nil
+}
+{{end}}
 
 {{range $error := $contract.Errors}}
 

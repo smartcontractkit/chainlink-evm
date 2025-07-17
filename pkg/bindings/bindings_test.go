@@ -11,6 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
+	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings/mocks"
 	datastorage "github.com/smartcontractkit/chainlink-evm/pkg/bindings/testdata"
@@ -145,6 +148,75 @@ func TestReadMethods(t *testing.T) {
 	require.NoError(t, err, "Awaiting ReadData reply should not return an error")
 	require.NotNil(t, response, "Response from ReadData should not be nil")
 	require.Equal(t, []byte{0x01, 0x02, 0x03, 0x04}, response.Data, "Response data should match expected dummy data")
+}
+
+func TestWriteReportMethods(t *testing.T) {
+	client := mocks.NewEVMClient(t)
+	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
+	require.NoError(t, err, "Failed to create DataStorage instance")
+
+	runtime := mocks.NewRuntime(t)
+
+	report := ocr3types.Metadata{
+		Version:          1,
+		ExecutionID:      "1234567890123456789012345678901234567890123456789012345678901234",
+		Timestamp:        1620000000,
+		DONID:            1,
+		DONConfigVersion: 1,
+		WorkflowID:       "1234567890123456789012345678901234567890123456789012345678901234",
+		WorkflowName:     "12",
+		WorkflowOwner:    "1234567890123456789012345678901234567890",
+		ReportID:         "1234",
+	}
+
+	rawReport, err := report.Encode()
+	require.NoError(t, err)
+
+	runtime.EXPECT().GenerateReport(mock.Anything).Return(
+		sdk.NewBasicPromise(func() (*pb.ReportResponse, error) {
+			return &pb.ReportResponse{
+				RawReport: rawReport,
+			}, nil
+		})).Once()
+
+	client.EXPECT().WriteReport(mock.Anything, mock.Anything).
+		Run(func(_ sdk.Runtime, req *evm.WriteReportRequest) {
+			require.Equal(t, []byte("1234"), req.Report.Id)
+		}).
+		Return(
+			sdk.NewBasicPromise(func() (*evm.WriteReportReply, error) {
+				// Simulate a successful write report
+				return &evm.WriteReportReply{
+					TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
+					TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
+				}, nil
+			})).Once()
+
+	reply, err := ds.WriteReportDataStorageUserData(runtime, datastorage.DataStorageUserData{
+		Key:   "testKey",
+		Value: "testValue",
+	}, nil)
+	require.NoError(t, err, "WriteReportDataStorageUserData should not return an error")
+	response, err := reply.Await()
+	require.NoError(t, err, "Awaiting WriteReportDataStorageUserData reply should not return an error")
+	require.NotNil(t, response, "Response from WriteReportDataStorageUserData should not be nil")
+	require.Equal(t, &evm.WriteReportReply{
+		TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
+		TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
+	}, response, "Response should match expected WriteReportReply")
+}
+
+func TestEncodeStruct(t *testing.T) {
+	ds := newDataStorage(t)
+
+	str := datastorage.DataStorageUpdateReserves{
+		TotalMinted:  big.NewInt(100),
+		TotalReserve: big.NewInt(200),
+	}
+
+	encoded, err := ds.Codec.EncodeDataStorageUpdateReservesStruct(str)
+	require.NoError(t, err, "Encoding DataStorageUpdateReserves should not return an error")
+	require.NotNil(t, encoded, "Encoded data should not be nil")
 }
 
 func TestErrorHandling(t *testing.T) {
