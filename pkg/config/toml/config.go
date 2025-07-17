@@ -1183,6 +1183,7 @@ type Node struct {
 	HTTPURLExtraWrite *commonconfig.URL
 	SendOnly          *bool
 	Order             *int32
+	IsRPCProxy        *bool
 }
 
 func (n *Node) ValidateConfig() (err error) {

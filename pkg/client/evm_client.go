@@ -47,7 +47,7 @@ func NewEvmClient(cfg evmconfig.NodePool, chainCfg ChainConfig, clientErrors evm
 
 			primaryNode := multinode.NewNode(cfg, chainCfg,
 				lggr, multiNodeMetrics, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i, chainID, *node.Order,
-				rpc, "EVM")
+				rpc, "EVM", *node.IsRPCProxy)
 			primaries = append(primaries, primaryNode)
 		}
 	}

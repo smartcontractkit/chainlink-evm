@@ -176,7 +176,7 @@ func NewChainClientWithTestNode(
 	})
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
-		nodeCfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, logger.Test(t), multiNodeMetrics, parsed, rpcHTTPURL, "eth-primary-node-0", id, chainID, 1, rpc, "EVM")
+		nodeCfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, logger.Test(t), multiNodeMetrics, parsed, rpcHTTPURL, "eth-primary-node-0", id, chainID, 1, rpc, "EVM", false)
 	primaries := []multinode.Node[*big.Int, *RPCClient]{n}
 
 	sendonlys := make([]multinode.SendOnlyNode[*big.Int, *RPCClient], len(sendonlyRPCURLs))
@@ -241,7 +241,7 @@ func NewChainClientWithMockedRpc(
 	require.NoError(t, err)
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
-		cfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, lggr, multiNodeMetrics, parsed, nil, "eth-primary-node-0", 1, chainID, 1, rpc, "EVM")
+		cfg, mocks.ChainConfig{NoNewHeadsThresholdVal: noNewHeadsThreshold}, lggr, multiNodeMetrics, parsed, nil, "eth-primary-node-0", 1, chainID, 1, rpc, "EVM", false)
 	primaries := []multinode.Node[*big.Int, *RPCClient]{n}
 	clientErrors := NewTestClientErrors()
 	c := NewChainClient(lggr, multiNodeMetrics, selectionMode, leaseDuration, primaries, nil, chainID, &clientErrors, 0, "")
