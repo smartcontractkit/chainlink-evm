@@ -51,10 +51,12 @@ func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
 	}
 }
 
-func (orm *DbORM) setHeadsBatch(heads []*evmtypes.Head, appendHead *evmtypes.Head) []*evmtypes.Head {
+func (orm *DbORM) setHeadsBatch(appendHead *evmtypes.Head) []*evmtypes.Head {
 	orm.mu.Lock()
 	defer orm.mu.Unlock()
 
+	// if we are appending a head, we need to check if the batch is big enough to insert
+	// if it is, copy it and return it
 	if appendHead != nil {
 		orm.headsBatch = append(orm.headsBatch, appendHead)
 		if len(orm.headsBatch) < int(orm.batchSize) {
@@ -65,14 +67,14 @@ func (orm *DbORM) setHeadsBatch(heads []*evmtypes.Head, appendHead *evmtypes.Hea
 		copy(copied, orm.headsBatch)
 
 		return copied
-	} else {
-		orm.headsBatch = heads
-		return nil
 	}
+	// this will be only called to reset headsBatch
+	orm.headsBatch = orm.headsBatch[:0]
+	return nil
 }
 
 func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error {
-	batch := orm.setHeadsBatch(nil, head)
+	batch := orm.setHeadsBatch(head)
 
 	if batch == nil {
 		// Not enough to batch insert yet
@@ -90,7 +92,7 @@ func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head)
 		return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert heads")
 	}
 	// reset the heads batch
-	orm.setHeadsBatch(batch[:0], nil)
+	orm.setHeadsBatch(nil)
 
 	return nil
 }
@@ -119,6 +121,7 @@ func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err e
 	}
 	query := `DELETE FROM evm.heads WHERE evm_chain_id = $1 AND number < $2`
 	_, err = orm.ds.ExecContext(ctx, query, orm.chainID, minBlockNumber)
+
 	return err
 }
 
