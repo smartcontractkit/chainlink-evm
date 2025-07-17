@@ -296,15 +296,24 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
     if err != nil {
         return nil, err
     }
-    if blockNumber == nil {
-		return nil, fmt.Errorf("block number must be specified for read calls")
-	} 
-	bn := pb.NewBigIntFromInt(blockNumber)
-	
-    return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
-        Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-        BlockNumber: bn,
-    }), nil
+	var bn *pb.BigInt
+	if blockNumber == nil {
+		promise := c.evmClient.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
+			BlockNumber: pb.NewBigIntFromInt(big.NewInt(-3)), // -3 means latest finalized block
+		})
+		finalizedBlock, err := promise.Await()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get finalized block: %w", err)
+		}
+		bn = finalizedBlock.Header.BlockNumber
+	} else {
+		bn = pb.NewBigIntFromInt(blockNumber)
+	}
+
+	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
+		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
+		BlockNumber: bn,
+	}), nil
 }
   {{- end}}
 {{end}}
@@ -330,18 +339,9 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate report: %w", err)
 	}
-	id, err := bindings.ExtractID(report.RawReport)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract ID from report: %w", err)
-	}
 	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
 		Receiver: c.Address,
-		Report: &evm.SignedReport{
-			RawReport:     report.RawReport,
-			ReportContext: report.ReportContext,
-			Signatures:    bindings.ExtractSigs(report.Sigs),
-			Id:            id,
-		},
+		Report: report,
 		GasConfig: gasConfig,
 	}), nil
 }

@@ -26,6 +26,7 @@ type EVMClient interface {
 	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]
 	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]
 	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
+	HeaderByNumber(runtime sdk.Runtime, input *evm.HeaderByNumberRequest) sdk.Promise[*evm.HeaderByNumberReply]
 }
 
 type ContractInitOptions struct {

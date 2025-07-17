@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
+	pb2 "github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
@@ -145,6 +146,17 @@ func TestReadMethods(t *testing.T) {
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
+	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).Return(
+		sdk.NewBasicPromise(func() (*evm.HeaderByNumberReply, error) {
+			// Simulate a successful header retrieval
+			header := &evm.HeaderByNumberReply{
+				Header: &evm.Header{
+					BlockNumber: pb2.NewBigIntFromInt(big.NewInt(123456)),
+				},
+			}
+			return header, nil
+		})).Once()
+
 	client.EXPECT().CallContract(mock.Anything, mock.Anything).Return(
 		sdk.NewBasicPromise(func() (*evm.CallContractReply, error) {
 			// Simulate a successful call with dummy data
@@ -157,7 +169,7 @@ func TestReadMethods(t *testing.T) {
 	reply, err := ds.ReadData(nil, datastorage.ReadDataInput{
 		User: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
 		Key:  "testKey",
-	}, big.NewInt(123))
+	}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, reply, "ReadData should return a non-nil reply")
 
@@ -198,7 +210,7 @@ func TestWriteReportMethods(t *testing.T) {
 
 	client.EXPECT().WriteReport(mock.Anything, mock.Anything).
 		Run(func(_ sdk.Runtime, req *evm.WriteReportRequest) {
-			require.Equal(t, []byte("1234"), req.Report.Id)
+			require.Equal(t, rawReport, req.Report.RawReport)
 		}).
 		Return(
 			sdk.NewBasicPromise(func() (*evm.WriteReportReply, error) {
