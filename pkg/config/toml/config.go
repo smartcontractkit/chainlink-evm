@@ -969,6 +969,7 @@ type HeadTracker struct {
 	MaxAllowedFinalityDepth *uint32
 	FinalityTagBypass       *bool
 	PersistenceEnabled      *bool
+	PersistenceBatchSize    *int64
 }
 
 func (t *HeadTracker) setFrom(f *HeadTracker) {
@@ -989,6 +990,9 @@ func (t *HeadTracker) setFrom(f *HeadTracker) {
 	}
 	if v := f.PersistenceEnabled; v != nil {
 		t.PersistenceEnabled = v
+	}
+	if v := f.PersistenceBatchSize; v != nil {
+		t.PersistenceBatchSize = v
 	}
 }
 

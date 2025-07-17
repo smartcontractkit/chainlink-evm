@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
@@ -31,31 +32,96 @@ type ORM interface {
 var _ ORM = &DbORM{}
 
 type DbORM struct {
-	chainID ubig.Big
-	ds      sqlutil.DataSource
+	chainID                ubig.Big
+	ds                     sqlutil.DataSource
+	lastTrimmedBlockNumber int64            // the last block number that was trimmed
+	headsBatch             []*evmtypes.Head // used to batch insert heads
+	mu                     sync.RWMutex
+	batchSize              int64 // the number of heads to batch insert/delete
 }
 
 // NewORM creates an ORM scoped to chainID.
-func NewORM(chainID big.Int, ds sqlutil.DataSource) *DbORM {
+func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
 	return &DbORM{
-		chainID: ubig.Big(chainID),
-		ds:      ds,
+		chainID:                ubig.Big(chainID),
+		ds:                     ds,
+		lastTrimmedBlockNumber: -1,
+		headsBatch:             make([]*evmtypes.Head, 0),
+		batchSize:              batchSize,
 	}
 }
 
+func (orm *DbORM) setHeadsBatch(appendHead *evmtypes.Head) []*evmtypes.Head {
+	orm.mu.Lock()
+	defer orm.mu.Unlock()
+
+	// if we are appending a head, we need to check if the batch is big enough to insert
+	// if it is, copy it and return it
+	if appendHead != nil {
+		orm.headsBatch = append(orm.headsBatch, appendHead)
+		if len(orm.headsBatch) < int(orm.batchSize) {
+			// Not enough to batch insert yet
+			return nil
+		}
+		copied := make([]*evmtypes.Head, len(orm.headsBatch))
+		copy(copied, orm.headsBatch)
+
+		return copied
+	}
+	// this will be only called to reset headsBatch
+	orm.headsBatch = orm.headsBatch[:0]
+	return nil
+}
+
 func (orm *DbORM) IdempotentInsertHead(ctx context.Context, head *evmtypes.Head) error {
+	batch := orm.setHeadsBatch(head)
+
+	if batch == nil {
+		// Not enough to batch insert yet
+		return nil
+	}
+
 	// listener guarantees head.EVMChainID to be equal to DbORM.chainID
-	query := `
-	INSERT INTO evm.heads (hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas) VALUES (
-	$1, $2, $3, now(), $4, $5, $6, $7)
-	ON CONFLICT (evm_chain_id, hash) DO NOTHING`
-	_, err := orm.ds.ExecContext(ctx, query, head.Hash, head.Number, head.ParentHash, head.Timestamp, head.L1BlockNumber, orm.chainID, head.BaseFeePerGas)
-	return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert head")
+	query := `INSERT INTO evm.heads
+				(hash, number, parent_hash, created_at, timestamp, l1_block_number, evm_chain_id, base_fee_per_gas)
+			VALUES (:hash, :number, :parent_hash, NOW(), :timestamp, :l1_block_number, :evm_chain_id, :base_fee_per_gas)
+				ON CONFLICT DO NOTHING`
+
+	_, err := orm.ds.NamedExecContext(ctx, query, batch)
+	if err != nil {
+		return pkgerrors.Wrap(err, "IdempotentInsertHead failed to insert heads")
+	}
+	// reset the heads batch
+	orm.setHeadsBatch(nil)
+
+	return nil
+}
+
+// the return value tells the caller if the batch is big enough to trim
+func (orm *DbORM) setLastTrimmedBlockNumber(minBlockNumber int64) bool {
+	orm.mu.Lock()
+	defer orm.mu.Unlock()
+	if orm.lastTrimmedBlockNumber == -1 {
+		// we delete everything before the minBlockNumber, so we need to set the lastTrimmedBlockNumber to the block before the minBlockNumber
+		orm.lastTrimmedBlockNumber = minBlockNumber - 1
+	}
+	if minBlockNumber-orm.lastTrimmedBlockNumber <= orm.batchSize {
+		// Batch not big enough to trim yet
+		return false
+	}
+	// we delete everything before the minBlockNumber, so we need to set the lastTrimmedBlockNumber to the block before the minBlockNumber
+	orm.lastTrimmedBlockNumber = minBlockNumber - 1
+	return true
 }
 
 func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err error) {
+	shouldTrim := orm.setLastTrimmedBlockNumber(minBlockNumber)
+	if !shouldTrim {
+		return nil
+	}
 	query := `DELETE FROM evm.heads WHERE evm_chain_id = $1 AND number < $2`
 	_, err = orm.ds.ExecContext(ctx, query, orm.chainID, minBlockNumber)
+
 	return err
 }
 

@@ -301,6 +301,7 @@ var fullConfig = EVMConfig{
 			FinalityTagBypass:       ptr[bool](false),
 			MaxAllowedFinalityDepth: ptr[uint32](1500),
 			PersistenceEnabled:      ptr(false),
+			PersistenceBatchSize:    ptr[int64](100),
 		},
 
 		NodePool: NodePool{
