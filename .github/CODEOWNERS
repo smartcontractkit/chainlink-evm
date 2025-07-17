@@ -77,3 +77,4 @@ go.mod @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/co
 go.sum @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity
 
 pkg/txm @dimriou @smartcontractkit/bix-framework @smartcontractkit/core
+pkg/bindings @smartcontractkit/bix-framework

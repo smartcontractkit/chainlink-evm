@@ -121,6 +121,55 @@ func (_c *EVMClient_FilterLogs_Call) RunAndReturn(run func(sdk.Runtime, *evm.Fil
 	return _c
 }
 
+// HeaderByNumber provides a mock function with given fields: runtime, input
+func (_m *EVMClient) HeaderByNumber(runtime sdk.Runtime, input *evm.HeaderByNumberRequest) sdk.Promise[*evm.HeaderByNumberReply] {
+	ret := _m.Called(runtime, input)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HeaderByNumber")
+	}
+
+	var r0 sdk.Promise[*evm.HeaderByNumberReply]
+	if rf, ok := ret.Get(0).(func(sdk.Runtime, *evm.HeaderByNumberRequest) sdk.Promise[*evm.HeaderByNumberReply]); ok {
+		r0 = rf(runtime, input)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(sdk.Promise[*evm.HeaderByNumberReply])
+		}
+	}
+
+	return r0
+}
+
+// EVMClient_HeaderByNumber_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HeaderByNumber'
+type EVMClient_HeaderByNumber_Call struct {
+	*mock.Call
+}
+
+// HeaderByNumber is a helper method to define mock.On call
+//   - runtime sdk.Runtime
+//   - input *evm.HeaderByNumberRequest
+func (_e *EVMClient_Expecter) HeaderByNumber(runtime interface{}, input interface{}) *EVMClient_HeaderByNumber_Call {
+	return &EVMClient_HeaderByNumber_Call{Call: _e.mock.On("HeaderByNumber", runtime, input)}
+}
+
+func (_c *EVMClient_HeaderByNumber_Call) Run(run func(runtime sdk.Runtime, input *evm.HeaderByNumberRequest)) *EVMClient_HeaderByNumber_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(sdk.Runtime), args[1].(*evm.HeaderByNumberRequest))
+	})
+	return _c
+}
+
+func (_c *EVMClient_HeaderByNumber_Call) Return(_a0 sdk.Promise[*evm.HeaderByNumberReply]) *EVMClient_HeaderByNumber_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *EVMClient_HeaderByNumber_Call) RunAndReturn(run func(sdk.Runtime, *evm.HeaderByNumberRequest) sdk.Promise[*evm.HeaderByNumberReply]) *EVMClient_HeaderByNumber_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RegisterLogTracking provides a mock function with given fields: _a0, _a1
 func (_m *EVMClient) RegisterLogTracking(_a0 sdk.Runtime, _a1 *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty] {
 	ret := _m.Called(_a0, _a1)
