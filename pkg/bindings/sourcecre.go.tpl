@@ -394,14 +394,14 @@ func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 
 {{range $event := $contract.Events}}
 
-func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(confidence evm.ConfidenceLevel, filters []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(chainSelector uint64, confidence evm.ConfidenceLevel, filters []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["{{.Normalized.Name}}"]
 	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
 	}
 
-	return evm.LogTrigger(&evm.FilterLogTriggerRequest{
+	return evm.LogTrigger(chainSelector, &evm.FilterLogTriggerRequest{
 		Addresses:  [][]byte{c.Address},
 		Topics:     topics,
 		Confidence: confidence,
