@@ -15,11 +15,12 @@ import (
 )
 
 type NodeConfig struct {
-	Name     *string
-	WSURL    *string
-	HTTPURL  *string
-	SendOnly *bool
-	Order    *int32
+	Name       *string
+	WSURL      *string
+	HTTPURL    *string
+	SendOnly   *bool
+	Order      *int32
+	IsRPCProxy *bool
 }
 
 // Build the configs needed to initialize the chain client
@@ -94,11 +95,12 @@ func parseNodeConfigs(nodeCfgs []NodeConfig) ([]*toml.Node, error) {
 
 		httpURL = commonconfig.MustParseURL(*nodeCfg.HTTPURL)
 		node := &toml.Node{
-			Name:     nodeCfg.Name,
-			WSURL:    wsURL,
-			HTTPURL:  httpURL,
-			SendOnly: nodeCfg.SendOnly,
-			Order:    nodeCfg.Order,
+			Name:       nodeCfg.Name,
+			WSURL:      wsURL,
+			HTTPURL:    httpURL,
+			SendOnly:   nodeCfg.SendOnly,
+			Order:      nodeCfg.Order,
+			IsRPCProxy: nodeCfg.IsRPCProxy,
 		}
 		nodes[i] = node
 	}

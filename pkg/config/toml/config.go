@@ -1233,6 +1233,11 @@ func (n *Node) ValidateConfig() (err error) {
 		n.Order = &z
 	}
 
+	if n.IsRPCProxy == nil {
+		z := false
+		n.IsRPCProxy = &z
+	}
+
 	return
 }
 
@@ -1254,6 +1259,9 @@ func (n *Node) SetFrom(f *Node) {
 	}
 	if f.Order != nil {
 		n.Order = f.Order
+	}
+	if f.IsRPCProxy != nil {
+		n.IsRPCProxy = f.IsRPCProxy
 	}
 }
 
