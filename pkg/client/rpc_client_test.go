@@ -276,7 +276,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		require.NoError(t, rpc.Dial(ctx))
 		server.Close()
 		_, _, err := rpc.SubscribeToHeads(ctx)
-		require.ErrorContains(t, err, "RPCClient returned error (rpc)")
+		require.ErrorContains(t, err, "RPC call failed: dial tcp")
 		tests.AssertLogEventually(t, observed, "evmclient.Client#EthSubscribe RPC call failure")
 	})
 	t.Run("Closed rpc client should remove existing SubscribeToHeads subscription with WS", func(t *testing.T) {
@@ -325,7 +325,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		go server.MustWriteBinaryMessageSync(t, "invalid msg")
 		select {
 		case err = <-sub.Err():
-			require.ErrorContains(t, err, "RPCClient returned error (rpc): invalid character")
+			require.ErrorContains(t, err, "RPC call failed: invalid character 'i' looking for beginning of value")
 		case <-ctx.Done():
 			t.Errorf("Expected subscription to return an error, but test timeout instead")
 		}
@@ -356,7 +356,7 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 		require.NoError(t, rpc.Dial(ctx))
 		server.Close()
 		_, err := rpc.SubscribeFilterLogs(ctx, ethereum.FilterQuery{}, make(chan types.Log))
-		require.ErrorContains(t, err, "RPCClient returned error (rpc)")
+		require.ErrorContains(t, err, "RPC call failed")
 		tests.AssertLogEventually(t, observed, "evmclient.Client#SubscribeFilterLogs RPC call failure")
 	})
 	t.Run("Subscription error is properly wrapper", func(t *testing.T) {
@@ -379,7 +379,7 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 		defer cancel()
 		select {
 		case err = <-sub.Err():
-			require.ErrorContains(t, err, "RPCClient returned error (rpc): invalid character")
+			require.ErrorContains(t, err, "RPC call failed: invalid character 'i' looking for beginning of value")
 		case <-errorCtx.Done():
 			t.Errorf("Expected subscription to return an error, but test timeout instead")
 		}
