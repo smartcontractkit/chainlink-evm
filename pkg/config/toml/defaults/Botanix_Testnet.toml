@@ -7,9 +7,9 @@ EIP1559DynamicFees = true
 TipCapMin = '0 wei'
 TipCapDefault = '0 wei'
 PriceDefault = '100 wei'
-PriceMax = '800 kwei'
+PriceMax = '50 mwei'
 PriceMin = '1 wei'
-FeeCapDefault = '800 kwei'
+FeeCapDefault = '50 mwei'
 
 [GasEstimator.BlockHistory]
 BlockHistorySize = 4
