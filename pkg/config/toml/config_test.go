@@ -365,7 +365,7 @@ var fullConfig = EVMConfig{
 			HTTPURLExtraWrite: config.MustParseURL("https://foo.web/extra"),
 			SendOnly:          ptr(false),
 			Order:             ptr[int32](0),
-			IsRPCProxy:        ptr(false),
+			IsLoadBalancedRPC: ptr(false),
 		},
 	},
 }

@@ -1187,7 +1187,7 @@ type Node struct {
 	HTTPURLExtraWrite *commonconfig.URL
 	SendOnly          *bool
 	Order             *int32
-	IsRPCProxy        *bool
+	IsLoadBalancedRPC *bool
 }
 
 func (n *Node) ValidateConfig() (err error) {
@@ -1233,9 +1233,9 @@ func (n *Node) ValidateConfig() (err error) {
 		n.Order = &z
 	}
 
-	if n.IsRPCProxy == nil {
+	if n.IsLoadBalancedRPC == nil {
 		z := false
-		n.IsRPCProxy = &z
+		n.IsLoadBalancedRPC = &z
 	}
 
 	return
@@ -1260,8 +1260,8 @@ func (n *Node) SetFrom(f *Node) {
 	if f.Order != nil {
 		n.Order = f.Order
 	}
-	if f.IsRPCProxy != nil {
-		n.IsRPCProxy = f.IsRPCProxy
+	if f.IsLoadBalancedRPC != nil {
+		n.IsLoadBalancedRPC = f.IsLoadBalancedRPC
 	}
 }
 
