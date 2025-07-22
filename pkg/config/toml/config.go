@@ -198,6 +198,9 @@ func legacyNode(n *Node, chainID *big.Big) (v2 types.Node) {
 	if n.Order != nil {
 		v2.Order = *n.Order
 	}
+	if n.IsLoadBalancedRPC != nil {
+		v2.IsLoadBalancedRPC = *n.IsLoadBalancedRPC
+	}
 	return
 }
 
