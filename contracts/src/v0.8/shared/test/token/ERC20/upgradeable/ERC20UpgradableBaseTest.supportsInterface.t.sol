@@ -10,9 +10,7 @@ import {IERC165} from "@openzeppelin/contracts@5.0.2/utils/introspection/IERC165
 import {ERC20UpgradableBaseTest} from "./ERC20UpgradableBaseTest.t.sol";
 
 contract ERC20UpgradableBaseTest_supportsInterface is ERC20UpgradableBaseTest {
-  function should_SupportsInterface(
-    IERC165 implementation
-  ) public view {
+  function should_SupportsInterface(IERC165 implementation) public view {
     assertTrue(implementation.supportsInterface(type(IERC20).interfaceId));
     assertTrue(implementation.supportsInterface(type(IBurnMintERC20Upgradeable).interfaceId));
     assertTrue(implementation.supportsInterface(type(IERC165).interfaceId));

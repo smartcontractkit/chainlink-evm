@@ -12,25 +12,15 @@ interface IERC20UpgradeableBase is IBurnMintERC20Upgradeable, IERC20Metadata, IG
   event AccountUnfrozen(address indexed account);
 
   function maxSupply() external view returns (uint256);
-  function grantMintAndBurnRoles(
-    address burnAndMinter
-  ) external;
-  function setCCIPAdmin(
-    address newAdmin
-  ) external;
+  function grantMintAndBurnRoles(address burnAndMinter) external;
+  function setCCIPAdmin(address newAdmin) external;
 
   function pause() external;
   function unpause() external;
 
-  function freeze(
-    address account
-  ) external;
-  function unfreeze(
-    address account
-  ) external;
-  function isFrozen(
-    address account
-  ) external view returns (bool);
+  function freeze(address account) external;
+  function unfreeze(address account) external;
+  function isFrozen(address account) external view returns (bool);
 }
 
 contract ERC20UpgradableBaseTest is BaseTest {
