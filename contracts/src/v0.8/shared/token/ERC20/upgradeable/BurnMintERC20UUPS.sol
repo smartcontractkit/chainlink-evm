@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 import {IGetCCIPAdmin} from "../../../../shared/interfaces/IGetCCIPAdmin.sol";
 import {IBurnMintERC20Upgradeable} from "../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
 
-import {AccessControlDefaultAdminRulesUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts//access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
-import {Initializable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts//proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts//proxy/utils/UUPSUpgradeable.sol";
-import {ERC20BurnableUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts//token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import {AccessControlDefaultAdminRulesUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import {Initializable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ERC20BurnableUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 import {IERC1822Proxiable} from "@openzeppelin/contracts@5.0.2/interfaces/draft-IERC1822.sol";
