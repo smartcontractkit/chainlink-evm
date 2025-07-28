@@ -167,3 +167,4 @@ HTTPURL = 'https://foo.web'
 HTTPURLExtraWrite = 'https://foo.web/extra'
 SendOnly = false
 Order = 0
+IsLoadBalancedRPC = false

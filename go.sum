@@ -650,10 +650,10 @@ github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-202506181640
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502/go.mod h1:Kb8f+wt2YmBdD0PfbsC9bDhdUG/Y8sqUkzAvC2Dn8/M=
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250717121125-2350c82883e2 h1:JU1JUrkzdAUHsOYdS9DENPkJfmrxweFRPRSztad6oPM=
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250717121125-2350c82883e2/go.mod h1:+pRGfDej1r7cHMs1dYmuyPuOZzYB9Q+PKu0FvZOYlmw=
-github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250618135814-7e3f79ab707e h1:LRT+PltY99+hxZAJn+4nyTfqGVNEM1S6FJ675B9BtJo=
-github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250618135814-7e3f79ab707e/go.mod h1:jo+cUqNcHwN8IF7SInQNXDZ8qzBsyMpnLdYbDswviFc=
-github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250522110034-65c54665034a h1:O28vgyHM7QF1YLg1BwkQSIbOYA+t0RiH9+b+k90GPG8=
-github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250522110034-65c54665034a/go.mod h1:zYqPBBRUXUQ/L+aD4Q7phnYsfVeC5rDBXtPt1VYwtws=
+github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250717121125-2350c82883e2 h1:ysZjKH+BpWlQhF93kr/Lc668UlCvT9NjfcsGdZT19I8=
+github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250717121125-2350c82883e2/go.mod h1:jo+cUqNcHwN8IF7SInQNXDZ8qzBsyMpnLdYbDswviFc=
+github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250728144240-d49ca2e104e6 h1:/hwMOxjcmXBvbfSZoL6aoLoOP8HwLd9vBtNGfZ0am+k=
+github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250728144240-d49ca2e104e6/go.mod h1:2JTBNp3FlRdO/nHc4dsc9bfxxMClMO1Qt8sLJgtreBY=
 github.com/smartcontractkit/chainlink-protos/svr v1.1.0 h1:79Z9N9dMbMVRGaLoDPAQ+vOwbM+Hnx8tIN2xCPG8H4o=
 github.com/smartcontractkit/chainlink-protos/svr v1.1.0/go.mod h1:TcOliTQU6r59DwG4lo3U+mFM9WWyBHGuFkkxQpvSujo=
 github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20250701132001-f8be142155b6 h1:RU3MWARa8aeEop6WmIBvXTLe3QruFzBWE0ugz4hB+3I=

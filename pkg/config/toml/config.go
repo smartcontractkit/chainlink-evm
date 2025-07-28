@@ -198,6 +198,9 @@ func legacyNode(n *Node, chainID *big.Big) (v2 types.Node) {
 	if n.Order != nil {
 		v2.Order = *n.Order
 	}
+	if n.IsLoadBalancedRPC != nil {
+		v2.IsLoadBalancedRPC = *n.IsLoadBalancedRPC
+	}
 	return
 }
 
@@ -1187,6 +1190,7 @@ type Node struct {
 	HTTPURLExtraWrite *commonconfig.URL
 	SendOnly          *bool
 	Order             *int32
+	IsLoadBalancedRPC *bool
 }
 
 func (n *Node) ValidateConfig() (err error) {
@@ -1232,6 +1236,11 @@ func (n *Node) ValidateConfig() (err error) {
 		n.Order = &z
 	}
 
+	if n.IsLoadBalancedRPC == nil {
+		z := false
+		n.IsLoadBalancedRPC = &z
+	}
+
 	return
 }
 
@@ -1253,6 +1262,9 @@ func (n *Node) SetFrom(f *Node) {
 	}
 	if f.Order != nil {
 		n.Order = f.Order
+	}
+	if f.IsLoadBalancedRPC != nil {
+		n.IsLoadBalancedRPC = f.IsLoadBalancedRPC
 	}
 }
 

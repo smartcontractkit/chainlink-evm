@@ -38,12 +38,13 @@ type Configs interface {
 }
 
 type Node struct {
-	Name       string
-	EVMChainID ubig.Big
-	WSURL      null.String
-	HTTPURL    null.String
-	SendOnly   bool
-	Order      int32
+	Name              string
+	EVMChainID        ubig.Big
+	WSURL             null.String
+	HTTPURL           null.String
+	SendOnly          bool
+	Order             int32
+	IsLoadBalancedRPC bool
 
 	State string
 }
