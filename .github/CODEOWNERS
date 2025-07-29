@@ -73,8 +73,12 @@
 contracts/scripts/requirements.txt @smartcontractkit/core @smartcontractkit/core-solidity
 contracts/package.json @smartcontractkit/foundations @smartcontractkit/core @smartcontractkit/core-solidity
 contracts/pnpm.lock @smartcontractkit/core @smartcontractkit/core-solidity
-go.mod @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity
-go.sum @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity
+go.mod @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity @smartcontractkit/bix-framework
+go.sum @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/core-solidity @smartcontractkit/bix-framework
 
 pkg/txm @dimriou @smartcontractkit/bix-framework @smartcontractkit/core
 pkg/bindings @smartcontractkit/bix-framework
+pkg/client @smartcontractkit/bix-framework
+pkg/logpoller @smartcontractkit/bix-framework
+pkg/heads @smartcontractkit/bix-framework
+pkg/writetarget @smartcontractkit/bix-framework
