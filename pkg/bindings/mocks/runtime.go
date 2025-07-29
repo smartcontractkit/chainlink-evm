@@ -3,12 +3,12 @@
 package mocks
 
 import (
-	rand "math/rand"
-
-	pb "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
+	cre "github.com/smartcontractkit/cre-sdk-go/cre"
 	mock "github.com/stretchr/testify/mock"
 
-	sdk "github.com/smartcontractkit/cre-sdk-go/sdk"
+	pb "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
+
+	rand "math/rand"
 
 	values "github.com/smartcontractkit/chainlink-common/pkg/values"
 )
@@ -27,19 +27,19 @@ func (_m *Runtime) EXPECT() *Runtime_Expecter {
 }
 
 // CallCapability provides a mock function with given fields: request
-func (_m *Runtime) CallCapability(request *pb.CapabilityRequest) sdk.Promise[*pb.CapabilityResponse] {
+func (_m *Runtime) CallCapability(request *pb.CapabilityRequest) cre.Promise[*pb.CapabilityResponse] {
 	ret := _m.Called(request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CallCapability")
 	}
 
-	var r0 sdk.Promise[*pb.CapabilityResponse]
-	if rf, ok := ret.Get(0).(func(*pb.CapabilityRequest) sdk.Promise[*pb.CapabilityResponse]); ok {
+	var r0 cre.Promise[*pb.CapabilityResponse]
+	if rf, ok := ret.Get(0).(func(*pb.CapabilityRequest) cre.Promise[*pb.CapabilityResponse]); ok {
 		r0 = rf(request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Promise[*pb.CapabilityResponse])
+			r0 = ret.Get(0).(cre.Promise[*pb.CapabilityResponse])
 		}
 	}
 
@@ -64,30 +64,30 @@ func (_c *Runtime_CallCapability_Call) Run(run func(request *pb.CapabilityReques
 	return _c
 }
 
-func (_c *Runtime_CallCapability_Call) Return(_a0 sdk.Promise[*pb.CapabilityResponse]) *Runtime_CallCapability_Call {
+func (_c *Runtime_CallCapability_Call) Return(_a0 cre.Promise[*pb.CapabilityResponse]) *Runtime_CallCapability_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Runtime_CallCapability_Call) RunAndReturn(run func(*pb.CapabilityRequest) sdk.Promise[*pb.CapabilityResponse]) *Runtime_CallCapability_Call {
+func (_c *Runtime_CallCapability_Call) RunAndReturn(run func(*pb.CapabilityRequest) cre.Promise[*pb.CapabilityResponse]) *Runtime_CallCapability_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GenerateReport provides a mock function with given fields: _a0
-func (_m *Runtime) GenerateReport(_a0 *pb.ReportRequest) sdk.Promise[*pb.ReportResponse] {
+func (_m *Runtime) GenerateReport(_a0 *pb.ReportRequest) cre.Promise[*pb.ReportResponse] {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateReport")
 	}
 
-	var r0 sdk.Promise[*pb.ReportResponse]
-	if rf, ok := ret.Get(0).(func(*pb.ReportRequest) sdk.Promise[*pb.ReportResponse]); ok {
+	var r0 cre.Promise[*pb.ReportResponse]
+	if rf, ok := ret.Get(0).(func(*pb.ReportRequest) cre.Promise[*pb.ReportResponse]); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Promise[*pb.ReportResponse])
+			r0 = ret.Get(0).(cre.Promise[*pb.ReportResponse])
 		}
 	}
 
@@ -112,12 +112,12 @@ func (_c *Runtime_GenerateReport_Call) Run(run func(_a0 *pb.ReportRequest)) *Run
 	return _c
 }
 
-func (_c *Runtime_GenerateReport_Call) Return(_a0 sdk.Promise[*pb.ReportResponse]) *Runtime_GenerateReport_Call {
+func (_c *Runtime_GenerateReport_Call) Return(_a0 cre.Promise[*pb.ReportResponse]) *Runtime_GenerateReport_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Runtime_GenerateReport_Call) RunAndReturn(run func(*pb.ReportRequest) sdk.Promise[*pb.ReportResponse]) *Runtime_GenerateReport_Call {
+func (_c *Runtime_GenerateReport_Call) RunAndReturn(run func(*pb.ReportRequest) cre.Promise[*pb.ReportResponse]) *Runtime_GenerateReport_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -180,19 +180,19 @@ func (_c *Runtime_Rand_Call) RunAndReturn(run func() (*rand.Rand, error)) *Runti
 }
 
 // RunInNodeMode provides a mock function with given fields: fn
-func (_m *Runtime) RunInNodeMode(fn func(sdk.NodeRuntime) *pb.SimpleConsensusInputs) sdk.Promise[values.Value] {
+func (_m *Runtime) RunInNodeMode(fn func(cre.NodeRuntime) *pb.SimpleConsensusInputs) cre.Promise[values.Value] {
 	ret := _m.Called(fn)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RunInNodeMode")
 	}
 
-	var r0 sdk.Promise[values.Value]
-	if rf, ok := ret.Get(0).(func(func(sdk.NodeRuntime) *pb.SimpleConsensusInputs) sdk.Promise[values.Value]); ok {
+	var r0 cre.Promise[values.Value]
+	if rf, ok := ret.Get(0).(func(func(cre.NodeRuntime) *pb.SimpleConsensusInputs) cre.Promise[values.Value]); ok {
 		r0 = rf(fn)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.Promise[values.Value])
+			r0 = ret.Get(0).(cre.Promise[values.Value])
 		}
 	}
 
@@ -205,24 +205,24 @@ type Runtime_RunInNodeMode_Call struct {
 }
 
 // RunInNodeMode is a helper method to define mock.On call
-//   - fn func(sdk.NodeRuntime) *pb.SimpleConsensusInputs
+//   - fn func(cre.NodeRuntime) *pb.SimpleConsensusInputs
 func (_e *Runtime_Expecter) RunInNodeMode(fn interface{}) *Runtime_RunInNodeMode_Call {
 	return &Runtime_RunInNodeMode_Call{Call: _e.mock.On("RunInNodeMode", fn)}
 }
 
-func (_c *Runtime_RunInNodeMode_Call) Run(run func(fn func(sdk.NodeRuntime) *pb.SimpleConsensusInputs)) *Runtime_RunInNodeMode_Call {
+func (_c *Runtime_RunInNodeMode_Call) Run(run func(fn func(cre.NodeRuntime) *pb.SimpleConsensusInputs)) *Runtime_RunInNodeMode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(func(sdk.NodeRuntime) *pb.SimpleConsensusInputs))
+		run(args[0].(func(cre.NodeRuntime) *pb.SimpleConsensusInputs))
 	})
 	return _c
 }
 
-func (_c *Runtime_RunInNodeMode_Call) Return(_a0 sdk.Promise[values.Value]) *Runtime_RunInNodeMode_Call {
+func (_c *Runtime_RunInNodeMode_Call) Return(_a0 cre.Promise[values.Value]) *Runtime_RunInNodeMode_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Runtime_RunInNodeMode_Call) RunAndReturn(run func(func(sdk.NodeRuntime) *pb.SimpleConsensusInputs) sdk.Promise[values.Value]) *Runtime_RunInNodeMode_Call {
+func (_c *Runtime_RunInNodeMode_Call) RunAndReturn(run func(func(cre.NodeRuntime) *pb.SimpleConsensusInputs) cre.Promise[values.Value]) *Runtime_RunInNodeMode_Call {
 	_c.Call.Return(run)
 	return _c
 }

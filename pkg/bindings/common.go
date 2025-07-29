@@ -11,7 +11,7 @@ import (
 	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
 
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
-	"github.com/smartcontractkit/cre-sdk-go/sdk"
+	"github.com/smartcontractkit/cre-sdk-go/cre"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
@@ -21,12 +21,12 @@ var _ EVMClient = &evm.Client{}
 
 // Minimal Chain Capabilities SDK client interface.
 type EVMClient interface {
-	CallContract(sdk.Runtime, *evm.CallContractRequest) sdk.Promise[*evm.CallContractReply]
-	WriteReport(sdk.Runtime, *evm.WriteReportRequest) sdk.Promise[*evm.WriteReportReply]
-	RegisterLogTracking(sdk.Runtime, *evm.RegisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]
-	UnregisterLogTracking(sdk.Runtime, *evm.UnregisterLogTrackingRequest) sdk.Promise[*emptypb.Empty]
-	FilterLogs(sdk.Runtime, *evm.FilterLogsRequest) sdk.Promise[*evm.FilterLogsReply]
-	HeaderByNumber(runtime sdk.Runtime, input *evm.HeaderByNumberRequest) sdk.Promise[*evm.HeaderByNumberReply]
+	CallContract(cre.Runtime, *evm.CallContractRequest) cre.Promise[*evm.CallContractReply]
+	WriteReport(cre.Runtime, *evm.WriteReportRequest) cre.Promise[*evm.WriteReportReply]
+	RegisterLogTracking(cre.Runtime, *evm.RegisterLogTrackingRequest) cre.Promise[*emptypb.Empty]
+	UnregisterLogTracking(cre.Runtime, *evm.UnregisterLogTrackingRequest) cre.Promise[*emptypb.Empty]
+	FilterLogs(cre.Runtime, *evm.FilterLogsRequest) cre.Promise[*evm.FilterLogsReply]
+	HeaderByNumber(runtime cre.Runtime, input *evm.HeaderByNumberRequest) cre.Promise[*evm.HeaderByNumberReply]
 }
 
 type ContractInitOptions struct {

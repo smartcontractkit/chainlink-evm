@@ -1,3 +1,6 @@
+gomods: ## Install gomods
+	go install github.com/jmank88/gomods@v0.1.6
+
 .PHONY: mockery
 mockery: ## Install mockery.
 	go install github.com/vektra/mockery/v2@v2.53.3
@@ -12,8 +15,8 @@ protoc: ## Install protoc
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@`go list -m -json google.golang.org/protobuf | jq -r .Version`
 
 .PHONY: generate
-generate: codecgen mockery protoc
-	export PATH="$(HOME)/.local/bin:$(PATH)"; go generate ./...
+generate: gomods codecgen mockery protoc
+	export PATH="$(HOME)/.local/bin:$(PATH)"; gomods -go generate ./...
 	find . -type f -name .mockery.yaml -execdir mockery \; ## Execute mockery for all .mockery.yaml files
 
 .PHONY: rm-mocked
