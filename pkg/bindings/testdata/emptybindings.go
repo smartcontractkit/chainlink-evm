@@ -21,7 +21,7 @@ import (
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
-	"github.com/smartcontractkit/cre-sdk-go/sdk"
+	"github.com/smartcontractkit/cre-sdk-go/cre"
 )
 
 var (
@@ -41,7 +41,7 @@ var (
 	_ = pb2.AggregationType_AGGREGATION_TYPE_COMMON_PREFIX
 	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
-	_ = sdk.ResponseBufferTooSmall
+	_ = cre.ResponseBufferTooSmall
 )
 
 var EmptyContractMetaData = &bind.MetaData{

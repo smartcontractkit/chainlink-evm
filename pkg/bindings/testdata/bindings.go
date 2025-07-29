@@ -21,7 +21,7 @@ import (
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
-	"github.com/smartcontractkit/cre-sdk-go/sdk"
+	"github.com/smartcontractkit/cre-sdk-go/cre"
 )
 
 var (
@@ -41,7 +41,7 @@ var (
 	_ = pb2.AggregationType_AGGREGATION_TYPE_COMMON_PREFIX
 	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
-	_ = sdk.ResponseBufferTooSmall
+	_ = cre.ResponseBufferTooSmall
 )
 
 var DataStorageMetaData = &bind.MetaData{
@@ -552,9 +552,9 @@ func (c *dataStorageCodecImpl) DecodeNoFields(log *evm.Log) (*NoFields, error) {
 }
 
 func (c DataStorage) GetReserves(
-	runtime sdk.Runtime,
+	runtime cre.Runtime,
 	blockNumber *big.Int,
-) (sdk.Promise[*evm.CallContractReply], error) {
+) (cre.Promise[*evm.CallContractReply], error) {
 	calldata, err := c.Codec.EncodeGetReservesMethodCall()
 	if err != nil {
 		return nil, err
@@ -580,9 +580,9 @@ func (c DataStorage) GetReserves(
 }
 
 func (c DataStorage) GetValue(
-	runtime sdk.Runtime,
+	runtime cre.Runtime,
 	blockNumber *big.Int,
-) (sdk.Promise[*evm.CallContractReply], error) {
+) (cre.Promise[*evm.CallContractReply], error) {
 	calldata, err := c.Codec.EncodeGetValueMethodCall()
 	if err != nil {
 		return nil, err
@@ -608,10 +608,10 @@ func (c DataStorage) GetValue(
 }
 
 func (c DataStorage) ReadData(
-	runtime sdk.Runtime,
+	runtime cre.Runtime,
 	args ReadDataInput,
 	blockNumber *big.Int,
-) (sdk.Promise[*evm.CallContractReply], error) {
+) (cre.Promise[*evm.CallContractReply], error) {
 	calldata, err := c.Codec.EncodeReadDataMethodCall(args)
 	if err != nil {
 		return nil, err
@@ -637,10 +637,10 @@ func (c DataStorage) ReadData(
 }
 
 func (c DataStorage) WriteReportDataStorageUpdateReserves(
-	runtime sdk.Runtime,
+	runtime cre.Runtime,
 	input DataStorageUpdateReserves,
 	gasConfig *evm.GasConfig,
-) (sdk.Promise[*evm.WriteReportReply], error) {
+) (cre.Promise[*evm.WriteReportReply], error) {
 	encoded, err := c.Codec.EncodeDataStorageUpdateReservesStruct(input)
 	if err != nil {
 		return nil, err
@@ -663,10 +663,10 @@ func (c DataStorage) WriteReportDataStorageUpdateReserves(
 }
 
 func (c DataStorage) WriteReportDataStorageUserData(
-	runtime sdk.Runtime,
+	runtime cre.Runtime,
 	input DataStorageUserData,
 	gasConfig *evm.GasConfig,
-) (sdk.Promise[*evm.WriteReportReply], error) {
+) (cre.Promise[*evm.WriteReportReply], error) {
 	encoded, err := c.Codec.EncodeDataStorageUserDataStruct(input)
 	if err != nil {
 		return nil, err
@@ -775,7 +775,7 @@ func (c *DataStorage) UnpackError(data []byte) (any, error) {
 	}
 }
 
-func (c *DataStorage) LogTriggerAccessLoggedLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []AccessLogged) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *DataStorage) LogTriggerAccessLoggedLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []AccessLogged) (cre.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["AccessLogged"]
 	topics, err := c.Codec.EncodeAccessLoggedTopics(event, filters)
 	if err != nil {
@@ -789,7 +789,7 @@ func (c *DataStorage) LogTriggerAccessLoggedLog(chainSelector uint64, confidence
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, options *bindings.LogTrackingOptions[AccessLogged]) error {
+func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime cre.Runtime, options *bindings.LogTrackingOptions[AccessLogged]) error {
 	bindings.ValidateLogTrackingOptions[AccessLogged](options)
 	topics, err := c.Codec.EncodeAccessLoggedTopics(c.ABI.Events["AccessLogged"], options.Filters)
 	if err != nil {
@@ -812,13 +812,13 @@ func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime sdk.Runtime, optio
 	return nil
 }
 
-func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime sdk.Runtime) {
+func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime cre.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "AccessLogged-" + common.Bytes2Hex(c.Address),
 	})
 }
 
-func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
+func (c *DataStorage) FilterLogsAccessLogged(runtime cre.Runtime, options *bindings.FilterOptions) cre.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: options.ToBlock,
@@ -837,7 +837,7 @@ func (c *DataStorage) FilterLogsAccessLogged(runtime sdk.Runtime, options *bindi
 	})
 }
 
-func (c *DataStorage) LogTriggerDataStoredLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []DataStored) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *DataStorage) LogTriggerDataStoredLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []DataStored) (cre.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["DataStored"]
 	topics, err := c.Codec.EncodeDataStoredTopics(event, filters)
 	if err != nil {
@@ -851,7 +851,7 @@ func (c *DataStorage) LogTriggerDataStoredLog(chainSelector uint64, confidence e
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingDataStored(runtime sdk.Runtime, options *bindings.LogTrackingOptions[DataStored]) error {
+func (c *DataStorage) RegisterLogTrackingDataStored(runtime cre.Runtime, options *bindings.LogTrackingOptions[DataStored]) error {
 	bindings.ValidateLogTrackingOptions[DataStored](options)
 	topics, err := c.Codec.EncodeDataStoredTopics(c.ABI.Events["DataStored"], options.Filters)
 	if err != nil {
@@ -874,13 +874,13 @@ func (c *DataStorage) RegisterLogTrackingDataStored(runtime sdk.Runtime, options
 	return nil
 }
 
-func (c *DataStorage) UnregisterLogTrackingDataStored(runtime sdk.Runtime) {
+func (c *DataStorage) UnregisterLogTrackingDataStored(runtime cre.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "DataStored-" + common.Bytes2Hex(c.Address),
 	})
 }
 
-func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
+func (c *DataStorage) FilterLogsDataStored(runtime cre.Runtime, options *bindings.FilterOptions) cre.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: options.ToBlock,
@@ -899,7 +899,7 @@ func (c *DataStorage) FilterLogsDataStored(runtime sdk.Runtime, options *binding
 	})
 }
 
-func (c *DataStorage) LogTriggerDynamicEventLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []DynamicEvent) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *DataStorage) LogTriggerDynamicEventLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []DynamicEvent) (cre.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["DynamicEvent"]
 	topics, err := c.Codec.EncodeDynamicEventTopics(event, filters)
 	if err != nil {
@@ -913,7 +913,7 @@ func (c *DataStorage) LogTriggerDynamicEventLog(chainSelector uint64, confidence
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime sdk.Runtime, options *bindings.LogTrackingOptions[DynamicEvent]) error {
+func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime cre.Runtime, options *bindings.LogTrackingOptions[DynamicEvent]) error {
 	bindings.ValidateLogTrackingOptions[DynamicEvent](options)
 	topics, err := c.Codec.EncodeDynamicEventTopics(c.ABI.Events["DynamicEvent"], options.Filters)
 	if err != nil {
@@ -936,13 +936,13 @@ func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime sdk.Runtime, optio
 	return nil
 }
 
-func (c *DataStorage) UnregisterLogTrackingDynamicEvent(runtime sdk.Runtime) {
+func (c *DataStorage) UnregisterLogTrackingDynamicEvent(runtime cre.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "DynamicEvent-" + common.Bytes2Hex(c.Address),
 	})
 }
 
-func (c *DataStorage) FilterLogsDynamicEvent(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
+func (c *DataStorage) FilterLogsDynamicEvent(runtime cre.Runtime, options *bindings.FilterOptions) cre.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: options.ToBlock,
@@ -961,7 +961,7 @@ func (c *DataStorage) FilterLogsDynamicEvent(runtime sdk.Runtime, options *bindi
 	})
 }
 
-func (c *DataStorage) LogTriggerNoFieldsLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []NoFields) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *DataStorage) LogTriggerNoFieldsLog(chainSelector uint64, confidence evm.ConfidenceLevel, filters []NoFields) (cre.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["NoFields"]
 	topics, err := c.Codec.EncodeNoFieldsTopics(event, filters)
 	if err != nil {
@@ -975,7 +975,7 @@ func (c *DataStorage) LogTriggerNoFieldsLog(chainSelector uint64, confidence evm
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingNoFields(runtime sdk.Runtime, options *bindings.LogTrackingOptions[NoFields]) error {
+func (c *DataStorage) RegisterLogTrackingNoFields(runtime cre.Runtime, options *bindings.LogTrackingOptions[NoFields]) error {
 	bindings.ValidateLogTrackingOptions[NoFields](options)
 	topics, err := c.Codec.EncodeNoFieldsTopics(c.ABI.Events["NoFields"], options.Filters)
 	if err != nil {
@@ -998,13 +998,13 @@ func (c *DataStorage) RegisterLogTrackingNoFields(runtime sdk.Runtime, options *
 	return nil
 }
 
-func (c *DataStorage) UnregisterLogTrackingNoFields(runtime sdk.Runtime) {
+func (c *DataStorage) UnregisterLogTrackingNoFields(runtime cre.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "NoFields-" + common.Bytes2Hex(c.Address),
 	})
 }
 
-func (c *DataStorage) FilterLogsNoFields(runtime sdk.Runtime, options *bindings.FilterOptions) sdk.Promise[*evm.FilterLogsReply] {
+func (c *DataStorage) FilterLogsNoFields(runtime cre.Runtime, options *bindings.FilterOptions) cre.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: options.ToBlock,

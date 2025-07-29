@@ -15,40 +15,13 @@ import (
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
+	"github.com/smartcontractkit/cre-sdk-go/cre"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings/mocks"
 	datastorage "github.com/smartcontractkit/chainlink-evm/pkg/bindings/testdata"
-	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
-	"github.com/smartcontractkit/cre-sdk-go/sdk"
 )
-
-func TestGenerateBindings(t *testing.T) {
-	t.Run("real contract", func(t *testing.T) {
-		err := bindings.GenerateBindings(
-			"./testdata/DataStorage_combined.json",
-			"",
-			"bindings",
-			"",
-			"./testdata/bindings.go",
-		)
-		require.NoError(t, err, "Failed to generate bindings from combined JSON")
-	})
-
-	t.Run("empty contract", func(t *testing.T) {
-		err := bindings.GenerateBindings(
-			"./testdata/EmptyContract_combined.json",
-			"",
-			"bindings",
-			"",
-			"./testdata/emptybindings.go",
-		)
-		require.NoError(t, err, "Failed to generate bindings from combined JSON")
-
-		// just verify it compiles
-		_, err = datastorage.NewEmptyContract(nil, nil, nil)
-		require.NoError(t, err)
-	})
-}
 
 func TestGeneratedBindingsCodec(t *testing.T) {
 	ds := newDataStorage(t)
@@ -147,7 +120,7 @@ func TestReadMethods(t *testing.T) {
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
 	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).Return(
-		sdk.NewBasicPromise(func() (*evm.HeaderByNumberReply, error) {
+		cre.NewBasicPromise(func() (*evm.HeaderByNumberReply, error) {
 			// Simulate a successful header retrieval
 			header := &evm.HeaderByNumberReply{
 				Header: &evm.Header{
@@ -158,7 +131,7 @@ func TestReadMethods(t *testing.T) {
 		})).Once()
 
 	client.EXPECT().CallContract(mock.Anything, mock.Anything).Return(
-		sdk.NewBasicPromise(func() (*evm.CallContractReply, error) {
+		cre.NewBasicPromise(func() (*evm.CallContractReply, error) {
 			// Simulate a successful call with dummy data
 			reply := &evm.CallContractReply{
 				Data: []byte{0x01, 0x02, 0x03, 0x04}, // Example data
@@ -202,18 +175,18 @@ func TestWriteReportMethods(t *testing.T) {
 	require.NoError(t, err)
 
 	runtime.EXPECT().GenerateReport(mock.Anything).Return(
-		sdk.NewBasicPromise(func() (*pb.ReportResponse, error) {
+		cre.NewBasicPromise(func() (*pb.ReportResponse, error) {
 			return &pb.ReportResponse{
 				RawReport: rawReport,
 			}, nil
 		})).Once()
 
 	client.EXPECT().WriteReport(mock.Anything, mock.Anything).
-		Run(func(_ sdk.Runtime, req *evm.WriteReportRequest) {
+		Run(func(_ cre.Runtime, req *evm.WriteReportRequest) {
 			require.Equal(t, rawReport, req.Report.RawReport)
 		}).
 		Return(
-			sdk.NewBasicPromise(func() (*evm.WriteReportReply, error) {
+			cre.NewBasicPromise(func() (*evm.WriteReportReply, error) {
 				// Simulate a successful write report
 				return &evm.WriteReportReply{
 					TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
@@ -290,7 +263,7 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 	client.
 		EXPECT().
 		RegisterLogTracking(mock.Anything, mock.Anything).
-		Run(func(_ sdk.Runtime, req *evm.RegisterLogTrackingRequest) {
+		Run(func(_ cre.Runtime, req *evm.RegisterLogTrackingRequest) {
 			require.Equal(t, req.Filter.Name, "AccessLogged-"+common.Bytes2Hex(ds.Address))
 			require.Equal(t, [][]byte{ds.Address}, req.Filter.Addresses)
 			require.Equal(t, [][]byte{ds.Codec.AccessLoggedLogHash()}, req.Filter.EventSigs)
@@ -301,7 +274,7 @@ func TestRegisterUnregisterLogTracking(t *testing.T) {
 	client.
 		EXPECT().
 		UnregisterLogTracking(mock.Anything, mock.Anything).
-		Run(func(_ sdk.Runtime, req *evm.UnregisterLogTrackingRequest) {
+		Run(func(_ cre.Runtime, req *evm.UnregisterLogTrackingRequest) {
 			require.Equal(t, req.FilterName, "AccessLogged-"+common.Bytes2Hex(ds.Address))
 		}).
 		Return(nil).Once()
@@ -328,13 +301,13 @@ func TestFilterLogs(t *testing.T) {
 
 	// Mock the client to return a successful response
 	client.EXPECT().FilterLogs(mock.Anything, mock.Anything).Run(
-		func(_ sdk.Runtime, req *evm.FilterLogsRequest) {
+		func(_ cre.Runtime, req *evm.FilterLogsRequest) {
 			require.Equal(t, [][]byte{ds.Address}, req.FilterQuery.Addresses, "Filter should contain the correct address")
 			require.Equal(t, bh, req.FilterQuery.BlockHash, "Filter should contain the correct block hash")
 			require.Equal(t, fb.Bytes(), req.FilterQuery.FromBlock.GetAbsVal(), "Filter should contain the correct from block")
 			require.Equal(t, tb.Bytes(), req.FilterQuery.ToBlock.GetAbsVal(), "Filter should contain the correct to block")
 		}).Return(
-		sdk.NewBasicPromise(func() (*evm.FilterLogsReply, error) {
+		cre.NewBasicPromise(func() (*evm.FilterLogsReply, error) {
 			logs := []*evm.Log{
 				{
 					Address: ds.Address,

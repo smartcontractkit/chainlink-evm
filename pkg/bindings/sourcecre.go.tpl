@@ -20,7 +20,7 @@ import (
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
-	"github.com/smartcontractkit/cre-sdk-go/sdk"
+	"github.com/smartcontractkit/cre-sdk-go/cre"
 	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 )
 
@@ -41,7 +41,7 @@ var (
 	_ = pb2.AggregationType_AGGREGATION_TYPE_COMMON_PREFIX
 	_ = bindings.FilterOptions{}
 	_ = evm.FilterLogTriggerRequest{}
-	_ = sdk.ResponseBufferTooSmall
+	_ = cre.ResponseBufferTooSmall
 )
 
 {{range $contract := .Contracts}}
@@ -282,12 +282,12 @@ func (c *{{decapitalise $contract.Type}}CodecImpl) Decode{{.Normalized.Name}}(lo
   {{- if or $call.Original.Constant (eq $call.Original.StateMutability "view")}}
 
 func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
-    runtime sdk.Runtime,
+    runtime cre.Runtime,
     {{- if gt (len $call.Normalized.Inputs) 0}}
     args {{$call.Normalized.Name}}Input,
     {{- end}}
     blockNumber *big.Int,
-) (sdk.Promise[*evm.CallContractReply], error) {
+) (cre.Promise[*evm.CallContractReply], error) {
     {{- if gt (len $call.Normalized.Inputs) 0}}
     calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall(args)
 	{{- else }}
@@ -321,10 +321,10 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
 {{range $.Structs}}
 
 func (c {{$contract.Type}}) WriteReport{{.Name}}(
-	runtime sdk.Runtime,
+	runtime cre.Runtime,
 	input {{.Name}},
 	gasConfig *evm.GasConfig,
-) (sdk.Promise[*evm.WriteReportReply], error) {
+) (cre.Promise[*evm.WriteReportReply], error) {
 	encoded, err := c.Codec.Encode{{.Name}}Struct(input)
 	if err != nil {
 		return nil, err
@@ -394,7 +394,7 @@ func (c *{{$contract.Type}}) UnpackError(data []byte) (any, error) {
 
 {{range $event := $contract.Events}}
 
-func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(chainSelector uint64, confidence evm.ConfidenceLevel, filters []{{.Normalized.Name}}) (sdk.Trigger[*evm.Log, *evm.Log], error) {
+func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(chainSelector uint64, confidence evm.ConfidenceLevel, filters []{{.Normalized.Name}}) (cre.Trigger[*evm.Log, *evm.Log], error) {
 	event := c.ABI.Events["{{.Normalized.Name}}"]
 	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(event, filters)
 	if err != nil {
@@ -408,7 +408,7 @@ func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(chainSelector uin
 	}), nil
 }
 
-func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.LogTrackingOptions[{{.Normalized.Name}}]) error {
+func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime cre.Runtime, options *bindings.LogTrackingOptions[{{.Normalized.Name}}]) error {
 	bindings.ValidateLogTrackingOptions[{{.Normalized.Name}}](options)
 	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(c.ABI.Events["{{.Normalized.Name}}"], options.Filters)
 	if err != nil {
@@ -431,13 +431,13 @@ func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime sdk
 	return nil
 }
 
-func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime sdk.Runtime) {
+func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime cre.Runtime) {
 	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
 	})
 }
 
-func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime sdk.Runtime, options *bindings.FilterOptions) (sdk.Promise[*evm.FilterLogsReply]) {
+func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime cre.Runtime, options *bindings.FilterOptions) (cre.Promise[*evm.FilterLogsReply]) {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: options.ToBlock,
