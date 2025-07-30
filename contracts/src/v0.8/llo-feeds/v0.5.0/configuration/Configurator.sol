@@ -19,10 +19,6 @@ uint256 constant MIN_SUPPORTED_ONCHAIN_CONFIG_VERSION = 1;
  **/
 
 contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165 {
-  /// @notice This error is thrown whenever trying to set a config
-  /// with a fault tolerance of 0
-  error FaultToleranceMustBePositive();
-
   /// @notice This error is thrown whenever a report is signed
   /// with more than the max number of signers
   /// @param numSigners The number of signers who have signed the report
@@ -340,7 +336,6 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   }
 
   modifier checkConfigValid(uint256 numSigners, uint256 f) {
-    if (f == 0) revert FaultToleranceMustBePositive();
     if (numSigners > MAX_NUM_ORACLES) revert ExcessSigners(numSigners, MAX_NUM_ORACLES);
     if (numSigners <= 3 * f) revert InsufficientSigners(numSigners, 3 * f + 1);
     _;
