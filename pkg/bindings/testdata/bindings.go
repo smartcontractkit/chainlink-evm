@@ -19,8 +19,8 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
-	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm/bindings"
 	"github.com/smartcontractkit/cre-sdk-go/cre"
 )
 
@@ -126,11 +126,11 @@ type NoFields struct {
 
 // Main Binding Type for DataStorage
 type DataStorage struct {
-	Address   []byte
-	Options   *bindings.ContractInitOptions
-	ABI       *abi.ABI
-	evmClient bindings.EVMClient
-	Codec     DataStorageCodec
+	Address []byte
+	Options *bindings.ContractInitOptions
+	ABI     *abi.ABI
+	client  *evm.Client
+	Codec   DataStorageCodec
 }
 
 type DataStorageCodec interface {
@@ -163,7 +163,7 @@ type DataStorageCodec interface {
 }
 
 func NewDataStorage(
-	client bindings.EVMClient,
+	client *evm.Client,
 	address []byte,
 	options *bindings.ContractInitOptions,
 ) (*DataStorage, error) {
@@ -176,11 +176,11 @@ func NewDataStorage(
 		return nil, err
 	}
 	return &DataStorage{
-		Address:   address,
-		Options:   options,
-		ABI:       &parsed,
-		evmClient: client,
-		Codec:     codec,
+		Address: address,
+		Options: options,
+		ABI:     &parsed,
+		client:  client,
+		Codec:   codec,
 	}, nil
 }
 
@@ -554,96 +554,114 @@ func (c *dataStorageCodecImpl) DecodeNoFields(log *evm.Log) (*NoFields, error) {
 func (c DataStorage) GetReserves(
 	runtime cre.Runtime,
 	blockNumber *big.Int,
-) (cre.Promise[*evm.CallContractReply], error) {
+) cre.Promise[*evm.CallContractReply] {
 	calldata, err := c.Codec.EncodeGetReservesMethodCall()
 	if err != nil {
-		return nil, err
-	}
-	var bn *pb.BigInt
-	if blockNumber == nil {
-		promise := c.evmClient.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
-			BlockNumber: pb.NewBigIntFromInt(big.NewInt(-3)), // -3 means latest finalized block
-		})
-		finalizedBlock, err := promise.Await()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get finalized block: %w", err)
-		}
-		bn = finalizedBlock.Header.BlockNumber
-	} else {
-		bn = pb.NewBigIntFromInt(blockNumber)
+		return cre.PromiseFromResult[*evm.CallContractReply](nil, err)
 	}
 
-	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
-		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: bn,
-	}), nil
+	var bn cre.Promise[*pb.BigInt]
+	if blockNumber == nil {
+		promise := c.client.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
+			BlockNumber: pb.NewBigIntFromInt(big.NewInt(-3)), // -3 means latest finalized block
+		})
+
+		bn = cre.Then(promise, func(finalizedBlock *evm.HeaderByNumberReply) (*pb.BigInt, error) {
+			if finalizedBlock == nil || finalizedBlock.Header == nil {
+				return nil, errors.New("failed to get finalized block header")
+			}
+			return finalizedBlock.Header.BlockNumber, nil
+		})
+	} else {
+		bn = cre.PromiseFromResult(pb.NewBigIntFromInt(blockNumber), nil)
+	}
+
+	return cre.ThenPromise(bn, func(bn *pb.BigInt) cre.Promise[*evm.CallContractReply] {
+		return c.client.CallContract(runtime, &evm.CallContractRequest{
+			Call:        &evm.CallMsg{To: c.Address, Data: calldata},
+			BlockNumber: bn,
+		})
+	})
+
 }
 
 func (c DataStorage) GetValue(
 	runtime cre.Runtime,
 	blockNumber *big.Int,
-) (cre.Promise[*evm.CallContractReply], error) {
+) cre.Promise[*evm.CallContractReply] {
 	calldata, err := c.Codec.EncodeGetValueMethodCall()
 	if err != nil {
-		return nil, err
-	}
-	var bn *pb.BigInt
-	if blockNumber == nil {
-		promise := c.evmClient.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
-			BlockNumber: pb.NewBigIntFromInt(big.NewInt(-3)), // -3 means latest finalized block
-		})
-		finalizedBlock, err := promise.Await()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get finalized block: %w", err)
-		}
-		bn = finalizedBlock.Header.BlockNumber
-	} else {
-		bn = pb.NewBigIntFromInt(blockNumber)
+		return cre.PromiseFromResult[*evm.CallContractReply](nil, err)
 	}
 
-	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
-		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: bn,
-	}), nil
+	var bn cre.Promise[*pb.BigInt]
+	if blockNumber == nil {
+		promise := c.client.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
+			BlockNumber: pb.NewBigIntFromInt(big.NewInt(-3)), // -3 means latest finalized block
+		})
+
+		bn = cre.Then(promise, func(finalizedBlock *evm.HeaderByNumberReply) (*pb.BigInt, error) {
+			if finalizedBlock == nil || finalizedBlock.Header == nil {
+				return nil, errors.New("failed to get finalized block header")
+			}
+			return finalizedBlock.Header.BlockNumber, nil
+		})
+	} else {
+		bn = cre.PromiseFromResult(pb.NewBigIntFromInt(blockNumber), nil)
+	}
+
+	return cre.ThenPromise(bn, func(bn *pb.BigInt) cre.Promise[*evm.CallContractReply] {
+		return c.client.CallContract(runtime, &evm.CallContractRequest{
+			Call:        &evm.CallMsg{To: c.Address, Data: calldata},
+			BlockNumber: bn,
+		})
+	})
+
 }
 
 func (c DataStorage) ReadData(
 	runtime cre.Runtime,
 	args ReadDataInput,
 	blockNumber *big.Int,
-) (cre.Promise[*evm.CallContractReply], error) {
+) cre.Promise[*evm.CallContractReply] {
 	calldata, err := c.Codec.EncodeReadDataMethodCall(args)
 	if err != nil {
-		return nil, err
-	}
-	var bn *pb.BigInt
-	if blockNumber == nil {
-		promise := c.evmClient.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
-			BlockNumber: pb.NewBigIntFromInt(big.NewInt(-3)), // -3 means latest finalized block
-		})
-		finalizedBlock, err := promise.Await()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get finalized block: %w", err)
-		}
-		bn = finalizedBlock.Header.BlockNumber
-	} else {
-		bn = pb.NewBigIntFromInt(blockNumber)
+		return cre.PromiseFromResult[*evm.CallContractReply](nil, err)
 	}
 
-	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
-		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: bn,
-	}), nil
+	var bn cre.Promise[*pb.BigInt]
+	if blockNumber == nil {
+		promise := c.client.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
+			BlockNumber: pb.NewBigIntFromInt(big.NewInt(-3)), // -3 means latest finalized block
+		})
+
+		bn = cre.Then(promise, func(finalizedBlock *evm.HeaderByNumberReply) (*pb.BigInt, error) {
+			if finalizedBlock == nil || finalizedBlock.Header == nil {
+				return nil, errors.New("failed to get finalized block header")
+			}
+			return finalizedBlock.Header.BlockNumber, nil
+		})
+	} else {
+		bn = cre.PromiseFromResult(pb.NewBigIntFromInt(blockNumber), nil)
+	}
+
+	return cre.ThenPromise(bn, func(bn *pb.BigInt) cre.Promise[*evm.CallContractReply] {
+		return c.client.CallContract(runtime, &evm.CallContractRequest{
+			Call:        &evm.CallMsg{To: c.Address, Data: calldata},
+			BlockNumber: bn,
+		})
+	})
+
 }
 
 func (c DataStorage) WriteReportDataStorageUpdateReserves(
 	runtime cre.Runtime,
 	input DataStorageUpdateReserves,
 	gasConfig *evm.GasConfig,
-) (cre.Promise[*evm.WriteReportReply], error) {
+) cre.Promise[*evm.WriteReportReply] {
 	encoded, err := c.Codec.EncodeDataStorageUpdateReservesStruct(input)
 	if err != nil {
-		return nil, err
+		return cre.PromiseFromResult[*evm.WriteReportReply](nil, err)
 	}
 	promise := runtime.GenerateReport(&pb2.ReportRequest{
 		EncodedPayload: encoded,
@@ -651,25 +669,24 @@ func (c DataStorage) WriteReportDataStorageUpdateReserves(
 		SigningAlgo:    "ecdsa",
 		HashingAlgo:    "keccak256",
 	})
-	report, err := promise.Await()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate report: %w", err)
-	}
-	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
-		Receiver:  c.Address,
-		Report:    report,
-		GasConfig: gasConfig,
-	}), nil
+
+	return cre.ThenPromise(promise, func(report *pb2.ReportResponse) cre.Promise[*evm.WriteReportReply] {
+		return c.client.WriteReport(runtime, &evm.WriteReportRequest{
+			Receiver:  c.Address,
+			Report:    report,
+			GasConfig: gasConfig,
+		})
+	})
 }
 
 func (c DataStorage) WriteReportDataStorageUserData(
 	runtime cre.Runtime,
 	input DataStorageUserData,
 	gasConfig *evm.GasConfig,
-) (cre.Promise[*evm.WriteReportReply], error) {
+) cre.Promise[*evm.WriteReportReply] {
 	encoded, err := c.Codec.EncodeDataStorageUserDataStruct(input)
 	if err != nil {
-		return nil, err
+		return cre.PromiseFromResult[*evm.WriteReportReply](nil, err)
 	}
 	promise := runtime.GenerateReport(&pb2.ReportRequest{
 		EncodedPayload: encoded,
@@ -677,15 +694,14 @@ func (c DataStorage) WriteReportDataStorageUserData(
 		SigningAlgo:    "ecdsa",
 		HashingAlgo:    "keccak256",
 	})
-	report, err := promise.Await()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate report: %w", err)
-	}
-	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
-		Receiver:  c.Address,
-		Report:    report,
-		GasConfig: gasConfig,
-	}), nil
+
+	return cre.ThenPromise(promise, func(report *pb2.ReportResponse) cre.Promise[*evm.WriteReportReply] {
+		return c.client.WriteReport(runtime, &evm.WriteReportRequest{
+			Receiver:  c.Address,
+			Report:    report,
+			GasConfig: gasConfig,
+		})
+	})
 }
 
 // DecodeDataNotFoundError decodes a DataNotFound error from revert data.
@@ -789,14 +805,14 @@ func (c *DataStorage) LogTriggerAccessLoggedLog(chainSelector uint64, confidence
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime cre.Runtime, options *bindings.LogTrackingOptions[AccessLogged]) error {
+func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime cre.Runtime, options *bindings.LogTrackingOptions[AccessLogged]) cre.Promise[*emptypb.Empty] {
 	bindings.ValidateLogTrackingOptions[AccessLogged](options)
 	topics, err := c.Codec.EncodeAccessLoggedTopics(c.ABI.Events["AccessLogged"], options.Filters)
 	if err != nil {
-		return fmt.Errorf("failed to encode topics for AccessLogged: %w", err)
+		return cre.PromiseFromResult[*emptypb.Empty](nil, fmt.Errorf("failed to encode topics for AccessLogged: %w", err))
 	}
 	padded := bindings.PadTopics(topics)
-	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
+	return c.client.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "AccessLogged-" + common.Bytes2Hex(c.Address),
 			Addresses:     [][]byte{c.Address},
@@ -809,11 +825,10 @@ func (c *DataStorage) RegisterLogTrackingAccessLogged(runtime cre.Runtime, optio
 			Topic4:        padded[3].Values,
 		},
 	})
-	return nil
 }
 
-func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime cre.Runtime) {
-	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
+func (c *DataStorage) UnregisterLogTrackingAccessLogged(runtime cre.Runtime) cre.Promise[*emptypb.Empty] {
+	return c.client.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "AccessLogged-" + common.Bytes2Hex(c.Address),
 	})
 }
@@ -824,7 +839,7 @@ func (c *DataStorage) FilterLogsAccessLogged(runtime cre.Runtime, options *bindi
 			ToBlock: options.ToBlock,
 		}
 	}
-	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+	return c.client.FilterLogs(runtime, &evm.FilterLogsRequest{
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{
@@ -851,14 +866,14 @@ func (c *DataStorage) LogTriggerDataStoredLog(chainSelector uint64, confidence e
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingDataStored(runtime cre.Runtime, options *bindings.LogTrackingOptions[DataStored]) error {
+func (c *DataStorage) RegisterLogTrackingDataStored(runtime cre.Runtime, options *bindings.LogTrackingOptions[DataStored]) cre.Promise[*emptypb.Empty] {
 	bindings.ValidateLogTrackingOptions[DataStored](options)
 	topics, err := c.Codec.EncodeDataStoredTopics(c.ABI.Events["DataStored"], options.Filters)
 	if err != nil {
-		return fmt.Errorf("failed to encode topics for DataStored: %w", err)
+		return cre.PromiseFromResult[*emptypb.Empty](nil, fmt.Errorf("failed to encode topics for DataStored: %w", err))
 	}
 	padded := bindings.PadTopics(topics)
-	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
+	return c.client.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "DataStored-" + common.Bytes2Hex(c.Address),
 			Addresses:     [][]byte{c.Address},
@@ -871,11 +886,10 @@ func (c *DataStorage) RegisterLogTrackingDataStored(runtime cre.Runtime, options
 			Topic4:        padded[3].Values,
 		},
 	})
-	return nil
 }
 
-func (c *DataStorage) UnregisterLogTrackingDataStored(runtime cre.Runtime) {
-	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
+func (c *DataStorage) UnregisterLogTrackingDataStored(runtime cre.Runtime) cre.Promise[*emptypb.Empty] {
+	return c.client.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "DataStored-" + common.Bytes2Hex(c.Address),
 	})
 }
@@ -886,7 +900,7 @@ func (c *DataStorage) FilterLogsDataStored(runtime cre.Runtime, options *binding
 			ToBlock: options.ToBlock,
 		}
 	}
-	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+	return c.client.FilterLogs(runtime, &evm.FilterLogsRequest{
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{
@@ -913,14 +927,14 @@ func (c *DataStorage) LogTriggerDynamicEventLog(chainSelector uint64, confidence
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime cre.Runtime, options *bindings.LogTrackingOptions[DynamicEvent]) error {
+func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime cre.Runtime, options *bindings.LogTrackingOptions[DynamicEvent]) cre.Promise[*emptypb.Empty] {
 	bindings.ValidateLogTrackingOptions[DynamicEvent](options)
 	topics, err := c.Codec.EncodeDynamicEventTopics(c.ABI.Events["DynamicEvent"], options.Filters)
 	if err != nil {
-		return fmt.Errorf("failed to encode topics for DynamicEvent: %w", err)
+		return cre.PromiseFromResult[*emptypb.Empty](nil, fmt.Errorf("failed to encode topics for DynamicEvent: %w", err))
 	}
 	padded := bindings.PadTopics(topics)
-	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
+	return c.client.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "DynamicEvent-" + common.Bytes2Hex(c.Address),
 			Addresses:     [][]byte{c.Address},
@@ -933,11 +947,10 @@ func (c *DataStorage) RegisterLogTrackingDynamicEvent(runtime cre.Runtime, optio
 			Topic4:        padded[3].Values,
 		},
 	})
-	return nil
 }
 
-func (c *DataStorage) UnregisterLogTrackingDynamicEvent(runtime cre.Runtime) {
-	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
+func (c *DataStorage) UnregisterLogTrackingDynamicEvent(runtime cre.Runtime) cre.Promise[*emptypb.Empty] {
+	return c.client.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "DynamicEvent-" + common.Bytes2Hex(c.Address),
 	})
 }
@@ -948,7 +961,7 @@ func (c *DataStorage) FilterLogsDynamicEvent(runtime cre.Runtime, options *bindi
 			ToBlock: options.ToBlock,
 		}
 	}
-	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+	return c.client.FilterLogs(runtime, &evm.FilterLogsRequest{
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{
@@ -975,14 +988,14 @@ func (c *DataStorage) LogTriggerNoFieldsLog(chainSelector uint64, confidence evm
 	}), nil
 }
 
-func (c *DataStorage) RegisterLogTrackingNoFields(runtime cre.Runtime, options *bindings.LogTrackingOptions[NoFields]) error {
+func (c *DataStorage) RegisterLogTrackingNoFields(runtime cre.Runtime, options *bindings.LogTrackingOptions[NoFields]) cre.Promise[*emptypb.Empty] {
 	bindings.ValidateLogTrackingOptions[NoFields](options)
 	topics, err := c.Codec.EncodeNoFieldsTopics(c.ABI.Events["NoFields"], options.Filters)
 	if err != nil {
-		return fmt.Errorf("failed to encode topics for NoFields: %w", err)
+		return cre.PromiseFromResult[*emptypb.Empty](nil, fmt.Errorf("failed to encode topics for NoFields: %w", err))
 	}
 	padded := bindings.PadTopics(topics)
-	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
+	return c.client.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "NoFields-" + common.Bytes2Hex(c.Address),
 			Addresses:     [][]byte{c.Address},
@@ -995,11 +1008,10 @@ func (c *DataStorage) RegisterLogTrackingNoFields(runtime cre.Runtime, options *
 			Topic4:        padded[3].Values,
 		},
 	})
-	return nil
 }
 
-func (c *DataStorage) UnregisterLogTrackingNoFields(runtime cre.Runtime) {
-	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
+func (c *DataStorage) UnregisterLogTrackingNoFields(runtime cre.Runtime) cre.Promise[*emptypb.Empty] {
+	return c.client.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "NoFields-" + common.Bytes2Hex(c.Address),
 	})
 }
@@ -1010,7 +1022,7 @@ func (c *DataStorage) FilterLogsNoFields(runtime cre.Runtime, options *bindings.
 			ToBlock: options.ToBlock,
 		}
 	}
-	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+	return c.client.FilterLogs(runtime, &evm.FilterLogsRequest{
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics: []*evm.Topics{

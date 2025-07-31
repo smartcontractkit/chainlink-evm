@@ -1,27 +1,29 @@
 package bindings_test
 
 import (
+	"context"
 	"math/big"
 	"testing"
-
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm/bindings"
+	evmmock "github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm/mock"
+	"github.com/smartcontractkit/cre-sdk-go/cre/testutils"
+	consensusmock "github.com/smartcontractkit/cre-sdk-go/internal_testing/capabilities/consensus/mock"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	ocr3types "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
-
-	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
-	"github.com/smartcontractkit/cre-sdk-go/cre"
-
-	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
-	"github.com/smartcontractkit/chainlink-evm/pkg/bindings/mocks"
 	datastorage "github.com/smartcontractkit/chainlink-evm/pkg/bindings/testdata"
 )
+
+const anyChainSelector = uint64(1337)
 
 func TestGeneratedBindingsCodec(t *testing.T) {
 	ds := newDataStorage(t)
@@ -115,31 +117,32 @@ func TestDecodeEvents(t *testing.T) {
 }
 
 func TestReadMethods(t *testing.T) {
-	client := mocks.NewEVMClient(t)
+	client := &evm.Client{ChainSelector: anyChainSelector}
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
-	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).Return(
-		cre.NewBasicPromise(func() (*evm.HeaderByNumberReply, error) {
-			// Simulate a successful header retrieval
-			header := &evm.HeaderByNumberReply{
-				Header: &evm.Header{
-					BlockNumber: pb2.NewBigIntFromInt(big.NewInt(123456)),
-				},
-			}
-			return header, nil
-		})).Once()
+	evmCap, err := evmmock.NewClientCapability(anyChainSelector, t)
+	require.NoError(t, err, "Failed to create EVM client capability")
 
-	client.EXPECT().CallContract(mock.Anything, mock.Anything).Return(
-		cre.NewBasicPromise(func() (*evm.CallContractReply, error) {
-			// Simulate a successful call with dummy data
-			reply := &evm.CallContractReply{
-				Data: []byte{0x01, 0x02, 0x03, 0x04}, // Example data
-			}
-			return reply, nil
-		})).Once()
+	evmCap.HeaderByNumber = func(_ context.Context, input *evm.HeaderByNumberRequest) (*evm.HeaderByNumberReply, error) {
+		header := &evm.HeaderByNumberReply{
+			Header: &evm.Header{
+				BlockNumber: pb2.NewBigIntFromInt(big.NewInt(123456)),
+			},
+		}
+		return header, nil
+	}
 
-	reply, err := ds.ReadData(nil, datastorage.ReadDataInput{
+	evmCap.CallContract = func(_ context.Context, input *evm.CallContractRequest) (*evm.CallContractReply, error) {
+		// Simulate a successful call with dummy data
+		reply := &evm.CallContractReply{
+			Data: []byte{0x01, 0x02, 0x03, 0x04}, // Example data
+		}
+		return reply, nil
+	}
+
+	runtime, _ := testutils.NewRuntimeAndEnv(t, "", map[string]string{})
+	reply := ds.ReadData(runtime, datastorage.ReadDataInput{
 		User: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
 		Key:  "testKey",
 	}, nil)
@@ -153,11 +156,9 @@ func TestReadMethods(t *testing.T) {
 }
 
 func TestWriteReportMethods(t *testing.T) {
-	client := mocks.NewEVMClient(t)
+	client := &evm.Client{ChainSelector: anyChainSelector}
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
-
-	runtime := mocks.NewRuntime(t)
 
 	report := ocr3types.Metadata{
 		Version:          1,
@@ -174,27 +175,27 @@ func TestWriteReportMethods(t *testing.T) {
 	rawReport, err := report.Encode()
 	require.NoError(t, err)
 
-	runtime.EXPECT().GenerateReport(mock.Anything).Return(
-		cre.NewBasicPromise(func() (*pb.ReportResponse, error) {
-			return &pb.ReportResponse{
-				RawReport: rawReport,
-			}, nil
-		})).Once()
+	consensusCap, err := consensusmock.NewConsensusCapability(t)
+	require.NoError(t, err, "Failed to create Consensus capability")
+	consensusCap.Report = func(_ context.Context, input *pb.ReportRequest) (*pb.ReportResponse, error) {
+		return &pb.ReportResponse{
+			RawReport: rawReport,
+		}, nil
+	}
 
-	client.EXPECT().WriteReport(mock.Anything, mock.Anything).
-		Run(func(_ cre.Runtime, req *evm.WriteReportRequest) {
-			require.Equal(t, rawReport, req.Report.RawReport)
-		}).
-		Return(
-			cre.NewBasicPromise(func() (*evm.WriteReportReply, error) {
-				// Simulate a successful write report
-				return &evm.WriteReportReply{
-					TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
-					TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
-				}, nil
-			})).Once()
+	evmCap, err := evmmock.NewClientCapability(anyChainSelector, t)
+	require.NoError(t, err, "Failed to create EVM client capability")
+	evmCap.WriteReport = func(_ context.Context, req *evm.WriteReportRequest) (*evm.WriteReportReply, error) {
+		require.Equal(t, rawReport, req.Report.RawReport)
+		return &evm.WriteReportReply{
+			TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
+			TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
+		}, nil
+	}
 
-	reply, err := ds.WriteReportDataStorageUserData(runtime, datastorage.DataStorageUserData{
+	runtime, _ := testutils.NewRuntimeAndEnv(t, "", map[string]string{})
+
+	reply := ds.WriteReportDataStorageUserData(runtime, datastorage.DataStorageUserData{
 		Key:   "testKey",
 		Value: "testValue",
 	}, nil)
@@ -202,10 +203,10 @@ func TestWriteReportMethods(t *testing.T) {
 	response, err := reply.Await()
 	require.NoError(t, err, "Awaiting WriteReportDataStorageUserData reply should not return an error")
 	require.NotNil(t, response, "Response from WriteReportDataStorageUserData should not be nil")
-	require.Equal(t, &evm.WriteReportReply{
+	require.True(t, proto.Equal(&evm.WriteReportReply{
 		TxStatus: evm.TxStatus_TX_STATUS_SUCCESS,
 		TxHash:   []byte{0x01, 0x02, 0x03, 0x04},
-	}, response, "Response should match expected WriteReportReply")
+	}, response), "Response should match expected WriteReportReply")
 }
 
 func TestEncodeStruct(t *testing.T) {
@@ -256,69 +257,73 @@ func TestErrorHandling(t *testing.T) {
 }
 
 func TestRegisterUnregisterLogTracking(t *testing.T) {
-	client := mocks.NewEVMClient(t)
-	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
+	client := &evm.Client{ChainSelector: anyChainSelector}
+	anyAddress := common.HexToAddress("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2").Bytes()
+	ds, err := datastorage.NewDataStorage(client, anyAddress, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
-	client.
-		EXPECT().
-		RegisterLogTracking(mock.Anything, mock.Anything).
-		Run(func(_ cre.Runtime, req *evm.RegisterLogTrackingRequest) {
-			require.Equal(t, req.Filter.Name, "AccessLogged-"+common.Bytes2Hex(ds.Address))
-			require.Equal(t, [][]byte{ds.Address}, req.Filter.Addresses)
-			require.Equal(t, [][]byte{ds.Codec.AccessLoggedLogHash()}, req.Filter.EventSigs)
-			require.Len(t, req.Filter.Topic2, 1)
-			require.Equal(t, req.Filter.Topic2[0], common.HexToHash("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2").Bytes())
-		}).Return(nil).Once()
+	evmCap, err := evmmock.NewClientCapability(anyChainSelector, t)
+	require.NoError(t, err, "Failed to create EVM client capability")
+	evmCap.RegisterLogTracking = func(_ context.Context, req *evm.RegisterLogTrackingRequest) (*emptypb.Empty, error) {
+		require.Equal(t, req.Filter.Name, "AccessLogged-"+common.Bytes2Hex(ds.Address))
+		require.ElementsMatch(t, [][]byte{ds.Address}, req.Filter.Addresses)
+		require.ElementsMatch(t, [][]byte{ds.Codec.AccessLoggedLogHash()}, req.Filter.EventSigs)
+		require.Len(t, req.Filter.Topic2, 1)
+		require.Equal(t, req.Filter.Topic2[0], common.HexToHash("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2").Bytes())
+		return &emptypb.Empty{}, nil
+	}
 
-	client.
-		EXPECT().
-		UnregisterLogTracking(mock.Anything, mock.Anything).
-		Run(func(_ cre.Runtime, req *evm.UnregisterLogTrackingRequest) {
-			require.Equal(t, req.FilterName, "AccessLogged-"+common.Bytes2Hex(ds.Address))
-		}).
-		Return(nil).Once()
+	evmCap.UnregisterLogTracking = func(ctx context.Context, req *evm.UnregisterLogTrackingRequest) (*emptypb.Empty, error) {
+		require.Equal(t, req.FilterName, "AccessLogged-"+common.Bytes2Hex(ds.Address))
+		return &emptypb.Empty{}, nil
+	}
 
-	err = ds.RegisterLogTrackingAccessLogged(mocks.NewRuntime(t), &bindings.LogTrackingOptions[datastorage.AccessLogged]{
+	runtime, _ := testutils.NewRuntimeAndEnv(t, "", map[string]string{})
+
+	register := ds.RegisterLogTrackingAccessLogged(runtime, &bindings.LogTrackingOptions[datastorage.AccessLogged]{
 		Filters: []datastorage.AccessLogged{
 			{
 				Caller: common.HexToAddress("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"),
 			},
 		},
 	})
+	_, err = register.Await()
 	require.NoError(t, err)
-	ds.UnregisterLogTrackingAccessLogged(mocks.NewRuntime(t))
+
+	_, err = ds.UnregisterLogTrackingAccessLogged(runtime).Await()
+	require.NoError(t, err)
 }
 
 func TestFilterLogs(t *testing.T) {
-	client := mocks.NewEVMClient(t)
-	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
+	client := &evm.Client{ChainSelector: anyChainSelector}
+	anyAddress := common.HexToAddress("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2").Bytes()
+	ds, err := datastorage.NewDataStorage(client, anyAddress, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 
 	bh := []byte{0x01, 0x02, 0x03, 0x04}
 	fb := big.NewInt(100)
 	tb := big.NewInt(200)
 
-	// Mock the client to return a successful response
-	client.EXPECT().FilterLogs(mock.Anything, mock.Anything).Run(
-		func(_ cre.Runtime, req *evm.FilterLogsRequest) {
-			require.Equal(t, [][]byte{ds.Address}, req.FilterQuery.Addresses, "Filter should contain the correct address")
-			require.Equal(t, bh, req.FilterQuery.BlockHash, "Filter should contain the correct block hash")
-			require.Equal(t, fb.Bytes(), req.FilterQuery.FromBlock.GetAbsVal(), "Filter should contain the correct from block")
-			require.Equal(t, tb.Bytes(), req.FilterQuery.ToBlock.GetAbsVal(), "Filter should contain the correct to block")
-		}).Return(
-		cre.NewBasicPromise(func() (*evm.FilterLogsReply, error) {
-			logs := []*evm.Log{
-				{
-					Address: ds.Address,
-					Topics:  [][]byte{ds.Codec.AccessLoggedLogHash()},
-					Data:    []byte("test log data"),
-				},
-			}
-			return &evm.FilterLogsReply{Logs: logs}, nil
-		})).Once()
+	evmCap, err := evmmock.NewClientCapability(anyChainSelector, t)
+	require.NoError(t, err, "Failed to create EVM client capability")
+	evmCap.FilterLogs = func(_ context.Context, req *evm.FilterLogsRequest) (*evm.FilterLogsReply, error) {
+		require.Equal(t, [][]byte{ds.Address}, req.FilterQuery.Addresses, "Filter should contain the correct address")
+		require.Equal(t, bh, req.FilterQuery.BlockHash, "Filter should contain the correct block hash")
+		require.Equal(t, fb.Bytes(), req.FilterQuery.FromBlock.GetAbsVal(), "Filter should contain the correct from block")
+		require.Equal(t, tb.Bytes(), req.FilterQuery.ToBlock.GetAbsVal(), "Filter should contain the correct to block")
+		logs := []*evm.Log{
+			{
+				Address: ds.Address,
+				Topics:  [][]byte{ds.Codec.AccessLoggedLogHash()},
+				Data:    []byte("test log data"),
+			},
+		}
+		return &evm.FilterLogsReply{Logs: logs}, nil
+	}
 
-	reply := ds.FilterLogsAccessLogged(mocks.NewRuntime(t), &bindings.FilterOptions{
+	runtime, _ := testutils.NewRuntimeAndEnv(t, "", map[string]string{})
+
+	reply := ds.FilterLogsAccessLogged(runtime, &bindings.FilterOptions{
 		BlockHash: bh,
 		FromBlock: fb,
 		ToBlock:   tb,
@@ -331,7 +336,7 @@ func TestFilterLogs(t *testing.T) {
 }
 
 func TestLogTrigger(t *testing.T) {
-	client := mocks.NewEVMClient(t)
+	client := &evm.Client{ChainSelector: anyChainSelector}
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 	t.Run("simple event", func(t *testing.T) {
@@ -436,7 +441,7 @@ func TestLogTrigger(t *testing.T) {
 }
 
 func newDataStorage(t *testing.T) *datastorage.DataStorage {
-	client := mocks.NewEVMClient(t)
+	client := &evm.Client{ChainSelector: anyChainSelector}
 	ds, err := datastorage.NewDataStorage(client, nil, &bindings.ContractInitOptions{})
 	require.NoError(t, err, "Failed to create DataStorage instance")
 	return ds

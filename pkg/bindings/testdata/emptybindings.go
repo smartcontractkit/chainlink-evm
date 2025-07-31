@@ -19,8 +19,8 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
-	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
 	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm/bindings"
 	"github.com/smartcontractkit/cre-sdk-go/cre"
 )
 
@@ -58,18 +58,18 @@ var EmptyContractMetaData = &bind.MetaData{
 
 // Main Binding Type for EmptyContract
 type EmptyContract struct {
-	Address   []byte
-	Options   *bindings.ContractInitOptions
-	ABI       *abi.ABI
-	evmClient bindings.EVMClient
-	Codec     EmptyContractCodec
+	Address []byte
+	Options *bindings.ContractInitOptions
+	ABI     *abi.ABI
+	client  *evm.Client
+	Codec   EmptyContractCodec
 }
 
 type EmptyContractCodec interface {
 }
 
 func NewEmptyContract(
-	client bindings.EVMClient,
+	client *evm.Client,
 	address []byte,
 	options *bindings.ContractInitOptions,
 ) (*EmptyContract, error) {
@@ -82,11 +82,11 @@ func NewEmptyContract(
 		return nil, err
 	}
 	return &EmptyContract{
-		Address:   address,
-		Options:   options,
-		ABI:       &parsed,
-		evmClient: client,
-		Codec:     codec,
+		Address: address,
+		Options: options,
+		ABI:     &parsed,
+		client:  client,
+		Codec:   codec,
 	}, nil
 }
 
