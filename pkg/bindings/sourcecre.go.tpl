@@ -18,10 +18,10 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb2 "github.com/smartcontractkit/chainlink-common/pkg/workflows/sdk/v2/pb"
-	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
-	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 	"github.com/smartcontractkit/cre-sdk-go/cre"
-	"github.com/smartcontractkit/chainlink-evm/pkg/bindings"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm"
+	"github.com/smartcontractkit/cre-sdk-go/capabilities/blockchain/evm/bindings"
+	"github.com/smartcontractkit/chainlink-common/pkg/values/pb"
 )
 
 var (
@@ -95,7 +95,7 @@ type {{$contract.Type}} struct {
 	Address   []byte
 	Options   *bindings.ContractInitOptions
 	ABI       *abi.ABI
-	evmClient bindings.EVMClient
+	client *evm.Client
 	Codec     {{$contract.Type}}Codec
 }
 
@@ -125,7 +125,7 @@ type {{$contract.Type}}Codec interface {
 }
 
 func New{{$contract.Type}}(
-	client bindings.EVMClient,
+	client *evm.Client,
 	address []byte,
 	options *bindings.ContractInitOptions,
 ) (*{{$contract.Type}}, error) {
@@ -141,7 +141,7 @@ func New{{$contract.Type}}(
 		Address:   address,
 		Options:   options,
 		ABI:       &parsed,
-		evmClient: client,
+		client: client,
 		Codec:     codec,
 	}, nil
 }
@@ -287,33 +287,39 @@ func (c {{$contract.Type}}) {{$call.Normalized.Name}}(
     args {{$call.Normalized.Name}}Input,
     {{- end}}
     blockNumber *big.Int,
-) (cre.Promise[*evm.CallContractReply], error) {
+) cre.Promise[*evm.CallContractReply] {
     {{- if gt (len $call.Normalized.Inputs) 0}}
     calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall(args)
 	{{- else }}
 	calldata, err := c.Codec.Encode{{$call.Normalized.Name}}MethodCall()
 	{{- end}}
     if err != nil {
-        return nil, err
+        return cre.PromiseFromResult[*evm.CallContractReply](nil, err)
     }
-	var bn *pb.BigInt
+
+	var bn cre.Promise[*pb.BigInt]
 	if blockNumber == nil {
-		promise := c.evmClient.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
+		promise := c.client.HeaderByNumber(runtime, &evm.HeaderByNumberRequest{
 			BlockNumber: pb.NewBigIntFromInt(big.NewInt(-3)), // -3 means latest finalized block
 		})
-		finalizedBlock, err := promise.Await()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get finalized block: %w", err)
-		}
-		bn = finalizedBlock.Header.BlockNumber
+
+		bn = cre.Then(promise, func(finalizedBlock *evm.HeaderByNumberReply) (*pb.BigInt, error) {
+            if finalizedBlock == nil || finalizedBlock.Header == nil {
+                return nil, errors.New("failed to get finalized block header")
+            }
+            return finalizedBlock.Header.BlockNumber, nil
+        })
 	} else {
-		bn = pb.NewBigIntFromInt(blockNumber)
+		bn = cre.PromiseFromResult(pb.NewBigIntFromInt(blockNumber), nil)
 	}
 
-	return c.evmClient.CallContract(runtime, &evm.CallContractRequest{
-		Call:        &evm.CallMsg{To: c.Address, Data: calldata},
-		BlockNumber: bn,
-	}), nil
+    return cre.ThenPromise(bn, func(bn *pb.BigInt) cre.Promise[*evm.CallContractReply] {
+        return c.client.CallContract(runtime, &evm.CallContractRequest{
+            Call:        &evm.CallMsg{To: c.Address, Data: calldata},
+            BlockNumber: bn,
+        })
+    })
+
 }
   {{- end}}
 {{end}}
@@ -324,10 +330,10 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 	runtime cre.Runtime,
 	input {{.Name}},
 	gasConfig *evm.GasConfig,
-) (cre.Promise[*evm.WriteReportReply], error) {
+) cre.Promise[*evm.WriteReportReply] {
 	encoded, err := c.Codec.Encode{{.Name}}Struct(input)
 	if err != nil {
-		return nil, err
+		return cre.PromiseFromResult[*evm.WriteReportReply](nil, err)
 	}
 	promise := runtime.GenerateReport(&pb2.ReportRequest{
 		EncodedPayload: encoded,
@@ -335,15 +341,14 @@ func (c {{$contract.Type}}) WriteReport{{.Name}}(
 		SigningAlgo:    "ecdsa",
 		HashingAlgo:    "keccak256",
 	})
-	report, err := promise.Await()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate report: %w", err)
-	}
-	return c.evmClient.WriteReport(runtime, &evm.WriteReportRequest{
-		Receiver: c.Address,
-		Report: report,
-		GasConfig: gasConfig,
-	}), nil
+
+	return cre.ThenPromise(promise, func(report *pb2.ReportResponse) cre.Promise[*evm.WriteReportReply] {
+	    return c.client.WriteReport(runtime, &evm.WriteReportRequest{
+    		Receiver: c.Address,
+    		Report: report,
+    		GasConfig: gasConfig,
+    	})
+	})
 }
 {{end}}
 
@@ -408,14 +413,14 @@ func (c *{{$contract.Type}}) LogTrigger{{.Normalized.Name}}Log(chainSelector uin
 	}), nil
 }
 
-func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime cre.Runtime, options *bindings.LogTrackingOptions[{{.Normalized.Name}}]) error {
+func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime cre.Runtime, options *bindings.LogTrackingOptions[{{.Normalized.Name}}]) cre.Promise[*emptypb.Empty] {
 	bindings.ValidateLogTrackingOptions[{{.Normalized.Name}}](options)
 	topics, err := c.Codec.Encode{{.Normalized.Name}}Topics(c.ABI.Events["{{.Normalized.Name}}"], options.Filters)
 	if err != nil {
-		return fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err)
+		return cre.PromiseFromResult[*emptypb.Empty](nil, fmt.Errorf("failed to encode topics for {{.Normalized.Name}}: %w", err))
 	}
 	padded := bindings.PadTopics(topics)
-	c.evmClient.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
+	return c.client.RegisterLogTracking(runtime, &evm.RegisterLogTrackingRequest{
 		Filter: &evm.LPFilter{
 			Name:          "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
 			Addresses:     [][]byte{c.Address},
@@ -428,22 +433,21 @@ func (c *{{$contract.Type}}) RegisterLogTracking{{.Normalized.Name}}(runtime cre
 			Topic4:        padded[3].Values,
 		},
 	})
-	return nil
 }
 
-func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime cre.Runtime) {
-	c.evmClient.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
+func (c *{{$contract.Type}}) UnregisterLogTracking{{.Normalized.Name}}(runtime cre.Runtime) cre.Promise[*emptypb.Empty] {
+	return c.client.UnregisterLogTracking(runtime, &evm.UnregisterLogTrackingRequest{
 		FilterName: "{{.Normalized.Name}}-" + common.Bytes2Hex(c.Address),
 	})
 }
 
-func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime cre.Runtime, options *bindings.FilterOptions) (cre.Promise[*evm.FilterLogsReply]) {
+func (c *{{$contract.Type}}) FilterLogs{{.Normalized.Name}}(runtime cre.Runtime, options *bindings.FilterOptions) cre.Promise[*evm.FilterLogsReply] {
 	if options == nil {
 		options = &bindings.FilterOptions{
 			ToBlock: options.ToBlock,
 		}
 	}
-	return c.evmClient.FilterLogs(runtime, &evm.FilterLogsRequest{
+	return c.client.FilterLogs(runtime, &evm.FilterLogsRequest{
 		FilterQuery: &evm.FilterQuery{
 			Addresses: [][]byte{c.Address},
 			Topics:    []*evm.Topics{
