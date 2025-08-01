@@ -178,7 +178,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 			EthCallError:        "call_contract failed",
 			ExpectedTag:         "finalized",
 			BlockByNumberResult: MakeHeadMsgForNumber(4),
-			ExpectedError:       "RPCClient returned error (rpc): caller request failed: call_contract failed",
+			ExpectedError:       "RPC call failed: caller request failed: call_contract failed",
 		},
 		{
 			Name:                "Failed to make reference call",
@@ -188,7 +188,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 			ExpectedTag:         "finalized",
 			BlockByNumberResult: MakeHeadMsgForNumber(4),
 			BlockByNumberError:  "failed to get finalized block number",
-			ExpectedError:       "RPCClient returned error (rpc): referenced block request failed: failed to get finalized block number",
+			ExpectedError:       "RPC call failed: referenced block request failed: failed to get finalized block number",
 		},
 		{
 			Name:                "Finalized block number if smaller than request",
