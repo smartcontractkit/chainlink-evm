@@ -513,6 +513,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // |                Owner linking functions                       |
   // ================================================================
   /// @notice View function to verify if the linkOwner() function can be called successfully.
+  /// @param owner The address of the owner to be linked.
   /// @param validityTimestamp Validity of the ownership proof.
   /// @param proof The ownership proof to be submitted.
   /// @param signature The signature of the ownership proof metadata.
@@ -520,27 +521,24 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// The ownership proof metadata is a combination of the claimed owner address, validity timestamp, and the proof hash.
   /// Request will be rejected if the validity timestamp has expired, owner addres is already linked, if the proof does
   /// not match the one that was originally submitted, or if the signature is not valid (for different reasons).
-  /// @dev Verification will use msg.sender as the owner address, which means caller must be the owner of the address,
-  /// otherwise the verification will fail with invalid signature error.
-  function canLinkOwner(uint256 validityTimestamp, bytes32 proof, bytes calldata signature) public view {
+  function canLinkOwner(address owner, uint256 validityTimestamp, bytes32 proof, bytes calldata signature) public view {
     if (block.timestamp > validityTimestamp) {
-      revert LinkOwnerRequestExpired(msg.sender, block.timestamp, validityTimestamp);
+      revert LinkOwnerRequestExpired(owner, block.timestamp, validityTimestamp);
     }
 
     // Workflow owner address may only be linked once
-    if (s_linkedOwners.contains(msg.sender)) {
-      revert OwnershipLinkAlreadyExists(msg.sender);
+    if (s_linkedOwners.contains(owner)) {
+      revert OwnershipLinkAlreadyExists(owner);
     }
 
     // Ownership proof must be unique and must not be used for linking more than once
     if (s_usedProofs[proof]) {
-      revert OwnershipProofAlreadyUsed(msg.sender, proof);
+      revert OwnershipProofAlreadyUsed(owner, proof);
     }
 
-    address signer =
-      _recoverSigner(uint8(LinkingRequestType.LINK_OWNER), msg.sender, validityTimestamp, proof, signature);
+    address signer = _recoverSigner(uint8(LinkingRequestType.LINK_OWNER), owner, validityTimestamp, proof, signature);
     if (!s_allowedSigners[signer]) {
-      revert InvalidOwnershipLink(msg.sender, validityTimestamp, proof, signature);
+      revert InvalidOwnershipLink(owner, validityTimestamp, proof, signature);
     }
   }
 
@@ -549,9 +547,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param proof The ownership proof to be submitted.
   /// @param signature The signature of the ownership proof metadata.
   /// @dev Run the verification process first by calling canLinkOwner() function. If the verification does not result
-  /// in a revert, then the ownership proof is valid and the owner address can be linked.
+  /// in a revert, then the ownership proof is valid and the owner address can be linked. Only the caller can link their address.
   function linkOwner(uint256 validityTimestamp, bytes32 proof, bytes calldata signature) external {
-    canLinkOwner(validityTimestamp, proof, signature);
+    canLinkOwner(msg.sender, validityTimestamp, proof, signature);
 
     s_linkedOwners.set(msg.sender, proof);
     s_usedProofs[proof] = true;
