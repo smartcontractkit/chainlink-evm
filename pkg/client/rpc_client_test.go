@@ -276,7 +276,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		require.NoError(t, rpc.Dial(ctx))
 		server.Close()
 		_, _, err := rpc.SubscribeToHeads(ctx)
-		require.ErrorContains(t, err, "RPC call failed: dial tcp")
+		require.ErrorContains(t, err, "RPC call failed")
 		tests.AssertLogEventually(t, observed, "evmclient.Client#EthSubscribe RPC call failure")
 	})
 	t.Run("Closed rpc client should remove existing SubscribeToHeads subscription with WS", func(t *testing.T) {
