@@ -325,9 +325,7 @@ func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method 
 
 	lggr.Debug("RPC call: evmclient.Client#CallContext")
 	start := time.Now()
-	var err error
-
-	err = r.wrapRPCClientError(client.rpc.CallContext(ctx, result, method, args...))
+	err := r.wrapRPCClientError(client.rpc.CallContext(ctx, result, method, args...))
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "CallContext")
@@ -366,9 +364,7 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 
 	lggr.Trace("RPC call: evmclient.Client#BatchCallContext")
 	start := time.Now()
-	var err error
-
-	err = r.wrapRPCClientError(client.rpc.BatchCallContext(ctx, b))
+	err := r.wrapRPCClientError(client.rpc.BatchCallContext(ctx, b))
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "BatchCallContext")
@@ -756,14 +752,12 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 
 	lggr.Debug("RPC call: evmclient.Client#SendTransaction")
 	start := time.Now()
-	var err error
-
 	if r.isChainType(chaintype.ChainTron) {
-		err = errors.New("SendTransaction not implemented for Tron, this should never be called")
+		err := errors.New("SendTransaction not implemented for Tron, this should never be called")
 		return struct{}{}, multinode.Fatal, err
 	}
 
-	err = r.wrapRPCClientError(client.geth.SendTransaction(ctx, tx))
+	err := r.wrapRPCClientError(client.geth.SendTransaction(ctx, tx))
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "SendTransaction")
@@ -805,7 +799,8 @@ func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Addres
 	}
 
 	n, err = client.geth.PendingNonceAt(ctx, account)
-	nonce = evmtypes.Nonce(int64(n))
+	//nolint:gosec // G115: it's safe to assume that the nonce always fits in int64
+	nonce = evmtypes.Nonce(n)
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
