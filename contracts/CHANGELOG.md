@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- [#164](https://github.com/smartcontractkit/chainlink-evm/pull/164) [`bf75f8a`](https://github.com/smartcontractkit/chainlink-evm/commit/bf75f8a) - Adding a variety of audited flavours of the CCT token (BurnMintERC20) that implements UUPS and Transparent Proxy upgradeability patterns. Brings proxy-related OZ contracts into vendor.
+
 - [#121](https://github.com/smartcontractkit/chainlink-evm/pull/121) [`e479a8d`](https://github.com/smartcontractkit/chainlink-evm/commit/e479a8d409) - Add BurnMintERC20WithDrip to replace the BurnMintERC677Helper. This should serve as the new standard BurnMintERC20 implementation.
 
 - [#117](https://github.com/smartcontractkit/chainlink-evm/pull/117) [`2820442`](https://github.com/smartcontractkit/chainlink-evm/commit/282044242e) - Make a number of functions virtual in BurnMintERC20 and BurnMintERC677.
