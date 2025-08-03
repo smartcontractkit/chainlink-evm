@@ -1,6 +1,6 @@
 {
   "name": "@chainlink/contracts",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Chainlink smart contracts",
   "author": "Chainlink devs",
   "repository": "github:smartcontractkit/chainlink-evm",
