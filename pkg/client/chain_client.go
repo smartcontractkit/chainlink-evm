@@ -76,7 +76,9 @@ type Client interface {
 	PendingNonceAt(ctx context.Context, account common.Address) (uint64, error)
 	NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error)
 	TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, error)
+	TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error)
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
+	TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (*types.Receipt, error)
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
@@ -502,6 +504,14 @@ func (c *chainClient) TransactionByHash(ctx context.Context, txHash common.Hash)
 	return r.TransactionByHash(ctx, txHash)
 }
 
+func (c *chainClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.TransactionByHashWithOpts(ctx, txHash, opts)
+}
+
 // TODO-1663: return custom Receipt type instead of geth's once client.go is deprecated.
 func (c *chainClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (receipt *types.Receipt, err error) {
 	r, err := c.multiNode.SelectRPC(ctx)
@@ -510,6 +520,15 @@ func (c *chainClient) TransactionReceipt(ctx context.Context, txHash common.Hash
 	}
 	// return rpc.TransactionReceipt(ctx, txHash)
 	return r.TransactionReceiptGeth(ctx, txHash)
+}
+
+func (c *chainClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *types.Receipt, err error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return receipt, err
+	}
+	// return rpc.TransactionReceipt(ctx, txHash)
+	return r.TransactionReceiptGethWithOpts(ctx, txHash, opts)
 }
 
 func (c *chainClient) LatestFinalizedBlock(ctx context.Context) (*evmtypes.Head, error) {
