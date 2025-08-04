@@ -12,10 +12,11 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
 // JSONRPCHandler is called with the method and request param(s).

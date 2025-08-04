@@ -2,12 +2,15 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 )
 
-const responseLimitCtxKey = "responseLimitCtxKey"
+type contextKey string
+
+const responseLimitCtxKey contextKey = "responseLimitCtxKey"
 
 // LimitedTransport wraps an http.RoundTripper and limits the size of the response body. Limit is set via context using
 type LimitedTransport struct {
@@ -51,7 +54,7 @@ func GetResponseSizeLimit(ctx context.Context) uint32 {
 	return limit
 }
 
-var errResponseTooLarge = fmt.Errorf("response is too large")
+var errResponseTooLarge = errors.New("response is too large")
 
 // limitReader returns a Reader that reads from r
 // but stops with EOF after n bytes.

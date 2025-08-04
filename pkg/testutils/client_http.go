@@ -10,9 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
 type HTTPServer struct {

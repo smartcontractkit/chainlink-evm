@@ -1082,6 +1082,7 @@ func TestRPCClient_FilterLogsWithOpts(t *testing.T) {
 	t.Run("Returns an error if external request's response size ", func(t *testing.T) {
 		logsAsJSON, err := json.Marshal(validLogs)
 		require.NoError(t, err)
+		//nolint:gosec //G115 it's safe to assume that response size fits into uint32
 		responseSize := uint32(len(logsAsJSON))
 		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
@@ -1133,6 +1134,7 @@ func TestRPCClient_TransactionReceiptGethWithOpts(t *testing.T) {
 			Logs: []*types.Log{},
 		})
 		require.NoError(t, err)
+		//nolint:gosec //G115 it's safe to assume that response size fits into uint32
 		responseSize := uint32(len(receiptsAsJSON))
 		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
@@ -1157,6 +1159,7 @@ func TestRPCClient_TransactionByHashWithOpts(t *testing.T) {
 		tx := types.NewTx(&types.DynamicFeeTx{})
 		txAsJSON, err := json.Marshal(tx)
 		require.NoError(t, err)
+		//nolint:gosec //G115 it's safe to assume that response size fits into uint32
 		responseSize := uint32(len(txAsJSON))
 		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
