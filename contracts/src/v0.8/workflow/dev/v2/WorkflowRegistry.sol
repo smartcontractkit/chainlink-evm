@@ -18,6 +18,40 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   string public constant override typeAndVersion = "WorkflowRegistry 2.0.0-dev";
 
+  /// @dev Packed metadata length caps (overrides configurable by owner):
+  /// We store four independent uint fields—maxNameLen, maxTagLen, maxUrlLen, and maxAttrLen—
+  /// in a single 256-bit word to minimize storage. Defaults are hard-coded as constants
+  /// (zero gas on deployment) and only consume storage when an override differs from the default.
+  /// When overrides exist, we write one packed word (s_metadataCaps).
+  /// Getter functions (getMaxNameLen(), getMaxTagLen(), etc.) extract each field via bit shifts,
+  /// falling back to the default if no override is set.
+  ///
+  /// Pattern inspired by OpenZeppelin’s ERC20Capped and Preset modules:
+  /// • Defaults live in bytecode (zero gas on deployment)
+  /// • Overrides live in one slot (one SLOAD per read)
+  /// • No per-field storage or struct-copying required
+  ///
+  /// @dev Bit layout (LSB → MSB):
+  /// NAME_SHIFT (8 bits)   = 0
+  /// TAG_SHIFT  (8 bits)   = 8
+  /// URL_SHIFT  (8 bits)   = 16
+  /// ATTR_SHIFT (16 bits)  = 24
+  ///
+  /// @dev Single-slot override; when s_metadataCaps == 0, all defaults apply.
+  /// @dev DEFAULT_PACKED bundles the defaults:
+  ///   (uint256(64)  << NAME_SHIFT) │
+  ///   (uint256(32)  << TAG_SHIFT)  │
+  ///   (uint256(200) << URL_SHIFT)  │
+  ///   (uint256(1024)<< ATTR_SHIFT)
+  /// where maxNameLen = 64, maxTagLen = 32, maxUrlLen = 200, maxAttrLen = 1024
+  uint8 private constant NAME_SHIFT = 0;
+  uint8 private constant TAG_SHIFT = 8;
+  uint8 private constant URL_SHIFT = 16;
+  uint8 private constant ATTR_SHIFT = 24; // uses 16 bits
+  uint256 private s_metadataCaps;
+  uint256 private constant DEFAULT_PACKED = (uint256(64) << NAME_SHIFT) | (uint256(32) << TAG_SHIFT)
+    | (uint256(200) << URL_SHIFT) | (uint256(1024) << ATTR_SHIFT);
+
   /// @dev The set of allowed signers for ownership proofs. These signers are considered to be trusted entities.
   /// If the ownership proof is not signed by one of the allowed signers, signature will be rejected.
   mapping(address signer => bool allowed) private s_allowedSigners;
@@ -53,14 +87,23 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev Every workflow ever registered for an owner. Pruned only on delete.
   mapping(address owner => EnumerableSet.Bytes32Set workflowRids) private s_allOwnerRids;
   mapping(bytes32 workflowKey => EnumerableSet.Bytes32Set activeRids) private s_activeRidsByWorkflowKey; // workflowKey → active Rids
-  // Fast counters for limits enforcement
+  /// @dev Fast counters for limits enforcement
   mapping(address owner => mapping(bytes32 donHash => uint32 workflowCount)) private s_userDONCount; // owner -> (donHash -> #workflows)
-  // The don family (as a hash) that the workflow is assigned to. Only active workflows are assigned don families.
-  // When a workflow is paused it is removed from the don family.
+  /// @dev The don family (as a hash) that the workflow is assigned to. Only active workflows are assigned don families.
+  /// When a workflow is paused it is removed from the don family.
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
-  // Tracking allowlisted requests for the owner address, required to enable anyone to verify off-chain requests.
+  /// @dev Tracking allowlisted requests for the owner address, required to enable anyone to verify off-chain requests.
   mapping(address owner => mapping(bytes32 requestDigest => uint256 expiryTimestamp)) private s_requestsAllowlist;
+  /// @dev Map each owner address to their arbitrary config. Can be used to control billing parameters or any other data per owner
+  mapping(address owner => bytes config) private s_ownerConfig;
+  /// @dev All DON configs
+  mapping(bytes32 donHash => DonConfig donCfg) private s_donConfigs;
+  /// @dev Stores the current DON Registry reference used by this contract.
+
+  DONRegistryConfig private s_donRegistry;
+  /// @dev Storage of all capacity and workflow life‑cycle events
+  EventRecord[] private s_events;
 
   // ================================================================
   // |                         Events                               |
@@ -89,11 +132,16 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes32 indexed workflowId, address indexed owner, string oldDonFamily, string newDonFamily
   );
   event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint256 expiryTimestamp);
+  /// @notice Emitted when metadata length limits are updated
+  event MetadataConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen);
+  /// @notice Emitted when a workflow owner’s config is updated
+  event WorkflowOwnerConfigUpdated(address indexed owner, bytes config);
+  /// @notice Emitted whenever the registry reference is changed.
+  event DONRegistryUpdated(address oldAddr, address newAddr, uint64 oldChainSelector, uint64 newChainSelector);
 
   // ================================================================
   // |                         Errors                               |
   // ================================================================
-
   error ZeroAddressNotAllowed();
   error ZeroWorkflowIDNotAllowed();
   error LinkOwnerRequestExpired(address caller, uint256 currentTime, uint256 expiryTimestamp);
@@ -124,7 +172,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   // |                         Enums                                |
   // ================================================================
-
   enum WorkflowStatus {
     ACTIVE,
     PAUSED
@@ -143,6 +190,16 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   }
 
+  enum EventType {
+    DONCapacitySet,
+    WorkflowAdded,
+    WorkflowRemoved
+  }
+
+  // ================================================================
+  // |                         Structs                              |
+  // ================================================================
+  /// @dev Struct for WorkflowMetadata. This is used to store the workflow metadata.
   struct WorkflowMetadata {
     bytes32 workflowId; //       Unique identifier from hash(owner, workflow name, wasm binary, cfg).
     address owner; // ─────────╮ Workflow owner.
@@ -154,6 +211,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string tag; //               Unique per (owner, workflowName) human readable identifier (32 chars limit)
     bytes attributes; //         Arbitrary bytes for additional workflow details.
   }
+  /// @dev View struct for WorkflowMetadata. This is used to return the workflow metadata including the donFamily.
 
   struct WorkflowMetadataView {
     bytes32 workflowId;
@@ -168,42 +226,42 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string donFamily;
   }
 
+  /// @dev ConfigValue struct to distinguish between unset and explicitly set zero values
+  struct ConfigValue {
+    uint32 value;
+    bool enabled;
+  }
+
+  /// @dev Configuration struct for don capacity of active workflows. Paused workflows are ignored.
+  ///      One config blob per DON (keyed by _hash(donFamily))
+  struct DonConfig {
+    /// @dev Human-readable DON label (e.g. “fast-pool”)
+    string label;
+    /// @dev Global cap for active workflows on this DON
+    ConfigValue limitValue;
+    /// @dev Optional per-user overrides for this DON
+    mapping(address => ConfigValue) userOverride;
+  }
+
+  /// @notice  DONRegistryConfig struct stores the pointer to the DON Registry this Workflow Registry uses.
+  /// @dev     `registry` is the contract address; `chainSelector` identifies the
+  ///          chain where the registry lives (Chainlink selector).
+  struct DONRegistryConfig {
+    address registry;
+    uint64 chainSelector;
+  }
+
+  /// @dev Struct for EventRecord. This is used to store the events that were emited related to capacity and workflow life-cycle.
+  struct EventRecord {
+    EventType eventType;
+    uint32 timestamp;
+    bytes payload; // ABI‑encoded event data
+  }
+
   // ================================================================
   // |                   Workflow Metadata Config                   |
   // ================================================================
-  /// @dev Packed metadata length caps (owner-configurable overrides):
-  /// We store four independent uint fields — maxNameLen, maxTagLen, maxUrlLen and maxAttrLen — in a single 256-bit word
-  /// to save storage. Default values (_DEF_MAX_*) are hard-coded as constants and never consume storage.
-  /// Only when an override differs from those defaults do we write one packed word (s_metadataCaps).
-  /// Getter functions (maxNameLen(), maxTagLen(), etc.) extract each
-  /// field via bit-shifts, falling back to the default if no override is set.
-  ///
-  /// Pattern inspired by OpenZeppelin’s ERC20Capped and Preset modules:
-  /// • Defaults live in bytecode (zero gas on deployment)
-  /// • Overrides live in one slot (one SLOAD per read)
-  /// • No per-field storage or struct copying required
-  uint8 private constant DEFAULT_NAME_LEN = 64;
-  uint8 private constant DEFAULT_TAG_LEN = 32;
-  uint8 private constant DEFAULT_URL_LEN = 200;
-  uint16 private constant DEFAULT_ATTR_LEN = 1024;
-
-  /// @dev Bit-layout (LSB … MSB)
-  uint8 private constant NAME_SHIFT = 0; // 8 bits
-  uint8 private constant TAG_SHIFT = 8; // 8 bits
-  uint8 private constant URL_SHIFT = 16; // 8 bits
-  uint8 private constant ATTR_SHIFT = 24; // 16 bits (uint16)
-
-  /// @dev Single-slot override; 0 means “all defaults”.
-  uint256 private s_metadataCaps;
-
-  /// @notice Emitted when metadata length limits are updated
-  /// @param maxNameLen New cap for `workflowName` length
-  /// @param maxTagLen  New cap for `tag` length
-  /// @param maxUrlLen  New cap for URL lengths
-  /// @param maxAttrLen New cap for `attributes` length
-  event MetadataConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen);
-
-  /// @notice Owner can override any of the four caps.
+  /// @notice setMetadataConfig function allows the owner to override any of the four caps.
   /// Passing the exact default values clears the override slot. Passing all 4 values as 0
   /// will also clear the override back to default. However, setting only some of the values to 0 will remove the cap
   /// and make the cap unlimited only for that field.
@@ -217,10 +275,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       | (uint256(attrLen) << ATTR_SHIFT);
 
     // If caller supplied all defaults (or zeros) clear the override slot
-    uint256 defaultPacked = (uint256(DEFAULT_NAME_LEN) << NAME_SHIFT) | (uint256(DEFAULT_TAG_LEN) << TAG_SHIFT)
-      | (uint256(DEFAULT_URL_LEN) << URL_SHIFT) | (uint256(DEFAULT_ATTR_LEN) << ATTR_SHIFT);
-
-    if (packed == defaultPacked || packed == 0) {
+    if (packed == DEFAULT_PACKED || packed == 0) {
       // if all 0 is passed, the caps are set to contract default
       delete s_metadataCaps;
     } else {
@@ -231,37 +286,36 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   }
 
   function _caps() private view returns (uint256 c) {
-    return s_metadataCaps == 0
-      ? (uint256(DEFAULT_NAME_LEN) << NAME_SHIFT) | (uint256(DEFAULT_TAG_LEN) << TAG_SHIFT)
-        | (uint256(DEFAULT_URL_LEN) << URL_SHIFT) | (uint256(DEFAULT_ATTR_LEN) << ATTR_SHIFT)
-      : s_metadataCaps;
+    return s_metadataCaps == 0 ? DEFAULT_PACKED : s_metadataCaps;
   }
 
-  function maxNameLen() public view returns (uint8) {
+  /// @notice getMaxNameLen function returns the maximum length of the workflow name.
+  /// @return The maximum length of the workflow name.
+  function getMaxNameLen() public view returns (uint8) {
     return uint8(_caps() >> NAME_SHIFT);
   }
 
-  function maxTagLen() public view returns (uint8) {
+  /// @notice getMaxTagLen function returns the maximum length of the workflow tag.
+  /// @return The maximum length of the workflow tag.
+  function getMaxTagLen() public view returns (uint8) {
     return uint8(_caps() >> TAG_SHIFT);
   }
 
-  function maxUrlLen() public view returns (uint8) {
+  /// @notice getMaxUrlLen function returns the maximum length of the workflow URL.
+  /// @return The maximum length of the workflow URL.
+  function getMaxUrlLen() public view returns (uint8) {
     return uint8(_caps() >> URL_SHIFT);
   }
 
-  function maxAttrLen() public view returns (uint16) {
+  /// @notice getMaxAttrLen function returns the maximum length of the workflow attributes.
+  /// @return The maximum length of the workflow attributes.
+  function getMaxAttrLen() public view returns (uint16) {
     return uint16(_caps() >> ATTR_SHIFT);
   }
 
   // ================================================================
   // |                   Workflow Owner Config                      |
   // ================================================================
-  /// @dev map each owner address → their arbitrary config. Can be used to control billing parameters
-  // or any other data per owner
-  mapping(address owner => bytes config) private s_ownerConfig;
-
-  event WorkflowOwnerConfigUpdated(address indexed owner, bytes config);
-
   /// @notice Let each workflow‐owner store an arbitrary “config blob” (e.g. billing params)
   /// @dev    You can put any encoded data here; off‐chain tools will watch the event or call the getter.
   /// @param  config  ABI‐encoded owner‐specific settings
@@ -282,27 +336,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   // |                         DON Config                           |
   // ================================================================
-  // Struct to distinguish between unset and explicitly set zero values
-
-  struct ConfigValue {
-    uint32 value;
-    bool enabled;
-  }
-
-  /// @dev Configuration struct for don capacity of active workflows. Paused workflows are ignored.
-  ///      One config blob per DON (keyed by _hash(donFamily))
-  struct DonConfig {
-    /// @dev Human-readable DON label (e.g. “fast-pool”)
-    string label;
-    /// @dev Global cap for active workflows on this DON
-    ConfigValue limitValue;
-    /// @dev Optional per-user overrides for this DON
-    mapping(address => ConfigValue) userOverride;
-  }
-
-  /// @dev All DON configs
-  mapping(bytes32 donHash => DonConfig donCfg) private s_donConfigs;
-
   /// @notice Sets or clears a DON-wide limit for the maximum number of
   ///         ACTIVE workflows.
   /// @dev    Only callable by the contract owner.
@@ -356,8 +389,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param limit      New per‐user cap when `enabled == true`
   /// @param enabled    `true` to enable/update the override; `false` to remove it
   function setUserDONOverride(address user, string calldata donFamily, uint32 limit, bool enabled) external onlyOwner {
-    bytes32 donHash = _hash(donFamily);
-    DonConfig storage cfg = s_donConfigs[donHash];
+    DonConfig storage cfg = s_donConfigs[_hash(donFamily)];
 
     // Ensure the DON itself has a global cap configured
     if (!cfg.limitValue.enabled) {
@@ -405,8 +437,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function getMaxWorkflowsPerDON(
     string calldata donFamily
   ) public view returns (uint32 maxWorkflows) {
-    bytes32 donHash = _hash(donFamily);
-    return s_donConfigs[donHash].limitValue.value;
+    return s_donConfigs[_hash(donFamily)].limitValue.value;
   }
 
   /// @notice Returns the active-workflow cap that applies to a given DON and user.
@@ -416,8 +447,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param  donFamily String identifier of the DON.
   /// @return maxActive Maximum number of ACTIVE workflows allowed for the user on that DON.
   function getMaxWorkflowsPerUserDON(address user, string calldata donFamily) public view returns (uint32) {
-    bytes32 donHash = _hash(donFamily);
-    DonConfig storage cfg = s_donConfigs[donHash];
+    DonConfig storage cfg = s_donConfigs[_hash(donFamily)];
 
     // If the user has an override, return that
     ConfigValue memory ov = cfg.userOverride[user];
@@ -432,24 +462,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   // |                         DON registry                         |
   // ================================================================
-  /// @notice  Stores the pointer to the DON Registry this Workflow Registry uses.
-  /// @dev     `registry` is the contract address; `chainSelector` identifies the
-  ///          chain where the registry lives (Chainlink selector).
-  struct DONRegistryConfig {
-    address registry;
-    uint64 chainSelector;
-  }
-
-  /// @dev Stores the current DON Registry reference used by this contract.
-  DONRegistryConfig private s_donRegistry;
-
-  /// @notice Emitted whenever the registry reference is changed.
-  /// @param oldAddr           Previous registry address (zero if first set).
-  /// @param newAddr           New registry address being stored.
-  /// @param oldChainSelector  Old chain selector (zero if first set).
-  /// @param newChainSelector  Chain selector where the registry lives.
-  event DONRegistryUpdated(address oldAddr, address newAddr, uint64 oldChainSelector, uint64 newChainSelector);
-
   /// @notice Sets or replaces the DON Registry that this Workflow Registry points to.
   /// @dev    Owner-only.  Overwrites the previous entry and emits
   ///         {DONRegistryUpdated}.
@@ -629,9 +641,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       // Iterate from the back since EnumerableSet.remove() swaps-and-pops.
       while (active.length() > 0) {
         bytes32 rid = active.at(active.length() - 1);
-        WorkflowMetadata storage rec = s_workflows[rid];
-        if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-        if (rec.owner != owner) revert CallerIsNotWorkflowOwner(owner);
+        WorkflowMetadata storage rec = _getRecord(owner, rid);
         if (action == PreUnlinkAction.PAUSE_WORKFLOWS) {
           _applyPause(rid, rec);
         } else {
@@ -710,21 +720,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   // |                   Capacity Changing Events                   |
   // ================================================================
-  enum EventType {
-    DONCapacitySet,
-    WorkflowAdded,
-    WorkflowRemoved
-  }
-
-  struct EventRecord {
-    EventType eventType;
-    uint32 timestamp;
-    bytes payload; // ABI‑encoded event data
-  }
-
-  // Storage of all capacity and workflow life‑cycle events
-  EventRecord[] private s_events;
-
   /// @notice Returns a page of events along with the total event count.
   /// @param start Zero-based index of the first event to include in the page.
   /// @param limit  Maximum number of events to return in this page.
@@ -801,7 +796,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert WorkflowIDAlreadyExists(workflowId);
     }
     // 3) check URLs (binary url is required. config url is optional; 0 = unlimited)
-    uint8 cap = maxUrlLen();
+    uint8 cap = getMaxUrlLen();
     uint256 binaryLen = bytes(binaryUrl).length;
     uint256 configLen = bytes(configUrl).length;
     if (binaryLen == 0) {
@@ -817,7 +812,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
 
     // 4) check attributes (optional; 0 = unlimited)
-    uint16 attrCap = maxAttrLen();
+    uint16 attrCap = getMaxAttrLen();
     if (attrCap != 0 && attributes.length > attrCap) {
       revert AttributesTooLong(attributes.length, attrCap);
     }
@@ -827,7 +822,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (tagLen == 0) {
       revert WorkflowTagRequired();
     }
-    cap = maxTagLen();
+    cap = getMaxTagLen();
     if (cap != 0 && tagLen > cap) {
       revert WorkflowTagTooLong(tagLen, cap);
     }
@@ -836,7 +831,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (nameLen == 0) {
       revert WorkflowNameRequired();
     }
-    cap = maxNameLen(); // 0  ➜ unlimited
+    cap = getMaxNameLen(); // 0  ➜ unlimited
     if (cap != 0 && nameLen > cap) {
       revert WorkflowNameTooLong(nameLen, cap);
     }
@@ -921,9 +916,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
 
     bytes32 rid = s_idToRid[workflowId];
-    WorkflowMetadata storage rec = s_workflows[rid];
-    if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-    if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
+    WorkflowMetadata storage rec = _getRecord(msg.sender, rid);
     if (rec.status != WorkflowStatus.PAUSED) {
       _applyPause(rid, rec);
     }
@@ -935,9 +928,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
 
     bytes32 rid = s_idToRid[workflowId];
-    WorkflowMetadata storage rec = s_workflows[rid];
-    if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-    if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
+    WorkflowMetadata storage rec = _getRecord(msg.sender, rid);
     if (rec.status != WorkflowStatus.ACTIVE) {
       bytes32 donHash = _hash(donFamily);
       _enforceLimits(msg.sender, donHash, donFamily, 1);
@@ -963,9 +954,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     for (uint256 i = 0; i < n; ++i) {
       bytes32 rid = s_idToRid[workflowIds[i]];
-      WorkflowMetadata storage rec = s_workflows[rid];
-      if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-      if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
+      WorkflowMetadata storage rec = _getRecord(msg.sender, rid);
       if (rec.status != WorkflowStatus.PAUSED) {
         _applyPause(rid, rec);
       }
@@ -991,9 +980,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     for (uint256 i; i < n; ++i) {
       bytes32 rid = s_idToRid[workflowIds[i]];
-      WorkflowMetadata storage rec = s_workflows[rid];
-      if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-      if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
+      WorkflowMetadata storage rec = _getRecord(msg.sender, rid);
       if (rec.status == WorkflowStatus.ACTIVE) continue; // already active, ignore
       ++pending;
     }
@@ -1073,9 +1060,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes32 workflowId
   ) external {
     bytes32 rid = s_idToRid[workflowId];
-    WorkflowMetadata storage rec = s_workflows[rid];
-    if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-    if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
+    WorkflowMetadata storage rec = _getRecord(msg.sender, rid);
     _applyDelete(rid, rec);
   }
 
@@ -1146,9 +1131,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
 
     bytes32 rid = s_idToRid[workflowId];
-    WorkflowMetadata storage rec = s_workflows[rid];
-    if (rec.owner == address(0)) revert WorkflowDoesNotExist();
-    if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
+    WorkflowMetadata storage rec = _getRecord(msg.sender, rid);
     if (rec.status != WorkflowStatus.ACTIVE) revert CannotUpdateDONFamilyForPausedWorkflows();
 
     bytes32 oldDonHash = s_donByWorkflowRid[rid];
@@ -1219,8 +1202,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function adminPauseAllByDON(
     string calldata donFamily
   ) external onlyOwner {
-    bytes32 donHash = _hash(donFamily);
-    EnumerableSet.Bytes32Set storage activeSet = s_activeDONWorkflowRids[donHash];
+    EnumerableSet.Bytes32Set storage activeSet = s_activeDONWorkflowRids[_hash(donFamily)];
 
     // Loop until the set is empty, always pausing the last workflow
     while (activeSet.length() > 0) {
@@ -1287,8 +1269,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function getWorkflowById(
     bytes32 workflowId
   ) external view returns (WorkflowMetadataView memory workflow) {
-    bytes32 rid = s_idToRid[workflowId];
-    return _workflowMetadataView(rid);
+    return _workflowMetadataView(s_idToRid[workflowId]);
   }
 
   /// @notice Return the full on-chain metadata for a given workflow.
@@ -1314,8 +1295,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string calldata workflowName,
     string calldata tag
   ) external view returns (WorkflowMetadataView memory workflow) {
-    bytes32 rid = keccak256(abi.encode(owner, workflowName, tag));
-    return _workflowMetadataView(rid);
+    return _workflowMetadataView(keccak256(abi.encode(owner, workflowName, tag)));
   }
 
   /// @notice  Return a paginated list of all versions (active *and* paused)
@@ -1381,9 +1361,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev
   ///  * Reads the RID set `s_allDONRids[donFamily]`, which tracks every
   ///    workflow ever registered to that DON, regardless of status.
-  ///  * If `start` is beyond the set’s length it returns an empty array.
-  ///  * Caps `limit` to `MAX_PAGINATION_LIMIT` when the caller supplies
-  ///    zero or a value larger than the contract-wide maximum.
   ///  * Does **not** revert on out-of-range requests; instead it returns
   ///    the largest sub-range that fits inside the set.
   ///
@@ -1415,8 +1392,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function totalActiveWorkflowsOnDON(
     string calldata donFamily
   ) external view returns (uint256 count) {
-    bytes32 donHash = _hash(donFamily);
-    return s_activeDONWorkflowRids[donHash].length();
+    return s_activeDONWorkflowRids[_hash(donFamily)].length();
   }
 
   /// @notice Returns the number of ACTIVE workflows the owner has over all DONs.
@@ -1463,14 +1439,13 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes32 rid
   ) internal view returns (WorkflowMetadataView memory v) {
     WorkflowMetadata storage rec = s_workflows[rid];
-    if (rec.owner == address(0)) revert WorkflowDoesNotExist();
+    if (rec.owner == address(0)) return v;
 
     // For ACTIVE workflows this will resolve to the correct DON label.
-    // For PAUSED/never‑assigned workflows the label is the empty string.
-    bytes32 donHash = s_donByWorkflowRid[rid];
-    string memory label = s_donConfigs[donHash].label;
+    // For PAUSED/never‑assigned workflows the label is the empty string.;
+    string memory label = s_donConfigs[s_donByWorkflowRid[rid]].label;
 
-    v = WorkflowMetadataView({
+    return WorkflowMetadataView({
       workflowId: rec.workflowId,
       owner: rec.owner,
       createdAt: rec.createdAt,
@@ -1482,8 +1457,19 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       attributes: rec.attributes,
       donFamily: label
     });
+  }
 
-    return v;
+  /// @dev Internal helper to get a workflow record from storage based on the RID. It also checks if the caller is the
+  /// owner of the workflow and that the owner is not 0.
+  /// @param rid The RID of the workflow to get.
+  /// @return rec The workflow record.
+  /// @custom:revert WorkflowDoesNotExist If the workflow does not exist.
+  /// @custom:revert CallerIsNotWorkflowOwner If the caller is not the owner of the workflow.
+  function _getRecord(address owner, bytes32 rid) internal view returns (WorkflowMetadata storage rec) {
+    rec = s_workflows[rid];
+    if (rec.owner == address(0)) revert WorkflowDoesNotExist();
+    if (rec.owner != owner) revert CallerIsNotWorkflowOwner(owner);
+    return rec;
   }
 
   /// @notice Computes a unique workflow key for indexing by owner and name.
