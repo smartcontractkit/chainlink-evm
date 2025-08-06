@@ -8,23 +8,11 @@
 
 - [#121](https://github.com/smartcontractkit/chainlink-evm/pull/121) [`e479a8d`](https://github.com/smartcontractkit/chainlink-evm/commit/e479a8d409) - Add BurnMintERC20WithDrip to replace the BurnMintERC677Helper. This provides a token with a public drip function, allowing users to test CCIP token transfers.
 
-- [#117](https://github.com/smartcontractkit/chainlink-evm/pull/117) [`2820442`](https://github.com/smartcontractkit/chainlink-evm/commit/282044242e) - Make a number of functions virtual in BurnMintERC20 and BurnMintERC677.
-
-- [#41](https://github.com/smartcontractkit/chainlink-evm/pull/41) [`6355981`](https://github.com/smartcontractkit/chainlink-evm/commit/63559812f6) - Add contract wrappers compiled for ZkSync.
-
 - [#39](https://github.com/smartcontractkit/chainlink-evm/pull/39) [`6fa3451`](https://github.com/smartcontractkit/chainlink-evm/commit/6fa34515a7) - Upgrade Scroll L2EP validator to use MessageQueueV2.
-
-- [#3](https://github.com/smartcontractkit/chainlink-evm/pull/3) [`830158e`](https://github.com/smartcontractkit/chainlink-evm/commit/830158ed5b) - Add ZKSync compilation scripts and build infrastructure for Era VM compatibility.
 
 ### Patch Changes
 
-- [#130](https://github.com/smartcontractkit/chainlink-evm/pull/130) [`448d489`](https://github.com/smartcontractkit/chainlink-evm/commit/448d489459) - Bump forge-std from v1.9.4 to v1.9.7.
-
 - [#119](https://github.com/smartcontractkit/chainlink-evm/pull/119) [`3f5fcc3`](https://github.com/smartcontractkit/chainlink-evm/commit/3f5fcc3197) - Remove OpStackBurnMintERC677 contract and IOptimismMintableERC20 interface.
-
-- [#118](https://github.com/smartcontractkit/chainlink-evm/pull/118) [`c61646c`](https://github.com/smartcontractkit/chainlink-evm/commit/c61646c9c1) - Upgrade Automation and VRF OpenZeppelin dependency from v4.7.3 to v4.9.6.
-
-- [#116](https://github.com/smartcontractkit/chainlink-evm/pull/116) [`9853801`](https://github.com/smartcontractkit/chainlink-evm/commit/9853801a6b) - Update NPM dependencies and remove unused GitHub Actions.
 
 - [#105](https://github.com/smartcontractkit/chainlink-evm/pull/105) [`2968eac`](https://github.com/smartcontractkit/chainlink-evm/commit/2968eacc46) - Remove Automation v1.2, v1.3, and v2.0 contracts source code. Corresponding geth wrapeprs remain in place.
 
@@ -32,13 +20,7 @@
 
 - [#101](https://github.com/smartcontractkit/chainlink-evm/pull/101) [`cf6eccf`](https://github.com/smartcontractkit/chainlink-evm/commit/cf6eccf28b) - Add OpenZeppelin v5.1.0 vendor contracts for EnumerableMap and EnumerableSet.
 
-- [#69](https://github.com/smartcontractkit/chainlink-evm/pull/69) [`725ebca`](https://github.com/smartcontractkit/chainlink-evm/commit/725ebcaab0) - Bump minor NPM dependencies, bump Foundry from 1.0.0 to 1.2.0, fix formatting in the README.
-
 - [#66](https://github.com/smartcontractkit/chainlink-evm/pull/66) [`3ec29e9`](https://github.com/smartcontractkit/chainlink-evm/commit/3ec29e90c9) - Add upgradability best practices section to Solidity style guide.
-
-- [#55](https://github.com/smartcontractkit/chainlink-evm/pull/55) [`df6a094`](https://github.com/smartcontractkit/chainlink-evm/commit/df6a094dce) - Fix version comparison logic in contracts release workflow.
-
-- [#46](https://github.com/smartcontractkit/chainlink-evm/pull/46) [`21113ff`](https://github.com/smartcontractkit/chainlink-evm/commit/21113ff284) - Fix documentation references in README and style guide.
 
 ## 1.4.0
 
