@@ -22,14 +22,12 @@ contract WorkflowRegistry_getWorkflow is WorkflowRegistrySetup {
   }
 
   function test_getWorkflow_WhenTheWorkflowDoesNotExist() external {
-    // it reverts with WorkflowDoesNotExist
+    // it returns nothing with no errors
 
     // try to fetch by workfowId first
-    vm.expectRevert(WorkflowRegistry.WorkflowDoesNotExist.selector);
     s_registry.getWorkflowById(s_workflowId);
 
     // try to fetch by owner, workflowName and tag next
-    vm.expectRevert(WorkflowRegistry.WorkflowDoesNotExist.selector);
     s_registry.getWorkflow(s_owner, s_workflowName, s_tag);
   }
 }
