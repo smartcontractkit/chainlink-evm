@@ -312,6 +312,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 		if err != nil {
 			return nil, fmt.Errorf("failed to construct tron txm: %w", err)
 		}
+		l.Info("Tron TXM constructed, disabling EVM TXM")
 	}
 
 	return &chain{
