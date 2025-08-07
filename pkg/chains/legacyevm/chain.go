@@ -347,7 +347,7 @@ func (c *chain) Start(ctx context.Context) error {
 		// We do not start the log poller here, it gets
 		// started after the jobs so they have a chance to apply their filters.
 		var ms services.MultiStart
-		if err := ms.Start(ctx, c.txm, c.headBroadcaster, c.headTracker, c.logBroadcaster); err != nil {
+		if err := ms.Start(ctx, c.txm, c.headBroadcaster, c.headTracker, c.logBroadcaster, c.logPoller); err != nil {
 			return err
 		}
 
