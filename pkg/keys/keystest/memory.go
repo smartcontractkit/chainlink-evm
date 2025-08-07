@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -69,4 +70,8 @@ func (m *MemoryChainStore) Sign(ctx context.Context, account string, data []byte
 		return nil, fmt.Errorf("account %s not found", account)
 	}
 	return crypto.Sign(data, pk)
+}
+
+func (m *MemoryChainStore) Decrypt(ctx context.Context, account string, encrypted []byte) (decrypted []byte, err error) {
+	return nil, errors.New("MemoryChainStore does not support decryption")
 }
