@@ -14,9 +14,6 @@ import (
 
 	"github.com/fatih/color"
 
-	cutils "github.com/smartcontractkit/chainlink-common/pkg/utils"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +24,7 @@ const compileCommand = "../contracts/scripts/native_solc_compile_all"
 // contract artifacts in contracts/solc with the abi and bytecode stored in the
 // contract wrapper
 func TestCheckContractHashesFromLastGoGenerate(t *testing.T) {
-	tests.SkipShort(t, "requires compiled artifacts")
+	SkipShort(t, "requires compiled artifacts")
 	versions, err := ReadVersionsDB()
 	require.NoError(t, err)
 	require.NotEmpty(t, versions.GethVersion, `version DB should have a "GETH_VERSION:" line`)
@@ -107,7 +104,7 @@ func ensureArtifacts() {
 	for db.Scan() {
 		line := strings.Fields(db.Text())
 		if stripTrailingColon(line[0], "") != "GETH_VERSION" {
-			if os.IsNotExist(cutils.JustError(os.Stat(line[1]))) {
+			if os.IsNotExist(JustError(os.Stat(line[1]))) {
 				solidityArtifactsMissing = append(solidityArtifactsMissing, line[1])
 			}
 		}
@@ -139,4 +136,14 @@ func getProjectRoot(t *testing.T) (rootPath string) {
 	}
 	t.Fatal("could not find project root")
 	return
+}
+
+func JustError(_ interface{}, err error) error {
+	return err
+}
+
+func SkipShort(tb testing.TB, why string) {
+	if testing.Short() {
+		tb.Skipf("skipping: %s", why)
+	}
 }
