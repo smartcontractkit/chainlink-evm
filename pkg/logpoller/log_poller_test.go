@@ -623,8 +623,7 @@ func TestLogPoller_BlockTimestamps(t *testing.T) {
 	time1 := start + 1 + uint64(589)
 	time2 := time1 + 1 + uint64(643)
 
-	require.NoError(t, th.Backend.AdjustTime(delay1))
-
+	th.AdjustTime(t, delay1)
 	blk, err = th.Client.BlockByNumber(ctx, nil)
 	require.NoError(t, err)
 	require.Equal(t, big.NewInt(2), blk.Number())
@@ -639,7 +638,7 @@ func TestLogPoller_BlockTimestamps(t *testing.T) {
 	require.Equal(t, big.NewInt(3), blk.Number())
 	assert.Equal(t, time1, blk.Time())
 
-	require.NoError(t, th.Backend.AdjustTime(delay2))
+	th.AdjustTime(t, delay2)
 	_, err = th.Emitter2.EmitLog2(th.Owner, []*big.Int{big.NewInt(2)})
 	require.NoError(t, err)
 	th.Client.Commit()
@@ -1025,7 +1024,7 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, uint64(35), b.NumberU64())
 			blockTimestamp := b.Time()
-			require.NoError(t, th.Backend.AdjustTime(time.Hour))
+			th.AdjustTime(t, time.Hour)
 			th.Backend.Commit()
 
 			b, err = th.Client.BlockByNumber(testutils.Context(t), nil)
