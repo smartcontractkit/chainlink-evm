@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"gethwrappers/generated"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 type (

@@ -12,7 +12,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
-	"gethwrappers/generated"
+	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
