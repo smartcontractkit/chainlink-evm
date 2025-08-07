@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers"
-	zksyncwrapper "github.com/smartcontractkit/chainlink-evm/gethwrappers/generation/generate/zksync"
+	"gethwrappers"
+	zksyncwrapper "gethwrappers/generation/generate/zksync"
 )
 
 func main() {

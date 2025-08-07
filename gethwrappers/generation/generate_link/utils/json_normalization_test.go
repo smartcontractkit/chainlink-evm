@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generation/generate_link/utils"
+	"gethwrappers/generation/generate_link/utils"
 )
 
 func TestNormalizedJSON(t *testing.T) {

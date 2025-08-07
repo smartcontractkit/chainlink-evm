@@ -27,8 +27,8 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/operatorforwarder/generated/authorized_forwarder"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/operatorforwarder/generated/operator"
+	"gethwrappers/operatorforwarder/generated/authorized_forwarder"
+	"gethwrappers/operatorforwarder/generated/operator"
 	"github.com/smartcontractkit/chainlink-evm/pkg/forwarders"
 )
 

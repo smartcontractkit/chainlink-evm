@@ -6,6 +6,7 @@ package workflow_registry_wrapper_v1
 import (
 	"errors"
 	"fmt"
+	"gethwrappers/generated"
 	"math/big"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (

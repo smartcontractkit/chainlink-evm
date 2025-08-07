@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generation/generate/genwrapper"
+	"gethwrappers/generation/generate/genwrapper"
 )
 
 func main() {

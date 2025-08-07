@@ -1,9 +1,8 @@
 package main
 
 import (
+	"gethwrappers/generation/generate/genwrapper"
 	"os"
-
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generation/generate/genwrapper"
 )
 
 var (

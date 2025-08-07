@@ -21,7 +21,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox"
 	"github.com/smartcontractkit/chainlink-framework/chains/heads"
 
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
+	"gethwrappers/generated"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	evmutils "github.com/smartcontractkit/chainlink-evm/pkg/utils"

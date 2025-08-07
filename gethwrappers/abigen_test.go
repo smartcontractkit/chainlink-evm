@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/shared/generated/log_emitter"
+	"gethwrappers/shared/generated/log_emitter"
 )
 
 // Test that the generated Deploy method fill all the required fields and returns the correct address.
