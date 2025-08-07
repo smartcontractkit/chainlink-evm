@@ -16,8 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/version"
 	"golang.org/x/tools/go/ast/astutil"
-
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 )
 
 const headerComment = `// Code generated - DO NOT EDIT.
@@ -464,5 +462,9 @@ func writeInterface(contractName string, fileNode *ast.File) *ast.File {
 }
 
 func addHeader(code []byte) []byte {
-	return utils.ConcatBytes([]byte(headerComment), code)
+	return ConcatBytes([]byte(headerComment), code)
+}
+
+func ConcatBytes(bufs ...[]byte) []byte {
+	return bytes.Join(bufs, []byte{})
 }
