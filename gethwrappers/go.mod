@@ -1,7 +1,5 @@
 module github.com/smartcontractkit/chainlink-evm/gethwrappers
 
-replace github.com/smartcontractkit/chainlink-evm => ../
-
 go 1.24.4
 
 require (
