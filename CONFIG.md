@@ -1020,7 +1020,8 @@ ExternalRequestMaxResponseSize = 0 # Default
 ExternalRequestMaxResponseSize sets the maximum allowed size (in bytes) for responses to external requests.
 Responses larger than this value will be rejected to prevent the node from being overloaded.
 Only CRE workflow requests are considered external requests.
-Only applies for RPCs configured with HTTP urls. There is no limit for WS only RPCs.
+Only applies for RPCs configured with HTTP urls. There is no limit for WS only RPCs, as WS RPCs only allow to define
+global limits that are applied to both internal and external requests.
 Set to 0 to disable the size check and allow responses of any size.
 
 ## NodePool.Errors
