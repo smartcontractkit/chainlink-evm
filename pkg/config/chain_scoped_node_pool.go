@@ -55,3 +55,10 @@ func (n *NodePoolConfig) EnforceRepeatableRead() bool {
 func (n *NodePoolConfig) DeathDeclarationDelay() time.Duration {
 	return n.C.DeathDeclarationDelay.Duration()
 }
+
+func (n *NodePoolConfig) ExternalRequestMaxResponseSize() uint32 {
+	if n.C.ExternalRequestMaxResponseSize == nil {
+		return 0
+	}
+	return *n.C.ExternalRequestMaxResponseSize
+}

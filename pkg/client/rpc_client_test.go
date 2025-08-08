@@ -276,7 +276,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		require.NoError(t, rpc.Dial(ctx))
 		server.Close()
 		_, _, err := rpc.SubscribeToHeads(ctx)
-		require.ErrorContains(t, err, "RPC call failed: dial tcp")
+		require.ErrorContains(t, err, "RPC call failed")
 		tests.AssertLogEventually(t, observed, "evmclient.Client#EthSubscribe RPC call failure")
 	})
 	t.Run("Closed rpc client should remove existing SubscribeToHeads subscription with WS", func(t *testing.T) {
@@ -340,10 +340,12 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 	defer cancel()
 	t.Run("Failed SubscribeFilterLogs when WSURL is empty", func(t *testing.T) {
 		// ws is optional when LogBroadcaster is disabled, however SubscribeFilterLogs will return error if ws is missing
-		rpcClient := client.NewTestRPCClient(t, client.RPCClientOpts{HTTP: &url.URL{}})
+		httpURL, err := url.Parse("https://valid_url.com")
+		require.NoError(t, err)
+		rpcClient := client.NewTestRPCClient(t, client.RPCClientOpts{HTTP: httpURL})
 		require.NoError(t, rpcClient.Dial(ctx))
 
-		_, err := rpcClient.SubscribeFilterLogs(ctx, ethereum.FilterQuery{}, make(chan types.Log))
+		_, err = rpcClient.SubscribeFilterLogs(ctx, ethereum.FilterQuery{}, make(chan types.Log))
 		require.Equal(t, errors.New("SubscribeFilterLogs is not allowed without ws url"), err)
 	})
 	t.Run("Failed SubscribeFilterLogs logs and returns proper error", func(t *testing.T) {
@@ -1003,6 +1005,24 @@ func TestRPCClient_CallContractWithOpts(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, string(result))
 	})
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
+		const responseLimit = 1024
+		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_call":
+				// Simulate a large response that exceeds the limit
+				resp.Result = fmt.Sprintf(`"%s"`, "0x"+hex.EncodeToString(make([]byte, responseLimit+1))) // 10 MB
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).URL()
+		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{HTTP: httpURL, ExternalRequestMaxResponseSize: responseLimit})
+		_, err := rpcClient.CallContractWithOpts(t.Context(), ethereum.CallMsg{}, big.NewInt(9), evmtypes.CallContractOpts{IsExternalRequest: false})
+		require.NoError(t, err)
+		_, err = rpcClient.CallContractWithOpts(t.Context(), ethereum.CallMsg{}, big.NewInt(9), evmtypes.CallContractOpts{IsExternalRequest: true})
+		require.ErrorContains(t, err, "RPC call failed: reached read limit of 1024 bytes: response is too large")
+	})
 }
 
 func TestRPCClient_BalanceAtWithOpts(t *testing.T) {
@@ -1031,16 +1051,17 @@ func TestRPCClient_BalanceAtWithOpts(t *testing.T) {
 
 func TestRPCClient_FilterLogsWithOpts(t *testing.T) {
 	t.Parallel()
+	topics := []common.Hash{common.BigToHash(big.NewInt(10))}
+	validLogs := []types.Log{
+		{Address: common.BigToAddress(big.NewInt(42)), Topics: topics, Data: []byte("hello")},
+		{Address: common.BigToAddress(big.NewInt(43)), Topics: topics, Data: []byte("hi")},
+	}
 	t.Run("Happy path", func(t *testing.T) {
-		topics := []common.Hash{common.BigToHash(big.NewInt(10))}
-		expectedResult := []types.Log{
-			{Address: common.BigToAddress(big.NewInt(42)), Topics: topics, Data: []byte("hello")},
-			{Address: common.BigToAddress(big.NewInt(43)), Topics: topics, Data: []byte("hi")},
-		}
+
 		wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
 			case "eth_getLogs":
-				logsAsJSON, err := json.Marshal(expectedResult)
+				logsAsJSON, err := json.Marshal(validLogs)
 				require.NoError(t, err)
 				resp.Result = string(logsAsJSON)
 			case "eth_getBlockByNumber":
@@ -1056,7 +1077,28 @@ func TestRPCClient_FilterLogsWithOpts(t *testing.T) {
 		filter := ethereum.FilterQuery{FromBlock: big.NewInt(0), ToBlock: big.NewInt(10), Topics: [][]common.Hash{topics}}
 		result, err := rpcClient.FilterLogsWithOpts(t.Context(), filter, evmtypes.FilterLogsOpts{ConfidenceLevel: primitives.Finalized})
 		require.NoError(t, err)
-		require.Equal(t, expectedResult, result)
+		require.Equal(t, validLogs, result)
+	})
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
+		logsAsJSON, err := json.Marshal(validLogs)
+		require.NoError(t, err)
+		//nolint:gosec //G115 it's safe to assume that response size fits into uint32
+		responseSize := uint32(len(logsAsJSON))
+		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getLogs":
+				resp.Result = string(logsAsJSON)
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).URL()
+		filter := ethereum.FilterQuery{FromBlock: big.NewInt(0), ToBlock: big.NewInt(10), Topics: [][]common.Hash{topics}}
+		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{HTTP: httpURL, ExternalRequestMaxResponseSize: responseSize - 1})
+		_, err = rpcClient.FilterLogsWithOpts(t.Context(), filter, evmtypes.FilterLogsOpts{IsExternalRequest: false})
+		require.NoError(t, err)
+		_, err = rpcClient.FilterLogsWithOpts(t.Context(), filter, evmtypes.FilterLogsOpts{IsExternalRequest: true})
+		require.ErrorContains(t, err, "RPC call failed: reached read limit of 804 bytes: response is too large")
 	})
 }
 
@@ -1082,5 +1124,56 @@ func TestRPCClient_HeaderByNumberWithOpts(t *testing.T) {
 		require.NoError(t, err)
 		head.EVMChainID = ubig.New(chainID)
 		require.Equal(t, (*evmtypes.Header)(head), result)
+	})
+}
+
+func TestRPCClient_TransactionReceiptGethWithOpts(t *testing.T) {
+	t.Parallel()
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
+		receiptsAsJSON, err := json.Marshal(&types.Receipt{
+			Logs: []*types.Log{},
+		})
+		require.NoError(t, err)
+		//nolint:gosec //G115 it's safe to assume that response size fits into uint32
+		responseSize := uint32(len(receiptsAsJSON))
+		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getTransactionReceipt":
+				resp.Result = string(receiptsAsJSON)
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).URL()
+		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{HTTP: httpURL, ExternalRequestMaxResponseSize: responseSize - 1})
+		_, err = rpcClient.TransactionReceiptGethWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionReceiptOpts{IsExternalRequest: false})
+		require.NoError(t, err)
+		_, err = rpcClient.TransactionReceiptGethWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionReceiptOpts{IsExternalRequest: true})
+		require.ErrorContains(t, err, "RPC call failed: reached read limit of 889 bytes: response is too large")
+	})
+}
+
+func TestRPCClient_TransactionByHashWithOpts(t *testing.T) {
+	t.Parallel()
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
+		tx := types.NewTx(&types.DynamicFeeTx{})
+		txAsJSON, err := json.Marshal(tx)
+		require.NoError(t, err)
+		//nolint:gosec //G115 it's safe to assume that response size fits into uint32
+		responseSize := uint32(len(txAsJSON))
+		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getTransactionByHash":
+				resp.Result = string(txAsJSON)
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).URL()
+		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{HTTP: httpURL, ExternalRequestMaxResponseSize: responseSize - 1})
+		_, err = rpcClient.TransactionByHashWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionByHashOpts{IsExternalRequest: false})
+		require.NoError(t, err)
+		_, err = rpcClient.TransactionByHashWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionByHashOpts{IsExternalRequest: true})
+		require.ErrorContains(t, err, "RPC call failed: reached read limit of 296 bytes: response is too large")
 	})
 }

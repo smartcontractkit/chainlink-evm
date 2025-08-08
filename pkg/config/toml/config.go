@@ -1080,18 +1080,19 @@ func (r *ClientErrors) setFrom(f *ClientErrors) bool {
 }
 
 type NodePool struct {
-	PollFailureThreshold       *uint32
-	PollInterval               *commonconfig.Duration
-	SelectionMode              *string
-	SyncThreshold              *uint32
-	LeaseDuration              *commonconfig.Duration
-	NodeIsSyncingEnabled       *bool
-	FinalizedBlockPollInterval *commonconfig.Duration
-	Errors                     ClientErrors `toml:",omitempty"`
-	EnforceRepeatableRead      *bool
-	DeathDeclarationDelay      *commonconfig.Duration
-	NewHeadsPollInterval       *commonconfig.Duration
-	VerifyChainID              *bool
+	PollFailureThreshold           *uint32
+	PollInterval                   *commonconfig.Duration
+	SelectionMode                  *string
+	SyncThreshold                  *uint32
+	LeaseDuration                  *commonconfig.Duration
+	NodeIsSyncingEnabled           *bool
+	FinalizedBlockPollInterval     *commonconfig.Duration
+	Errors                         ClientErrors `toml:",omitempty"`
+	EnforceRepeatableRead          *bool
+	DeathDeclarationDelay          *commonconfig.Duration
+	NewHeadsPollInterval           *commonconfig.Duration
+	VerifyChainID                  *bool
+	ExternalRequestMaxResponseSize *uint32
 }
 
 func (p *NodePool) setFrom(f *NodePool) {
@@ -1131,6 +1132,10 @@ func (p *NodePool) setFrom(f *NodePool) {
 
 	if v := f.VerifyChainID; v != nil {
 		p.VerifyChainID = v
+	}
+
+	if v := f.ExternalRequestMaxResponseSize; v != nil {
+		p.ExternalRequestMaxResponseSize = v
 	}
 
 	p.Errors.setFrom(&f.Errors)
