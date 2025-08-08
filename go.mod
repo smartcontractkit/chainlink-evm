@@ -2,12 +2,6 @@ module github.com/smartcontractkit/chainlink-evm
 
 go 1.24.4
 
-replace github.com/smartcontractkit/chainlink-evm/gethwrappers => ./gethwrappers
-
-// Using a separate inline `require` here to avoid surrounding line changes
-// creating potential merge conflicts.
-require github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0
-
 require (
 	github.com/ethereum/go-ethereum v1.15.3
 	github.com/google/uuid v1.6.0
@@ -28,6 +22,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/smartcontractkit/chain-selectors v1.0.62
 	github.com/smartcontractkit/chainlink-common v0.8.1-0.20250730004800-27955557aca6
+	github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20250808121824-2c3544aab8f3
 	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502
 	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250717121125-2350c82883e2
 	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250717121125-2350c82883e2
