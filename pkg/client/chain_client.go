@@ -527,7 +527,6 @@ func (c *chainClient) TransactionReceiptWithOpts(ctx context.Context, txHash com
 	if err != nil {
 		return receipt, err
 	}
-	// return rpc.TransactionReceipt(ctx, txHash)
 	return r.TransactionReceiptGethWithOpts(ctx, txHash, opts)
 }
 

@@ -1005,7 +1005,7 @@ func TestRPCClient_CallContractWithOpts(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, string(result))
 	})
-	t.Run("Returns an error if external request's response size ", func(t *testing.T) {
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
 		const responseLimit = 1024
 		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
@@ -1079,7 +1079,7 @@ func TestRPCClient_FilterLogsWithOpts(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, validLogs, result)
 	})
-	t.Run("Returns an error if external request's response size ", func(t *testing.T) {
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
 		logsAsJSON, err := json.Marshal(validLogs)
 		require.NoError(t, err)
 		//nolint:gosec //G115 it's safe to assume that response size fits into uint32
@@ -1129,7 +1129,7 @@ func TestRPCClient_HeaderByNumberWithOpts(t *testing.T) {
 
 func TestRPCClient_TransactionReceiptGethWithOpts(t *testing.T) {
 	t.Parallel()
-	t.Run("Returns an error if external request's response size ", func(t *testing.T) {
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
 		receiptsAsJSON, err := json.Marshal(&types.Receipt{
 			Logs: []*types.Log{},
 		})
@@ -1155,7 +1155,7 @@ func TestRPCClient_TransactionReceiptGethWithOpts(t *testing.T) {
 
 func TestRPCClient_TransactionByHashWithOpts(t *testing.T) {
 	t.Parallel()
-	t.Run("Returns an error if external request's response size ", func(t *testing.T) {
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
 		tx := types.NewTx(&types.DynamicFeeTx{})
 		txAsJSON, err := json.Marshal(tx)
 		require.NoError(t, err)

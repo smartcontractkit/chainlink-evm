@@ -12,7 +12,7 @@ type contextKey string
 
 const responseLimitCtxKey contextKey = "responseLimitCtxKey"
 
-// LimitedTransport wraps an http.RoundTripper and limits the size of the response body. Limit is set via context using
+// LimitedTransport wraps an http.RoundTripper and limits the size of the response body. Limit is set via context using WithResponseSizeLimit
 type LimitedTransport struct {
 	// RoundTripper is the underlying http.RoundTripper to use for the actual request.
 	// This will typically be http.DefaultTransport or a custom *http.Transport.
