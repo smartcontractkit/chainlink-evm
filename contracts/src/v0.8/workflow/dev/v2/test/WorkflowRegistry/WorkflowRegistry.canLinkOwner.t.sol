@@ -18,7 +18,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
         WorkflowRegistry.LinkOwnerRequestExpired.selector, s_owner, block.timestamp, s_validityTimestamp
       )
     );
-    s_registry.canLinkOwner(s_validityTimestamp, ownerProof, sig);
+    s_registry.canLinkOwner(s_owner, s_validityTimestamp, ownerProof, sig);
   }
 
   // whenSignatureHasNotExpired
@@ -28,7 +28,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
     (bytes32 ownerProof, bytes memory sig) = _getLinkProofSignature(s_owner);
     vm.prank(s_owner);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkAlreadyExists.selector, s_owner));
-    s_registry.canLinkOwner(s_validityTimestamp, ownerProof, sig);
+    s_registry.canLinkOwner(s_owner, s_validityTimestamp, ownerProof, sig);
   }
 
   // whenSignatureHasNotExpired whenMsgSenderIsNotYetLinked
@@ -58,7 +58,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
     bytes memory sig2 = abi.encodePacked(r2, s2, v2);
     vm.prank(s_owner);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipProofAlreadyUsed.selector, s_owner, s_proof));
-    s_registry.canLinkOwner(s_validityTimestamp, s_proof, sig2);
+    s_registry.canLinkOwner(s_owner, s_validityTimestamp, s_proof, sig2);
   }
 
   // whenBlockTimestampIsLessOrEqualToValidityTimestamp
@@ -77,7 +77,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
         bytes32(uint256(2)) // bytes32(uint256(2)) is the length of hex"abcd",
       )
     );
-    s_registry.canLinkOwner(s_validityTimestamp, s_proof, badSig);
+    s_registry.canLinkOwner(s_owner, s_validityTimestamp, s_proof, badSig);
   }
 
   // whenSignatureHasNotExpired whenMsgSenderIsNotYetLinked whenProofIsUnused
@@ -96,7 +96,7 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
     vm.expectRevert(
       abi.encodeWithSelector(WorkflowRegistry.InvalidOwnershipLink.selector, s_owner, s_validityTimestamp, s_proof, sig)
     );
-    s_registry.canLinkOwner(s_validityTimestamp, s_proof, sig);
+    s_registry.canLinkOwner(s_owner, s_validityTimestamp, s_proof, sig);
   }
 
   // whenSignatureHasNotExpired whenMsgSenderIsNotYetLinked whenProofIsUnused
@@ -104,6 +104,6 @@ contract WorkflowRegistry_canLinkOwner is WorkflowRegistrySetup {
     // It should return (no revert)
     (bytes32 ownerProof, bytes memory sig) = _getLinkProofSignature(s_owner);
     vm.prank(s_owner);
-    s_registry.canLinkOwner(s_validityTimestamp, ownerProof, sig);
+    s_registry.canLinkOwner(s_owner, s_validityTimestamp, ownerProof, sig);
   }
 }

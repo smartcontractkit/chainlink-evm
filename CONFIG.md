@@ -905,7 +905,6 @@ EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
 VerifyChainID = true # Default
-ExternalRequestMaxResponseSize = 0 # Default
 ```
 The node pool manages multiple RPC endpoints.
 
@@ -1012,16 +1011,6 @@ Set to 0 to disable.
 VerifyChainID = true # Default
 ```
 VerifyChainID enforces RPC Client ChainIDs to match configured ChainID
-
-### ExternalRequestMaxResponseSize
-```toml
-ExternalRequestMaxResponseSize = 0 # Default
-```
-ExternalRequestMaxResponseSize sets the maximum allowed size (in bytes) for responses to external requests.
-Responses larger than this value will be rejected to prevent the node from being overloaded.
-Only CRE workflow requests are considered external requests.
-Only applies for RPCs configured with HTTP urls. There is no limit for WS only RPCs.
-Set to 0 to disable the size check and allow responses of any size.
 
 ## NodePool.Errors
 :warning: **_ADVANCED_**: _Do not change these settings unless you know what you are doing._
@@ -1203,7 +1192,7 @@ HTTPURL = 'https://foo.web' # Example
 HTTPURLExtraWrite = 'https://foo.web/extra' # Example
 SendOnly = false # Default
 Order = 100 # Default
-IsLoadBalancedRPC = false # Default
+IsLoadBalancedRPC = false # Example
 ```
 
 
@@ -1245,7 +1234,7 @@ Order of the node in the pool, will takes effect if `SelectionMode` is `Priority
 
 ### IsLoadBalancedRPC
 ```toml
-IsLoadBalancedRPC = false # Default
+IsLoadBalancedRPC = false # Example
 ```
 IsLoadBalancedRPC indicates whether the http/ws url above has multiple rpc's behind it.
 If true, we should try reconnecting to the node even when its the only node in the Nodes list.

@@ -19,10 +19,10 @@ contract WorkflowRegistry_setMetadataConfig is WorkflowRegistrySetup {
     vm.expectEmit(true, true, true, true);
     emit WorkflowRegistry.MetadataConfigUpdated(12, 6, 180, 512);
     s_registry.setMetadataConfig(12, 6, 180, 512);
-    assertEq(s_registry.maxNameLen(), 12);
-    assertEq(s_registry.maxTagLen(), 6);
-    assertEq(s_registry.maxUrlLen(), 180);
-    assertEq(s_registry.maxAttrLen(), 512);
+    assertEq(s_registry.getMaxNameLen(), 12);
+    assertEq(s_registry.getMaxTagLen(), 6);
+    assertEq(s_registry.getMaxUrlLen(), 180);
+    assertEq(s_registry.getMaxAttrLen(), 512);
   }
 
   // whenTheCallerISTheContractOwner
@@ -32,10 +32,10 @@ contract WorkflowRegistry_setMetadataConfig is WorkflowRegistrySetup {
     vm.expectEmit(true, true, true, true);
     emit WorkflowRegistry.MetadataConfigUpdated(12, 6, 0, 0);
     s_registry.setMetadataConfig(12, 6, 0, 0);
-    assertEq(s_registry.maxNameLen(), 12);
-    assertEq(s_registry.maxTagLen(), 6);
-    assertEq(s_registry.maxUrlLen(), 0);
-    assertEq(s_registry.maxAttrLen(), 0);
+    assertEq(s_registry.getMaxNameLen(), 12);
+    assertEq(s_registry.getMaxTagLen(), 6);
+    assertEq(s_registry.getMaxUrlLen(), 0);
+    assertEq(s_registry.getMaxAttrLen(), 0);
   }
 
   // whenTheCallerISTheContractOwner
@@ -44,10 +44,10 @@ contract WorkflowRegistry_setMetadataConfig is WorkflowRegistrySetup {
     vm.startPrank(s_owner);
     // set value to something else first
     s_registry.setMetadataConfig(12, 6, 180, 512);
-    assertEq(s_registry.maxNameLen(), 12);
-    assertEq(s_registry.maxTagLen(), 6);
-    assertEq(s_registry.maxUrlLen(), 180);
-    assertEq(s_registry.maxAttrLen(), 512);
+    assertEq(s_registry.getMaxNameLen(), 12);
+    assertEq(s_registry.getMaxTagLen(), 6);
+    assertEq(s_registry.getMaxUrlLen(), 180);
+    assertEq(s_registry.getMaxAttrLen(), 512);
 
     // set value to all zero now
     vm.expectEmit(true, true, true, true);
@@ -55,9 +55,9 @@ contract WorkflowRegistry_setMetadataConfig is WorkflowRegistrySetup {
     s_registry.setMetadataConfig(0, 0, 0, 0);
     vm.stopPrank();
     // since we cleared the override, we now get the immutable defaults
-    assertEq(s_registry.maxNameLen(), 64);
-    assertEq(s_registry.maxTagLen(), 32);
-    assertEq(s_registry.maxUrlLen(), 200);
-    assertEq(s_registry.maxAttrLen(), 1024);
+    assertEq(s_registry.getMaxNameLen(), 64);
+    assertEq(s_registry.getMaxTagLen(), 32);
+    assertEq(s_registry.getMaxUrlLen(), 200);
+    assertEq(s_registry.getMaxAttrLen(), 1024);
   }
 }
