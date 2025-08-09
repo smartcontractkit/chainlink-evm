@@ -85,6 +85,8 @@ func TestLogPoller_RegisterFilter(t *testing.T) {
 	assert.Equal(t, []common.Address{a1}, lp.Filter(nil, nil, nil).Addresses)
 	assert.Equal(t, [][]common.Hash{{EmitterABI.Events["Log1"].ID}}, lp.Filter(nil, nil, nil).Topics)
 	validateFiltersTable(t, lp, orm)
+	require.Equal(t, 1, observedLogs.Len())
+	require.Contains(t, observedLogs.All()[0].Entry.Message, "Inserted filter")
 
 	// Should de-dupe EventSigs
 	err = lp.RegisterFilter(ctx, Filter{Name: "Emitter Log 1 + 2", EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID, EmitterABI.Events["Log2"].ID}, Addresses: []common.Address{a2}})
@@ -92,6 +94,8 @@ func TestLogPoller_RegisterFilter(t *testing.T) {
 	assert.Equal(t, []common.Address{a1, a2}, lp.Filter(nil, nil, nil).Addresses)
 	assert.Equal(t, [][]common.Hash{{EmitterABI.Events["Log1"].ID, EmitterABI.Events["Log2"].ID}}, lp.Filter(nil, nil, nil).Topics)
 	validateFiltersTable(t, lp, orm)
+	require.Equal(t, 2, observedLogs.Len())
+	require.Contains(t, observedLogs.All()[1].Entry.Message, "Inserted filter")
 
 	// Should de-dupe Addresses
 	err = lp.RegisterFilter(ctx, Filter{Name: "Emitter Log 1 + 2 dupe", EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID, EmitterABI.Events["Log2"].ID}, Addresses: []common.Address{a2}})
@@ -99,6 +103,8 @@ func TestLogPoller_RegisterFilter(t *testing.T) {
 	assert.Equal(t, []common.Address{a1, a2}, lp.Filter(nil, nil, nil).Addresses)
 	assert.Equal(t, [][]common.Hash{{EmitterABI.Events["Log1"].ID, EmitterABI.Events["Log2"].ID}}, lp.Filter(nil, nil, nil).Topics)
 	validateFiltersTable(t, lp, orm)
+	require.Equal(t, 3, observedLogs.Len())
+	require.Contains(t, observedLogs.All()[2].Entry.Message, "Inserted filter")
 
 	// Address required.
 	err = lp.RegisterFilter(ctx, Filter{Name: "no address", EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID}})
@@ -111,8 +117,8 @@ func TestLogPoller_RegisterFilter(t *testing.T) {
 	// Removing non-existence Filter should log error but return nil
 	err = lp.UnregisterFilter(ctx, "Filter doesn't exist")
 	require.NoError(t, err)
-	require.Equal(t, 1, observedLogs.Len())
-	require.Contains(t, observedLogs.TakeAll()[0].Entry.Message, "not found")
+	require.Equal(t, 4, observedLogs.Len())
+	require.Contains(t, observedLogs.All()[3].Entry.Message, "not found")
 
 	// Check that all filters are still there
 	_, ok := lp.filters["Emitter Log 1"]
