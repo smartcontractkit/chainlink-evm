@@ -806,6 +806,7 @@ SamplingInterval = '1s' # Default
 FinalityTagBypass = false # Default
 MaxAllowedFinalityDepth = 10000 # Default
 PersistenceEnabled = true # Default
+PersistenceBatchSize = 100 # Default
 ```
 The head tracker continually listens for new heads from the chain.
 
@@ -860,6 +861,16 @@ Persistence is helpful on chains with large finality depth, where fetching block
 On chains with fast finality, the persistence layer does not improve the chain's load time and only consumes database resources (mainly IO).
 NOTE: persistence should not be disabled for products that use LogBroadcaster, as it might lead to missed on-chain events.
 
+### PersistenceBatchSize
+```toml
+PersistenceBatchSize = 100 # Default
+```
+PersistenceBatchSize is used to batch head tracker db transactions (inserts and deletes).
+If set to 100, the head tracker will insert and delete to the db every 100 heads.
+If the head tracker crashes before the batch size is reached (i.e it fails to write the current batch to the db).
+Then it will have to load that batch of heads from the rpc on startup (check PersistenceEnabled above).
+To limit that initial fetch while also improving db usage, 100 is the default for now.
+
 ## KeySpecific
 ```toml
 [[KeySpecific]]
@@ -894,6 +905,7 @@ EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
 VerifyChainID = true # Default
+ExternalRequestMaxResponseSize = 0 # Default
 ```
 The node pool manages multiple RPC endpoints.
 
@@ -1000,6 +1012,17 @@ Set to 0 to disable.
 VerifyChainID = true # Default
 ```
 VerifyChainID enforces RPC Client ChainIDs to match configured ChainID
+
+### ExternalRequestMaxResponseSize
+```toml
+ExternalRequestMaxResponseSize = 0 # Default
+```
+ExternalRequestMaxResponseSize sets the maximum allowed size (in bytes) for responses to external requests.
+Responses larger than this value will be rejected to prevent the node from being overloaded.
+Only CRE workflow requests are considered external requests.
+Only applies for RPCs configured with HTTP urls. There is no limit for WS only RPCs, as WS RPCs only allow to define
+global limits that are applied to both internal and external requests.
+Set to 0 to disable the size check and allow responses of any size.
 
 ## NodePool.Errors
 :warning: **_ADVANCED_**: _Do not change these settings unless you know what you are doing._
@@ -1181,6 +1204,7 @@ HTTPURL = 'https://foo.web' # Example
 HTTPURLExtraWrite = 'https://foo.web/extra' # Example
 SendOnly = false # Default
 Order = 100 # Default
+IsLoadBalancedRPC = false # Example
 ```
 
 
@@ -1219,6 +1243,14 @@ SendOnly limits usage to sending transaction broadcasts only. With this enabled,
 Order = 100 # Default
 ```
 Order of the node in the pool, will takes effect if `SelectionMode` is `PriorityLevel` or will be used as a tie-breaker for `HighestHead` and `TotalDifficulty`
+
+### IsLoadBalancedRPC
+```toml
+IsLoadBalancedRPC = false # Example
+```
+IsLoadBalancedRPC indicates whether the http/ws url above has multiple rpc's behind it.
+If true, we should try reconnecting to the node even when its the only node in the Nodes list.
+If false and its the only node in the nodes list, we will mark it alive even when its out of sync, because it might still be able to send txs.
 
 ## OCR2.Automation
 ```toml

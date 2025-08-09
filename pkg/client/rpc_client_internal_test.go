@@ -245,7 +245,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 				}
 				return
 			}).WSURL()
-			rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true, ChainID: chainID})
+			rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{HTTP: wsURL, FinalityTagsEnabled: true, ChainID: chainID})
 			var result hexutil.Bytes
 			err := rpcClient.doWithConfidence(t.Context(), rpc.BatchElem{Method: "eth_call", Result: &result}, tc.CallBlockNumber, tc.Confidence)
 			if tc.ExpectedError != "" {
@@ -381,20 +381,21 @@ func TestRPCClient_referenceHeadToMaxAvailableHeight(t *testing.T) {
 }
 
 type RPCClientOpts struct {
-	Cfg                    config.NodePool
-	Lggr                   logger.Logger
-	WS                     *url.URL
-	HTTP                   *url.URL
-	Name                   string
-	ID                     int
-	ChainID                *big.Int
-	Tier                   multinode.NodeTier
-	LargePayloadRPCTimeout *time.Duration
-	RPCTimeout             *time.Duration
-	ChainType              chaintype.ChainType
-	FinalityTagsEnabled    bool
-	FinalityDepth          uint32
-	SafeDepth              uint32
+	Cfg                            config.NodePool
+	Lggr                           logger.Logger
+	WS                             *url.URL
+	HTTP                           *url.URL
+	Name                           string
+	ID                             int
+	ChainID                        *big.Int
+	Tier                           multinode.NodeTier
+	LargePayloadRPCTimeout         *time.Duration
+	RPCTimeout                     *time.Duration
+	ChainType                      chaintype.ChainType
+	FinalityTagsEnabled            bool
+	FinalityDepth                  uint32
+	SafeDepth                      uint32
+	ExternalRequestMaxResponseSize uint32
 }
 
 func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
@@ -427,7 +428,7 @@ func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
 
 	return NewRPCClient(opts.Cfg, opts.Lggr, opts.WS, opts.HTTP, opts.Name, opts.ID, opts.ChainID, opts.Tier,
 		*opts.LargePayloadRPCTimeout, *opts.RPCTimeout, opts.ChainType, opts.FinalityTagsEnabled, opts.FinalityDepth,
-		opts.SafeDepth)
+		opts.SafeDepth, opts.ExternalRequestMaxResponseSize)
 }
 
 func ptr[T any](v T) *T {

@@ -186,7 +186,16 @@ func (c *SimulatedBackendClient) TransactionReceipt(ctx context.Context, receipt
 	return c.client.TransactionReceipt(ctx, receipt)
 }
 
+func (c *SimulatedBackendClient) TransactionReceiptWithOpts(ctx context.Context, receipt common.Hash, _ evmtypes.TransactionReceiptOpts) (*types.Receipt, error) {
+	return c.client.TransactionReceipt(ctx, receipt)
+}
+
 func (c *SimulatedBackendClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, err error) {
+	tx, _, err = c.client.TransactionByHash(ctx, txHash)
+	return
+}
+
+func (c *SimulatedBackendClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, _ evmtypes.TransactionByHashOpts) (tx *types.Transaction, err error) {
 	tx, _, err = c.client.TransactionByHash(ctx, txHash)
 	return
 }

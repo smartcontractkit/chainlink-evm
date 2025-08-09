@@ -212,6 +212,7 @@ type NodePool interface {
 	DeathDeclarationDelay() time.Duration
 	NewHeadsPollInterval() time.Duration
 	VerifyChainID() bool
+	ExternalRequestMaxResponseSize() uint32
 }
 
 type ChainScopedConfig interface {

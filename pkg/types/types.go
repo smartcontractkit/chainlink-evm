@@ -464,13 +464,23 @@ type BalanceAtOpts struct {
 }
 
 type CallContractOpts struct {
-	ConfidenceLevel primitives.ConfidenceLevel
+	ConfidenceLevel   primitives.ConfidenceLevel
+	IsExternalRequest bool // if true, limits like response size limit should be applied
 }
 
 type FilterLogsOpts struct {
-	ConfidenceLevel primitives.ConfidenceLevel
+	ConfidenceLevel   primitives.ConfidenceLevel
+	IsExternalRequest bool // if true, limits like response size limit should be applied
 }
 
 type HeaderByNumberOpts struct {
 	ConfidenceLevel primitives.ConfidenceLevel
+}
+
+type TransactionByHashOpts struct {
+	IsExternalRequest bool // if true, limits like response size limit should be applied
+}
+
+type TransactionReceiptOpts struct {
+	IsExternalRequest bool // if true, limits like response size limit should be applied
 }

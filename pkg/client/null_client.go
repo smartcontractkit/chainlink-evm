@@ -159,8 +159,18 @@ func (nc *NullClient) TransactionReceipt(ctx context.Context, txHash common.Hash
 	return nil, nil
 }
 
+func (nc *NullClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (*types.Receipt, error) {
+	nc.lggr.Debug("TransactionReceiptWithOpts")
+	return nil, nil
+}
+
 func (nc *NullClient) TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, error) {
 	nc.lggr.Debug("TransactionByHash")
+	return nil, nil
+}
+
+func (nc *NullClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error) {
+	nc.lggr.Debug("TransactionByHashWithOpts")
 	return nil, nil
 }
 
