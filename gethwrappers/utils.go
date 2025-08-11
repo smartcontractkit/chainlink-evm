@@ -34,20 +34,42 @@ func Exit(msg string, err error) {
 	os.Exit(1)
 }
 
-// GetProjectRoot returns the root of the chainlink project
+// GetProjectRoot returns the path with top-level go.mod, defined as the first ancestor
+// directory containing a go.mod whose module path is exactly
+// "github.com/smartcontractkit/<repo>" (no further nested segments).
 func GetProjectRoot() (rootPath string) {
-	root, err := os.Getwd()
+	const orgPrefix = "github.com/smartcontractkit/"
+
+	cwd, err := os.Getwd()
 	if err != nil {
-		Exit("could not get current working directory while seeking project root",
-			err)
+		Exit("could not get current working directory while seeking project root", err)
 	}
-	for root != "/" { // Walk up path to find dir containing go.mod
-		if _, err := os.Stat(filepath.Join(root, "go.mod")); !os.IsNotExist(err) {
-			return root
+
+	dir := cwd
+	for dir != "/" {
+		goModPath := filepath.Join(dir, "go.mod")
+		if _, statErr := os.Stat(goModPath); !os.IsNotExist(statErr) {
+			modPath, parseErr := readModulePathFromGoMod(goModPath)
+			if parseErr != nil {
+				Exit("failed to parse go.mod", parseErr)
+			}
+			if strings.HasPrefix(modPath, orgPrefix) {
+				// remainder must be a single segment (the repo name)
+				remainder := strings.TrimPrefix(modPath, orgPrefix)
+				if remainder != "" && !strings.Contains(remainder, "/") {
+					return dir
+				}
+			}
 		}
-		root = filepath.Dir(root)
+		dir = filepath.Dir(dir)
 	}
-	Exit("could not find project root", nil)
+
+	reason := fmt.Sprintf(
+		"could not find project root: expected a go.mod whose module is '%s<repo>' "+
+			"with no further nested path segments",
+		orgPrefix,
+	)
+	Exit(reason, nil)
 	panic("can't get here")
 }
 
@@ -89,4 +111,25 @@ func BoxOutput(errorMsgTemplate string, errorMsgValues ...interface{}) string {
 	output += "→  " + strings.Repeat(" ", maxlen) + "  ←\n"
 	return "\n" + output + "↗" + strings.Repeat("↑", internalLength) + "↖" + // bottom line
 		"\n\n"
+}
+
+// Extracts the module path from a go.mod file.
+func readModulePathFromGoMod(goModPath string) (string, error) {
+	bs, err := os.ReadFile(goModPath)
+	if err != nil {
+		return "", err
+	}
+	for _, raw := range strings.Split(string(bs), "\n") {
+		line := strings.TrimSpace(raw)
+		if !strings.HasPrefix(line, "module ") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			return "", fmt.Errorf("invalid go mod directive in %s", goModPath)
+		}
+		mod := strings.Trim(fields[1], "\"")
+		return mod, nil
+	}
+	return "", fmt.Errorf("no module directive found in %s", goModPath)
 }
