@@ -59,7 +59,7 @@ func TestLogPoller_RegisterFilter(t *testing.T) {
 	a1 := common.HexToAddress("0x2ab9a2dc53736b361b72d900cdf9f78f9406fbbb")
 	a2 := common.HexToAddress("0x2ab9a2dc53736b361b72d900cdf9f78f9406fbbc")
 
-	lggr, observedLogs := logger.TestObserved(t, zapcore.WarnLevel)
+	lggr, observedLogs := logger.TestObserved(t, zapcore.InfoLevel)
 	chainID := testutils.NewRandomEVMChainID()
 	db := testutils.NewSqlxDB(t)
 	ctx := testutils.Context(t)

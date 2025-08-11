@@ -299,7 +299,7 @@ func (lp *logPoller) RegisterFilter(ctx context.Context, filter Filter) error {
 	if err := lp.orm.InsertFilter(ctx, filter); err != nil {
 		return pkgerrors.Wrap(err, "error inserting filter")
 	}
-	lp.lggr.Warnw("Inserted filter", "name", filter.Name, "filter", filter)
+	lp.lggr.Infow("Inserted filter", "name", filter.Name, "filter", filter)
 	lp.filters[filter.Name] = filter
 	lp.filterDirty = true
 	if filter.MaxLogsKept > 0 {
