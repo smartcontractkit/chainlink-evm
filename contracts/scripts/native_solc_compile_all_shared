@@ -34,6 +34,28 @@ compileContract() {
   $command
 }
 
+compileContractWithSolc826() {
+  local contract
+  contract=$(basename "$1")
+  echo "Compiling" "$contract"
+  local current_project="$PROJECT"
+
+  if [ -n "$2" ]; then
+    echo "Compiling from another project: ""$2"
+    current_project=$2
+  fi
+
+  # We override the foundry.toml Solidity version to not change the bytecode.
+  local command
+  command="forge build $CONTRACTS_DIR/src/v0.8/$current_project/"$1.sol" \
+   --root $CONTRACTS_DIR \
+   --extra-output-files bin abi \
+   --use 0.8.26 \
+   -o $CONTRACTS_DIR/solc/$PROJECT/$contract"
+
+  $command
+}
+
 compileContract interfaces/AggregatorV3Interface
 compileContract interfaces/ITypeAndVersion
 compileContract token/ERC677/ERC677
@@ -41,13 +63,13 @@ compileContract token/ERC677/BurnMintERC677
 compileContract token/ERC677/LinkToken
 compileContract token/ERC20/BurnMintERC20
 
-compileContract token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent
-compileContract token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS
-compileContract token/ERC20/upgradeable/BurnMintERC20PausableTransparent
-compileContract token/ERC20/upgradeable/BurnMintERC20PausableUUPS
-compileContract token/ERC20/upgradeable/BurnMintERC20Transparent
-compileContract token/ERC20/upgradeable/BurnMintERC20UUPS
-compileContract token/ERC20/upgradeable/IBurnMintERC20Upgradeable
+compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent
+compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS
+compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20PausableTransparent
+compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20PausableUUPS
+compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20Transparent
+compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20UUPS
+compileContractWithSolc826 token/ERC20/upgradeable/IBurnMintERC20Upgradeable
 
 compileContract test/helpers/BurnMintERC20WithDrip
 compileContract test/helpers/ChainReaderTester
