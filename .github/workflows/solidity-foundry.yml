@@ -195,6 +195,13 @@ jobs:
             echo "has_solc_version=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Setup Rust version required for SVM
+        if: ${{ steps.check-for-solc-version.outputs.has_solc_version == 'false'
+          && (contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name)
+          || contains(fromJson(needs.changes.outputs.all_changes), 'shared')
+          || needs.changes.outputs.non_src_changes == 'true') }}
+        uses: dtolnay/rust-toolchain@1.89.0
+
       - name: Install SVM
         if: ${{ steps.check-for-solc-version.outputs.has_solc_version == 'false'
           && (contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name)
