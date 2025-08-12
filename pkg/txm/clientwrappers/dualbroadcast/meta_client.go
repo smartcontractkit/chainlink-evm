@@ -63,8 +63,8 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		return err
 	}
 
-	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable {
-		meta, err := a.SendRequest(ctx, tx, attempt)
+	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable && meta.DualBroadcastParams != nil {
+		meta, err := a.SendRequest(ctx, tx, attempt, meta.DualBroadcastParams)
 		if err != nil {
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
 		}
@@ -88,10 +88,36 @@ type Parameters struct {
 }
 
 type requestResponse struct {
-	Result *Metacalldata `json:"result,omitempty"`
+	Result *ResponseResult `json:"result"`
 	Error  struct {
 		ErrorMessage string `json:"message,omitempty"`
 	}
+}
+
+type ResponseResult struct {
+	UOP *UO `json:"userOperation"`
+	SOP *SO `json:"solverOperations"`
+	DOP *DO `json:"dAppOperation"`
+	Metacalldata
+}
+
+type UO struct {
+	To        common.Address `json:"to"`
+	Dapp      common.Address `json:"dapp"`
+	Control   common.Address `json:"control"`
+	Data      hexutil.Bytes  `json:"data"`
+	Signature hexutil.Bytes  `json:"signature"`
+}
+
+type SO struct {
+	To      common.Address `json:"to"`
+	Control common.Address `json:"control"`
+}
+
+type DO struct {
+	To      common.Address `json:"to"`
+	Control common.Address `json:"control"`
+	Bundler common.Address `json:"bundler"`
 }
 
 type Metacalldata struct {
@@ -101,7 +127,7 @@ type Metacalldata struct {
 	CallData     []byte         `json:"metacallCallData"`
 }
 
-func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt) (*Metacalldata, error) {
+func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams *string) (*Metacalldata, error) {
 	ctx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 
@@ -174,7 +200,47 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		return nil, errors.New(response.Error.ErrorMessage)
 	}
 
-	return response.Result, nil
+	return verifyResponse(tx.Data, signature, tx.FromAddress, response.Result, dualBroadcastParams)
+}
+
+func verifyResponse(txData []byte, signature []byte, fromAddress common.Address, result *ResponseResult, dualBroadcastParams *string) (*Metacalldata, error) {
+	params, err := url.ParseQuery(*dualBroadcastParams)
+	if err != nil {
+		return nil, err
+	}
+
+	info := params["info"]
+	if len(info) != 2 {
+		return nil, fmt.Errorf("incorrect size for info: %v", info)
+	}
+	to := common.HexToAddress(info[0])
+	dApp := common.HexToAddress(info[1])
+	if result.Metacalldata.ToAddress != to ||
+		result.UOP.To != to ||
+		result.SOP.To != to ||
+		result.DOP.To != to {
+		return nil, fmt.Errorf("incorrect destination address, metacall.To: %v, uOp.To: %v, sOp.To: %v, dOp.To: %v, info.To: %v",
+			result.Metacalldata.ToAddress, result.UOP.To, result.SOP.To, result.DOP.To, to)
+	}
+
+	if result.UOP.Control != dApp || result.UOP.Dapp != dApp || result.DOP.Control != dApp || result.SOP.Control != dApp {
+		return nil, fmt.Errorf("incorrect dApp address, uOp.To: %v, uOp.dApp: %v, dOp.Control: %v, sOp.Control: %v, info.dApp: %v",
+			result.UOP.Control, result.UOP.Dapp, result.DOP.Control, result.SOP.Control, dApp)
+	}
+
+	if !bytes.Equal(result.UOP.Data, txData) || !bytes.Contains(result.Metacalldata.CallData, txData) {
+		return nil, fmt.Errorf("incorrect calldata, uOp.Data: %v, metacall.CallData: %v, txData: %v", result.UOP.Data, result.Metacalldata.CallData, txData)
+	}
+
+	if !bytes.Equal(result.UOP.Signature, signature) {
+		return nil, fmt.Errorf("incorrect signature, uOp.Signature: %v, signature: %v", result.UOP.Signature, signature)
+	}
+
+	if result.DOP.Bundler != fromAddress {
+		return nil, fmt.Errorf("incorrect bundler, dOp.Bundler: %v, fromAddress: %v", result.DOP.Bundler, fromAddress)
+	}
+
+	return &result.Metacalldata, nil
 }
 
 func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta Metacalldata) error {
