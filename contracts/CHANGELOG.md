@@ -2,6 +2,17 @@
 
 ## 1.4.1
 
+### Contracts In This Release
+
+- [BurnMintERC20PausableFreezableTransparent](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent.sol)
+- [BurnMintERC20PausableFreezableUUPS](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS.sol)
+- [BurnMintERC20PausableTransparent](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20PausableTransparent.sol)
+- [BurnMintERC20PausableUUPS](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20PausableUUPS.sol)
+- [BurnMintERC20Transparent](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20Transparent.sol)
+- [BurnMintERC20UUPS](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20UUPS.sol)
+- [IBurnMintERC20Upgradeable](src/v0.8/shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol)
+- [BurnMintERC20WithDrip](src/v0.8/shared/test/helpers/BurnMintERC20WithDrip.sol)
+
 ### Minor Changes
 
 - [#164](https://github.com/smartcontractkit/chainlink-evm/pull/164) [`bf75f8a`](https://github.com/smartcontractkit/chainlink-evm/commit/bf75f8a) - Adding a variety of audited flavours of the CCT token (BurnMintERC20) that implements UUPS and Transparent Proxy upgradeability patterns. Brings proxy-related OZ contracts into vendor.
@@ -261,7 +272,6 @@ The source code has moved from [chainlink](https://github.com/smartcontractkit/c
 - [#12481](https://github.com/smartcontractkit/chainlink/pull/12481) [`daa90db289`](https://github.com/smartcontractkit/chainlink/commit/daa90db289f84829a607b41792f7d231871a5462) Thanks [@justinkaseman](https://github.com/justinkaseman)! - Chainlink Functions contracts v1.3.0
 
 - [#12489](https://github.com/smartcontractkit/chainlink/pull/12489) [`3a49094db2`](https://github.com/smartcontractkit/chainlink/commit/3a49094db25036e1948818e4030fca11be748914) Thanks [@kidambisrinivas](https://github.com/kidambisrinivas)! - - Misc VRF V2+ contract changes
-
   - Reuse struct RequestCommitmentV2Plus from VRFTypes
   - Fix interface name IVRFCoordinatorV2PlusFulfill in BatchVRFCoordinatorV2Plus to avoid confusion with IVRFCoordinatorV2Plus.sol
   - Remove unused errors

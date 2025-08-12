@@ -40,6 +40,15 @@ compileContract token/ERC677/ERC677
 compileContract token/ERC677/BurnMintERC677
 compileContract token/ERC677/LinkToken
 compileContract token/ERC20/BurnMintERC20
+
+compileContract token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent
+compileContract token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS
+compileContract token/ERC20/upgradeable/BurnMintERC20PausableTransparent
+compileContract token/ERC20/upgradeable/BurnMintERC20PausableUUPS
+compileContract token/ERC20/upgradeable/BurnMintERC20Transparent
+compileContract token/ERC20/upgradeable/BurnMintERC20UUPS
+compileContract token/ERC20/upgradeable/IBurnMintERC20Upgradeable
+
 compileContract test/helpers/BurnMintERC20WithDrip
 compileContract test/helpers/ChainReaderTester
 compileContract test/helpers/LogEmitter
