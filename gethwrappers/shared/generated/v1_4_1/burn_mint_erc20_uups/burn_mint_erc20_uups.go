@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	generated "github.com/smartcontractkit/chainlink-evm/gethwrappers/generatediface"
+	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
