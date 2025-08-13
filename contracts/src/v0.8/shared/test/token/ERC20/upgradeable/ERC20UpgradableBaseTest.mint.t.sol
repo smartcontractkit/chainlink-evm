@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
@@ -7,7 +7,9 @@ import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 import {ERC20UpgradableBaseTest, IERC20UpgradeableBase} from "./ERC20UpgradableBaseTest.t.sol";
 
 contract ERC20UpgradableBaseTest_mint is ERC20UpgradableBaseTest {
-  function should_Mint(address implementation) public {
+  function should_Mint(
+    address implementation
+  ) public {
     changePrank(i_mockPool);
 
     uint256 balanceBefore = IERC20UpgradeableBase(implementation).balanceOf(STRANGER);

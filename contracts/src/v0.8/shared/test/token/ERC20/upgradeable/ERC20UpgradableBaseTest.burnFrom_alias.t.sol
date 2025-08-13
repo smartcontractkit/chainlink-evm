@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {IBurnMintERC20Upgradeable} from "../../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
@@ -8,7 +8,9 @@ import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 import {ERC20UpgradableBaseTest} from "./ERC20UpgradableBaseTest.t.sol";
 
 contract ERC20UpgradableBaseTest_burnFrom_alias is ERC20UpgradableBaseTest {
-  function should_BurnFrom_alias(address implementation) public {
+  function should_BurnFrom_alias(
+    address implementation
+  ) public {
     changePrank(i_mockPool);
     IBurnMintERC20Upgradeable(implementation).mint(STRANGER, AMOUNT);
 

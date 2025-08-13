@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
-import {Ownable2Step} from "../../access/Ownable2Step.sol";
 import {AuthorizedCallers} from "../../access/AuthorizedCallers.sol";
+import {Ownable2Step} from "../../access/Ownable2Step.sol";
 import {BaseTest} from "../BaseTest.t.sol";
 
 contract AuthorizedCallers_setup is BaseTest {
@@ -167,10 +167,8 @@ contract AuthorizedCallers_applyAuthorizedCallerUpdates is AuthorizedCallers_set
   function test_OnlyCallableByOwner_Revert() public {
     vm.stopPrank();
 
-    AuthorizedCallers.AuthorizedCallerArgs memory authorizedCallerArgs = AuthorizedCallers.AuthorizedCallerArgs({
-      addedCallers: new address[](0),
-      removedCallers: new address[](0)
-    });
+    AuthorizedCallers.AuthorizedCallerArgs memory authorizedCallerArgs =
+      AuthorizedCallers.AuthorizedCallerArgs({addedCallers: new address[](0), removedCallers: new address[](0)});
 
     vm.expectRevert(Ownable2Step.OnlyCallableByOwner.selector);
 

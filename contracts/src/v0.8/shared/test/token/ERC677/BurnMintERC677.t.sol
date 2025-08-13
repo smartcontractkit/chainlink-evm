@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {IBurnMintERC20} from "../../../token/ERC20/IBurnMintERC20.sol";
 import {IERC677} from "../../../token/ERC677/IERC677.sol";
 
-import {BaseTest} from "../../BaseTest.t.sol";
 import {BurnMintERC677} from "../../../token/ERC677/BurnMintERC677.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
 import {IERC165} from "@openzeppelin/contracts@4.8.3/utils/introspection/IERC165.sol";
@@ -116,9 +116,7 @@ contract BurnMintERC677_mint is BurnMintERC677Setup {
     // Mint max supply
     s_burnMintERC677.mint(OWNER, s_burnMintERC677.maxSupply());
 
-    vm.expectRevert(
-      abi.encodeWithSelector(BurnMintERC677.MaxSupplyExceeded.selector, s_burnMintERC677.maxSupply() + 1)
-    );
+    vm.expectRevert(abi.encodeWithSelector(BurnMintERC677.MaxSupplyExceeded.selector, s_burnMintERC677.maxSupply() + 1));
 
     // Attempt to mint 1 more than max supply
     s_burnMintERC677.mint(OWNER, 1);
