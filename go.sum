@@ -594,12 +594,14 @@ github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6Mwd
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/smartcontractkit/chain-selectors v1.0.62 h1:KWLEyKQXHxGGHIlUfLrzjYldlB8hBjRZi9GP49WtgYs=
 github.com/smartcontractkit/chain-selectors v1.0.62/go.mod h1:xsKM0aN3YGcQKTPRPDDtPx2l4mlTN1Djmg0VVXV40b8=
-github.com/smartcontractkit/chainlink-common v0.8.1-0.20250812214255-67aebf1bbeb5 h1:UiMDF0HQypTl/b8syUbhBWCcodJjocmG7elxoSNST/s=
-github.com/smartcontractkit/chainlink-common v0.8.1-0.20250812214255-67aebf1bbeb5/go.mod h1:e4280rM099IzfjaPG9uxHdjXgY79cURgenW7+obyAq0=
+github.com/smartcontractkit/chainlink-common v0.8.1-0.20250813130821-b873b0f57784 h1:cVhohdaKz8C7AXqXEezwZDCm6eWfJRyoReR9Hb3al3g=
+github.com/smartcontractkit/chainlink-common v0.8.1-0.20250813130821-b873b0f57784/go.mod h1:OYfK10oQCJVQEdBmA2J1FC9gq+bp9497LcD88T0q+lw=
 github.com/smartcontractkit/chainlink-common/pkg/chipingress v0.0.1 h1:ca2z5OXgnbBPQRxpwXwBLJsUA1+cAp5ncfW4Ssvd6eY=
 github.com/smartcontractkit/chainlink-common/pkg/chipingress v0.0.1/go.mod h1:NZv/qKYGFRnkjOYBouajnDfFoZ+WDa6H2KNmSf1dnKc=
 github.com/smartcontractkit/chainlink-common/pkg/values v0.0.0-20250806152407-159881c7589c h1:QaImySzrLcGzQc4wCF2yDqqb73jA3+9EIqybgx8zT4w=
 github.com/smartcontractkit/chainlink-common/pkg/values v0.0.0-20250806152407-159881c7589c/go.mod h1:U1UAbPhy6D7Qz0wHKGPoQO+dpR0hsYjgUz8xwRrmKwI=
+github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20250811145846-a48e9e035375 h1:7dQAbn4WAR2K7vg7KpTroDoizsKgHLGqXwttjSJb5Cc=
+github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20250811145846-a48e9e035375/go.mod h1:3Lsp38qxen9PABVF+O5eocveQev+hyo9HLAgRodBD4Q=
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502 h1:WLgEB8/lIfA1vI+7O4RE/PYitO57TRkKUqVllDIgJD4=
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502/go.mod h1:Kb8f+wt2YmBdD0PfbsC9bDhdUG/Y8sqUkzAvC2Dn8/M=
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250717121125-2350c82883e2 h1:JU1JUrkzdAUHsOYdS9DENPkJfmrxweFRPRSztad6oPM=
