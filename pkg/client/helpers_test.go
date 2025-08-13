@@ -88,17 +88,18 @@ func (c *TestClientErrors) TooManyResults() string          { return c.tooManyRe
 func (c *TestClientErrors) MissingBlocks() string           { return c.missingBlocks }
 
 type TestNodePoolConfig struct {
-	NodePollFailureThreshold       uint32
-	NodePollInterval               time.Duration
-	NodeSelectionMode              string
-	NodeSyncThreshold              uint32
-	NodeLeaseDuration              time.Duration
-	NodeIsSyncingEnabledVal        bool
-	NodeFinalizedBlockPollInterval time.Duration
-	NodeErrors                     config.ClientErrors
-	EnforceRepeatableReadVal       bool
-	NodeDeathDeclarationDelay      time.Duration
-	NodeNewHeadsPollInterval       time.Duration
+	NodePollFailureThreshold          uint32
+	NodePollInterval                  time.Duration
+	NodeSelectionMode                 string
+	NodeSyncThreshold                 uint32
+	NodeLeaseDuration                 time.Duration
+	NodeIsSyncingEnabledVal           bool
+	NodeFinalizedBlockPollInterval    time.Duration
+	NodeErrors                        config.ClientErrors
+	EnforceRepeatableReadVal          bool
+	NodeDeathDeclarationDelay         time.Duration
+	NodeNewHeadsPollInterval          time.Duration
+	ExternalRequestMaxResponseSizeVal uint32
 }
 
 func (tc TestNodePoolConfig) PollFailureThreshold() uint32 { return tc.NodePollFailureThreshold }
@@ -135,6 +136,10 @@ func (tc TestNodePoolConfig) EnforceRepeatableRead() bool {
 
 func (tc TestNodePoolConfig) DeathDeclarationDelay() time.Duration {
 	return tc.NodeDeathDeclarationDelay
+}
+
+func (tc TestNodePoolConfig) ExternalRequestMaxResponseSize() uint32 {
+	return tc.ExternalRequestMaxResponseSizeVal
 }
 
 func NewChainClientWithTestNode(

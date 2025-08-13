@@ -2347,6 +2347,66 @@ func (_c *Client_TransactionByHash_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// TransactionByHashWithOpts provides a mock function with given fields: ctx, txHash, opts
+func (_m *Client) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts types.TransactionByHashOpts) (*coretypes.Transaction, error) {
+	ret := _m.Called(ctx, txHash, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TransactionByHashWithOpts")
+	}
+
+	var r0 *coretypes.Transaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, types.TransactionByHashOpts) (*coretypes.Transaction, error)); ok {
+		return rf(ctx, txHash, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, types.TransactionByHashOpts) *coretypes.Transaction); ok {
+		r0 = rf(ctx, txHash, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.Transaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, common.Hash, types.TransactionByHashOpts) error); ok {
+		r1 = rf(ctx, txHash, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_TransactionByHashWithOpts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransactionByHashWithOpts'
+type Client_TransactionByHashWithOpts_Call struct {
+	*mock.Call
+}
+
+// TransactionByHashWithOpts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - txHash common.Hash
+//   - opts types.TransactionByHashOpts
+func (_e *Client_Expecter) TransactionByHashWithOpts(ctx interface{}, txHash interface{}, opts interface{}) *Client_TransactionByHashWithOpts_Call {
+	return &Client_TransactionByHashWithOpts_Call{Call: _e.mock.On("TransactionByHashWithOpts", ctx, txHash, opts)}
+}
+
+func (_c *Client_TransactionByHashWithOpts_Call) Run(run func(ctx context.Context, txHash common.Hash, opts types.TransactionByHashOpts)) *Client_TransactionByHashWithOpts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Hash), args[2].(types.TransactionByHashOpts))
+	})
+	return _c
+}
+
+func (_c *Client_TransactionByHashWithOpts_Call) Return(_a0 *coretypes.Transaction, _a1 error) *Client_TransactionByHashWithOpts_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_TransactionByHashWithOpts_Call) RunAndReturn(run func(context.Context, common.Hash, types.TransactionByHashOpts) (*coretypes.Transaction, error)) *Client_TransactionByHashWithOpts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TransactionReceipt provides a mock function with given fields: ctx, txHash
 func (_m *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*coretypes.Receipt, error) {
 	ret := _m.Called(ctx, txHash)
@@ -2402,6 +2462,66 @@ func (_c *Client_TransactionReceipt_Call) Return(_a0 *coretypes.Receipt, _a1 err
 }
 
 func (_c *Client_TransactionReceipt_Call) RunAndReturn(run func(context.Context, common.Hash) (*coretypes.Receipt, error)) *Client_TransactionReceipt_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TransactionReceiptWithOpts provides a mock function with given fields: ctx, txHash, opts
+func (_m *Client) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts types.TransactionReceiptOpts) (*coretypes.Receipt, error) {
+	ret := _m.Called(ctx, txHash, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TransactionReceiptWithOpts")
+	}
+
+	var r0 *coretypes.Receipt
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, types.TransactionReceiptOpts) (*coretypes.Receipt, error)); ok {
+		return rf(ctx, txHash, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, types.TransactionReceiptOpts) *coretypes.Receipt); ok {
+		r0 = rf(ctx, txHash, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*coretypes.Receipt)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, common.Hash, types.TransactionReceiptOpts) error); ok {
+		r1 = rf(ctx, txHash, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_TransactionReceiptWithOpts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransactionReceiptWithOpts'
+type Client_TransactionReceiptWithOpts_Call struct {
+	*mock.Call
+}
+
+// TransactionReceiptWithOpts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - txHash common.Hash
+//   - opts types.TransactionReceiptOpts
+func (_e *Client_Expecter) TransactionReceiptWithOpts(ctx interface{}, txHash interface{}, opts interface{}) *Client_TransactionReceiptWithOpts_Call {
+	return &Client_TransactionReceiptWithOpts_Call{Call: _e.mock.On("TransactionReceiptWithOpts", ctx, txHash, opts)}
+}
+
+func (_c *Client_TransactionReceiptWithOpts_Call) Run(run func(ctx context.Context, txHash common.Hash, opts types.TransactionReceiptOpts)) *Client_TransactionReceiptWithOpts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Hash), args[2].(types.TransactionReceiptOpts))
+	})
+	return _c
+}
+
+func (_c *Client_TransactionReceiptWithOpts_Call) Return(_a0 *coretypes.Receipt, _a1 error) *Client_TransactionReceiptWithOpts_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_TransactionReceiptWithOpts_Call) RunAndReturn(run func(context.Context, common.Hash, types.TransactionReceiptOpts) (*coretypes.Receipt, error)) *Client_TransactionReceiptWithOpts_Call {
 	_c.Call.Return(run)
 	return _c
 }

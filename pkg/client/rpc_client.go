@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"net/http"
 	"net/url"
 	"strconv"
 	"sync/atomic"
@@ -89,24 +90,26 @@ type rawclient struct {
 }
 
 type RPCClient struct {
-	cfg                        config.NodePool
-	rpcLog                     logger.SugaredLogger
-	name                       string
-	id                         int
-	chainID                    *big.Int
-	tier                       multinode.NodeTier
-	largePayloadRPCTimeout     time.Duration
-	finalizedBlockPollInterval time.Duration
-	newHeadsPollInterval       time.Duration
-	rpcTimeout                 time.Duration
-	chainType                  chaintype.ChainType
-	clientErrors               config.ClientErrors
-	finalityTagEnabled         bool
-	finalityDepth              uint32
-	safeDepth                  uint32
+	cfg                            config.NodePool
+	rpcLog                         logger.SugaredLogger
+	name                           string
+	id                             int
+	chainID                        *big.Int
+	tier                           multinode.NodeTier
+	largePayloadRPCTimeout         time.Duration
+	finalizedBlockPollInterval     time.Duration
+	newHeadsPollInterval           time.Duration
+	rpcTimeout                     time.Duration
+	chainType                      chaintype.ChainType
+	clientErrors                   config.ClientErrors
+	finalityTagEnabled             bool
+	finalityDepth                  uint32
+	safeDepth                      uint32
+	externalRequestMaxResponseSize uint32
 
-	ws   atomic.Pointer[rawclient]
-	http atomic.Pointer[rawclient]
+	ws        atomic.Pointer[rawclient]
+	limitedWS atomic.Pointer[rawclient] // ws client with limited response size
+	http      atomic.Pointer[rawclient]
 
 	*multinode.RPCClientBase[*evmtypes.Head]
 }
@@ -129,15 +132,17 @@ func NewRPCClient(
 	supportsFinalityTags bool,
 	finalityDepth uint32,
 	safeDepth uint32,
+	externalRequestMaxResponseSize uint32,
 ) *RPCClient {
 	r := &RPCClient{
-		largePayloadRPCTimeout: largePayloadRPCTimeout,
-		rpcTimeout:             rpcTimeout,
-		chainType:              chainType,
-		clientErrors:           cfg.Errors(),
-		finalityTagEnabled:     supportsFinalityTags,
-		finalityDepth:          finalityDepth,
-		safeDepth:              safeDepth,
+		largePayloadRPCTimeout:         largePayloadRPCTimeout,
+		rpcTimeout:                     rpcTimeout,
+		chainType:                      chainType,
+		clientErrors:                   cfg.Errors(),
+		finalityTagEnabled:             supportsFinalityTags,
+		finalityDepth:                  finalityDepth,
+		safeDepth:                      safeDepth,
+		externalRequestMaxResponseSize: externalRequestMaxResponseSize,
 	}
 	r.cfg = cfg
 	r.name = name
@@ -148,6 +153,7 @@ func NewRPCClient(
 	r.newHeadsPollInterval = cfg.NewHeadsPollInterval()
 	if wsuri != nil {
 		r.ws.Store(&rawclient{uri: *wsuri})
+		r.limitedWS.Store(&rawclient{uri: *wsuri})
 	}
 	if httpuri != nil {
 		r.http.Store(&rawclient{uri: *httpuri})
@@ -160,6 +166,10 @@ func NewRPCClient(
 		"evmChainID", chainID,
 	)
 	r.rpcLog = logger.Sugared(lggr).Named("RPC")
+
+	if httpuri == nil && externalRequestMaxResponseSize > 0 {
+		lggr.Error("RPC client is configured with only WebSocket URL. If this CL Node serves external requests, it must also have an HTTP URL configured. Otherwise, there is a serious DDoS risk.")
+	}
 
 	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock)
 	return r
@@ -179,8 +189,8 @@ func (r *RPCClient) Dial(callerCtx context.Context) error {
 	defer cancel()
 
 	ws := r.ws.Load()
-	http := r.http.Load()
-	if ws == nil && http == nil {
+	httpClient := r.http.Load()
+	if ws == nil && httpClient == nil {
 		return errors.New("cannot dial rpc client when both ws and http info are missing")
 	}
 
@@ -197,9 +207,9 @@ func (r *RPCClient) Dial(callerCtx context.Context) error {
 		r.ws.Store(&rawclient{uri: ws.uri, rpc: wsrpc, geth: ethclient.NewClient(wsrpc)})
 	}
 
-	if http != nil {
-		lggr = lggr.With("httpuri", http.uri.Redacted())
-		if err := r.DialHTTP(); err != nil {
+	if httpClient != nil {
+		lggr = lggr.With("httpuri", httpClient.uri.Redacted())
+		if err := r.DialHTTP(callerCtx); err != nil {
 			return err
 		}
 	}
@@ -211,21 +221,25 @@ func (r *RPCClient) Dial(callerCtx context.Context) error {
 
 // DialHTTP doesn't actually make any external HTTP calls
 // It can only return error if the URL is malformed.
-func (r *RPCClient) DialHTTP() error {
-	http := r.http.Load()
+func (r *RPCClient) DialHTTP(ctx context.Context) error {
+	ctx, cancel, _ := r.AcquireQueryCtx(ctx, r.rpcTimeout)
+	defer cancel()
+
+	httpClient := r.http.Load()
 	promEVMPoolRPCNodeDials.WithLabelValues(r.chainID.String(), r.name).Inc()
-	lggr := r.rpcLog.With("httpuri", http.uri.Redacted())
+	lggr := r.rpcLog.With("httpuri", httpClient.uri.Redacted())
 	lggr.Debugw("RPC dial: evmclient.Client#dial")
 
-	var httprpc *rpc.Client
-	httprpc, err := rpc.DialHTTP(http.uri.String())
+	httpRPC, err := rpc.DialOptions(ctx, httpClient.uri.String(), rpc.WithHTTPClient(&http.Client{
+		Transport: &LimitedTransport{RoundTripper: http.DefaultTransport},
+	}))
 	if err != nil {
 		promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
-		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", http.uri.Redacted()))
+		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", httpClient.uri.Redacted()))
 	}
 
-	http.rpc = httprpc
-	http.geth = ethclient.NewClient(httprpc)
+	httpClient.rpc = httpRPC
+	httpClient.geth = ethclient.NewClient(httpRPC)
 
 	promEVMPoolRPCNodeDialsSuccess.WithLabelValues(r.chainID.String(), r.name).Inc()
 
@@ -234,9 +248,10 @@ func (r *RPCClient) DialHTTP() error {
 
 func (r *RPCClient) Close() {
 	defer func() {
-		ws := r.ws.Load()
-		if ws != nil && ws.rpc != nil {
-			ws.rpc.Close()
+		for _, ws := range []*rawclient{r.ws.Load(), r.limitedWS.Load()} {
+			if ws != nil && ws.rpc != nil {
+				ws.rpc.Close()
+			}
 		}
 	}()
 	r.RPCClientBase.Close()
@@ -316,7 +331,7 @@ func (r *RPCClient) isChainType(chainType chaintype.ChainType) bool {
 
 // CallContext implementation
 func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.largePayloadRPCTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With(
 		"method", method,
@@ -325,13 +340,7 @@ func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method 
 
 	lggr.Debug("RPC call: evmclient.Client#CallContext")
 	start := time.Now()
-	var err error
-
-	if http != nil {
-		err = r.wrapRPCClientError(http.rpc.CallContext(ctx, result, method, args...))
-	} else {
-		err = r.wrapRPCClientError(ws.rpc.CallContext(ctx, result, method, args...))
-	}
+	err := r.wrapRPCClientError(client.rpc.CallContext(ctx, result, method, args...))
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "CallContext")
@@ -364,19 +373,13 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 		}
 	}
 
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(rootCtx, r.largePayloadRPCTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(rootCtx, r.largePayloadRPCTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("nBatchElems", len(b), "batchElems", b)
 
 	lggr.Trace("RPC call: evmclient.Client#BatchCallContext")
 	start := time.Now()
-	var err error
-
-	if http != nil {
-		err = r.wrapRPCClientError(http.rpc.BatchCallContext(ctx, b))
-	} else {
-		err = r.wrapRPCClientError(ws.rpc.BatchCallContext(ctx, b))
-	}
+	err := r.wrapRPCClientError(client.rpc.BatchCallContext(ctx, b))
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "BatchCallContext")
@@ -482,21 +485,17 @@ func (r *RPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) 
 	return
 }
 
-func (r *RPCClient) TransactionReceiptGeth(ctx context.Context, txHash common.Hash) (receipt *types.Receipt, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+func (r *RPCClient) TransactionReceiptGethWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *types.Receipt, err error) {
+	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("txHash", txHash)
 
 	lggr.Debug("RPC call: evmclient.Client#TransactionReceipt")
 
 	start := time.Now()
-	if http != nil {
-		receipt, err = http.geth.TransactionReceipt(ctx, txHash)
-		err = r.wrapRPCClientError(err)
-	} else {
-		receipt, err = ws.geth.TransactionReceipt(ctx, txHash)
-		err = r.wrapRPCClientError(err)
-	}
+	receipt, err = client.geth.TransactionReceipt(ctx, txHash)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "TransactionReceipt",
@@ -505,21 +504,26 @@ func (r *RPCClient) TransactionReceiptGeth(ctx context.Context, txHash common.Ha
 
 	return
 }
+
+func (r *RPCClient) TransactionReceiptGeth(ctx context.Context, txHash common.Hash) (receipt *types.Receipt, err error) {
+	return r.TransactionReceiptGethWithOpts(ctx, txHash, evmtypes.TransactionReceiptOpts{})
+}
+
 func (r *RPCClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	return r.TransactionByHashWithOpts(ctx, txHash, evmtypes.TransactionByHashOpts{IsExternalRequest: false})
+}
+
+func (r *RPCClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (tx *types.Transaction, err error) {
+	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("txHash", txHash)
 
 	lggr.Debug("RPC call: evmclient.Client#TransactionByHash")
 
 	start := time.Now()
-	if http != nil {
-		tx, _, err = http.geth.TransactionByHash(ctx, txHash)
-		err = r.wrapRPCClientError(err)
-	} else {
-		tx, _, err = ws.geth.TransactionByHash(ctx, txHash)
-		err = r.wrapRPCClientError(err)
-	}
+	tx, _, err = client.geth.TransactionByHash(ctx, txHash)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "TransactionByHash",
@@ -530,19 +534,14 @@ func (r *RPCClient) TransactionByHash(ctx context.Context, txHash common.Hash) (
 }
 
 func (r *RPCClient) HeaderByNumber(ctx context.Context, number *big.Int) (header *types.Header, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("number", number)
 
 	lggr.Debug("RPC call: evmclient.Client#HeaderByNumber")
 	start := time.Now()
-	if http != nil {
-		header, err = http.geth.HeaderByNumber(ctx, number)
-		err = r.wrapRPCClientError(err)
-	} else {
-		header, err = ws.geth.HeaderByNumber(ctx, number)
-		err = r.wrapRPCClientError(err)
-	}
+	header, err = client.geth.HeaderByNumber(ctx, number)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "HeaderByNumber", "header", header)
@@ -551,19 +550,14 @@ func (r *RPCClient) HeaderByNumber(ctx context.Context, number *big.Int) (header
 }
 
 func (r *RPCClient) HeaderByHash(ctx context.Context, hash common.Hash) (header *types.Header, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("hash", hash)
 
 	lggr.Debug("RPC call: evmclient.Client#HeaderByHash")
 	start := time.Now()
-	if http != nil {
-		header, err = http.geth.HeaderByHash(ctx, hash)
-		err = r.wrapRPCClientError(err)
-	} else {
-		header, err = ws.geth.HeaderByHash(ctx, hash)
-		err = r.wrapRPCClientError(err)
-	}
+	header, err = client.geth.HeaderByHash(ctx, hash)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "HeaderByHash",
@@ -710,7 +704,7 @@ func (r *RPCClient) HeaderByNumberWithOpts(ctx context.Context, blockNumber *big
 }
 
 func (r *RPCClient) ethGetBlockByNumber(ctx context.Context, number string, result interface{}) (err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	const method = "eth_getBlockByNumber"
 	args := []interface{}{number, false}
@@ -721,11 +715,7 @@ func (r *RPCClient) ethGetBlockByNumber(ctx context.Context, number string, resu
 
 	lggr.Debug("RPC call: evmclient.Client#CallContext")
 	start := time.Now()
-	if http != nil {
-		err = r.wrapRPCClientError(http.rpc.CallContext(ctx, result, method, args...))
-	} else {
-		err = r.wrapRPCClientError(ws.rpc.CallContext(ctx, result, method, args...))
-	}
+	err = r.wrapRPCClientError(client.rpc.CallContext(ctx, result, method, args...))
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "CallContext")
@@ -746,19 +736,14 @@ func (r *RPCClient) BlockByHash(ctx context.Context, hash common.Hash) (head *ev
 }
 
 func (r *RPCClient) BlockByHashGeth(ctx context.Context, hash common.Hash) (block *types.Block, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("hash", hash)
 
 	lggr.Debug("RPC call: evmclient.Client#BlockByHash")
 	start := time.Now()
-	if http != nil {
-		block, err = http.geth.BlockByHash(ctx, hash)
-		err = r.wrapRPCClientError(err)
-	} else {
-		block, err = ws.geth.BlockByHash(ctx, hash)
-		err = r.wrapRPCClientError(err)
-	}
+	block, err = client.geth.BlockByHash(ctx, hash)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "BlockByHash",
@@ -769,19 +754,14 @@ func (r *RPCClient) BlockByHashGeth(ctx context.Context, hash common.Hash) (bloc
 }
 
 func (r *RPCClient) BlockByNumberGeth(ctx context.Context, number *big.Int) (block *types.Block, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("number", number)
 
 	lggr.Debug("RPC call: evmclient.Client#BlockByNumber")
 	start := time.Now()
-	if http != nil {
-		block, err = http.geth.BlockByNumber(ctx, number)
-		err = r.wrapRPCClientError(err)
-	} else {
-		block, err = ws.geth.BlockByNumber(ctx, number)
-		err = r.wrapRPCClientError(err)
-	}
+	block, err = client.geth.BlockByNumber(ctx, number)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "BlockByNumber",
@@ -792,24 +772,18 @@ func (r *RPCClient) BlockByNumberGeth(ctx context.Context, number *big.Int) (blo
 }
 
 func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) (struct{}, multinode.SendTxReturnCode, error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.largePayloadRPCTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("tx", tx)
 
 	lggr.Debug("RPC call: evmclient.Client#SendTransaction")
 	start := time.Now()
-	var err error
-
 	if r.isChainType(chaintype.ChainTron) {
-		err = errors.New("SendTransaction not implemented for Tron, this should never be called")
+		err := errors.New("SendTransaction not implemented for Tron, this should never be called")
 		return struct{}{}, multinode.Fatal, err
 	}
 
-	if http != nil {
-		err = r.wrapRPCClientError(http.geth.SendTransaction(ctx, tx))
-	} else {
-		err = r.wrapRPCClientError(ws.geth.SendTransaction(ctx, tx))
-	}
+	err := r.wrapRPCClientError(client.geth.SendTransaction(ctx, tx))
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "SendTransaction")
@@ -836,7 +810,7 @@ func (r *RPCClient) SendEmptyTransaction(
 
 // PendingSequenceAt returns one higher than the highest nonce from both mempool and mined transactions
 func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Address) (nonce evmtypes.Nonce, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("account", account)
 
@@ -850,15 +824,10 @@ func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Addres
 		return
 	}
 
-	if http != nil {
-		n, err = http.geth.PendingNonceAt(ctx, account)
-		nonce = evmtypes.Nonce(int64(n))
-		err = r.wrapRPCClientError(err)
-	} else {
-		n, err = ws.geth.PendingNonceAt(ctx, account)
-		nonce = evmtypes.Nonce(int64(n))
-		err = r.wrapRPCClientError(err)
-	}
+	n, err = client.geth.PendingNonceAt(ctx, account)
+	//nolint:gosec // G115: it's safe to assume that the nonce always fits in int64
+	nonce = evmtypes.Nonce(n)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "PendingNonceAt",
@@ -872,7 +841,7 @@ func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Addres
 // mined nonce at the given block number, but it actually returns the total
 // transaction count which is the highest mined nonce + 1
 func (r *RPCClient) NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (nonce uint64, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("account", account, "blockNumber", blockNumber)
 
@@ -885,13 +854,8 @@ func (r *RPCClient) NonceAt(ctx context.Context, account common.Address, blockNu
 		return
 	}
 
-	if http != nil {
-		nonce, err = http.geth.NonceAt(ctx, account, blockNumber)
-		err = r.wrapRPCClientError(err)
-	} else {
-		nonce, err = ws.geth.NonceAt(ctx, account, blockNumber)
-		err = r.wrapRPCClientError(err)
-	}
+	nonce, err = client.geth.NonceAt(ctx, account, blockNumber)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "NonceAt",
@@ -902,19 +866,14 @@ func (r *RPCClient) NonceAt(ctx context.Context, account common.Address, blockNu
 }
 
 func (r *RPCClient) PendingCodeAt(ctx context.Context, account common.Address) (code []byte, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("account", account)
 
 	lggr.Debug("RPC call: evmclient.Client#PendingCodeAt")
 	start := time.Now()
-	if http != nil {
-		code, err = http.geth.PendingCodeAt(ctx, account)
-		err = r.wrapRPCClientError(err)
-	} else {
-		code, err = ws.geth.PendingCodeAt(ctx, account)
-		err = r.wrapRPCClientError(err)
-	}
+	code, err = client.geth.PendingCodeAt(ctx, account)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "PendingCodeAt",
@@ -925,19 +884,14 @@ func (r *RPCClient) PendingCodeAt(ctx context.Context, account common.Address) (
 }
 
 func (r *RPCClient) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) (code []byte, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("account", account, "blockNumber", blockNumber)
 
 	lggr.Debug("RPC call: evmclient.Client#CodeAt")
 	start := time.Now()
-	if http != nil {
-		code, err = http.geth.CodeAt(ctx, account, blockNumber)
-		err = r.wrapRPCClientError(err)
-	} else {
-		code, err = ws.geth.CodeAt(ctx, account, blockNumber)
-		err = r.wrapRPCClientError(err)
-	}
+	code, err = client.geth.CodeAt(ctx, account, blockNumber)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "CodeAt",
@@ -948,7 +902,7 @@ func (r *RPCClient) CodeAt(ctx context.Context, account common.Address, blockNum
 }
 
 func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.largePayloadRPCTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	call := c.(ethereum.CallMsg)
 	lggr := r.newRqLggr().With("call", call)
@@ -957,17 +911,12 @@ func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64,
 	start := time.Now()
 
 	if r.isChainType(chaintype.ChainTron) {
-		err = r.wrapRPCClientError(http.rpc.CallContext(ctx, &gas, "eth_estimateGas", r.prepareCallArgs(call)))
+		err = r.wrapRPCClientError(client.rpc.CallContext(ctx, &gas, "eth_estimateGas", r.prepareCallArgs(call)))
 		return
 	}
 
-	if http != nil {
-		gas, err = http.geth.EstimateGas(ctx, call)
-		err = r.wrapRPCClientError(err)
-	} else {
-		gas, err = ws.geth.EstimateGas(ctx, call)
-		err = r.wrapRPCClientError(err)
-	}
+	gas, err = client.geth.EstimateGas(ctx, call)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "EstimateGas",
@@ -978,19 +927,14 @@ func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64,
 }
 
 func (r *RPCClient) SuggestGasPrice(ctx context.Context) (price *big.Int, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr()
 
 	lggr.Debug("RPC call: evmclient.Client#SuggestGasPrice")
 	start := time.Now()
-	if http != nil {
-		price, err = http.geth.SuggestGasPrice(ctx)
-		err = r.wrapRPCClientError(err)
-	} else {
-		price, err = ws.geth.SuggestGasPrice(ctx)
-		err = r.wrapRPCClientError(err)
-	}
+	price, err = client.geth.SuggestGasPrice(ctx)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "SuggestGasPrice",
@@ -1001,7 +945,7 @@ func (r *RPCClient) SuggestGasPrice(ctx context.Context) (price *big.Int, err er
 }
 
 func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumber *big.Int) (val []byte, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.largePayloadRPCTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("callMsg", msg, "blockNumber", blockNumber)
 	message := msg.(ethereum.CallMsg)
@@ -1009,13 +953,8 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 	lggr.Debug("RPC call: evmclient.Client#CallContract")
 	start := time.Now()
 	var hex hexutil.Bytes
-	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), ToBackwardCompatibleBlockNumArg(blockNumber))
-		err = r.wrapRPCClientError(err)
-	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), ToBackwardCompatibleBlockNumArg(blockNumber))
-		err = r.wrapRPCClientError(err)
-	}
+	err = client.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), ToBackwardCompatibleBlockNumArg(blockNumber))
+	err = r.wrapRPCClientError(err)
 	if err == nil {
 		val = hex
 	}
@@ -1042,6 +981,7 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 //   - "Finalized": returns error if call is executed at block that is not safe
 //   - "Safe": returns error if call is executed at block that is not safe
 func (r *RPCClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, opts evmtypes.CallContractOpts) ([]byte, error) {
+	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
 	if isUnconfirmed(opts.ConfidenceLevel) || blockNumber == nil || blockNumber.Sign() < 0 {
 		return r.CallContract(ctx, msg, blockNumber)
 	}
@@ -1059,7 +999,7 @@ func (r *RPCClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallM
 }
 
 func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (val []byte, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.largePayloadRPCTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("callMsg", msg)
 	message := msg.(ethereum.CallMsg)
@@ -1067,13 +1007,8 @@ func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (v
 	lggr.Debug("RPC call: evmclient.Client#PendingCallContract")
 	start := time.Now()
 	var hex hexutil.Bytes
-	if http != nil {
-		err = http.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), "pending")
-		err = r.wrapRPCClientError(err)
-	} else {
-		err = ws.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), "pending")
-		err = r.wrapRPCClientError(err)
-	}
+	err = client.rpc.CallContext(ctx, &hex, "eth_call", r.prepareCallArgs(message), "pending")
+	err = r.wrapRPCClientError(err)
 	if err == nil {
 		val = hex
 	}
@@ -1093,19 +1028,14 @@ func (r *RPCClient) LatestBlockHeight(ctx context.Context) (*big.Int, error) {
 }
 
 func (r *RPCClient) BlockNumber(ctx context.Context) (height uint64, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr()
 
 	lggr.Debug("RPC call: evmclient.Client#BlockNumber")
 	start := time.Now()
-	if http != nil {
-		height, err = http.geth.BlockNumber(ctx)
-		err = r.wrapRPCClientError(err)
-	} else {
-		height, err = ws.geth.BlockNumber(ctx)
-		err = r.wrapRPCClientError(err)
-	}
+	height, err = client.geth.BlockNumber(ctx)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "BlockNumber",
@@ -1116,19 +1046,14 @@ func (r *RPCClient) BlockNumber(ctx context.Context) (height uint64, err error) 
 }
 
 func (r *RPCClient) BalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (balance *big.Int, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("account", account.Hex(), "blockNumber", blockNumber)
 
 	lggr.Debug("RPC call: evmclient.Client#BalanceAt")
 	start := time.Now()
-	if http != nil {
-		balance, err = http.geth.BalanceAt(ctx, account, blockNumber)
-		err = r.wrapRPCClientError(err)
-	} else {
-		balance, err = ws.geth.BalanceAt(ctx, account, blockNumber)
-		err = r.wrapRPCClientError(err)
-	}
+	balance, err = client.geth.BalanceAt(ctx, account, blockNumber)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "BalanceAt",
@@ -1169,19 +1094,14 @@ func (r *RPCClient) BalanceAtWithOpts(ctx context.Context, account common.Addres
 }
 
 func (r *RPCClient) FeeHistory(ctx context.Context, blockCount uint64, lastBlock *big.Int, rewardPercentiles []float64) (feeHistory *ethereum.FeeHistory, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("blockCount", blockCount, "rewardPercentiles", rewardPercentiles)
 
 	lggr.Debug("RPC call: evmclient.Client#FeeHistory")
 	start := time.Now()
-	if http != nil {
-		feeHistory, err = http.geth.FeeHistory(ctx, blockCount, lastBlock, rewardPercentiles)
-		err = r.wrapRPCClientError(err)
-	} else {
-		feeHistory, err = ws.geth.FeeHistory(ctx, blockCount, lastBlock, rewardPercentiles)
-		err = r.wrapRPCClientError(err)
-	}
+	feeHistory, err = client.geth.FeeHistory(ctx, blockCount, lastBlock, rewardPercentiles)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "FeeHistory",
@@ -1234,19 +1154,14 @@ func (r *RPCClient) FilterEvents(ctx context.Context, q ethereum.FilterQuery) ([
 }
 
 func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l []types.Log, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("q", q)
 
 	lggr.Debug("RPC call: evmclient.Client#FilterLogs")
 	start := time.Now()
-	if http != nil {
-		l, err = http.geth.FilterLogs(ctx, q)
-		err = r.wrapRPCClientError(err)
-	} else {
-		l, err = ws.geth.FilterLogs(ctx, q)
-		err = r.wrapRPCClientError(err)
-	}
+	l, err = client.geth.FilterLogs(ctx, q)
+	err = r.wrapRPCClientError(err)
 
 	if err == nil {
 		err = r.makeLogsValid(l)
@@ -1266,6 +1181,7 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 //   - "Finalized": returns error if specified q.ToBlockNumber is not finalized
 //   - "Safe": returns error if specified q.ToBlockNumber is not safe
 func (r *RPCClient) FilterLogsWithOpts(ctx context.Context, q ethereum.FilterQuery, opts evmtypes.FilterLogsOpts) ([]types.Log, error) {
+	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
 	if isUnconfirmed(opts.ConfidenceLevel) || q.FromBlock == nil || q.FromBlock.Sign() < 0 || q.ToBlock == nil || q.ToBlock.Sign() < 0 {
 		return r.FilterEvents(ctx, q)
 	}
@@ -1317,19 +1233,14 @@ func (r *RPCClient) SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQu
 }
 
 func (r *RPCClient) SuggestGasTipCap(ctx context.Context) (tipCap *big.Int, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr()
 
 	lggr.Debug("RPC call: evmclient.Client#SuggestGasTipCap")
 	start := time.Now()
-	if http != nil {
-		tipCap, err = http.geth.SuggestGasTipCap(ctx)
-		err = r.wrapRPCClientError(err)
-	} else {
-		tipCap, err = ws.geth.SuggestGasTipCap(ctx)
-		err = r.wrapRPCClientError(err)
-	}
+	tipCap, err = client.geth.SuggestGasTipCap(ctx)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "SuggestGasTipCap",
@@ -1342,16 +1253,11 @@ func (r *RPCClient) SuggestGasTipCap(ctx context.Context) (tipCap *big.Int, err 
 // Returns the ChainID according to the geth client. This is useful for functions like verify()
 // the common node.
 func (r *RPCClient) ChainID(ctx context.Context) (chainID *big.Int, err error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 
-	if http != nil {
-		chainID, err = http.geth.ChainID(ctx)
-		err = r.wrapRPCClientError(err)
-	} else {
-		chainID, err = ws.geth.ChainID(ctx)
-		err = r.wrapRPCClientError(err)
-	}
+	chainID, err = client.geth.ChainID(ctx)
+	err = r.wrapRPCClientError(err)
 	return
 }
 
@@ -1378,11 +1284,24 @@ func (r *RPCClient) wrapRPCClientError(err error) error {
 	return pkgerrors.Wrap(err, "RPC call failed")
 }
 
-// makeLiveQueryCtxAndSafeGetClients wraps makeQueryCtx
-func (r *RPCClient) makeLiveQueryCtxAndSafeGetClients(parentCtx context.Context, timeout time.Duration) (ctx context.Context, cancel context.CancelFunc,
-	ws *rawclient, http *rawclient) {
-	ctx, cancel, _, ws, http = r.acquireQueryCtx(parentCtx, timeout)
-	return
+// makeLiveQueryCtxAndSafeGetClient wraps makeQueryCtx
+func (r *RPCClient) makeLiveQueryCtxAndSafeGetClient(parentCtx context.Context, timeout time.Duration) (context.Context, context.CancelFunc, *rawclient) {
+	ctx, cancel, _, ws, httpClient := r.acquireQueryCtx(parentCtx, timeout)
+	if httpClient != nil {
+		return ctx, cancel, httpClient
+	}
+
+	if GetResponseSizeLimit(ctx) > 0 {
+		r.rpcLog.Warn("RPC Request size limit is set, but ignored because only WS URL is configured. This makes node vulnerable to DoS attacks.")
+	}
+	return ctx, cancel, ws
+}
+
+func (r *RPCClient) wrapCtx(ctx context.Context, isExternalRequest bool) context.Context {
+	if isExternalRequest {
+		ctx = WithResponseSizeLimit(ctx, r.externalRequestMaxResponseSize)
+	}
+	return ctx
 }
 
 func (r *RPCClient) acquireQueryCtx(parentCtx context.Context, timeout time.Duration) (ctx context.Context, cancel context.CancelFunc,
@@ -1400,7 +1319,7 @@ func (r *RPCClient) acquireQueryCtx(parentCtx context.Context, timeout time.Dura
 }
 
 func (r *RPCClient) IsSyncing(ctx context.Context) (bool, error) {
-	ctx, cancel, ws, http := r.makeLiveQueryCtxAndSafeGetClients(ctx, r.rpcTimeout)
+	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	lggr := r.newRqLggr()
 
@@ -1409,13 +1328,8 @@ func (r *RPCClient) IsSyncing(ctx context.Context) (bool, error) {
 	start := time.Now()
 	var err error
 
-	if http != nil {
-		syncProgress, err = http.geth.SyncProgress(ctx)
-		err = r.wrapRPCClientError(err)
-	} else {
-		syncProgress, err = ws.geth.SyncProgress(ctx)
-		err = r.wrapRPCClientError(err)
-	}
+	syncProgress, err = client.geth.SyncProgress(ctx)
+	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
 	r.logResult(lggr, err, duration, r.getRPCDomain(), "BlockNumber",
