@@ -1,8 +1,41 @@
 # @chainlink/contracts
 
+## 1.4.1
+
+### Contracts In This Release
+
+- [BurnMintERC20PausableFreezableTransparent](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent.sol)
+- [BurnMintERC20PausableFreezableUUPS](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS.sol)
+- [BurnMintERC20PausableTransparent](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20PausableTransparent.sol)
+- [BurnMintERC20PausableUUPS](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20PausableUUPS.sol)
+- [BurnMintERC20Transparent](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20Transparent.sol)
+- [BurnMintERC20UUPS](src/v0.8/shared/token/ERC20/upgradeable/BurnMintERC20UUPS.sol)
+- [IBurnMintERC20Upgradeable](src/v0.8/shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol)
+- [BurnMintERC20WithDrip](src/v0.8/shared/test/helpers/BurnMintERC20WithDrip.sol)
+
+### Minor Changes
+
+- [#164](https://github.com/smartcontractkit/chainlink-evm/pull/164) [`bf75f8a`](https://github.com/smartcontractkit/chainlink-evm/commit/bf75f8a) - Adding a variety of audited flavours of the CCT token (BurnMintERC20) that implements UUPS and Transparent Proxy upgradeability patterns. Brings proxy-related OZ contracts into vendor.
+
+- [#121](https://github.com/smartcontractkit/chainlink-evm/pull/121) [`e479a8d`](https://github.com/smartcontractkit/chainlink-evm/commit/e479a8d409) - Add BurnMintERC20WithDrip to replace the BurnMintERC677Helper. This provides a token with a public drip function, allowing users to test CCIP token transfers.
+
+- [#39](https://github.com/smartcontractkit/chainlink-evm/pull/39) [`6fa3451`](https://github.com/smartcontractkit/chainlink-evm/commit/6fa34515a7) - Upgrade Scroll L2EP validator to use MessageQueueV2.
+
+### Patch Changes
+
+- [#119](https://github.com/smartcontractkit/chainlink-evm/pull/119) [`3f5fcc3`](https://github.com/smartcontractkit/chainlink-evm/commit/3f5fcc3197) - Remove OpStackBurnMintERC677 contract and IOptimismMintableERC20 interface.
+
+- [#105](https://github.com/smartcontractkit/chainlink-evm/pull/105) [`2968eac`](https://github.com/smartcontractkit/chainlink-evm/commit/2968eacc46) - Remove Automation v1.2, v1.3, and v2.0 contracts source code. Corresponding geth wrapeprs remain in place.
+
+- [#104](https://github.com/smartcontractkit/chainlink-evm/pull/104) [`9df9724`](https://github.com/smartcontractkit/chainlink-evm/commit/9df97249e6) - Remove the vendored OZ versions in favour of NPM dependencies.
+
+- [#101](https://github.com/smartcontractkit/chainlink-evm/pull/101) [`cf6eccf`](https://github.com/smartcontractkit/chainlink-evm/commit/cf6eccf28b) - Add OpenZeppelin v5.1.0 vendor contracts for EnumerableMap and EnumerableSet.
+
+- [#66](https://github.com/smartcontractkit/chainlink-evm/pull/66) [`3ec29e9`](https://github.com/smartcontractkit/chainlink-evm/commit/3ec29e90c9) - Add upgradability best practices section to Solidity style guide.
+
 ## 1.4.0
 
-The source code has moved from [chainlink](https://github.com/smartcontractkit/chainlink) to [chainlink-evm](https://github.com/smartcontractkit/chainlink-evm). 
+The source code has moved from [chainlink](https://github.com/smartcontractkit/chainlink) to [chainlink-evm](https://github.com/smartcontractkit/chainlink-evm).
 
 ### Minor Changes
 
@@ -27,7 +60,6 @@ The source code has moved from [chainlink](https://github.com/smartcontractkit/c
 - [`14a99b3`](https://github.com/smartcontractkit/chainlink-evm/commit/14a99b38433f5dcdf0628a1c05d1e574b5a53c25) - #updated [CCIP-5323] Compile workflow using forge instead of solidity.
 
 - [`2724ef8`](https://github.com/smartcontractkit/chainlink-evm/commit/2724ef8937488de77b320e4e9692ed0dcb3a165a) - #updated Add typeAndVersion to Keystone BalanceReader
-
 
 ### Patch Changes
 
@@ -240,7 +272,6 @@ The source code has moved from [chainlink](https://github.com/smartcontractkit/c
 - [#12481](https://github.com/smartcontractkit/chainlink/pull/12481) [`daa90db289`](https://github.com/smartcontractkit/chainlink/commit/daa90db289f84829a607b41792f7d231871a5462) Thanks [@justinkaseman](https://github.com/justinkaseman)! - Chainlink Functions contracts v1.3.0
 
 - [#12489](https://github.com/smartcontractkit/chainlink/pull/12489) [`3a49094db2`](https://github.com/smartcontractkit/chainlink/commit/3a49094db25036e1948818e4030fca11be748914) Thanks [@kidambisrinivas](https://github.com/kidambisrinivas)! - - Misc VRF V2+ contract changes
-
   - Reuse struct RequestCommitmentV2Plus from VRFTypes
   - Fix interface name IVRFCoordinatorV2PlusFulfill in BatchVRFCoordinatorV2Plus to avoid confusion with IVRFCoordinatorV2Plus.sol
   - Remove unused errors

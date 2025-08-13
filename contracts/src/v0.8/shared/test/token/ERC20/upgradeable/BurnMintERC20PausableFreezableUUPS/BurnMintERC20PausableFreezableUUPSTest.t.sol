@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {BurnMintERC20PausableFreezableUUPS} from "../../../../../token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS.sol";
 import {BurnMintERC20UUPS} from "../../../../../token/ERC20/upgradeable/BurnMintERC20UUPS.sol";
