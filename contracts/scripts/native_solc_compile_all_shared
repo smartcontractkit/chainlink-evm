@@ -12,21 +12,19 @@ FOUNDRY_PROJECT_SUFFIX=""
 CONTRACTS_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../ && pwd -P )"
 export FOUNDRY_PROFILE="$PROJECT"$FOUNDRY_PROJECT_SUFFIX
 
-SOLC_VERSION_DEFAULT="0.8.19"
-SOLC_VERSION_026="0.8.26"
-
-compileContractWithVersion() {
+compileContract() {
   local path="$1"
   local version="$2"
+  local project="$3"
 
   local contract
   contract=$(basename "$path")
   echo "Compiling" "$contract"
 
   local current_project="$PROJECT"
-  if [ -n "$3" ]; then
-    echo "Compiling from another project: ""$3"
-    current_project=$3
+  if [ -n "$project" ]; then
+    echo "Compiling from another project: ""$project"
+    current_project=$project
   fi
 
   # Build base command
@@ -48,37 +46,30 @@ compileContractWithVersion() {
   $command
 }
 
-compileContract() {
-  compileContractWithVersion "$1" "$SOLC_VERSION_DEFAULT" "$2"
-}
+# Various contracts are compiled with v0.8.19 instead of the default specified in foundry.toml.
+compileContract interfaces/AggregatorV3Interface 0.8.19
+compileContract interfaces/ITypeAndVersion 0.8.19
+compileContract token/ERC677/ERC677 0.8.19
+compileContract token/ERC677/BurnMintERC677 0.8.19
+compileContract token/ERC677/LinkToken 0.8.19
+compileContract token/ERC20/BurnMintERC20 0.8.19
 
-compileContractWithSolc826() {
-  compileContractWithVersion "$1" "$SOLC_VERSION_026" "$2"
-}
+compileContract token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent
+compileContract token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS
+compileContract token/ERC20/upgradeable/BurnMintERC20PausableTransparent
+compileContract token/ERC20/upgradeable/BurnMintERC20PausableUUPS
+compileContract token/ERC20/upgradeable/BurnMintERC20Transparent
+compileContract token/ERC20/upgradeable/BurnMintERC20UUPS
+compileContract token/ERC20/upgradeable/IBurnMintERC20Upgradeable
 
-compileContract interfaces/AggregatorV3Interface
-compileContract interfaces/ITypeAndVersion
-compileContract token/ERC677/ERC677
-compileContract token/ERC677/BurnMintERC677
-compileContract token/ERC677/LinkToken
-compileContract token/ERC20/BurnMintERC20
+compileContract test/helpers/BurnMintERC20WithDrip 0.8.19
+compileContract test/helpers/ChainReaderTester 0.8.19
+compileContract test/helpers/LogEmitter 0.8.19
+compileContract test/helpers/VRFLogEmitter 0.8.19
+compileContract mocks/MockV3Aggregator 0.8.19
+compileContract mocks/WERC20Mock 0.8.19
+compileContract token/ERC20/zksync/WETH9ZKSync 0.8.19
 
-compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent
-compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS
-compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20PausableTransparent
-compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20PausableUUPS
-compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20Transparent
-compileContractWithSolc826 token/ERC20/upgradeable/BurnMintERC20UUPS
-compileContractWithSolc826 token/ERC20/upgradeable/IBurnMintERC20Upgradeable
-
-compileContract test/helpers/BurnMintERC20WithDrip
-compileContract test/helpers/ChainReaderTester
-compileContract test/helpers/LogEmitter
-compileContract test/helpers/VRFLogEmitter
-compileContract mocks/MockV3Aggregator
-compileContract mocks/WERC20Mock
-compileContract token/ERC20/zksync/WETH9ZKSync
-
-compileContract ERC20 ../../node_modules/@openzeppelin/contracts@4.8.3/token/ERC20
-compileContract multicall/ebd8b64/src/Multicall3 vendor
-compileContract canonical-weth/WETH9 vendor
+compileContract @openzeppelin/contracts@4.8.3/token/ERC20/ERC20 0.8.19 ../../node_modules
+compileContract multicall/ebd8b64/src/Multicall3 0.8.19 vendor
+compileContract canonical-weth/WETH9 0.8.19 vendor
