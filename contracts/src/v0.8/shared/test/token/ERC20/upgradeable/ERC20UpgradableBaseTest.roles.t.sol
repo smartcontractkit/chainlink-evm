@@ -24,15 +24,11 @@ contract ERC20UpgradableBaseTest_roles is ERC20UpgradableBaseTest {
     assertTrue(IAccessControl(implementation).hasRole(BURNER_ROLE, STRANGER));
   }
 
-  function should_GetCCIPAdmin(
-    address implementation
-  ) public view {
+  function should_GetCCIPAdmin(address implementation) public view {
     assertEq(IGetCCIPAdmin(implementation).getCCIPAdmin(), DEFAULT_ADMIN);
   }
 
-  function should_SetCCIPAdmin(
-    address implementation
-  ) public {
+  function should_SetCCIPAdmin(address implementation) public {
     changePrank(DEFAULT_ADMIN);
 
     vm.expectEmit();
