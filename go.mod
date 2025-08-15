@@ -20,20 +20,20 @@ require (
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.63.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/smartcontractkit/chain-selectors v1.0.62
-	github.com/smartcontractkit/chainlink-common v0.8.1-0.20250813130821-b873b0f57784
-	github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20250811145846-a48e9e035375
+	github.com/smartcontractkit/chain-selectors v1.0.67
+	github.com/smartcontractkit/chainlink-common v0.8.1-0.20250814111752-91ec077f29f5
+	github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20250808121824-2c3544aab8f3
 	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250618164021-9b34289a9502
 	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20250717121125-2350c82883e2
 	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20250717121125-2350c82883e2
 	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20250729142306-508e798f6a5d
 	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
-	github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20250813185240-48ca6db2bc82
+	github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20250815105909-75499abc4335
 	github.com/smartcontractkit/libocr v0.0.0-20250408131511-c90716988ee0
 	github.com/stretchr/testify v1.10.0
 	github.com/theodesp/go-heaps v0.0.0-20190520121037-88e35354fe0a
 	github.com/tidwall/gjson v1.18.0
-	github.com/ugorji/go/codec v1.2.12
+	github.com/ugorji/go/codec v1.2.7
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/metric v1.37.0
 	go.uber.org/multierr v1.11.0

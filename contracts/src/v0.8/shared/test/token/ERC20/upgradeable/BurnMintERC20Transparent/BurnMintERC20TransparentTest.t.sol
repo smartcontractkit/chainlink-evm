@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {BurnMintERC20Transparent, Initializable} from "../../../../../token/ERC20/upgradeable/BurnMintERC20Transparent.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";

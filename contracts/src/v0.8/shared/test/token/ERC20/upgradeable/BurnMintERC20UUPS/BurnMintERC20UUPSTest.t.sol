@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {BurnMintERC20UUPS, Initializable, UUPSUpgradeable} from "../../../../../token/ERC20/upgradeable/BurnMintERC20UUPS.sol";
 import {IERC1822Proxiable} from "@openzeppelin/contracts@5.0.2/interfaces/draft-IERC1822.sol";
