@@ -282,7 +282,7 @@ func (r *RPCClient) logResult(
 	promEVMPoolRPCNodeCalls.WithLabelValues(r.chainID.String(), r.name).Inc()
 	if err == nil {
 		promEVMPoolRPCNodeCallsSuccess.WithLabelValues(r.chainID.String(), r.name).Inc()
-		logger.Sugared(lggr).Tracew(fmt.Sprintf("evmclient.Client#%s RPC call success", callName), results...)
+		logger.Sugared(lggr).Debugw(fmt.Sprintf("evmclient.Client#%s RPC call success", callName), results...)
 	} else {
 		promEVMPoolRPCNodeCallsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
 		lggr.Debugw(
