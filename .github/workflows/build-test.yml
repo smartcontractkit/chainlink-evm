@@ -116,7 +116,7 @@ jobs:
 
       - name: Ensure gomodtidy has been run
         run: |
-          go mod tidy
+          gomods tidy
           git add --all
           git diff --minimal --cached --exit-code
 
