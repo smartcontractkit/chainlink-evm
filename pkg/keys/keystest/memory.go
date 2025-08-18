@@ -25,6 +25,7 @@ func NewMemoryChainStore() *MemoryChainStore {
 type MemoryChainStore struct {
 	mu       sync.RWMutex
 	privKeys map[string]*ecdsa.PrivateKey
+	core.UnimplementedKeystore
 }
 
 func (m *MemoryChainStore) MustCreate(t require.TestingT) common.Address {
