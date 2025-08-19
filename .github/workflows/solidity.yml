@@ -62,7 +62,7 @@ jobs:
 
   prepublish-test:
     needs: [changes, tag-check]
-    if: needs.changes.outputs.changes == 'true' || (needs.tag-check.outputs.is-pre-release-core == 'true')
+    if: needs.changes.outputs.changes == 'true' || needs.tag-check.outputs.is-pre-release-core == 'true' || needs.tag-check.outputs.is-release-core == 'true'
     name: Prepublish Test
     runs-on: ubuntu-latest
     steps:
@@ -74,6 +74,17 @@ jobs:
         uses: ./.github/actions/setup-nodejs
       - name: Install Foundry
         uses: ./.github/actions/install-solidity-foundry
+      - name: Create OZ version alias symlinks for Hardhat
+        working-directory: contracts
+        shell: bash
+        run: |
+          for v in 4.7.3 4.8.3 4.9.6 5.0.2 5.1.0; do
+            hyphen_v=${v//./-}
+            mkdir -p node_modules/@openzeppelin
+            if [ -d "node_modules/@openzeppelin/contracts-$hyphen_v" ]; then
+              ln -sfn ../@openzeppelin/contracts-$hyphen_v node_modules/@openzeppelin/contracts@$v
+            fi
+          done
       - name: Run Prepublish test
         working-directory: contracts
         run: pnpm prepublishOnly
@@ -206,6 +217,18 @@ jobs:
         working-directory: contracts
         run: make wrappers-all
 
+      - name: Create OZ version alias symlinks for Hardhat
+        working-directory: contracts
+        shell: bash
+        run: |
+          for v in 4.7.3 4.8.3 4.9.6 5.0.2 5.1.0; do
+            hyphen_v=${v//./-}
+            mkdir -p node_modules/@openzeppelin
+            if [ -d "node_modules/@openzeppelin/contracts-$hyphen_v" ]; then
+              ln -sfn ../@openzeppelin/contracts-$hyphen_v node_modules/@openzeppelin/contracts@$v
+            fi
+          done
+
       - name: Version package.json
         working-directory: contracts
         shell: bash
@@ -254,6 +277,18 @@ jobs:
       - name: Run native compile and generate wrappers
         working-directory: contracts
         run: make wrappers-all
+
+      - name: Create OZ version alias symlinks for Hardhat
+        working-directory: contracts
+        shell: bash
+        run: |
+          for v in 4.7.3 4.8.3 4.9.6 5.0.2 5.1.0; do
+            hyphen_v=${v//./-}
+            mkdir -p node_modules/@openzeppelin
+            if [ -d "node_modules/@openzeppelin/contracts-$hyphen_v" ]; then
+              ln -sfn ../@openzeppelin/contracts-$hyphen_v node_modules/@openzeppelin/contracts@$v
+            fi
+          done
 
       - name: Validate version
         working-directory: contracts
