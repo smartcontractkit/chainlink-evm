@@ -1322,7 +1322,7 @@ func ToBlockNumArg(number *big.Int) string {
 func (r *RPCClient) makeLogsValid(logs []types.Log) error {
 
 	switch r.chainType {
-	case chaintype.ChainSei, chaintype.ChainHedera, chaintype.ChainRootstock:
+	case chaintype.ChainSei, chaintype.ChainHedera, chaintype.ChainRootstock, chaintype.ChainPharos:
 		// Sei, Rootstock and Hedera does not have unique log index position in the block.
 	default:
 		return nil
@@ -1341,7 +1341,7 @@ func (r *RPCClient) makeLogsValid(logs []types.Log) error {
 
 func (r *RPCClient) makeLogValid(log types.Log) (types.Log, error) {
 	switch r.chainType {
-	case chaintype.ChainSei, chaintype.ChainHedera, chaintype.ChainRootstock:
+	case chaintype.ChainSei, chaintype.ChainHedera, chaintype.ChainRootstock, chaintype.ChainPharos:
 		// Sei, Rootstock and Hedera does not have unique log index position in the block.
 	default:
 		return log, nil
