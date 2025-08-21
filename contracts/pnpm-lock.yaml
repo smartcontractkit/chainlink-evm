@@ -30,24 +30,24 @@ importers:
       '@eth-optimism/contracts':
         specifier: 0.6.0
         version: 0.6.0(ethers@5.8.0)
+      '@openzeppelin/contracts-4-7-3':
+        specifier: npm:@openzeppelin/contracts@4.7.3
+        version: '@openzeppelin/contracts@4.7.3'
+      '@openzeppelin/contracts-4-8-3':
+        specifier: npm:@openzeppelin/contracts@4.8.3
+        version: '@openzeppelin/contracts@4.8.3'
+      '@openzeppelin/contracts-4-9-6':
+        specifier: npm:@openzeppelin/contracts@4.9.6
+        version: '@openzeppelin/contracts@4.9.6'
+      '@openzeppelin/contracts-5-0-2':
+        specifier: npm:@openzeppelin/contracts@5.0.2
+        version: '@openzeppelin/contracts@5.0.2'
+      '@openzeppelin/contracts-5-1-0':
+        specifier: npm:@openzeppelin/contracts@5.1.0
+        version: '@openzeppelin/contracts@5.1.0'
       '@openzeppelin/contracts-upgradeable':
         specifier: 4.9.6
         version: 4.9.6
-      '@openzeppelin/contracts@4.7.3/':
-        specifier: npm:@openzeppelin/contracts@4.7.3
-        version: '@openzeppelin/contracts@4.7.3'
-      '@openzeppelin/contracts@4.8.3/':
-        specifier: npm:@openzeppelin/contracts@4.8.3
-        version: '@openzeppelin/contracts@4.8.3'
-      '@openzeppelin/contracts@4.9.6/':
-        specifier: npm:@openzeppelin/contracts@4.9.6
-        version: '@openzeppelin/contracts@4.9.6'
-      '@openzeppelin/contracts@5.0.2/':
-        specifier: npm:@openzeppelin/contracts@5.0.2
-        version: '@openzeppelin/contracts@5.0.2'
-      '@openzeppelin/contracts@5.1.0/':
-        specifier: npm:@openzeppelin/contracts@5.1.0
-        version: '@openzeppelin/contracts@5.1.0'
       '@scroll-tech/contracts':
         specifier: 2.0.0
         version: 2.0.0

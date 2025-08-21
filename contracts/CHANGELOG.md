@@ -1,6 +1,6 @@
 # @chainlink/contracts
 
-## 1.4.1
+## 1.5.0
 
 ### Contracts In This Release
 
@@ -15,6 +15,8 @@
 
 ### Minor Changes
 
+- [#104](https://github.com/smartcontractkit/chainlink-evm/pull/104) [`9df9724`](https://github.com/smartcontractkit/chainlink-evm/commit/9df97249e6) - Remove the vendored OZ versions in favour of NPM dependencies. Different openzeppelin versions are added to `package.json`. This could impact dependency resolution of some tools, e.g Hardhat 2.
+
 - [#164](https://github.com/smartcontractkit/chainlink-evm/pull/164) [`bf75f8a`](https://github.com/smartcontractkit/chainlink-evm/commit/bf75f8a) - Adding a variety of audited flavours of the CCT token (BurnMintERC20) that implements UUPS and Transparent Proxy upgradeability patterns. Brings proxy-related OZ contracts into vendor.
 
 - [#121](https://github.com/smartcontractkit/chainlink-evm/pull/121) [`e479a8d`](https://github.com/smartcontractkit/chainlink-evm/commit/e479a8d409) - Add BurnMintERC20WithDrip to replace the BurnMintERC677Helper. This provides a token with a public drip function, allowing users to test CCIP token transfers.
@@ -26,8 +28,6 @@
 - [#119](https://github.com/smartcontractkit/chainlink-evm/pull/119) [`3f5fcc3`](https://github.com/smartcontractkit/chainlink-evm/commit/3f5fcc3197) - Remove OpStackBurnMintERC677 contract and IOptimismMintableERC20 interface.
 
 - [#105](https://github.com/smartcontractkit/chainlink-evm/pull/105) [`2968eac`](https://github.com/smartcontractkit/chainlink-evm/commit/2968eacc46) - Remove Automation v1.2, v1.3, and v2.0 contracts source code. Corresponding geth wrapeprs remain in place.
-
-- [#104](https://github.com/smartcontractkit/chainlink-evm/pull/104) [`9df9724`](https://github.com/smartcontractkit/chainlink-evm/commit/9df97249e6) - Remove the vendored OZ versions in favour of NPM dependencies.
 
 - [#101](https://github.com/smartcontractkit/chainlink-evm/pull/101) [`cf6eccf`](https://github.com/smartcontractkit/chainlink-evm/commit/cf6eccf28b) - Add OpenZeppelin v5.1.0 vendor contracts for EnumerableMap and EnumerableSet.
 
