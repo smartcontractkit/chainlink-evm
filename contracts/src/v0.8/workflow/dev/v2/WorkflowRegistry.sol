@@ -94,7 +94,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
   /// @dev Tracking allowlisted requests for the owner address, required to enable anyone to verify off-chain requests.
-  mapping(address owner => mapping(bytes32 requestDigest => uint256 expiryTimestamp)) private s_requestsAllowlist;
+  mapping(bytes32 ownerDigestHash => uint32 expiryTimestamp) private s_requestsAllowlist;
+  /// @dev Storing allowlisted requests for all owners, enabling fetching all non-expired requests
+  OwnerAllowlistedRequest[] private s_requestAllowlistArray;
   /// @dev Map each owner address to their arbitrary config. Can be used to control billing parameters or any other data per owner
   mapping(address owner => bytes config) private s_ownerConfig;
 
@@ -277,6 +279,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     EventType eventType;
     uint32 timestamp;
     bytes payload; // ABI‑encoded event data
+  }
+
+  struct OwnerAllowlistedRequest {
+    bytes32 requestDigest;
+    address owner;
+    uint32 expiryTimestamp;
   }
 
   // ================================================================
@@ -1312,11 +1320,14 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// - User calls allowlistRequest(requestDigest) on the Workflow Registry.
   /// - Any user can then send the request payload to the Vault DON.
   /// - Vault DON checks if the digest is on-chain for verification purposes.
-  function allowlistRequest(bytes32 requestDigest, uint256 expiryTimestamp) external {
+  function allowlistRequest(bytes32 requestDigest, uint32 expiryTimestamp) external {
     if (expiryTimestamp <= block.timestamp) revert RequestExpired(requestDigest, expiryTimestamp);
     if (!s_linkedOwners.contains(msg.sender)) revert OwnershipLinkDoesNotExist(msg.sender);
 
-    s_requestsAllowlist[msg.sender][requestDigest] = expiryTimestamp;
+    s_requestsAllowlist[_ownerDigestHash(msg.sender, requestDigest)] = expiryTimestamp;
+    s_requestAllowlistArray.push(
+      OwnerAllowlistedRequest({owner: msg.sender, requestDigest: requestDigest, expiryTimestamp: expiryTimestamp})
+    );
     emit RequestAllowlisted(msg.sender, requestDigest, expiryTimestamp);
   }
 
@@ -1327,7 +1338,41 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param requestDigest    Unique identifier for the request (hash of the request payload).
   /// @return bool            True if the request is allowlisted and not expired, false otherwise.
   function isRequestAllowlisted(address owner, bytes32 requestDigest) external view returns (bool) {
-    return s_requestsAllowlist[owner][requestDigest] > block.timestamp;
+    return s_requestsAllowlist[_ownerDigestHash(owner, requestDigest)] > block.timestamp;
+  }
+
+  function getAllowlistedRequests(
+    uint256 start,
+    uint256 limit
+  ) external view returns (OwnerAllowlistedRequest[] memory allowlistedRequests, uint256 total) {
+    total = s_requestAllowlistArray.length;
+    uint256 pageCount = _getPageCount(total, start, limit);
+
+    if (pageCount == 0) return (new OwnerAllowlistedRequest[](0), total);
+
+    allowlistedRequests = new OwnerAllowlistedRequest[](pageCount);
+    uint256 addedCount = 0;
+    for (uint256 i = 0; i < pageCount; ++i) {
+      OwnerAllowlistedRequest storage request = s_requestAllowlistArray[start + i];
+      if (request.expiryTimestamp > block.timestamp) {
+        allowlistedRequests[i] = request;
+        ++addedCount;
+      }
+    }
+
+    if (addedCount < pageCount) {
+      OwnerAllowlistedRequest[] memory shrinkedList = new OwnerAllowlistedRequest[](addedCount);
+      for (uint256 i = 0; i < addedCount; ++i) {
+        shrinkedList[i] = allowlistedRequests[i];
+      }
+      allowlistedRequests = shrinkedList;
+    }
+
+    return (allowlistedRequests, total);
+  }
+
+  function totalAllowlistedRequests() external view returns (uint256) {
+    return s_requestAllowlistArray.length;
   }
 
   // ================================================================
@@ -1571,5 +1616,13 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string memory str
   ) internal pure returns (bytes32 hash) {
     return keccak256(bytes(str));
+  }
+
+  /// @notice Hashes owner address and request digest into a fixed-size bytes32.
+  /// @param owner  Address of the workflow owner.
+  /// @param digest Request digest.
+  /// @return hash Keccak256 hash of `owner` and `digest`.
+  function _ownerDigestHash(address owner, bytes32 digest) internal pure returns (bytes32) {
+    return keccak256(abi.encode(owner, digest));
   }
 }

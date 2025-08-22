@@ -1,0 +1,8 @@
+WorkflowRegistry.getAllowlistedRequests
+├── when no requests are allowlisted
+│   └── it should return an empty array
+└── when some requests are allowlisted
+    ├── when none of the requests have expired
+    │   └── it should return all requests
+    └── when some of the requests have expired
+        └── it should return only the non-expired requests
