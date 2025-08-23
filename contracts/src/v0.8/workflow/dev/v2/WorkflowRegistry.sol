@@ -5,10 +5,10 @@ import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 
 import {Ownable2StepMsgSender} from "../../../shared/access/Ownable2StepMsgSender.sol";
 
-import {ECDSA} from "@openzeppelin/contracts@5.1.0/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts@5.1.0/utils/cryptography/MessageHashUtils.sol";
-import {EnumerableMap} from "@openzeppelin/contracts@5.1.0/utils/structs/EnumerableMap.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@5.1.0/utils/structs/EnumerableSet.sol";
+import {ECDSA} from "@openzeppelin/contracts-5-1-0/utils/cryptography/ECDSA.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts-5-1-0/utils/cryptography/MessageHashUtils.sol";
+import {EnumerableMap} from "@openzeppelin/contracts-5-1-0/utils/structs/EnumerableMap.sol";
+import {EnumerableSet} from "@openzeppelin/contracts-5-1-0/utils/structs/EnumerableSet.sol";
 
 // solhint-disable-next-line max-states-count
 contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {

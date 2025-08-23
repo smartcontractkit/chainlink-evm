@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {ZKSyncAutomationRegistryBase2_3} from "./ZKSyncAutomationRegistryBase2_3.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
 import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
-import {IChainModule} from "../interfaces/IChainModule.sol";
-import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IAutomationV21PlusCommon} from "../interfaces/IAutomationV21PlusCommon.sol";
+import {IChainModule} from "../interfaces/IChainModule.sol";
+import {ZKSyncAutomationRegistryBase2_3} from "./ZKSyncAutomationRegistryBase2_3.sol";
+import {IERC20Metadata as IERC20} from "@openzeppelin/contracts-4-8-3/token/ERC20/extensions/IERC20Metadata.sol";
+import {Address} from "@openzeppelin/contracts-4-9-6/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts-4-9-6/utils/structs/EnumerableSet.sol";
 
 contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
   using Address for address;
@@ -59,7 +60,9 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
   /**
    * @notice accepts the transfer of the payee
    */
-  function acceptPayeeship(address transmitter) external {
+  function acceptPayeeship(
+    address transmitter
+  ) external {
     if (s_proposedPayee[transmitter] != msg.sender) revert OnlyCallableByProposedPayee();
     address past = s_transmitterPayees[transmitter];
     s_transmitterPayees[transmitter] = msg.sender;
@@ -102,7 +105,9 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
    * @notice this is used by the owner to set the initial payees for newly added transmitters. The owner is not allowed to change payees for existing transmitters.
    * @dev the IGNORE_ADDRESS is a "helper" that makes it easier to construct a list of payees when you only care about setting the payee for a small number of transmitters.
    */
-  function setPayees(address[] calldata payees) external onlyOwner {
+  function setPayees(
+    address[] calldata payees
+  ) external onlyOwner {
     if (s_transmittersList.length != payees.length) revert ParameterLengthError();
     for (uint256 i = 0; i < s_transmittersList.length; i++) {
       address transmitter = s_transmittersList[i];
@@ -173,11 +178,8 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
 
     for (uint256 i = 0; i < activeTransmittersLength; i++) {
       address transmitterAddr = s_transmittersList[i];
-      uint96 balance = _updateTransmitterBalanceFromPool(
-        transmitterAddr,
-        totalPremium,
-        uint96(activeTransmittersLength)
-      );
+      uint96 balance =
+        _updateTransmitterBalanceFromPool(transmitterAddr, totalPremium, uint96(activeTransmittersLength));
 
       payments[i] = balance;
       payees[i] = s_transmitterPayees[transmitterAddr];
@@ -258,7 +260,9 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
     return address(i_wrappedNativeToken);
   }
 
-  function getBillingToken(uint256 upkeepID) external view returns (IERC20) {
+  function getBillingToken(
+    uint256 upkeepID
+  ) external view returns (IERC20) {
     return s_upkeep[upkeepID].billingToken;
   }
 
@@ -266,15 +270,21 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
     return s_billingTokens;
   }
 
-  function supportsBillingToken(IERC20 token) external view returns (bool) {
+  function supportsBillingToken(
+    IERC20 token
+  ) external view returns (bool) {
     return address(s_billingConfigs[token].priceFeed) != address(0);
   }
 
-  function getBillingTokenConfig(IERC20 token) external view returns (BillingConfig memory) {
+  function getBillingTokenConfig(
+    IERC20 token
+  ) external view returns (BillingConfig memory) {
     return s_billingConfigs[token];
   }
 
-  function getBillingOverridesEnabled(uint256 upkeepID) external view returns (bool) {
+  function getBillingOverridesEnabled(
+    uint256 upkeepID
+  ) external view returns (bool) {
     return s_upkeep[upkeepID].overridesEnabled;
   }
 
@@ -298,7 +308,9 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
    * @dev this function may be deprecated in a future version of automation in favor of individual
    * getters for each field
    */
-  function getUpkeep(uint256 id) external view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory upkeepInfo) {
+  function getUpkeep(
+    uint256 id
+  ) external view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory upkeepInfo) {
     Upkeep memory reg = s_upkeep[id];
     address target = address(reg.forwarder) == address(0) ? address(0) : reg.forwarder.getTarget();
     upkeepInfo = IAutomationV21PlusCommon.UpkeepInfoLegacy({
@@ -338,14 +350,18 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
   /**
    * @notice returns the upkeep's trigger type
    */
-  function getTriggerType(uint256 upkeepId) external pure returns (Trigger) {
+  function getTriggerType(
+    uint256 upkeepId
+  ) external pure returns (Trigger) {
     return _getTriggerType(upkeepId);
   }
 
   /**
    * @notice returns the trigger config for an upkeeep
    */
-  function getUpkeepTriggerConfig(uint256 upkeepId) public view returns (bytes memory) {
+  function getUpkeepTriggerConfig(
+    uint256 upkeepId
+  ) public view returns (bytes memory) {
     return s_upkeepTriggerConfig[upkeepId];
   }
 
@@ -375,7 +391,9 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
   /**
    * @notice read the current info about any signer address
    */
-  function getSignerInfo(address query) external view returns (bool active, uint8 index) {
+  function getSignerInfo(
+    address query
+  ) external view returns (bool active, uint8 index) {
     Signer memory signer = s_signers[query];
     return (signer.active, signer.index);
   }
@@ -386,25 +404,24 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
    * backwards compatibility matters!
    */
   function getConfig() external view returns (OnchainConfig memory) {
-    return
-      OnchainConfig({
-        checkGasLimit: s_storage.checkGasLimit,
-        stalenessSeconds: s_hotVars.stalenessSeconds,
-        gasCeilingMultiplier: s_hotVars.gasCeilingMultiplier,
-        maxPerformGas: s_storage.maxPerformGas,
-        maxCheckDataSize: s_storage.maxCheckDataSize,
-        maxPerformDataSize: s_storage.maxPerformDataSize,
-        maxRevertDataSize: s_storage.maxRevertDataSize,
-        fallbackGasPrice: s_fallbackGasPrice,
-        fallbackLinkPrice: s_fallbackLinkPrice,
-        fallbackNativePrice: s_fallbackNativePrice,
-        transcoder: s_storage.transcoder,
-        registrars: s_registrars.values(),
-        upkeepPrivilegeManager: s_storage.upkeepPrivilegeManager,
-        chainModule: s_hotVars.chainModule,
-        reorgProtectionEnabled: s_hotVars.reorgProtectionEnabled,
-        financeAdmin: s_storage.financeAdmin
-      });
+    return OnchainConfig({
+      checkGasLimit: s_storage.checkGasLimit,
+      stalenessSeconds: s_hotVars.stalenessSeconds,
+      gasCeilingMultiplier: s_hotVars.gasCeilingMultiplier,
+      maxPerformGas: s_storage.maxPerformGas,
+      maxCheckDataSize: s_storage.maxCheckDataSize,
+      maxPerformDataSize: s_storage.maxPerformDataSize,
+      maxRevertDataSize: s_storage.maxRevertDataSize,
+      fallbackGasPrice: s_fallbackGasPrice,
+      fallbackLinkPrice: s_fallbackLinkPrice,
+      fallbackNativePrice: s_fallbackNativePrice,
+      transcoder: s_storage.transcoder,
+      registrars: s_registrars.values(),
+      upkeepPrivilegeManager: s_storage.upkeepPrivilegeManager,
+      chainModule: s_hotVars.chainModule,
+      reorgProtectionEnabled: s_hotVars.reorgProtectionEnabled,
+      financeAdmin: s_storage.financeAdmin
+    });
   }
 
   /**
@@ -492,7 +509,9 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
    * @notice calculates the minimum balance required for an upkeep to remain eligible
    * @param id the upkeep id to calculate minimum balance for
    */
-  function getBalance(uint256 id) external view returns (uint96 balance) {
+  function getBalance(
+    uint256 id
+  ) external view returns (uint96 balance) {
     return s_upkeep[id].balance;
   }
 
@@ -500,7 +519,9 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
    * @notice calculates the minimum balance required for an upkeep to remain eligible
    * @param id the upkeep id to calculate minimum balance for
    */
-  function getMinBalance(uint256 id) external view returns (uint96) {
+  function getMinBalance(
+    uint256 id
+  ) external view returns (uint96) {
     return getMinBalanceForUpkeep(id);
   }
 
@@ -509,7 +530,9 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
    * @param id the upkeep id to calculate minimum balance for
    * @dev this will be deprecated in a future version in favor of getMinBalance
    */
-  function getMinBalanceForUpkeep(uint256 id) public view returns (uint96 minBalance) {
+  function getMinBalanceForUpkeep(
+    uint256 id
+  ) public view returns (uint96 minBalance) {
     Upkeep memory upkeep = s_upkeep[id];
     return getMaxPaymentForGas(id, _getTriggerType(id), upkeep.performGas, upkeep.billingToken);
   }
@@ -532,35 +555,45 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
   /**
    * @notice retrieves the migration permission for a peer registry
    */
-  function getPeerRegistryMigrationPermission(address peer) external view returns (MigrationPermission) {
+  function getPeerRegistryMigrationPermission(
+    address peer
+  ) external view returns (MigrationPermission) {
     return s_peerRegistryMigrationPermission[peer];
   }
 
   /**
    * @notice returns the upkeep privilege config
    */
-  function getUpkeepPrivilegeConfig(uint256 upkeepId) external view returns (bytes memory) {
+  function getUpkeepPrivilegeConfig(
+    uint256 upkeepId
+  ) external view returns (bytes memory) {
     return s_upkeepPrivilegeConfig[upkeepId];
   }
 
   /**
    * @notice returns the admin's privilege config
    */
-  function getAdminPrivilegeConfig(address admin) external view returns (bytes memory) {
+  function getAdminPrivilegeConfig(
+    address admin
+  ) external view returns (bytes memory) {
     return s_adminPrivilegeConfig[admin];
   }
 
   /**
    * @notice returns the upkeep's forwarder contract
    */
-  function getForwarder(uint256 upkeepID) external view returns (IAutomationForwarder) {
+  function getForwarder(
+    uint256 upkeepID
+  ) external view returns (IAutomationForwarder) {
     return s_upkeep[upkeepID].forwarder;
   }
 
   /**
    * @notice returns if the dedupKey exists or not
    */
-  function hasDedupKey(bytes32 dedupKey) external view returns (bool) {
+  function hasDedupKey(
+    bytes32 dedupKey
+  ) external view returns (bool) {
     return s_dedupKeys[dedupKey];
   }
 
@@ -575,14 +608,18 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
    * @notice returns the amount of a particular token that is reserved as
    * user deposits / NOP payments
    */
-  function getReserveAmount(IERC20 billingToken) external view returns (uint256) {
+  function getReserveAmount(
+    IERC20 billingToken
+  ) external view returns (uint256) {
     return s_reserveAmounts[billingToken];
   }
 
   /**
    * @notice returns the amount of a particular token that is withdraw-able by finance admin
    */
-  function getAvailableERC20ForPayment(IERC20 billingToken) external view returns (uint256) {
+  function getAvailableERC20ForPayment(
+    IERC20 billingToken
+  ) external view returns (uint256) {
     return billingToken.balanceOf(address(this)) - s_reserveAmounts[IERC20(address(billingToken))];
   }
 
@@ -596,14 +633,18 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
   /**
    * @notice returns the BillingOverrides config for a given upkeep
    */
-  function getBillingOverrides(uint256 upkeepID) external view returns (BillingOverrides memory) {
+  function getBillingOverrides(
+    uint256 upkeepID
+  ) external view returns (BillingOverrides memory) {
     return s_billingOverrides[upkeepID];
   }
 
   /**
    * @notice returns the BillingConfig for a given billing token, this includes decimals and price feed etc
    */
-  function getBillingConfig(IERC20 billingToken) external view returns (BillingConfig memory) {
+  function getBillingConfig(
+    IERC20 billingToken
+  ) external view returns (BillingConfig memory) {
     return s_billingConfigs[billingToken];
   }
 

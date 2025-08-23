@@ -2,11 +2,13 @@
 pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+
+import {Common} from "../libraries/Common.sol";
 import {IVerifier} from "./interfaces/IVerifier.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
-import {Common} from "../libraries/Common.sol";
+import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
 
 // OCR2 standard
 uint256 constant MAX_NUM_ORACLES = 31;
@@ -132,7 +134,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   mapping(bytes32 => VerifierState) internal s_verifierStates;
 
   /// @param verifierProxyAddr The address of the VerifierProxy contract
-  constructor(address verifierProxyAddr) ConfirmedOwner(msg.sender) {
+  constructor(
+    address verifierProxyAddr
+  ) ConfirmedOwner(msg.sender) {
     if (verifierProxyAddr == address(0)) revert ZeroAddress();
     i_verifierProxyAddr = verifierProxyAddr;
   }
@@ -145,7 +149,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(bytes4 interfaceId) external pure override returns (bool isVerifier) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) external pure override returns (bool isVerifier) {
     return interfaceId == this.verify.selector;
   }
 
@@ -160,13 +166,8 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     address sender
   ) external override returns (bytes memory verifierResponse) {
     if (msg.sender != i_verifierProxyAddr) revert AccessForbidden();
-    (
-      bytes32[3] memory reportContext,
-      bytes memory reportData,
-      bytes32[] memory rs,
-      bytes32[] memory ss,
-      bytes32 rawVs
-    ) = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
+    (bytes32[3] memory reportContext, bytes memory reportData, bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs)
+    = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
 
     // reportContext consists of:
     // reportContext[0]: ConfigDigest
@@ -319,7 +320,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifier
-  function activateConfig(bytes32 configDigest) external onlyOwner {
+  function activateConfig(
+    bytes32 configDigest
+  ) external onlyOwner {
     VerifierState storage verifierState = s_verifierStates[configDigest];
 
     if (configDigest == bytes32("")) revert DigestEmpty();
@@ -329,7 +332,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifier
-  function deactivateConfig(bytes32 configDigest) external onlyOwner {
+  function deactivateConfig(
+    bytes32 configDigest
+  ) external onlyOwner {
     VerifierState storage verifierState = s_verifierStates[configDigest];
 
     if (configDigest == bytes32("")) revert DigestEmpty();
@@ -339,7 +344,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifier
-  function latestConfigDetails(bytes32 configDigest) external view override returns (uint32 blockNumber) {
+  function latestConfigDetails(
+    bytes32 configDigest
+  ) external view override returns (uint32 blockNumber) {
     VerifierState storage verifierState = s_verifierStates[configDigest];
     return (verifierState.latestConfigBlockNumber);
   }

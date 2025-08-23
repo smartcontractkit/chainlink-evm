@@ -1,20 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
+
+import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
+import {WERC20Mock} from "../../../../shared/mocks/WERC20Mock.sol";
+import {Common} from "../../../libraries/Common.sol";
+import {DestinationFeeManager} from "../../DestinationFeeManager.sol";
+
+import {DestinationRewardManager} from "../../DestinationRewardManager.sol";
+import {DestinationVerifier} from "../../DestinationVerifier.sol";
 import {DestinationVerifierProxy} from "../../DestinationVerifierProxy.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
+
+import {IDestinationRewardManager} from "../../interfaces/IDestinationRewardManager.sol";
 import {IDestinationVerifier} from "../../interfaces/IDestinationVerifier.sol";
 import {IDestinationVerifierProxy} from "../../interfaces/IDestinationVerifierProxy.sol";
-import {DestinationVerifier} from "../../DestinationVerifier.sol";
-import {Strings} from "@openzeppelin/contracts@4.9.6/utils/Strings.sol";
-import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
-import {DestinationFeeManager} from "../../DestinationFeeManager.sol";
-import {Common} from "../../../libraries/Common.sol";
-import {WERC20Mock} from "../../../../shared/mocks/WERC20Mock.sol";
-import {DestinationRewardManager} from "../../DestinationRewardManager.sol";
-import {IDestinationRewardManager} from "../../interfaces/IDestinationRewardManager.sol";
-import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
+import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
+
+import {Strings} from "@openzeppelin/contracts-4-9-6/utils/Strings.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract BaseTest is Test {
   uint64 internal constant POOL_SCALAR = 1e18;
@@ -91,19 +95,20 @@ contract BaseTest is Test {
   //version 3 feeds
   bytes32 internal constant FEED_ID_V3 = (keccak256("ETH-USD") & V_MASK) | V3_BITMASK;
 
-  function _encodeReport(V3Report memory report) internal pure returns (bytes memory) {
-    return
-      abi.encode(
-        report.feedId,
-        report.observationsTimestamp,
-        report.validFromTimestamp,
-        report.nativeFee,
-        report.linkFee,
-        report.expiresAt,
-        report.benchmarkPrice,
-        report.bid,
-        report.ask
-      );
+  function _encodeReport(
+    V3Report memory report
+  ) internal pure returns (bytes memory) {
+    return abi.encode(
+      report.feedId,
+      report.observationsTimestamp,
+      report.validFromTimestamp,
+      report.nativeFee,
+      report.linkFee,
+      report.expiresAt,
+      report.benchmarkPrice,
+      report.bid,
+      report.ask
+    );
   }
 
   function _generateSignerSignatures(
@@ -132,11 +137,8 @@ contract BaseTest is Test {
     Signer[] memory signers
   ) internal pure returns (bytes memory) {
     bytes memory reportBytes = _encodeReport(report);
-    (bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs) = _generateSignerSignatures(
-      reportBytes,
-      reportContext,
-      signers
-    );
+    (bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs) =
+      _generateSignerSignatures(reportBytes, reportContext, signers);
     return abi.encode(reportContext, reportBytes, rs, ss, rawVs);
   }
 
@@ -150,26 +152,20 @@ contract BaseTest is Test {
   }
 
   function _generateV3Report() internal view returns (V3Report memory) {
-    return
-      V3Report({
-        feedId: FEED_ID_V3,
-        observationsTimestamp: OBSERVATIONS_TIMESTAMP,
-        validFromTimestamp: uint32(block.timestamp),
-        nativeFee: uint192(DEFAULT_REPORT_NATIVE_FEE),
-        linkFee: uint192(DEFAULT_REPORT_LINK_FEE),
-        expiresAt: uint32(block.timestamp),
-        benchmarkPrice: MEDIAN,
-        bid: BID,
-        ask: ASK
-      });
+    return V3Report({
+      feedId: FEED_ID_V3,
+      observationsTimestamp: OBSERVATIONS_TIMESTAMP,
+      validFromTimestamp: uint32(block.timestamp),
+      nativeFee: uint192(DEFAULT_REPORT_NATIVE_FEE),
+      linkFee: uint192(DEFAULT_REPORT_LINK_FEE),
+      expiresAt: uint32(block.timestamp),
+      benchmarkPrice: MEDIAN,
+      bid: BID,
+      ask: ASK
+    });
   }
 
-  function _verifyBulk(
-    bytes[] memory payload,
-    address feeAddress,
-    uint256 wrappedNativeValue,
-    address sender
-  ) internal {
+  function _verifyBulk(bytes[] memory payload, address feeAddress, uint256 wrappedNativeValue, address sender) internal {
     address originalAddr = msg.sender;
     changePrank(sender);
 
@@ -209,7 +205,9 @@ contract BaseTest is Test {
     }
   }
 
-  function _getSigners(uint256 numSigners) internal view returns (Signer[] memory) {
+  function _getSigners(
+    uint256 numSigners
+  ) internal view returns (Signer[] memory) {
     Signer[] memory signers = new Signer[](numSigners);
     for (uint256 i; i < numSigners; i++) {
       signers[i] = s_signers[i];
@@ -217,7 +215,9 @@ contract BaseTest is Test {
     return signers;
   }
 
-  function _getSignerAddresses(Signer[] memory signers) internal pure returns (address[] memory) {
+  function _getSignerAddresses(
+    Signer[] memory signers
+  ) internal pure returns (address[] memory) {
     address[] memory signerAddrs = new address[](signers.length);
     for (uint256 i = 0; i < signerAddrs.length; i++) {
       signerAddrs[i] = signers[i].signerAddress;
@@ -317,12 +317,7 @@ contract MultipleVerifierWithMultipleFeeManagers is BaseTest {
     s_verifierProxy2.setVerifier(address(s_verifier2));
     s_verifierProxy3.setVerifier(address(s_verifier3));
 
-    feeManager2 = new DestinationFeeManager(
-      address(link),
-      address(native),
-      address(s_verifier),
-      address(rewardManager)
-    );
+    feeManager2 = new DestinationFeeManager(address(link), address(native), address(s_verifier), address(rewardManager));
 
     s_verifier.setFeeManager(address(feeManager));
     s_verifier2.setFeeManager(address(feeManager));

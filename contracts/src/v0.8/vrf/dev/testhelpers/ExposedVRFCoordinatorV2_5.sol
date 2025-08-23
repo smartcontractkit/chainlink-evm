@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
 import {VRFTypes} from "../../VRFTypes.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
+import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
+import {EnumerableSet} from "@openzeppelin/contracts-4-9-6/utils/structs/EnumerableSet.sol";
 
 contract ExposedVRFCoordinatorV2_5 is VRFCoordinatorV2_5 {
   using EnumerableSet for EnumerableSet.UintSet;
 
-  constructor(address blockhashStore) VRFCoordinatorV2_5(blockhashStore) {}
+  constructor(
+    address blockhashStore
+  ) VRFCoordinatorV2_5(blockhashStore) {}
 
   function computeRequestIdExternal(
     bytes32 keyHash,
@@ -19,7 +21,9 @@ contract ExposedVRFCoordinatorV2_5 is VRFCoordinatorV2_5 {
     return _computeRequestId(keyHash, sender, subId, nonce);
   }
 
-  function isTargetRegisteredExternal(address target) external view returns (bool) {
+  function isTargetRegisteredExternal(
+    address target
+  ) external view returns (bool) {
     return _isTargetRegistered(target);
   }
 
@@ -34,23 +38,33 @@ contract ExposedVRFCoordinatorV2_5 is VRFCoordinatorV2_5 {
     return s_subIds.length();
   }
 
-  function getSubscriptionConfig(uint256 subId) external view returns (SubscriptionConfig memory) {
+  function getSubscriptionConfig(
+    uint256 subId
+  ) external view returns (SubscriptionConfig memory) {
     return s_subscriptionConfigs[subId];
   }
 
-  function getSubscriptionStruct(uint256 subId) external view returns (Subscription memory) {
+  function getSubscriptionStruct(
+    uint256 subId
+  ) external view returns (Subscription memory) {
     return s_subscriptions[subId];
   }
 
-  function setTotalBalanceTestingOnlyXXX(uint96 newBalance) external {
+  function setTotalBalanceTestingOnlyXXX(
+    uint96 newBalance
+  ) external {
     s_totalBalance = newBalance;
   }
 
-  function setTotalNativeBalanceTestingOnlyXXX(uint96 newBalance) external {
+  function setTotalNativeBalanceTestingOnlyXXX(
+    uint96 newBalance
+  ) external {
     s_totalNativeBalance = newBalance;
   }
 
-  function setWithdrawableTokensTestingOnlyXXX(uint96 newBalance) external {
+  function setWithdrawableTokensTestingOnlyXXX(
+    uint96 newBalance
+  ) external {
     s_withdrawableTokens = newBalance;
   }
 
@@ -58,7 +72,9 @@ contract ExposedVRFCoordinatorV2_5 is VRFCoordinatorV2_5 {
     return s_withdrawableTokens;
   }
 
-  function setWithdrawableNativeTestingOnlyXXX(uint96 newBalance) external {
+  function setWithdrawableNativeTestingOnlyXXX(
+    uint96 newBalance
+  ) external {
     s_withdrawableNative = newBalance;
   }
 

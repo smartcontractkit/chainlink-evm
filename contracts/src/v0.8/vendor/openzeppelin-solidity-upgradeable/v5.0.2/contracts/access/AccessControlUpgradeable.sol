@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 import {Initializable} from "../proxy/utils/Initializable.sol";
 import {ContextUpgradeable} from "../utils/ContextUpgradeable.sol";
 import {ERC165Upgradeable} from "../utils/introspection/ERC165Upgradeable.sol";
-import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
+import {IAccessControl} from "@openzeppelin/contracts-5-0-2/access/IAccessControl.sol";
 
 /**
  * @dev Contract module that allows children to implement role-based access

@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {BurnMintERC20} from "../../../../token/ERC20/BurnMintERC20.sol";
 import {BurnMintERC20Setup} from "./BurnMintERC20Setup.t.sol";
 
-import {Strings} from "@openzeppelin/contracts@4.8.3/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts-4-8-3/utils/Strings.sol";
 
 contract BurnMintERC20_burnFrom is BurnMintERC20Setup {
   function setUp() public virtual override {

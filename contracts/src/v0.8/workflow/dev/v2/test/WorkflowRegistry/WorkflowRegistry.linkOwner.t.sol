@@ -6,7 +6,7 @@ import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {LinkingUtils} from "../../testhelpers/LinkingUtils.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
-import {ECDSA} from "@openzeppelin/contracts@5.1.0/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "@openzeppelin/contracts-5-1-0/utils/cryptography/ECDSA.sol";
 
 contract WorkflowRegistry_linkOwner is WorkflowRegistrySetup {
   // whenTheOwnerIsNotAlreadyLinked whenTheTimestampHasNotExpired

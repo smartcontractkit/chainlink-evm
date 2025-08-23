@@ -6,12 +6,12 @@ pragma solidity ^0.8.20;
 import {Initializable} from "../../proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "../AccessControlUpgradeable.sol";
 
-import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
+import {IAccessControl} from "@openzeppelin/contracts-5-0-2/access/IAccessControl.sol";
 import {IAccessControlDefaultAdminRules} from
-  "@openzeppelin/contracts@5.0.2/access/extensions/IAccessControlDefaultAdminRules.sol";
-import {IERC5313} from "@openzeppelin/contracts@5.0.2/interfaces/IERC5313.sol";
-import {Math} from "@openzeppelin/contracts@5.0.2/utils/math/Math.sol";
-import {SafeCast} from "@openzeppelin/contracts@5.0.2/utils/math/SafeCast.sol";
+  "@openzeppelin/contracts-5-0-2/access/extensions/IAccessControlDefaultAdminRules.sol";
+import {IERC5313} from "@openzeppelin/contracts-5-0-2/interfaces/IERC5313.sol";
+import {Math} from "@openzeppelin/contracts-5-0-2/utils/math/Math.sol";
+import {SafeCast} from "@openzeppelin/contracts-5-0-2/utils/math/SafeCast.sol";
 
 /**
  * @dev Extension of {AccessControl} that allows specifying special rules to manage

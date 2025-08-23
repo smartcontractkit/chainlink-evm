@@ -2,14 +2,16 @@
 pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
-import {IDestinationVerifier} from "./interfaces/IDestinationVerifier.sol";
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
-import {Common} from "../libraries/Common.sol";
+
 import {IAccessController} from "../../shared/interfaces/IAccessController.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+import {Common} from "../libraries/Common.sol";
+import {IDestinationVerifier} from "./interfaces/IDestinationVerifier.sol";
+
+import {IDestinationVerifierFeeManager} from "./interfaces/IDestinationVerifierFeeManager.sol";
 import {IDestinationVerifierProxy} from "./interfaces/IDestinationVerifierProxy.sol";
 import {IDestinationVerifierProxyVerifier} from "./interfaces/IDestinationVerifierProxyVerifier.sol";
-import {IDestinationVerifierFeeManager} from "./interfaces/IDestinationVerifierFeeManager.sol";
+import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
 
 // OCR2 standard
 uint256 constant MAX_NUM_ORACLES = 31;
@@ -133,7 +135,9 @@ contract DestinationVerifier is
     uint32 activationTime;
   }
 
-  constructor(address verifierProxy) ConfirmedOwner(msg.sender) {
+  constructor(
+    address verifierProxy
+  ) ConfirmedOwner(msg.sender) {
     if (verifierProxy == address(0)) {
       revert ZeroAddress();
     }
@@ -152,14 +156,9 @@ contract DestinationVerifier is
     address fm = s_feeManager;
     if (fm != address(0)) {
       //process the fee and catch the error
-      try
-        IDestinationVerifierFeeManager(fm).processFee{value: msg.value}(
-          donConfigId,
-          signedReport,
-          parameterPayload,
-          sender
-        )
-      {
+      try IDestinationVerifierFeeManager(fm).processFee{value: msg.value}(
+        donConfigId, signedReport, parameterPayload, sender
+      ) {
         //do nothing
       } catch {
         // we purposefully obfuscate the error here to prevent information leaking leading to free verifications
@@ -188,14 +187,9 @@ contract DestinationVerifier is
     address fm = s_feeManager;
     if (fm != address(0)) {
       //process the fee and catch the error
-      try
-        IDestinationVerifierFeeManager(fm).processFeeBulk{value: msg.value}(
-          donConfigs,
-          signedReports,
-          parameterPayload,
-          sender
-        )
-      {
+      try IDestinationVerifierFeeManager(fm).processFeeBulk{value: msg.value}(
+        donConfigs, signedReports, parameterPayload, sender
+      ) {
         //do nothing
       } catch {
         // we purposefully obfuscate the error here to prevent information leaking leading to free verifications
@@ -207,13 +201,8 @@ contract DestinationVerifier is
   }
 
   function _verify(bytes calldata signedReport, address sender) internal returns (bytes memory, bytes32) {
-    (
-      bytes32[3] memory reportContext,
-      bytes memory reportData,
-      bytes32[] memory rs,
-      bytes32[] memory ss,
-      bytes32 rawVs
-    ) = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
+    (bytes32[3] memory reportContext, bytes memory reportData, bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs)
+    = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
 
     // Signature lengths must match
     if (rs.length != ss.length) revert MismatchedSignatures(rs.length, ss.length);
@@ -312,9 +301,11 @@ contract DestinationVerifier is
     // Register the signers for this DON
     for (uint256 i; i < signers.length; ++i) {
       if (signers[i] == address(0)) revert ZeroAddress();
-      /** This index is registered so we can efficiently lookup whether a NOP is part of a config without having to
-                loop through the entire config each verification. It's effectively a DonConfig <-> Signer
-                composite key which keys track of all historic configs for a signer */
+      /**
+       * This index is registered so we can efficiently lookup whether a NOP is part of a config without having to
+       *               loop through the entire config each verification. It's effectively a DonConfig <-> Signer
+       *               composite key which keys track of all historic configs for a signer
+       */
       s_signerByAddressAndDonConfigId[keccak256(abi.encodePacked(signers[i], donConfigId))] = true;
     }
 
@@ -344,9 +335,12 @@ contract DestinationVerifier is
   }
 
   /// @inheritdoc IDestinationVerifier
-  function setFeeManager(address feeManager) external override onlyOwner {
-    if (!IERC165(feeManager).supportsInterface(type(IDestinationVerifierFeeManager).interfaceId))
+  function setFeeManager(
+    address feeManager
+  ) external override onlyOwner {
+    if (!IERC165(feeManager).supportsInterface(type(IDestinationVerifierFeeManager).interfaceId)) {
       revert FeeManagerInvalid();
+    }
 
     address oldFeeManager = s_feeManager;
     s_feeManager = feeManager;
@@ -355,7 +349,9 @@ contract DestinationVerifier is
   }
 
   /// @inheritdoc IDestinationVerifier
-  function setAccessController(address accessController) external override onlyOwner {
+  function setAccessController(
+    address accessController
+  ) external override onlyOwner {
     address oldAccessController = s_accessController;
     s_accessController = accessController;
     emit AccessControllerSet(oldAccessController, accessController);
@@ -388,13 +384,17 @@ contract DestinationVerifier is
     emit ConfigRemoved(config.donConfigId);
   }
 
-  function _decodeReportTimestamp(bytes memory reportPayload) internal pure returns (uint256) {
-    (, , uint256 timestamp) = abi.decode(reportPayload, (bytes32, uint32, uint32));
+  function _decodeReportTimestamp(
+    bytes memory reportPayload
+  ) internal pure returns (uint256) {
+    (,, uint256 timestamp) = abi.decode(reportPayload, (bytes32, uint32, uint32));
 
     return timestamp;
   }
 
-  function _findActiveConfig(uint256 timestamp) internal view returns (DonConfig memory) {
+  function _findActiveConfig(
+    uint256 timestamp
+  ) internal view returns (DonConfig memory) {
     DonConfig memory activeDonConfig;
 
     // 99% of the time the signer config will be the last index, however for historic reports generated by a previous configuration we'll need to cycle back
@@ -423,17 +423,20 @@ contract DestinationVerifier is
     _;
   }
 
-  modifier checkAccess(address sender) {
+  modifier checkAccess(
+    address sender
+  ) {
     address ac = s_accessController;
     if (address(ac) != address(0) && !IAccessController(ac).hasAccess(sender, msg.data)) revert AccessForbidden();
     _;
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-    return
-      interfaceId == type(IDestinationVerifier).interfaceId ||
-      interfaceId == type(IDestinationVerifierProxyVerifier).interfaceId;
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public pure override returns (bool) {
+    return interfaceId == type(IDestinationVerifier).interfaceId
+      || interfaceId == type(IDestinationVerifierProxyVerifier).interfaceId;
   }
 
   /// @inheritdoc ITypeAndVersion

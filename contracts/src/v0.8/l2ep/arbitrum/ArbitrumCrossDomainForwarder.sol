@@ -9,7 +9,7 @@ import {CrossDomainForwarder} from "../CrossDomainForwarder.sol";
 import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
 import {AddressAliasHelper} from "../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts-4-7-3/utils/Address.sol";
 
 /**
  * @title ArbitrumCrossDomainForwarder - L1 xDomain account representation
@@ -23,7 +23,9 @@ contract ArbitrumCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
    * @param l1OwnerAddr the L1 owner address that will be allowed to call the forward fn
    * @dev Empty constructor required due to inheriting from abstract contract CrossDomainForwarder
    */
-  constructor(address l1OwnerAddr) CrossDomainOwnable(l1OwnerAddr) {}
+  constructor(
+    address l1OwnerAddr
+  ) CrossDomainOwnable(l1OwnerAddr) {}
 
   /**
    * @notice versions:

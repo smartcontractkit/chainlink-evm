@@ -5,7 +5,7 @@ import {CapabilitiesRegistry} from "../../../CapabilitiesRegistry.sol";
 import {ICapabilityConfiguration} from "../../../interfaces/ICapabilityConfiguration.sol";
 
 import {Constants} from "../Constants.t.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
 
 contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Constants {
   string internal s_capabilityWithConfigurationContractId;

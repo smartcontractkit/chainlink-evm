@@ -1,16 +1,16 @@
 pragma solidity ^0.8.19;
 
-import {console} from "forge-std/console.sol";
-import "@openzeppelin/contracts@4.9.6/utils/Strings.sol";
+import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
+import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 import {VRF} from "../VRF.sol";
 import {VRFTypes} from "../VRFTypes.sol";
 import {BlockhashStore} from "../dev/BlockhashStore.sol";
 import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
 import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
 import {VRFV2PlusConsumerExample} from "../dev/testhelpers/VRFV2PlusConsumerExample.sol";
-import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
-import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 import "./BaseTest.t.sol";
+import "@openzeppelin/contracts-4-9-6/utils/Strings.sol";
+import {console} from "forge-std/console.sol";
 
 contract FixtureVRFCoordinatorV2_5 is BaseTest, VRF {
   address internal SUBSCRIPTION_OWNER = makeAddr("SUBSCRIPTION_OWNER");
@@ -95,7 +95,9 @@ contract FixtureVRFCoordinatorV2_5 is BaseTest, VRF {
 
   // note: Call this function via this.getProvingKeyParts to be able to pass memory as calldata and
   // index over the byte array.
-  function _getProvingKeyParts(bytes calldata uncompressedKey) public pure returns (uint256[2] memory) {
+  function _getProvingKeyParts(
+    bytes calldata uncompressedKey
+  ) public pure returns (uint256[2] memory) {
     uint256 keyPart1 = uint256(bytes32(uncompressedKey[0:32]));
     uint256 keyPart2 = uint256(bytes32(uncompressedKey[32:64]));
     return [keyPart1, keyPart2];

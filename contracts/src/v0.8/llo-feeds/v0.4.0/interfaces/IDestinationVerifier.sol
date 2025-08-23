@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Common} from "../../libraries/Common.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
 
 interface IDestinationVerifier is IERC165 {
   /**
@@ -35,13 +35,17 @@ interface IDestinationVerifier is IERC165 {
    * @notice Sets the fee manager address
    * @param feeManager The address of the fee manager
    */
-  function setFeeManager(address feeManager) external;
+  function setFeeManager(
+    address feeManager
+  ) external;
 
   /**
    * @notice Sets the access controller address
    * @param accessController The address of the access controller
    */
-  function setAccessController(address accessController) external;
+  function setAccessController(
+    address accessController
+  ) external;
 
   /**
    * @notice Updates the config active status

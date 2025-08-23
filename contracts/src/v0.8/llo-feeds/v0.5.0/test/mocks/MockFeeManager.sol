@@ -2,14 +2,17 @@
 pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../../../shared/access/ConfirmedOwner.sol";
-import {IFeeManager} from "../../interfaces/IFeeManager.sol";
+
 import {ITypeAndVersion} from "../../../../shared/interfaces/ITypeAndVersion.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
+
 import {Common} from "../../../libraries/Common.sol";
+import {IFeeManager} from "../../interfaces/IFeeManager.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
-import {IERC20} from "@openzeppelin/contracts@4.8.3/interfaces/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/utils/SafeERC20.sol";
+
 import {IVerifierFeeManager} from "../../interfaces/IVerifierFeeManager.sol";
+import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
+import {IERC20} from "@openzeppelin/contracts-4-8-3/interfaces/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts-4-8-3/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title MockFeeManager
@@ -132,10 +135,8 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
     address _rewardManagerAddress
   ) ConfirmedOwner(msg.sender) {
     if (
-      _linkAddress == address(0) ||
-      _nativeAddress == address(0) ||
-      _proxyAddress == address(0) ||
-      _rewardManagerAddress == address(0)
+      _linkAddress == address(0) || _nativeAddress == address(0) || _proxyAddress == address(0)
+        || _rewardManagerAddress == address(0)
     ) revert InvalidAddress();
 
     i_linkAddress = _linkAddress;
@@ -162,7 +163,9 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) external pure override returns (bool) {
     return interfaceId == this.processFee.selector || interfaceId == this.processFeeBulk.selector;
   }
 
@@ -173,11 +176,8 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
     address subscriber
   ) external payable override onlyProxy {
     // solhint-disable-next-line no-unused-vars
-    (Common.Asset memory fee, Common.Asset memory reward, uint256 appliedDiscount) = _processFee(
-      payload,
-      parameterPayload,
-      subscriber
-    );
+    (Common.Asset memory fee, Common.Asset memory reward, uint256 appliedDiscount) =
+      _processFee(payload, parameterPayload, subscriber);
   }
 
   /// @inheritdoc IVerifierFeeManager
@@ -194,19 +194,12 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
 
     uint256 feesAndRewardsIndex;
     for (uint256 i; i < payloads.length; ++i) {
-      (Common.Asset memory fee, Common.Asset memory reward, uint256 appliedDiscount) = _processFee(
-        payloads[i],
-        parameterPayload,
-        subscriber
-      );
+      (Common.Asset memory fee, Common.Asset memory reward, uint256 appliedDiscount) =
+        _processFee(payloads[i], parameterPayload, subscriber);
 
       if (fee.amount != 0) {
-        feesAndRewards[feesAndRewardsIndex++] = IFeeManager.FeeAndReward(
-          bytes32(payloads[i]),
-          fee,
-          reward,
-          appliedDiscount
-        );
+        feesAndRewards[feesAndRewardsIndex++] =
+          IFeeManager.FeeAndReward(bytes32(payloads[i]), fee, reward, appliedDiscount);
 
         unchecked {
           //keep track of some tallys to make downstream calculations more efficient
@@ -252,7 +245,9 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IFeeManager
-  function setNativeSurcharge(uint64 surcharge) external onlyOwner {
+  function setNativeSurcharge(
+    uint64 surcharge
+  ) external onlyOwner {
     if (surcharge > PERCENTAGE_SCALAR) revert InvalidSurcharge();
 
     s_nativeSurcharge = surcharge;
@@ -307,7 +302,9 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
    * @notice Gets the current version of the report that is encoded as the last two bytes of the feed
    * @param feedId feed id to get the report version for
    */
-  function _getReportVersion(bytes32 feedId) internal pure returns (bytes32) {
+  function _getReportVersion(
+    bytes32 feedId
+  ) internal pure returns (bytes32) {
     return REPORT_VERSION_MASK & feedId;
   }
 
@@ -343,7 +340,9 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
   ) internal {}
 
   /// @inheritdoc IFeeManager
-  function payLinkDeficit(bytes32 configDigest) external onlyOwner {
+  function payLinkDeficit(
+    bytes32 configDigest
+  ) external onlyOwner {
     uint256 deficit = s_linkDeficit[configDigest];
 
     emit LinkDeficitCleared(configDigest, deficit);

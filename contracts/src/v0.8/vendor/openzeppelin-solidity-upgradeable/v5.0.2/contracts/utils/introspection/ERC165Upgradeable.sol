@@ -4,7 +4,7 @@
 pragma solidity ^0.8.20;
 
 import {Initializable} from "../../proxy/utils/Initializable.sol";
-import {IERC165} from "@openzeppelin/contracts@5.0.2/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin/contracts-5-0-2/utils/introspection/IERC165.sol";
 
 /**
  * @dev Implementation of the {IERC165} interface.

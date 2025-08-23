@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {BurnMintERC20Transparent, Initializable} from "../../../../../token/ERC20/upgradeable/BurnMintERC20Transparent.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {
+  BurnMintERC20Transparent, Initializable
+} from "../../../../../token/ERC20/upgradeable/BurnMintERC20Transparent.sol";
+import {TransparentUpgradeableProxy} from
+  "@openzeppelin/contracts-5-0-2/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {ERC20UpgradableBaseTest_approve} from "../ERC20UpgradableBaseTest.approve.t.sol";
 import {ERC20UpgradableBaseTest_burn} from "../ERC20UpgradableBaseTest.burn.t.sol";
@@ -54,14 +57,8 @@ contract BurnMintERC20TransparentTest is
   function setUp() public virtual override {
     ERC20UpgradableBaseTest.setUp();
 
-    s_burnMintERC20Transparent = deployBurnMintERC20Transparent(
-      NAME,
-      SYMBOL,
-      DECIMALS,
-      MAX_SUPPLY,
-      PRE_MINT,
-      DEFAULT_ADMIN
-    );
+    s_burnMintERC20Transparent =
+      deployBurnMintERC20Transparent(NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN);
 
     s_burnMintERC20Transparent.grantMintAndBurnRoles(i_mockPool);
   }
@@ -76,14 +73,8 @@ contract BurnMintERC20TransparentTest is
 
   function test_Initialize_WithPreMint() public {
     uint256 newPreMint = 1e18;
-    BurnMintERC20Transparent newBurnMintERC20Transparent = deployBurnMintERC20Transparent(
-      NAME,
-      SYMBOL,
-      DECIMALS,
-      MAX_SUPPLY,
-      newPreMint,
-      DEFAULT_ADMIN
-    );
+    BurnMintERC20Transparent newBurnMintERC20Transparent =
+      deployBurnMintERC20Transparent(NAME, SYMBOL, DECIMALS, MAX_SUPPLY, newPreMint, DEFAULT_ADMIN);
 
     should_Initialize_WithPreMint(address(newBurnMintERC20Transparent), newPreMint);
   }
@@ -100,8 +91,7 @@ contract BurnMintERC20TransparentTest is
       implementation,
       INITIAL_OWNER_ADDRESS_FOR_PROXY_ADMIN,
       abi.encodeCall(
-        BurnMintERC20Transparent.initialize,
-        (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, newPreMint, DEFAULT_ADMIN)
+        BurnMintERC20Transparent.initialize, (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, newPreMint, DEFAULT_ADMIN)
       )
     );
   }
@@ -139,8 +129,7 @@ contract BurnMintERC20TransparentTest is
 
   function test_Approve_RevertWhen_RecipientIsImplementationItself() public {
     should_Approve_RevertWhen_RecipientIsImplementationItself(
-      address(s_burnMintERC20Transparent),
-      BurnMintERC20Transparent.BurnMintERC20Transparent__InvalidRecipient.selector
+      address(s_burnMintERC20Transparent), BurnMintERC20Transparent.BurnMintERC20Transparent__InvalidRecipient.selector
     );
   }
 
@@ -154,22 +143,19 @@ contract BurnMintERC20TransparentTest is
 
   function test_Mint_RevertWhen_CallerDoesNotHaveMinterRole() public {
     should_Mint_RevertWhen_CallerDoesNotHaveMinterRole(
-      address(s_burnMintERC20Transparent),
-      s_burnMintERC20Transparent.MINTER_ROLE()
+      address(s_burnMintERC20Transparent), s_burnMintERC20Transparent.MINTER_ROLE()
     );
   }
 
   function test_Mint_RevertWhen_AmountExceedsMaxSupply() public {
     should_Mint_RevertWhen_AmountExceedsMaxSupply(
-      address(s_burnMintERC20Transparent),
-      BurnMintERC20Transparent.BurnMintERC20Transparent__MaxSupplyExceeded.selector
+      address(s_burnMintERC20Transparent), BurnMintERC20Transparent.BurnMintERC20Transparent__MaxSupplyExceeded.selector
     );
   }
 
   function test_Mint_RevertWhen_RecipientIsImplementationItself() public {
     should_Mint_RevertWhen_RecipientIsImplementationItself(
-      address(s_burnMintERC20Transparent),
-      BurnMintERC20Transparent.BurnMintERC20Transparent__InvalidRecipient.selector
+      address(s_burnMintERC20Transparent), BurnMintERC20Transparent.BurnMintERC20Transparent__InvalidRecipient.selector
     );
   }
 
@@ -179,8 +165,7 @@ contract BurnMintERC20TransparentTest is
 
   function test_Burn_RevertWhen_CallerDoesNotHaveBurnerRole() public {
     should_Burn_RevertWhen_CallerDoesNotHaveBurnerRole(
-      address(s_burnMintERC20Transparent),
-      s_burnMintERC20Transparent.BURNER_ROLE()
+      address(s_burnMintERC20Transparent), s_burnMintERC20Transparent.BURNER_ROLE()
     );
   }
 
@@ -190,8 +175,7 @@ contract BurnMintERC20TransparentTest is
 
   function test_BurnFrom_RevertWhen_CallerDoesNotHaveBurnerRole() public {
     should_BurnFrom_RevertWhen_CallerDoesNotHaveBurnerRole(
-      address(s_burnMintERC20Transparent),
-      s_burnMintERC20Transparent.BURNER_ROLE()
+      address(s_burnMintERC20Transparent), s_burnMintERC20Transparent.BURNER_ROLE()
     );
   }
 
@@ -201,8 +185,7 @@ contract BurnMintERC20TransparentTest is
 
   function test_BurnFrom_alias_RevertWhen_CallerDoesNotHaveBurnerRole() public {
     should_BurnFrom_alias_RevertWhen_CallerDoesNotHaveBurnerRole(
-      address(s_burnMintERC20Transparent),
-      s_burnMintERC20Transparent.BURNER_ROLE()
+      address(s_burnMintERC20Transparent), s_burnMintERC20Transparent.BURNER_ROLE()
     );
   }
 

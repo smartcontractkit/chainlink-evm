@@ -5,9 +5,9 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "../../proxy/utils/Initializable.sol";
 import {ContextUpgradeable} from "../../utils/ContextUpgradeable.sol";
-import {IERC20Errors} from "@openzeppelin/contracts@5.0.2/interfaces/draft-IERC6093.sol";
-import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts@5.0.2/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Errors} from "@openzeppelin/contracts-5-0-2/interfaces/draft-IERC6093.sol";
+import {IERC20} from "@openzeppelin/contracts-5-0-2/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts-5-0-2/token/ERC20/extensions/IERC20Metadata.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.

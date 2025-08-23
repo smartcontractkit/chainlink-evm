@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
-import {ZKSyncAutomationRegistryBase2_3} from "./ZKSyncAutomationRegistryBase2_3.sol";
-import {ZKSyncAutomationRegistryLogicC2_3} from "./ZKSyncAutomationRegistryLogicC2_3.sol";
-import {ZKSyncAutomationRegistryLogicB2_3} from "./ZKSyncAutomationRegistryLogicB2_3.sol";
+import {IERC677Receiver} from "../../shared/interfaces/IERC677Receiver.sol";
 import {Chainable} from "../Chainable.sol";
 import {ZKSyncAutomationForwarder} from "../ZKSyncAutomationForwarder.sol";
 import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
-import {UpkeepTranscoderInterfaceV2} from "../interfaces/UpkeepTranscoderInterfaceV2.sol";
 import {MigratableKeeperRegistryInterfaceV2} from "../interfaces/MigratableKeeperRegistryInterfaceV2.sol";
-import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/utils/SafeERC20.sol";
-import {IERC677Receiver} from "../../shared/interfaces/IERC677Receiver.sol";
+import {UpkeepTranscoderInterfaceV2} from "../interfaces/UpkeepTranscoderInterfaceV2.sol";
+import {ZKSyncAutomationRegistryBase2_3} from "./ZKSyncAutomationRegistryBase2_3.sol";
+import {ZKSyncAutomationRegistryLogicB2_3} from "./ZKSyncAutomationRegistryLogicB2_3.sol";
+import {ZKSyncAutomationRegistryLogicC2_3} from "./ZKSyncAutomationRegistryLogicC2_3.sol";
+
+import {IERC20Metadata as IERC20} from "@openzeppelin/contracts-4-8-3/token/ERC20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "@openzeppelin/contracts-4-8-3/token/ERC20/utils/SafeERC20.sol";
+import {Address} from "@openzeppelin/contracts-4-9-6/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts-4-9-6/utils/structs/EnumerableSet.sol";
 
 /**
  * @notice Logic contract, works in tandem with AutomationRegistry as a proxy
@@ -90,9 +91,8 @@ contract ZKSyncAutomationRegistryLogicA2_3 is ZKSyncAutomationRegistryBase2_3, C
     if (msg.sender != owner() && !s_registrars.contains(msg.sender)) revert OnlyCallableByOwnerOrRegistrar();
     if (!target.isContract()) revert NotAContract();
     id = _createID(triggerType);
-    IAutomationForwarder forwarder = IAutomationForwarder(
-      address(new ZKSyncAutomationForwarder(target, address(this), i_automationForwarderLogic))
-    );
+    IAutomationForwarder forwarder =
+      IAutomationForwarder(address(new ZKSyncAutomationForwarder(target, address(this), i_automationForwarderLogic)));
     _createUpkeep(
       id,
       Upkeep({
@@ -125,7 +125,9 @@ contract ZKSyncAutomationRegistryLogicA2_3 is ZKSyncAutomationRegistryBase2_3, C
    * @dev if a user cancels an upkeep, their funds are locked for CANCELLATION_DELAY blocks to
    * allow any pending performUpkeep txs time to get confirmed
    */
-  function cancelUpkeep(uint256 id) external {
+  function cancelUpkeep(
+    uint256 id
+  ) external {
     Upkeep memory upkeep = s_upkeep[id];
     bool isOwner = msg.sender == owner();
     uint96 minSpend = s_billingConfigs[upkeep.billingToken].minSpend;
@@ -168,8 +170,8 @@ contract ZKSyncAutomationRegistryLogicA2_3 is ZKSyncAutomationRegistryBase2_3, C
    */
   function migrateUpkeeps(uint256[] calldata ids, address destination) external {
     if (
-      s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING &&
-      s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
+      s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING
+        && s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
     ) revert MigrationNotPermitted();
     if (s_storage.transcoder == ZERO_ADDRESS) revert TranscoderNotSet();
     if (ids.length == 0) revert ArrayHasNoEntries();
@@ -225,20 +227,11 @@ contract ZKSyncAutomationRegistryLogicA2_3 is ZKSyncAutomationRegistryBase2_3, C
     s_reserveAmounts[billingToken] = s_reserveAmounts[billingToken] - balanceToTransfer;
     billingToken.safeTransfer(destination, balanceToTransfer);
 
-    bytes memory encodedUpkeeps = abi.encode(
-      ids,
-      upkeeps,
-      new address[](ids.length),
-      admins,
-      checkDatas,
-      triggerConfigs,
-      offchainConfigs
-    );
+    bytes memory encodedUpkeeps =
+      abi.encode(ids, upkeeps, new address[](ids.length), admins, checkDatas, triggerConfigs, offchainConfigs);
     MigratableKeeperRegistryInterfaceV2(destination).receiveUpkeeps(
       UpkeepTranscoderInterfaceV2(s_storage.transcoder).transcodeUpkeeps(
-        UPKEEP_VERSION_BASE,
-        MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(),
-        encodedUpkeeps
+        UPKEEP_VERSION_BASE, MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(), encodedUpkeeps
       )
     );
   }
@@ -249,10 +242,12 @@ contract ZKSyncAutomationRegistryLogicA2_3 is ZKSyncAutomationRegistryBase2_3, C
    * @dev this function is never called directly, it is only called by another registry's migrate function
    * @dev s_billingOverrides and s_upkeepPrivilegeConfig are not handled in this function
    */
-  function receiveUpkeeps(bytes calldata encodedUpkeeps) external {
+  function receiveUpkeeps(
+    bytes calldata encodedUpkeeps
+  ) external {
     if (
-      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.INCOMING &&
-      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.BIDIRECTIONAL
+      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.INCOMING
+        && s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.BIDIRECTIONAL
     ) revert MigrationNotPermitted();
     (
       uint256[] memory ids,
@@ -270,12 +265,7 @@ contract ZKSyncAutomationRegistryLogicA2_3 is ZKSyncAutomationRegistryBase2_3, C
         );
       }
       _createUpkeep(
-        ids[idx],
-        upkeeps[idx],
-        upkeepAdmins[idx],
-        checkDatas[idx],
-        triggerConfigs[idx],
-        offchainConfigs[idx]
+        ids[idx], upkeeps[idx], upkeepAdmins[idx], checkDatas[idx], triggerConfigs[idx], offchainConfigs[idx]
       );
       emit UpkeepReceived(ids[idx], upkeeps[idx].balance, msg.sender);
     }

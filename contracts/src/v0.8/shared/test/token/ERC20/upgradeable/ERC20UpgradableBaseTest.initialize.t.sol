@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
+import {IAccessControl} from "@openzeppelin/contracts-5-0-2/access/IAccessControl.sol";
 
 import {ERC20UpgradableBaseTest, IERC20UpgradeableBase} from "./ERC20UpgradableBaseTest.t.sol";
 

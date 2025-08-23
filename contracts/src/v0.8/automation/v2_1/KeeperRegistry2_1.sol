@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
-import {KeeperRegistryBase2_1} from "./KeeperRegistryBase2_1.sol";
-import {KeeperRegistryLogicB2_1} from "./KeeperRegistryLogicB2_1.sol";
-import {Chainable} from "../Chainable.sol";
 import {IERC677Receiver} from "../../shared/interfaces/IERC677Receiver.sol";
 import {OCR2Abstract} from "../../shared/ocr2/OCR2Abstract.sol";
+import {Chainable} from "../Chainable.sol";
 import {IAutomationV21PlusCommon} from "../interfaces/IAutomationV21PlusCommon.sol";
+import {KeeperRegistryBase2_1} from "./KeeperRegistryBase2_1.sol";
+import {KeeperRegistryLogicB2_1} from "./KeeperRegistryLogicB2_1.sol";
+import {Address} from "@openzeppelin/contracts-4-9-6/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts-4-9-6/utils/structs/EnumerableSet.sol";
 
 /**
  * @notice Registry for adding work for Chainlink Keepers to perform on client
@@ -22,7 +22,7 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
   /**
    * @notice versions:
    * - KeeperRegistry 2.1.0: introduces support for log, cron, and ready triggers
-                           : removes the need for "wrapped perform data"
+   *                          : removes the need for "wrapped perform data"
    * - KeeperRegistry 2.0.2: pass revert bytes as performData when target contract reverts
    *                       : fixes issue with arbitrum block number
    *                       : does an early return in case of stale report instead of revert
@@ -98,11 +98,8 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
         report.linkNative,
         true
       );
-      (upkeepTransmitInfo[i].earlyChecksPassed, upkeepTransmitInfo[i].dedupID) = _prePerformChecks(
-        report.upkeepIds[i],
-        report.triggers[i],
-        upkeepTransmitInfo[i]
-      );
+      (upkeepTransmitInfo[i].earlyChecksPassed, upkeepTransmitInfo[i].dedupID) =
+        _prePerformChecks(report.upkeepIds[i], report.triggers[i], upkeepTransmitInfo[i]);
 
       if (upkeepTransmitInfo[i].earlyChecksPassed) {
         numUpkeepsPassedChecks += 1;
@@ -111,11 +108,8 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
       }
 
       // Actually perform the target upkeep
-      (upkeepTransmitInfo[i].performSuccess, upkeepTransmitInfo[i].gasUsed) = _performUpkeep(
-        upkeepTransmitInfo[i].upkeep.forwarder,
-        report.gasLimits[i],
-        report.performDatas[i]
-      );
+      (upkeepTransmitInfo[i].performSuccess, upkeepTransmitInfo[i].gasUsed) =
+        _performUpkeep(upkeepTransmitInfo[i].upkeep.forwarder, report.gasLimits[i], report.performDatas[i]);
 
       // Deduct that gasUsed by upkeep from our running counter
       gasOverhead -= upkeepTransmitInfo[i].gasUsed;
@@ -131,10 +125,8 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
     // This is the overall gas overhead that will be split across performed upkeeps
     // Take upper bound of 16 gas per callData bytes, which is approximated to be reportLength
     // Rest of msg.data is accounted for in accounting overheads
-    gasOverhead =
-      (gasOverhead - gasleft() + 16 * rawReport.length) +
-      ACCOUNTING_FIXED_GAS_OVERHEAD +
-      (ACCOUNTING_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1));
+    gasOverhead = (gasOverhead - gasleft() + 16 * rawReport.length) + ACCOUNTING_FIXED_GAS_OVERHEAD
+      + (ACCOUNTING_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1));
     gasOverhead = gasOverhead / numUpkeepsPassedChecks + ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD;
 
     uint96 totalReimbursement;
@@ -145,10 +137,7 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
       for (uint256 i = 0; i < report.upkeepIds.length; i++) {
         if (upkeepTransmitInfo[i].earlyChecksPassed) {
           upkeepTransmitInfo[i].gasOverhead = _getCappedGasOverhead(
-            gasOverhead,
-            upkeepTransmitInfo[i].triggerType,
-            uint32(report.performDatas[i].length),
-            hotVars.f
+            gasOverhead, upkeepTransmitInfo[i].triggerType, uint32(report.performDatas[i].length), hotVars.f
           );
 
           (reimbursement, premium) = _postPerformPayment(

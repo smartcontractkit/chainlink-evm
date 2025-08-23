@@ -6,10 +6,10 @@ import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.so
 
 import {OwnerIsCreator} from "../shared/access/OwnerIsCreator.sol";
 
-import {EnumerableSet} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableSet.sol";
-import {ERC165Checker} from "@openzeppelin/contracts@4.8.3/utils/introspection/ERC165Checker.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
+import {ERC165Checker} from "@openzeppelin/contracts-4-8-3/utils/introspection/ERC165Checker.sol";
+import {EnumerableSet} from "@openzeppelin/contracts-4-8-3/utils/structs/EnumerableSet.sol";
 
 /// @notice CapabilitiesRegistry is used to manage Nodes (including their links to Node Operators), Capabilities,
 /// and DONs (Decentralized Oracle Networks) which are sets of nodes that support those Capabilities.
@@ -428,7 +428,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice Adds a list of node operators
   /// @param nodeOperators List of node operators to add
-  function addNodeOperators(NodeOperator[] calldata nodeOperators) external onlyOwner {
+  function addNodeOperators(
+    NodeOperator[] calldata nodeOperators
+  ) external onlyOwner {
     for (uint256 i; i < nodeOperators.length; ++i) {
       NodeOperator memory nodeOperator = nodeOperators[i];
       if (nodeOperator.admin == address(0)) revert InvalidNodeOperatorAdmin();
@@ -441,7 +443,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice Removes a node operator
   /// @param nodeOperatorIds The IDs of the node operators to remove
-  function removeNodeOperators(uint32[] calldata nodeOperatorIds) external onlyOwner {
+  function removeNodeOperators(
+    uint32[] calldata nodeOperatorIds
+  ) external onlyOwner {
     for (uint32 i; i < nodeOperatorIds.length; ++i) {
       uint32 nodeOperatorId = nodeOperatorIds[i];
       delete s_nodeOperators[nodeOperatorId];
@@ -453,8 +457,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param nodeOperatorIds The ID of the node operator being updated
   /// @param nodeOperators The updated node operator params
   function updateNodeOperators(uint32[] calldata nodeOperatorIds, NodeOperator[] calldata nodeOperators) external {
-    if (nodeOperatorIds.length != nodeOperators.length)
+    if (nodeOperatorIds.length != nodeOperators.length) {
       revert LengthMismatch(nodeOperatorIds.length, nodeOperators.length);
+    }
 
     address owner = owner();
     for (uint256 i; i < nodeOperatorIds.length; ++i) {
@@ -468,8 +473,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       if (msg.sender != currentNodeOperator.admin && msg.sender != owner) revert AccessForbidden(msg.sender);
 
       if (
-        currentNodeOperator.admin != nodeOperator.admin ||
-        keccak256(abi.encode(currentNodeOperator.name)) != keccak256(abi.encode(nodeOperator.name))
+        currentNodeOperator.admin != nodeOperator.admin
+          || keccak256(abi.encode(currentNodeOperator.name)) != keccak256(abi.encode(nodeOperator.name))
       ) {
         currentNodeOperator.admin = nodeOperator.admin;
         currentNodeOperator.name = nodeOperator.name;
@@ -481,7 +486,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Gets a node operator's data
   /// @param nodeOperatorId The ID of the node operator to query for
   /// @return NodeOperator The node operator data
-  function getNodeOperator(uint32 nodeOperatorId) external view returns (NodeOperator memory) {
+  function getNodeOperator(
+    uint32 nodeOperatorId
+  ) external view returns (NodeOperator memory) {
     return s_nodeOperators[nodeOperatorId];
   }
 
@@ -515,7 +522,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Adds nodes. Nodes can be added with deprecated capabilities to
   /// avoid breaking changes when deprecating capabilities.
   /// @param nodes The nodes to add
-  function addNodes(NodeParams[] calldata nodes) external {
+  function addNodes(
+    NodeParams[] calldata nodes
+  ) external {
     bool isOwner = msg.sender == owner();
     for (uint256 i; i < nodes.length; ++i) {
       NodeParams memory node = nodes[i];
@@ -556,7 +565,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Removes nodes.  The node operator admin or contract owner
   /// can remove nodes
   /// @param removedNodeP2PIds The P2P Ids of the nodes to remove
-  function removeNodes(bytes32[] calldata removedNodeP2PIds) external {
+  function removeNodes(
+    bytes32[] calldata removedNodeP2PIds
+  ) external {
     bool isOwner = msg.sender == owner();
     for (uint256 i; i < removedNodeP2PIds.length; ++i) {
       bytes32 p2pId = removedNodeP2PIds[i];
@@ -564,8 +575,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       Node storage node = s_nodes[p2pId];
 
       if (node.signer == bytes32("")) revert NodeDoesNotExist(p2pId);
-      if (node.capabilitiesDONIds.length() > 0)
+      if (node.capabilitiesDONIds.length() > 0) {
         revert NodePartOfCapabilitiesDON(uint32(node.capabilitiesDONIds.at(i)), p2pId);
+      }
       if (node.workflowDONId != 0) revert NodePartOfWorkflowDON(node.workflowDONId, p2pId);
 
       if (!isOwner && msg.sender != s_nodeOperators[node.nodeOperatorId].admin) revert AccessForbidden(msg.sender);
@@ -579,7 +591,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Updates nodes.  The node admin can update the node's signer address
   /// and reconfigure its supported capabilities
   /// @param nodes The nodes to update
-  function updateNodes(NodeParams[] calldata nodes) external {
+  function updateNodes(
+    NodeParams[] calldata nodes
+  ) external {
     bool isOwner = msg.sender == owner();
     for (uint256 i; i < nodes.length; ++i) {
       NodeParams memory node = nodes[i];
@@ -606,21 +620,22 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
       uint32 capabilityConfigCount = ++storedNode.configCount;
       for (uint256 j; j < supportedHashedCapabilityIds.length; ++j) {
-        if (!s_hashedCapabilityIds.contains(supportedHashedCapabilityIds[j]))
+        if (!s_hashedCapabilityIds.contains(supportedHashedCapabilityIds[j])) {
           revert InvalidNodeCapabilities(supportedHashedCapabilityIds);
+        }
         storedNode.supportedHashedCapabilityIds[capabilityConfigCount].add(supportedHashedCapabilityIds[j]);
       }
 
       // Validate that capabilities required by a Workflow DON are still supported
       uint32 nodeWorkflowDONId = storedNode.workflowDONId;
       if (nodeWorkflowDONId != 0) {
-        bytes32[] memory workflowDonCapabilityIds = s_dons[nodeWorkflowDONId]
-          .config[s_dons[nodeWorkflowDONId].configCount]
-          .capabilityIds;
+        bytes32[] memory workflowDonCapabilityIds =
+          s_dons[nodeWorkflowDONId].config[s_dons[nodeWorkflowDONId].configCount].capabilityIds;
 
         for (uint256 j; j < workflowDonCapabilityIds.length; ++j) {
-          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j]))
+          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j])) {
             revert CapabilityRequiredByDON(workflowDonCapabilityIds[j], nodeWorkflowDONId);
+          }
         }
       }
 
@@ -631,8 +646,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         bytes32[] memory donCapabilityIds = s_dons[donId].config[s_dons[donId].configCount].capabilityIds;
 
         for (uint256 k; k < donCapabilityIds.length; ++k) {
-          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(donCapabilityIds[k]))
+          if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(donCapabilityIds[k])) {
             revert CapabilityRequiredByDON(donCapabilityIds[k], donId);
+          }
         }
       }
 
@@ -647,7 +663,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Gets a node's data
   /// @param p2pId The P2P ID of the node to query for
   /// @return nodeInfo NodeInfo The node data
-  function getNode(bytes32 p2pId) public view returns (NodeInfo memory nodeInfo) {
+  function getNode(
+    bytes32 p2pId
+  ) public view returns (NodeInfo memory nodeInfo) {
     return (
       NodeInfo({
         nodeOperatorId: s_nodes[p2pId].nodeOperatorId,
@@ -677,7 +695,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Gets nodes by their P2P IDs
   /// @param p2pIds The P2P IDs of the nodes to query for
   /// @return NodeInfo[] The nodes data
-  function getNodesByP2PIds(bytes32[] calldata p2pIds) external view returns (NodeInfo[] memory) {
+  function getNodesByP2PIds(
+    bytes32[] calldata p2pIds
+  ) external view returns (NodeInfo[] memory) {
     NodeInfo[] memory nodesInfo = new NodeInfo[](p2pIds.length);
 
     for (uint256 i; i < p2pIds.length; ++i) {
@@ -692,7 +712,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @dev There is no function to update capabilities as this would require
   /// nodes to trust that the capabilities they support are not updated by the
   /// admin
-  function addCapabilities(Capability[] calldata capabilities) external onlyOwner {
+  function addCapabilities(
+    Capability[] calldata capabilities
+  ) external onlyOwner {
     for (uint256 i; i < capabilities.length; ++i) {
       Capability memory capability = capabilities[i];
       bytes32 hashedCapabilityId = getHashedCapabilityId(capability.labelledName, capability.version);
@@ -703,7 +725,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice Deprecates a capability
   /// @param hashedCapabilityIds[] The IDs of the capabilities to deprecate
-  function deprecateCapabilities(bytes32[] calldata hashedCapabilityIds) external onlyOwner {
+  function deprecateCapabilities(
+    bytes32[] calldata hashedCapabilityIds
+  ) external onlyOwner {
     for (uint256 i; i < hashedCapabilityIds.length; ++i) {
       bytes32 hashedCapabilityId = hashedCapabilityIds[i];
       if (!s_hashedCapabilityIds.contains(hashedCapabilityId)) revert CapabilityDoesNotExist(hashedCapabilityId);
@@ -715,7 +739,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice Returns a Capability by its hashed ID.
   /// @dev Use `getHashedCapabilityId` to get the hashed ID.
-  function getCapability(bytes32 hashedId) public view returns (CapabilityInfo memory) {
+  function getCapability(
+    bytes32 hashedId
+  ) public view returns (CapabilityInfo memory) {
     return (
       CapabilityInfo({
         hashedId: hashedId,
@@ -755,7 +781,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Returns whether a capability is deprecated
   /// @param hashedCapabilityId The hashed ID of the capability to check
   /// @return bool True if the capability is deprecated, false otherwise
-  function isCapabilityDeprecated(bytes32 hashedCapabilityId) external view returns (bool) {
+  function isCapabilityDeprecated(
+    bytes32 hashedCapabilityId
+  ) external view returns (bool) {
     return s_deprecatedHashedCapabilityIds.contains(hashedCapabilityId);
   }
 
@@ -819,7 +847,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
   /// @notice Removes DONs from the Capability Registry
   /// @param donIds The IDs of the DON to be removed
-  function removeDONs(uint32[] calldata donIds) external onlyOwner {
+  function removeDONs(
+    uint32[] calldata donIds
+  ) external onlyOwner {
     for (uint256 i; i < donIds.length; ++i) {
       uint32 donId = donIds[i];
       DON storage don = s_dons[donId];
@@ -846,7 +876,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Gets DON's data
   /// @param donId The DON ID
   /// @return DONInfo The DON's parameters
-  function getDON(uint32 donId) external view returns (DONInfo memory) {
+  function getDON(
+    uint32 donId
+  ) external view returns (DONInfo memory) {
     return _getDON(donId);
   }
 
@@ -884,8 +916,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bytes memory globalCapabilityConfig;
 
     if (s_capabilities[capabilityId].configurationContract != address(0)) {
-      globalCapabilityConfig = ICapabilityConfiguration(s_capabilities[capabilityId].configurationContract)
-        .getCapabilityConfiguration(donId);
+      globalCapabilityConfig =
+        ICapabilityConfiguration(s_capabilities[capabilityId].configurationContract).getCapabilityConfiguration(donId);
     }
 
     return (donCapabilityConfig, globalCapabilityConfig);
@@ -927,8 +959,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       if (!donCapabilityConfig.nodes.add(nodes[i])) revert DuplicateDONNode(donParams.id, nodes[i]);
 
       if (donParams.acceptsWorkflows) {
-        if (s_nodes[nodes[i]].workflowDONId != donParams.id && s_nodes[nodes[i]].workflowDONId != 0)
+        if (s_nodes[nodes[i]].workflowDONId != donParams.id && s_nodes[nodes[i]].workflowDONId != 0) {
           revert NodePartOfWorkflowDON(donParams.id, nodes[i]);
+        }
         s_nodes[nodes[i]].workflowDONId = donParams.id;
       } else {
         /// Fine to add a duplicate DON ID to the set of supported DON IDs again as the set
@@ -940,13 +973,16 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     for (uint256 i; i < capabilityConfigurations.length; ++i) {
       CapabilityConfiguration calldata configuration = capabilityConfigurations[i];
 
-      if (!s_hashedCapabilityIds.contains(configuration.capabilityId))
+      if (!s_hashedCapabilityIds.contains(configuration.capabilityId)) {
         revert CapabilityDoesNotExist(configuration.capabilityId);
-      if (s_deprecatedHashedCapabilityIds.contains(configuration.capabilityId))
+      }
+      if (s_deprecatedHashedCapabilityIds.contains(configuration.capabilityId)) {
         revert CapabilityIsDeprecated(configuration.capabilityId);
+      }
 
-      if (donCapabilityConfig.capabilityConfigs[configuration.capabilityId].length > 0)
+      if (donCapabilityConfig.capabilityConfigs[configuration.capabilityId].length > 0) {
         revert DuplicateDONCapability(donParams.id, configuration.capabilityId);
+      }
 
       for (uint256 j; j < nodes.length; ++j) {
         if (
@@ -965,11 +1001,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       s_dons[donParams.id].configCount = donParams.configCount;
 
       _setDONCapabilityConfig(
-        donParams.id,
-        donParams.configCount,
-        configuration.capabilityId,
-        nodes,
-        configuration.config
+        donParams.id, donParams.configCount, configuration.capabilityId, nodes, configuration.config
       );
     }
     emit ConfigSet(donParams.id, donParams.configCount);
@@ -991,10 +1023,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   ) internal {
     if (s_capabilities[capabilityId].configurationContract != address(0)) {
       ICapabilityConfiguration(s_capabilities[capabilityId].configurationContract).beforeCapabilityConfigSet(
-        nodes,
-        config,
-        configCount,
-        donId
+        nodes, config, configCount, donId
       );
     }
   }
@@ -1019,7 +1048,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Gets DON's data
   /// @param donId The DON ID
   /// @return DONInfo The DON's parameters
-  function _getDON(uint32 donId) internal view returns (DONInfo memory) {
+  function _getDON(
+    uint32 donId
+  ) internal view returns (DONInfo memory) {
     uint32 configCount = s_dons[donId].configCount;
 
     DONCapabilityConfig storage donCapabilityConfig = s_dons[donId].config[configCount];
@@ -1034,15 +1065,14 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       });
     }
 
-    return
-      DONInfo({
-        id: s_dons[donId].id,
-        configCount: configCount,
-        f: s_dons[donId].f,
-        isPublic: s_dons[donId].isPublic,
-        acceptsWorkflows: s_dons[donId].acceptsWorkflows,
-        nodeP2PIds: donCapabilityConfig.nodes.values(),
-        capabilityConfigurations: capabilityConfigurations
-      });
+    return DONInfo({
+      id: s_dons[donId].id,
+      configCount: configCount,
+      f: s_dons[donId].f,
+      isPublic: s_dons[donId].isPublic,
+      acceptsWorkflows: s_dons[donId].acceptsWorkflows,
+      nodeP2PIds: donCapabilityConfig.nodes.values(),
+      capabilityConfigurations: capabilityConfigurations
+    });
   }
 }

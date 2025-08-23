@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {IGetCCIPAdmin} from "../../../../../shared/interfaces/IGetCCIPAdmin.sol";
 import {IBurnMintERC20Upgradeable} from "../../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
 import {BaseTest} from "../../../BaseTest.t.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts@5.0.2/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts-5-0-2/token/ERC20/extensions/IERC20Metadata.sol";
 
 interface IERC20UpgradeableBase is IBurnMintERC20Upgradeable, IERC20Metadata, IGetCCIPAdmin {
   event CCIPAdminTransferred(address indexed previousAdmin, address indexed newAdmin);
@@ -12,15 +12,25 @@ interface IERC20UpgradeableBase is IBurnMintERC20Upgradeable, IERC20Metadata, IG
   event AccountUnfrozen(address indexed account);
 
   function maxSupply() external view returns (uint256);
-  function grantMintAndBurnRoles(address burnAndMinter) external;
-  function setCCIPAdmin(address newAdmin) external;
+  function grantMintAndBurnRoles(
+    address burnAndMinter
+  ) external;
+  function setCCIPAdmin(
+    address newAdmin
+  ) external;
 
   function pause() external;
   function unpause() external;
 
-  function freeze(address account) external;
-  function unfreeze(address account) external;
-  function isFrozen(address account) external view returns (bool);
+  function freeze(
+    address account
+  ) external;
+  function unfreeze(
+    address account
+  ) external;
+  function isFrozen(
+    address account
+  ) external view returns (bool);
 }
 
 contract ERC20UpgradableBaseTest is BaseTest {

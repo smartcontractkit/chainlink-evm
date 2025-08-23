@@ -3,8 +3,9 @@ pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
+
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
+import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
 
 // OCR2 standard
 uint256 constant MAX_NUM_ORACLES = 31;
@@ -16,8 +17,8 @@ uint256 constant MIN_SUPPORTED_ONCHAIN_CONFIG_VERSION = 1;
  * @title Configurator
  * @author samsondav
  * @notice This contract is intended to be deployed on the source chain and acts as a OCR3 configurator for LLO/Mercury
- **/
-
+ *
+ */
 contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165 {
   /// @notice This error is thrown whenever trying to set a config
   /// with a fault tolerance of 0
@@ -161,9 +162,9 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
 
     ConfigurationState memory configurationState = s_configurationStates[configId];
     if (
-      predecessorConfigDigest == bytes32(0) ||
-      predecessorConfigDigest !=
-      s_configurationStates[configId].configDigest[configurationState.isGreenProduction ? 1 : 0]
+      predecessorConfigDigest == bytes32(0)
+        || predecessorConfigDigest
+          != s_configurationStates[configId].configDigest[configurationState.isGreenProduction ? 1 : 0]
     ) revert InvalidPredecessorConfigDigest(predecessorConfigDigest);
 
     _setConfig(
@@ -197,11 +198,13 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   // cause "gaps" to be created, but that seems unavoidable in such a scenario.
   function promoteStagingConfig(bytes32 configId, bool isGreenProduction) external onlyOwner {
     ConfigurationState storage configurationState = s_configurationStates[configId];
-    if (isGreenProduction != configurationState.isGreenProduction)
+    if (isGreenProduction != configurationState.isGreenProduction) {
       revert IsGreenProductionMustMatchContractState(configId, !isGreenProduction);
+    }
     if (configurationState.configCount == 0) revert ConfigUnset(configId);
-    if (configurationState.configDigest[isGreenProduction ? 0 : 1] == bytes32(0))
+    if (configurationState.configDigest[isGreenProduction ? 0 : 1] == bytes32(0)) {
       revert ConfigUnsetStaging(configId, isGreenProduction);
+    }
     bytes32 retiredConfigDigest = configurationState.configDigest[isGreenProduction ? 1 : 0];
     if (retiredConfigDigest == bytes32(0)) revert ConfigUnsetProduction(configId, isGreenProduction);
 
@@ -330,7 +333,9 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(bytes4 interfaceId) external pure override returns (bool isVerifier) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) external pure override returns (bool isVerifier) {
     return interfaceId == type(IConfigurator).interfaceId;
   }
 

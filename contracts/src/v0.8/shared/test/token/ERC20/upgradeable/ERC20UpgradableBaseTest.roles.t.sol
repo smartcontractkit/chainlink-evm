@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {IGetCCIPAdmin} from "../../../../../shared/interfaces/IGetCCIPAdmin.sol";
-import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
+import {IAccessControl} from "@openzeppelin/contracts-5-0-2/access/IAccessControl.sol";
 
 import {ERC20UpgradableBaseTest, IERC20UpgradeableBase} from "./ERC20UpgradableBaseTest.t.sol";
 
@@ -24,11 +24,15 @@ contract ERC20UpgradableBaseTest_roles is ERC20UpgradableBaseTest {
     assertTrue(IAccessControl(implementation).hasRole(BURNER_ROLE, STRANGER));
   }
 
-  function should_GetCCIPAdmin(address implementation) public view {
+  function should_GetCCIPAdmin(
+    address implementation
+  ) public view {
     assertEq(IGetCCIPAdmin(implementation).getCCIPAdmin(), DEFAULT_ADMIN);
   }
 
-  function should_SetCCIPAdmin(address implementation) public {
+  function should_SetCCIPAdmin(
+    address implementation
+  ) public {
     changePrank(DEFAULT_ADMIN);
 
     vm.expectEmit();

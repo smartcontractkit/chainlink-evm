@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts@4.8.3/utils/Address.sol";
+import "@openzeppelin/contracts-4-8-3/utils/Address.sol";
 
 /// sourced from: https://github.com/scroll-tech/scroll/blob/develop/contracts/src/libraries/IScrollMessenger.sol
 interface IScrollMessenger {
@@ -17,12 +17,7 @@ interface IScrollMessenger {
   /// @param gasLimit The optional gas limit passed to L1 or L2.
   /// @param message The calldata passed to the target contract.
   event SentMessage(
-    address indexed sender,
-    address indexed target,
-    uint256 value,
-    uint256 messageNonce,
-    uint256 gasLimit,
-    bytes message
+    address indexed sender, address indexed target, uint256 value, uint256 messageNonce, uint256 gasLimit, bytes message
   );
 
   /// @notice Emitted when a cross domain message is relayed successfully.
@@ -69,7 +64,9 @@ interface IScrollMessenger {
 contract MockScrollCrossDomainMessenger is IScrollMessenger {
   address internal mockMessageSender;
 
-  constructor(address sender) {
+  constructor(
+    address sender
+  ) {
     mockMessageSender = sender;
   }
 
@@ -77,7 +74,9 @@ contract MockScrollCrossDomainMessenger is IScrollMessenger {
     return mockMessageSender;
   }
 
-  function _setMockMessageSender(address sender) external {
+  function _setMockMessageSender(
+    address sender
+  ) external {
     mockMessageSender = sender;
   }
 

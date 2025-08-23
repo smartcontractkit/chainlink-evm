@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 // solhint-disable-next-line no-unused-import
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 // solhint-disable-next-line no-unused-import
-import {IForwarder} from "../interfaces/IForwarder.sol";
+
 import {IDelegateForwarder} from "../interfaces/IDelegateForwarder.sol";
 
 import {ArbitrumCrossDomainForwarder} from "./ArbitrumCrossDomainForwarder.sol";
 
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts-4-7-3/utils/Address.sol";
 
 /**
  * @title ArbitrumCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Arbitrum
@@ -23,7 +23,9 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @param l1OwnerAddr the L1 owner address that will be allowed to call the forward fn
    * @dev Empty constructor required due to inheriting from abstract contract CrossDomainForwarder
    */
-  constructor(address l1OwnerAddr) ArbitrumCrossDomainForwarder(l1OwnerAddr) {}
+  constructor(
+    address l1OwnerAddr
+  ) ArbitrumCrossDomainForwarder(l1OwnerAddr) {}
 
   /**
    * @notice versions:
@@ -38,7 +40,6 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
 
   /**
    * @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
-   * @inheritdoc IForwarder
    */
   function forward(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
     Address.functionCall(target, data, "Governor call reverted");

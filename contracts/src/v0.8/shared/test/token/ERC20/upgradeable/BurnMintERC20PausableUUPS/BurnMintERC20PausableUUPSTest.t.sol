@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {BurnMintERC20PausableUUPS} from "../../../../../token/ERC20/upgradeable/BurnMintERC20PausableUUPS.sol";
 import {BurnMintERC20UUPS} from "../../../../../token/ERC20/upgradeable/BurnMintERC20UUPS.sol";
 import {ERC20UpgradableBaseTest_pausing} from "../ERC20UpgradableBaseTest.pausing.t.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts@5.0.2/proxy/ERC1967/ERC1967Proxy.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts-5-0-2/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract BurnMintERC20PausableUUPSTest is ERC20UpgradableBaseTest_pausing {
   BurnMintERC20PausableUUPS internal s_burnMintERC20PausableUUPS;
@@ -16,8 +16,7 @@ contract BurnMintERC20PausableUUPSTest is ERC20UpgradableBaseTest_pausing {
       new ERC1967Proxy(
         implementation,
         abi.encodeCall(
-          BurnMintERC20UUPS.initialize,
-          (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN, DEFAULT_UPGRADER)
+          BurnMintERC20UUPS.initialize, (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN, DEFAULT_UPGRADER)
         )
       )
     );
@@ -43,15 +42,13 @@ contract BurnMintERC20PausableUUPSTest is ERC20UpgradableBaseTest_pausing {
 
   function test_Pause_RevertWhen_CallerDoesNotHavePauserRole() public {
     should_Pause_RevertWhen_CallerDoesNotHavePauserRole(
-      address(s_burnMintERC20PausableUUPS),
-      s_burnMintERC20PausableUUPS.PAUSER_ROLE()
+      address(s_burnMintERC20PausableUUPS), s_burnMintERC20PausableUUPS.PAUSER_ROLE()
     );
   }
 
   function test_Unpause_RevertWhen_CallerDoesNotHaveDefaultAdminRole() public {
     should_Unpause_RevertWhen_CallerDoesNotHaveDefaultAdminRole(
-      address(s_burnMintERC20PausableUUPS),
-      s_burnMintERC20PausableUUPS.DEFAULT_ADMIN_ROLE()
+      address(s_burnMintERC20PausableUUPS), s_burnMintERC20PausableUUPS.DEFAULT_ADMIN_ROLE()
     );
   }
 

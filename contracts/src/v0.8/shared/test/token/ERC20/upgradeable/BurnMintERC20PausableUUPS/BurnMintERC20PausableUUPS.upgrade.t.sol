@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {BurnMintERC20PausableUUPS} from "../../../../../token/ERC20/upgradeable/BurnMintERC20PausableUUPS.sol";
 import {BurnMintERC20UUPS} from "../../../../../token/ERC20/upgradeable/BurnMintERC20UUPS.sol";
 import {ERC20UpgradableBaseTest_pausing} from "../ERC20UpgradableBaseTest.pausing.t.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts@5.0.2/proxy/ERC1967/ERC1967Proxy.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts-5-0-2/proxy/ERC1967/ERC1967Proxy.sol";
 
 interface IUpgradeableProxy {
   function upgradeToAndCall(address, bytes memory) external payable;
@@ -32,11 +32,15 @@ contract MockBurnMintERC20PausableUUPSV2 is BurnMintERC20PausableUUPS {
     }
   }
 
-  function initializeFreezerRole(address defaultFreezer) public onlyRole(UPGRADER_ROLE) {
+  function initializeFreezerRole(
+    address defaultFreezer
+  ) public onlyRole(UPGRADER_ROLE) {
     _grantRole(FREEZER_ROLE, defaultFreezer);
   }
 
-  function freeze(address account) public onlyRole(FREEZER_ROLE) {
+  function freeze(
+    address account
+  ) public onlyRole(FREEZER_ROLE) {
     MockBurnMintERC20PausableUUPSV2Storage storage $ = _getV2Storage();
     $.s_isFrozen[account] = true;
   }
@@ -61,8 +65,7 @@ contract BurnMintERC20PausableUUPS_upgrade is ERC20UpgradableBaseTest_pausing {
       new ERC1967Proxy(
         implementation,
         abi.encodeCall(
-          BurnMintERC20UUPS.initialize,
-          (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN, DEFAULT_UPGRADER)
+          BurnMintERC20UUPS.initialize, (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN, DEFAULT_UPGRADER)
         )
       )
     );
@@ -106,8 +109,7 @@ contract BurnMintERC20PausableUUPS_upgrade is ERC20UpgradableBaseTest_pausing {
     changePrank(STRANGER);
     vm.expectRevert(
       abi.encodeWithSelector(
-        MockBurnMintERC20PausableUUPSV2.MockBurnMintERC20PausableUUPSV2__AccountFrozen.selector,
-        STRANGER
+        MockBurnMintERC20PausableUUPSV2.MockBurnMintERC20PausableUUPSV2__AccountFrozen.selector, STRANGER
       )
     );
     newImplementation.transfer(OWNER, AMOUNT);

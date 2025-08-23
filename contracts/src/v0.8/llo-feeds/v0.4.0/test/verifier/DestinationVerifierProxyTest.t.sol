@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
-import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
-import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
 import {DestinationFeeManager} from "../../../v0.4.0/DestinationFeeManager.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
+import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
+import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
+import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
+
+import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
 
 contract DestinationVerifierProxyInitializeVerifierTest is BaseTest {
   function test_setVerifierCalledByNoOwner() public {

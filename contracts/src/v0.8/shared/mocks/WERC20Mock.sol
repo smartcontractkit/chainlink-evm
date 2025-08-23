@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts-4-8-3/token/ERC20/ERC20.sol";
 
 contract WERC20Mock is ERC20 {
   constructor() ERC20("WERC20Mock", "WERC") {}
@@ -18,7 +18,9 @@ contract WERC20Mock is ERC20 {
     emit Deposit(msg.sender, msg.value);
   }
 
-  function withdraw(uint256 wad) public {
+  function withdraw(
+    uint256 wad
+  ) public {
     // solhint-disable-next-line gas-custom-errors, reason-string
     require(balanceOf(msg.sender) >= wad);
     _burn(msg.sender, wad);

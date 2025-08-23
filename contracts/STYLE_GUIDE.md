@@ -7,7 +7,7 @@ Rules are all enforced through CI, this can be through Solhint rules or other to
 ## Background
 
 Our starting point is the [official Solidity Style Guide](https://docs.soliditylang.org/en/v0.8.21/style-guide.html) and
-[ConsenSys's Secure Development practices](https://consensys.github.io/smart-contract-best-practices/), 
+[ConsenSys's Secure Development practices](https://consensys.github.io/smart-contract-best-practices/),
 but we deviate in some ways.
 We are trying to automate as much of this style guide with Solhint as possible.
 
@@ -19,10 +19,10 @@ Consistency is preferred.
 
 We use `forge fmt` for all new projects, but some older ones still rely on `prettier`.
 
-
 # <a name="guidelines"></a>Guidelines
 
 ## Code Organization
+
 - Structs, events and custom errors should be defined at the top of the contract.
 - Group helper functions near the functions that use them. This is helpful when reading code because the related pieces are localized.
 - 🤔Why not follow the Solidity recommendation of grouping by visibility? Visibility is clearly defined next to the method signature, making it trivial to check. However, searching can be deceiving because of inherited methods. Given this inconsistency in grouping, we find it easier to read and more consistent to organize code around functionality. Additionally, we recommend testing the public interface for any Solidity contract to ensure it only exposes expected methods.
@@ -33,8 +33,8 @@ We use `forge fmt` for all new projects, but some older ones still rely on `pret
   - E.g. we keep unaudited code in a directory named `dev` that exists within each project's folder. Only once it has been audited we move the audited files out of `dev` and only then is it considered safe to deploy.
   - This `dev` folder also has implications for when code is valid for bug bounties, so be extra careful to move functionality out of a `dev` folder.
 
-
 ## Comments
+
 - Besides comments above functions and structs, comments should live everywhere a reader might be confused.
   Don’t overestimate the reader of your contract, expect confusion in many places and document accordingly.
   This will help massively during audits and onboarding new team members.
@@ -91,6 +91,7 @@ struct FeeTokenConfigArgs {
   uint256 fee; //                 The flat fee the user pays in juels
 }
 ```
+
 ## Functions
 
 ### Naming
@@ -119,8 +120,7 @@ struct FeeTokenConfigArgs {
 
 - Events should only be triggered on state changes. If the value is set but not changed, we prefer avoiding a log emission indicating a change. (e.g. Either do not emit a log, or name the event `ConfigSet` instead of `ConfigUpdated`.)
 - Events should be emitted for all state changes, not emitting should be an exception
-- When possible, event names should correspond to the method they are in or the action that is being taken. Events preferably follow the format <subject><actionPerformed>, where the action performed is the past tense of the imperative verb in the method name.  e.g. calling `setConfig` should emit an event called `ConfigSet`, not `ConfigUpdated` in a method named `setConfig`.
-
+- When possible, event names should correspond to the method they are in or the action that is being taken. Events preferably follow the format <subject><actionPerformed>, where the action performed is the past tense of the imperative verb in the method name. e.g. calling `setConfig` should emit an event called `ConfigSet`, not `ConfigUpdated` in a method named `setConfig`.
 
 ### Expose Errors
 
@@ -158,7 +158,6 @@ This will cost slightly more gas to copy the response into memory, but will ulti
 
 The original error will not be human-readable in an off-chain explorer because it is RLP hex encoded but is easily decoded with standard Solidity ABI decoding tools, or a hex to UTF-8 converter and some basic ABI knowledge.
 
-
 ## Interfaces
 
 - Interfaces should be as concise as reasonably possible. Break it up into smaller composable interfaces when that is sensible.
@@ -176,7 +175,6 @@ The original error will not be human-readable in an off-chain explorer because i
   - NPM packages work for repos already in the JavaScript ecosystem. If you go this route you should lock to a hash of the repo or use a proxy registry like GitHub Packages.
   - Copy and paste the code into a `vendor` directory. Record attribution of the code and license in the repo along with the commit or version that you pulled the code from.
   - Foundry uses git submodules for its dependencies. We only use the `forge-std` lib through submodules, we don’t import any non-Foundry-testing code through this method.
-
 
 ## Common Behaviors
 
@@ -203,7 +201,7 @@ The original error will not be human-readable in an off-chain explorer because i
   - uint40 for timestamps (or uint32 if you really need the space)
   - uint96 for LINK, as there are only 1b LINK tokens
 - prefer `++i` over `i++`
-- Avoid `unchecked` 
+- Avoid `unchecked`
 - Only use `assembly` when there is no option to do something in Solidity or when it saves a significant amount of gas over the alternative implementation.
 - If you’re unsure about golfing, ask in the #tech-solidity channel
 
@@ -216,7 +214,6 @@ While these patterns offer upgrade flexibility, they also introduce significant 
 In most cases, safer architectural patterns can and should be employed instead of proxy-based solutions. These may include:
 
 - **Router Pattern**: Use a central, non-upgradable router to direct calls to versioned contracts (e.g., CCIP [Router](https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/evm/contracts/Router.sol)).
-    
 - **Externalized Storage Contracts**: Separate storage concerns by outsourcing persistent data to standalone contracts, which can be accessed and modified via standard call operations (e.g., CCIP [NonceManager](https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/evm/contracts/NonceManager.sol)).
 
 These approaches retain flexibility and upgradeability without relying on `delegatecall`, significantly reducing the risk of implementation errors or upgrade-related vulnerabilities.
@@ -238,7 +235,6 @@ Please read the [Foundry Guide](FOUNDRY_GUIDE.md). No new tests should be writte
   - Explicitly use the `Paris` hardfork when compiling with >=0.8.20 to keep the bytecode compatible with all chains.
 - All contracts should have an SPDX license identifier. If unsure about which one to pick, please consult with legal. Most older contracts have been MIT, but some of the newer products have been using BUSL-1.1
 
-
 ## Versioning
 
 Contracts should implement the following interface
@@ -253,26 +249,27 @@ Here are some examples of what this should look like:
 
 ```solidity
 contract AccessControlledFoo is Foo {
-  string public constant override typeAndVersion = "AccessControlledFoo 1.0.0";
+  string public constant override typeAndVersion = 'AccessControlledFoo 1.0.0';
 }
 
 contract OffchainAggregator is ITypeAndVersion {
-   string public constant override typeAndVersion = "OffchainAggregator 1.0.0";
+  string public constant override typeAndVersion = 'OffchainAggregator 1.0.0';
 
-    function getData() public returns(uint256) {
-        return 4;
-    }
+  function getData() public returns (uint256) {
+    return 4;
+  }
 }
 
 // Next version of Aggregator contract
 contract SuperDuperAggregator is ITypeAndVersion {
-    /// This is a new contract that has not been released yet, so we
-    /// add a `-dev` suffix to the typeAndVersion.
-    string public constant override typeAndVersion = "SuperDuperAggregator 1.1.0-dev";
+  /// This is a new contract that has not been released yet, so we
+  /// add a `-dev` suffix to the typeAndVersion.
+  string public constant override typeAndVersion =
+    'SuperDuperAggregator 1.1.0-dev';
 
-    function getData() public returns(uint256) {
-      return 5;
-    }
+  function getData() public returns (uint256) {
+    return 5;
+  }
 }
 ```
 
@@ -280,17 +277,9 @@ All contracts will expose a `typeAndVersion` constant.
 The string has the following format: `<contract name><SPACE><semver>-<dev>` with the `-dev` part only being applicable to contracts that have not been fully released.
 Try to fit it into 32 bytes to keep the impact on contract sizes minimal.
 
-
-
-
-
-
-
-
 # <a name="rules"></a>Rules
 
 All rules have a `rule` tag which indicates how the rule is enforced.
-
 
 ## Comments
 
@@ -307,24 +296,24 @@ All rules have a `rule` tag which indicates how the rule is enforced.
   - rule: `tbd`
 
 ```solidity
-import {IInterface} from "../interfaces/IInterface.sol";
+import { IInterface } from '../interfaces/IInterface.sol';
 
-import {AnythingElse} from "../code/AnythingElse.sol";
+import { AnythingElse } from '../code/AnythingElse.sol';
 
-import {ThirdPartyCode} from "../../vendor/ThirdPartyCode.sol";
+import { ThirdPartyCode } from '../../vendor/ThirdPartyCode.sol';
 ```
 
 - An example would be the following. Note that third party interfaces go with the third party imports.
 
 ```solidity
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {IPool} from "../interfaces/pools/IPool.sol";
+import { ITypeAndVersion } from '../../shared/interfaces/ITypeAndVersion.sol';
+import { IPool } from '../interfaces/pools/IPool.sol';
 
-import {AggregateRateLimiter} from "../AggregateRateLimiter.sol";
-import {Client} from "../libraries/Client.sol";
+import { AggregateRateLimiter } from '../AggregateRateLimiter.sol';
+import { Client } from '../libraries/Client.sol';
 
-import {SafeERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
+import { SafeERC20 } from '@openzeppelin/contracts-4-8-3/token/ERC20/utils/SafeERC20.sol';
+import { IERC20 } from '@openzeppelin/contracts-4-8-3/token/ERC20/IERC20.sol';
 ```
 
 ## Variables
@@ -348,7 +337,6 @@ rule: `tbd`
   - rule: `explicit-types`
 - Mapping should always be named if Solidity allows it (≥0.8.18)
   - rule: `tbd`
-
 
 ## Functions
 
@@ -401,7 +389,7 @@ If created, interfaces should have a documented purpose. For example, an interfa
 
 ### Naming
 
-Interfaces should be named `IFoo` instead of `FooInterface`. This follows the patterns of popular [libraries like OpenZeppelin’s](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol#L9). 
+Interfaces should be named `IFoo` instead of `FooInterface`. This follows the patterns of popular [libraries like OpenZeppelin’s](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol#L9).
 
 rule: `interface-starts-with-i`
 
@@ -417,11 +405,7 @@ rule: `gas-struct-packing`
 ```solidity
 // Good
 function setConfig(uint64 _foo, uint64 _bar, uint64 _baz) external {
-  config = Config({
-    foo: _foo,
-    bar: _bar,
-    baz: _baz
-  });
+  config = Config({ foo: _foo, bar: _bar, baz: _baz });
 }
 
 // Bad

@@ -2,14 +2,17 @@
 pragma solidity ^0.8.24;
 
 import {IBurnMintERC20Upgradeable} from "../../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
-import {PausableUpgradeable} from "../../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
-import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
-import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
+import {PausableUpgradeable} from
+  "../../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
+import {IAccessControl} from "@openzeppelin/contracts-5-0-2/access/IAccessControl.sol";
+import {IERC20} from "@openzeppelin/contracts-5-0-2/interfaces/IERC20.sol";
 
 import {ERC20UpgradableBaseTest, IERC20UpgradeableBase} from "./ERC20UpgradableBaseTest.t.sol";
 
 contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
-  function should_Pause(address implementation) public {
+  function should_Pause(
+    address implementation
+  ) public {
     changePrank(DEFAULT_PAUSER);
 
     vm.expectEmit();
@@ -20,7 +23,9 @@ contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
     assertTrue(PausableUpgradeable(implementation).paused());
   }
 
-  function should_Unpause(address implementation) public {
+  function should_Unpause(
+    address implementation
+  ) public {
     changePrank(DEFAULT_PAUSER);
     IERC20UpgradeableBase(implementation).pause();
 
@@ -67,7 +72,9 @@ contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
     IERC20UpgradeableBase(implementation).unpause();
   }
 
-  function should_Mint_RevertWhen_ImplementationIsPaused(address implementation) public {
+  function should_Mint_RevertWhen_ImplementationIsPaused(
+    address implementation
+  ) public {
     changePrank(DEFAULT_PAUSER);
     IERC20UpgradeableBase(implementation).pause();
 
@@ -77,7 +84,9 @@ contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
     IBurnMintERC20Upgradeable(implementation).mint(STRANGER, AMOUNT);
   }
 
-  function should_Transfer_RevertWhen_ImplementationIsPaused(address implementation) public {
+  function should_Transfer_RevertWhen_ImplementationIsPaused(
+    address implementation
+  ) public {
     changePrank(i_mockPool);
     IBurnMintERC20Upgradeable(implementation).mint(STRANGER, AMOUNT);
 
@@ -89,7 +98,9 @@ contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
     IERC20(implementation).transfer(OWNER, AMOUNT);
   }
 
-  function should_Burn_RevertWhen_ImplementationIsPaused(address implementation) public {
+  function should_Burn_RevertWhen_ImplementationIsPaused(
+    address implementation
+  ) public {
     changePrank(DEFAULT_PAUSER);
     IERC20UpgradeableBase(implementation).pause();
 
@@ -100,7 +111,9 @@ contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
     IBurnMintERC20Upgradeable(implementation).burn(0);
   }
 
-  function should_BurnFrom_RevertWhen_ImplementationIsPaused(address implementation) public {
+  function should_BurnFrom_RevertWhen_ImplementationIsPaused(
+    address implementation
+  ) public {
     changePrank(DEFAULT_PAUSER);
     IERC20UpgradeableBase(implementation).pause();
 
@@ -110,7 +123,9 @@ contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
     IBurnMintERC20Upgradeable(implementation).burnFrom(STRANGER, 0);
   }
 
-  function should_BurnFrom_alias_RevertWhen_ImplementationIsPaused(address implementation) public {
+  function should_BurnFrom_alias_RevertWhen_ImplementationIsPaused(
+    address implementation
+  ) public {
     changePrank(DEFAULT_PAUSER);
     IERC20UpgradeableBase(implementation).pause();
 
@@ -120,7 +135,9 @@ contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
     IBurnMintERC20Upgradeable(implementation).burn(STRANGER, 0);
   }
 
-  function should_Approve_RevertWhen_ImplementationIsPaused(address implementation) public {
+  function should_Approve_RevertWhen_ImplementationIsPaused(
+    address implementation
+  ) public {
     changePrank(DEFAULT_PAUSER);
     IERC20UpgradeableBase(implementation).pause();
 
