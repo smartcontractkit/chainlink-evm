@@ -19,12 +19,15 @@ const COMPILER_SETTINGS = {
 
 const EXCLUDE_DIRS = [
   'src/v0.8/vendor/forge-std',
+  'src/v0.8/shared/token',
+  'src/v0.8/data-feeds',
   'src/v0.8/workflow',
   'src/v0.8/vrf',
   'src/v0.8/llo-feeds',
   'src/v0.8/keystone',
   'src/v0.8/functions',
   'src/v0.8/vendor/@eth-optimism',
+  'src/v0.8/vendor/openzeppelin-solidity-upgradeable',
 ]
 
 // prune forge style tests from hardhat paths
