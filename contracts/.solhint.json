@@ -10,6 +10,7 @@
 		"immutable-vars-naming": "off",
 		"no-inline-assembly": "off",
 		"contract-name-capwords": "off",
+        "import-path-check": "off",
 		"no-unused-import": "error",
 		"gas-struct-packing": "warn",
 		"interface-starts-with-i": "warn",
