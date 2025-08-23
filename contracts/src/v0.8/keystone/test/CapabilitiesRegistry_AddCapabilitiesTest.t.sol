@@ -42,7 +42,8 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        CapabilitiesRegistry.InvalidCapabilityConfigurationContractInterface.selector, nonExistentContract
+        CapabilitiesRegistry.InvalidCapabilityConfigurationContractInterface.selector,
+        nonExistentContract
       )
     );
     s_CapabilitiesRegistry.addCapabilities(capabilities);
@@ -54,8 +55,8 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
       contractWithoutERC165,
       abi.encodeWithSelector(
         IERC165.supportsInterface.selector,
-        ICapabilityConfiguration.getCapabilityConfiguration.selector
-          ^ ICapabilityConfiguration.beforeCapabilityConfigSet.selector
+        ICapabilityConfiguration.getCapabilityConfiguration.selector ^
+          ICapabilityConfiguration.beforeCapabilityConfigSet.selector
       ),
       abi.encode(false)
     );
@@ -65,7 +66,8 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        CapabilitiesRegistry.InvalidCapabilityConfigurationContractInterface.selector, contractWithoutERC165
+        CapabilitiesRegistry.InvalidCapabilityConfigurationContractInterface.selector,
+        contractWithoutERC165
       )
     );
     s_CapabilitiesRegistry.addCapabilities(capabilities);
@@ -79,8 +81,9 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
     emit CapabilitiesRegistry.CapabilityConfigured(hashedCapabilityId);
     s_CapabilitiesRegistry.addCapabilities(capabilities);
-    CapabilitiesRegistry.CapabilityInfo memory storedCapability =
-      s_CapabilitiesRegistry.getCapability(hashedCapabilityId);
+    CapabilitiesRegistry.CapabilityInfo memory storedCapability = s_CapabilitiesRegistry.getCapability(
+      hashedCapabilityId
+    );
 
     assertEq(storedCapability.labelledName, s_basicCapability.labelledName);
     assertEq(storedCapability.version, s_basicCapability.version);
@@ -93,14 +96,16 @@ contract CapabilitiesRegistry_AddCapabilitiesTest is BaseTest {
     capabilities[0] = s_capabilityWithConfigurationContract;
 
     bytes32 hashedCapabilityId = s_CapabilitiesRegistry.getHashedCapabilityId(
-      s_capabilityWithConfigurationContract.labelledName, s_capabilityWithConfigurationContract.version
+      s_capabilityWithConfigurationContract.labelledName,
+      s_capabilityWithConfigurationContract.version
     );
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
     emit CapabilitiesRegistry.CapabilityConfigured(hashedCapabilityId);
     s_CapabilitiesRegistry.addCapabilities(capabilities);
 
-    CapabilitiesRegistry.CapabilityInfo memory storedCapability =
-      s_CapabilitiesRegistry.getCapability(hashedCapabilityId);
+    CapabilitiesRegistry.CapabilityInfo memory storedCapability = s_CapabilitiesRegistry.getCapability(
+      hashedCapabilityId
+    );
 
     assertEq(storedCapability.labelledName, s_capabilityWithConfigurationContract.labelledName);
     assertEq(storedCapability.version, s_capabilityWithConfigurationContract.version);

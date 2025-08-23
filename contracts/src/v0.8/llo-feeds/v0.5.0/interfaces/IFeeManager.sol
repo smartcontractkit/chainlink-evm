@@ -23,9 +23,7 @@ interface IFeeManager is IERC165, IVerifierFeeManager {
    * @notice Sets the native surcharge
    * @param surcharge surcharge to be paid if paying in native
    */
-  function setNativeSurcharge(
-    uint64 surcharge
-  ) external;
+  function setNativeSurcharge(uint64 surcharge) external;
 
   /**
    * @notice Adds a subscriber to the fee manager
@@ -54,9 +52,7 @@ interface IFeeManager is IERC165, IVerifierFeeManager {
    * @notice Admin function to pay the LINK deficit for a given config digest
    * @param configDigest the config digest to pay the deficit for
    */
-  function payLinkDeficit(
-    bytes32 configDigest
-  ) external;
+  function payLinkDeficit(bytes32 configDigest) external;
 
   /**
    * @notice Adds a subscriber to the fee manager

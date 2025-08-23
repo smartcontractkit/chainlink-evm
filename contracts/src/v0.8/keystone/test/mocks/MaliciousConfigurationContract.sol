@@ -10,15 +10,11 @@ import {IERC165} from "@openzeppelin/contracts-4-8-3/interfaces/IERC165.sol";
 contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Constants {
   bytes32 internal s_capabilityWithConfigurationContractId;
 
-  constructor(
-    bytes32 capabilityWithConfigContractId
-  ) {
+  constructor(bytes32 capabilityWithConfigContractId) {
     s_capabilityWithConfigurationContractId = capabilityWithConfigContractId;
   }
 
-  function getCapabilityConfiguration(
-    uint32
-  ) external pure returns (bytes memory configuration) {
+  function getCapabilityConfiguration(uint32) external pure returns (bytes memory configuration) {
     return bytes("");
   }
 
@@ -48,9 +44,7 @@ contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Co
     CapabilitiesRegistry(msg.sender).updateNodes(nodes);
   }
 
-  function supportsInterface(
-    bytes4 interfaceId
-  ) public pure returns (bool) {
+  function supportsInterface(bytes4 interfaceId) public pure returns (bool) {
     return interfaceId == type(ICapabilityConfiguration).interfaceId || interfaceId == type(IERC165).interfaceId;
   }
 }

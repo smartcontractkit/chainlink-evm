@@ -2,8 +2,7 @@
 
 pragma solidity 0.8.6;
 
-import {AutomationCompatibleInterface as KeeperCompatibleInterface} from
-  "../../automation/interfaces/AutomationCompatibleInterface.sol";
+import {AutomationCompatibleInterface as KeeperCompatibleInterface} from "../../automation/interfaces/AutomationCompatibleInterface.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
@@ -115,10 +114,11 @@ contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompat
     Target memory target;
     for (uint256 idx = 0; idx < watchList.length; idx++) {
       target = s_targets[watchList[idx]];
-      (uint96 subscriptionBalance,,,) = COORDINATOR.getSubscription(watchList[idx]);
+      (uint96 subscriptionBalance, , , ) = COORDINATOR.getSubscription(watchList[idx]);
       if (
-        target.lastTopUpTimestamp + minWaitPeriod <= block.timestamp && contractBalance >= target.topUpAmountJuels
-          && subscriptionBalance < target.minBalanceJuels
+        target.lastTopUpTimestamp + minWaitPeriod <= block.timestamp &&
+        contractBalance >= target.topUpAmountJuels &&
+        subscriptionBalance < target.minBalanceJuels
       ) {
         needsFunding[count] = watchList[idx];
         count++;
@@ -137,21 +137,24 @@ contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompat
    * @notice Send funds to the subscriptions provided.
    * @param needsFunding the list of subscriptions to fund
    */
-  function topUp(
-    uint64[] memory needsFunding
-  ) public whenNotPaused {
+  function topUp(uint64[] memory needsFunding) public whenNotPaused {
     uint256 minWaitPeriodSeconds = s_minWaitPeriodSeconds;
     uint256 contractBalance = LINKTOKEN.balanceOf(address(this));
     Target memory target;
     for (uint256 idx = 0; idx < needsFunding.length; idx++) {
       target = s_targets[needsFunding[idx]];
-      (uint96 subscriptionBalance,,,) = COORDINATOR.getSubscription(needsFunding[idx]);
+      (uint96 subscriptionBalance, , , ) = COORDINATOR.getSubscription(needsFunding[idx]);
       if (
-        target.isActive && target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp
-          && subscriptionBalance < target.minBalanceJuels && contractBalance >= target.topUpAmountJuels
+        target.isActive &&
+        target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp &&
+        subscriptionBalance < target.minBalanceJuels &&
+        contractBalance >= target.topUpAmountJuels
       ) {
-        bool success =
-          LINKTOKEN.transferAndCall(address(COORDINATOR), target.topUpAmountJuels, abi.encode(needsFunding[idx]));
+        bool success = LINKTOKEN.transferAndCall(
+          address(COORDINATOR),
+          target.topUpAmountJuels,
+          abi.encode(needsFunding[idx])
+        );
         if (success) {
           s_targets[needsFunding[idx]].lastTopUpTimestamp = uint56(block.timestamp);
           contractBalance -= target.topUpAmountJuels;
@@ -184,9 +187,7 @@ contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompat
    * @notice Called by the keeper to send funds to underfunded addresses.
    * @param performData the abi encoded list of addresses to fund
    */
-  function performUpkeep(
-    bytes calldata performData
-  ) external override onlyKeeperRegistry whenNotPaused {
+  function performUpkeep(bytes calldata performData) external override onlyKeeperRegistry whenNotPaused {
     uint64[] memory needsFunding = abi.decode(performData, (uint64[]));
     topUp(needsFunding);
   }
@@ -206,9 +207,7 @@ contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompat
   /**
    * @notice Sets the LINK token address.
    */
-  function setLinkTokenAddress(
-    address linkTokenAddress
-  ) public onlyOwner {
+  function setLinkTokenAddress(address linkTokenAddress) public onlyOwner {
     // solhint-disable-next-line gas-custom-errors, reason-string
     require(linkTokenAddress != address(0));
     emit LinkTokenAddressUpdated(address(LINKTOKEN), linkTokenAddress);
@@ -218,9 +217,7 @@ contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompat
   /**
    * @notice Sets the VRF coordinator address.
    */
-  function setVRFCoordinatorV2Address(
-    address coordinatorAddress
-  ) public onlyOwner {
+  function setVRFCoordinatorV2Address(address coordinatorAddress) public onlyOwner {
     // solhint-disable-next-line gas-custom-errors, reason-string
     require(coordinatorAddress != address(0));
     emit VRFCoordinatorV2AddressUpdated(address(COORDINATOR), coordinatorAddress);
@@ -230,9 +227,7 @@ contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompat
   /**
    * @notice Sets the keeper registry address.
    */
-  function setKeeperRegistryAddress(
-    address keeperRegistryAddress
-  ) public onlyOwner {
+  function setKeeperRegistryAddress(address keeperRegistryAddress) public onlyOwner {
     // solhint-disable-next-line gas-custom-errors, reason-string
     require(keeperRegistryAddress != address(0));
     emit KeeperRegistryAddressUpdated(s_keeperRegistryAddress, keeperRegistryAddress);
@@ -242,9 +237,7 @@ contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompat
   /**
    * @notice Sets the minimum wait period (in seconds) for subscription ids between funding.
    */
-  function setMinWaitPeriodSeconds(
-    uint256 period
-  ) public onlyOwner {
+  function setMinWaitPeriodSeconds(uint256 period) public onlyOwner {
     emit MinWaitPeriodUpdated(s_minWaitPeriodSeconds, period);
     s_minWaitPeriodSeconds = period;
   }

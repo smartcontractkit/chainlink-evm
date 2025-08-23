@@ -126,7 +126,11 @@ contract ZKSyncAutomationRegistry2_3 is ZKSyncAutomationRegistryBase2_3, OCR2Abs
    */
   function _handleReport(HotVars memory hotVars, Report memory report) private {
     UpkeepTransmitInfo[] memory upkeepTransmitInfo = new UpkeepTransmitInfo[](report.upkeepIds.length);
-    TransmitVars memory transmitVars = TransmitVars({numUpkeepsPassedChecks: 0, totalReimbursement: 0, totalPremium: 0});
+    TransmitVars memory transmitVars = TransmitVars({
+      numUpkeepsPassedChecks: 0,
+      totalReimbursement: 0,
+      totalPremium: 0
+    });
 
     uint256 blocknumber = hotVars.chainModule.blockNumber();
     uint256 gasOverhead;
@@ -135,8 +139,13 @@ contract ZKSyncAutomationRegistry2_3 is ZKSyncAutomationRegistryBase2_3, OCR2Abs
       upkeepTransmitInfo[i].upkeep = s_upkeep[report.upkeepIds[i]];
       upkeepTransmitInfo[i].triggerType = _getTriggerType(report.upkeepIds[i]);
 
-      (upkeepTransmitInfo[i].earlyChecksPassed, upkeepTransmitInfo[i].dedupID) =
-        _prePerformChecks(report.upkeepIds[i], blocknumber, report.triggers[i], upkeepTransmitInfo[i], hotVars);
+      (upkeepTransmitInfo[i].earlyChecksPassed, upkeepTransmitInfo[i].dedupID) = _prePerformChecks(
+        report.upkeepIds[i],
+        blocknumber,
+        report.triggers[i],
+        upkeepTransmitInfo[i],
+        hotVars
+      );
 
       if (upkeepTransmitInfo[i].earlyChecksPassed) {
         transmitVars.numUpkeepsPassedChecks += 1;
@@ -145,8 +154,11 @@ contract ZKSyncAutomationRegistry2_3 is ZKSyncAutomationRegistryBase2_3, OCR2Abs
       }
 
       // Actually perform the target upkeep
-      (upkeepTransmitInfo[i].performSuccess, upkeepTransmitInfo[i].gasUsed) =
-        _performUpkeep(upkeepTransmitInfo[i].upkeep.forwarder, report.gasLimits[i], report.performDatas[i]);
+      (upkeepTransmitInfo[i].performSuccess, upkeepTransmitInfo[i].gasUsed) = _performUpkeep(
+        upkeepTransmitInfo[i].upkeep.forwarder,
+        report.gasLimits[i],
+        report.performDatas[i]
+      );
 
       // Store last perform block number / deduping key for upkeep
       _updateTriggerMarker(report.upkeepIds[i], blocknumber, upkeepTransmitInfo[i]);
@@ -165,7 +177,10 @@ contract ZKSyncAutomationRegistry2_3 is ZKSyncAutomationRegistryBase2_3, OCR2Abs
     }
 
     gasOverhead +=
-      16 * msg.data.length + ACCOUNTING_FIXED_GAS_OVERHEAD + (REGISTRY_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1));
+      16 *
+      msg.data.length +
+      ACCOUNTING_FIXED_GAS_OVERHEAD +
+      (REGISTRY_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1));
     gasOverhead = gasOverhead / transmitVars.numUpkeepsPassedChecks + ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD;
 
     {
@@ -227,11 +242,20 @@ contract ZKSyncAutomationRegistry2_3 is ZKSyncAutomationRegistryBase2_3, OCR2Abs
     uint64 offchainConfigVersion,
     bytes memory offchainConfig
   ) external override {
-    (OnchainConfig memory config, IERC20[] memory billingTokens, BillingConfig[] memory billingConfigs) =
-      abi.decode(onchainConfigBytes, (OnchainConfig, IERC20[], BillingConfig[]));
+    (OnchainConfig memory config, IERC20[] memory billingTokens, BillingConfig[] memory billingConfigs) = abi.decode(
+      onchainConfigBytes,
+      (OnchainConfig, IERC20[], BillingConfig[])
+    );
 
     setConfigTypeSafe(
-      signers, transmitters, f, config, offchainConfigVersion, offchainConfig, billingTokens, billingConfigs
+      signers,
+      transmitters,
+      f,
+      config,
+      offchainConfigVersion,
+      offchainConfig,
+      billingTokens,
+      billingConfigs
     );
   }
 

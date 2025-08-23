@@ -111,8 +111,15 @@ contract AutomationRegistryLogicA2_2 is AutomationRegistryBase2_2, Chainable {
 
     (upkeepNeeded, performData) = abi.decode(result, (bool, bytes));
     if (!upkeepNeeded) {
-      return
-        (false, bytes(""), UpkeepFailureReason.UPKEEP_NOT_NEEDED, gasUsed, upkeep.performGas, fastGasWei, linkNative);
+      return (
+        false,
+        bytes(""),
+        UpkeepFailureReason.UPKEEP_NOT_NEEDED,
+        gasUsed,
+        upkeep.performGas,
+        fastGasWei,
+        linkNative
+      );
     }
 
     if (performData.length > s_storage.maxPerformDataSize) {
@@ -225,8 +232,9 @@ contract AutomationRegistryLogicA2_2 is AutomationRegistryBase2_2, Chainable {
     if (msg.sender != owner() && !s_registrars.contains(msg.sender)) revert OnlyCallableByOwnerOrRegistrar();
     if (!target.isContract()) revert NotAContract();
     id = _createID(triggerType);
-    IAutomationForwarder forwarder =
-      IAutomationForwarder(address(new AutomationForwarder(target, address(this), i_automationForwarderLogic)));
+    IAutomationForwarder forwarder = IAutomationForwarder(
+      address(new AutomationForwarder(target, address(this), i_automationForwarderLogic))
+    );
     _createUpkeep(
       id,
       Upkeep({
@@ -271,9 +279,7 @@ contract AutomationRegistryLogicA2_2 is AutomationRegistryBase2_2, Chainable {
    * @dev if a user cancels an upkeep, their funds are locked for CANCELLATION_DELAY blocks to
    * allow any pending performUpkeep txs time to get confirmed
    */
-  function cancelUpkeep(
-    uint256 id
-  ) external {
+  function cancelUpkeep(uint256 id) external {
     Upkeep memory upkeep = s_upkeep[id];
     bool isOwner = msg.sender == owner();
 
@@ -328,8 +334,8 @@ contract AutomationRegistryLogicA2_2 is AutomationRegistryBase2_2, Chainable {
    */
   function migrateUpkeeps(uint256[] calldata ids, address destination) external {
     if (
-      s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING
-        && s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
+      s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING &&
+      s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
     ) revert MigrationNotPermitted();
     if (s_storage.transcoder == ZERO_ADDRESS) revert TranscoderNotSet();
     if (ids.length == 0) revert ArrayHasNoEntries();
@@ -362,11 +368,20 @@ contract AutomationRegistryLogicA2_2 is AutomationRegistryBase2_2, Chainable {
       emit UpkeepMigrated(id, upkeep.balance, destination);
     }
     s_expectedLinkBalance = s_expectedLinkBalance - totalBalanceRemaining;
-    bytes memory encodedUpkeeps =
-      abi.encode(ids, upkeeps, new address[](ids.length), admins, checkDatas, triggerConfigs, offchainConfigs);
+    bytes memory encodedUpkeeps = abi.encode(
+      ids,
+      upkeeps,
+      new address[](ids.length),
+      admins,
+      checkDatas,
+      triggerConfigs,
+      offchainConfigs
+    );
     MigratableKeeperRegistryInterfaceV2(destination).receiveUpkeeps(
       UpkeepTranscoderInterfaceV2(s_storage.transcoder).transcodeUpkeeps(
-        UPKEEP_VERSION_BASE, MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(), encodedUpkeeps
+        UPKEEP_VERSION_BASE,
+        MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(),
+        encodedUpkeeps
       )
     );
     i_link.transfer(destination, totalBalanceRemaining);
@@ -377,12 +392,10 @@ contract AutomationRegistryLogicA2_2 is AutomationRegistryBase2_2, Chainable {
    * @param encodedUpkeeps the raw upkeep data to import
    * @dev this function is never called directly, it is only called by another registry's migrate function
    */
-  function receiveUpkeeps(
-    bytes calldata encodedUpkeeps
-  ) external {
+  function receiveUpkeeps(bytes calldata encodedUpkeeps) external {
     if (
-      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.INCOMING
-        && s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.BIDIRECTIONAL
+      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.INCOMING &&
+      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.BIDIRECTIONAL
     ) revert MigrationNotPermitted();
     (
       uint256[] memory ids,
@@ -400,7 +413,12 @@ contract AutomationRegistryLogicA2_2 is AutomationRegistryBase2_2, Chainable {
         );
       }
       _createUpkeep(
-        ids[idx], upkeeps[idx], upkeepAdmins[idx], checkDatas[idx], triggerConfigs[idx], offchainConfigs[idx]
+        ids[idx],
+        upkeeps[idx],
+        upkeepAdmins[idx],
+        checkDatas[idx],
+        triggerConfigs[idx],
+        offchainConfigs[idx]
       );
       emit UpkeepReceived(ids[idx], upkeeps[idx].balance, msg.sender);
     }

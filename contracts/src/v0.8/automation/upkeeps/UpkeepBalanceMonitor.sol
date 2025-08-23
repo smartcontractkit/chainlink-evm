@@ -147,11 +147,12 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
 
   /// @notice Gets list of upkeeps ids that are underfunded and returns a keeper-compatible payload.
   /// @return upkeepNeeded signals if upkeep is needed, performData is an abi encoded list of subscription ids that need funds
-  function checkUpkeep(
-    bytes calldata
-  ) external view returns (bool upkeepNeeded, bytes memory performData) {
-    (uint256[] memory needsFunding, address[] memory registryAddresses, uint96[] memory topUpAmounts) =
-      getUnderfundedUpkeeps();
+  function checkUpkeep(bytes calldata) external view returns (bool upkeepNeeded, bytes memory performData) {
+    (
+      uint256[] memory needsFunding,
+      address[] memory registryAddresses,
+      uint96[] memory topUpAmounts
+    ) = getUnderfundedUpkeeps();
     upkeepNeeded = needsFunding.length > 0;
     if (upkeepNeeded) {
       performData = abi.encode(needsFunding, registryAddresses, topUpAmounts);
@@ -161,11 +162,11 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
 
   /// @notice Called by the keeper to send funds to underfunded addresses.
   /// @param performData the abi encoded list of addresses to fund
-  function performUpkeep(
-    bytes calldata performData
-  ) external {
-    (uint256[] memory upkeepIDs, address[] memory registryAddresses, uint96[] memory topUpAmounts) =
-      abi.decode(performData, (uint256[], address[], uint96[]));
+  function performUpkeep(bytes calldata performData) external {
+    (uint256[] memory upkeepIDs, address[] memory registryAddresses, uint96[] memory topUpAmounts) = abi.decode(
+      performData,
+      (uint256[], address[], uint96[])
+    );
     topUp(upkeepIDs, registryAddresses, topUpAmounts);
   }
 
@@ -212,12 +213,12 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
 
   /// @notice Sets the contract config
   /// @param config the new config
-  function setConfig(
-    Config memory config
-  ) public onlyOwner {
+  function setConfig(Config memory config) public onlyOwner {
     if (
-      config.maxBatchSize == 0 || config.minPercentage < 100 || config.targetPercentage <= config.minPercentage
-        || config.maxTopUpAmount == 0
+      config.maxBatchSize == 0 ||
+      config.minPercentage < 100 ||
+      config.targetPercentage <= config.minPercentage ||
+      config.maxTopUpAmount == 0
     ) {
       revert InvalidConfig();
     }
@@ -228,9 +229,7 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
   /// @notice Sets the upkeep's forwarder contract
   /// @param forwarderAddress the new forwarder
   /// @dev this should only need to be called once, after registering the contract with the registry
-  function setForwarder(
-    address forwarderAddress
-  ) external onlyOwner {
+  function setForwarder(address forwarderAddress) external onlyOwner {
     s_forwarderAddress = forwarderAddress;
     emit ForwarderSet(forwarderAddress);
   }

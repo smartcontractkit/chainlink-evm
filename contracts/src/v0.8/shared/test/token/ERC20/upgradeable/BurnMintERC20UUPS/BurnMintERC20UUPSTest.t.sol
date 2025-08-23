@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {
-  BurnMintERC20UUPS,
-  Initializable,
-  UUPSUpgradeable
-} from "../../../../../token/ERC20/upgradeable/BurnMintERC20UUPS.sol";
+import {BurnMintERC20UUPS, Initializable, UUPSUpgradeable} from "../../../../../token/ERC20/upgradeable/BurnMintERC20UUPS.sol";
 import {IERC1822Proxiable} from "@openzeppelin/contracts-5-0-2/interfaces/draft-IERC1822.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts-5-0-2/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -50,7 +46,8 @@ contract BurnMintERC20UUPSTest is
       new ERC1967Proxy(
         implementation,
         abi.encodeCall(
-          BurnMintERC20UUPS.initialize, (name, symbol, decimals, maxSupply, preMint, defaultAdmin, defaultUpgrader)
+          BurnMintERC20UUPS.initialize,
+          (name, symbol, decimals, maxSupply, preMint, defaultAdmin, defaultUpgrader)
         )
       )
     );
@@ -61,8 +58,15 @@ contract BurnMintERC20UUPSTest is
   function setUp() public virtual override {
     ERC20UpgradableBaseTest.setUp();
 
-    s_burnMintERC20UUPS =
-      deployBurnMintERC20UUPS(NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN, DEFAULT_UPGRADER);
+    s_burnMintERC20UUPS = deployBurnMintERC20UUPS(
+      NAME,
+      SYMBOL,
+      DECIMALS,
+      MAX_SUPPLY,
+      PRE_MINT,
+      DEFAULT_ADMIN,
+      DEFAULT_UPGRADER
+    );
 
     // Grant mint and burn role to the mock pool address
     s_burnMintERC20UUPS.grantMintAndBurnRoles(i_mockPool);
@@ -79,8 +83,15 @@ contract BurnMintERC20UUPSTest is
 
   function test_Initialize_WithPreMint() public {
     uint256 newPreMint = 1e18;
-    BurnMintERC20UUPS newBurnMintERC20UUPS =
-      deployBurnMintERC20UUPS(NAME, SYMBOL, DECIMALS, MAX_SUPPLY, newPreMint, DEFAULT_ADMIN, DEFAULT_UPGRADER);
+    BurnMintERC20UUPS newBurnMintERC20UUPS = deployBurnMintERC20UUPS(
+      NAME,
+      SYMBOL,
+      DECIMALS,
+      MAX_SUPPLY,
+      newPreMint,
+      DEFAULT_ADMIN,
+      DEFAULT_UPGRADER
+    );
 
     should_Initialize_WithPreMint(address(newBurnMintERC20UUPS), newPreMint);
   }
@@ -89,12 +100,15 @@ contract BurnMintERC20UUPSTest is
     uint256 newPreMint = MAX_SUPPLY + 1;
     address implementation = address(new BurnMintERC20UUPS());
 
-    vm.expectRevert(abi.encodeWithSelector(BurnMintERC20UUPS.BurnMintERC20UUPS__MaxSupplyExceeded.selector, newPreMint));
+    vm.expectRevert(
+      abi.encodeWithSelector(BurnMintERC20UUPS.BurnMintERC20UUPS__MaxSupplyExceeded.selector, newPreMint)
+    );
 
     new ERC1967Proxy(
       implementation,
       abi.encodeCall(
-        BurnMintERC20UUPS.initialize, (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, newPreMint, DEFAULT_ADMIN, DEFAULT_UPGRADER)
+        BurnMintERC20UUPS.initialize,
+        (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, newPreMint, DEFAULT_ADMIN, DEFAULT_UPGRADER)
       )
     );
   }
@@ -145,7 +159,8 @@ contract BurnMintERC20UUPSTest is
 
   function test_Approve_RevertWhen_RecipientIsImplementationItself() public {
     should_Approve_RevertWhen_RecipientIsImplementationItself(
-      address(s_burnMintERC20UUPS), BurnMintERC20UUPS.BurnMintERC20UUPS__InvalidRecipient.selector
+      address(s_burnMintERC20UUPS),
+      BurnMintERC20UUPS.BurnMintERC20UUPS__InvalidRecipient.selector
     );
   }
 
@@ -163,13 +178,15 @@ contract BurnMintERC20UUPSTest is
 
   function test_Mint_RevertWhen_AmountExceedsMaxSupply() public {
     should_Mint_RevertWhen_AmountExceedsMaxSupply(
-      address(s_burnMintERC20UUPS), BurnMintERC20UUPS.BurnMintERC20UUPS__MaxSupplyExceeded.selector
+      address(s_burnMintERC20UUPS),
+      BurnMintERC20UUPS.BurnMintERC20UUPS__MaxSupplyExceeded.selector
     );
   }
 
   function test_Mint_RevertWhen_RecipientIsImplementationItself() public {
     should_Mint_RevertWhen_RecipientIsImplementationItself(
-      address(s_burnMintERC20UUPS), BurnMintERC20UUPS.BurnMintERC20UUPS__InvalidRecipient.selector
+      address(s_burnMintERC20UUPS),
+      BurnMintERC20UUPS.BurnMintERC20UUPS__InvalidRecipient.selector
     );
   }
 
@@ -187,7 +204,8 @@ contract BurnMintERC20UUPSTest is
 
   function test_BurnFrom_RevertWhen_CallerDoesNotHaveBurnerRole() public {
     should_BurnFrom_RevertWhen_CallerDoesNotHaveBurnerRole(
-      address(s_burnMintERC20UUPS), s_burnMintERC20UUPS.BURNER_ROLE()
+      address(s_burnMintERC20UUPS),
+      s_burnMintERC20UUPS.BURNER_ROLE()
     );
   }
 
@@ -197,7 +215,8 @@ contract BurnMintERC20UUPSTest is
 
   function test_BurnFrom_alias_RevertWhen_CallerDoesNotHaveBurnerRole() public {
     should_BurnFrom_alias_RevertWhen_CallerDoesNotHaveBurnerRole(
-      address(s_burnMintERC20UUPS), s_burnMintERC20UUPS.BURNER_ROLE()
+      address(s_burnMintERC20UUPS),
+      s_burnMintERC20UUPS.BURNER_ROLE()
     );
   }
 
@@ -207,7 +226,9 @@ contract BurnMintERC20UUPSTest is
 
   function test_GrantMintAndBurnRoles() public {
     should_GrantMintAndBurnRoles(
-      address(s_burnMintERC20UUPS), s_burnMintERC20UUPS.MINTER_ROLE(), s_burnMintERC20UUPS.BURNER_ROLE()
+      address(s_burnMintERC20UUPS),
+      s_burnMintERC20UUPS.MINTER_ROLE(),
+      s_burnMintERC20UUPS.BURNER_ROLE()
     );
   }
 

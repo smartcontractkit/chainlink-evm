@@ -15,7 +15,7 @@ contract VerifierProxyInitializeVerifierTest is BaseTestWithConfiguredVerifierAn
   }
 
   function test_revertsIfDigestAlreadySet() public {
-    (,, bytes32 takenDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (, , bytes32 takenDigest) = s_verifier.latestConfigDetails(FEED_ID);
 
     address maliciousVerifier = address(666);
     bytes32 maliciousDigest = bytes32("malicious-digest");
@@ -33,7 +33,7 @@ contract VerifierProxyInitializeVerifierTest is BaseTestWithConfiguredVerifierAn
   }
 
   function test_updatesVerifierIfVerifier() public {
-    (,, bytes32 prevDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (, , bytes32 prevDigest) = s_verifier.latestConfigDetails(FEED_ID);
     changePrank(address(s_verifier));
     s_verifierProxy.setVerifier(prevDigest, bytes32("new-config"), new Common.AddressAndWeight[](0));
     assertEq(s_verifierProxy.getVerifier(bytes32("new-config")), address(s_verifier));

@@ -95,9 +95,7 @@ contract FixtureVRFCoordinatorV2_5 is BaseTest, VRF {
 
   // note: Call this function via this.getProvingKeyParts to be able to pass memory as calldata and
   // index over the byte array.
-  function _getProvingKeyParts(
-    bytes calldata uncompressedKey
-  ) public pure returns (uint256[2] memory) {
+  function _getProvingKeyParts(bytes calldata uncompressedKey) public pure returns (uint256[2] memory) {
     uint256 keyPart1 = uint256(bytes32(uncompressedKey[0:32]));
     uint256 keyPart2 = uint256(bytes32(uncompressedKey[32:64]));
     return [keyPart1, keyPart2];

@@ -93,8 +93,14 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
     uint256 dataVersion,
     bytes calldata data
   ) external override validateFromLINK {
-    (bytes32 requestId, uint256 expiration) =
-      _verifyAndProcessOracleRequest(sender, payment, callbackAddress, callbackFunctionId, nonce, dataVersion);
+    (bytes32 requestId, uint256 expiration) = _verifyAndProcessOracleRequest(
+      sender,
+      payment,
+      callbackAddress,
+      callbackFunctionId,
+      nonce,
+      dataVersion
+    );
     emit OracleRequest(specId, sender, requestId, payment, sender, callbackFunctionId, expiration, dataVersion, data);
   }
 
@@ -117,8 +123,14 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
     uint256 dataVersion,
     bytes calldata data
   ) external override validateFromLINK {
-    (bytes32 requestId, uint256 expiration) =
-      _verifyAndProcessOracleRequest(sender, payment, sender, callbackFunctionId, nonce, dataVersion);
+    (bytes32 requestId, uint256 expiration) = _verifyAndProcessOracleRequest(
+      sender,
+      payment,
+      sender,
+      callbackFunctionId,
+      nonce,
+      dataVersion
+    );
     emit OracleRequest(specId, sender, requestId, payment, sender, callbackFunctionId, expiration, dataVersion, data);
   }
 
@@ -154,7 +166,7 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
     // All updates to the oracle's fulfillment should come before calling the
     // callback(addr+functionId) as it is untrusted.
     // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
-    (bool success,) = callbackAddress.call(abi.encodeWithSelector(callbackFunctionId, requestId, data)); // solhint-disable-line avoid-low-level-calls
+    (bool success, ) = callbackAddress.call(abi.encodeWithSelector(callbackFunctionId, requestId, data)); // solhint-disable-line avoid-low-level-calls
     return success;
   }
 
@@ -191,7 +203,7 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
     // All updates to the oracle's fulfillment should come before calling the
     // callback(addr+functionId) as it is untrusted.
     // See: https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
-    (bool success,) = callbackAddress.call(abi.encodePacked(callbackFunctionId, data)); // solhint-disable-line avoid-low-level-calls
+    (bool success, ) = callbackAddress.call(abi.encodePacked(callbackFunctionId, data)); // solhint-disable-line avoid-low-level-calls
     return success;
   }
 
@@ -212,9 +224,7 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
   // with future contracts.
   // @dev Must be the pending owner on the contract
   // @param ownable list of addresses of Ownable contracts to accept
-  function acceptOwnableContracts(
-    address[] calldata ownable
-  ) public validateAuthorizedSenderSetter {
+  function acceptOwnableContracts(address[] calldata ownable) public validateAuthorizedSenderSetter {
     for (uint256 i = 0; i < ownable.length; ++i) {
       s_owned[ownable[i]] = true;
       emit OwnableContractAccepted(ownable[i]);
@@ -275,7 +285,7 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
   function ownerForward(address to, bytes calldata data) external onlyOwner validateNotToLINK(to) {
     require(to.code.length != 0, "Must forward to a contract");
     // solhint-disable-next-line avoid-low-level-calls
-    (bool status,) = to.call(data);
+    (bool status, ) = to.call(data);
     require(status, "Forwarded call failed");
   }
 
@@ -305,7 +315,7 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
     for (uint256 i = 0; i < receivers.length; ++i) {
       uint256 sendAmount = amounts[i];
       valueRemaining = valueRemaining - sendAmount;
-      (bool success,) = receivers[i].call{value: sendAmount}("");
+      (bool success, ) = receivers[i].call{value: sendAmount}("");
       require(success, "Address: unable to send value, recipient may have reverted");
     }
     require(valueRemaining == 0, "Too much ETH sent");
@@ -461,35 +471,27 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
 
   // @dev Reverts if amount requested is greater than withdrawable balance
   // @param amount The given amount to compare to `s_withdrawableTokens`
-  modifier validateAvailableFunds(
-    uint256 amount
-  ) {
+  modifier validateAvailableFunds(uint256 amount) {
     require(_fundsAvailable() >= amount, "Amount requested is greater than withdrawable balance");
     _;
   }
 
   // @dev Reverts if request ID does not exist
   // @param requestId The given request ID to check in stored `commitments`
-  modifier validateRequestId(
-    bytes32 requestId
-  ) {
+  modifier validateRequestId(bytes32 requestId) {
     require(s_commitments[requestId].paramsHash != 0, "Must have a valid requestId");
     _;
   }
 
   // @dev Reverts if the callback address is the LINK token
   // @param to The callback address
-  modifier validateNotToLINK(
-    address to
-  ) {
+  modifier validateNotToLINK(address to) {
     require(to != address(i_linkToken), "Cannot call to LINK");
     _;
   }
 
   // @dev Reverts if the target address is owned by the operator
-  modifier validateCallbackAddress(
-    address callbackAddress
-  ) {
+  modifier validateCallbackAddress(address callbackAddress) {
     require(!s_owned[callbackAddress], "Cannot call owned contract");
     _;
   }

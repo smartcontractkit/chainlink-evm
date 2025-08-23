@@ -172,9 +172,7 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    * @dev only owner can call this
    * @param recipient address where to send the funds
    */
-  function withdrawFundsTo(
-    address payable recipient
-  ) external onlyOwner {
+  function withdrawFundsTo(address payable recipient) external onlyOwner {
     uint256 amount = address(this).balance;
     Address.sendValue(recipient, amount);
   }
@@ -195,8 +193,9 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
     uint256 maxSubmissionCost = _approximateMaxSubmissionCost(message.length);
     uint256 maxGas = 120_000; // static `maxGas` for L2 -> L1 transfer
     uint256 gasPriceBid = s_gasConfig.gasPriceBid;
-    uint256 l1PaymentValue =
-      s_paymentStrategy == PaymentStrategy.L1 ? _maxRetryableTicketCost(maxSubmissionCost, maxGas, gasPriceBid) : 0;
+    uint256 l1PaymentValue = s_paymentStrategy == PaymentStrategy.L1
+      ? _maxRetryableTicketCost(maxSubmissionCost, maxGas, gasPriceBid)
+      : 0;
     // NOTICE: In the case of PaymentStrategy.L2 the L2 xDomain alias address needs to be funded, as it will be paying the fee.
     id = IArbitrumDelayedInbox(CROSS_DOMAIN_MESSENGER).createRetryableTicketNoRefundAliasRewrite{value: l1PaymentValue}(
       ARBSYS_ADDR, // target
@@ -218,9 +217,7 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    * @dev only owner can call this
    * @param accessController new AccessControllerInterface contract address
    */
-  function setConfigAC(
-    address accessController
-  ) external onlyOwner {
+  function setConfigAC(address accessController) external onlyOwner {
     _setConfigAC(accessController);
   }
 
@@ -245,9 +242,7 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    * @dev access control provided by `configAC`
    * @param _paymentStrategy strategy describing how the contract pays for xDomain calls
    */
-  function setPaymentStrategy(
-    PaymentStrategy _paymentStrategy
-  ) external onlyOwnerOrConfigAccess {
+  function setPaymentStrategy(PaymentStrategy _paymentStrategy) external onlyOwnerOrConfigAccess {
     _setPaymentStrategy(_paymentStrategy);
   }
 
@@ -283,8 +278,9 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
     uint256 maxSubmissionCost = _approximateMaxSubmissionCost(message.length);
     uint256 maxGas = s_gasConfig.maxGas;
     uint256 gasPriceBid = s_gasConfig.gasPriceBid;
-    uint256 l1PaymentValue =
-      s_paymentStrategy == PaymentStrategy.L1 ? _maxRetryableTicketCost(maxSubmissionCost, maxGas, gasPriceBid) : 0;
+    uint256 l1PaymentValue = s_paymentStrategy == PaymentStrategy.L1
+      ? _maxRetryableTicketCost(maxSubmissionCost, maxGas, gasPriceBid)
+      : 0;
     // NOTICE: In the case of PaymentStrategy.L2 the L2 xDomain alias address needs to be funded, as it will be paying the fee.
     // We also ignore the returned msg number, that can be queried via the `InboxMessageDelivered` event.
     IArbitrumDelayedInbox(CROSS_DOMAIN_MESSENGER).createRetryableTicketNoRefundAliasRewrite{value: l1PaymentValue}(
@@ -303,9 +299,7 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
   }
 
   /// @notice internal method that stores the payment strategy
-  function _setPaymentStrategy(
-    PaymentStrategy _paymentStrategy
-  ) internal {
+  function _setPaymentStrategy(PaymentStrategy _paymentStrategy) internal {
     s_paymentStrategy = _paymentStrategy;
     emit PaymentStrategySet(_paymentStrategy);
   }
@@ -323,9 +317,7 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
   }
 
   /// @notice Internal method that stores the configuration access controller
-  function _setConfigAC(
-    address accessController
-  ) internal {
+  function _setConfigAC(address accessController) internal {
     address previousAccessController = address(s_configAC);
     if (accessController != previousAccessController) {
       s_configAC = AccessControllerInterface(accessController);
@@ -339,12 +331,12 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    * implemented in Arbitrum DelayedInbox's calculateRetryableSubmissionFee function
    * @param calldataSizeInBytes xDomain message size in bytes
    */
-  function _approximateMaxSubmissionCost(
-    uint256 calldataSizeInBytes
-  ) internal view returns (uint256) {
-    return IArbitrumDelayedInbox(CROSS_DOMAIN_MESSENGER).calculateRetryableSubmissionFee(
-      calldataSizeInBytes, s_gasConfig.baseFee
-    );
+  function _approximateMaxSubmissionCost(uint256 calldataSizeInBytes) internal view returns (uint256) {
+    return
+      IArbitrumDelayedInbox(CROSS_DOMAIN_MESSENGER).calculateRetryableSubmissionFee(
+        calldataSizeInBytes,
+        s_gasConfig.baseFee
+      );
   }
 
   /// @notice Internal helper method that calculates the total cost of the xDomain retryable ticket call

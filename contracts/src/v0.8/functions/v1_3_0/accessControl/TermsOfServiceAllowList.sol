@@ -71,9 +71,7 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
 
   /// @notice Sets the contracts's configuration
   /// @param config - See the contents of the TermsOfServiceAllowListConfig struct in ITermsOfServiceAllowList.sol for more information
-  function updateConfig(
-    TermsOfServiceAllowListConfig memory config
-  ) public onlyOwner {
+  function updateConfig(TermsOfServiceAllowListConfig memory config) public onlyOwner {
     s_config = config;
     emit ConfigUpdated(config);
   }
@@ -94,8 +92,9 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
     }
 
     // Validate that the signature is correct and the correct data has been signed
-    bytes32 prefixedMessage =
-      keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", getMessage(acceptor, recipient)));
+    bytes32 prefixedMessage = keccak256(
+      abi.encodePacked("\x19Ethereum Signed Message:\n32", getMessage(acceptor, recipient))
+    );
     if (ecrecover(prefixedMessage, v, r, s) != s_config.signerPublicKey) {
       revert InvalidSignature();
     }
@@ -130,8 +129,9 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
     uint64 allowedSenderIdxEnd
   ) external view override returns (address[] memory allowedSenders) {
     if (
-      allowedSenderIdxStart > allowedSenderIdxEnd || allowedSenderIdxEnd >= s_allowedSenders.length()
-        || s_allowedSenders.length() == 0
+      allowedSenderIdxStart > allowedSenderIdxEnd ||
+      allowedSenderIdxEnd >= s_allowedSenders.length() ||
+      s_allowedSenders.length() == 0
     ) {
       revert InvalidCalldata();
     }
@@ -145,7 +145,7 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
   }
 
   /// @inheritdoc IAccessController
-  function hasAccess(address user, bytes calldata /* data */ ) external view override returns (bool) {
+  function hasAccess(address user, bytes calldata /* data */) external view override returns (bool) {
     if (!s_config.enabled) {
       return true;
     }
@@ -157,9 +157,7 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
   // ================================================================
 
   /// @inheritdoc ITermsOfServiceAllowList
-  function isBlockedSender(
-    address sender
-  ) external view override returns (bool) {
+  function isBlockedSender(address sender) external view override returns (bool) {
     if (!s_config.enabled) {
       return false;
     }
@@ -167,18 +165,14 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
   }
 
   /// @inheritdoc ITermsOfServiceAllowList
-  function blockSender(
-    address sender
-  ) external override onlyOwner {
+  function blockSender(address sender) external override onlyOwner {
     s_allowedSenders.remove(sender);
     s_blockedSenders.add(sender);
     emit BlockedAccess(sender);
   }
 
   /// @inheritdoc ITermsOfServiceAllowList
-  function unblockSender(
-    address sender
-  ) external override onlyOwner {
+  function unblockSender(address sender) external override onlyOwner {
     s_blockedSenders.remove(sender);
     emit UnblockedAccess(sender);
   }
@@ -194,8 +188,9 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
     uint64 blockedSenderIdxEnd
   ) external view override returns (address[] memory blockedSenders) {
     if (
-      blockedSenderIdxStart > blockedSenderIdxEnd || blockedSenderIdxEnd >= s_blockedSenders.length()
-        || s_blockedSenders.length() == 0
+      blockedSenderIdxStart > blockedSenderIdxEnd ||
+      blockedSenderIdxEnd >= s_blockedSenders.length() ||
+      s_blockedSenders.length() == 0
     ) {
       revert InvalidCalldata();
     }

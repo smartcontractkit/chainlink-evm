@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {iOVM_CrossDomainMessenger} from
-  "../../../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
+import {iOVM_CrossDomainMessenger} from "../../../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
 
 import {Address} from "@openzeppelin/contracts-4-8-3/utils/Address.sol";
 
 contract MockOVMCrossDomainMessenger is iOVM_CrossDomainMessenger {
   address internal s_mockMessageSender;
 
-  constructor(
-    address sender
-  ) {
+  constructor(address sender) {
     s_mockMessageSender = sender;
   }
 
@@ -19,9 +16,7 @@ contract MockOVMCrossDomainMessenger is iOVM_CrossDomainMessenger {
     return s_mockMessageSender;
   }
 
-  function _setMockMessageSender(
-    address sender
-  ) external {
+  function _setMockMessageSender(address sender) external {
     s_mockMessageSender = sender;
   }
 

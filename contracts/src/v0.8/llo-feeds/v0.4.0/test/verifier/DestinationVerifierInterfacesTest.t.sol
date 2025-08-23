@@ -118,7 +118,7 @@ contract VerifierInterfacesTest is VerifierWithFeeManager {
     IDestinationRewardManager rewardManager = IDestinationRewardManager(address(feeManager.i_rewardManager()));
 
     address feeTokenAddress = feeManager.i_linkAddress();
-    (Common.Asset memory fee,,) = feeManager.getFeeAndReward(address(this), reportData, feeTokenAddress);
+    (Common.Asset memory fee, , ) = feeManager.getFeeAndReward(address(this), reportData, feeTokenAddress);
 
     // Approve rewardManager to spend this contract's balance in fees
     _approveLink(address(rewardManager), fee.amount, USER);

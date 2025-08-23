@@ -98,8 +98,11 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
         report.linkNative,
         true
       );
-      (upkeepTransmitInfo[i].earlyChecksPassed, upkeepTransmitInfo[i].dedupID) =
-        _prePerformChecks(report.upkeepIds[i], report.triggers[i], upkeepTransmitInfo[i]);
+      (upkeepTransmitInfo[i].earlyChecksPassed, upkeepTransmitInfo[i].dedupID) = _prePerformChecks(
+        report.upkeepIds[i],
+        report.triggers[i],
+        upkeepTransmitInfo[i]
+      );
 
       if (upkeepTransmitInfo[i].earlyChecksPassed) {
         numUpkeepsPassedChecks += 1;
@@ -108,8 +111,11 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
       }
 
       // Actually perform the target upkeep
-      (upkeepTransmitInfo[i].performSuccess, upkeepTransmitInfo[i].gasUsed) =
-        _performUpkeep(upkeepTransmitInfo[i].upkeep.forwarder, report.gasLimits[i], report.performDatas[i]);
+      (upkeepTransmitInfo[i].performSuccess, upkeepTransmitInfo[i].gasUsed) = _performUpkeep(
+        upkeepTransmitInfo[i].upkeep.forwarder,
+        report.gasLimits[i],
+        report.performDatas[i]
+      );
 
       // Deduct that gasUsed by upkeep from our running counter
       gasOverhead -= upkeepTransmitInfo[i].gasUsed;
@@ -125,8 +131,10 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
     // This is the overall gas overhead that will be split across performed upkeeps
     // Take upper bound of 16 gas per callData bytes, which is approximated to be reportLength
     // Rest of msg.data is accounted for in accounting overheads
-    gasOverhead = (gasOverhead - gasleft() + 16 * rawReport.length) + ACCOUNTING_FIXED_GAS_OVERHEAD
-      + (ACCOUNTING_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1));
+    gasOverhead =
+      (gasOverhead - gasleft() + 16 * rawReport.length) +
+      ACCOUNTING_FIXED_GAS_OVERHEAD +
+      (ACCOUNTING_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1));
     gasOverhead = gasOverhead / numUpkeepsPassedChecks + ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD;
 
     uint96 totalReimbursement;
@@ -137,7 +145,10 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
       for (uint256 i = 0; i < report.upkeepIds.length; i++) {
         if (upkeepTransmitInfo[i].earlyChecksPassed) {
           upkeepTransmitInfo[i].gasOverhead = _getCappedGasOverhead(
-            gasOverhead, upkeepTransmitInfo[i].triggerType, uint32(report.performDatas[i].length), hotVars.f
+            gasOverhead,
+            upkeepTransmitInfo[i].triggerType,
+            uint32(report.performDatas[i].length),
+            hotVars.f
           );
 
           (reimbursement, premium) = _postPerformPayment(

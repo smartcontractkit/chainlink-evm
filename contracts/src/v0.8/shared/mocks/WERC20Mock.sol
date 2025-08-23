@@ -18,9 +18,7 @@ contract WERC20Mock is ERC20 {
     emit Deposit(msg.sender, msg.value);
   }
 
-  function withdraw(
-    uint256 wad
-  ) public {
+  function withdraw(uint256 wad) public {
     // solhint-disable-next-line gas-custom-errors, reason-string
     require(balanceOf(msg.sender) >= wad);
     _burn(msg.sender, wad);

@@ -44,9 +44,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice accepts the transfer of an upkeep admin
    */
-  function acceptUpkeepAdmin(
-    uint256 id
-  ) external {
+  function acceptUpkeepAdmin(uint256 id) external {
     Upkeep memory upkeep = s_upkeep[id];
     if (upkeep.maxValidBlocknumber != UINT32_MAX) revert UpkeepCancelled();
     if (s_proposedAdmin[id] != msg.sender) revert OnlyCallableByProposedAdmin();
@@ -60,9 +58,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice pauses an upkeep - an upkeep will be neither checked nor performed while paused
    */
-  function pauseUpkeep(
-    uint256 id
-  ) external {
+  function pauseUpkeep(uint256 id) external {
     _requireAdminAndNotCancelled(id);
     Upkeep memory upkeep = s_upkeep[id];
     if (upkeep.paused) revert OnlyUnpausedUpkeep();
@@ -74,9 +70,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice unpauses an upkeep
    */
-  function unpauseUpkeep(
-    uint256 id
-  ) external {
+  function unpauseUpkeep(uint256 id) external {
     _requireAdminAndNotCancelled(id);
     Upkeep memory upkeep = s_upkeep[id];
     if (!upkeep.paused) revert OnlyPausedUpkeep();
@@ -151,9 +145,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice accepts the transfer of the payee
    */
-  function acceptPayeeship(
-    address transmitter
-  ) external {
+  function acceptPayeeship(address transmitter) external {
     if (s_proposedPayee[transmitter] != msg.sender) revert OnlyCallableByProposedPayee();
     address past = s_transmitterPayees[transmitter];
     s_transmitterPayees[transmitter] = msg.sender;
@@ -212,9 +204,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice sets the payees for the transmitters
    */
-  function setPayees(
-    address[] calldata payees
-  ) external onlyOwner {
+  function setPayees(address[] calldata payees) external onlyOwner {
     if (s_transmittersList.length != payees.length) revert ParameterLengthError();
     for (uint256 i = 0; i < s_transmittersList.length; i++) {
       address transmitter = s_transmittersList[i];
@@ -324,9 +314,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @dev this function may be deprecated in a future version of automation in favor of individual
    * getters for each field
    */
-  function getUpkeep(
-    uint256 id
-  ) external view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory upkeepInfo) {
+  function getUpkeep(uint256 id) external view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory upkeepInfo) {
     Upkeep memory reg = s_upkeep[id];
     address target = address(reg.forwarder) == address(0) ? address(0) : reg.forwarder.getTarget();
     upkeepInfo = IAutomationV21PlusCommon.UpkeepInfoLegacy({
@@ -366,18 +354,14 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice returns the upkeep's trigger type
    */
-  function getTriggerType(
-    uint256 upkeepId
-  ) external pure returns (Trigger) {
+  function getTriggerType(uint256 upkeepId) external pure returns (Trigger) {
     return _getTriggerType(upkeepId);
   }
 
   /**
    * @notice returns the trigger config for an upkeeep
    */
-  function getUpkeepTriggerConfig(
-    uint256 upkeepId
-  ) public view returns (bytes memory) {
+  function getUpkeepTriggerConfig(uint256 upkeepId) public view returns (bytes memory) {
     return s_upkeepTriggerConfig[upkeepId];
   }
 
@@ -407,9 +391,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice read the current info about any signer address
    */
-  function getSignerInfo(
-    address query
-  ) external view returns (bool active, uint8 index) {
+  function getSignerInfo(address query) external view returns (bool active, uint8 index) {
     Signer memory signer = s_signers[query];
     return (signer.active, signer.index);
   }
@@ -466,9 +448,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @notice calculates the minimum balance required for an upkeep to remain eligible
    * @param id the upkeep id to calculate minimum balance for
    */
-  function getBalance(
-    uint256 id
-  ) external view returns (uint96 balance) {
+  function getBalance(uint256 id) external view returns (uint96 balance) {
     return s_upkeep[id].balance;
   }
 
@@ -476,9 +456,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @notice calculates the minimum balance required for an upkeep to remain eligible
    * @param id the upkeep id to calculate minimum balance for
    */
-  function getMinBalance(
-    uint256 id
-  ) external view returns (uint96) {
+  function getMinBalance(uint256 id) external view returns (uint96) {
     return getMinBalanceForUpkeep(id);
   }
 
@@ -487,9 +465,7 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @param id the upkeep id to calculate minimum balance for
    * @dev this will be deprecated in a future version in favor of getMinBalance
    */
-  function getMinBalanceForUpkeep(
-    uint256 id
-  ) public view returns (uint96 minBalance) {
+  function getMinBalanceForUpkeep(uint256 id) public view returns (uint96 minBalance) {
     return getMaxPaymentForGas(_getTriggerType(id), s_upkeep[id].performGas);
   }
 
@@ -507,45 +483,35 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice retrieves the migration permission for a peer registry
    */
-  function getPeerRegistryMigrationPermission(
-    address peer
-  ) external view returns (MigrationPermission) {
+  function getPeerRegistryMigrationPermission(address peer) external view returns (MigrationPermission) {
     return s_peerRegistryMigrationPermission[peer];
   }
 
   /**
    * @notice returns the upkeep privilege config
    */
-  function getUpkeepPrivilegeConfig(
-    uint256 upkeepId
-  ) external view returns (bytes memory) {
+  function getUpkeepPrivilegeConfig(uint256 upkeepId) external view returns (bytes memory) {
     return s_upkeepPrivilegeConfig[upkeepId];
   }
 
   /**
    * @notice returns the upkeep privilege config
    */
-  function getAdminPrivilegeConfig(
-    address admin
-  ) external view returns (bytes memory) {
+  function getAdminPrivilegeConfig(address admin) external view returns (bytes memory) {
     return s_adminPrivilegeConfig[admin];
   }
 
   /**
    * @notice returns the upkeep's forwarder contract
    */
-  function getForwarder(
-    uint256 upkeepID
-  ) external view returns (IAutomationForwarder) {
+  function getForwarder(uint256 upkeepID) external view returns (IAutomationForwarder) {
     return s_upkeep[upkeepID].forwarder;
   }
 
   /**
    * @notice returns the upkeep's forwarder contract
    */
-  function hasDedupKey(
-    bytes32 dedupKey
-  ) external view returns (bool) {
+  function hasDedupKey(bytes32 dedupKey) external view returns (bool) {
     return s_dedupKeys[dedupKey];
   }
 }

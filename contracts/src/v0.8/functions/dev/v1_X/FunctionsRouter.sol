@@ -51,7 +51,10 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
   );
 
   event RequestNotProcessed(
-    bytes32 indexed requestId, address coordinator, address transmitter, FunctionsResponse.FulfillResult resultCode
+    bytes32 indexed requestId,
+    address coordinator,
+    address transmitter,
+    FunctionsResponse.FulfillResult resultCode
   );
 
   error EmptyRequestData();
@@ -110,7 +113,9 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
   ContractProposalSet private s_proposedContractSet;
 
   event ContractProposed(
-    bytes32 proposedContractSetId, address proposedContractSetFromAddress, address proposedContractSetToAddress
+    bytes32 proposedContractSetId,
+    address proposedContractSetFromAddress,
+    address proposedContractSetToAddress
   );
 
   event ContractUpdated(bytes32 id, address from, address to);
@@ -142,9 +147,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
   }
 
   /// @notice The router configuration
-  function updateConfig(
-    Config memory config
-  ) public onlyOwner {
+  function updateConfig(Config memory config) public onlyOwner {
     s_config = config;
     emit ConfigUpdated(config);
   }
@@ -172,9 +175,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
   }
 
   /// @inheritdoc IFunctionsRouter
-  function setAllowListId(
-    bytes32 allowListId
-  ) external override onlyOwner {
+  function setAllowListId(bytes32 allowListId) external override onlyOwner {
     s_allowListId = allowListId;
   }
 
@@ -360,11 +361,17 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
 
     delete s_requestCommitments[commitment.requestId];
 
-    CallbackResult memory result =
-      _callback(commitment.requestId, response, err, commitment.callbackGasLimit, commitment.client);
+    CallbackResult memory result = _callback(
+      commitment.requestId,
+      response,
+      err,
+      commitment.callbackGasLimit,
+      commitment.client
+    );
 
-    resultCode =
-      result.success ? FunctionsResponse.FulfillResult.FULFILLED : FunctionsResponse.FulfillResult.USER_CALLBACK_ERROR;
+    resultCode = result.success
+      ? FunctionsResponse.FulfillResult.FULFILLED
+      : FunctionsResponse.FulfillResult.USER_CALLBACK_ERROR;
 
     Receipt memory receipt = _pay(
       commitment.subscriptionId,
@@ -408,8 +415,12 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
       return CallbackResult({success: false, gasUsed: 0, returnData: new bytes(0)});
     }
 
-    bytes memory encodedCallback =
-      abi.encodeWithSelector(s_config.handleOracleFulfillmentSelector, requestId, response, err);
+    bytes memory encodedCallback = abi.encodeWithSelector(
+      s_config.handleOracleFulfillmentSelector,
+      requestId,
+      response,
+      err
+    );
 
     uint16 gasForCallExactCheck = s_config.gasForCallExactCheck;
 
@@ -431,11 +442,15 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
       // as we do not want to provide them with less, however that check itself costs
       // gas. gasForCallExactCheck ensures we have at least enough gas to be able
       // to revert if gasAmount >  63//64*gas available.
-      if lt(g, gasForCallExactCheck) { revert(0, 0) }
+      if lt(g, gasForCallExactCheck) {
+        revert(0, 0)
+      }
       g := sub(g, gasForCallExactCheck)
       // if g - g//64 <= gasAmount, revert
       // (we subtract g//64 because of EIP-150)
-      if iszero(gt(sub(g, div(g, 64)), callbackGasLimit)) { revert(0, 0) }
+      if iszero(gt(sub(g, div(g, 64)), callbackGasLimit)) {
+        revert(0, 0)
+      }
       // call and report whether we succeeded
       // call(gas,addr,value,argsOffset,argsLength,retOffset,retLength)
       let gasBeforeCall := gas()
@@ -444,7 +459,9 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
 
       // limit our copy to MAX_CALLBACK_RETURN_BYTES bytes
       let toCopy := returndatasize()
-      if gt(toCopy, MAX_CALLBACK_RETURN_BYTES) { toCopy := MAX_CALLBACK_RETURN_BYTES }
+      if gt(toCopy, MAX_CALLBACK_RETURN_BYTES) {
+        toCopy := MAX_CALLBACK_RETURN_BYTES
+      }
       // Store the length of the copied bytes
       mstore(returnData, toCopy)
       // copy the bytes from returnData[0:_toCopy]
@@ -459,9 +476,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
   // ================================================================
 
   /// @inheritdoc IFunctionsRouter
-  function getContractById(
-    bytes32 id
-  ) public view override returns (address) {
+  function getContractById(bytes32 id) public view override returns (address) {
     address currentImplementation = s_route[id];
     if (currentImplementation == address(0)) {
       revert RouteNotFound(id);
@@ -470,9 +485,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
   }
 
   /// @inheritdoc IFunctionsRouter
-  function getProposedContractById(
-    bytes32 id
-  ) public view override returns (address) {
+  function getProposedContractById(bytes32 id) public view override returns (address) {
     // Iterations will not exceed MAX_PROPOSAL_SET_LENGTH
     for (uint8 i = 0; i < s_proposedContractSet.ids.length; ++i) {
       if (id == s_proposedContractSet.ids[i]) {
@@ -507,8 +520,8 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
       bytes32 id = proposedContractSetIds[i];
       address proposedContract = proposedContractSetAddresses[i];
       if (
-        proposedContract == address(0) // The Proposed address must be a valid address
-          || s_route[id] == proposedContract // The Proposed address must point to a different address than what is currently set
+        proposedContract == address(0) || // The Proposed address must be a valid address
+        s_route[id] == proposedContract // The Proposed address must point to a different address than what is currently set
       ) {
         revert InvalidProposal();
       }

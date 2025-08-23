@@ -85,9 +85,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   // ================================================================
   // |                       Initialization                         |
   // ================================================================
-  constructor(
-    address link
-  ) {
+  constructor(address link) {
     i_linkToken = IERC20(link);
   }
 
@@ -120,8 +118,8 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
     uint96 totalCostJuels = costWithoutCallbackJuels + adminFee + callbackGasCostJuels;
 
     if (
-      s_subscriptions[subscriptionId].balance < totalCostJuels
-        || s_subscriptions[subscriptionId].blockedBalance < estimatedTotalCostJuels
+      s_subscriptions[subscriptionId].balance < totalCostJuels ||
+      s_subscriptions[subscriptionId].blockedBalance < estimatedTotalCostJuels
     ) {
       revert InsufficientBalance(s_subscriptions[subscriptionId].balance);
     }
@@ -149,18 +147,14 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   // ================================================================
 
   /// @inheritdoc IFunctionsSubscriptions
-  function ownerCancelSubscription(
-    uint64 subscriptionId
-  ) external override {
+  function ownerCancelSubscription(uint64 subscriptionId) external override {
     _onlyRouterOwner();
     _isExistingSubscription(subscriptionId);
     _cancelSubscriptionHelper(subscriptionId, s_subscriptions[subscriptionId].owner, false);
   }
 
   /// @inheritdoc IFunctionsSubscriptions
-  function recoverFunds(
-    address to
-  ) external override {
+  function recoverFunds(address to) external override {
     _onlyRouterOwner();
     uint256 externalBalance = i_linkToken.balanceOf(address(this));
     uint256 internalBalance = uint256(s_totalLinkBalance);
@@ -256,9 +250,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   }
 
   /// @inheritdoc IFunctionsSubscriptions
-  function getSubscription(
-    uint64 subscriptionId
-  ) public view override returns (Subscription memory) {
+  function getSubscription(uint64 subscriptionId) public view override returns (Subscription memory) {
     _isExistingSubscription(subscriptionId);
     return s_subscriptions[subscriptionId];
   }
@@ -269,8 +261,9 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
     uint64 subscriptionIdEnd
   ) external view override returns (Subscription[] memory subscriptions) {
     if (
-      subscriptionIdStart > subscriptionIdEnd || subscriptionIdEnd > s_currentSubscriptionId
-        || s_currentSubscriptionId == 0
+      subscriptionIdStart > subscriptionIdEnd ||
+      subscriptionIdEnd > s_currentSubscriptionId ||
+      s_currentSubscriptionId == 0
     ) {
       revert InvalidCalldata();
     }
@@ -289,9 +282,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   }
 
   /// @dev Used within this file & FunctionsRouter.sol
-  function _isExistingSubscription(
-    uint64 subscriptionId
-  ) internal view {
+  function _isExistingSubscription(uint64 subscriptionId) internal view {
     if (s_subscriptions[subscriptionId].owner == address(0)) {
       revert InvalidSubscription();
     }
@@ -325,9 +316,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   }
 
   /// @inheritdoc IFunctionsSubscriptions
-  function createSubscriptionWithConsumer(
-    address consumer
-  ) external override returns (uint64 subscriptionId) {
+  function createSubscriptionWithConsumer(address consumer) external override returns (uint64 subscriptionId) {
     _whenNotPaused();
     _onlySenderThatAcceptedToS();
 
@@ -365,9 +354,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   }
 
   /// @inheritdoc IFunctionsSubscriptions
-  function acceptSubscriptionOwnerTransfer(
-    uint64 subscriptionId
-  ) external override {
+  function acceptSubscriptionOwnerTransfer(uint64 subscriptionId) external override {
     _whenNotPaused();
     _onlySenderThatAcceptedToS();
 
@@ -482,9 +469,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   }
 
   /// @inheritdoc IFunctionsSubscriptions
-  function pendingRequestExists(
-    uint64 subscriptionId
-  ) public view override returns (bool) {
+  function pendingRequestExists(uint64 subscriptionId) public view override returns (bool) {
     address[] memory consumers = s_subscriptions[subscriptionId].consumers;
     // NOTE: loop iterations are bounded by config.maxConsumers
     for (uint256 i = 0; i < consumers.length; ++i) {
@@ -504,9 +489,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   }
 
   /// @inheritdoc IFunctionsSubscriptions
-  function getFlags(
-    uint64 subscriptionId
-  ) public view returns (bytes32) {
+  function getFlags(uint64 subscriptionId) public view returns (bytes32) {
     return s_subscriptions[subscriptionId].flags;
   }
 
@@ -515,9 +498,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   // ================================================================
 
   /// @inheritdoc IFunctionsSubscriptions
-  function timeoutRequests(
-    FunctionsResponse.Commitment[] calldata requestsToTimeoutByCommitment
-  ) external override {
+  function timeoutRequests(FunctionsResponse.Commitment[] calldata requestsToTimeoutByCommitment) external override {
     _whenNotPaused();
 
     for (uint256 i = 0; i < requestsToTimeoutByCommitment.length; ++i) {
@@ -551,9 +532,7 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   // |                         Modifiers                            |
   // ================================================================
 
-  function _onlySubscriptionOwner(
-    uint64 subscriptionId
-  ) internal view {
+  function _onlySubscriptionOwner(uint64 subscriptionId) internal view {
     address owner = s_subscriptions[subscriptionId].owner;
     if (owner == address(0)) {
       revert InvalidSubscription();

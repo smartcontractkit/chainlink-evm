@@ -78,14 +78,14 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
    * @notice Executes the cron job with id encoded in performData
    * @param performData abi encoding of cron job ID and the cron job's next run-at datetime
    */
-  function performUpkeep(
-    bytes calldata performData
-  ) external override whenNotPaused {
-    (uint256 id, uint256 tickTime, address target, bytes memory handler) =
-      abi.decode(performData, (uint256, uint256, address, bytes));
+  function performUpkeep(bytes calldata performData) external override whenNotPaused {
+    (uint256 id, uint256 tickTime, address target, bytes memory handler) = abi.decode(
+      performData,
+      (uint256, uint256, address, bytes)
+    );
     validate(id, tickTime, target, handler);
     s_lastRuns[id] = block.timestamp;
-    (bool success,) = target.call(handler);
+    (bool success, ) = target.call(handler);
     emit CronJobExecuted(id, success);
   }
 
@@ -133,9 +133,7 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
    * the id is not found.
    * @param id the id of the cron job to delete
    */
-  function deleteCronJob(
-    uint256 id
-  ) external onlyOwner onlyValidCronID(id) {
+  function deleteCronJob(uint256 id) external onlyOwner onlyValidCronID(id) {
     delete s_lastRuns[id];
     delete s_specs[id];
     delete s_targets[id];
@@ -164,9 +162,7 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
    * @return upkeepNeeded signals if upkeep is needed, performData is an abi encoding
    * of the id and "next tick" of the elligible cron job
    */
-  function checkUpkeep(
-    bytes calldata
-  ) external override whenNotPaused cannotExecute returns (bool, bytes memory) {
+  function checkUpkeep(bytes calldata) external override whenNotPaused cannotExecute returns (bool, bytes memory) {
     _delegate(s_delegate);
   }
 
@@ -258,9 +254,7 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
     return keccak256(abi.encodePacked(target, handler));
   }
 
-  modifier onlyValidCronID(
-    uint256 id
-  ) {
+  modifier onlyValidCronID(uint256 id) {
     if (!s_activeCronJobIDs.contains(id)) {
       revert CronJobIDNotFound(id);
     }

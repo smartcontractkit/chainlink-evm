@@ -67,9 +67,7 @@ contract DestinationRewardManager is IDestinationRewardManager, ConfirmedOwner, 
    * @notice Constructor
    * @param linkAddress address of the wrapped LINK token
    */
-  constructor(
-    address linkAddress
-  ) ConfirmedOwner(msg.sender) {
+  constructor(address linkAddress) ConfirmedOwner(msg.sender) {
     //ensure that the address ia not zero
     if (linkAddress == address(0)) revert InvalidAddress();
 
@@ -82,9 +80,7 @@ contract DestinationRewardManager is IDestinationRewardManager, ConfirmedOwner, 
   }
 
   // @inheritdoc IERC165
-  function supportsInterface(
-    bytes4 interfaceId
-  ) external pure override returns (bool) {
+  function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
     return interfaceId == type(IDestinationRewardManager).interfaceId;
   }
 
@@ -93,9 +89,7 @@ contract DestinationRewardManager is IDestinationRewardManager, ConfirmedOwner, 
     _;
   }
 
-  modifier onlyOwnerOrRecipientInPool(
-    bytes32 poolId
-  ) {
+  modifier onlyOwnerOrRecipientInPool(bytes32 poolId) {
     if (s_rewardRecipientWeights[poolId][msg.sender] == 0 && msg.sender != owner()) revert Unauthorized();
     _;
   }
@@ -127,9 +121,7 @@ contract DestinationRewardManager is IDestinationRewardManager, ConfirmedOwner, 
   }
 
   /// @inheritdoc IDestinationRewardManager
-  function claimRewards(
-    bytes32[] memory poolIds
-  ) external override {
+  function claimRewards(bytes32[] memory poolIds) external override {
     _claimRewards(msg.sender, poolIds);
   }
 
@@ -280,9 +272,7 @@ contract DestinationRewardManager is IDestinationRewardManager, ConfirmedOwner, 
   }
 
   /// @inheritdoc IDestinationRewardManager
-  function addFeeManager(
-    address newFeeManagerAddress
-  ) external onlyOwner {
+  function addFeeManager(address newFeeManagerAddress) external onlyOwner {
     if (newFeeManagerAddress == address(0)) revert InvalidAddress();
     if (s_feeManagerAddressList[newFeeManagerAddress] != address(0)) revert InvalidAddress();
 
@@ -292,9 +282,7 @@ contract DestinationRewardManager is IDestinationRewardManager, ConfirmedOwner, 
   }
 
   /// @inheritdoc IDestinationRewardManager
-  function removeFeeManager(
-    address feeManagerAddress
-  ) external onlyOwner {
+  function removeFeeManager(address feeManagerAddress) external onlyOwner {
     if (s_feeManagerAddressList[feeManagerAddress] == address(0)) revert InvalidAddress();
     delete s_feeManagerAddressList[feeManagerAddress];
   }

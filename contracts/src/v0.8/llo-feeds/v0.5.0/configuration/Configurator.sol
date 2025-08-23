@@ -162,9 +162,9 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
 
     ConfigurationState memory configurationState = s_configurationStates[configId];
     if (
-      predecessorConfigDigest == bytes32(0)
-        || predecessorConfigDigest
-          != s_configurationStates[configId].configDigest[configurationState.isGreenProduction ? 1 : 0]
+      predecessorConfigDigest == bytes32(0) ||
+      predecessorConfigDigest !=
+      s_configurationStates[configId].configDigest[configurationState.isGreenProduction ? 1 : 0]
     ) revert InvalidPredecessorConfigDigest(predecessorConfigDigest);
 
     _setConfig(
@@ -333,9 +333,7 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(
-    bytes4 interfaceId
-  ) external pure override returns (bool isVerifier) {
+  function supportsInterface(bytes4 interfaceId) external pure override returns (bool isVerifier) {
     return interfaceId == type(IConfigurator).interfaceId;
   }
 

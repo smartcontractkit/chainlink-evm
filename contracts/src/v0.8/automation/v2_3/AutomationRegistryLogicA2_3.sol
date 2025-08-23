@@ -91,8 +91,9 @@ contract AutomationRegistryLogicA2_3 is AutomationRegistryBase2_3, Chainable, IE
     if (msg.sender != owner() && !s_registrars.contains(msg.sender)) revert OnlyCallableByOwnerOrRegistrar();
     if (!target.isContract()) revert NotAContract();
     id = _createID(triggerType);
-    IAutomationForwarder forwarder =
-      IAutomationForwarder(address(new AutomationForwarder(target, address(this), i_automationForwarderLogic)));
+    IAutomationForwarder forwarder = IAutomationForwarder(
+      address(new AutomationForwarder(target, address(this), i_automationForwarderLogic))
+    );
     _createUpkeep(
       id,
       Upkeep({
@@ -125,9 +126,7 @@ contract AutomationRegistryLogicA2_3 is AutomationRegistryBase2_3, Chainable, IE
    * @dev if a user cancels an upkeep, their funds are locked for CANCELLATION_DELAY blocks to
    * allow any pending performUpkeep txs time to get confirmed
    */
-  function cancelUpkeep(
-    uint256 id
-  ) external {
+  function cancelUpkeep(uint256 id) external {
     Upkeep memory upkeep = s_upkeep[id];
     bool isOwner = msg.sender == owner();
     uint96 minSpend = s_billingConfigs[upkeep.billingToken].minSpend;
@@ -170,8 +169,8 @@ contract AutomationRegistryLogicA2_3 is AutomationRegistryBase2_3, Chainable, IE
    */
   function migrateUpkeeps(uint256[] calldata ids, address destination) external {
     if (
-      s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING
-        && s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
+      s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING &&
+      s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
     ) revert MigrationNotPermitted();
     if (s_storage.transcoder == ZERO_ADDRESS) revert TranscoderNotSet();
     if (ids.length == 0) revert ArrayHasNoEntries();
@@ -227,11 +226,20 @@ contract AutomationRegistryLogicA2_3 is AutomationRegistryBase2_3, Chainable, IE
     s_reserveAmounts[billingToken] = s_reserveAmounts[billingToken] - balanceToTransfer;
     billingToken.safeTransfer(destination, balanceToTransfer);
 
-    bytes memory encodedUpkeeps =
-      abi.encode(ids, upkeeps, new address[](ids.length), admins, checkDatas, triggerConfigs, offchainConfigs);
+    bytes memory encodedUpkeeps = abi.encode(
+      ids,
+      upkeeps,
+      new address[](ids.length),
+      admins,
+      checkDatas,
+      triggerConfigs,
+      offchainConfigs
+    );
     MigratableKeeperRegistryInterfaceV2(destination).receiveUpkeeps(
       UpkeepTranscoderInterfaceV2(s_storage.transcoder).transcodeUpkeeps(
-        UPKEEP_VERSION_BASE, MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(), encodedUpkeeps
+        UPKEEP_VERSION_BASE,
+        MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(),
+        encodedUpkeeps
       )
     );
   }
@@ -242,12 +250,10 @@ contract AutomationRegistryLogicA2_3 is AutomationRegistryBase2_3, Chainable, IE
    * @dev this function is never called directly, it is only called by another registry's migrate function
    * @dev s_billingOverrides and s_upkeepPrivilegeConfig are not handled in this function
    */
-  function receiveUpkeeps(
-    bytes calldata encodedUpkeeps
-  ) external {
+  function receiveUpkeeps(bytes calldata encodedUpkeeps) external {
     if (
-      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.INCOMING
-        && s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.BIDIRECTIONAL
+      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.INCOMING &&
+      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.BIDIRECTIONAL
     ) revert MigrationNotPermitted();
     (
       uint256[] memory ids,
@@ -265,7 +271,12 @@ contract AutomationRegistryLogicA2_3 is AutomationRegistryBase2_3, Chainable, IE
         );
       }
       _createUpkeep(
-        ids[idx], upkeeps[idx], upkeepAdmins[idx], checkDatas[idx], triggerConfigs[idx], offchainConfigs[idx]
+        ids[idx],
+        upkeeps[idx],
+        upkeepAdmins[idx],
+        checkDatas[idx],
+        triggerConfigs[idx],
+        offchainConfigs[idx]
       );
       emit UpkeepReceived(ids[idx], upkeeps[idx].balance, msg.sender);
     }

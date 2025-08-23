@@ -74,18 +74,19 @@ contract VRFV2Plus is BaseTest {
 
     // Use create2 to deploy our consumer, so that its address is always the same
     // and surrounding changes do not alter our generated proofs.
-    bytes memory consumerInitCode =
-      bytes.concat(initializeCode, abi.encode(address(s_testCoordinator), address(s_linkToken)));
+    bytes memory consumerInitCode = bytes.concat(
+      initializeCode,
+      abi.encode(address(s_testCoordinator), address(s_linkToken))
+    );
     bytes32 abiEncodedOwnerAddress = bytes32(uint256(uint160(LINK_WHALE)) << 96);
     address consumerCreate2Address;
     assembly {
-      consumerCreate2Address :=
-        create2(
-          0, // value - left at zero here
-          add(0x20, consumerInitCode), // initialization bytecode (excluding first memory slot which contains its length)
-          mload(consumerInitCode), // length of initialization bytecode
-          abiEncodedOwnerAddress // user-defined nonce to ensure unique SCA addresses
-        )
+      consumerCreate2Address := create2(
+        0, // value - left at zero here
+        add(0x20, consumerInitCode), // initialization bytecode (excluding first memory slot which contains its length)
+        mload(consumerInitCode), // length of initialization bytecode
+        abiEncodedOwnerAddress // user-defined nonce to ensure unique SCA addresses
+      )
     }
     s_testConsumer = VRFV2PlusConsumerExample(consumerCreate2Address);
 
@@ -240,8 +241,8 @@ contract VRFV2Plus is BaseTest {
     // Should set the proving key successfully.
     registerProvingKey();
 
-    bytes memory unregisteredPubKey =
-      hex"6d919e4ed6add6c34b2af77eb6b2d2f5d27db11ba004e70734b23bd4321ea234ff8577a063314bead6d88c1b01849289a5542767a5138924f38fed551a7773db";
+    bytes
+      memory unregisteredPubKey = hex"6d919e4ed6add6c34b2af77eb6b2d2f5d27db11ba004e70734b23bd4321ea234ff8577a063314bead6d88c1b01849289a5542767a5138924f38fed551a7773db";
 
     // Should revert when given pubkey is not registered
     uint256[2] memory unregisteredKeyParts = this.getProvingKeyParts(unregisteredPubKey);
@@ -267,9 +268,7 @@ contract VRFV2Plus is BaseTest {
 
   // note: Call this function via this.getProvingKeyParts to be able to pass memory as calldata and
   // index over the byte array.
-  function getProvingKeyParts(
-    bytes calldata uncompressedKey
-  ) public pure returns (uint256[2] memory) {
+  function getProvingKeyParts(bytes calldata uncompressedKey) public pure returns (uint256[2] memory) {
     uint256 keyPart1 = uint256(bytes32(uncompressedKey[0:32]));
     uint256 keyPart2 = uint256(bytes32(uncompressedKey[32:64]));
     return [keyPart1, keyPart2];
@@ -366,14 +365,23 @@ contract VRFV2Plus is BaseTest {
     address indexed sender
   );
   event RandomWordsFulfilled(
-    uint256 indexed requestId, uint256 outputSeed, uint256 indexed subID, uint96 payment, bytes extraArgs, bool success
+    uint256 indexed requestId,
+    uint256 outputSeed,
+    uint256 indexed subID,
+    uint96 payment,
+    bytes extraArgs,
+    bool success
   );
   event FallbackWeiPerUnitLinkUsed(uint256 requestId, int256 fallbackWeiPerUnitLink);
 
   function testRequestAndFulfillRandomWordsNative() public {
-    (VRF.Proof memory proof, VRFTypes.RequestCommitmentV2Plus memory rc, uint256 subId, uint256 requestId) =
-      setupSubAndRequestRandomnessNativePayment();
-    (, uint96 nativeBalanceBefore,,,) = s_testCoordinator.getSubscription(subId);
+    (
+      VRF.Proof memory proof,
+      VRFTypes.RequestCommitmentV2Plus memory rc,
+      uint256 subId,
+      uint256 requestId
+    ) = setupSubAndRequestRandomnessNativePayment();
+    (, uint96 nativeBalanceBefore, , , ) = s_testCoordinator.getSubscription(subId);
 
     uint256 outputSeed = s_testCoordinator.getRandomnessFromProofExternal(proof, rc).randomness;
     vm.recordLogs();
@@ -381,11 +389,11 @@ contract VRFV2Plus is BaseTest {
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries[0].topics[1], bytes32(uint256(requestId)));
     assertEq(entries[0].topics[2], bytes32(uint256(subId)));
-    (uint256 loggedOutputSeed,,, bool loggedSuccess) = abi.decode(entries[0].data, (uint256, uint256, bool, bool));
+    (uint256 loggedOutputSeed, , , bool loggedSuccess) = abi.decode(entries[0].data, (uint256, uint256, bool, bool));
     assertEq(loggedOutputSeed, outputSeed);
     assertEq(loggedSuccess, true);
 
-    (bool fulfilled,,) = s_testConsumer.s_requests(requestId);
+    (bool fulfilled, , ) = s_testConsumer.s_requests(requestId);
     assertEq(fulfilled, true);
 
     // The cost of fulfillRandomWords is approximately 70_000 gas.
@@ -401,7 +409,7 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = baseFeeWei * (100 + linkPremiumPercentage / 100) + 5e17
     // billed_fee = 1.2e16 * 1.15 + 5e17
     // billed_fee = 5.138e+17
-    (, uint96 nativeBalanceAfter,,,) = s_testCoordinator.getSubscription(subId);
+    (, uint96 nativeBalanceAfter, , , ) = s_testCoordinator.getSubscription(subId);
     // 1e15 is less than 1 percent discrepancy
     assertApproxEqAbs(payment, 5.138 * 1e17, 1e15);
     assertApproxEqAbs(nativeBalanceAfter, nativeBalanceBefore - 5.138 * 1e17, 1e15);
@@ -409,9 +417,13 @@ contract VRFV2Plus is BaseTest {
   }
 
   function testRequestAndFulfillRandomWordsLINK() public {
-    (VRF.Proof memory proof, VRFTypes.RequestCommitmentV2Plus memory rc, uint256 subId, uint256 requestId) =
-      setupSubAndRequestRandomnessLINKPayment();
-    (uint96 linkBalanceBefore,,,,) = s_testCoordinator.getSubscription(subId);
+    (
+      VRF.Proof memory proof,
+      VRFTypes.RequestCommitmentV2Plus memory rc,
+      uint256 subId,
+      uint256 requestId
+    ) = setupSubAndRequestRandomnessLINKPayment();
+    (uint96 linkBalanceBefore, , , , ) = s_testCoordinator.getSubscription(subId);
 
     uint256 outputSeed = s_testCoordinator.getRandomnessFromProofExternal(proof, rc).randomness;
     vm.recordLogs();
@@ -420,11 +432,11 @@ contract VRFV2Plus is BaseTest {
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries[0].topics[1], bytes32(uint256(requestId)));
     assertEq(entries[0].topics[2], bytes32(uint256(subId)));
-    (uint256 loggedOutputSeed,,, bool loggedSuccess) = abi.decode(entries[0].data, (uint256, uint256, bool, bool));
+    (uint256 loggedOutputSeed, , , bool loggedSuccess) = abi.decode(entries[0].data, (uint256, uint256, bool, bool));
     assertEq(loggedOutputSeed, outputSeed);
     assertEq(loggedSuccess, true);
 
-    (bool fulfilled,,) = s_testConsumer.s_requests(requestId);
+    (bool fulfilled, , ) = s_testConsumer.s_requests(requestId);
     assertEq(fulfilled, true);
 
     // The cost of fulfillRandomWords is approximately 86_000 gas.
@@ -442,7 +454,7 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = 2.72e16 * 1.1 + 8e17
     // billed_fee = 2.992e16 + 8e17 = 8.2992e17
     // note: delta is doubled from the native test to account for more variance due to the link/native ratio
-    (uint96 linkBalanceAfter,,,,) = s_testCoordinator.getSubscription(subId);
+    (uint96 linkBalanceAfter, , , , ) = s_testCoordinator.getSubscription(subId);
     // 1e15 is less than 1 percent discrepancy
     assertApproxEqAbs(payment, 8.2992 * 1e17, 1e15);
     assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 8.2992 * 1e17, 1e15);
@@ -450,14 +462,18 @@ contract VRFV2Plus is BaseTest {
   }
 
   function testRequestAndFulfillRandomWordsLINK_FallbackWeiPerUnitLinkUsed() public {
-    (VRF.Proof memory proof, VRFTypes.RequestCommitmentV2Plus memory rc,, uint256 requestId) =
-      setupSubAndRequestRandomnessLINKPayment();
+    (
+      VRF.Proof memory proof,
+      VRFTypes.RequestCommitmentV2Plus memory rc,
+      ,
+      uint256 requestId
+    ) = setupSubAndRequestRandomnessLINKPayment();
 
-    (,,, uint32 stalenessSeconds,,,,,) = s_testCoordinator.s_config();
+    (, , , uint32 stalenessSeconds, , , , , ) = s_testCoordinator.s_config();
     int256 fallbackWeiPerUnitLink = s_testCoordinator.s_fallbackWeiPerUnitLink();
 
     // Set the link feed to be stale.
-    (uint80 roundId, int256 answer, uint256 startedAt,,) = s_linkNativeFeed.latestRoundData();
+    (uint80 roundId, int256 answer, uint256 startedAt, , ) = s_linkNativeFeed.latestRoundData();
     uint256 timestamp = block.timestamp - stalenessSeconds - 1;
     s_linkNativeFeed.updateRoundData(roundId, answer, timestamp, startedAt);
 
@@ -496,7 +512,7 @@ contract VRFV2Plus is BaseTest {
       address(s_testConsumer) // requester
     );
     s_testConsumer.requestRandomWords(CALLBACK_GAS_LIMIT, MIN_CONFIRMATIONS, NUM_WORDS, vrfKeyHash, false);
-    (bool fulfilled,,) = s_testConsumer.s_requests(requestId);
+    (bool fulfilled, , ) = s_testConsumer.s_requests(requestId);
     assertEq(fulfilled, false);
     assertTrue(s_testCoordinator.pendingRequestExists(subId));
 
@@ -592,7 +608,7 @@ contract VRFV2Plus is BaseTest {
       address(s_testConsumer) // requester
     );
     s_testConsumer.requestRandomWords(CALLBACK_GAS_LIMIT, MIN_CONFIRMATIONS, NUM_WORDS, vrfKeyHash, true);
-    (bool fulfilled,,) = s_testConsumer.s_requests(requestId);
+    (bool fulfilled, , ) = s_testConsumer.s_requests(requestId);
     assertEq(fulfilled, false);
     assertTrue(s_testCoordinator.pendingRequestExists(subId));
 
@@ -660,7 +676,12 @@ contract VRFV2Plus is BaseTest {
   }
 
   function testRequestAndFulfillRandomWords_NetworkGasPriceExceedsGasLane() public {
-    (VRF.Proof memory proof, VRFTypes.RequestCommitmentV2Plus memory rc,,) = setupSubAndRequestRandomnessNativePayment();
+    (
+      VRF.Proof memory proof,
+      VRFTypes.RequestCommitmentV2Plus memory rc,
+      ,
+
+    ) = setupSubAndRequestRandomnessNativePayment();
 
     // network gas is higher than gas lane max gas
     uint256 networkGasPrice = GAS_LANE_MAX_GAS + 1;
@@ -672,9 +693,13 @@ contract VRFV2Plus is BaseTest {
   }
 
   function testRequestAndFulfillRandomWords_OnlyPremium_NativePayment() public {
-    (VRF.Proof memory proof, VRFTypes.RequestCommitmentV2Plus memory rc, uint256 subId, uint256 requestId) =
-      setupSubAndRequestRandomnessNativePayment();
-    (, uint96 nativeBalanceBefore,,,) = s_testCoordinator.getSubscription(subId);
+    (
+      VRF.Proof memory proof,
+      VRFTypes.RequestCommitmentV2Plus memory rc,
+      uint256 subId,
+      uint256 requestId
+    ) = setupSubAndRequestRandomnessNativePayment();
+    (, uint96 nativeBalanceBefore, , , ) = s_testCoordinator.getSubscription(subId);
 
     // network gas is twice the gas lane max gas
     uint256 networkGasPrice = GAS_LANE_MAX_GAS * 2;
@@ -682,15 +707,15 @@ contract VRFV2Plus is BaseTest {
 
     uint256 outputSeed = s_testCoordinator.getRandomnessFromProofExternal(proof, rc).randomness;
     vm.recordLogs();
-    uint96 payment = s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    uint96 payment = s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */);
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries[0].topics[1], bytes32(uint256(requestId)));
     assertEq(entries[0].topics[2], bytes32(uint256(subId)));
-    (uint256 loggedOutputSeed,,, bool loggedSuccess) = abi.decode(entries[0].data, (uint256, uint256, bool, bool));
+    (uint256 loggedOutputSeed, , , bool loggedSuccess) = abi.decode(entries[0].data, (uint256, uint256, bool, bool));
     assertEq(loggedOutputSeed, outputSeed);
     assertEq(loggedSuccess, true);
 
-    (bool fulfilled,,) = s_testConsumer.s_requests(requestId);
+    (bool fulfilled, , ) = s_testConsumer.s_requests(requestId);
     assertEq(fulfilled, true);
 
     // The cost of fulfillRandomWords is approximately 72_100 gas.
@@ -707,7 +732,7 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = baseFeeWei * (linkPremiumPercentage / 100) + 5e17
     // billed_fee = 6.11e17 * 0.15 + 5e17
     // billed_fee = 5.9157e+17
-    (, uint96 nativeBalanceAfter,,,) = s_testCoordinator.getSubscription(subId);
+    (, uint96 nativeBalanceAfter, , , ) = s_testCoordinator.getSubscription(subId);
     // 1e15 is less than 1 percent discrepancy
     assertApproxEqAbs(payment, 5.9157 * 1e17, 1e15);
     assertApproxEqAbs(nativeBalanceAfter, nativeBalanceBefore - 5.9157 * 1e17, 1e15);
@@ -715,9 +740,13 @@ contract VRFV2Plus is BaseTest {
   }
 
   function testRequestAndFulfillRandomWords_OnlyPremium_LinkPayment() public {
-    (VRF.Proof memory proof, VRFTypes.RequestCommitmentV2Plus memory rc, uint256 subId, uint256 requestId) =
-      setupSubAndRequestRandomnessLINKPayment();
-    (uint96 linkBalanceBefore,,,,) = s_testCoordinator.getSubscription(subId);
+    (
+      VRF.Proof memory proof,
+      VRFTypes.RequestCommitmentV2Plus memory rc,
+      uint256 subId,
+      uint256 requestId
+    ) = setupSubAndRequestRandomnessLINKPayment();
+    (uint96 linkBalanceBefore, , , , ) = s_testCoordinator.getSubscription(subId);
 
     // network gas is twice the gas lane max gas
     uint256 networkGasPrice = GAS_LANE_MAX_GAS * 5;
@@ -725,16 +754,16 @@ contract VRFV2Plus is BaseTest {
 
     uint256 outputSeed = s_testCoordinator.getRandomnessFromProofExternal(proof, rc).randomness;
     vm.recordLogs();
-    uint96 payment = s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    uint96 payment = s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */);
 
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries[0].topics[1], bytes32(uint256(requestId)));
     assertEq(entries[0].topics[2], bytes32(uint256(subId)));
-    (uint256 loggedOutputSeed,,, bool loggedSuccess) = abi.decode(entries[0].data, (uint256, uint256, bool, bool));
+    (uint256 loggedOutputSeed, , , bool loggedSuccess) = abi.decode(entries[0].data, (uint256, uint256, bool, bool));
     assertEq(loggedOutputSeed, outputSeed);
     assertEq(loggedSuccess, true);
 
-    (bool fulfilled,,) = s_testConsumer.s_requests(requestId);
+    (bool fulfilled, , ) = s_testConsumer.s_requests(requestId);
     assertEq(fulfilled, true);
 
     // The cost of fulfillRandomWords is approximately 89_100 gas.
@@ -753,7 +782,7 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = 1.391e+18 * 0.1 + 8e17
     // billed_fee = 9.391e+17
     // note: delta is doubled from the native test to account for more variance due to the link/native ratio
-    (uint96 linkBalanceAfter,,,,) = s_testCoordinator.getSubscription(subId);
+    (uint96 linkBalanceAfter, , , , ) = s_testCoordinator.getSubscription(subId);
     // 1e15 is less than 1 percent discrepancy
     assertApproxEqAbs(payment, 9.391 * 1e17, 1e15);
     assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 9.391 * 1e17, 1e15);
@@ -769,7 +798,13 @@ contract VRFV2Plus is BaseTest {
     // consumer is not added to the subscription
     vm.expectRevert(abi.encodeWithSelector(SubscriptionAPI.InvalidConsumer.selector, subId, address(consumer)));
     consumer.requestRandomWords(
-      subId, MIN_CONFIRMATIONS, vrfKeyHash, CALLBACK_GAS_LIMIT, true, NUM_WORDS, 1 /* requestCount */
+      subId,
+      MIN_CONFIRMATIONS,
+      vrfKeyHash,
+      CALLBACK_GAS_LIMIT,
+      true,
+      NUM_WORDS,
+      1 /* requestCount */
     );
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
@@ -809,7 +844,7 @@ contract VRFV2Plus is BaseTest {
       MIN_CONFIRMATIONS,
       vrfKeyHash,
       CALLBACK_GAS_LIMIT,
-      true, /* nativePayment */
+      true /* nativePayment */,
       NUM_WORDS,
       1 /* requestCount */
     );
@@ -874,7 +909,7 @@ contract VRFV2Plus is BaseTest {
       sender: address(consumer),
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true}))
     });
-    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */);
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
 
     // 4. remove consumer and verify request random words doesn't work
@@ -885,7 +920,7 @@ contract VRFV2Plus is BaseTest {
       MIN_CONFIRMATIONS,
       vrfKeyHash,
       CALLBACK_GAS_LIMIT,
-      false, /* nativePayment */
+      false /* nativePayment */,
       NUM_WORDS,
       1 /* requestCount */
     );
@@ -912,7 +947,7 @@ contract VRFV2Plus is BaseTest {
       MIN_CONFIRMATIONS,
       vrfKeyHash,
       CALLBACK_GAS_LIMIT,
-      false, /* nativePayment */
+      false /* nativePayment */,
       NUM_WORDS,
       1 /* requestCount */
     );
@@ -937,10 +972,18 @@ contract VRFV2Plus is BaseTest {
 
     // 2. Request random words.
     changePrank(subOwner);
-    (uint256 requestId1, uint256 preSeed1) =
-      s_testCoordinator.computeRequestIdExternal(vrfKeyHash, address(consumer1), subId, 1);
-    (uint256 requestId2, uint256 preSeed2) =
-      s_testCoordinator.computeRequestIdExternal(vrfKeyHash, address(consumer2), subId, 1);
+    (uint256 requestId1, uint256 preSeed1) = s_testCoordinator.computeRequestIdExternal(
+      vrfKeyHash,
+      address(consumer1),
+      subId,
+      1
+    );
+    (uint256 requestId2, uint256 preSeed2) = s_testCoordinator.computeRequestIdExternal(
+      vrfKeyHash,
+      address(consumer2),
+      subId,
+      1
+    );
     assertNotEq(requestId1, requestId2);
     assertNotEq(preSeed1, preSeed2);
     consumer1.requestRandomWords(
@@ -948,7 +991,7 @@ contract VRFV2Plus is BaseTest {
       MIN_CONFIRMATIONS,
       vrfKeyHash,
       CALLBACK_GAS_LIMIT,
-      true, /* nativePayment */
+      true /* nativePayment */,
       NUM_WORDS,
       1 /* requestCount */
     );
@@ -957,7 +1000,7 @@ contract VRFV2Plus is BaseTest {
       MIN_CONFIRMATIONS,
       vrfKeyHash,
       CALLBACK_GAS_LIMIT,
-      true, /* nativePayment */
+      true /* nativePayment */,
       NUM_WORDS,
       1 /* requestCount */
     );
@@ -1022,7 +1065,7 @@ contract VRFV2Plus is BaseTest {
       sender: address(consumer1),
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true}))
     });
-    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */);
     assertTrue(s_testCoordinator.pendingRequestExists(subId));
 
     // 4. Fulfill the 2nd request
@@ -1078,13 +1121,11 @@ contract VRFV2Plus is BaseTest {
       sender: address(consumer2),
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true}))
     });
-    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */);
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
 
-  function createAndAddLoadTestWithMetricsConsumer(
-    uint256 subId
-  ) internal returns (VRFV2PlusLoadTestWithMetrics) {
+  function createAndAddLoadTestWithMetricsConsumer(uint256 subId) internal returns (VRFV2PlusLoadTestWithMetrics) {
     VRFV2PlusLoadTestWithMetrics consumer = new VRFV2PlusLoadTestWithMetrics(address(s_testCoordinator));
     s_testCoordinator.addConsumer(subId, address(consumer));
     return consumer;
@@ -1101,21 +1142,21 @@ contract VRFV2Plus is BaseTest {
     // test remove consumers from multiple positions to have better gas distribution
     address earlyConsumerAddress = consumers[0];
     s_testCoordinator.removeConsumer(subId, earlyConsumerAddress);
-    (,,,, consumers) = s_testCoordinator.getSubscription(subId);
+    (, , , , consumers) = s_testCoordinator.getSubscription(subId);
     assertEq(consumers.length, consumersLength - 1);
     assertFalse(addressIsIn(earlyConsumerAddress, consumers));
 
     consumersLength = consumers.length;
     address middleConsumerAddress = consumers[consumersLength / 2];
     s_testCoordinator.removeConsumer(subId, middleConsumerAddress);
-    (,,,, consumers) = s_testCoordinator.getSubscription(subId);
+    (, , , , consumers) = s_testCoordinator.getSubscription(subId);
     assertEq(consumers.length, consumersLength - 1);
     assertFalse(addressIsIn(middleConsumerAddress, consumers));
 
     consumersLength = consumers.length;
     address lateConsumerAddress = consumers[consumersLength - 1];
     s_testCoordinator.removeConsumer(subId, lateConsumerAddress);
-    (,,,, consumers) = s_testCoordinator.getSubscription(subId);
+    (, , , , consumers) = s_testCoordinator.getSubscription(subId);
     assertEq(consumers.length, consumersLength - 1);
     assertFalse(addressIsIn(lateConsumerAddress, consumers));
   }

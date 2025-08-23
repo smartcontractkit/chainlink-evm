@@ -13,9 +13,7 @@ contract MaliciousRevertingReceiver is IReceiver {
     for (uint256 i = 0; gasleft() > targetGasRemaining; ++i) {}
   }
 
-  function supportsInterface(
-    bytes4 interfaceId
-  ) public pure override returns (bool) {
+  function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
     // Consume up to the maximum amount of gas that can be consumed in this check
     for (uint256 i = 0; i < 500; ++i) {}
 

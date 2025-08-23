@@ -6,8 +6,7 @@ import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interfa
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
-import {OVM_GasPriceOracle} from
-  "../../vendor/@eth-optimism/contracts/v0.8.9/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
+import {OVM_GasPriceOracle} from "../../vendor/@eth-optimism/contracts/v0.8.9/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
 import {ExecutionPrevention} from "../ExecutionPrevention.sol";
 
 import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
@@ -221,7 +220,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     bool reentrancyGuard; // guard against reentrancy
     uint96 totalPremium; // total historical payment to oracles for premium
     uint32 latestEpoch; // latest epoch for which a report was transmitted
-      // 1 EVM word full
+    // 1 EVM word full
   }
 
   /// @dev Config + State storage struct which is not on hot transmit path
@@ -241,7 +240,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     uint32 maxPerformDataSize; // max length of performData bytes
     uint32 maxRevertDataSize; // max length of revertData bytes
     address upkeepPrivilegeManager; // address which can set privilege for upkeeps
-      // 3 EVM word full
+    // 3 EVM word full
   }
 
   /// @dev Report transmitted by OCR to transmit function
@@ -333,7 +332,12 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
   event UpkeepOffchainConfigSet(uint256 indexed id, bytes offchainConfig);
   event UpkeepPaused(uint256 indexed id);
   event UpkeepPerformed(
-    uint256 indexed id, bool indexed success, uint96 totalPayment, uint256 gasUsed, uint256 gasOverhead, bytes trigger
+    uint256 indexed id,
+    bool indexed success,
+    uint96 totalPayment,
+    uint256 gasUsed,
+    uint256 gasOverhead,
+    bytes trigger
   );
   event UpkeepPrivilegeConfigSet(uint256 indexed id, bytes privilegeConfig);
   event UpkeepReceived(uint256 indexed id, uint256 startingBalance, address importedFrom);
@@ -410,12 +414,11 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
    * @dev we add the "identifying" part in the middle so that it is mostly hidden from users who usually only
    * see the first 4 and last 4 hex values ex 0x1234...ABCD
    */
-  function _createID(
-    Trigger triggerType
-  ) internal view returns (uint256) {
+  function _createID(Trigger triggerType) internal view returns (uint256) {
     bytes1 empty;
-    bytes memory idBytes =
-      abi.encodePacked(keccak256(abi.encode(_blockHash(_blockNum() - 1), address(this), s_storage.nonce)));
+    bytes memory idBytes = abi.encodePacked(
+      keccak256(abi.encode(_blockHash(_blockNum() - 1), address(this), s_storage.nonce))
+    );
     for (uint256 idx = 4; idx < 15; idx++) {
       idBytes[idx] = empty;
     }
@@ -429,14 +432,12 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
    * for gas it takes the min of gas price in the transaction or the fast gas
    * price in order to reduce costs for the upkeep clients.
    */
-  function _getFeedData(
-    HotVars memory hotVars
-  ) internal view returns (uint256 gasWei, uint256 linkNative) {
+  function _getFeedData(HotVars memory hotVars) internal view returns (uint256 gasWei, uint256 linkNative) {
     uint32 stalenessSeconds = hotVars.stalenessSeconds;
     bool staleFallback = stalenessSeconds > 0;
     uint256 timestamp;
     int256 feedValue;
-    (, feedValue,, timestamp,) = i_fastGasFeed.latestRoundData();
+    (, feedValue, , timestamp, ) = i_fastGasFeed.latestRoundData();
     if (
       feedValue <= 0 || block.timestamp < timestamp || (staleFallback && stalenessSeconds < block.timestamp - timestamp)
     ) {
@@ -444,7 +445,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     } else {
       gasWei = uint256(feedValue);
     }
-    (, feedValue,, timestamp,) = i_linkNativeFeed.latestRoundData();
+    (, feedValue, , timestamp, ) = i_linkNativeFeed.latestRoundData();
     if (
       feedValue <= 0 || block.timestamp < timestamp || (staleFallback && stalenessSeconds < block.timestamp - timestamp)
     ) {
@@ -497,7 +498,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
       } else {
         // fee is 4 per 0 byte, 16 per non-zero byte - we assume all non-zero and
         // max data size to calculate max payment
-        (, uint256 perL1CalldataUnit,,,,) = ARB_NITRO_ORACLE.getPricesInWei();
+        (, uint256 perL1CalldataUnit, , , , ) = ARB_NITRO_ORACLE.getPricesInWei();
         l1CostWei = perL1CalldataUnit * s_storage.maxPerformDataSize * 16;
       }
     }
@@ -509,8 +510,10 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     l1CostWei = l1CostWei / numBatchedUpkeeps;
 
     uint256 gasPayment = ((gasWei * (gasLimit + gasOverhead) + l1CostWei) * 1e18) / linkNative;
-    uint256 premium = (((gasWei * gasLimit) + l1CostWei) * 1e9 * hotVars.paymentPremiumPPB) / linkNative
-      + uint256(hotVars.flatFeeMicroLink) * 1e12;
+    uint256 premium = (((gasWei * gasLimit) + l1CostWei) * 1e9 * hotVars.paymentPremiumPPB) /
+      linkNative +
+      uint256(hotVars.flatFeeMicroLink) *
+      1e12;
     // LINK_TOTAL_SUPPLY < UINT96_MAX
     if (gasPayment + premium > LINK_TOTAL_SUPPLY) revert PaymentGreaterThanAllLINK();
     return (uint96(gasPayment), uint96(premium));
@@ -555,8 +558,10 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     } else {
       revert InvalidTriggerType();
     }
-    return baseOverhead + (REGISTRY_PER_SIGNER_GAS_OVERHEAD * (f + 1))
-      + (REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD * performDataLength);
+    return
+      baseOverhead +
+      (REGISTRY_PER_SIGNER_GAS_OVERHEAD * (f + 1)) +
+      (REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD * performDataLength);
   }
 
   /**
@@ -583,9 +588,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
   /**
    * @dev gets the trigger type from an upkeepID (trigger type is encoded in the middle of the ID)
    */
-  function _getTriggerType(
-    uint256 upkeepId
-  ) internal pure returns (Trigger) {
+  function _getTriggerType(uint256 upkeepId) internal pure returns (Trigger) {
     bytes32 rawID = bytes32(upkeepId);
     bytes1 empty = bytes1(0);
     for (uint256 idx = 4; idx < 15; idx++) {
@@ -614,14 +617,13 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
   /**
    * @dev _decodeReport decodes a serialized report into a Report struct
    */
-  function _decodeReport(
-    bytes calldata rawReport
-  ) internal pure returns (Report memory) {
+  function _decodeReport(bytes calldata rawReport) internal pure returns (Report memory) {
     Report memory report = abi.decode(rawReport, (Report));
     uint256 expectedLength = report.upkeepIds.length;
     if (
-      report.gasLimits.length != expectedLength || report.triggers.length != expectedLength
-        || report.performDatas.length != expectedLength
+      report.gasLimits.length != expectedLength ||
+      report.triggers.length != expectedLength ||
+      report.performDatas.length != expectedLength
     ) {
       revert InvalidReport();
     }
@@ -677,8 +679,8 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
       return false;
     }
     if (
-      (trigger.blockHash != bytes32("") && _blockHash(trigger.blockNum) != trigger.blockHash)
-        || trigger.blockNum >= _blockNum()
+      (trigger.blockHash != bytes32("") && _blockHash(trigger.blockNum) != trigger.blockHash) ||
+      trigger.blockNum >= _blockNum()
     ) {
       // There are two cases of reorged report
       // 1. trigger block number is in future: this is an edge case during extreme deep reorgs of chain
@@ -700,8 +702,8 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     LogTrigger memory trigger = abi.decode(rawTrigger, (LogTrigger));
     bytes32 dedupID = keccak256(abi.encodePacked(upkeepId, trigger.logBlockHash, trigger.txHash, trigger.logIndex));
     if (
-      (trigger.blockHash != bytes32("") && _blockHash(trigger.blockNum) != trigger.blockHash)
-        || trigger.blockNum >= _blockNum()
+      (trigger.blockHash != bytes32("") && _blockHash(trigger.blockNum) != trigger.blockHash) ||
+      trigger.blockNum >= _blockNum()
     ) {
       // Reorg protection is same as conditional trigger upkeeps
       emit ReorgedUpkeepReport(upkeepId, rawTrigger);
@@ -817,9 +819,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
   /**
    * @dev ensures the upkeep is not cancelled and the caller is the upkeep admin
    */
-  function _requireAdminAndNotCancelled(
-    uint256 upkeepId
-  ) internal view {
+  function _requireAdminAndNotCancelled(uint256 upkeepId) internal view {
     if (msg.sender != s_upkeepAdmin[upkeepId]) revert OnlyCallableByAdmin();
     if (s_upkeep[upkeepId].maxValidBlocknumber != UINT32_MAX) revert UpkeepCancelled();
   }
@@ -840,9 +840,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
    * @param n the blocknumber to retrieve the blockhash for
    * @return blockhash the blockhash of block number n, or 0 if n is out queryable of range
    */
-  function _blockHash(
-    uint256 n
-  ) internal view returns (bytes32) {
+  function _blockHash(uint256 n) internal view returns (bytes32) {
     if (i_mode == Mode.ARBITRUM) {
       uint256 blockNum = ARB_SYS.arbBlockNumber();
       if (n >= blockNum || blockNum - n > 256) {

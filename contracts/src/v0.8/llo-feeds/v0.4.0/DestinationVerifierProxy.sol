@@ -44,9 +44,7 @@ contract DestinationVerifierProxy is IDestinationVerifierProxy, ConfirmedOwner, 
   }
 
   /// @inheritdoc IDestinationVerifierProxy
-  function setVerifier(
-    address verifierAddress
-  ) external onlyOwner {
+  function setVerifier(address verifierAddress) external onlyOwner {
     //check it supports the functions we need
     if (!IERC165(verifierAddress).supportsInterface(type(IDestinationVerifierProxyVerifier).interfaceId)) {
       revert VerifierInvalid(verifierAddress);
@@ -68,9 +66,7 @@ contract DestinationVerifierProxy is IDestinationVerifierProxy, ConfirmedOwner, 
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(
-    bytes4 interfaceId
-  ) external pure override returns (bool) {
+  function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
     return interfaceId == type(IDestinationVerifierProxy).interfaceId;
   }
 }

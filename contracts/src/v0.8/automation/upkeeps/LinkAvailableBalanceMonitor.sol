@@ -134,8 +134,9 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
     uint64[] calldata dstChainSelectors
   ) external onlyAdminOrExecutor {
     if (
-      addresses.length != minBalances.length || addresses.length != topUpAmounts.length
-        || addresses.length != dstChainSelectors.length
+      addresses.length != minBalances.length ||
+      addresses.length != topUpAmounts.length ||
+      addresses.length != dstChainSelectors.length
     ) {
       revert InvalidWatchList();
     }
@@ -147,7 +148,7 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
     // s_onRampAddresses is not the same length as s_watchList, so it has
     // to be clean in a separate loop
     for (uint256 idx = s_onRampAddresses.length(); idx > 0; idx--) {
-      (uint256 key,) = s_onRampAddresses.at(idx - 1);
+      (uint256 key, ) = s_onRampAddresses.at(idx - 1);
       s_onRampAddresses.remove(key);
     }
     for (uint256 idx = 0; idx < addresses.length; idx++) {
@@ -207,9 +208,7 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
 
   /// @notice Delete an address from the watchlist and sets the target to inactive
   /// @param targetAddress the address to be deleted
-  function removeFromWatchList(
-    address targetAddress
-  ) public onlyAdminOrExecutor returns (bool) {
+  function removeFromWatchList(address targetAddress) public onlyAdminOrExecutor returns (bool) {
     if (s_watchList.remove(targetAddress)) {
       delete s_targets[targetAddress];
       return true;
@@ -234,11 +233,14 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
     address[] memory targetsToFund = new address[](maxPerform);
     MonitoredAddress memory contractToFund;
     address targetAddress;
-    for (uint256 numChecked = 0; numChecked < numToCheck; (idx, numChecked) = ((idx + 1) % numTargets, numChecked + 1))
-    {
+    for (
+      uint256 numChecked = 0;
+      numChecked < numToCheck;
+      (idx, numChecked) = ((idx + 1) % numTargets, numChecked + 1)
+    ) {
       targetAddress = s_watchList.at(idx);
       contractToFund = s_targets[targetAddress];
-      (bool fundingNeeded,) = _needsFunding(
+      (bool fundingNeeded, ) = _needsFunding(
         targetAddress,
         contractToFund.lastTopUpTimestamp + minWaitPeriod,
         contractToFund.minBalance,
@@ -262,9 +264,7 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
 
   /// @notice tries to fund an array of target addresses, checking if they're underfunded in the process
   /// @param targetAddresses is an array of contract addresses to be funded in case they're underfunded
-  function topUp(
-    address[] memory targetAddresses
-  ) public whenNotPaused nonReentrant {
+  function topUp(address[] memory targetAddresses) public whenNotPaused nonReentrant {
     MonitoredAddress memory contractToFund;
     uint256 minWaitPeriod = s_minWaitPeriodSeconds;
     uint256 localBalance = i_linkToken.balanceOf(address(this));
@@ -354,9 +354,7 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
 
   /// @notice Called by the keeper to send funds to underfunded addresses.
   /// @param performData the abi encoded list of addresses to fund
-  function performUpkeep(
-    bytes calldata performData
-  ) external override {
+  function performUpkeep(bytes calldata performData) external override {
     address[] memory needsFunding = abi.decode(performData, (address[]));
     topUp(needsFunding);
   }
@@ -391,33 +389,25 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
   }
 
   /// @notice Update s_maxPerform
-  function setMaxPerform(
-    uint16 maxPerform
-  ) public onlyRole(ADMIN_ROLE) {
+  function setMaxPerform(uint16 maxPerform) public onlyRole(ADMIN_ROLE) {
     emit MaxPerformSet(s_maxPerform, maxPerform);
     s_maxPerform = maxPerform;
   }
 
   /// @notice Update s_maxCheck
-  function setMaxCheck(
-    uint16 maxCheck
-  ) public onlyRole(ADMIN_ROLE) {
+  function setMaxCheck(uint16 maxCheck) public onlyRole(ADMIN_ROLE) {
     emit MaxCheckSet(s_maxCheck, maxCheck);
     s_maxCheck = maxCheck;
   }
 
   /// @notice Sets the minimum wait period (in seconds) for addresses between funding
-  function setMinWaitPeriodSeconds(
-    uint256 minWaitPeriodSeconds
-  ) public onlyRole(ADMIN_ROLE) {
+  function setMinWaitPeriodSeconds(uint256 minWaitPeriodSeconds) public onlyRole(ADMIN_ROLE) {
     emit MinWaitPeriodSet(s_minWaitPeriodSeconds, minWaitPeriodSeconds);
     s_minWaitPeriodSeconds = minWaitPeriodSeconds;
   }
 
   /// @notice Update s_upkeepInterval
-  function setUpkeepInterval(
-    uint8 upkeepInterval
-  ) public onlyRole(ADMIN_ROLE) {
+  function setUpkeepInterval(uint8 upkeepInterval) public onlyRole(ADMIN_ROLE) {
     if (upkeepInterval > 255) revert InvalidUpkeepInterval(upkeepInterval);
     emit UpkeepIntervalSet(s_upkeepInterval, upkeepInterval);
     s_upkeepInterval = upkeepInterval;
@@ -449,9 +439,7 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
   }
 
   /// @notice Gets the onRamp address with the specified dstChainSelector
-  function getOnRampAddressAtChainSelector(
-    uint64 dstChainSelector
-  ) external view returns (address) {
+  function getOnRampAddressAtChainSelector(uint64 dstChainSelector) external view returns (address) {
     if (dstChainSelector == 0) revert InvalidChainSelector();
     return s_onRampAddresses.get(dstChainSelector);
   }

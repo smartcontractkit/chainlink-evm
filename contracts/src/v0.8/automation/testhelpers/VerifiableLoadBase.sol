@@ -67,7 +67,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    */
   constructor(AutomationRegistrar2_1 _registrar, bool _useArb) ConfirmedOwner(msg.sender) {
     registrar = _registrar;
-    (address registryAddress,) = registrar.getConfig();
+    (address registryAddress, ) = registrar.getConfig();
     registry = IKeeperRegistryMaster(payable(address(registryAddress)));
     linkToken = registrar.LINK();
     useArbitrumBlockNum = _useArb;
@@ -80,9 +80,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     timeParamKey = _timeParamKey;
   }
 
-  function setFeeds(
-    string[] memory _feeds
-  ) external {
+  function setFeeds(string[] memory _feeds) external {
     feedsHex = _feeds;
   }
 
@@ -106,11 +104,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @notice sets registrar, registry, and link token address.
    * @param newRegistrar the new registrar address
    */
-  function setConfig(
-    AutomationRegistrar2_1 newRegistrar
-  ) external {
+  function setConfig(AutomationRegistrar2_1 newRegistrar) external {
     registrar = newRegistrar;
-    (address registryAddress,) = registrar.getConfig();
+    (address registryAddress, ) = registrar.getConfig();
     registry = IKeeperRegistryMaster(payable(address(registryAddress)));
     linkToken = registrar.LINK();
   }
@@ -155,9 +151,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @param params a registration params struct
    * @return an upkeep ID
    */
-  function _registerUpkeep(
-    AutomationRegistrar2_1.RegistrationParams memory params
-  ) private returns (uint256) {
+  function _registerUpkeep(AutomationRegistrar2_1.RegistrationParams memory params) private returns (uint256) {
     uint256 upkeepId = registrar.registerUpkeep(params);
     s_upkeepIDs.add(upkeepId);
     gasLimits[upkeepId] = params.gasLimit;
@@ -225,8 +219,14 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
         if (log != 0) {
           sig = emittedAgainSig;
         }
-        bytes memory triggerCfg =
-          this.getLogTriggerConfig(address(this), selector, sig, bytes32(abi.encode(upkeepId)), bytes32(0), bytes32(0));
+        bytes memory triggerCfg = this.getLogTriggerConfig(
+          address(this),
+          selector,
+          sig,
+          bytes32(abi.encode(upkeepId)),
+          bytes32(0),
+          bytes32(0)
+        );
         registry.setUpkeepTriggerConfig(upkeepId, triggerCfg);
       }
     }
@@ -303,27 +303,19 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function getMinBalanceForUpkeep(
-    uint256 upkeepId
-  ) external view returns (uint96) {
+  function getMinBalanceForUpkeep(uint256 upkeepId) external view returns (uint96) {
     return registry.getMinBalanceForUpkeep(upkeepId);
   }
 
-  function getForwarder(
-    uint256 upkeepID
-  ) external view returns (address) {
+  function getForwarder(uint256 upkeepID) external view returns (address) {
     return registry.getForwarder(upkeepID);
   }
 
-  function getBalance(
-    uint256 id
-  ) external view returns (uint96 balance) {
+  function getBalance(uint256 id) external view returns (uint96 balance) {
     return registry.getBalance(id);
   }
 
-  function getTriggerType(
-    uint256 upkeepId
-  ) external view returns (uint8) {
+  function getTriggerType(uint256 upkeepId) external view returns (uint8) {
     return registry.getTriggerType(upkeepId);
   }
 
@@ -353,15 +345,11 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     registry.setUpkeepCheckData(upkeepId, pipelineData);
   }
 
-  function withdrawLinks(
-    uint256 upkeepId
-  ) external {
+  function withdrawLinks(uint256 upkeepId) external {
     registry.withdrawFunds(upkeepId, address(this));
   }
 
-  function batchWithdrawLinks(
-    uint256[] calldata upkeepIds
-  ) external {
+  function batchWithdrawLinks(uint256[] calldata upkeepIds) external {
     uint256 len = upkeepIds.length;
     for (uint32 i = 0; i < len; i++) {
       this.withdrawLinks(upkeepIds[i]);
@@ -372,9 +360,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @notice batch canceling upkeeps.
    * @param upkeepIds an array of upkeep IDs
    */
-  function batchCancelUpkeeps(
-    uint256[] calldata upkeepIds
-  ) external {
+  function batchCancelUpkeeps(uint256[] calldata upkeepIds) external {
     uint256 len = upkeepIds.length;
     for (uint8 i = 0; i < len; i++) {
       registry.cancelUpkeep(upkeepIds[i]);
@@ -382,9 +368,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function eligible(
-    uint256 upkeepId
-  ) public view returns (bool) {
+  function eligible(uint256 upkeepId) public view returns (bool) {
     if (firstPerformBlocks[upkeepId] == 0) {
       return true;
     }
@@ -453,9 +437,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @notice batch updating pipeline data for all upkeeps.
    * @param upkeepIds an array of upkeep IDs
    */
-  function batchUpdatePipelineData(
-    uint256[] calldata upkeepIds
-  ) external {
+  function batchUpdatePipelineData(uint256[] calldata upkeepIds) external {
     uint256 len = upkeepIds.length;
     for (uint256 i = 0; i < len; i++) {
       uint256 upkeepId = upkeepIds[i];
@@ -466,9 +448,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   /**
    * @notice finds all log trigger upkeeps and emits logs to serve as the initial trigger for upkeeps
    */
-  function batchSendLogs(
-    uint8 log
-  ) external {
+  function batchSendLogs(uint8 log) external {
     uint256[] memory upkeepIds = this.getActiveUpkeepIDsDeployedByThisContract(0, 0);
     uint256 len = upkeepIds.length;
     uint256 blockNum = getBlockNumber();
@@ -485,21 +465,15 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function getUpkeepInfo(
-    uint256 upkeepId
-  ) public view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory) {
+  function getUpkeepInfo(uint256 upkeepId) public view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory) {
     return registry.getUpkeep(upkeepId);
   }
 
-  function getUpkeepTriggerConfig(
-    uint256 upkeepId
-  ) public view returns (bytes memory) {
+  function getUpkeepTriggerConfig(uint256 upkeepId) public view returns (bytes memory) {
     return registry.getUpkeepTriggerConfig(upkeepId);
   }
 
-  function getUpkeepPrivilegeConfig(
-    uint256 upkeepId
-  ) public view returns (bytes memory) {
+  function getUpkeepPrivilegeConfig(uint256 upkeepId) public view returns (bytes memory) {
     return registry.getUpkeepPrivilegeConfig(upkeepId);
   }
 
@@ -516,15 +490,11 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function getDelaysLength(
-    uint256 upkeepId
-  ) public view returns (uint256) {
+  function getDelaysLength(uint256 upkeepId) public view returns (uint256) {
     return delays[upkeepId].length;
   }
 
-  function getBucketedDelaysLength(
-    uint256 upkeepId
-  ) public view returns (uint256) {
+  function getBucketedDelaysLength(uint256 upkeepId) public view returns (uint256) {
     uint16 currentBucket = buckets[upkeepId];
     uint256 len = 0;
     for (uint16 i = 0; i <= currentBucket; i++) {
@@ -533,9 +503,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     return len;
   }
 
-  function getDelays(
-    uint256 upkeepId
-  ) public view returns (uint256[] memory) {
+  function getDelays(uint256 upkeepId) public view returns (uint256[] memory) {
     return delays[upkeepId];
   }
 

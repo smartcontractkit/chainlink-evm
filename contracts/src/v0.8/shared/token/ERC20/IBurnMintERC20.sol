@@ -13,9 +13,7 @@ interface IBurnMintERC20 is IERC20 {
   /// @notice Burns tokens from the sender.
   /// @param amount The number of tokens to be burned.
   /// @dev this function decreases the total supply.
-  function burn(
-    uint256 amount
-  ) external;
+  function burn(uint256 amount) external;
 
   /// @notice Burns tokens from a given address..
   /// @param account The address to burn tokens from.

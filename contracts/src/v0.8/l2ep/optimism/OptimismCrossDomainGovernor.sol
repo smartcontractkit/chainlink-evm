@@ -7,8 +7,7 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 
 import {OptimismCrossDomainForwarder} from "./OptimismCrossDomainForwarder.sol";
 
-import {iOVM_CrossDomainMessenger} from
-  "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
+import {iOVM_CrossDomainMessenger} from "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
 import {Address} from "@openzeppelin/contracts-4-7-3/utils/Address.sol";
 
 /**
@@ -66,7 +65,8 @@ contract OptimismCrossDomainGovernor is IDelegateForwarder, OptimismCrossDomainF
     if (msg.sender == messenger) {
       // solhint-disable-next-line gas-custom-errors
       require(
-        iOVM_CrossDomainMessenger(messenger).xDomainMessageSender() == l1Owner(), "xDomain sender is not the L1 owner"
+        iOVM_CrossDomainMessenger(messenger).xDomainMessageSender() == l1Owner(),
+        "xDomain sender is not the L1 owner"
       );
     }
     _;

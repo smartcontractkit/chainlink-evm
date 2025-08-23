@@ -117,9 +117,7 @@ contract BaseTest is Test {
     }
   }
 
-  function _getSigners(
-    uint256 numSigners
-  ) internal view returns (Signer[] memory) {
+  function _getSigners(uint256 numSigners) internal view returns (Signer[] memory) {
     Signer[] memory signers = new Signer[](numSigners);
     for (uint256 i; i < numSigners; i++) {
       signers[i] = s_signers[i];
@@ -127,9 +125,7 @@ contract BaseTest is Test {
     return signers;
   }
 
-  function _getSignerAddresses(
-    Signer[] memory signers
-  ) internal view returns (address[] memory) {
+  function _getSignerAddresses(Signer[] memory signers) internal view returns (address[] memory) {
     address[] memory signerAddrs = new address[](signers.length);
     for (uint256 i = 0; i < signerAddrs.length; i++) {
       signerAddrs[i] = s_signers[i].signerAddress;
@@ -157,20 +153,19 @@ contract BaseTest is Test {
     return (rs, ss, bytes32(vs));
   }
 
-  function _encodeReport(
-    V1Report memory report
-  ) internal pure returns (bytes memory) {
-    return abi.encode(
-      report.feedId,
-      report.observationsTimestamp,
-      report.median,
-      report.bid,
-      report.ask,
-      report.blocknumberUpperBound,
-      report.upperBlockhash,
-      report.blocknumberLowerBound,
-      report.currentBlockTimestamp
-    );
+  function _encodeReport(V1Report memory report) internal pure returns (bytes memory) {
+    return
+      abi.encode(
+        report.feedId,
+        report.observationsTimestamp,
+        report.median,
+        report.bid,
+        report.ask,
+        report.blocknumberUpperBound,
+        report.upperBlockhash,
+        report.blocknumberLowerBound,
+        report.currentBlockTimestamp
+      );
   }
 
   function _generateV1EncodedBlob(
@@ -179,8 +174,11 @@ contract BaseTest is Test {
     Signer[] memory signers
   ) internal pure returns (bytes memory) {
     bytes memory reportBytes = _encodeReport(report);
-    (bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs) =
-      _generateSignerSignatures(reportBytes, reportContext, signers);
+    (bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs) = _generateSignerSignatures(
+      reportBytes,
+      reportContext,
+      signers
+    );
     return abi.encode(reportContext, reportBytes, rs, ss, rawVs);
   }
 
@@ -234,29 +232,31 @@ contract BaseTest is Test {
     uint64 blocknumberLowerBound,
     uint32 currentBlockTimestamp
   ) internal pure returns (V1Report memory) {
-    return V1Report({
-      feedId: feedId,
-      observationsTimestamp: observationsTimestamp,
-      median: median,
-      bid: bid,
-      ask: ask,
-      blocknumberUpperBound: blocknumberUpperBound,
-      upperBlockhash: upperBlockhash,
-      blocknumberLowerBound: blocknumberLowerBound,
-      currentBlockTimestamp: currentBlockTimestamp
-    });
+    return
+      V1Report({
+        feedId: feedId,
+        observationsTimestamp: observationsTimestamp,
+        median: median,
+        bid: bid,
+        ask: ask,
+        blocknumberUpperBound: blocknumberUpperBound,
+        upperBlockhash: upperBlockhash,
+        blocknumberLowerBound: blocknumberLowerBound,
+        currentBlockTimestamp: currentBlockTimestamp
+      });
   }
 
   function _ccipReadURL(bytes32 feedId, uint256 commitmentBlock) internal pure returns (string memory url) {
-    return string(
-      abi.encodePacked(
-        SERVER_URL,
-        "?feedIDHex=",
-        Strings.toHexString(uint256(feedId)),
-        "&L2Blocknumber=",
-        Strings.toString(commitmentBlock)
-      )
-    );
+    return
+      string(
+        abi.encodePacked(
+          SERVER_URL,
+          "?feedIDHex=",
+          Strings.toHexString(uint256(feedId)),
+          "&L2Blocknumber=",
+          Strings.toString(commitmentBlock)
+        )
+      );
   }
 }
 
@@ -313,7 +313,10 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     );
 
     s_verifier.setConfig(
-      v1ConfigDigest, _getSignerAddresses(signers), FAULT_TOLERANCE, new Common.AddressAndWeight[](0)
+      v1ConfigDigest,
+      _getSignerAddresses(signers),
+      FAULT_TOLERANCE,
+      new Common.AddressAndWeight[](0)
     );
 
     v3ConfigDigest = _configDigestFromConfigData(
@@ -330,7 +333,10 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     );
 
     s_verifier.setConfig(
-      v3ConfigDigest, _getSignerAddresses(signers), FAULT_TOLERANCE, new Common.AddressAndWeight[](0)
+      v3ConfigDigest,
+      _getSignerAddresses(signers),
+      FAULT_TOLERANCE,
+      new Common.AddressAndWeight[](0)
     );
 
     link = new ERC20Mock(18);
@@ -343,20 +349,19 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     rewardManager.setFeeManager(address(feeManager));
   }
 
-  function _encodeReport(
-    V3Report memory report
-  ) internal pure returns (bytes memory) {
-    return abi.encode(
-      report.feedId,
-      report.observationsTimestamp,
-      report.validFromTimestamp,
-      report.nativeFee,
-      report.linkFee,
-      report.expiresAt,
-      report.benchmarkPrice,
-      report.bid,
-      report.ask
-    );
+  function _encodeReport(V3Report memory report) internal pure returns (bytes memory) {
+    return
+      abi.encode(
+        report.feedId,
+        report.observationsTimestamp,
+        report.validFromTimestamp,
+        report.nativeFee,
+        report.linkFee,
+        report.expiresAt,
+        report.benchmarkPrice,
+        report.bid,
+        report.ask
+      );
   }
 
   function _generateV3EncodedBlob(
@@ -365,42 +370,45 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     Signer[] memory signers
   ) internal pure returns (bytes memory) {
     bytes memory reportBytes = _encodeReport(report);
-    (bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs) =
-      _generateSignerSignatures(reportBytes, reportContext, signers);
+    (bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs) = _generateSignerSignatures(
+      reportBytes,
+      reportContext,
+      signers
+    );
     return abi.encode(reportContext, reportBytes, rs, ss, rawVs);
   }
 
   function _generateV1Report() internal view returns (V1Report memory) {
-    return _createV1Report(
-      FEED_ID,
-      OBSERVATIONS_TIMESTAMP,
-      MEDIAN,
-      BID,
-      ASK,
-      BLOCKNUMBER_UPPER_BOUND,
-      bytes32(blockhash(BLOCKNUMBER_UPPER_BOUND)),
-      BLOCKNUMBER_LOWER_BOUND,
-      uint32(block.timestamp)
-    );
+    return
+      _createV1Report(
+        FEED_ID,
+        OBSERVATIONS_TIMESTAMP,
+        MEDIAN,
+        BID,
+        ASK,
+        BLOCKNUMBER_UPPER_BOUND,
+        bytes32(blockhash(BLOCKNUMBER_UPPER_BOUND)),
+        BLOCKNUMBER_LOWER_BOUND,
+        uint32(block.timestamp)
+      );
   }
 
   function _generateV3Report() internal view returns (V3Report memory) {
-    return V3Report({
-      feedId: FEED_ID_V3,
-      observationsTimestamp: OBSERVATIONS_TIMESTAMP,
-      validFromTimestamp: uint32(block.timestamp),
-      nativeFee: uint192(DEFAULT_REPORT_NATIVE_FEE),
-      linkFee: uint192(DEFAULT_REPORT_LINK_FEE),
-      expiresAt: uint32(block.timestamp),
-      benchmarkPrice: MEDIAN,
-      bid: BID,
-      ask: ASK
-    });
+    return
+      V3Report({
+        feedId: FEED_ID_V3,
+        observationsTimestamp: OBSERVATIONS_TIMESTAMP,
+        validFromTimestamp: uint32(block.timestamp),
+        nativeFee: uint192(DEFAULT_REPORT_NATIVE_FEE),
+        linkFee: uint192(DEFAULT_REPORT_LINK_FEE),
+        expiresAt: uint32(block.timestamp),
+        benchmarkPrice: MEDIAN,
+        bid: BID,
+        ask: ASK
+      });
   }
 
-  function _generateReportContext(
-    bytes32 configDigest
-  ) internal pure returns (bytes32[3] memory) {
+  function _generateReportContext(bytes32 configDigest) internal pure returns (bytes32[3] memory) {
     bytes32[3] memory reportContext;
     reportContext[0] = configDigest;
     reportContext[1] = bytes32(abi.encode(uint32(5), uint8(1)));
@@ -432,7 +440,12 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     changePrank(originalAddr);
   }
 
-  function _verifyBulk(bytes[] memory payload, address feeAddress, uint256 wrappedNativeValue, address sender) internal {
+  function _verifyBulk(
+    bytes[] memory payload,
+    address feeAddress,
+    uint256 wrappedNativeValue,
+    address sender
+  ) internal {
     address originalAddr = msg.sender;
     changePrank(sender);
 
@@ -475,7 +488,10 @@ contract BaseTestWithMultipleConfiguredDigests is BaseTestWithConfiguredVerifier
       bytes("")
     );
     s_verifier.setConfig(
-      s_configDigestTwo, _getSignerAddresses(secondSetOfSigners), FAULT_TOLERANCE_TWO, new Common.AddressAndWeight[](0)
+      s_configDigestTwo,
+      _getSignerAddresses(secondSetOfSigners),
+      FAULT_TOLERANCE_TWO,
+      new Common.AddressAndWeight[](0)
     );
 
     // Verifier 1, Feed 1, Config 3
@@ -513,7 +529,10 @@ contract BaseTestWithMultipleConfiguredDigests is BaseTestWithConfiguredVerifier
       bytes("")
     );
     s_verifier.setConfig(
-      s_configDigestFour, _getSignerAddresses(signers), FAULT_TOLERANCE, new Common.AddressAndWeight[](0)
+      s_configDigestFour,
+      _getSignerAddresses(signers),
+      FAULT_TOLERANCE,
+      new Common.AddressAndWeight[](0)
     );
 
     // Verifier 2, Feed 3, Config 1
@@ -531,7 +550,10 @@ contract BaseTestWithMultipleConfiguredDigests is BaseTestWithConfiguredVerifier
       bytes("")
     );
     s_verifier_2.setConfig(
-      s_configDigestFive, _getSignerAddresses(signers), FAULT_TOLERANCE, new Common.AddressAndWeight[](0)
+      s_configDigestFive,
+      _getSignerAddresses(signers),
+      FAULT_TOLERANCE,
+      new Common.AddressAndWeight[](0)
     );
   }
 }

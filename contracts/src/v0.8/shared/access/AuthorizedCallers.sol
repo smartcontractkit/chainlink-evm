@@ -25,9 +25,7 @@ contract AuthorizedCallers is Ownable2StepMsgSender {
   EnumerableSet.AddressSet internal s_authorizedCallers;
 
   /// @param authorizedCallers the authorized callers to set
-  constructor(
-    address[] memory authorizedCallers
-  ) {
+  constructor(address[] memory authorizedCallers) {
     _applyAuthorizedCallerUpdates(
       AuthorizedCallerArgs({addedCallers: authorizedCallers, removedCallers: new address[](0)})
     );
@@ -40,17 +38,13 @@ contract AuthorizedCallers is Ownable2StepMsgSender {
 
   /// @notice Updates the list of authorized callers
   /// @param authorizedCallerArgs Callers to add and remove. Removals are performed first.
-  function applyAuthorizedCallerUpdates(
-    AuthorizedCallerArgs memory authorizedCallerArgs
-  ) external onlyOwner {
+  function applyAuthorizedCallerUpdates(AuthorizedCallerArgs memory authorizedCallerArgs) external onlyOwner {
     _applyAuthorizedCallerUpdates(authorizedCallerArgs);
   }
 
   /// @notice Updates the list of authorized callers
   /// @param authorizedCallerArgs Callers to add and remove. Removals are performed first.
-  function _applyAuthorizedCallerUpdates(
-    AuthorizedCallerArgs memory authorizedCallerArgs
-  ) internal {
+  function _applyAuthorizedCallerUpdates(AuthorizedCallerArgs memory authorizedCallerArgs) internal {
     address[] memory removedCallers = authorizedCallerArgs.removedCallers;
     for (uint256 i = 0; i < removedCallers.length; ++i) {
       address caller = removedCallers[i];

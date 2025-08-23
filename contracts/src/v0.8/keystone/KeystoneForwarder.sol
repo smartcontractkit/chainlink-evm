@@ -75,7 +75,10 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
   /// @notice Emitted when a report is processed
   /// @param result The result of the attempted delivery. True if successful.
   event ReportProcessed(
-    address indexed receiver, bytes32 indexed workflowExecutionId, bytes2 indexed reportId, bool result
+    address indexed receiver,
+    bytes32 indexed workflowExecutionId,
+    bytes2 indexed reportId,
+    bool result
   );
 
   /// @notice Contains the configuration for each DON ID
@@ -112,16 +115,12 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
   mapping(address forwarder => bool isForwarder) internal s_forwarders;
   mapping(bytes32 transmissionId => Transmission transmission) internal s_transmissions;
 
-  function addForwarder(
-    address forwarder
-  ) external onlyOwner {
+  function addForwarder(address forwarder) external onlyOwner {
     s_forwarders[forwarder] = true;
     emit ForwarderAdded(forwarder);
   }
 
-  function removeForwarder(
-    address forwarder
-  ) external onlyOwner {
+  function removeForwarder(address forwarder) external onlyOwner {
     s_forwarders[forwarder] = false;
     emit ForwarderRemoved(forwarder);
   }
@@ -194,14 +193,15 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
       state = transmission.success ? IRouter.TransmissionState.SUCCEEDED : IRouter.TransmissionState.FAILED;
     }
 
-    return TransmissionInfo({
-      gasLimit: transmission.gasLimit,
-      invalidReceiver: transmission.invalidReceiver,
-      state: state,
-      success: transmission.success,
-      transmissionId: transmissionId,
-      transmitter: transmission.transmitter
-    });
+    return
+      TransmissionInfo({
+        gasLimit: transmission.gasLimit,
+        invalidReceiver: transmission.invalidReceiver,
+        state: state,
+        success: transmission.success,
+        transmissionId: transmissionId,
+        transmitter: transmission.transmitter
+      });
   }
 
   /// @notice Get transmitter of a given report or 0x0 if it wasn't transmitted yet
@@ -213,9 +213,7 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
     return s_transmissions[getTransmissionId(receiver, workflowExecutionId, reportId)].transmitter;
   }
 
-  function isForwarder(
-    address forwarder
-  ) external view returns (bool) {
+  function isForwarder(address forwarder) external view returns (bool) {
     return s_forwarders[forwarder];
   }
 
@@ -287,8 +285,12 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
       for (uint256 i = 0; i < signatures.length; ++i) {
         bytes calldata signature = signatures[i];
         if (signature.length != SIGNATURE_LENGTH) revert InvalidSignature(signature);
-        address signer =
-          ecrecover(completeHash, uint8(signature[64]) + 27, bytes32(signature[0:32]), bytes32(signature[32:64]));
+        address signer = ecrecover(
+          completeHash,
+          uint8(signature[64]) + 27,
+          bytes32(signature[0:32]),
+          bytes32(signature[32:64])
+        );
 
         // validate signer is trusted and signature is unique
         uint256 index = config._positions[signer];

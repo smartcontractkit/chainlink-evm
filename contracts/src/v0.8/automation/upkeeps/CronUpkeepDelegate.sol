@@ -29,9 +29,7 @@ contract CronUpkeepDelegate {
    * @return upkeepNeeded signals if upkeep is needed, performData is an abi encoding
    * of the id and "next tick" of the eligible cron job
    */
-  function checkUpkeep(
-    bytes calldata
-  ) external view returns (bool, bytes memory) {
+  function checkUpkeep(bytes calldata) external view returns (bool, bytes memory) {
     // DEV: start at a random spot in the list so that checks are
     // spread evenly among cron jobs
     uint256 numCrons = s_activeCronJobIDs.length();

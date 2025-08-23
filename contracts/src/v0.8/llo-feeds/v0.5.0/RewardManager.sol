@@ -67,9 +67,7 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
    * @notice Constructor
    * @param linkAddress address of the wrapped LINK token
    */
-  constructor(
-    address linkAddress
-  ) ConfirmedOwner(msg.sender) {
+  constructor(address linkAddress) ConfirmedOwner(msg.sender) {
     //ensure that the address ia not zero
     if (linkAddress == address(0)) revert InvalidAddress();
 
@@ -82,9 +80,7 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   // @inheritdoc IERC165
-  function supportsInterface(
-    bytes4 interfaceId
-  ) external pure override returns (bool) {
+  function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
     return interfaceId == this.onFeePaid.selector;
   }
 
@@ -93,9 +89,7 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
     _;
   }
 
-  modifier onlyOwnerOrRecipientInPool(
-    bytes32 poolId
-  ) {
+  modifier onlyOwnerOrRecipientInPool(bytes32 poolId) {
     if (msg.sender != owner() && s_rewardRecipientWeights[poolId][msg.sender] == 0) revert Unauthorized();
     _;
   }
@@ -127,9 +121,7 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IRewardManager
-  function claimRewards(
-    bytes32[] memory poolIds
-  ) external override {
+  function claimRewards(bytes32[] memory poolIds) external override {
     _claimRewards(msg.sender, poolIds);
   }
 
@@ -280,9 +272,7 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IRewardManager
-  function setFeeManager(
-    address newFeeManagerAddress
-  ) external onlyOwner {
+  function setFeeManager(address newFeeManagerAddress) external onlyOwner {
     if (newFeeManagerAddress == address(0)) revert InvalidAddress();
 
     s_feeManagerAddress = newFeeManagerAddress;

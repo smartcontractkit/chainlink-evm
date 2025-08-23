@@ -23,9 +23,7 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @param l1OwnerAddr the L1 owner address that will be allowed to call the forward fn
    * @dev Empty constructor required due to inheriting from abstract contract CrossDomainForwarder
    */
-  constructor(
-    address l1OwnerAddr
-  ) ArbitrumCrossDomainForwarder(l1OwnerAddr) {}
+  constructor(address l1OwnerAddr) ArbitrumCrossDomainForwarder(l1OwnerAddr) {}
 
   /**
    * @notice versions:

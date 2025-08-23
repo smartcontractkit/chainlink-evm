@@ -156,17 +156,13 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     }
   }
 
-  function _requireSufficientBalance(
-    bool condition
-  ) internal pure {
+  function _requireSufficientBalance(bool condition) internal pure {
     if (!condition) {
       revert InsufficientBalance();
     }
   }
 
-  function _requireValidSubscription(
-    address subOwner
-  ) internal pure {
+  function _requireValidSubscription(address subOwner) internal pure {
     if (subOwner == address(0)) {
       revert InvalidSubscription();
     }
@@ -194,9 +190,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
    * @param subId subscription id
    * @dev notably can be called even if there are pending requests, outstanding ones may fail onchain
    */
-  function ownerCancelSubscription(
-    uint256 subId
-  ) external onlyOwner {
+  function ownerCancelSubscription(uint256 subId) external onlyOwner {
     address subOwner = s_subscriptionConfigs[subId].owner;
     _requireValidSubscription(subOwner);
     _cancelSubscriptionHelper(subId, subOwner);
@@ -206,9 +200,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
    * @notice Recover link sent with transfer instead of transferAndCall.
    * @param to address to send link to
    */
-  function recoverFunds(
-    address to
-  ) external onlyOwner {
+  function recoverFunds(address to) external onlyOwner {
     // If LINK is not set, we cannot recover funds.
     // It is possible that this coordinator address was funded with LINK
     // by accident by a user but the LINK token needs to be set first
@@ -236,9 +228,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
    * @notice Recover native sent with transfer/call/send instead of fundSubscription.
    * @param to address to send native to
    */
-  function recoverNativeFunds(
-    address payable to
-  ) external onlyOwner {
+  function recoverNativeFunds(address payable to) external onlyOwner {
     uint256 externalBalance = address(this).balance;
     uint256 internalBalance = uint256(s_totalNativeBalance);
     if (internalBalance > externalBalance) {
@@ -246,7 +236,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     }
     if (internalBalance < externalBalance) {
       uint256 amount = externalBalance - internalBalance;
-      (bool sent,) = to.call{value: amount}("");
+      (bool sent, ) = to.call{value: amount}("");
       if (!sent) {
         revert FailedToSendNative();
       }
@@ -260,9 +250,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
    * @param recipient where to send the funds
    * @param amount amount to withdraw
    */
-  function withdraw(
-    address recipient
-  ) external nonReentrant onlyOwner {
+  function withdraw(address recipient) external nonReentrant onlyOwner {
     if (address(LINK) == address(0)) {
       revert LinkNotSet();
     }
@@ -278,9 +266,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
    * @param recipient where to send the funds
    * @param amount amount to withdraw
    */
-  function withdrawNative(
-    address payable recipient
-  ) external nonReentrant onlyOwner {
+  function withdrawNative(address payable recipient) external nonReentrant onlyOwner {
     uint96 amount = s_withdrawableNative;
     _requireSufficientBalance(amount > 0);
     // Prevent re-entrancy by updating state before transfer.
@@ -309,9 +295,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
   /**
    * @inheritdoc IVRFSubscriptionV2Plus
    */
-  function fundSubscriptionWithNative(
-    uint256 subId
-  ) external payable override nonReentrant {
+  function fundSubscriptionWithNative(uint256 subId) external payable override nonReentrant {
     _requireValidSubscription(s_subscriptionConfigs[subId].owner);
     // We do not check that the msg.sender is the subscription owner,
     // anyone can fund a subscription.
@@ -370,15 +354,19 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
   function createSubscription() external override nonReentrant returns (uint256 subId) {
     // Generate a subscription id that is globally unique.
     uint64 currentSubNonce = s_currentSubNonce;
-    subId =
-      uint256(keccak256(abi.encodePacked(msg.sender, blockhash(block.number - 1), address(this), currentSubNonce)));
+    subId = uint256(
+      keccak256(abi.encodePacked(msg.sender, blockhash(block.number - 1), address(this), currentSubNonce))
+    );
     // Increment the subscription nonce counter.
     s_currentSubNonce = currentSubNonce + 1;
     // Initialize storage variables.
     address[] memory consumers = new address[](0);
     s_subscriptions[subId] = Subscription({balance: 0, nativeBalance: 0, reqCount: 0});
-    s_subscriptionConfigs[subId] =
-      SubscriptionConfig({owner: msg.sender, requestedOwner: address(0), consumers: consumers});
+    s_subscriptionConfigs[subId] = SubscriptionConfig({
+      owner: msg.sender,
+      requestedOwner: address(0),
+      consumers: consumers
+    });
     // Update the s_subIds set, which tracks all subscription ids created in this contract.
     s_subIds.add(subId);
 
@@ -404,9 +392,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
   /**
    * @inheritdoc IVRFSubscriptionV2Plus
    */
-  function acceptSubscriptionOwnerTransfer(
-    uint256 subId
-  ) external override nonReentrant {
+  function acceptSubscriptionOwnerTransfer(uint256 subId) external override nonReentrant {
     address oldOwner = s_subscriptionConfigs[subId].owner;
     _requireValidSubscription(oldOwner);
     if (s_subscriptionConfigs[subId].requestedOwner != msg.sender) {
@@ -441,9 +427,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     emit SubscriptionConsumerAdded(subId, consumer);
   }
 
-  function _deleteSubscription(
-    uint256 subId
-  ) internal returns (uint96 balance, uint96 nativeBalance) {
+  function _deleteSubscription(uint256 subId) internal returns (uint96 balance, uint96 nativeBalance) {
     address[] storage consumers = s_subscriptionConfigs[subId].consumers;
     balance = s_subscriptions[subId].balance;
     nativeBalance = s_subscriptions[subId].nativeBalance;
@@ -478,16 +462,12 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     emit SubscriptionCanceled(subId, to, balance, nativeBalance);
   }
 
-  modifier onlySubOwner(
-    uint256 subId
-  ) {
+  modifier onlySubOwner(uint256 subId) {
     _onlySubOwner(subId);
     _;
   }
 
-  function _onlySubOwner(
-    uint256 subId
-  ) internal view {
+  function _onlySubOwner(uint256 subId) internal view {
     address subOwner = s_subscriptionConfigs[subId].owner;
     _requireValidSubscription(subOwner);
     if (msg.sender != subOwner) {
@@ -496,7 +476,7 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
   }
 
   function _mustSendNative(address to, uint256 amount) internal {
-    (bool success,) = to.call{value: amount}("");
+    (bool success, ) = to.call{value: amount}("");
     if (!success) {
       revert FailedToSendNative();
     }

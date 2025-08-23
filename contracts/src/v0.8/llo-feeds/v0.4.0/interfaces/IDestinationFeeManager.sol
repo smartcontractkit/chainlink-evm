@@ -22,9 +22,7 @@ interface IDestinationFeeManager is IERC165 {
    * @notice Sets the native surcharge
    * @param surcharge surcharge to be paid if paying in native
    */
-  function setNativeSurcharge(
-    uint64 surcharge
-  ) external;
+  function setNativeSurcharge(uint64 surcharge) external;
 
   /**
    * @notice Adds a subscriber to the fee manager
@@ -61,33 +59,25 @@ interface IDestinationFeeManager is IERC165 {
    * @notice Admin function to pay the LINK deficit for a given config digest
    * @param configDigest the config digest to pay the deficit for
    */
-  function payLinkDeficit(
-    bytes32 configDigest
-  ) external;
+  function payLinkDeficit(bytes32 configDigest) external;
 
   /**
    * @notice Adds the verifier to the list of verifiers able to use the feeManager
    * @param verifier address of the verifier
    */
-  function addVerifier(
-    address verifier
-  ) external;
+  function addVerifier(address verifier) external;
 
   /**
    * @notice Removes the verifier from the list of verifiers able to use the feeManager
    * @param verifier address of the verifier
    */
-  function removeVerifier(
-    address verifier
-  ) external;
+  function removeVerifier(address verifier) external;
 
   /**
    * @notice Sets the reward manager to the address
    * @param rewardManager address of the reward manager
    */
-  function setRewardManager(
-    address rewardManager
-  ) external;
+  function setRewardManager(address rewardManager) external;
 
   /**
    * @notice The structure to hold a fee and reward to verify a report

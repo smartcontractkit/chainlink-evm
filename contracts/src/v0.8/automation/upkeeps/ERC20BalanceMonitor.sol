@@ -66,8 +66,9 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
     uint96[] calldata topUpLevels
   ) external onlyOwner {
     if (
-      addresses.length != minBalances.length || addresses.length != topUpLevels.length
-        || addresses.length > MAX_WATCHLIST_SIZE
+      addresses.length != minBalances.length ||
+      addresses.length != topUpLevels.length ||
+      addresses.length > MAX_WATCHLIST_SIZE
     ) {
       revert InvalidWatchList();
     }
@@ -85,8 +86,12 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
       if (topUpLevels[idx] <= minBalances[idx]) {
         revert InvalidWatchList();
       }
-      s_targets[addresses[idx]] =
-        Target({isActive: true, minBalance: minBalances[idx], topUpLevel: topUpLevels[idx], lastTopUpTimestamp: 0});
+      s_targets[addresses[idx]] = Target({
+        isActive: true,
+        minBalance: minBalances[idx],
+        topUpLevel: topUpLevels[idx],
+        lastTopUpTimestamp: 0
+      });
     }
     s_watchList = addresses;
     emit WatchlistUpdated(oldWatchList, addresses);
@@ -107,8 +112,9 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
       target = s_targets[watchList[idx]];
       uint256 targetTokenBalance = s_erc20Token.balanceOf(watchList[idx]);
       if (
-        target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp && targetTokenBalance < target.minBalance
-          && contractBalance >= (target.topUpLevel - targetTokenBalance)
+        target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp &&
+        targetTokenBalance < target.minBalance &&
+        contractBalance >= (target.topUpLevel - targetTokenBalance)
       ) {
         uint256 topUpAmount = target.topUpLevel - targetTokenBalance;
         needsFunding[count] = watchList[idx];
@@ -128,9 +134,7 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
    * @notice Send funds to the subscriptions provided.
    * @param needsFunding the list of subscriptions to fund
    */
-  function topUp(
-    address[] memory needsFunding
-  ) public whenNotPaused {
+  function topUp(address[] memory needsFunding) public whenNotPaused {
     uint256 minWaitPeriodSeconds = s_minWaitPeriodSeconds;
     Target memory target;
     uint256 contractBalance = s_erc20Token.balanceOf(address(this));
@@ -138,8 +142,10 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
       target = s_targets[needsFunding[idx]];
       uint256 targetTokenBalance = s_erc20Token.balanceOf(needsFunding[idx]);
       if (
-        target.isActive && target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp
-          && targetTokenBalance < target.minBalance && contractBalance >= (target.topUpLevel - targetTokenBalance)
+        target.isActive &&
+        target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp &&
+        targetTokenBalance < target.minBalance &&
+        contractBalance >= (target.topUpLevel - targetTokenBalance)
       ) {
         uint256 topUpAmount = target.topUpLevel - targetTokenBalance;
         s_targets[needsFunding[idx]].lastTopUpTimestamp = uint56(block.timestamp);
@@ -170,9 +176,7 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
    * @notice Called by the keeper to send funds to underfunded addresses.
    * @param performData the abi encoded list of addresses to fund
    */
-  function performUpkeep(
-    bytes calldata performData
-  ) external override onlyKeeperRegistry whenNotPaused {
+  function performUpkeep(bytes calldata performData) external override onlyKeeperRegistry whenNotPaused {
     address[] memory needsFunding = abi.decode(performData, (address[]));
     topUp(needsFunding);
   }
@@ -191,9 +195,7 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
   /**
    * @notice Sets the ERC20 token address.
    */
-  function setERC20TokenAddress(
-    address erc20TokenAddress
-  ) public onlyOwner {
+  function setERC20TokenAddress(address erc20TokenAddress) public onlyOwner {
     require(erc20TokenAddress != address(0));
     emit ERC20TokenAddressUpdated(address(s_erc20Token), erc20TokenAddress);
     s_erc20Token = IERC20(erc20TokenAddress);
@@ -202,9 +204,7 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
   /**
    * @notice Sets the keeper registry address.
    */
-  function setKeeperRegistryAddress(
-    address keeperRegistryAddress
-  ) public onlyOwner {
+  function setKeeperRegistryAddress(address keeperRegistryAddress) public onlyOwner {
     require(keeperRegistryAddress != address(0));
     emit KeeperRegistryAddressUpdated(s_keeperRegistryAddress, keeperRegistryAddress);
     s_keeperRegistryAddress = keeperRegistryAddress;
@@ -213,9 +213,7 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
   /**
    * @notice Sets the minimum wait period (in seconds) for subscription ids between funding.
    */
-  function setMinWaitPeriodSeconds(
-    uint256 period
-  ) public onlyOwner {
+  function setMinWaitPeriodSeconds(uint256 period) public onlyOwner {
     emit MinWaitPeriodUpdated(s_minWaitPeriodSeconds, period);
     s_minWaitPeriodSeconds = period;
   }

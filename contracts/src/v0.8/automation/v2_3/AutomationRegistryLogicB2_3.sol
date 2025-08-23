@@ -78,8 +78,16 @@ contract AutomationRegistryLogicB2_3 is AutomationRegistryBase2_3, Chainable {
       }
       if (upkeep.paused) return (false, bytes(""), UpkeepFailureReason.UPKEEP_PAUSED, 0, upkeep.performGas, 0, 0);
       (fastGasWei, linkUSD, nativeUSD) = _getFeedData(hotVars);
-      maxPayment =
-        _getMaxPayment(id, hotVars, triggerType, upkeep.performGas, fastGasWei, linkUSD, nativeUSD, upkeep.billingToken);
+      maxPayment = _getMaxPayment(
+        id,
+        hotVars,
+        triggerType,
+        upkeep.performGas,
+        fastGasWei,
+        linkUSD,
+        nativeUSD,
+        upkeep.billingToken
+      );
       if (upkeep.balance < maxPayment) {
         return (false, bytes(""), UpkeepFailureReason.INSUFFICIENT_BALANCE, 0, upkeep.performGas, 0, 0);
       }
@@ -106,7 +114,13 @@ contract AutomationRegistryLogicB2_3 is AutomationRegistryBase2_3, Chainable {
         );
       }
       return (
-        upkeepNeeded, result, UpkeepFailureReason.TARGET_CHECK_REVERTED, gasUsed, upkeep.performGas, fastGasWei, linkUSD
+        upkeepNeeded,
+        result,
+        UpkeepFailureReason.TARGET_CHECK_REVERTED,
+        gasUsed,
+        upkeep.performGas,
+        fastGasWei,
+        linkUSD
       );
     }
 
@@ -273,9 +287,7 @@ contract AutomationRegistryLogicB2_3 is AutomationRegistryBase2_3, Chainable {
    * @notice remove the overridden billing config for an upkeep
    * @param id the upkeepID
    */
-  function removeBillingOverrides(
-    uint256 id
-  ) external {
+  function removeBillingOverrides(uint256 id) external {
     _onlyPrivilegeManagerAllowed();
 
     s_upkeep[id].overridesEnabled = false;
@@ -299,9 +311,7 @@ contract AutomationRegistryLogicB2_3 is AutomationRegistryBase2_3, Chainable {
   /**
    * @notice accepts the transfer of an upkeep admin
    */
-  function acceptUpkeepAdmin(
-    uint256 id
-  ) external {
+  function acceptUpkeepAdmin(uint256 id) external {
     Upkeep memory upkeep = s_upkeep[id];
     if (upkeep.maxValidBlocknumber != UINT32_MAX) revert UpkeepCancelled();
     if (s_proposedAdmin[id] != msg.sender) revert OnlyCallableByProposedAdmin();
@@ -315,9 +325,7 @@ contract AutomationRegistryLogicB2_3 is AutomationRegistryBase2_3, Chainable {
   /**
    * @notice pauses an upkeep - an upkeep will be neither checked nor performed while paused
    */
-  function pauseUpkeep(
-    uint256 id
-  ) external {
+  function pauseUpkeep(uint256 id) external {
     _requireAdminAndNotCancelled(id);
     Upkeep memory upkeep = s_upkeep[id];
     if (upkeep.paused) revert OnlyUnpausedUpkeep();
@@ -329,9 +337,7 @@ contract AutomationRegistryLogicB2_3 is AutomationRegistryBase2_3, Chainable {
   /**
    * @notice unpauses an upkeep
    */
-  function unpauseUpkeep(
-    uint256 id
-  ) external {
+  function unpauseUpkeep(uint256 id) external {
     _requireAdminAndNotCancelled(id);
     Upkeep memory upkeep = s_upkeep[id];
     if (!upkeep.paused) revert OnlyPausedUpkeep();

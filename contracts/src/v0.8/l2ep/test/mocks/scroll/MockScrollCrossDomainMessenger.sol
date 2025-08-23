@@ -8,9 +8,7 @@ import {Address} from "@openzeppelin/contracts-4-8-3/utils/Address.sol";
 contract MockScrollCrossDomainMessenger is IScrollMessenger {
   address internal s_mockMessageSender;
 
-  constructor(
-    address sender
-  ) {
+  constructor(address sender) {
     s_mockMessageSender = sender;
   }
 
@@ -18,9 +16,7 @@ contract MockScrollCrossDomainMessenger is IScrollMessenger {
     return s_mockMessageSender;
   }
 
-  function _setMockMessageSender(
-    address sender
-  ) external {
+  function _setMockMessageSender(address sender) external {
     s_mockMessageSender = sender;
   }
 

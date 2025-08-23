@@ -4,14 +4,10 @@ pragma solidity ^0.8.24;
 import {IGetCCIPAdmin} from "../../../../shared/interfaces/IGetCCIPAdmin.sol";
 import {IBurnMintERC20Upgradeable} from "../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
 
-import {AccessControlDefaultAdminRulesUpgradeable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
-import {Initializable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {ERC20BurnableUpgradeable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import {AccessControlDefaultAdminRulesUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import {Initializable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ERC20BurnableUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts-5-0-2/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts-5-0-2/interfaces/IERC20.sol";
 import {IERC1822Proxiable} from "@openzeppelin/contracts-5-0-2/interfaces/draft-IERC1822.sol";
@@ -102,9 +98,7 @@ contract BurnMintERC20UUPS is
     _grantRole(UPGRADER_ROLE, defaultUpgrader);
   }
 
-  function _authorizeUpgrade(
-    address newImplementation
-  ) internal override onlyRole(UPGRADER_ROLE) {}
+  function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
 
   // ================================================================
   // │                           ERC165                             │
@@ -114,9 +108,13 @@ contract BurnMintERC20UUPS is
   function supportsInterface(
     bytes4 interfaceId
   ) public pure virtual override(AccessControlDefaultAdminRulesUpgradeable, IERC165) returns (bool) {
-    return interfaceId == type(IERC20).interfaceId || interfaceId == type(IBurnMintERC20Upgradeable).interfaceId
-      || interfaceId == type(IERC165).interfaceId || interfaceId == type(IAccessControl).interfaceId
-      || interfaceId == type(IERC1822Proxiable).interfaceId || interfaceId == type(IGetCCIPAdmin).interfaceId;
+    return
+      interfaceId == type(IERC20).interfaceId ||
+      interfaceId == type(IBurnMintERC20Upgradeable).interfaceId ||
+      interfaceId == type(IERC165).interfaceId ||
+      interfaceId == type(IAccessControl).interfaceId ||
+      interfaceId == type(IERC1822Proxiable).interfaceId ||
+      interfaceId == type(IGetCCIPAdmin).interfaceId;
   }
 
   // ================================================================
@@ -200,9 +198,7 @@ contract BurnMintERC20UUPS is
   /// @notice grants both mint and burn roles to `burnAndMinter`.
   /// @dev calls public functions so this function does not require
   /// access controls. This is handled in the inner functions.
-  function grantMintAndBurnRoles(
-    address burnAndMinter
-  ) external {
+  function grantMintAndBurnRoles(address burnAndMinter) external {
     grantRole(MINTER_ROLE, burnAndMinter);
     grantRole(BURNER_ROLE, burnAndMinter);
   }
@@ -216,9 +212,7 @@ contract BurnMintERC20UUPS is
   /// @dev only the owner can call this function, NOT the current ccipAdmin, and 1-step ownership transfer is used.
   /// @param newAdmin The address to transfer the CCIPAdmin role to. Setting to address(0) is a valid way to revoke
   /// the role
-  function setCCIPAdmin(
-    address newAdmin
-  ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+  function setCCIPAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
     BurnMintERC20UUPSStorage storage $ = _getBurnMintERC20UUPSStorage();
     address currentAdmin = $.ccipAdmin;
 

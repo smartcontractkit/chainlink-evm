@@ -89,18 +89,14 @@ interface IVerifier is IERC165 {
    * @param feedId Feed ID to activated
    * @dev This function can be called by the contract admin to activate a feed
    */
-  function activateFeed(
-    bytes32 feedId
-  ) external;
+  function activateFeed(bytes32 feedId) external;
 
   /**
    * @notice Deactivates the given feed
    * @param feedId Feed ID to deactivated
    * @dev This function can be called by the contract admin to deactivate a feed
    */
-  function deactivateFeed(
-    bytes32 feedId
-  ) external;
+  function deactivateFeed(bytes32 feedId) external;
 
   /**
    * @notice returns the latest config digest and epoch for a feed
