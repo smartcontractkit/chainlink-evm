@@ -232,12 +232,13 @@ func VerifyResponse(txData []byte, fromAddress common.Address, result *ResponseR
 		return nil, err
 	}
 
-	info := params["info"]
-	if len(info) != 2 {
-		return nil, fmt.Errorf("incorrect size for info: %v", info)
+	destination := params["destination"]
+	dapp := params["dapp"]
+	if len(destination) != 1 || len(dapp) != 1 {
+		return nil, fmt.Errorf("incorrect size for info params: %v - %v", destination, dapp)
 	}
-	to := common.HexToAddress(info[0]) // metacall address
-	dApp := common.HexToAddress(info[1])
+	to := common.HexToAddress(destination[0]) // metacall address
+	dApp := common.HexToAddress(dapp[0])
 	abi, err := abi.JSON(strings.NewReader(ABI))
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read ABI: %w", err)
@@ -289,7 +290,7 @@ func VerifyResponse(txData []byte, fromAddress common.Address, result *ResponseR
 	for _, sop := range result.SOPs {
 		if sop != nil {
 			if sop.To != to || sop.Control != dApp {
-				// TODO: decide for early exit or not
+				// Exit early
 				return nil, fmt.Errorf("incorrect SOP: sop.To: %v, sop.Control: %v, to: %v, dApp: %v", sop.To, sop.Control, to, dApp)
 			}
 			atLeastOne = true
