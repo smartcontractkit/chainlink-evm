@@ -1,0 +1,18 @@
+WorkflowRegistry.batchActivateWorkflows
+├── when caller is NOT a linked owner
+│   └── it reverts with OwnershipLinkDoesNotExist
+└── when caller IS a linked owner
+    ├── when workflowIds length is 0
+    │   └── it reverts with EmptyUpdateBatch
+    ├── when every workflowId is unknown
+    │   └── it reverts with WorkflowDoesNotExist
+    ├── when at least one workflowId is not owned by caller
+    │   └── it reverts with CallerIsNotWorkflowOwner
+    ├── when DON family has no global limit set
+    │   └── it reverts with DonLimitNotSet
+    ├── when activation would exceed callers per-DON cap
+    │   └── it reverts with MaxWorkflowsPerUserDONExceeded
+    ├── when all listed workflows are already ACTIVE
+    │   └── it emits no WorkflowActivated events and leaves state unchanged
+    └── when list mixes ACTIVE and PAUSED workflows where the ones to activate are within cap
+        └── it activates each PAUSED workflow and emits a WorkflowActivated event for each

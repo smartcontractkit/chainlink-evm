@@ -67,7 +67,7 @@ func TestHeadTracker_New(t *testing.T) {
 		Maybe().
 		Return(nil, mockEth.NewSub(t), nil)
 
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), testutils.Head(1)))
 	last := testutils.Head(16)
 	require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), last))
@@ -92,7 +92,7 @@ func TestHeadTracker_MarkFinalized_MarksAndTrimsTable(t *testing.T) {
 	})
 
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	for idx := 0; idx < 200; idx++ {
 		require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), testutils.Head(idx)))
@@ -138,7 +138,7 @@ func TestHeadTracker_Get(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			db := testutils.NewSqlxDB(t)
 			config := configtest.NewChainScopedConfig(t, nil)
-			orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+			orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 			ethClient := clienttest.NewClientWithDefaultChainID(t)
 			chStarted := make(chan struct{})
@@ -186,7 +186,7 @@ func TestHeadTracker_Start_NewHeads(t *testing.T) {
 
 	db := testutils.NewSqlxDB(t)
 	config := configtest.NewChainScopedConfig(t, nil)
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 	chStarted := make(chan struct{})
@@ -217,7 +217,7 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 		config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 			c.FinalityTagEnabled = ptr(true)
 		})
-		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+		orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 		ethClient := clienttest.NewClientWithDefaultChainID(t)
 		chStarted := make(chan struct{})
@@ -272,7 +272,7 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 			// finalty violation on old block possible only with finalty tag
 			c.HeadTracker.FinalityTagBypass = ptr(true)
 		})
-		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+		orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 		ethClient := clienttest.NewClientWithDefaultChainID(t)
 		chStarted := make(chan struct{})
@@ -330,7 +330,7 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 			c.FinalityTagEnabled = ptr(true)
 			c.FinalityDepth = ptr(uint32(0))
 		})
-		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+		orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 		ethClient := clienttest.NewClientWithDefaultChainID(t)
 		chStarted := make(chan struct{})
@@ -412,7 +412,7 @@ func TestHeadTracker_Start(t *testing.T) {
 		})
 		if opts.ORM == nil {
 			db := testutils.NewSqlxDB(t)
-			opts.ORM = evmheads.NewORM(*testutils.FixtureChainID, db)
+			opts.ORM = evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 		}
 		ethClient := clienttest.NewClientWithDefaultChainID(t)
 		mockEth := &clienttest.MockEth{EthClient: ethClient}
@@ -529,7 +529,7 @@ func TestHeadTracker_CallsHeadTrackableCallbacks(t *testing.T) {
 
 	db := testutils.NewSqlxDB(t)
 	config := configtest.NewChainScopedConfig(t, nil)
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 
@@ -567,7 +567,7 @@ func TestHeadTracker_ReconnectOnError(t *testing.T) {
 
 	db := testutils.NewSqlxDB(t)
 	config := configtest.NewChainScopedConfig(t, nil)
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 	mockEth := &clienttest.MockEth{EthClient: ethClient}
@@ -604,7 +604,7 @@ func TestHeadTracker_ResubscribeOnSubscriptionError(t *testing.T) {
 
 	db := testutils.NewSqlxDB(t)
 	config := configtest.NewChainScopedConfig(t, nil)
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 
@@ -683,7 +683,7 @@ func TestHeadTracker_Start_LoadsLatestChain(t *testing.T) {
 			},
 		)
 
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 	trackable := &CountingHeadTrackable{}
 	ht := createHeadTrackerWithChecker(t, ethClient, config.EVM(), config.EVM().HeadTracker(), orm, trackable)
 
@@ -725,7 +725,7 @@ func TestHeadTracker_SwitchesToLongestChainWithHeadSamplingEnabled(t *testing.T)
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 
 	checker := headstest.NewTrackable[*evmtypes.Head, common.Hash](t)
-	orm := evmheads.NewORM(*config.EVM().ChainID(), db)
+	orm := evmheads.NewORM(*config.EVM().ChainID(), db, 0)
 	ht := createHeadTrackerWithChecker(t, ethClient, config.EVM(), config.EVM().HeadTracker(), orm, checker)
 
 	chchHeaders := make(chan testutils.RawSub[*evmtypes.Head], 1)
@@ -846,7 +846,7 @@ func TestHeadTracker_SwitchesToLongestChainWithHeadSamplingDisabled(t *testing.T
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 
 	checker := headstest.NewTrackable[*evmtypes.Head, common.Hash](t)
-	orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 	ht := createHeadTrackerWithChecker(t, ethClient, config.EVM(), config.EVM().HeadTracker(), orm, checker)
 
 	chchHeaders := make(chan testutils.RawSub[*evmtypes.Head], 1)
@@ -972,7 +972,7 @@ func TestHeadTracker_Backfill(t *testing.T) {
 	t.Run("Enabled Persistence", func(t *testing.T) {
 		testHeadTrackerBackfill(t, func(t *testing.T) evmheads.ORM {
 			db := testutils.NewSqlxDB(t)
-			return evmheads.NewORM(*testutils.FixtureChainID, db)
+			return evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 		})
 	})
 	t.Run("Disabled Persistence", func(t *testing.T) {
@@ -1365,7 +1365,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		})
 
 		db := testutils.NewSqlxDB(t)
-		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+		orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 		for i := range opts.Heads {
 			require.NoError(t, orm.IdempotentInsertHead(t.Context(), opts.Heads[i]))
 		}
@@ -1446,7 +1446,7 @@ func TestHeadTracker_LatestAndFinalizedBlock(t *testing.T) {
 		})
 
 		db := testutils.NewSqlxDB(t)
-		orm := evmheads.NewORM(*testutils.FixtureChainID, db)
+		orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 		for i := range opts.Heads {
 			require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), opts.Heads[i]))
 		}

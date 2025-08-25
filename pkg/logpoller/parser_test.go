@@ -180,6 +180,24 @@ func TestDSLParser(t *testing.T) {
 			assertArgs(t, args, 1)
 		})
 
+		t.Run("safe", func(t *testing.T) {
+			parser := &pgDSLParser{}
+			chainID := big.NewInt(1)
+
+			expressions := []query.Expression{query.Confidence(primitives.Safe)}
+			limiter := query.LimitAndSort{}
+
+			result, args, err := parser.buildQuery(chainID, expressions, limiter)
+			expected := logsQuery(
+				" WHERE evm_chain_id = :evm_chain_id " +
+					"AND block_number <= (SELECT safe_block_number FROM evm.log_poller_blocks WHERE evm_chain_id = :evm_chain_id ORDER BY block_number DESC LIMIT 1) ORDER BY " + defaultSort)
+
+			require.NoError(t, err)
+			assert.Equal(t, expected, result)
+
+			assertArgs(t, args, 1)
+		})
+
 		t.Run("unconfirmed", func(t *testing.T) {
 			parser := &pgDSLParser{}
 			chainID := big.NewInt(1)

@@ -79,7 +79,7 @@ func populateDatabase(t testing.TB, o logpoller.ORM, chainID *big.Int) (common.H
 			})
 		}
 		require.NoError(t, o.InsertLogs(ctx, logs))
-		require.NoError(t, o.InsertBlock(ctx, utils.RandomHash(), int64((j+1)*1000-1), startDate.Add(time.Duration(j*1000)*time.Hour), 0))
+		require.NoError(t, o.InsertBlock(ctx, utils.RandomHash(), int64((j+1)*1000-1), startDate.Add(time.Duration(j*1000)*time.Hour), 0, 0))
 	}
 
 	return event1, address1, address2
@@ -125,7 +125,7 @@ func TestPopulateLoadedDB(t *testing.T) {
 	}()
 
 	// Confirm all the logs.
-	require.NoError(t, o.InsertBlock(ctx, common.HexToHash("0x10"), 1000000, time.Now(), 0))
+	require.NoError(t, o.InsertBlock(ctx, common.HexToHash("0x10"), 1000000, time.Now(), 0, 0))
 	func() {
 		defer logRuntime(t, time.Now())
 		lgs, err1 := o.SelectLogsDataWordRange(ctx, address1, event1, 0, logpoller.EvmWord(50000), logpoller.EvmWord(50020), 0)
@@ -623,8 +623,7 @@ func TestLogPoller_BlockTimestamps(t *testing.T) {
 	time1 := start + 1 + uint64(589)
 	time2 := time1 + 1 + uint64(643)
 
-	require.NoError(t, th.Backend.AdjustTime(delay1))
-
+	th.AdjustTime(t, delay1)
 	blk, err = th.Client.BlockByNumber(ctx, nil)
 	require.NoError(t, err)
 	require.Equal(t, big.NewInt(2), blk.Number())
@@ -639,7 +638,7 @@ func TestLogPoller_BlockTimestamps(t *testing.T) {
 	require.Equal(t, big.NewInt(3), blk.Number())
 	assert.Equal(t, time1, blk.Time())
 
-	require.NoError(t, th.Backend.AdjustTime(delay2))
+	th.AdjustTime(t, delay2)
 	_, err = th.Emitter2.EmitLog2(th.Owner, []*big.Int{big.NewInt(2)})
 	require.NoError(t, err)
 	th.Client.Commit()
@@ -1025,7 +1024,7 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, uint64(35), b.NumberU64())
 			blockTimestamp := b.Time()
-			require.NoError(t, th.Backend.AdjustTime(time.Hour))
+			th.AdjustTime(t, time.Hour)
 			th.Backend.Commit()
 
 			b, err = th.Client.BlockByNumber(testutils.Context(t), nil)
@@ -1573,6 +1572,7 @@ func TestTooManyLogResults(t *testing.T) {
 		finalized.Number = head.Number - lpOpts.FinalityDepth
 
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil).Once()
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(finalized, nil).Once()
 
 		headByHash := ec.On("HeadByHash", mock.Anything, mock.Anything).Return(func(ctx context.Context, blockHash common.Hash) (*evmtypes.Head, error) {
 			return &evmtypes.Head{Hash: blockHash}, nil
@@ -1645,6 +1645,7 @@ func TestTooManyLogResults(t *testing.T) {
 		head.Number = 500
 		finalized.Number = head.Number - lpOpts.FinalityDepth
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil).Once()
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(finalized, nil).Once()
 		filterLogsCall = ec.On("FilterLogs", mock.Anything, mock.Anything).Return(func(ctx context.Context, fq ethereum.FilterQuery) (logs []types.Log, err error) {
 			if fq.BlockHash != nil {
 				return []types.Log{}, nil // succeed when single block requested
@@ -1684,6 +1685,7 @@ func TestTooManyLogResults(t *testing.T) {
 			return []types.Log{}, unrelatedError // return an unrelated error that should just be retried with same size
 		})
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil).Once()
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(finalized, nil).Once()
 
 		lp.PollAndSaveLogs(ctx, 298)
 		block, err := o.SelectLatestBlock(ctx)
@@ -1759,6 +1761,17 @@ func Test_PollAndQueryFinalizedBlocks(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, finalizedLogs, firstBatchLen, "len(finalizedLogs) = %d, should have been %d", len(finalizedLogs), firstBatchLen)
+
+	safeLogs, err := th.LogPoller.LogsDataWordGreaterThan(
+		ctx,
+		eventSig,
+		th.EmitterAddress1,
+		0,
+		common.Hash{},
+		evmtypes.Safe,
+	)
+	require.NoError(t, err)
+	require.Len(t, safeLogs, firstBatchLen, "len(safeLogs) = %d, should have been %d", len(safeLogs), firstBatchLen)
 
 	numberOfConfirmations := 1
 	logsByConfs, err := th.LogPoller.LogsDataWordGreaterThan(
@@ -1969,7 +1982,7 @@ func Test_PruneOldBlocks(t *testing.T) {
 			th := SetupTH(t, lpOpts)
 
 			for i := 1; i <= tt.blockToCreate; i++ {
-				err := th.ORM.InsertBlock(ctx, utils.RandomBytes32(), int64(i+10), time.Now(), int64(i))
+				err := th.ORM.InsertBlock(ctx, utils.RandomBytes32(), int64(i+10), time.Now(), int64(i), int64(i))
 				require.NoError(t, err)
 			}
 
@@ -2012,10 +2025,10 @@ func TestFindLCA(t *testing.T) {
 		require.ErrorContains(t, err, "failed to select the latest block")
 	})
 	// oldest
-	require.NoError(t, orm.InsertBlock(ctx, common.HexToHash("0x123"), 10, time.Now(), 0))
+	require.NoError(t, orm.InsertBlock(ctx, common.HexToHash("0x123"), 10, time.Now(), 0, 0))
 	// latest
 	latestBlockHash := common.HexToHash("0x124")
-	require.NoError(t, orm.InsertBlock(ctx, latestBlockHash, 16, time.Now(), 0))
+	require.NoError(t, orm.InsertBlock(ctx, latestBlockHash, 16, time.Now(), 0, 0))
 	t.Run("Fails, if caller's context canceled", func(t *testing.T) {
 		lCtx, cancel := context.WithCancel(ctx)
 		ec.On("HeadByHash", mock.Anything, latestBlockHash).Return(nil, nil).Run(func(_ mock.Arguments) {
@@ -2084,7 +2097,7 @@ func TestFindLCA(t *testing.T) {
 			for _, b := range tc.Blocks {
 				blockHashI++
 				hash := common.BigToHash(big.NewInt(blockHashI))
-				require.NoError(t, orm.InsertBlock(ctx, hash, int64(b.BN), time.Now(), 0))
+				require.NoError(t, orm.InsertBlock(ctx, hash, int64(b.BN), time.Now(), 0, 0))
 				// Hashes are unique for all test cases
 				var onChainBlock *evmtypes.Head
 				if b.Exists {

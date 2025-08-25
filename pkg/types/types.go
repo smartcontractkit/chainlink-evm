@@ -16,6 +16,8 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	"gopkg.in/guregu/null.v4"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
@@ -36,12 +38,13 @@ type Configs interface {
 }
 
 type Node struct {
-	Name       string
-	EVMChainID ubig.Big
-	WSURL      null.String
-	HTTPURL    null.String
-	SendOnly   bool
-	Order      int32
+	Name              string
+	EVMChainID        ubig.Big
+	WSURL             null.String
+	HTTPURL           null.String
+	SendOnly          bool
+	Order             int32
+	IsLoadBalancedRPC bool
 
 	State string
 }
@@ -270,6 +273,7 @@ func (r *Receipt) GetRevertReason() *string {
 type Confirmations int
 
 const (
+	Safe        = Confirmations(-2)
 	Finalized   = Confirmations(-1)
 	Unconfirmed = Confirmations(0)
 )
@@ -453,4 +457,30 @@ type Backend interface {
 	Fork(parentHash common.Hash) error
 	AdjustTime(adjustment time.Duration) error
 	Client() simulated.Client
+}
+
+type BalanceAtOpts struct {
+	ConfidenceLevel primitives.ConfidenceLevel
+}
+
+type CallContractOpts struct {
+	ConfidenceLevel   primitives.ConfidenceLevel
+	IsExternalRequest bool // if true, limits like response size limit should be applied
+}
+
+type FilterLogsOpts struct {
+	ConfidenceLevel   primitives.ConfidenceLevel
+	IsExternalRequest bool // if true, limits like response size limit should be applied
+}
+
+type HeaderByNumberOpts struct {
+	ConfidenceLevel primitives.ConfidenceLevel
+}
+
+type TransactionByHashOpts struct {
+	IsExternalRequest bool // if true, limits like response size limit should be applied
+}
+
+type TransactionReceiptOpts struct {
+	IsExternalRequest bool // if true, limits like response size limit should be applied
 }

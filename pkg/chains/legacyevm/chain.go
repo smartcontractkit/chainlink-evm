@@ -10,6 +10,8 @@ import (
 	gotoml "github.com/pelletier/go-toml/v2"
 	"go.uber.org/multierr"
 
+	chainselectors "github.com/smartcontractkit/chain-selectors"
+
 	common "github.com/smartcontractkit/chainlink-common/pkg/chains"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -218,7 +220,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 	} else if opts.GenHeadTracker == nil {
 		var orm heads.ORM
 		if cfg.EVM().HeadTracker().PersistenceEnabled() {
-			orm = heads.NewORM(*chainID, opts.DS)
+			orm = heads.NewORM(*chainID, opts.DS, cfg.EVM().HeadTracker().PersistenceBatchSize())
 		} else {
 			orm = heads.NewNullORM()
 		}
@@ -306,7 +308,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 	// Construct the Tron TXM, will be nil if the chaintype is not tron
 	var tronTxm *trontxm.TronTxm
 	if cfg.EVM().ChainType() == chaintype.ChainTron {
-		tronTxm, err = tron.ConstructTxm(l, nodes, opts.KeyStore)
+		tronTxm, err = tron.ConstructTxm(l, cfg.EVM().GasEstimator(), nodes, opts.KeyStore)
 		if err != nil {
 			return nil, fmt.Errorf("failed to construct tron txm: %w", err)
 		}
@@ -467,6 +469,33 @@ func (c *chain) GetChainStatus(ctx context.Context) (types.ChainStatus, error) {
 	}, nil
 }
 
+func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
+	chainID := c.cfg.EVM().ChainID()
+
+	chainSelector := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	chainFamily, err := chainselectors.GetSelectorFamily(chainSelector)
+	if err != nil {
+		return types.ChainInfo{}, fmt.Errorf("failed to get chain family for selector %d: %w", chainSelector, err)
+	}
+
+	chainDetails, err := chainselectors.GetChainDetailsByChainIDAndFamily(chainID.String(), chainFamily)
+	if err != nil {
+		return types.ChainInfo{}, fmt.Errorf("failed to get chain details for chain %d and family %s: %w", chainID, chainFamily, err)
+	}
+
+	envName, err := chainselectors.ExtractNetworkEnvName(chainDetails.ChainName)
+	if err != nil {
+		return types.ChainInfo{}, fmt.Errorf("failed to get network name for chain %d: %w", chainID, err)
+	}
+
+	return types.ChainInfo{
+		FamilyName:      chainFamily,
+		ChainID:         chainID.String(),
+		NetworkName:     envName,
+		NetworkNameFull: chainDetails.ChainName,
+	}, nil
+}
+
 // TODO BCF-2602 statuses are static for non-evm chain and should be dynamic
 func (c *chain) listNodeStatuses(start, end int) ([]types.NodeStatus, int, error) {
 	nodes := c.cfg.Nodes()
@@ -481,9 +510,7 @@ func (c *chain) listNodeStatuses(start, end int) ([]types.NodeStatus, int, error
 
 	states := c.Client().NodeStates()
 	for _, n := range nodes[start:end] {
-		var (
-			nodeState string
-		)
+		var nodeState string
 		toml, err := gotoml.Marshal(n)
 		if err != nil {
 			return nil, -1, err

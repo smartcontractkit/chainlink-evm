@@ -270,6 +270,7 @@ Set to zero to disable.
 ## Transactions
 ```toml
 [Transactions]
+ConfirmationTimeout = '60s' # Default
 Enabled = true # Default
 ForwardersEnabled = false # Default
 MaxInFlight = 16 # Default
@@ -279,6 +280,12 @@ ReaperThreshold = '168h' # Default
 ResendAfterThreshold = '1m' # Default
 ```
 
+
+### ConfirmationTimeout
+```toml
+ConfirmationTimeout = '60s' # Default
+```
+ConfirmationTimeout time to wait for a TX to get into a block in the blockchain. This is used for the EVMService.SubmitTransaction operation.
 
 ### Enabled
 ```toml
@@ -796,9 +803,10 @@ the prices and end up in stale values.
 HistoryDepth = 100 # Default
 MaxBufferSize = 3 # Default
 SamplingInterval = '1s' # Default
-FinalityTagBypass = true # Default
+FinalityTagBypass = false # Default
 MaxAllowedFinalityDepth = 10000 # Default
 PersistenceEnabled = true # Default
+PersistenceBatchSize = 100 # Default
 ```
 The head tracker continually listens for new heads from the chain.
 
@@ -831,11 +839,10 @@ SamplingInterval means that head tracker callbacks will at maximum be made once 
 
 ### FinalityTagBypass
 ```toml
-FinalityTagBypass = true # Default
+FinalityTagBypass = false # Default
 ```
 FinalityTagBypass disables FinalityTag support in HeadTracker and makes it track blocks up to FinalityDepth from the most recent head.
-It should only be used on chains with an extremely large actual finality depth (the number of blocks between the most recent head and the latest finalized block).
-Has no effect if `FinalityTagsEnabled` = false
+This param is considered deprecated, and should be set to false on all chains
 
 ### MaxAllowedFinalityDepth
 ```toml
@@ -853,6 +860,16 @@ PersistenceEnabled defines whether HeadTracker needs to store heads in the datab
 Persistence is helpful on chains with large finality depth, where fetching blocks from the latest to the latest finalized takes a lot of time.
 On chains with fast finality, the persistence layer does not improve the chain's load time and only consumes database resources (mainly IO).
 NOTE: persistence should not be disabled for products that use LogBroadcaster, as it might lead to missed on-chain events.
+
+### PersistenceBatchSize
+```toml
+PersistenceBatchSize = 100 # Default
+```
+PersistenceBatchSize is used to batch head tracker db transactions (inserts and deletes).
+If set to 100, the head tracker will insert and delete to the db every 100 heads.
+If the head tracker crashes before the batch size is reached (i.e it fails to write the current batch to the db).
+Then it will have to load that batch of heads from the rpc on startup (check PersistenceEnabled above).
+To limit that initial fetch while also improving db usage, 100 is the default for now.
 
 ## KeySpecific
 ```toml
@@ -888,6 +905,7 @@ EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
 VerifyChainID = true # Default
+ExternalRequestMaxResponseSize = 0 # Default
 ```
 The node pool manages multiple RPC endpoints.
 
@@ -994,6 +1012,17 @@ Set to 0 to disable.
 VerifyChainID = true # Default
 ```
 VerifyChainID enforces RPC Client ChainIDs to match configured ChainID
+
+### ExternalRequestMaxResponseSize
+```toml
+ExternalRequestMaxResponseSize = 0 # Default
+```
+ExternalRequestMaxResponseSize sets the maximum allowed size (in bytes) for responses to external requests.
+Responses larger than this value will be rejected to prevent the node from being overloaded.
+Only CRE workflow requests are considered external requests.
+Only applies for RPCs configured with HTTP urls. There is no limit for WS only RPCs, as WS RPCs only allow to define
+global limits that are applied to both internal and external requests.
+Set to 0 to disable the size check and allow responses of any size.
 
 ## NodePool.Errors
 :warning: **_ADVANCED_**: _Do not change these settings unless you know what you are doing._
@@ -1175,6 +1204,7 @@ HTTPURL = 'https://foo.web' # Example
 HTTPURLExtraWrite = 'https://foo.web/extra' # Example
 SendOnly = false # Default
 Order = 100 # Default
+IsLoadBalancedRPC = false # Example
 ```
 
 
@@ -1214,6 +1244,14 @@ Order = 100 # Default
 ```
 Order of the node in the pool, will takes effect if `SelectionMode` is `PriorityLevel` or will be used as a tie-breaker for `HighestHead` and `TotalDifficulty`
 
+### IsLoadBalancedRPC
+```toml
+IsLoadBalancedRPC = false # Example
+```
+IsLoadBalancedRPC indicates whether the http/ws url above has multiple rpc's behind it.
+If true, we should try reconnecting to the node even when its the only node in the Nodes list.
+If false and its the only node in the nodes list, we will mark it alive even when its out of sync, because it might still be able to send txs.
+
 ## OCR2.Automation
 ```toml
 [OCR2.Automation]
@@ -1233,6 +1271,9 @@ GasLimit controls the gas limit for transmit transactions from ocr2automation jo
 FromAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 ForwarderAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 GasLimitDefault = 400_000 # Default
+TxAcceptanceState = 2 # Default
+PollPeriod = '2s' # Default
+AcceptanceTimeout = '30s' # Default
 ```
 
 
@@ -1253,4 +1294,22 @@ ForwarderAddress is the keystone forwarder contract address on chain.
 GasLimitDefault = 400_000 # Default
 ```
 GasLimitDefault is the default gas limit for workflow transactions.
+
+### TxAcceptanceState
+```toml
+TxAcceptanceState = 2 # Default
+```
+TxAcceptanceState is the default acceptance state for writer DON tranmissions.
+
+### PollPeriod
+```toml
+PollPeriod = '2s' # Default
+```
+PollPeriod is the default poll period for checking transmission state
+
+### AcceptanceTimeout
+```toml
+AcceptanceTimeout = '30s' # Default
+```
+AcceptanceTimeout is the default timeout for a tranmission to be accepted on chain
 

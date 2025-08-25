@@ -148,6 +148,21 @@ func SetupTH(t testing.TB, opts logpoller.Opts) TestHarness {
 	}
 }
 
+// there is delay between backend.Commit and removing pending transactions from tx pool
+// this wrapper ensures tx pool transactions are cleanup before calling backend.AdjustTime
+func (th *TestHarness) AdjustTime(t *testing.T, d time.Duration) {
+	for {
+		count, err := th.Backend.Client().PendingTransactionCount(t.Context())
+		require.NoError(t, err)
+		if count == 0 {
+			break
+		}
+	}
+
+	err := th.Backend.AdjustTime(d)
+	require.NoError(t, err)
+}
+
 func (th *TestHarness) PollAndSaveLogs(ctx context.Context, currentBlockNumber int64) int64 {
 	th.LogPoller.PollAndSaveLogs(ctx, currentBlockNumber)
 	latest, _ := th.LogPoller.LatestBlock(ctx)

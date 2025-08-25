@@ -33,6 +33,7 @@ MaxQueued = 99
 ReaperInterval = '1m0s'
 ReaperThreshold = '1m0s'
 ResendAfterThreshold = '1h0m0s'
+ConfirmationTimeout = '1m0s'
 
 [Transactions.AutoPurge]
 Enabled = false
@@ -100,6 +101,7 @@ SamplingInterval = '1h0m0s'
 MaxAllowedFinalityDepth = 1500
 FinalityTagBypass = false
 PersistenceEnabled = false
+PersistenceBatchSize = 100
 
 [[KeySpecific]]
 Key = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292'
@@ -119,6 +121,7 @@ EnforceRepeatableRead = true
 DeathDeclarationDelay = '1m0s'
 NewHeadsPollInterval = '0s'
 VerifyChainID = true
+ExternalRequestMaxResponseSize = 10
 
 [NodePool.Errors]
 NonceTooLow = '(: |^)nonce too low'
@@ -165,3 +168,4 @@ HTTPURL = 'https://foo.web'
 HTTPURLExtraWrite = 'https://foo.web/extra'
 SendOnly = false
 Order = 0
+IsLoadBalancedRPC = false

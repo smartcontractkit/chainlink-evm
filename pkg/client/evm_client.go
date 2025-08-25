@@ -17,7 +17,12 @@ import (
 
 const QueryTimeout = 10 * time.Second
 
-func NewEvmClient(cfg evmconfig.NodePool, chainCfg multinode.ChainConfig, clientErrors evmconfig.ClientErrors, lggr logger.Logger, chainID *big.Int, nodes []*toml.Node, chainType chaintype.ChainType) (Client, error) {
+type ChainConfig interface {
+	multinode.ChainConfig
+	SafeDepth() uint32
+}
+
+func NewEvmClient(cfg evmconfig.NodePool, chainCfg ChainConfig, clientErrors evmconfig.ClientErrors, lggr logger.Logger, chainID *big.Int, nodes []*toml.Node, chainType chaintype.ChainType) (Client, error) {
 	var primaries []multinode.Node[*big.Int, *RPCClient]
 	var sendonlys []multinode.SendOnlyNode[*big.Int, *RPCClient]
 	largePayloadRPCTimeout, defaultRPCTimeout := getRPCTimeouts(chainType)
@@ -30,17 +35,19 @@ func NewEvmClient(cfg evmconfig.NodePool, chainCfg multinode.ChainConfig, client
 	for i, node := range nodes {
 		if node.SendOnly != nil && *node.SendOnly {
 			rpc := NewRPCClient(cfg, lggr, nil, node.HTTPURL.URL(), *node.Name, i, chainID,
-				multinode.Secondary, largePayloadRPCTimeout, defaultRPCTimeout, chainType)
+				multinode.Secondary, largePayloadRPCTimeout, defaultRPCTimeout, chainType,
+				chainCfg.FinalityTagEnabled(), chainCfg.FinalityDepth(), chainCfg.SafeDepth(), cfg.ExternalRequestMaxResponseSize())
 			sendonly := multinode.NewSendOnlyNode(lggr, multiNodeMetrics, (url.URL)(*node.HTTPURL),
 				*node.Name, chainID, rpc)
 			sendonlys = append(sendonlys, sendonly)
 		} else {
 			rpc := NewRPCClient(cfg, lggr, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i,
-				chainID, multinode.Primary, largePayloadRPCTimeout, defaultRPCTimeout, chainType)
+				chainID, multinode.Primary, largePayloadRPCTimeout, defaultRPCTimeout, chainType,
+				chainCfg.FinalityTagEnabled(), chainCfg.FinalityDepth(), chainCfg.SafeDepth(), cfg.ExternalRequestMaxResponseSize())
 
 			primaryNode := multinode.NewNode(cfg, chainCfg,
 				lggr, multiNodeMetrics, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i, chainID, *node.Order,
-				rpc, "EVM")
+				rpc, "EVM", *node.IsLoadBalancedRPC)
 			primaries = append(primaries, primaryNode)
 		}
 	}

@@ -31,6 +31,8 @@ import (
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
+type Header Head
+
 // Head represents a BlockNumber, BlockHash.
 type Head struct {
 	ID               uint64

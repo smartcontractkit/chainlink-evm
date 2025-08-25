@@ -76,15 +76,16 @@ data-feeds-precommit:
 .PHONY: wrappers
 wrappers: pnpmdep mockery abigen ## Recompiles solidity contracts and their go wrappers.
 	./scripts/native_solc_compile_all_$(FOUNDRY_PROFILE)
-	go generate ../gethwrappers/$(FOUNDRY_PROFILE)
+	cd ../gethwrappers; go generate ./$(FOUNDRY_PROFILE)
+
 
 # This call generates all gethwrappers for all products. It does so based on the
 # assumption that native_solc_compile_all contains sub-calls to each product, and
 # go_generate does the same.
 .PHONY: wrappers-all
 wrappers-all: pnpmdep mockery abigen ## Recompiles solidity contracts and their go wrappers.
-	# go_generate contains a call to  compile all contracts before generating wrappers
-	go generate ../gethwrappers/go_generate.go
+	# go_generate contains a call to compile all contracts before generating wrappers
+	cd ../gethwrappers; go generate ./go_generate.go
 
 .PHONY: wrappers-zksync
 wrappers-zksync: pnpmdep forge-zksync

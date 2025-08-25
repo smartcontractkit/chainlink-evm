@@ -8,7 +8,6 @@ import (
 	"go.uber.org/multierr"
 
 	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
-	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	evmconfig "github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
@@ -16,11 +15,12 @@ import (
 )
 
 type NodeConfig struct {
-	Name     *string
-	WSURL    *string
-	HTTPURL  *string
-	SendOnly *bool
-	Order    *int32
+	Name              *string
+	WSURL             *string
+	HTTPURL           *string
+	SendOnly          *bool
+	Order             *int32
+	IsLoadBalancedRPC *bool
 }
 
 // Build the configs needed to initialize the chain client
@@ -44,7 +44,9 @@ func NewClientConfigs(
 	noNewFinalizedHeadsThreshold time.Duration,
 	finalizedBlockPollInterval time.Duration,
 	newHeadsPollInterval time.Duration,
-) (multinode.ChainConfig, evmconfig.NodePool, []*toml.Node, error) {
+	confirmationTimeout time.Duration,
+	safeDepth *uint32,
+) (ChainConfig, evmconfig.NodePool, []*toml.Node, error) {
 	nodes, err := parseNodeConfigs(nodeCfgs)
 	if err != nil {
 		return nil, nil, nil, err
@@ -71,6 +73,7 @@ func NewClientConfigs(
 				NoNewHeadsThreshold:          commonconfig.MustNewDuration(noNewHeadsThreshold),
 				FinalizedBlockOffset:         finalizedBlockOffset,
 				NoNewFinalizedHeadsThreshold: commonconfig.MustNewDuration(noNewFinalizedHeadsThreshold),
+				SafeDepth:                    safeDepth,
 			},
 		},
 	}
@@ -92,11 +95,12 @@ func parseNodeConfigs(nodeCfgs []NodeConfig) ([]*toml.Node, error) {
 
 		httpURL = commonconfig.MustParseURL(*nodeCfg.HTTPURL)
 		node := &toml.Node{
-			Name:     nodeCfg.Name,
-			WSURL:    wsURL,
-			HTTPURL:  httpURL,
-			SendOnly: nodeCfg.SendOnly,
-			Order:    nodeCfg.Order,
+			Name:              nodeCfg.Name,
+			WSURL:             wsURL,
+			HTTPURL:           httpURL,
+			SendOnly:          nodeCfg.SendOnly,
+			Order:             nodeCfg.Order,
+			IsLoadBalancedRPC: nodeCfg.IsLoadBalancedRPC,
 		}
 		nodes[i] = node
 	}

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Generates go.md
+
+set -e
+
+echo "## EVM modules and org dependencies
+\`\`\`mermaid
+flowchart LR
+"
+gomods -s proto_vendor graph | modgraph -prefix github.com/smartcontractkit/
+echo "\`\`\`"

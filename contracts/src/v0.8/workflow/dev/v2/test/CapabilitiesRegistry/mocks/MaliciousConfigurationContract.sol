@@ -34,6 +34,7 @@ contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Co
       p2pId: P2P_ID,
       signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
+      csaKey: TEST_CSA_KEY,
       capabilityIds: capabilityIds
     });
 
@@ -42,6 +43,7 @@ contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Co
       p2pId: P2P_ID_THREE,
       signer: NODE_OPERATOR_THREE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY_THREE,
+      csaKey: TEST_CSA_KEY_THREE,
       capabilityIds: capabilityIds
     });
 

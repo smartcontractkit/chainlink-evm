@@ -2,6 +2,7 @@ package legacyevm
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
@@ -39,6 +40,11 @@ func newEvmTxm(
 		"nonceAutoSync", cfg.NonceAutoSync(),
 		"limitDefault", cfg.GasEstimator().LimitDefault(),
 	)
+
+	err = validateConfirmationTimeout(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	if opts.GenTxManager == nil {
 		var txmv2 txmgr.TxManager
@@ -78,6 +84,15 @@ func newEvmTxm(
 		txm = opts.GenTxManager(chainID)
 	}
 	return
+}
+
+const maximumConfirmationTimeout = time.Second * 600
+
+func validateConfirmationTimeout(cfg evmconfig.EVM) error {
+	if cfg.ConfirmationTimeout() > maximumConfirmationTimeout {
+		return fmt.Errorf("ConfirmationTimeout cannot be greater than 10 minutes, got %s", cfg.ConfirmationTimeout())
+	}
+	return nil
 }
 
 func newGasEstimator(

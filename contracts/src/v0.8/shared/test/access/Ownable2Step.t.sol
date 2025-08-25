@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
-import {BaseTest} from "../BaseTest.t.sol";
 import {Ownable2Step} from "../../access/Ownable2Step.sol";
+import {BaseTest} from "../BaseTest.t.sol";
 
 contract Ownable2Step_setup is BaseTest {
   Ownable2StepHelper internal s_ownable2Step;

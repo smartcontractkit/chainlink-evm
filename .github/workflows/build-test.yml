@@ -3,63 +3,104 @@ name: Build and Test
 on: [pull_request]
 
 jobs:
-  build-test:
+  build-test-matrix:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: pkg # applied only for "run" steps
+
     env:
       # We explicitly have this env var not be "CL_DATABASE_URL" to avoid having it be used by core related tests
       # when they should not be using it, while still allowing us to DRY up the setup
       DB_URL: postgresql://postgres:postgres@localhost:5432/chainlink_test?sslmode=disable
+
+    strategy:
+      fail-fast: false
+      matrix:
+        type:
+          # TODO only run when needed
+          - path: .
+            should-run: "true"
+            requires-foundry: "false"
+          - path: ./gethwrappers
+            should-run: "true"
+            requires-foundry: "true"
+
     steps:
       - name: Checkout
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
       - name: Set up Go
+        if: ${{ matrix.type.should-run == 'true' }}
         uses: actions/setup-go@v5
         with:
-          cache-dependency-path: go.sum
-          go-version-file: go.mod
+          cache-dependency-path: ${{ matrix.type.path }}/go.sum
+          go-version-file: ${{ matrix.type.path }}/go.mod
+
+      # Only needed because we use the NPM versions of packages and not native Foundry.
+      - name: Setup NodeJS
+        if: ${{ matrix.type.should-run == 'true' && matrix.type.requires-foundry == 'true' }}
+        uses: ./.github/actions/setup-nodejs
+        with:
+          prod: "true"
+
+      - name: Install Foundry
+        if: ${{ matrix.type.should-run == 'true' && matrix.type.requires-foundry == 'true' }}
+        uses: ./.github/actions/install-solidity-foundry
 
       - name: Build
+        if: ${{ matrix.type.should-run == 'true' }}
         run: go build ./...
+        working-directory: ${{ matrix.type.path }}
 
       - name: Setup Postgres
+        if: ${{ matrix.type.should-run == 'true' }}
         uses: smartcontractkit/.github/actions/setup-postgres@7aa7ce23687ba493e9ba9c6ad47a063e60ae3433 # setup-postgres@0.1.0
 
       - name: Setup DB
+        if: ${{ matrix.type.should-run == 'true' }}
         run: make testdb
+        working-directory: ./pkg
         env:
           CL_DATABASE_URL: ${{ env.DB_URL }}
 
       - name: Unit Tests
+        if: ${{ matrix.type.should-run == 'true' }}
         run: GORACE="log_path=$PWD/race" go test -race ./... -coverpkg=./... -coverprofile=coverage.txt
+        working-directory: ${{ matrix.type.path }}
         env:
           CL_DATABASE_URL: ${{ env.DB_URL }}
 
       - name: Print Races
-        if: failure()
+        if: ${{ matrix.type.should-run == 'true' && failure() }}
         run: |
           find race.* | xargs cat > race.txt
           if [[ -s race.txt ]]; then
             cat race.txt
           fi
+        working-directory: ${{ matrix.type.path }}
 
       - name: Upload Go test results
-        if: always()
+        if: ${{ matrix.type.should-run == 'true' }}
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: go-test-results
           path: |
-            pkg/coverage.txt
-            pkg/race.*
+            ${{ matrix.type.path }}/pkg/coverage.txt
+            ${{ matrix.type.path }}/pkg/race.*
+
+
+  build-test:
+    if: always()
+    needs: [ build-test-matrix ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check format statuses and fail if any of them failed or were cancelled
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          echo "At least one format check failed or was cancelled. Please check the logs."
+          exit 1
+      - run: echo 'Success'
 
   check-tidy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: pkg # applied only for "run" steps
     steps:
       - name: Checkout
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
@@ -72,7 +113,7 @@ jobs:
 
       - name: Ensure gomodtidy has been run
         run: |
-          go mod tidy
+          make tidy
           git add --all
           git diff --minimal --cached --exit-code
 

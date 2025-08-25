@@ -99,7 +99,7 @@ via_ir = true
 evm_version = 'paris'
 
 [profile.workflow-v2]
-optimizer_runs = 1_000_000
+optimizer_runs = 1_000
 solc_version = '0.8.26'
 src = 'src/v0.8/workflow/dev/v2'
 test = 'src/v0.8/workflow/dev/v2/test'
@@ -117,7 +117,7 @@ evm_version = 'paris'
 optimizer_runs = 1_000_000
 src = 'src/v0.8/shared'
 test = 'src/v0.8/shared/test'
-solc_version = '0.8.24'
+solc_version = '0.8.26'
 evm_version = 'paris'
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
