@@ -1344,18 +1344,18 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function getAllowlistedRequests(
     uint256 start,
     uint256 limit
-  ) external view returns (OwnerAllowlistedRequest[] memory allowlistedRequests, uint256 total) {
-    total = s_requestAllowlistArray.length;
+  ) external view returns (OwnerAllowlistedRequest[] memory allowlistedRequests) {
+    uint256 total = s_requestAllowlistArray.length;
     uint256 pageCount = _getPageCount(total, start, limit);
 
-    if (pageCount == 0) return (new OwnerAllowlistedRequest[](0), total);
+    if (pageCount == 0) return new OwnerAllowlistedRequest[](0);
 
     allowlistedRequests = new OwnerAllowlistedRequest[](pageCount);
     uint256 addedCount = 0;
     for (uint256 i = 0; i < pageCount; ++i) {
       OwnerAllowlistedRequest storage request = s_requestAllowlistArray[start + i];
       if (request.expiryTimestamp > block.timestamp) {
-        allowlistedRequests[i] = request;
+        allowlistedRequests[addedCount] = request;
         ++addedCount;
       }
     }
@@ -1368,7 +1368,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       allowlistedRequests = shrinkedList;
     }
 
-    return (allowlistedRequests, total);
+    return allowlistedRequests;
   }
 
   function totalAllowlistedRequests() external view returns (uint256) {
