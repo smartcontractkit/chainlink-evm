@@ -281,6 +281,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     bytes payload; // ABI‑encoded event data
   }
 
+  /// @dev Struct for OwnerAllowlistedRequest. This is used to return the allowlisted request data for each owner.
   struct OwnerAllowlistedRequest {
     bytes32 requestDigest;
     address owner;
