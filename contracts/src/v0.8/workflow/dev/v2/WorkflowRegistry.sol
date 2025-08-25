@@ -36,6 +36,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// TAG_SHIFT  (8 bits)   = 8
   /// URL_SHIFT  (8 bits)   = 16
   /// ATTR_SHIFT (16 bits)  = 24
+  /// EXPIRY_SHIFT (32 bits) = 40
   ///
   /// @dev Single-slot override; when s_metadataCaps == 0, all defaults apply.
   /// @dev DEFAULT_PACKED bundles the defaults:
@@ -43,14 +44,15 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///   (uint256(32)  << TAG_SHIFT)  │
   ///   (uint256(200) << URL_SHIFT)  │
   ///   (uint256(1024)<< ATTR_SHIFT)
-  /// where maxNameLen = 64, maxTagLen = 32, maxUrlLen = 200, maxAttrLen = 1024
+  /// where maxNameLen = 64, maxTagLen = 32, maxUrlLen = 200, maxAttrLen = 1024, maxExpiry = 604800
   uint8 private constant NAME_SHIFT = 0;
   uint8 private constant TAG_SHIFT = 8;
   uint8 private constant URL_SHIFT = 16;
   uint8 private constant ATTR_SHIFT = 24; // uses 16 bits
+  uint8 private constant EXPIRY_SHIFT = 40; // uses 32 bits
   uint256 private s_metadataCaps;
   uint256 private constant DEFAULT_PACKED = (uint256(64) << NAME_SHIFT) | (uint256(32) << TAG_SHIFT)
-    | (uint256(200) << URL_SHIFT) | (uint256(1024) << ATTR_SHIFT);
+    | (uint256(200) << URL_SHIFT) | (uint256(1024) << ATTR_SHIFT) | (uint256(604800) << EXPIRY_SHIFT);
 
   /// @dev The set of allowed signers for ownership proofs. These signers are considered to be trusted entities.
   /// If the ownership proof is not signed by one of the allowed signers, signature will be rejected.
@@ -136,9 +138,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   event WorkflowDonFamilyUpdated(
     bytes32 indexed workflowId, address indexed owner, string oldDonFamily, string newDonFamily
   );
-  event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint256 expiryTimestamp);
+  event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint32 expiryTimestamp);
   /// @notice Emitted when metadata length limits are updated
-  event MetadataConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen);
+  event MetadataConfigUpdated(
+    uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen, uint32 maxExpiryLen
+  );
   /// @notice Emitted when a workflow owner’s config is updated
   event WorkflowOwnerConfigUpdated(address indexed owner, bytes config);
   /// @notice Emitted whenever the registry reference is changed.
@@ -172,7 +176,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error EmptyUpdateBatch();
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
-  error RequestExpired(bytes32 requestDigest, uint256 expiryTimestamp);
+  error RequestExpired(bytes32 requestDigest, uint32 expiryTimestamp);
+  error RequestOverMaxExpiry(bytes32 requestDigest, uint32 expiryTimestamp, uint32 maxAllowed);
 
   // ================================================================
   // |                         Enums                                |
@@ -290,10 +295,17 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param tagLen  New cap for `tag`
   /// @param urlLen  New cap for each URL
   /// @param attrLen New cap for `attributes`
-  function setMetadataConfig(uint8 nameLen, uint8 tagLen, uint8 urlLen, uint16 attrLen) external onlyOwner {
+  /// @param expiryLen New cap for every allowlisted request expiration timestamp
+  function setMetadataConfig(
+    uint8 nameLen,
+    uint8 tagLen,
+    uint8 urlLen,
+    uint16 attrLen,
+    uint32 expiryLen
+  ) external onlyOwner {
     // Pack
     uint256 packed = (uint256(nameLen) << NAME_SHIFT) | (uint256(tagLen) << TAG_SHIFT) | (uint256(urlLen) << URL_SHIFT)
-      | (uint256(attrLen) << ATTR_SHIFT);
+      | (uint256(attrLen) << ATTR_SHIFT) | (uint256(expiryLen) << EXPIRY_SHIFT);
 
     // If caller supplied all defaults (or zeros) clear the override slot
     if (packed == DEFAULT_PACKED || packed == 0) {
@@ -303,7 +315,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       s_metadataCaps = packed;
     }
 
-    emit MetadataConfigUpdated(nameLen, tagLen, urlLen, attrLen);
+    emit MetadataConfigUpdated(nameLen, tagLen, urlLen, attrLen, expiryLen);
   }
 
   function _caps() private view returns (uint256 c) {
@@ -332,6 +344,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @return The maximum length of the workflow attributes.
   function getMaxAttrLen() public view returns (uint16) {
     return uint16(_caps() >> ATTR_SHIFT);
+  }
+
+  /// @notice getMaxExpiry function returns the maximum expiry timestamp for the allowlisted request.
+  /// @return The maximum expiry timestamp.
+  function getMaxExpiry() public view returns (uint32) {
+    return uint32(_caps() >> EXPIRY_SHIFT);
   }
 
   // ================================================================
@@ -1312,8 +1330,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// - User calls allowlistRequest(requestDigest) on the Workflow Registry.
   /// - Any user can then send the request payload to the Vault DON.
   /// - Vault DON checks if the digest is on-chain for verification purposes.
-  function allowlistRequest(bytes32 requestDigest, uint256 expiryTimestamp) external {
+  function allowlistRequest(bytes32 requestDigest, uint32 expiryTimestamp) external {
     if (expiryTimestamp <= block.timestamp) revert RequestExpired(requestDigest, expiryTimestamp);
+    uint32 maxAllowedExpiry = getMaxExpiry();
+    if (expiryTimestamp - block.timestamp > maxAllowedExpiry) {
+      revert RequestOverMaxExpiry(requestDigest, expiryTimestamp, maxAllowedExpiry);
+    }
     if (!s_linkedOwners.contains(msg.sender)) revert OwnershipLinkDoesNotExist(msg.sender);
 
     s_requestsAllowlist[msg.sender][requestDigest] = expiryTimestamp;
