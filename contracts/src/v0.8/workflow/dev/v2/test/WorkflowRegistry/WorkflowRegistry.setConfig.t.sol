@@ -5,19 +5,19 @@ import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
-contract WorkflowRegistry_setMetadataConfig is WorkflowRegistrySetup {
-  function test_setMetadataConfig_WhenTheCallerIsNOTTheContractOwner() external {
+contract WorkflowRegistry_setConfig is WorkflowRegistrySetup {
+  function test_setConfig_WhenTheCallerIsNOTTheContractOwner() external {
+    // it should revert
     vm.prank(s_stranger);
     vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector, s_stranger));
-    // passes five args instead of a struct
     s_registry.setConfig(10, 8, 150, 256, 3600);
   }
 
   //whenTheCallerISTheContractOwner
-  function test_setMetadataConfig_WhenConfigFieldsAreNon_zero() external {
+  function test_setConfig_WhenConfigFieldsAreNon_zero() external {
     vm.prank(s_owner);
     vm.expectEmit(true, true, true, true);
-    emit WorkflowRegistry.MetadataConfigUpdated(12, 6, 180, 512, 3600);
+    emit WorkflowRegistry.ConfigUpdated(12, 6, 180, 512, 3600);
     s_registry.setConfig(12, 6, 180, 512, 3600);
     assertEq(s_registry.getConfig().maxNameLen, 12);
     assertEq(s_registry.getConfig().maxTagLen, 6);
@@ -27,11 +27,11 @@ contract WorkflowRegistry_setMetadataConfig is WorkflowRegistrySetup {
   }
 
   // whenTheCallerISTheContractOwner
-  function test_setMetadataConfig_WhenSomeConfigFieldsAreZero() external {
-    // it should emit MetadataConfigUpdated and store the new config values
+  function test_setConfig_WhenSomeConfigFieldsAreZero() external {
+    // it should emit ConfigUpdated and store the new config values
     vm.prank(s_owner);
     vm.expectEmit(true, true, true, true);
-    emit WorkflowRegistry.MetadataConfigUpdated(12, 6, 0, 0, 0);
+    emit WorkflowRegistry.ConfigUpdated(12, 6, 0, 0, 0);
     s_registry.setConfig(12, 6, 0, 0, 0);
     assertEq(s_registry.getConfig().maxNameLen, 12);
     assertEq(s_registry.getConfig().maxTagLen, 6);
@@ -41,8 +41,8 @@ contract WorkflowRegistry_setMetadataConfig is WorkflowRegistrySetup {
   }
 
   // whenTheCallerISTheContractOwner
-  function test_setMetadataConfig_WhenAllConfigFieldsAreZero() external {
-    // it should emit MetadataConfigUpdated and restore default immutable values
+  function test_setConfig_WhenAllConfigFieldsAreZero() external {
+    // it should emit ConfigUpdated and restore default immutable values
     vm.startPrank(s_owner);
     // set value to something else first
     s_registry.setConfig(12, 6, 180, 512, 3600);
@@ -54,7 +54,7 @@ contract WorkflowRegistry_setMetadataConfig is WorkflowRegistrySetup {
 
     // set value to all zero now
     vm.expectEmit(true, true, true, true);
-    emit WorkflowRegistry.MetadataConfigUpdated(0, 0, 0, 0, 0);
+    emit WorkflowRegistry.ConfigUpdated(0, 0, 0, 0, 0);
     s_registry.setConfig(0, 0, 0, 0, 0);
     vm.stopPrank();
     assertEq(s_registry.getConfig().maxNameLen, 0);

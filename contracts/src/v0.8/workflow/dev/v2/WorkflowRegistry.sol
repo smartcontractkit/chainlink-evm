@@ -121,9 +121,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   );
   event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint32 expiryTimestamp);
   /// @notice Emitted when metadata length limits are updated
-  event MetadataConfigUpdated(
-    uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen, uint32 maxExpiryLen
-  );
+  event ConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen, uint32 maxExpiryLen);
   /// @notice Emitted when a workflow owner’s config is updated
   event WorkflowOwnerConfigUpdated(address indexed owner, bytes config);
   /// @notice Emitted whenever the registry reference is changed.
@@ -286,7 +284,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     s_config =
       Config({maxNameLen: nameLen, maxTagLen: tagLen, maxUrlLen: urlLen, maxAttrLen: attrLen, maxExpiryLen: expiryLen});
 
-    emit MetadataConfigUpdated(nameLen, tagLen, urlLen, attrLen, expiryLen);
+    emit ConfigUpdated(nameLen, tagLen, urlLen, attrLen, expiryLen);
   }
 
   /// @notice getConfig function returns the current metadata config.
