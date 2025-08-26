@@ -138,7 +138,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   event WorkflowDonFamilyUpdated(
     bytes32 indexed workflowId, address indexed owner, string oldDonFamily, string newDonFamily
   );
-  event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint256 expiryTimestamp);
+  event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint32 expiryTimestamp);
   /// @notice Emitted when metadata length limits are updated
   event MetadataConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen);
   /// @notice Emitted when a workflow owner’s config is updated
@@ -174,7 +174,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error EmptyUpdateBatch();
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
-  error RequestExpired(bytes32 requestDigest, uint256 expiryTimestamp);
+  error RequestExpired(bytes32 requestDigest, uint32 expiryTimestamp);
 
   // ================================================================
   // |                         Enums                                |
@@ -1325,7 +1325,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (expiryTimestamp <= block.timestamp) revert RequestExpired(requestDigest, expiryTimestamp);
     if (!s_linkedOwners.contains(msg.sender)) revert OwnershipLinkDoesNotExist(msg.sender);
 
-    s_requestsAllowlist[_ownerDigestHash(msg.sender, requestDigest)] = expiryTimestamp;
+    s_requestsAllowlist[keccak256(abi.encode(msg.sender, requestDigest))] = expiryTimestamp;
     s_requestAllowlistArray.push(
       OwnerAllowlistedRequest({owner: msg.sender, requestDigest: requestDigest, expiryTimestamp: expiryTimestamp})
     );
@@ -1339,7 +1339,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param requestDigest    Unique identifier for the request (hash of the request payload).
   /// @return bool            True if the request is allowlisted and not expired, false otherwise.
   function isRequestAllowlisted(address owner, bytes32 requestDigest) external view returns (bool) {
-    return s_requestsAllowlist[_ownerDigestHash(owner, requestDigest)] > block.timestamp;
+    return s_requestsAllowlist[keccak256(abi.encode(owner, requestDigest))] > block.timestamp;
   }
 
   function getAllowlistedRequests(
@@ -1617,13 +1617,5 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string memory str
   ) internal pure returns (bytes32 hash) {
     return keccak256(bytes(str));
-  }
-
-  /// @notice Hashes owner address and request digest into a fixed-size bytes32.
-  /// @param owner  Address of the workflow owner.
-  /// @param digest Request digest.
-  /// @return hash Keccak256 hash of `owner` and `digest`.
-  function _ownerDigestHash(address owner, bytes32 digest) internal pure returns (bytes32) {
-    return keccak256(abi.encode(owner, digest));
   }
 }
