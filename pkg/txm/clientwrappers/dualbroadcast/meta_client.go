@@ -304,6 +304,7 @@ func VerifyResponse(txData []byte, fromAddress common.Address, result *ResponseR
 	if result.UOP.To != to ||
 		result.UOP.MaxFeePerGas == nil || result.Metacalldata.MaxFeePerGas == nil || result.UOP.MaxFeePerGas.ToInt().Cmp(result.Metacalldata.MaxFeePerGas.ToInt()) != 0 ||
 		result.UOP.Dapp != dApp ||
+		result.UOP.Control != dApp ||
 		destinationAddress != fwdrDestAddress || !bytes.Equal(updateCalldata, txData) {
 		return nil, fmt.Errorf("incorrect UOP: uop.To: %v, uop.MaxFeePerGas: %v, uop.Dapp: %v, uop.update.destinationAddress: %v, uop.update.calldata: %v, to: %v, metacall.MaxFeePerGas: %v, dApp: %v, fwdrDestAddress: %v, txData: %v",
 			result.UOP.To, result.UOP.MaxFeePerGas, result.UOP.Dapp, destinationAddress, updateCalldata, to, result.Metacalldata.MaxFeePerGas, dApp, fwdrDestAddress, txData)
