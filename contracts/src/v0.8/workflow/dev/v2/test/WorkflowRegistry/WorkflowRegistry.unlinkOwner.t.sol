@@ -39,7 +39,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
         WorkflowRegistry.UnlinkOwnerRequestExpired.selector, s_owner, block.timestamp, s_validityTimestamp
       )
     );
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
     assertTrue(s_registry.isOwnerLinked(s_owner), "Owner should be linked");
   }
 
@@ -56,7 +56,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     vm.prank(s_user);
     (, bytes memory sig) = _getUnlinkProofSignature(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkDoesNotExist.selector, s_owner));
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should not be linked");
   }
 
@@ -72,7 +72,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, ownerProof, false);
     vm.prank(s_user);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
   }
 
@@ -101,7 +101,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
       )
     );
     // calling with validity timestamp that does not match the one from the signature
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, invalidSig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, invalidSig);
     assertTrue(s_registry.isOwnerLinked(s_owner), "Owner should be linked");
   }
 
@@ -128,7 +128,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
         WorkflowRegistry.InvalidOwnershipLink.selector, s_owner, s_validityTimestamp, storedProof, sig
       )
     );
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
     assertTrue(s_registry.isOwnerLinked(s_owner), "Owner should be linked");
   }
 
@@ -160,7 +160,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
         WorkflowRegistry.UnlinkOwnerRequestExpired.selector, s_owner, block.timestamp, s_validityTimestamp
       )
     );
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
     assertTrue(s_registry.isOwnerLinked(s_owner), "Owner should be linked");
   }
 
@@ -174,7 +174,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     (, bytes memory sig) = _getUnlinkProofSignature(unlinkedOwner);
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkDoesNotExist.selector, unlinkedOwner));
-    s_registry.unlinkOwner(unlinkedOwner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(unlinkedOwner, s_validityTimestamp, sig);
     assertFalse(s_registry.isOwnerLinked(unlinkedOwner), "Owner should not be linked");
   }
 
@@ -194,7 +194,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     vm.prank(s_user);
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
   }
 
@@ -223,7 +223,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
       )
     );
     // calling with validity timestamp that does not match the one from the signature
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, invalidSig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, invalidSig);
     assertTrue(s_registry.isOwnerLinked(s_owner), "Owner should be linked");
   }
 
@@ -250,7 +250,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
         WorkflowRegistry.InvalidOwnershipLink.selector, s_owner, s_validityTimestamp, storedProof, sig
       )
     );
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
     assertTrue(s_registry.isOwnerLinked(s_owner), "Owner should be linked");
   }
 
@@ -261,60 +261,6 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     _;
   }
 
-  function test_unlinkOwner_preUnlinkActionsWhenNONEIsSelectedAsTheUnlinkAction()
-    external
-    whenTheCallerIsTheOwner
-    givenThatOwnerHasNoActiveWorkflows
-  {
-    // it should unlink the s_owner without any additional actions
-    (bytes32 storedProof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = s_owner
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, storedProof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
-    assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
-  }
-
-  function test_unlinkOwner_preUnlinkActionsWhenREMOVEIsSelectedAsTheUnlinkAction()
-    external
-    whenTheCallerIsTheOwner
-    givenThatOwnerHasNoActiveWorkflows
-  {
-    // it should unlink the s_owner without any additional actions
-    (bytes32 storedProof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = s_owner
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, storedProof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.REMOVE_WORKFLOWS);
-    assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
-  }
-
-  function test_unlinkOwner_preUnlinkActionsWhenPAUSEIsSelectedAsTheUnlinkAction()
-    external
-    whenTheCallerIsTheOwner
-    givenThatOwnerHasNoActiveWorkflows
-  {
-    // it should unlink the s_owner without any additional actions
-    (bytes32 storedProof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = s_owner
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, storedProof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.PAUSE_WORKFLOWS);
-    assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
-  }
-
   modifier givenThatOwnerHasActiveWorkflows() {
     // create 5 random active workflows
     _linkOwner(s_owner);
@@ -322,29 +268,12 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     _;
   }
 
-  function test_unlinkOwner_preUnlinkActionsWhenNONEIsTheUnlinkAction()
+  function test_unlinkOwner_AutomaticallyDeletesWorkflowsWhenOwnerIsLinked()
     external
     whenTheCallerIsTheOwner
     givenThatOwnerHasActiveWorkflows
   {
-    // it should revert with active workflows error
-    (, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = s_owner
-    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.CannotUnlinkWithActiveWorkflows.selector));
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
-    assertTrue(s_registry.isOwnerLinked(s_owner), "Owner should be linked");
-  }
-
-  function test_unlinkOwner_preUnlinkActionsWhenREMOVETheUnlinkAction()
-    external
-    whenTheCallerIsTheOwner
-    givenThatOwnerHasActiveWorkflows
-  {
-    // it should remove the workflows and unlink the s_owner
+    // it should automatically delete workflows and unlink the owner
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
     WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
@@ -353,36 +282,13 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     vm.prank(s_user); // s_user = s_owner
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.REMOVE_WORKFLOWS);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
+
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
 
-    wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 0, "There should be 0 workflows for the s_owner");
-  }
-
-  function test_unlinkOwner_preUnlinkActionsWhenPAUSEIsTheUnlinkAction()
-    external
-    whenTheCallerIsTheOwner
-    givenThatOwnerHasActiveWorkflows
-  {
-    // it should pause the workflows and unlink the s_owner
-    (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = s_owner
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.PAUSE_WORKFLOWS);
-    assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
-
-    wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be still 5 workflows for the s_owner");
-
-    for (uint256 i = 0; i < wrs.length; ++i) {
-      assertEq(uint8(wrs[i].status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED), "Workflow should be paused");
-    }
+    // Verify all workflows were deleted
+    WorkflowRegistry.WorkflowMetadataView[] memory remainingWrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
+    assertEq(remainingWrs.length, 0, "All workflows should be deleted");
   }
 
   modifier whenTheCallerIsNotTheOwner() {
@@ -397,60 +303,6 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     _;
   }
 
-  function test_unlinkOwner_preUnlinkActionsWhenNONEIsChosenAsTheUnlinkAction()
-    external
-    whenTheCallerIsNotTheOwner
-    givenThatCallerHasNoActiveWorkflows
-  {
-    // it should unlink the s_owner without any additional actions
-    (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = not s_owner
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
-    assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
-  }
-
-  function test_unlinkOwner_preUnlinkActionsWhenREMOVEIsChosenAsTheUnlinkAction()
-    external
-    whenTheCallerIsNotTheOwner
-    givenThatCallerHasNoActiveWorkflows
-  {
-    // it should unlink the s_owner without any additional actions
-    (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = not s_owner
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.REMOVE_WORKFLOWS);
-    assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
-  }
-
-  function test_unlinkOwner_preUnlinkActionsWhenPAUSEIsChosenAsTheUnlinkAction()
-    external
-    whenTheCallerIsNotTheOwner
-    givenThatCallerHasNoActiveWorkflows
-  {
-    // it should unlink the s_owner without any additional actions
-    (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = not s_owner
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.PAUSE_WORKFLOWS);
-    assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
-  }
-
   modifier givenThatCallerHasActiveWorkflows() {
     // create 5 random active workflows
     _linkOwner(s_owner);
@@ -458,29 +310,12 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     _;
   }
 
-  function test_unlinkOwner_preUnlinkActionsWhenNONEIsEqualToTheUnlinkAction()
+  function test_unlinkOwner_AutomaticallyDeletesWorkflowsWhenCallerIsNotOwner()
     external
     whenTheCallerIsNotTheOwner
     givenThatCallerHasActiveWorkflows
   {
-    // it should revert with active workflows error
-    (, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = not s_owner
-    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.CannotUnlinkWithActiveWorkflows.selector));
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.NONE);
-    assertTrue(s_registry.isOwnerLinked(s_owner), "Owner should be linked");
-  }
-
-  function test_unlinkOwner_preUnlinkActionsWhenREMOVEIsEqualToTheUnlinkAction()
-    external
-    whenTheCallerIsNotTheOwner
-    givenThatCallerHasActiveWorkflows
-  {
-    // it should remove the workflows and unlink the s_owner
+    // it should automatically delete workflows and unlink the owner even when caller is not the owner
     (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
 
     WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
@@ -489,35 +324,12 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
     vm.prank(s_user); // s_user = not s_owner
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.REMOVE_WORKFLOWS);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig);
+
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
 
-    wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 0, "There should be 0 workflows for the s_owner");
-  }
-
-  function test_unlinkOwner_preUnlinkActionsWhenPAUSEIsEqualToTheUnlinkAction()
-    external
-    whenTheCallerIsNotTheOwner
-    givenThatCallerHasActiveWorkflows
-  {
-    // it should pause the workflows and unlink the s_owner
-    (bytes32 proof, bytes memory sig) = _getUnlinkProofSignature(s_owner);
-
-    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be 5 workflows for the s_owner");
-
-    vm.prank(s_user); // s_user = s_owner
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, sig, WorkflowRegistry.PreUnlinkAction.PAUSE_WORKFLOWS);
-    assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
-
-    wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 5, "There should be still 5 workflows for the s_owner");
-
-    for (uint256 i = 0; i < wrs.length; ++i) {
-      assertEq(uint8(wrs[i].status), uint8(WorkflowRegistry.WorkflowStatus.PAUSED), "Workflow should be paused");
-    }
+    // Verify all workflows were deleted
+    WorkflowRegistry.WorkflowMetadataView[] memory remainingWrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
+    assertEq(remainingWrs.length, 0, "All workflows should be deleted");
   }
 }

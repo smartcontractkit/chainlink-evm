@@ -1,0 +1,11 @@
+WorkflowRegistry.deleteWorkflow
+├── when the owner is not linked
+│   └── it should revert with OwnershipLinkDoesNotExist
+└── when the owner is linked
+    ├── when the workflow does not exist
+    │   └── it should revert with WorkflowDoesNotExist
+    └── when the workflow exists
+        ├── when caller is not the owner
+        │   └── it should revert with CallerIsNotWorkflowOwner
+        └── when caller is the owner
+            └── it should delete the workflow and emit WorkflowDeleted
