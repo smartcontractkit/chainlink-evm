@@ -17,40 +17,21 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   using EnumerableMap for EnumerableMap.AddressToBytes32Map;
 
   string public constant override typeAndVersion = "WorkflowRegistry 2.0.0-dev";
+  /// @dev Default values for contract configuration.
+  uint8 private constant DEFAULT_MAX_NAME_LEN = 64;
+  uint8 private constant DEFAULT_MAX_TAG_LEN = 32;
+  uint8 private constant DEFAULT_MAX_URL_LEN = 200;
+  uint16 private constant DEFAULT_MAX_ATTR_LEN = 1024;
+  uint32 private constant DEFAULT_MAX_EXPIRY = 604800; // one week
 
-  /// @dev Packed metadata length caps (overrides configurable by owner):
-  /// We store four independent uint fields—maxNameLen, maxTagLen, maxUrlLen, and maxAttrLen—
-  /// in a single 256-bit word to minimize storage. Defaults are hard-coded as constants
-  /// (zero gas on deployment) and only consume storage when an override differs from the default.
-  /// When overrides exist, we write one packed word (s_metadataCaps).
-  /// Getter functions (getMaxNameLen(), getMaxTagLen(), etc.) extract each field via bit shifts,
-  /// falling back to the default if no override is set.
-  ///
-  /// Pattern inspired by OpenZeppelin’s ERC20Capped and Preset modules:
-  /// • Defaults live in bytecode (zero gas on deployment)
-  /// • Overrides live in one slot (one SLOAD per read)
-  /// • No per-field storage or struct-copying required
-  ///
-  /// @dev Bit layout (LSB → MSB):
-  /// NAME_SHIFT (8 bits)   = 0
-  /// TAG_SHIFT  (8 bits)   = 8
-  /// URL_SHIFT  (8 bits)   = 16
-  /// ATTR_SHIFT (16 bits)  = 24
-  ///
-  /// @dev Single-slot override; when s_metadataCaps == 0, all defaults apply.
-  /// @dev DEFAULT_PACKED bundles the defaults:
-  ///   (uint256(64)  << NAME_SHIFT) │
-  ///   (uint256(32)  << TAG_SHIFT)  │
-  ///   (uint256(200) << URL_SHIFT)  │
-  ///   (uint256(1024)<< ATTR_SHIFT)
-  /// where maxNameLen = 64, maxTagLen = 32, maxUrlLen = 200, maxAttrLen = 1024
-  uint8 private constant NAME_SHIFT = 0;
-  uint8 private constant TAG_SHIFT = 8;
-  uint8 private constant URL_SHIFT = 16;
-  uint8 private constant ATTR_SHIFT = 24; // uses 16 bits
-  uint256 private s_metadataCaps;
-  uint256 private constant DEFAULT_PACKED = (uint256(64) << NAME_SHIFT) | (uint256(32) << TAG_SHIFT)
-    | (uint256(200) << URL_SHIFT) | (uint256(1024) << ATTR_SHIFT);
+  /// @dev Configuration struct that keeps config parameters for this contract.
+  Config private s_config = Config({
+    maxNameLen: DEFAULT_MAX_NAME_LEN,
+    maxTagLen: DEFAULT_MAX_TAG_LEN,
+    maxUrlLen: DEFAULT_MAX_URL_LEN,
+    maxAttrLen: DEFAULT_MAX_ATTR_LEN,
+    maxExpiryLen: DEFAULT_MAX_EXPIRY
+  });
 
   /// @dev The set of allowed signers for ownership proofs. These signers are considered to be trusted entities.
   /// If the ownership proof is not signed by one of the allowed signers, signature will be rejected.
@@ -140,7 +121,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   );
   event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint32 expiryTimestamp);
   /// @notice Emitted when metadata length limits are updated
-  event MetadataConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen);
+  event ConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen, uint32 maxExpiryLen);
   /// @notice Emitted when a workflow owner’s config is updated
   event WorkflowOwnerConfigUpdated(address indexed owner, bytes config);
   /// @notice Emitted whenever the registry reference is changed.
@@ -174,7 +155,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error EmptyUpdateBatch();
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
-  error RequestExpired(bytes32 requestDigest, uint32 expiryTimestamp);
+  error InvalidExpiryTimestamp(bytes32 requestDigest, uint32 expiryTimestamp, uint32 maxAllowed);
 
   // ================================================================
   // |                         Enums                                |
@@ -199,6 +180,15 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   // |                         Structs                              |
   // ================================================================
+  /// @dev Struct for Workflow Registry configuration parameters
+  struct Config {
+    uint8 maxNameLen; // Cap for `workflowName` (0 ➜ unlimited)
+    uint8 maxTagLen; // Cap for `tag` (0 ➜ unlimited)
+    uint8 maxUrlLen; // Cap for each URL (0 ➜ unlimited)
+    uint16 maxAttrLen; // Cap for `attributes` (0 ➜ unlimited)
+    uint32 maxExpiryLen; // Cap for every allowlisted request expiration timestamp (0 ➜ unlimited)
+  }
+
   /// @dev Struct for WorkflowMetadata. This is used to store the workflow metadata.
   struct WorkflowMetadata {
     bytes32 workflowId; //       Unique identifier from hash(owner, workflow name, wasm binary, cfg).
@@ -284,56 +274,22 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   // |                   Workflow Metadata Config                   |
   // ================================================================
-  /// @notice setMetadataConfig function allows the owner to override any of the four caps.
-  /// Passing the exact default values clears the override slot. Passing all 4 values as 0
-  /// will also clear the override back to default. However, setting only some of the values to 0 will remove the cap
-  /// and make the cap unlimited only for that field.
+  /// @notice setConfig function allows the owner to override all the config parameters.
   /// @param nameLen New cap for `workflowName` (0 ➜ unlimited)
-  /// @param tagLen  New cap for `tag`
-  /// @param urlLen  New cap for each URL
-  /// @param attrLen New cap for `attributes`
-  function setMetadataConfig(uint8 nameLen, uint8 tagLen, uint8 urlLen, uint16 attrLen) external onlyOwner {
-    // Pack
-    uint256 packed = (uint256(nameLen) << NAME_SHIFT) | (uint256(tagLen) << TAG_SHIFT) | (uint256(urlLen) << URL_SHIFT)
-      | (uint256(attrLen) << ATTR_SHIFT);
+  /// @param tagLen  New cap for `tag` (0 ➜ unlimited)
+  /// @param urlLen  New cap for each URL (0 ➜ unlimited)
+  /// @param attrLen New cap for `attributes` (0 ➜ unlimited)
+  /// @param expiryLen New cap for every allowlisted request expiration timestamp (0 ➜ unlimited)
+  function setConfig(uint8 nameLen, uint8 tagLen, uint8 urlLen, uint16 attrLen, uint32 expiryLen) external onlyOwner {
+    s_config =
+      Config({maxNameLen: nameLen, maxTagLen: tagLen, maxUrlLen: urlLen, maxAttrLen: attrLen, maxExpiryLen: expiryLen});
 
-    // If caller supplied all defaults (or zeros) clear the override slot
-    if (packed == DEFAULT_PACKED || packed == 0) {
-      // if all 0 is passed, the caps are set to contract default
-      delete s_metadataCaps;
-    } else {
-      s_metadataCaps = packed;
-    }
-
-    emit MetadataConfigUpdated(nameLen, tagLen, urlLen, attrLen);
+    emit ConfigUpdated(nameLen, tagLen, urlLen, attrLen, expiryLen);
   }
 
-  function _caps() private view returns (uint256 c) {
-    return s_metadataCaps == 0 ? DEFAULT_PACKED : s_metadataCaps;
-  }
-
-  /// @notice getMaxNameLen function returns the maximum length of the workflow name.
-  /// @return The maximum length of the workflow name.
-  function getMaxNameLen() public view returns (uint8) {
-    return uint8(_caps() >> NAME_SHIFT);
-  }
-
-  /// @notice getMaxTagLen function returns the maximum length of the workflow tag.
-  /// @return The maximum length of the workflow tag.
-  function getMaxTagLen() public view returns (uint8) {
-    return uint8(_caps() >> TAG_SHIFT);
-  }
-
-  /// @notice getMaxUrlLen function returns the maximum length of the workflow URL.
-  /// @return The maximum length of the workflow URL.
-  function getMaxUrlLen() public view returns (uint8) {
-    return uint8(_caps() >> URL_SHIFT);
-  }
-
-  /// @notice getMaxAttrLen function returns the maximum length of the workflow attributes.
-  /// @return The maximum length of the workflow attributes.
-  function getMaxAttrLen() public view returns (uint16) {
-    return uint16(_caps() >> ATTR_SHIFT);
+  /// @notice getConfig function returns the current metadata config.
+  function getConfig() public view returns (Config memory) {
+    return s_config;
   }
 
   // ================================================================
@@ -868,7 +824,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       revert WorkflowIDAlreadyExists(workflowId);
     }
     // 3) check URLs (binary url is required. config url is optional; 0 = unlimited)
-    uint8 cap = getMaxUrlLen();
+    uint8 cap = s_config.maxUrlLen;
     uint256 binaryLen = bytes(binaryUrl).length;
     uint256 configLen = bytes(configUrl).length;
     if (binaryLen == 0) {
@@ -884,7 +840,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
 
     // 4) check attributes (optional; 0 = unlimited)
-    uint16 attrCap = getMaxAttrLen();
+    uint16 attrCap = s_config.maxAttrLen;
     if (attrCap != 0 && attributes.length > attrCap) {
       revert AttributesTooLong(attributes.length, attrCap);
     }
@@ -894,7 +850,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (tagLen == 0) {
       revert WorkflowTagRequired();
     }
-    cap = getMaxTagLen();
+    cap = s_config.maxTagLen; // 0  ➜ unlimited
     if (cap != 0 && tagLen > cap) {
       revert WorkflowTagTooLong(tagLen, cap);
     }
@@ -903,7 +859,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (nameLen == 0) {
       revert WorkflowNameRequired();
     }
-    cap = getMaxNameLen(); // 0  ➜ unlimited
+    cap = s_config.maxNameLen; // 0  ➜ unlimited
     if (cap != 0 && nameLen > cap) {
       revert WorkflowNameTooLong(nameLen, cap);
     }
@@ -1307,7 +1263,13 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// - Any user can then send the request payload to the Vault DON.
   /// - Vault DON checks if the digest is on-chain for verification purposes.
   function allowlistRequest(bytes32 requestDigest, uint32 expiryTimestamp) external {
-    if (expiryTimestamp <= block.timestamp) revert RequestExpired(requestDigest, expiryTimestamp);
+    uint32 maxAllowedExpiry = s_config.maxExpiryLen; // 0 -> unlimited
+    if (
+      expiryTimestamp <= block.timestamp
+        || (maxAllowedExpiry != 0 && expiryTimestamp - block.timestamp > maxAllowedExpiry)
+    ) {
+      revert InvalidExpiryTimestamp(requestDigest, expiryTimestamp, maxAllowedExpiry);
+    }
     if (!s_linkedOwners.contains(msg.sender)) revert OwnershipLinkDoesNotExist(msg.sender);
 
     s_requestsAllowlist[keccak256(abi.encode(msg.sender, requestDigest))] = expiryTimestamp;
