@@ -43,54 +43,6 @@ const config: HardhatUserConfig = {
       },
     ],
     overrides: {
-      'src/v0.8/vrf/VRFCoordinatorV2.sol': {
-        version: '0.8.6',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 10000, // see native_solc_compile_all
-          },
-          metadata: {
-            bytecodeHash: 'none',
-          },
-        },
-      },
-      'src/v0.8/vrf/dev/VRFCoordinatorV2_5.sol': {
-        version: '0.8.19',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 500, // see native_solc_compile_all_vrf
-          },
-          metadata: {
-            bytecodeHash: 'none',
-          },
-        },
-      },
-      'src/v0.8/vrf/dev/VRFCoordinatorV2_5_Arbitrum.sol': {
-        version: '0.8.19',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 500, // see native_solc_compile_all_vrf
-          },
-          metadata: {
-            bytecodeHash: 'none',
-          },
-        },
-      },
-      'src/v0.8/vrf/dev/VRFCoordinatorV2_5_Optimism.sol': {
-        version: '0.8.19',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 500, // see native_solc_compile_all_vrf
-          },
-          metadata: {
-            bytecodeHash: 'none',
-          },
-        },
-      },
       'src/v0.8/automation/AutomationForwarderLogic.sol': {
         version: '0.8.19',
         settings: COMPILER_SETTINGS,
