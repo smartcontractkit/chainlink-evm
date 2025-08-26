@@ -25,7 +25,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   uint32 private constant DEFAULT_MAX_EXPIRY = 604800; // one week
 
   /// @dev Configuration struct that keeps config parameters for this contract.
-  Config s_config = Config({
+  Config private s_config = Config({
     maxNameLen: DEFAULT_MAX_NAME_LEN,
     maxTagLen: DEFAULT_MAX_TAG_LEN,
     maxUrlLen: DEFAULT_MAX_URL_LEN,
