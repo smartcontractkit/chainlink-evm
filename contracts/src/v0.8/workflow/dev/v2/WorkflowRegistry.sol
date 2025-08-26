@@ -199,7 +199,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     uint8 maxTagLen; // Cap for `tag` (0 ➜ unlimited)
     uint8 maxUrlLen; // Cap for each URL (0 ➜ unlimited)
     uint16 maxAttrLen; // Cap for `attributes` (0 ➜ unlimited)
-    uint32 maxExpiryLen; // Cap for every allowlisted request expiration timestamp (0 ➜ unlimited)
+    uint32 maxExpiryLen; // Maximum window in seconds from now (0 ⇒ never expires) for every allowlisted request expiration timestamp.
   }
 
   /// @dev Struct for WorkflowMetadata. This is used to store the workflow metadata.
@@ -842,8 +842,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (s_idToRid[workflowId] != bytes32(0)) {
       revert WorkflowIDAlreadyExists(workflowId);
     }
-    // 3) check URLs (binary url is required. config url is optional; 0 = unlimited)
-    uint8 cap = s_config.maxUrlLen;
+
+    // 3) check length configs
+    // binary url is required. config url is optional; 0 = unlimited
+    Config memory cfg = s_config;
+
+    uint8 cap = cfg.maxUrlLen;
     uint256 binaryLen = bytes(binaryUrl).length;
     uint256 configLen = bytes(configUrl).length;
     if (binaryLen == 0) {
@@ -869,18 +873,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (tagLen == 0) {
       revert WorkflowTagRequired();
     }
-    cap = s_config.maxTagLen; // 0  ➜ unlimited
-    if (cap != 0 && tagLen > cap) {
-      revert WorkflowTagTooLong(tagLen, cap);
-    }
+
     // 6) check workflowName (required)
     uint256 nameLen = bytes(workflowName).length;
     if (nameLen == 0) {
       revert WorkflowNameRequired();
-    }
-    cap = s_config.maxNameLen; // 0  ➜ unlimited
-    if (cap != 0 && nameLen > cap) {
-      revert WorkflowNameTooLong(nameLen, cap);
     }
 
     // using abi.encode here ensures each dynamic field (string) is length-prefixed,
@@ -891,6 +888,15 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (rec.owner == address(0)) {
       bytes32 wKey = _workflowKey(msg.sender, workflowName);
       bytes32 donHash = _hash(donFamily);
+
+      // Check for tag and name length. 0  ➜ unlimited. This is only created once the first time the workflow is created.
+      if (cfg.maxTagLen != 0 && tagLen > cfg.maxTagLen) {
+        revert WorkflowTagTooLong(tagLen, cfg.maxTagLen);
+      }
+
+      if (cfg.maxNameLen != 0 && nameLen > cfg.maxNameLen) {
+        revert WorkflowNameTooLong(nameLen, cfg.maxNameLen);
+      }
 
       /* ───────────────────────── 1. HOUSEKEEPING ───────────────────────── */
       // we need to do this first, or there may be extra workflows occupying the limit
