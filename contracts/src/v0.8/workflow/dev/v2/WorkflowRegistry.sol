@@ -1489,27 +1489,28 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @notice Fetch a paginated slice of **all** workflows (active *and*
   ///         paused) that belong to a given DON.
   /// @dev
-  ///  * Reads the RID set `s_allDONRids[donFamily]`, which tracks every
+  ///  * Reads the RID set `s_allDONRids[donHash]` derived from the donFamily, which tracks every
   ///    workflow ever registered to that DON, regardless of status.
   ///  * Does **not** revert on out-of-range requests; instead it returns
   ///    the largest sub-range that fits inside the set.
   ///
-  /// @param donFamily  bytes32-encoded DON label used as the secondary key.
+  /// @param donFamily  Human readable string of the DON family.
   /// @param start     Zero-based index into the RID set.
   /// @param limit     Bathc size for the workflows
   /// @return list     Array of `WorkflowMetadataView` structs whose length is
   ///                  `min(limit, total-start)`.
   function getWorkflowListByDON(
-    bytes32 donFamily,
+    string calldata donFamily,
     uint256 start,
     uint256 limit
   ) external view returns (WorkflowMetadataView[] memory list) {
-    uint256 total = s_allDONRids[donFamily].length();
+    bytes32 donHash = _hash(donFamily);
+    uint256 total = s_allDONRids[donHash].length();
     uint256 count = _getPageCount(total, start, limit);
 
     list = new WorkflowMetadataView[](count);
     for (uint256 i = 0; i < count; ++i) {
-      bytes32 rid = s_allDONRids[donFamily].at(start + i);
+      bytes32 rid = s_allDONRids[donHash].at(start + i);
       list[i] = _workflowMetadataView(rid);
     }
 
@@ -1571,10 +1572,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     WorkflowMetadata storage rec = s_workflows[rid];
     if (rec.owner == address(0)) return v;
 
-    // For ACTIVE workflows this will resolve to the correct DON label.
-    // For PAUSED/never‑assigned workflows the label is the empty string.;
-    string memory family = s_donConfigs[s_donByWorkflowRid[rid]].family;
-
     return WorkflowMetadataView({
       workflowId: rec.workflowId,
       owner: rec.owner,
@@ -1585,7 +1582,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       configUrl: rec.configUrl,
       tag: rec.tag,
       attributes: rec.attributes,
-      donFamily: family
+      // For ACTIVE workflows this will resolve to the correct DON label.
+      // For PAUSED/never‑assigned workflows the label is the empty string.;
+      donFamily: s_donConfigs[s_donByWorkflowRid[rid]].family
     });
   }
 
