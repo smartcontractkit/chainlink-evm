@@ -20,13 +20,27 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
 
     // old timestamp should revert
     expiryTimestamp = uint32(block.timestamp - 1 hours);
-    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.RequestExpired.selector, requestDigest, expiryTimestamp));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WorkflowRegistry.InvalidExpiryTimestamp.selector,
+        requestDigest,
+        expiryTimestamp,
+        s_registry.getConfig().maxExpiryLen
+      )
+    );
     vm.prank(s_user);
     s_registry.allowlistRequest(requestDigest, expiryTimestamp);
 
     // timestamp equal to current block timestamp should revert
     expiryTimestamp = uint32(block.timestamp);
-    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.RequestExpired.selector, requestDigest, expiryTimestamp));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WorkflowRegistry.InvalidExpiryTimestamp.selector,
+        requestDigest,
+        expiryTimestamp,
+        s_registry.getConfig().maxExpiryLen
+      )
+    );
     vm.prank(s_user);
     s_registry.allowlistRequest(requestDigest, expiryTimestamp);
   }
@@ -77,15 +91,38 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
     assertTrue(s_registry.isRequestAllowlisted(s_user, newRequestDigest), "New request should be allowlisted");
 
     // revert if expiration timestamp is much greater than maxAllowedExpiry
-    uint32 maxAllowedExpiry = s_registry.getMaxExpiry();
-    newRequestDigest = keccak256("new-request-digest");
+    newRequestDigest = keccak256("new-request-digest-2");
     newExpiryTimestamp = uint32(block.timestamp + 8 days); // much more than maxAllowedExpiry
     vm.prank(s_user);
     vm.expectRevert(
       abi.encodeWithSelector(
-        WorkflowRegistry.RequestOverMaxExpiry.selector, newRequestDigest, newExpiryTimestamp, maxAllowedExpiry
+        WorkflowRegistry.InvalidExpiryTimestamp.selector,
+        newRequestDigest,
+        newExpiryTimestamp,
+        s_registry.getConfig().maxExpiryLen
       )
     );
+    s_registry.allowlistRequest(newRequestDigest, newExpiryTimestamp);
+
+    // don't revert if expiration time is equal to maxAllowedExpiry
+    newRequestDigest = keccak256("new-request-digest-2");
+    uint32 maxExpiry = s_registry.getConfig().maxExpiryLen;
+    newExpiryTimestamp = uint32(block.timestamp + maxExpiry);
+    vm.expectEmit(true, true, true, false);
+    emit WorkflowRegistry.RequestAllowlisted(s_user, newRequestDigest, newExpiryTimestamp);
+    vm.prank(s_user);
+    s_registry.allowlistRequest(newRequestDigest, newExpiryTimestamp);
+
+    // don't revert if maxAllowedExpiry is set to unlimited
+    WorkflowRegistry.Config memory config = s_registry.getConfig();
+    vm.prank(s_owner);
+    // set only the maxAllowedExpiry to unlimited
+    s_registry.setConfig(config.maxNameLen, config.maxTagLen, config.maxUrlLen, config.maxAttrLen, 0);
+    newRequestDigest = keccak256("new-request-digest-3");
+    newExpiryTimestamp = uint32(block.timestamp + 8 days); // much more than default maxAllowedExpiry
+    vm.prank(s_user);
+    vm.expectEmit(true, true, true, false);
+    emit WorkflowRegistry.RequestAllowlisted(s_user, newRequestDigest, newExpiryTimestamp);
     s_registry.allowlistRequest(newRequestDigest, newExpiryTimestamp);
   }
 }
