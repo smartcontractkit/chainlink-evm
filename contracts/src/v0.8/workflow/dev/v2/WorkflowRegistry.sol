@@ -94,7 +94,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
   /// @dev Tracking allowlisted requests for the owner address, required to enable anyone to verify off-chain requests.
-  mapping(address owner => mapping(bytes32 requestDigest => uint256 expiryTimestamp)) private s_requestsAllowlist;
+  mapping(bytes32 ownerDigestHash => uint32 expiryTimestamp) private s_requestsAllowlist;
+  /// @dev Storing allowlisted requests for all owners, enabling fetching all non-expired requests
+  OwnerAllowlistedRequest[] private s_requestAllowlistArray;
   /// @dev Map each owner address to their arbitrary config. Can be used to control billing parameters or any other data per owner
   mapping(address owner => bytes config) private s_ownerConfig;
 
@@ -136,7 +138,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   event WorkflowDonFamilyUpdated(
     bytes32 indexed workflowId, address indexed owner, string oldDonFamily, string newDonFamily
   );
-  event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint256 expiryTimestamp);
+  event RequestAllowlisted(address indexed owner, bytes32 indexed requestDigest, uint32 expiryTimestamp);
   /// @notice Emitted when metadata length limits are updated
   event MetadataConfigUpdated(uint8 maxNameLen, uint8 maxTagLen, uint8 maxUrlLen, uint16 maxAttrLen);
   /// @notice Emitted when a workflow owner’s config is updated
@@ -172,7 +174,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error EmptyUpdateBatch();
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
-  error RequestExpired(bytes32 requestDigest, uint256 expiryTimestamp);
+  error RequestExpired(bytes32 requestDigest, uint32 expiryTimestamp);
 
   // ================================================================
   // |                         Enums                                |
@@ -277,6 +279,13 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     EventType eventType;
     uint32 timestamp;
     bytes payload; // ABI‑encoded event data
+  }
+
+  /// @dev Struct for OwnerAllowlistedRequest. This is used to return the allowlisted request data for each owner.
+  struct OwnerAllowlistedRequest {
+    bytes32 requestDigest;
+    address owner;
+    uint32 expiryTimestamp;
   }
 
   // ================================================================
@@ -1312,11 +1321,14 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// - User calls allowlistRequest(requestDigest) on the Workflow Registry.
   /// - Any user can then send the request payload to the Vault DON.
   /// - Vault DON checks if the digest is on-chain for verification purposes.
-  function allowlistRequest(bytes32 requestDigest, uint256 expiryTimestamp) external {
+  function allowlistRequest(bytes32 requestDigest, uint32 expiryTimestamp) external {
     if (expiryTimestamp <= block.timestamp) revert RequestExpired(requestDigest, expiryTimestamp);
     if (!s_linkedOwners.contains(msg.sender)) revert OwnershipLinkDoesNotExist(msg.sender);
 
-    s_requestsAllowlist[msg.sender][requestDigest] = expiryTimestamp;
+    s_requestsAllowlist[keccak256(abi.encode(msg.sender, requestDigest))] = expiryTimestamp;
+    s_requestAllowlistArray.push(
+      OwnerAllowlistedRequest({owner: msg.sender, requestDigest: requestDigest, expiryTimestamp: expiryTimestamp})
+    );
     emit RequestAllowlisted(msg.sender, requestDigest, expiryTimestamp);
   }
 
@@ -1327,7 +1339,41 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param requestDigest    Unique identifier for the request (hash of the request payload).
   /// @return bool            True if the request is allowlisted and not expired, false otherwise.
   function isRequestAllowlisted(address owner, bytes32 requestDigest) external view returns (bool) {
-    return s_requestsAllowlist[owner][requestDigest] > block.timestamp;
+    return s_requestsAllowlist[keccak256(abi.encode(owner, requestDigest))] > block.timestamp;
+  }
+
+  function getAllowlistedRequests(
+    uint256 start,
+    uint256 limit
+  ) external view returns (OwnerAllowlistedRequest[] memory allowlistedRequests) {
+    uint256 total = s_requestAllowlistArray.length;
+    uint256 pageCount = _getPageCount(total, start, limit);
+
+    if (pageCount == 0) return new OwnerAllowlistedRequest[](0);
+
+    allowlistedRequests = new OwnerAllowlistedRequest[](pageCount);
+    uint256 addedCount = 0;
+    for (uint256 i = 0; i < pageCount; ++i) {
+      OwnerAllowlistedRequest storage request = s_requestAllowlistArray[start + i];
+      if (request.expiryTimestamp > block.timestamp) {
+        allowlistedRequests[addedCount] = request;
+        ++addedCount;
+      }
+    }
+
+    if (addedCount < pageCount) {
+      OwnerAllowlistedRequest[] memory shrinkedList = new OwnerAllowlistedRequest[](addedCount);
+      for (uint256 i = 0; i < addedCount; ++i) {
+        shrinkedList[i] = allowlistedRequests[i];
+      }
+      allowlistedRequests = shrinkedList;
+    }
+
+    return allowlistedRequests;
+  }
+
+  function totalAllowlistedRequests() external view returns (uint256) {
+    return s_requestAllowlistArray.length;
   }
 
   // ================================================================
