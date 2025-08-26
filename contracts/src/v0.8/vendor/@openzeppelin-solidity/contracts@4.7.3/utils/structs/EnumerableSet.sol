@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.7.0) (utils/structs/EnumerableSet.sol)
-// This file was procedurally generated from scripts/generate/templates/EnumerableSet.js.
 
 pragma solidity ^0.8.0;
 
@@ -215,15 +214,7 @@ library EnumerableSet {
      * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
      */
     function values(Bytes32Set storage set) internal view returns (bytes32[] memory) {
-        bytes32[] memory store = _values(set._inner);
-        bytes32[] memory result;
-
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := store
-        }
-
-        return result;
+        return _values(set._inner);
     }
 
     // AddressSet
@@ -334,7 +325,7 @@ library EnumerableSet {
     }
 
     /**
-     * @dev Returns the number of values in the set. O(1).
+     * @dev Returns the number of values on the set. O(1).
      */
     function length(UintSet storage set) internal view returns (uint256) {
         return _length(set._inner);
