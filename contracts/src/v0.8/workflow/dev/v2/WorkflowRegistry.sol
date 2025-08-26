@@ -107,8 +107,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// Tracks every user that currently has an override for a specific DON.
   mapping(bytes32 donHash => EnumerableSet.AddressSet userOverrides) private s_donOverrideUsers;
 
-  /// @dev Stores the current DON Registry reference used by this contract.
-  DONRegistryConfig private s_donRegistry;
+  /// @dev Stores the current Capabilities Registry reference used by this contract.
+  CapabilitiesRegistryConfig private s_capabilitiesRegistry;
   /// @dev Storage of all capacity and workflow life‑cycle events
   EventRecord[] private s_events;
 
@@ -144,7 +144,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @notice Emitted when a workflow owner’s config is updated
   event WorkflowOwnerConfigUpdated(address indexed owner, bytes config);
   /// @notice Emitted whenever the registry reference is changed.
-  event DONRegistryUpdated(address oldAddr, address newAddr, uint64 oldChainSelector, uint64 newChainSelector);
+  event CapabilitiesRegistryUpdated(address oldAddr, address newAddr, uint64 oldChainSelector, uint64 newChainSelector);
 
   // ================================================================
   // |                         Errors                               |
@@ -266,10 +266,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     uint32 limit;
   }
 
-  /// @notice  DONRegistryConfig struct stores the pointer to the DON Registry this Workflow Registry uses.
+  /// @notice  CapabilitiesRegistryConfig struct stores the pointer to the Capabilities Registry this Workflow Registry uses.
   /// @dev     `registry` is the contract address; `chainSelector` identifies the
   ///          chain where the registry lives (Chainlink selector).
-  struct DONRegistryConfig {
+  struct CapabilitiesRegistryConfig {
     address registry;
     uint64 chainSelector;
   }
@@ -553,36 +553,36 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   }
 
   // ================================================================
-  // |                         DON registry                         |
+  // |                     Capabilities Registry                    |
   // ================================================================
-  /// @notice Sets or replaces the DON Registry that this Workflow Registry points to.
+  /// @notice Sets or replaces the Capabilities Registry that this Workflow Registry points to.
   /// @dev    Owner-only.  Overwrites the previous entry and emits
-  ///         {DONRegistryUpdated}.
-  /// @param  registry       Address of the DON Registry contract.
+  ///         {CapabilitiesRegistryUpdated}.
+  /// @param  registry       Address of the Capabilities Registry contract.
   /// @param  chainSelector  Chain selector for the registry’s chain.
-  function setDONRegistry(address registry, uint64 chainSelector) external onlyOwner {
-    address oldRegistry = s_donRegistry.registry;
-    uint64 oldChain = s_donRegistry.chainSelector;
+  function setCapabilitiesRegistry(address registry, uint64 chainSelector) external onlyOwner {
+    address oldRegistry = s_capabilitiesRegistry.registry;
+    uint64 oldChain = s_capabilitiesRegistry.chainSelector;
 
     if (registry == oldRegistry && chainSelector == oldChain) {
       return;
     }
 
     if (registry != oldRegistry) {
-      s_donRegistry.registry = registry;
+      s_capabilitiesRegistry.registry = registry;
     }
     if (chainSelector != oldChain) {
-      s_donRegistry.chainSelector = chainSelector;
+      s_capabilitiesRegistry.chainSelector = chainSelector;
     }
 
-    emit DONRegistryUpdated(oldRegistry, registry, oldChain, chainSelector);
+    emit CapabilitiesRegistryUpdated(oldRegistry, registry, oldChain, chainSelector);
   }
 
-  /// @notice Returns the current DON Registry reference and its chain selector.
-  /// @return Address of the DON Registry contract.
+  /// @notice Returns the current Capabilities Registry reference and its chain selector.
+  /// @return Address of the Capabilities Registry contract.
   /// @return Chain selector for the registry’s chain.
-  function getDONRegistry() external view returns (address, uint64) {
-    return (s_donRegistry.registry, s_donRegistry.chainSelector);
+  function getCapabilitiesRegistry() external view returns (address, uint64) {
+    return (s_capabilitiesRegistry.registry, s_capabilitiesRegistry.chainSelector);
   }
 
   // ================================================================

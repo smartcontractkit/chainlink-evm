@@ -10,7 +10,7 @@ contract WorkflowRegistry_getAllowlistedRequests is WorkflowRegistrySetup {
   // https://github.com/foundry-rs/foundry/issues/1373
   uint256 public currentTimestamp = block.timestamp;
 
-  function test_getAllowlistedRequests_WhenNoRequestsAreAllowlisted() external {
+  function test_getAllowlistedRequests_WhenNoRequestsAreAllowlisted() external view {
     // it should return an empty array
     uint256 total = s_registry.totalAllowlistedRequests();
     WorkflowRegistry.OwnerAllowlistedRequest[] memory requests = s_registry.getAllowlistedRequests(0, 100);
