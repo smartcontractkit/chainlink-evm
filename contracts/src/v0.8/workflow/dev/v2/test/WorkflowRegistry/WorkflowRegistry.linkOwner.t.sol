@@ -115,7 +115,7 @@ contract WorkflowRegistry_linkOwner is WorkflowRegistrySetup {
     vm.prank(s_owner);
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.OwnershipLinkUpdated(s_owner, s_proof, false);
-    s_registry.unlinkOwner(s_owner, s_validityTimestamp, unlinkSignature, WorkflowRegistry.PreUnlinkAction.NONE);
+    s_registry.unlinkOwner(s_owner, s_validityTimestamp, unlinkSignature);
     assertFalse(s_registry.isOwnerLinked(s_owner), "Owner should be unlinked");
 
     // next, attempt to link the s_owner again using the same s_proof (this should fail because s_proof can't be reused)

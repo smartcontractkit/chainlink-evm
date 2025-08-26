@@ -158,7 +158,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error InvalidSignature(bytes signature, uint8 recoverErrorId, bytes32 recoverErrorArg);
   error InvalidOwnershipLink(address owner, uint256 validityTimestamp, bytes32 proof, bytes signature);
   error OwnershipProofAlreadyUsed(address caller, bytes32 proof);
-  error CannotUnlinkWithActiveWorkflows();
+
   error CallerIsNotWorkflowOwner(address caller);
   error DonLimitNotSet(string donFamily);
   error MaxWorkflowsPerUserDONExceeded(address owner, string donFamily);
@@ -182,13 +182,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   enum WorkflowStatus {
     ACTIVE,
     PAUSED
-  }
-
-  enum PreUnlinkAction {
-    NONE, //              No action prior to unlinking.
-    REMOVE_WORKFLOWS, //  Remove all workflows owned by the owner prior to unlinking.
-    PAUSE_WORKFLOWS //    Pause all workflows owned by the owner prior to unlinking.
-
   }
 
   enum LinkingRequestType {
@@ -661,35 +654,19 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     emit OwnershipLinkUpdated(msg.sender, proof, true);
   }
 
-  /// @notice View function to verify if the unlinkOwner() function can be called successfully.
+  /// @notice Validates whether an owner can be unlinked using the provided proof and signature.
   /// @param owner The address of the owner to be unlinked.
   /// @param validityTimestamp Validity of the ownership proof.
   /// @param signature The signature of the ownership proof metadata.
-  /// preUnlinkAction Determines what to do with existing workflows owned by the owner before unlinking.
-  /// @dev If preUnlinkAction is NONE, the function will check if there are any active workflows registered to the
-  /// owner, and if so, the transaction will revert. If preUnlinkAction is not NONE, then all workflows owned by this
-  /// owner's address will be removed or paused before unlinking is completed.
   /// @dev This function is used to verify if the ownership proof is valid without actually unlinking the owner address.
   /// The ownership proof metadata is a combination of the claimed owner address, validity timestamp, and the proof hash.
-  /// Request will be rejected if the validity timestamp has expired, owner addres is not linked, if the proof does not
+  /// Request will be rejected if the validity timestamp has expired, owner address is not linked, if the proof does not
   /// match the one that was originally submitted, or if the signature is not valid (for different reasons).
-  /// @dev It is essential to ensure that the unlinking process does not leave any active workflows running because
-  /// they can't be managed on the registry by anyone else aside from a valid owner. Without this, the workflows
-  /// would be stuck since they can't be managed or removed by anyone.
   /// @dev Important difference between linking and unlinking is that unlinking may be called by any address, as
   /// long as the valid proof is provided. The caller does not have to be the owner of the address being unlinked.
   /// This is done to ensure that unlinking can be done even in cases when access to the private key of the owner
   /// address is lost or compromised, and the owner is not able to submit the unlinking request themselves.
-  function canUnlinkOwner(
-    address owner,
-    uint256 validityTimestamp,
-    bytes calldata signature,
-    PreUnlinkAction action
-  ) public view {
-    if ((action == PreUnlinkAction.NONE) && (s_activeOwnerWorkflowRids[owner].length() != 0)) {
-      revert CannotUnlinkWithActiveWorkflows();
-    }
-
+  function canUnlinkOwner(address owner, uint256 validityTimestamp, bytes calldata signature) public view {
     if (block.timestamp > validityTimestamp) {
       revert UnlinkOwnerRequestExpired(owner, block.timestamp, validityTimestamp);
     }
@@ -714,36 +691,38 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param owner The address of the owner to be unlinked.
   /// @param validityTimestamp Validity of the ownership proof.
   /// @param signature The signature of the ownership proof metadata.
-  /// preUnlinkAction Determines what to do with existing workflows owned by the owner before unlinking.
-  /// @dev If preUnlinkAction is NONE, the function will check if there are any active workflows registered to the
-  /// owner, and if so, the transaction will revert. If preUnlinkAction is not NONE, then all workflows owned by this
-  /// owner's address will be removed or paused before unlinking is completed.
-  /// @dev Run the verification process first by calling canUnlinkOwner() function. If the verification does not result
-  /// in a revert, then the ownership proof is valid and the owner address can be unlinked.
-  function unlinkOwner(
-    address owner,
-    uint256 validityTimestamp,
-    bytes calldata signature,
-    PreUnlinkAction action
-  ) external {
-    canUnlinkOwner(owner, validityTimestamp, signature, action);
-
-    if (action != PreUnlinkAction.NONE) {
-      EnumerableSet.Bytes32Set storage active = s_activeOwnerWorkflowRids[owner];
-      // ------------- PAUSE or DELETE -------------
-      // Iterate from the back since EnumerableSet.remove() swaps-and-pops.
-      while (active.length() > 0) {
-        bytes32 rid = active.at(active.length() - 1);
-        WorkflowMetadata storage rec = _getRecord(owner, rid);
-        if (action == PreUnlinkAction.PAUSE_WORKFLOWS) {
-          _applyPause(rid, rec);
-        } else {
-          _applyDelete(rid, rec);
-        }
-      }
+  /// @dev The function will automatically delete all workflows owned by the owner before unlinking.
+  /// Upstream callers are responsible for ensuring this is the intended behavior.
+  /// @dev The function validates the ownership proof and signature before proceeding with deletion and unlinking.
+  function unlinkOwner(address owner, uint256 validityTimestamp, bytes calldata signature) external {
+    // Validate the unlinking request
+    if (block.timestamp > validityTimestamp) {
+      revert UnlinkOwnerRequestExpired(owner, block.timestamp, validityTimestamp);
     }
 
+    if (!s_linkedOwners.contains(owner)) {
+      revert OwnershipLinkDoesNotExist(owner);
+    }
+
+    // The expectation is that the signature must contain the same proof that was originally used for the linking
     bytes32 storedProof = s_linkedOwners.get(owner);
+
+    // Request type prevents replay attacks, since the same proof can be used for both linking and unlinking
+    address signer =
+      _recoverSigner(uint8(LinkingRequestType.UNLINK_OWNER), owner, validityTimestamp, storedProof, signature);
+    if (!s_allowedSigners[signer]) {
+      revert InvalidOwnershipLink(owner, validityTimestamp, storedProof, signature);
+    }
+
+    // Delete all workflows owned by the owner
+    EnumerableSet.Bytes32Set storage allRids = s_allOwnerRids[owner];
+    // Iterate from the back since EnumerableSet.remove() swaps-and-pops.
+    while (allRids.length() > 0) {
+      bytes32 rid = allRids.at(allRids.length() - 1);
+      WorkflowMetadata storage rec = s_workflows[rid];
+      _applyDelete(rid, rec);
+    }
+
     s_linkedOwners.remove(owner);
     emit OwnershipLinkUpdated(owner, storedProof, false);
   }
@@ -1139,19 +1118,25 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   /// @notice Permanently delete a workflow owned by the caller.
   /// @dev Sequence:
-  ///  1. Resolve the registry-ID (`rid`) from `workflowId` and verify ownership.
-  ///  2. If the workflow is **ACTIVE**, remove it from every
-  ///     “active” index and decrement per-DON counters.
-  ///  3. Purge the RID from global owner / DON maps and key-based sets.
-  ///  4. Clear the ID→RID map, delete the primary record, and emit an event.
-  ///  5. Unlinked owners can still delete their workflows.
+  ///  1. Verify the caller (owner) is linked to the registry.
+  ///  2. Resolve the registry-ID (`rid`) from `workflowId` and verify ownership.
+  ///  3. If the workflow is **ACTIVE**, remove it from every
+  ///     "active" index and decrement per-DON counters.
+  ///  4. Purge the RID from global owner / DON maps and key-based sets.
+  ///  5. Clear the ID→RID map, delete the primary record, and emit an event.
   ///
   /// @param workflowId  The globally-unique identifier to remove.
+  /// @custom:reverts OwnershipLinkDoesNotExist If the caller is not linked.
   /// @custom:reverts WorkflowDoesNotExist      If the ID is unknown.
   /// @custom:reverts CallerIsNotWorkflowOwner  If `msg.sender` is not the owner.
   function deleteWorkflow(
     bytes32 workflowId
   ) external {
+    // Check that the caller (owner) is linked
+    if (!s_linkedOwners.contains(msg.sender)) {
+      revert OwnershipLinkDoesNotExist(msg.sender);
+    }
+
     bytes32 rid = s_idToRid[workflowId];
     WorkflowMetadata storage rec = _getRecord(msg.sender, rid);
     _applyDelete(rid, rec);

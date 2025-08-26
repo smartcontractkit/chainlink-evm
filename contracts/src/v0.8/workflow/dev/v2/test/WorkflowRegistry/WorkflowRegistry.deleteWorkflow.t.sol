@@ -5,9 +5,20 @@ import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
 contract WorkflowRegistrydeleteWorkflow is WorkflowRegistrySetup {
-  function test_WhenTheWorkflowDoesNotExist() external {
-    // It should revert with WorkflowDoesNotExist
+  function test_WhenTheOwnerIsNotLinked() external {
+    // It should revert with OwnershipLinkDoesNotExist
+    vm.prank(s_owner);
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.OwnershipLinkDoesNotExist.selector, s_owner));
+    s_registry.deleteWorkflow(s_workflowId);
+  }
+
+  modifier whenTheOwnerIsLinked() {
     _linkOwner(s_owner);
+    _;
+  }
+
+  function test_WhenTheWorkflowDoesNotExist() external whenTheOwnerIsLinked {
+    // It should revert with WorkflowDoesNotExist
     vm.prank(s_owner);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.WorkflowDoesNotExist.selector, s_workflowId));
     s_registry.deleteWorkflow(s_workflowId);
@@ -17,9 +28,9 @@ contract WorkflowRegistrydeleteWorkflow is WorkflowRegistrySetup {
     _;
   }
 
-  function test_WhenCallerIsNotTheOwner() external whenTheWorkflowExists {
+  function test_WhenCallerIsNotTheOwner() external whenTheOwnerIsLinked whenTheWorkflowExists {
     // It should revert with CallerIsNotWorkflowOwner
-    _linkOwner(s_owner);
+    _linkOwner(s_user);
     vm.prank(s_owner);
     s_registry.upsertWorkflow(
       s_workflowName,
@@ -37,9 +48,8 @@ contract WorkflowRegistrydeleteWorkflow is WorkflowRegistrySetup {
     s_registry.deleteWorkflow(s_workflowId);
   }
 
-  function test_WhenCallerIsTheOwner() external whenTheWorkflowExists {
+  function test_WhenCallerIsTheOwner() external whenTheOwnerIsLinked whenTheWorkflowExists {
     // It should delete the workflow and emit WorkflowDeleted
-    _linkOwner(s_owner);
     vm.startPrank(s_owner);
     s_registry.upsertWorkflow(
       s_workflowName,
@@ -53,7 +63,7 @@ contract WorkflowRegistrydeleteWorkflow is WorkflowRegistrySetup {
       false
     );
     WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_owner, 0, 100);
-    assertEq(wrs.length, 1, "There should be 0 workflows for the s_owner");
+    assertEq(wrs.length, 1, "There should be 1 workflow for the s_owner");
 
     s_registry.deleteWorkflow(s_workflowId);
     vm.stopPrank();
