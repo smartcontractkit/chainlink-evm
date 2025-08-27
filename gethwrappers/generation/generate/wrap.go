@@ -17,5 +17,5 @@ func main() {
 		outDirSuffix = os.Args[5]
 	}
 
-	genwrapper.GenWrapper(abiPath, binPath, className, pkgName, outDirSuffix)
+	genwrapper.GenWrapper(abiPath, binPath, "", "", className, pkgName, outDirSuffix)
 }

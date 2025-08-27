@@ -20,6 +20,7 @@ compileContract() {
   local contract
   contract=$(basename "$path")
   echo "Compiling" "$contract"
+  dir=$CONTRACTS_DIR/solc/$PROJECT/$contract
 
   local current_project="$PROJECT"
   if [ -n "$project" ]; then
@@ -31,7 +32,9 @@ compileContract() {
   local command
   command="forge build $CONTRACTS_DIR/src/v0.8/$current_project/"$path.sol" \
    --root $CONTRACTS_DIR \
-   --extra-output-files bin abi"
+   --extra-output-files bin abi metadata \
+   --build-info \
+   --build-info-path $dir/build"
 
   # Add version if provided
   if [ -n "$version" ]; then
@@ -41,9 +44,12 @@ compileContract() {
 
   # Output directory
   command="$command \
-   -o $CONTRACTS_DIR/solc/$PROJECT/$contract"
+   -o $dir"
 
   $command
+
+  # Move the build info to an expected file name
+  mv $(find $dir/build -type f -name '*.json' ! -name 'build.json') $dir/build/build.json
 
   # Copy the generated abi files to a single folder
   mkdir -p "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"
