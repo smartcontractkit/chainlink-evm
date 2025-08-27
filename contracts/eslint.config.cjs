@@ -61,6 +61,7 @@ module.exports = defineConfig([
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/ban-ts-comment': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/no-require-imports': 'off',
 
       '@typescript-eslint/no-use-before-define': [
         'error',
