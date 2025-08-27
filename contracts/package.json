@@ -12,7 +12,6 @@
     "prettier:check": "prettier '**/*' --check --ignore-unknown",
     "prettier:write": "prettier '**/*' --write --ignore-unknown",
     "compile:native": "./scripts/native_solc_compile_all",
-    "prepublishOnly": "pnpm compile && ./scripts/prepublish_generate_abi_folder",
     "publish-beta": "pnpm publish --tag beta",
     "publish-prod": "pnpm publish --tag latest",
     "solhint": "solhint --max-warnings 0 \"./src/v0.8/**/*.sol\"",

@@ -60,24 +60,6 @@ jobs:
           # Get the version by stripping the "contracts-v" prefix.
           VERSION_PREFIX: "contracts-v"
 
-  prepublish-test:
-    needs: [changes, tag-check]
-    if: needs.changes.outputs.changes == 'true' || (needs.tag-check.outputs.is-pre-release-core == 'true')
-    name: Prepublish Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repo
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Setup NodeJS
-        uses: ./.github/actions/setup-nodejs
-      - name: Install Foundry
-        uses: ./.github/actions/install-solidity-foundry
-      - name: Run Prepublish test
-        working-directory: contracts
-        run: pnpm prepublishOnly
-
   native-compile:
     needs: [changes, tag-check]
     if: needs.changes.outputs.changes == 'true' || needs.tag-check.outputs.is-release-core == 'true' || needs.tag-check.outputs.is-pre-release-core == 'true'
@@ -187,7 +169,7 @@ jobs:
   publish-beta:
     name: Publish Beta NPM
     environment: publish-contracts
-    needs: [tag-check, changes, lint, prettier, native-compile, prepublish-test]
+    needs: [tag-check, changes, lint, prettier, native-compile]
     if: needs.tag-check.outputs.is-pre-release-core == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -234,7 +216,7 @@ jobs:
   publish-prod:
     name: Publish Prod NPM
     environment: publish-contracts
-    needs: [tag-check, changes, lint, prettier, native-compile, prepublish-test]
+    needs: [tag-check, changes, lint, prettier, native-compile]
     if: needs.tag-check.outputs.is-release-core == 'true'
     runs-on: ubuntu-latest
     permissions:
