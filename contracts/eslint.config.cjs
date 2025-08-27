@@ -1,10 +1,8 @@
 const { defineConfig, globalIgnores } = require('eslint/config')
-
 const tsParser = require('@typescript-eslint/parser')
 const typescriptEslint = require('@typescript-eslint/eslint-plugin')
 const globals = require('globals')
 const js = require('@eslint/js')
-
 const { FlatCompat } = require('@eslint/eslintrc')
 
 const compat = new FlatCompat({

@@ -119,8 +119,8 @@ importers:
         specifier: ^16.3.0
         version: 16.3.0
       hardhat:
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^3.0.2
+        version: 3.0.2
       moment:
         specifier: ^2.30.1
         version: 2.30.1
@@ -1553,8 +1553,8 @@ packages:
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
 
-  hardhat@3.0.1:
-    resolution: {integrity: sha512-IronMout14GKbg8RTbW2b5HAkcztCBLs9ZldssUoDiM2rXyf6LBOS126/dFPntclILeT7ik3uGpWcoJ+2DtXpg==}
+  hardhat@3.0.2:
+    resolution: {integrity: sha512-BXQwItt/2R+grUWY/srJCfjX3i9yiPtlyZV2rU+938baRrXYqzBkLv5DBo3OlLdiXf32NkNf5Xjv182Cks80Rw==}
     hasBin: true
 
   has-flag@3.0.0:
@@ -4331,7 +4331,7 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  hardhat@3.0.1:
+  hardhat@3.0.2:
     dependencies:
       '@nomicfoundation/edr': 0.12.0-next.4
       '@nomicfoundation/hardhat-errors': 3.0.0

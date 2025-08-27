@@ -1,4 +1,4 @@
-import type { HardhatUserConfig } from 'hardhat/config'
+import { HardhatUserConfig } from 'hardhat/config'
 
 const COMPILER_SETTINGS = {
   optimizer: {
@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
   paths: {
     artifacts: './artifacts',
     cache: './cache',
-    sources: './src',
+    sources: './src/v0.8/operatorforwarder',
     tests: './test',
   },
   solidity: {
@@ -26,13 +26,6 @@ const config: HardhatUserConfig = {
       {
         version: '0.8.19',
         settings: COMPILER_SETTINGS,
-      },
-      {
-        version: '0.8.24',
-        settings: {
-          ...COMPILER_SETTINGS,
-          evmVersion: 'paris',
-        },
       },
       {
         version: '0.8.26',
