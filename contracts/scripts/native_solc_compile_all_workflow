@@ -22,6 +22,10 @@ compileContract () {
   --root "$CONTRACTS_DIR" \
   --extra-output-files bin abi \
   -o "$CONTRACTS_DIR/solc/$PROJECT/$src_rel"
+
+  # Copy the generated abi files to a single folder
+  mkdir -p "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"/"$src_rel"
+  cp "$CONTRACTS_DIR"/solc/$PROJECT/"$src_rel"/"$contract".sol/"$contract".abi.json "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"/"$src_rel".abi.json
 }
 
 compileContract workflow-v1 v1/WorkflowRegistry

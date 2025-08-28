@@ -25,6 +25,10 @@ compileContract() {
    $optimizer_override \
    -o $CONTRACTS_DIR/solc/$PROJECT/$contract"
   $command
+
+  # Copy the generated abi files to a single folder
+  mkdir -p "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"
+  cp "$CONTRACTS_DIR"/solc/$PROJECT/"$contract"/"$contract".sol/"$contract".abi.json "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"/"$contract".abi.json
 }
 
 # VRF
