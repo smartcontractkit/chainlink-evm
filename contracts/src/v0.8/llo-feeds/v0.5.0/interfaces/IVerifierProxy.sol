@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.0;
 
 import {Common} from "../../libraries/Common.sol";
 import {AccessControllerInterface} from "../../../shared/interfaces/AccessControllerInterface.sol";
