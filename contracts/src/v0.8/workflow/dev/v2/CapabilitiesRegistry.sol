@@ -31,6 +31,17 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     /// @dev The contract does not validate the length or characters of the node operator name because
     /// a trusted admin will supply these names. We reduce gas costs by omitting these checks on-chain.
     string name;
+    /// @notice The P2P IDs of the nodes that this Node Operator supports
+    EnumerableSet.Bytes32Set nodeP2PIDs;
+  }
+
+  struct NodeOperatorParams {
+    /// @notice The address of the admin that can manage a node operator
+    address admin;
+    /// @notice Human readable name of a Node Operator managing the node
+    /// @dev The contract does not validate the length or characters of the node operator name because
+    /// a trusted admin will supply these names. We reduce gas costs by omitting these checks on-chain.
+    string name;
   }
 
   struct NodeParams {
@@ -348,6 +359,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param existingNodeOperatorId The ID of the node operator that already exists
   error NodeOperatorAlreadyExists(uint32 existingNodeOperatorId);
 
+  /// @notice This error is thrown when trying to remove a node operator that
+  /// is still in use on a Node
+  error NodeOperatorPartOfNode();
+
   /// @notice This error is thrown when trying to remove a node that is still
   /// part of a capabilities DON
   /// @param donId The Id of the DON the node belongs to
@@ -527,13 +542,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @notice Adds a list of node operators
   /// @param nodeOperators List of node operators to add
   function addNodeOperators(
-    NodeOperator[] calldata nodeOperators
+    NodeOperatorParams[] calldata nodeOperators
   ) external onlyOwner {
     for (uint256 i; i < nodeOperators.length; ++i) {
-      NodeOperator memory nodeOperator = nodeOperators[i];
+      NodeOperatorParams memory nodeOperator = nodeOperators[i];
       if (nodeOperator.admin == address(0)) revert InvalidNodeOperatorAdmin();
       uint32 nodeOperatorId = s_nextNodeOperatorId;
-      s_nodeOperators[nodeOperatorId] = NodeOperator({admin: nodeOperator.admin, name: nodeOperator.name});
+      NodeOperator storage storedNodeOperator = s_nodeOperators[nodeOperatorId];
+      storedNodeOperator.admin = nodeOperator.admin;
+      storedNodeOperator.name = nodeOperator.name;
       bytes32 nodeOperatorDataHash = _nodeOperatorHash(nodeOperator);
       if (s_nodeOperatorDataHashToId[nodeOperatorDataHash] != 0) {
         revert NodeOperatorAlreadyExists(s_nodeOperatorDataHashToId[nodeOperatorDataHash]);
@@ -551,8 +568,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   ) external onlyOwner {
     for (uint32 i; i < nodeOperatorIds.length; ++i) {
       uint32 nodeOperatorId = nodeOperatorIds[i];
-      NodeOperator memory nodeOperator = s_nodeOperators[nodeOperatorId];
-      bytes32 nodeOperatorDataHash = _nodeOperatorHash(nodeOperator);
+      if (s_nodeOperators[nodeOperatorId].nodeP2PIDs.length() != 0) revert NodeOperatorPartOfNode();
+      NodeOperator storage nodeOperator = s_nodeOperators[nodeOperatorId];
+      bytes32 nodeOperatorDataHash =
+        _nodeOperatorHash(NodeOperatorParams({admin: nodeOperator.admin, name: nodeOperator.name}));
       s_nodeOperatorDataHashToId[nodeOperatorDataHash] = 0;
       delete s_nodeOperators[nodeOperatorId];
       emit NodeOperatorRemoved(nodeOperatorId);
@@ -562,7 +581,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @notice Updates a node operator
   /// @param nodeOperatorIds The ID of the node operator being updated
   /// @param nodeOperators The updated node operator params
-  function updateNodeOperators(uint32[] calldata nodeOperatorIds, NodeOperator[] calldata nodeOperators) external {
+  function updateNodeOperators(uint32[] calldata nodeOperatorIds, NodeOperatorParams[] calldata nodeOperators) external {
     if (nodeOperatorIds.length != nodeOperators.length) {
       revert LengthMismatch(nodeOperatorIds.length, nodeOperators.length);
     }
@@ -574,7 +593,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       NodeOperator storage currentNodeOperator = s_nodeOperators[nodeOperatorId];
       if (currentNodeOperator.admin == address(0)) revert NodeOperatorDoesNotExist(nodeOperatorId);
 
-      NodeOperator memory nodeOperator = nodeOperators[i];
+      NodeOperatorParams memory nodeOperator = nodeOperators[i];
       if (nodeOperator.admin == address(0)) revert InvalidNodeOperatorAdmin();
       if (msg.sender != currentNodeOperator.admin && msg.sender != owner) revert AccessForbidden(msg.sender);
 
@@ -605,9 +624,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     for (uint256 i; i < nodes.length; ++i) {
       NodeParams memory node = nodes[i];
 
-      NodeOperator memory nodeOperator = s_nodeOperators[node.nodeOperatorId];
+      NodeOperator storage nodeOperator = s_nodeOperators[node.nodeOperatorId];
       if (nodeOperator.admin == address(0)) revert NodeOperatorDoesNotExist(node.nodeOperatorId);
       if (!isOwner && msg.sender != nodeOperator.admin) revert AccessForbidden(msg.sender);
+      s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.add(node.p2pId);
 
       Node storage storedNode = s_nodes[node.p2pId];
       if (storedNode.signer != bytes32("")) revert NodeAlreadyExists(node.p2pId);
@@ -673,6 +693,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       }
       s_nodeSigners.remove(node.signer);
       s_nodeP2PIds.remove(node.p2pId);
+      s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.remove(node.p2pId);
       delete s_nodes[p2pId];
       emit NodeRemoved(p2pId);
     }
@@ -688,7 +709,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     for (uint256 i; i < nodes.length; ++i) {
       NodeParams memory node = nodes[i];
       Node storage storedNode = s_nodes[node.p2pId];
-      NodeOperator memory nodeOperator = s_nodeOperators[storedNode.nodeOperatorId];
+      NodeOperator storage nodeOperator = s_nodeOperators[storedNode.nodeOperatorId];
 
       if (storedNode.signer == bytes32("")) revert NodeDoesNotExist(node.p2pId);
       if (!isOwner && msg.sender != nodeOperator.admin) revert AccessForbidden(msg.sender);
@@ -754,6 +775,11 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       storedNode.p2pId = node.p2pId;
       storedNode.encryptionPublicKey = node.encryptionPublicKey;
       storedNode.csaKey = node.csaKey;
+
+      if (storedNode.nodeOperatorId != node.nodeOperatorId) {
+        s_nodeOperators[storedNode.nodeOperatorId].nodeP2PIDs.remove(storedNode.p2pId);
+        s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.add(storedNode.p2pId);
+      }
 
       emit NodeUpdated(node.p2pId, node.nodeOperatorId, node.signer);
     }
@@ -983,20 +1009,21 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @return NodeOperator The node operator data
   function getNodeOperator(
     uint32 nodeOperatorId
-  ) external view returns (NodeOperator memory) {
-    return s_nodeOperators[nodeOperatorId];
+  ) external view returns (NodeOperatorParams memory) {
+    return
+      NodeOperatorParams({admin: s_nodeOperators[nodeOperatorId].admin, name: s_nodeOperators[nodeOperatorId].name});
   }
 
   /// @notice Gets all node operators
   /// @return NodeOperator[] All node operators
-  function getNodeOperators() external view returns (NodeOperator[] memory) {
+  function getNodeOperators() external view returns (NodeOperatorParams[] memory) {
     uint32 nodeOperatorId = s_nextNodeOperatorId;
     /// Minus one to account for s_nextNodeOperatorId starting at index 1
-    NodeOperator[] memory nodeOperators = new NodeOperator[](s_nextNodeOperatorId - 1);
+    NodeOperatorParams[] memory nodeOperators = new NodeOperatorParams[](s_nextNodeOperatorId - 1);
     uint256 idx;
     for (uint32 i = 1; i < nodeOperatorId; ++i) {
       if (s_nodeOperators[i].admin != address(0)) {
-        nodeOperators[idx] = s_nodeOperators[i];
+        nodeOperators[idx] = NodeOperatorParams({admin: s_nodeOperators[i].admin, name: s_nodeOperators[i].name});
         ++idx;
       }
     }
@@ -1435,7 +1462,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param nodeOperator The node operator's data
   /// @return bytes32 The hash of the node operator's data
   function _nodeOperatorHash(
-    NodeOperator memory nodeOperator
+    NodeOperatorParams memory nodeOperator
   ) internal pure returns (bytes32) {
     return keccak256(abi.encode(nodeOperator.admin, nodeOperator.name));
   }

@@ -18,8 +18,8 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
   function test_RevertWhen_CalledByNonAdminAndNonOwner() public {
     changePrank(STRANGER);
 
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: ADMIN, name: NEW_NODE_OPERATOR_NAME});
+    CapabilitiesRegistry.NodeOperatorParams[] memory nodeOperators = new CapabilitiesRegistry.NodeOperatorParams[](1);
+    nodeOperators[0] = CapabilitiesRegistry.NodeOperatorParams({admin: ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
     uint32[] memory nodeOperatorIds = new uint32[](1);
     nodeOperatorIds[0] = TEST_NODE_OPERATOR_ID;
@@ -30,8 +30,8 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
 
   function test_RevertWhen_NodeOperatorAdminIsZeroAddress() public {
     changePrank(ADMIN);
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: address(0), name: NEW_NODE_OPERATOR_NAME});
+    CapabilitiesRegistry.NodeOperatorParams[] memory nodeOperators = new CapabilitiesRegistry.NodeOperatorParams[](1);
+    nodeOperators[0] = CapabilitiesRegistry.NodeOperatorParams({admin: address(0), name: NEW_NODE_OPERATOR_NAME});
 
     uint32[] memory nodeOperatorIds = new uint32[](1);
     nodeOperatorIds[0] = TEST_NODE_OPERATOR_ID;
@@ -42,8 +42,9 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
 
   function test_RevertWhen_NodeOperatorIdAndParamLengthsMismatch() public {
     changePrank(ADMIN);
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
+    CapabilitiesRegistry.NodeOperatorParams[] memory nodeOperators = new CapabilitiesRegistry.NodeOperatorParams[](1);
+    nodeOperators[0] =
+      CapabilitiesRegistry.NodeOperatorParams({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
     uint32 invalidNodeOperatorId = 10000;
     uint32[] memory nodeOperatorIds = new uint32[](2);
@@ -56,8 +57,9 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
 
   function test_RevertWhen_NodeOperatorDoesNotExist() public {
     changePrank(ADMIN);
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
+    CapabilitiesRegistry.NodeOperatorParams[] memory nodeOperators = new CapabilitiesRegistry.NodeOperatorParams[](1);
+    nodeOperators[0] =
+      CapabilitiesRegistry.NodeOperatorParams({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
     uint32 invalidNodeOperatorId = 10000;
     uint32[] memory nodeOperatorIds = new uint32[](1);
@@ -72,8 +74,9 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     changePrank(ADMIN);
 
     // Try to make Node Operator 1 the same as Node Operator 2
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NODE_OPERATOR_TWO_ADMIN, name: NODE_OPERATOR_TWO_NAME});
+    CapabilitiesRegistry.NodeOperatorParams[] memory nodeOperators = new CapabilitiesRegistry.NodeOperatorParams[](1);
+    nodeOperators[0] =
+      CapabilitiesRegistry.NodeOperatorParams({admin: NODE_OPERATOR_TWO_ADMIN, name: NODE_OPERATOR_TWO_NAME});
 
     uint32[] memory nodeOperatorIds = new uint32[](1);
     nodeOperatorIds[0] = TEST_NODE_OPERATOR_ID;
@@ -85,8 +88,9 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
   function test_UpdatesNodeOperator() public {
     changePrank(ADMIN);
 
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
+    CapabilitiesRegistry.NodeOperatorParams[] memory nodeOperators = new CapabilitiesRegistry.NodeOperatorParams[](1);
+    nodeOperators[0] =
+      CapabilitiesRegistry.NodeOperatorParams({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
     uint32[] memory nodeOperatorIds = new uint32[](1);
     nodeOperatorIds[0] = TEST_NODE_OPERATOR_ID;
@@ -97,7 +101,7 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     );
     s_CapabilitiesRegistry.updateNodeOperators(nodeOperatorIds, nodeOperators);
 
-    CapabilitiesRegistry.NodeOperator memory nodeOperator =
+    CapabilitiesRegistry.NodeOperatorParams memory nodeOperator =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ID);
     assertEq(nodeOperator.admin, NEW_NODE_OPERATOR_ADMIN);
     assertEq(nodeOperator.name, NEW_NODE_OPERATOR_NAME);
