@@ -74,6 +74,6 @@ compileContract mocks/MockV3Aggregator 0.8.19
 compileContract mocks/WERC20Mock 0.8.19
 compileContract token/ERC20/zksync/WETH9ZKSync 0.8.19
 
-compileContract @openzeppelin/contracts@4.8.3/token/ERC20/ERC20 0.8.19 ../../node_modules
+compileContract @openzeppelin/contracts-4.8.3/token/ERC20/ERC20 0.8.19 ../../node_modules
 compileContract multicall/ebd8b64/src/Multicall3 0.8.19 vendor
 compileContract canonical-weth/WETH9 0.8.19 vendor
