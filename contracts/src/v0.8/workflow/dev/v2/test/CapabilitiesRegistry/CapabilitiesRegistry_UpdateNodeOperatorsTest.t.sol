@@ -68,6 +68,20 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     s_CapabilitiesRegistry.updateNodeOperators(nodeOperatorIds, nodeOperators);
   }
 
+  function test_RevertWhen_DuplicateNodeOperator() public {
+    changePrank(ADMIN);
+
+    // Try to make Node Operator 1 the same as Node Operator 2
+    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
+    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NODE_OPERATOR_TWO_ADMIN, name: NODE_OPERATOR_TWO_NAME});
+
+    uint32[] memory nodeOperatorIds = new uint32[](1);
+    nodeOperatorIds[0] = TEST_NODE_OPERATOR_ID;
+
+    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.NodeOperatorAlreadyExists.selector, 2));
+    s_CapabilitiesRegistry.updateNodeOperators(nodeOperatorIds, nodeOperators);
+  }
+
   function test_UpdatesNodeOperator() public {
     changePrank(ADMIN);
 
