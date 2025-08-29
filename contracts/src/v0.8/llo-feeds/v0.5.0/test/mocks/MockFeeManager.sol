@@ -172,12 +172,7 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
     bytes calldata parameterPayload,
     address subscriber
   ) external payable override onlyProxy {
-    // solhint-disable-next-line no-unused-vars
-    (Common.Asset memory fee, Common.Asset memory reward, uint256 appliedDiscount) = _processFee(
-      payload,
-      parameterPayload,
-      subscriber
-    );
+    _processFee(payload, parameterPayload, subscriber);
   }
 
   /// @inheritdoc IVerifierFeeManager
@@ -226,10 +221,8 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
 
   /// @inheritdoc IFeeManager
   function getFeeAndReward(
-    // solhint-disable-next-line no-unused-vars
-    address subscriber,
-    // solhint-disable-next-line no-unused-vars
-    bytes memory report,
+    address, // subscriber
+    bytes memory, // report,
     address quoteAddress
   ) public view returns (Common.Asset memory, Common.Asset memory, uint256) {
     Common.Asset memory fee;
