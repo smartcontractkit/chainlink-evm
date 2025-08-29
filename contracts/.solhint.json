@@ -11,6 +11,7 @@
 		"no-inline-assembly": "off",
 		"contract-name-capwords": "off",
 		"no-unused-import": "error",
+        "import-path-check": "off",
 		"gas-struct-packing": "warn",
 		"interface-starts-with-i": "warn",
 		"func-visibility": [
