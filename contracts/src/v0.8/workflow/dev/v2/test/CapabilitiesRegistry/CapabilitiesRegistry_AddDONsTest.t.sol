@@ -257,4 +257,56 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
 
     s_CapabilitiesRegistry.addDONs(oneNodeDONs);
   }
+
+  function test_AddDONs_EmptyConfigDON() public {
+    s_CapabilitiesRegistry =
+      new CapabilitiesRegistry(CapabilitiesRegistry.ConstructorParams({canAddOneNodeDONs: false}));
+
+    s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
+    s_CapabilitiesRegistry.addCapabilities(s_capabilities);
+    s_CapabilitiesRegistry.addNodes(s_paramsForTwoNodes);
+
+    CapabilitiesRegistry.CapabilityConfiguration[] memory emptyCapabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](0);
+
+    string[] memory donFamilies = new string[](1);
+    donFamilies[0] = "basic-family";
+
+    CapabilitiesRegistry.NewDONParams[] memory emptyConfigDONs = new CapabilitiesRegistry.NewDONParams[](1);
+    emptyConfigDONs[0] = CapabilitiesRegistry.NewDONParams({
+      nodes: s_nodeIds,
+      capabilityConfigurations: emptyCapabilityConfigs,
+      isPublic: true,
+      acceptsWorkflows: true,
+      f: F_VALUE,
+      name: TEST_DON_NAME_ONE,
+      donFamilies: donFamilies,
+      config: bytes("abc")
+    });
+
+    vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
+    emit CapabilitiesRegistry.ConfigSet(DON_ID, 1);
+    vm.expectCall(
+      address(s_capabilityConfigurationContract),
+      abi.encodeWithSelector(
+        ICapabilityConfiguration.beforeCapabilityConfigSet.selector, s_nodeIds, emptyConfigDONs, 1, DON_ID
+      ),
+      0
+    );
+    s_CapabilitiesRegistry.addDONs(emptyConfigDONs);
+
+    // DON ID 1 has been used, next ID should be 2
+    uint32 donID = s_CapabilitiesRegistry.getNextDONId();
+    assertEq(donID, DON_ID + 1);
+
+    CapabilitiesRegistry.DONInfo[] memory dons = s_CapabilitiesRegistry.getDONs();
+    assertEq(dons.length, 1);
+    assertEq(dons[0].id, 1);
+    assertEq(dons[0].name, TEST_DON_NAME_ONE);
+    assertEq(dons[0].config, bytes("abc"));
+    assertEq(dons[0].configCount, 1);
+    assertEq(dons[0].capabilityConfigurations.length, emptyCapabilityConfigs.length);
+    assertEq(dons[0].donFamilies.length, 1);
+    assertEq(dons[0].donFamilies[0], "basic-family");
+  }
 }
