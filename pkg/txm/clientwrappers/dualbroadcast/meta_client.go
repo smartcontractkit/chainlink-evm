@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 
@@ -25,9 +26,75 @@ import (
 )
 
 const (
-	timeout      = time.Second * 300
-	metaMethodID = "0x4317ca01"
-	ABI          = `[
+	timeout = time.Second * 300
+	metaABI = `[
+  {
+    "type": "function",
+    "name": "metacall",
+    "stateMutability": "payable",
+    "inputs": [
+      {
+        "name": "userOp",
+        "type": "tuple",
+        "components": [
+          { "name": "from", "type": "address" },
+          { "name": "to", "type": "address" },
+          { "name": "value", "type": "uint256" },
+          { "name": "gas", "type": "uint256" },
+          { "name": "maxFeePerGas", "type": "uint256" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "deadline", "type": "uint256" },
+          { "name": "dapp", "type": "address" },
+          { "name": "control", "type": "address" },
+          { "name": "callConfig", "type": "uint32" },
+          { "name": "dappGasLimit", "type": "uint32" },
+          { "name": "solverGasLimit", "type": "uint32" },
+          { "name": "bundlerSurchargeRate", "type": "uint24" },
+          { "name": "sessionKey", "type": "address" },
+          { "name": "data", "type": "bytes" },
+          { "name": "signature", "type": "bytes" }
+        ]
+      },
+      {
+        "name": "solverOps",
+        "type": "tuple[]",
+        "components": [
+          { "name": "from", "type": "address" },
+          { "name": "to", "type": "address" },
+          { "name": "value", "type": "uint256" },
+          { "name": "gas", "type": "uint256" },
+          { "name": "maxFeePerGas", "type": "uint256" },
+          { "name": "deadline", "type": "uint256" },
+          { "name": "solver", "type": "address" },
+          { "name": "control", "type": "address" },
+          { "name": "userOpHash", "type": "bytes32" },
+          { "name": "bidToken", "type": "address" },
+          { "name": "bidAmount", "type": "uint256" },
+          { "name": "data", "type": "bytes" },
+          { "name": "signature", "type": "bytes" }
+        ]
+      },
+      {
+        "name": "dAppOp",
+        "type": "tuple",
+        "components": [
+          { "name": "from", "type": "address" },
+          { "name": "to", "type": "address" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "deadline", "type": "uint256" },
+          { "name": "control", "type": "address" },
+          { "name": "bundler", "type": "address" },
+          { "name": "userOpHash", "type": "bytes32" },
+          { "name": "callChainHash", "type": "bytes32" },
+          { "name": "signature", "type": "bytes" }
+        ]
+      },
+      { "name": "gasRefundBeneficiary", "type": "address" }
+    ],
+    "outputs": [ { "name": "auctionWon", "type": "bool" } ]
+  }
+]`
+	ABI = `[
   {
     "inputs": [
       {
@@ -114,39 +181,43 @@ type RequestResponse struct {
 }
 
 type ResponseResult struct {
-	UOP  *UO   `json:"userOperation"`
-	SOPs []*SO `json:"solverOperations"`
-	DOP  *DO   `json:"dAppOperation"`
-	Metacalldata
+	MetacalldataResponse
 }
 
-type UO struct {
-	To           common.Address `json:"to"`
-	MaxFeePerGas *hexutil.Big   `json:"maxFeePerGas"`
-	Dapp         common.Address `json:"dapp"`
-	Control      common.Address `json:"control"`
-	Data         hexutil.Bytes  `json:"data"`
-}
-
-type SO struct {
-	To      common.Address `json:"to"`
-	Control common.Address `json:"control"`
-}
-
-type DO struct {
-	To      common.Address `json:"to"`
-	Control common.Address `json:"control"`
-	Bundler common.Address `json:"bundler"`
-}
-
-type Metacalldata struct {
+type MetacalldataResponse struct {
 	ToAddress    common.Address `json:"metacallDestination"`
 	GasLimit     *hexutil.Big   `json:"metacallGasLimit"`
 	MaxFeePerGas *hexutil.Big   `json:"metacallMaxFeePerGas"`
 	CallData     hexutil.Bytes  `json:"metacallCallData"`
 }
 
-func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams *string, fwdrDestAddress common.Address) (*Metacalldata, error) {
+type UO struct {
+	To           common.Address
+	MaxFeePerGas *big.Int
+	Dapp         common.Address
+	Control      common.Address
+	Data         []byte
+}
+
+type SO struct {
+	To      common.Address
+	Control common.Address
+}
+
+type DO struct {
+	To      common.Address
+	Control common.Address
+	Bundler common.Address
+}
+
+type Metacalldata struct {
+	UOP                  UO             `abi:"userOp"`
+	SOPs                 []SO           `abi:"solverOps"`
+	DOP                  DO             `abi:"dAppOp"`
+	GasRefundBeneficiary common.Address `abi:"gasRefundBeneficiary"`
+}
+
+func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams *string, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
 	ctx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 
@@ -223,10 +294,10 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		return nil, errors.New("empty response")
 	}
 
-	return VerifyResponse(tx.Data, tx.FromAddress, response.Result, dualBroadcastParams, fwdrDestAddress)
+	return VerifyResponse(response.Result.MetacalldataResponse, dualBroadcastParams, tx.Data, tx.FromAddress, fwdrDestAddress)
 }
 
-func VerifyResponse(txData []byte, fromAddress common.Address, result *ResponseResult, dualBroadcastParams *string, fwdrDestAddress common.Address) (*Metacalldata, error) {
+func VerifyResponse(metacalldata MetacalldataResponse, dualBroadcastParams *string, txData []byte, fromAddress common.Address, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
 	params, err := url.ParseQuery(*dualBroadcastParams)
 	if err != nil {
 		return nil, err
@@ -239,14 +310,56 @@ func VerifyResponse(txData []byte, fromAddress common.Address, result *ResponseR
 	}
 	to := common.HexToAddress(destination[0]) // metacall address
 	dApp := common.HexToAddress(dapp[0])
+
+	if metacalldata.ToAddress != to {
+		return nil, fmt.Errorf("incorrect metacall: metacall.ToAddress: %v, to: %v",
+			metacalldata.ToAddress, to)
+	}
+
+	// Calldata verification
+	if len(metacalldata.CallData) < 4 {
+		return nil, errors.New("calldata too short")
+	}
+
+	mABI, err := abi.JSON(strings.NewReader(metaABI))
+	if err != nil {
+		return nil, fmt.Errorf("parse ABI: %w", err)
+	}
+	method, ok := mABI.Methods["metacall"]
+	if !ok {
+		return nil, errors.New("method not found in ABI")
+	}
+
+	if !bytes.Equal(metacalldata.CallData[:4], method.ID) {
+		return nil, fmt.Errorf("selector mismatch: got %x, expected %x", metacalldata.CallData[:4], method.ID)
+	}
+	args, err := method.Inputs.Unpack(metacalldata.CallData[4:])
+	if err != nil || len(args) != 4 {
+		return nil, fmt.Errorf("unpack error(argsLen:%d): %w", len(args), err)
+	}
+
+	result := new(Metacalldata)
+	result.UOP, err = copyUserOp(args[0])
+	if err != nil {
+		return nil, fmt.Errorf("error unpacking UO: %w", err)
+	}
+	result.SOPs, err = copySolverOps(args[1])
+	if err != nil {
+		return nil, fmt.Errorf("error unpacking SOs: %w", err)
+	}
+	result.DOP, err = copyDAppOp(args[2])
+	if err != nil {
+		return nil, fmt.Errorf("error unpacking DO: %w", err)
+	}
+	return VerifyMetadata(txData, fromAddress, *result, fwdrDestAddress, dApp, to, metacalldata)
+}
+
+func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacalldata, fwdrDestAddress common.Address, dApp common.Address, to common.Address, metacalldata MetacalldataResponse) (*MetacalldataResponse, error) {
 	abi, err := abi.JSON(strings.NewReader(ABI))
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read ABI: %w", err)
 	}
 
-	if result.UOP == nil {
-		return nil, errors.New("nil UOP for metacall")
-	}
 	updateFn, ok := abi.Methods["update"]
 	if !ok {
 		return nil, errors.New("update method not found in ABI")
@@ -270,16 +383,7 @@ func VerifyResponse(txData []byte, fromAddress common.Address, result *ResponseR
 		return nil, fmt.Errorf("incorrect type for update.calldata: %v", args[1])
 	}
 
-	// Metacall
-	if result.Metacalldata.ToAddress != to || !strings.HasPrefix(result.Metacalldata.CallData.String(), metaMethodID) || !bytes.Contains(result.Metacalldata.CallData, txData) {
-		return nil, fmt.Errorf("incorrect metacall: metacall.ToAddress: %v, metacall.CallData: %v, to: %v, metaMethodID: %v, txData: %v",
-			result.Metacalldata.ToAddress, result.Metacalldata.CallData.String(), to, metaMethodID, txData)
-	}
-
 	// DOP
-	if result.DOP == nil {
-		return nil, errors.New("nil DOP for metacall")
-	}
 	if result.DOP.To != to || result.DOP.Control != dApp || result.DOP.Bundler != fromAddress {
 		return nil, fmt.Errorf("incorrect DOP: dop.To: %v, dop.Control: %v, dop.Bundler: %v, to: %v, dApp: %v, fromAddress: %v",
 			result.DOP.To, result.DOP.Control, result.DOP.Bundler, to, dApp, fromAddress)
@@ -288,13 +392,11 @@ func VerifyResponse(txData []byte, fromAddress common.Address, result *ResponseR
 	// SOP
 	atLeastOne := false
 	for _, sop := range result.SOPs {
-		if sop != nil {
-			if sop.To != to || sop.Control != dApp {
-				// Exit early
-				return nil, fmt.Errorf("incorrect SOP: sop.To: %v, sop.Control: %v, to: %v, dApp: %v", sop.To, sop.Control, to, dApp)
-			}
-			atLeastOne = true
+		if sop.To != to || sop.Control != dApp {
+			// Exit early
+			return nil, fmt.Errorf("incorrect SOP: sop.To: %v, sop.Control: %v, to: %v, dApp: %v", sop.To, sop.Control, to, dApp)
 		}
+		atLeastOne = true
 	}
 	if !atLeastOne {
 		return nil, errors.New("no valid sop")
@@ -302,18 +404,18 @@ func VerifyResponse(txData []byte, fromAddress common.Address, result *ResponseR
 
 	// UOP
 	if result.UOP.To != to ||
-		result.UOP.MaxFeePerGas == nil || result.Metacalldata.MaxFeePerGas == nil || result.UOP.MaxFeePerGas.ToInt().Cmp(result.Metacalldata.MaxFeePerGas.ToInt()) != 0 ||
+		result.UOP.MaxFeePerGas == nil || metacalldata.MaxFeePerGas == nil || result.UOP.MaxFeePerGas.Cmp(metacalldata.MaxFeePerGas.ToInt()) != 0 ||
 		result.UOP.Dapp != dApp ||
 		result.UOP.Control != dApp ||
 		destinationAddress != fwdrDestAddress || !bytes.Equal(updateCalldata, txData) {
 		return nil, fmt.Errorf("incorrect UOP: uop.To: %v, uop.MaxFeePerGas: %v, uop.Dapp: %v, uop.update.destinationAddress: %v, uop.update.calldata: %v, to: %v, metacall.MaxFeePerGas: %v, dApp: %v, fwdrDestAddress: %v, txData: %v",
-			result.UOP.To, result.UOP.MaxFeePerGas, result.UOP.Dapp, destinationAddress, updateCalldata, to, result.Metacalldata.MaxFeePerGas, dApp, fwdrDestAddress, txData)
+			result.UOP.To, result.UOP.MaxFeePerGas, result.UOP.Dapp, destinationAddress, updateCalldata, to, metacalldata.MaxFeePerGas, dApp, fwdrDestAddress, txData)
 	}
 
-	return &result.Metacalldata, nil
+	return &metacalldata, nil
 }
 
-func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta Metacalldata) error {
+func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta MetacalldataResponse) error {
 	if tx.Nonce == nil {
 		return fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
 	}
@@ -343,4 +445,170 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
 	return a.c.SendTransaction(ctx, signedTx)
+}
+
+func verifyRaw(raw any) (reflect.Value, error) {
+	rv := reflect.ValueOf(raw)
+	if !rv.IsValid() {
+		return rv, errors.New("raw is invalid")
+	}
+
+	if rv.Kind() == reflect.Ptr || rv.Kind() == reflect.Interface {
+		if rv.IsNil() {
+			return rv, errors.New("raw is nil")
+		}
+		rv = rv.Elem()
+	}
+
+	if rv.Kind() != reflect.Struct {
+		return rv, fmt.Errorf("raw is not a struct, got %s", rv.Kind())
+	}
+	return rv, nil
+}
+
+func copyUserOp(raw any) (UO, error) {
+	var u UO
+
+	rv, err := verifyRaw(raw)
+	if err != nil {
+		return u, err
+	}
+
+	to, err := getFieldTyped[common.Address]("To", rv)
+	if err != nil {
+		return u, err
+	}
+	u.To = to
+
+	maxFeePerGas, err := getFieldTyped[*big.Int]("MaxFeePerGas", rv)
+	if err != nil {
+		return u, err
+	}
+	u.MaxFeePerGas = maxFeePerGas
+
+	dapp, err := getFieldTyped[common.Address]("Dapp", rv)
+	if err != nil {
+		return u, err
+	}
+	u.Dapp = dapp
+
+	control, err := getFieldTyped[common.Address]("Control", rv)
+	if err != nil {
+		return u, err
+	}
+	u.Control = control
+
+	f, err := getField("Data", rv)
+	if err != nil {
+		return u, err
+	}
+	if !(f.Kind() == reflect.Slice && f.Type().Elem().Kind() == reflect.Uint8) {
+		return u, errors.New("field Data not []byte")
+	}
+	u.Data = f.Bytes()
+
+	return u, nil
+}
+
+func copySolverOp(raw any) (SO, error) {
+	var s SO
+
+	rv, err := verifyRaw(raw)
+	if err != nil {
+		return s, err
+	}
+
+	to, err := getFieldTyped[common.Address]("To", rv)
+	if err != nil {
+		return s, err
+	}
+	s.To = to
+
+	control, err := getFieldTyped[common.Address]("Control", rv)
+	if err != nil {
+		return s, err
+	}
+	s.Control = control
+
+	return s, nil
+}
+
+func copySolverOps(raw any) ([]SO, error) {
+	sliceVal := reflect.ValueOf(raw)
+	if !sliceVal.IsValid() {
+		return nil, errors.New("raw is invalid")
+	}
+	if sliceVal.Kind() == reflect.Ptr || sliceVal.Kind() == reflect.Interface {
+		if sliceVal.IsNil() {
+			return nil, errors.New("raw is nil")
+		}
+		sliceVal = sliceVal.Elem()
+	}
+
+	if sliceVal.Kind() != reflect.Slice && sliceVal.Kind() != reflect.Array {
+		return nil, fmt.Errorf("raw is not a slice or array, got %s", sliceVal.Kind())
+	}
+
+	n := sliceVal.Len()
+	out := make([]SO, 0, n)
+	for i := range n {
+		solverOp, err := copySolverOp(sliceVal.Index(i).Interface())
+		if err != nil {
+			return nil, fmt.Errorf("failed to copy solverOp at index %d: %w", i, err)
+		}
+		out = append(out, solverOp)
+	}
+	return out, nil
+}
+
+func copyDAppOp(raw any) (DO, error) {
+	var d DO
+
+	rv, err := verifyRaw(raw)
+	if err != nil {
+		return d, err
+	}
+
+	to, err := getFieldTyped[common.Address]("To", rv)
+	if err != nil {
+		return d, err
+	}
+	d.To = to
+
+	control, err := getFieldTyped[common.Address]("Control", rv)
+	if err != nil {
+		return d, err
+	}
+	d.Control = control
+
+	bundler, err := getFieldTyped[common.Address]("Bundler", rv)
+	if err != nil {
+		return d, err
+	}
+	d.Bundler = bundler
+
+	return d, nil
+}
+
+func getField(name string, rv reflect.Value) (reflect.Value, error) {
+	f := rv.FieldByName(name)
+	if !f.IsValid() {
+		return reflect.Value{}, fmt.Errorf("field %s not found", name)
+	}
+	return f, nil
+}
+
+func getFieldTyped[T any](name string, rv reflect.Value) (value T, err error) {
+	f := rv.FieldByName(name)
+	if !f.IsValid() {
+		return value, fmt.Errorf("field %s not found", name)
+	}
+
+	var ok bool
+	value, ok = f.Interface().(T)
+	if !ok {
+		var t T
+		return value, fmt.Errorf("field %s is not of expected type %T", name, t)
+	}
+	return value, nil
 }
