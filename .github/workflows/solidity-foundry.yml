@@ -100,9 +100,6 @@ jobs:
               - 'contracts/src/v0.8/vrf/**/*.sol'
             shared:
               - 'contracts/src/v0.8/shared/**/*.sol'
-              - 'contracts/src/v0.8/*.sol'
-              - 'contracts/src/v0.8/mocks/**/*.sol'
-              - 'contracts/src/v0.8/tests/**/*.sol'
               - 'contracts/src/v0.8/vendor/**/*.sol'
             workflow:
               - 'contracts/src/v0.8/workflow/**/*.sol'
