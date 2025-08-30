@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
-import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
-import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
+import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
+import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 
 contract VerifierVerifyTest is BaseTest {
   bytes32[3] internal s_reportContext;
@@ -278,11 +278,8 @@ contract VerifierVerifyTest is BaseTest {
       abi.encodeWithSelector(AccessControllerInterface.hasAccess.selector, USER),
       abi.encode(false)
     );
-    bytes memory signedReport = _generateV3EncodedBlob(
-      s_testReportThree,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(s_testReportThree, s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     vm.expectRevert(abi.encodeWithSelector(DestinationVerifier.AccessForbidden.selector));
 
@@ -603,10 +600,7 @@ contract VerifierVerifyTest is BaseTest {
     uint32 configATimestmap = 100;
     address[] memory signersAddrA = _getSignerAddresses(signersA);
     s_verifier.setConfigWithActivationTime(
-      signersAddrA,
-      MINIMAL_FAULT_TOLERANCE,
-      new Common.AddressAndWeight[](0),
-      configATimestmap
+      signersAddrA, MINIMAL_FAULT_TOLERANCE, new Common.AddressAndWeight[](0), configATimestmap
     );
 
     // ConfigB (historical config)
@@ -623,10 +617,7 @@ contract VerifierVerifyTest is BaseTest {
     signersB[6] = signers[14];
     address[] memory signersAddrsB = _getSignerAddresses(signersB);
     s_verifier.setConfigWithActivationTime(
-      signersAddrsB,
-      MINIMAL_FAULT_TOLERANCE,
-      new Common.AddressAndWeight[](0),
-      configBTimestmap
+      signersAddrsB, MINIMAL_FAULT_TOLERANCE, new Common.AddressAndWeight[](0), configBTimestmap
     );
 
     // ConfigC (config at current timestamp)
@@ -703,11 +694,8 @@ contract VerifierVerifyTest is BaseTest {
     s_verifierProxy.verify(signedReportC, abi.encode(native));
 
     // current report verified by historical report fails
-    bytes memory signedNewReportWithOldSignatures = _generateV3EncodedBlob(
-      s_testReportC,
-      s_reportContext,
-      reportSignersA
-    );
+    bytes memory signedNewReportWithOldSignatures =
+      _generateV3EncodedBlob(s_testReportC, s_reportContext, reportSignersA);
     vm.expectRevert(abi.encodeWithSelector(DestinationVerifier.BadVerification.selector));
     s_verifierProxy.verify(signedNewReportWithOldSignatures, abi.encode(native));
   }

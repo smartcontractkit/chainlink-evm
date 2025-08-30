@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {BaseTest} from "../BaseTest.t.sol";
 import {SortedSetValidationUtil} from "../../../shared/util/SortedSetValidationUtil.sol";
+import {BaseTest} from "../BaseTest.t.sol";
 
 contract SortedSetValidationUtilBaseTest is BaseTest {
   uint256 constant OFFSET = 5;

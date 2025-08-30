@@ -1,11 +1,11 @@
 pragma solidity 0.8.19;
 
-import "./BaseTest.t.sol";
-import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
+import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
+import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
 import {VRFCoordinatorV2_5Mock} from "../mocks/VRFCoordinatorV2_5Mock.sol";
 import {VRFConsumerV2Plus} from "../testhelpers/VRFConsumerV2Plus.sol";
-import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
+import "./BaseTest.t.sol";
 
 contract VRFCoordinatorV2_5MockTest is BaseTest {
   MockLinkToken internal s_linkToken;
@@ -91,13 +91,8 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
     uint256 subId = s_vrfCoordinatorV2_5Mock.createSubscription();
     assertEq(subId, expectedSubId);
 
-    (
-      uint96 balance,
-      uint96 nativeBalance,
-      uint64 reqCount,
-      address owner,
-      address[] memory consumers
-    ) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
+    (uint96 balance, uint96 nativeBalance, uint64 reqCount, address owner, address[] memory consumers) =
+      s_vrfCoordinatorV2_5Mock.getSubscription(subId);
     assertEq(balance, 0);
     assertEq(nativeBalance, 0);
     assertEq(reqCount, 0);
@@ -113,8 +108,8 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
     emit SubscriptionConsumerAdded(subId, address(s_vrfConsumerV2Plus));
     s_vrfCoordinatorV2_5Mock.addConsumer(subId, address(s_vrfConsumerV2Plus));
 
-    (uint96 balance, , uint64 reqCount, address owner, address[] memory consumers) = s_vrfCoordinatorV2_5Mock
-      .getSubscription(subId);
+    (uint96 balance,, uint64 reqCount, address owner, address[] memory consumers) =
+      s_vrfCoordinatorV2_5Mock.getSubscription(subId);
     assertEq(balance, 0);
     assertEq(reqCount, 0);
     assertEq(owner, s_subOwner);
@@ -152,7 +147,7 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
 
     s_vrfCoordinatorV2_5Mock.addConsumer(subId, address(s_vrfConsumerV2Plus));
 
-    (, , , , address[] memory consumers) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
+    (,,,, address[] memory consumers) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
     assertEq(consumers.length, 1);
     assertEq(consumers[0], address(s_vrfConsumerV2Plus));
 
@@ -184,7 +179,7 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
 
     s_vrfCoordinatorV2_5Mock.addConsumer(subId, address(s_vrfConsumerV2Plus));
 
-    (, , , , address[] memory consumers) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
+    (,,,, address[] memory consumers) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
     assertEq(consumers.length, 1);
     assertEq(consumers[0], address(s_vrfConsumerV2Plus));
 
@@ -209,7 +204,7 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
     emit SubscriptionFunded(subId, 0, twoLink);
     s_vrfCoordinatorV2_5Mock.fundSubscription(subId, twoLink);
 
-    (uint96 balance, , , , address[] memory consumers) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
+    (uint96 balance,,,, address[] memory consumers) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
     assertEq(balance, twoLink);
     assertEq(consumers.length, 0);
 
@@ -219,7 +214,9 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
   }
 
   // cannot fund a nonexistent subscription
-  function testFuzz_FundSubscription_RevertIfInvalidSubscription(uint256 subId) public {
+  function testFuzz_FundSubscription_RevertIfInvalidSubscription(
+    uint256 subId
+  ) public {
     vm.startPrank(s_subOwner);
 
     vm.expectRevert(SubscriptionAPI.InvalidSubscription.selector);
@@ -237,7 +234,7 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
     emit SubscriptionFundedWithNative(subId, 0, oneNative);
     s_vrfCoordinatorV2_5Mock.fundSubscriptionWithNative{value: oneNative}(subId);
 
-    (, uint256 nativeBalance, , , address[] memory consumers) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
+    (, uint256 nativeBalance,,, address[] memory consumers) = s_vrfCoordinatorV2_5Mock.getSubscription(subId);
     assertEq(nativeBalance, oneNative);
     assertEq(consumers.length, 0);
 
@@ -247,7 +244,9 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
   }
 
   // cannot fund a nonexistent subscription
-  function testFuzz_FundSubscriptionWithNative_RevertIfInvalidSubscription(uint256 subId) public {
+  function testFuzz_FundSubscriptionWithNative_RevertIfInvalidSubscription(
+    uint256 subId
+  ) public {
     vm.startPrank(s_subOwner);
 
     vm.expectRevert(SubscriptionAPI.InvalidSubscription.selector);
@@ -309,7 +308,9 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
   }
 
   // fails to fulfill without being a valid consumer
-  function testFuzz_RequestRandomWords_RevertIfInvalidConsumer(bool nativePayment) public {
+  function testFuzz_RequestRandomWords_RevertIfInvalidConsumer(
+    bool nativePayment
+  ) public {
     vm.startPrank(s_subOwner);
     uint256 subId = s_vrfCoordinatorV2_5Mock.createSubscription();
 
@@ -329,7 +330,9 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
   }
 
   // fails to fulfill with insufficient funds
-  function testFuzz_RequestRandomWords_RevertIfInsufficientFunds(bool nativePayment) public {
+  function testFuzz_RequestRandomWords_RevertIfInsufficientFunds(
+    bool nativePayment
+  ) public {
     vm.startPrank(s_subOwner);
     uint256 subId = s_vrfCoordinatorV2_5Mock.createSubscription();
 
@@ -450,7 +453,9 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
   }
 
   // Correctly allows for user override of fulfillRandomWords [ @skip-coverage ]
-  function testFuzz_RequestRandomWordsUserOverride(bool nativePayment) public {
+  function testFuzz_RequestRandomWordsUserOverride(
+    bool nativePayment
+  ) public {
     vm.startPrank(s_subOwner);
     uint256 subId = s_vrfCoordinatorV2_5Mock.createSubscription();
 

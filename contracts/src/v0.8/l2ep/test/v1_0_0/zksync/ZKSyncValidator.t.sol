@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {MockBridgehub} from "../../mocks/zksync/MockZKSyncL1Bridge.sol";
+import {BaseValidator} from "../../../base/BaseValidator.sol";
 import {ISequencerUptimeFeed} from "../../../interfaces/ISequencerUptimeFeed.sol";
 import {ZKSyncValidator} from "../../../zksync/ZKSyncValidator.sol";
-import {BaseValidator} from "../../../base/BaseValidator.sol";
+import {MockBridgehub} from "../../mocks/zksync/MockZKSyncL1Bridge.sol";
+
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract ZKSyncValidator_Setup is L2EPTest {
@@ -55,11 +56,7 @@ contract ZKSyncValidator_Constructor is ZKSyncValidator_Setup {
   function test_Constructor_RevertWhen_L1BridgeAddressIsZero() public {
     vm.expectRevert(BaseValidator.L1CrossDomainMessengerAddressZero.selector);
     new ZKSyncValidator(
-      address(0),
-      DUMMY_L2_UPTIME_FEED_ADDR,
-      INIT_GAS_LIMIT,
-      MAIN_NET_CHAIN_ID,
-      INIT_GAS_PER_PUBDATA_BYTE_LIMIT
+      address(0), DUMMY_L2_UPTIME_FEED_ADDR, INIT_GAS_LIMIT, MAIN_NET_CHAIN_ID, INIT_GAS_PER_PUBDATA_BYTE_LIMIT
     );
   }
 
@@ -67,11 +64,7 @@ contract ZKSyncValidator_Constructor is ZKSyncValidator_Setup {
   function test_Constructor_RevertWhen_L2UpdateFeedAddressIsZero() public {
     vm.expectRevert(BaseValidator.L2UptimeFeedAddrZero.selector);
     new ZKSyncValidator(
-      DUMMY_L1_XDOMAIN_MSNGR_ADDR,
-      address(0),
-      INIT_GAS_LIMIT,
-      MAIN_NET_CHAIN_ID,
-      INIT_GAS_PER_PUBDATA_BYTE_LIMIT
+      DUMMY_L1_XDOMAIN_MSNGR_ADDR, address(0), INIT_GAS_LIMIT, MAIN_NET_CHAIN_ID, INIT_GAS_PER_PUBDATA_BYTE_LIMIT
     );
   }
 }
@@ -117,11 +110,8 @@ contract ZKSyncValidator_Validate is ZKSyncValidator_Setup {
     vm.warp(futureTimestampInSeconds);
 
     // Sets up the expected event data
-    bytes memory message = abi.encodeWithSelector(
-      ISequencerUptimeFeed.updateStatus.selector,
-      false,
-      futureTimestampInSeconds
-    );
+    bytes memory message =
+      abi.encodeWithSelector(ISequencerUptimeFeed.updateStatus.selector, false, futureTimestampInSeconds);
 
     vm.expectEmit(false, false, false, true);
     emit SentMessage(address(s_zksyncValidator), message);

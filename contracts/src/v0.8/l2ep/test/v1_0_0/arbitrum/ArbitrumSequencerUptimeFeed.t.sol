@@ -2,10 +2,12 @@
 pragma solidity 0.8.24;
 
 import {SimpleWriteAccessController} from "../../../../shared/access/SimpleWriteAccessController.sol";
-import {ArbitrumSequencerUptimeFeed} from "../../../arbitrum/ArbitrumSequencerUptimeFeed.sol";
-import {MockAggregatorV2V3} from "../../mocks/MockAggregatorV2V3.sol";
-import {FeedConsumer} from "../../FeedConsumer.sol";
+
 import {Flags} from "../../../Flags.sol";
+import {ArbitrumSequencerUptimeFeed} from "../../../arbitrum/ArbitrumSequencerUptimeFeed.sol";
+import {FeedConsumer} from "../../FeedConsumer.sol";
+import {MockAggregatorV2V3} from "../../mocks/MockAggregatorV2V3.sol";
+
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract ArbitrumSequencerUptimeFeedTest is L2EPTest {
@@ -192,13 +194,8 @@ contract ArbitrumSequencerUptimeFeed_AggregatorV3Interface is ArbitrumSequencerU
     vm.startPrank(s_l1OwnerAddr, s_l1OwnerAddr);
 
     // Gets data from a round that has not happened yet
-    (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    ) = s_arbitrumSequencerUptimeFeed.getRoundData(2);
+    (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
+      s_arbitrumSequencerUptimeFeed.getRoundData(2);
 
     // Validates round data
     assertEq(roundId, 2);
@@ -240,7 +237,7 @@ contract ArbitrumSequencerUptimeFeed_ProtectReadsOnAggregatorV2V3InterfaceFuncti
     assertEq(s_arbitrumSequencerUptimeFeed.hasAccess(address(feedConsumer), abi.encode("")), true);
 
     // Asserts reads are possible from consuming contract
-    (uint80 roundId, int256 answer, , , ) = feedConsumer.latestRoundData();
+    (uint80 roundId, int256 answer,,,) = feedConsumer.latestRoundData();
     assertEq(feedConsumer.latestAnswer(), 0);
     assertEq(roundId, 1);
     assertEq(answer, 0);

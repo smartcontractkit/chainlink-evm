@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest, BaseTestWithConfiguredVerifierAndFeeManager} from "../verifier/BaseVerifierTest.t.sol";
 import {SimpleWriteAccessController} from "../../../../shared/access/SimpleWriteAccessController.sol";
 import {Common} from "../../../libraries/Common.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
+import {BaseTest, BaseTestWithConfiguredVerifierAndFeeManager} from "../verifier/BaseVerifierTest.t.sol";
 
 contract Verifier_setConfig is BaseTest {
   address[] internal s_signerAddrs;
@@ -44,7 +44,7 @@ contract Verifier_verifyWithFee is BaseTestWithConfiguredVerifierAndFeeManager {
     //warm the rewardManager
     link.mint(address(this), DEFAULT_NATIVE_MINT_QUANTITY);
     _approveLink(address(rewardManager), DEFAULT_REPORT_LINK_FEE, address(this));
-    (, , bytes32 latestConfigDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (,, bytes32 latestConfigDigest) = s_verifier.latestConfigDetails(FEED_ID);
 
     //mint some tokens to the user
     link.mint(USER, DEFAULT_LINK_MINT_QUANTITY);
@@ -69,9 +69,7 @@ contract Verifier_verifyWithFee is BaseTestWithConfiguredVerifierAndFeeManager {
 
   function testVerifyProxyWithLinkFeeSuccess_gas() public {
     bytes memory signedLinkPayload = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     s_verifierProxy.verify(signedLinkPayload, abi.encode(link));
@@ -79,9 +77,7 @@ contract Verifier_verifyWithFee is BaseTestWithConfiguredVerifierAndFeeManager {
 
   function testVerifyProxyWithNativeFeeSuccess_gas() public {
     bytes memory signedNativePayload = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     s_verifierProxy.verify(signedNativePayload, abi.encode(native));
@@ -103,7 +99,7 @@ contract Verifier_bulkVerifyWithFee is BaseTestWithConfiguredVerifierAndFeeManag
     //warm the rewardManager
     link.mint(address(this), DEFAULT_NATIVE_MINT_QUANTITY);
     _approveLink(address(rewardManager), DEFAULT_REPORT_LINK_FEE, address(this));
-    (, , bytes32 latestConfigDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (,, bytes32 latestConfigDigest) = s_verifier.latestConfigDetails(FEED_ID);
 
     //mint some tokens to the user
     link.mint(USER, DEFAULT_LINK_MINT_QUANTITY);
@@ -128,9 +124,7 @@ contract Verifier_bulkVerifyWithFee is BaseTestWithConfiguredVerifierAndFeeManag
 
   function testBulkVerifyProxyWithLinkFeeSuccess_gas() public {
     bytes memory signedLinkPayload = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedLinkPayloads = new bytes[](NUMBER_OF_REPORTS_TO_VERIFY);
@@ -143,9 +137,7 @@ contract Verifier_bulkVerifyWithFee is BaseTestWithConfiguredVerifierAndFeeManag
 
   function testBulkVerifyProxyWithNativeFeeSuccess_gas() public {
     bytes memory signedNativePayload = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedNativePayloads = new bytes[](NUMBER_OF_REPORTS_TO_VERIFY);
@@ -174,7 +166,7 @@ contract Verifier_verify is BaseTestWithConfiguredVerifierAndFeeManager {
       BLOCKNUMBER_LOWER_BOUND,
       uint32(block.timestamp)
     );
-    (, , s_configDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (,, s_configDigest) = s_verifier.latestConfigDetails(FEED_ID);
     bytes32[3] memory reportContext;
     reportContext[0] = s_configDigest;
     reportContext[1] = bytes32(abi.encode(uint32(5), uint8(1)));
@@ -213,7 +205,7 @@ contract Verifier_accessControlledVerify is BaseTestWithConfiguredVerifierAndFee
       BLOCKNUMBER_LOWER_BOUND,
       uint32(block.timestamp)
     );
-    (, , s_configDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (,, s_configDigest) = s_verifier.latestConfigDetails(FEED_ID);
     bytes32[3] memory reportContext;
     reportContext[0] = s_configDigest;
     reportContext[1] = bytes32(abi.encode(uint32(5), uint8(1)));

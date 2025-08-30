@@ -1,12 +1,14 @@
 pragma solidity 0.8.19;
 
-import "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
-import {BlockhashStore} from "../dev/BlockhashStore.sol";
+
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
+import {BlockhashStore} from "../dev/BlockhashStore.sol";
+import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
+import "./BaseTest.t.sol";
+
 import {VmSafe} from "forge-std/Vm.sol";
 
 contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
@@ -68,13 +70,12 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
     uint256 weiPerUnitGas,
     bool onlyPremium
   ) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ExposedVRFCoordinatorV2_5_Arbitrum.calculatePaymentAmountNativeExternal.selector,
-        startGas,
-        weiPerUnitGas,
-        onlyPremium
-      );
+    return abi.encodeWithSelector(
+      ExposedVRFCoordinatorV2_5_Arbitrum.calculatePaymentAmountNativeExternal.selector,
+      startGas,
+      weiPerUnitGas,
+      onlyPremium
+    );
   }
 
   function _encodeCalculatePaymentAmountLinkExternal(
@@ -82,16 +83,17 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
     uint256 weiPerUnitGas,
     bool onlyPremium
   ) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ExposedVRFCoordinatorV2_5_Arbitrum.calculatePaymentAmountLinkExternal.selector,
-        startGas,
-        weiPerUnitGas,
-        onlyPremium
-      );
+    return abi.encodeWithSelector(
+      ExposedVRFCoordinatorV2_5_Arbitrum.calculatePaymentAmountLinkExternal.selector,
+      startGas,
+      weiPerUnitGas,
+      onlyPremium
+    );
   }
 
-  function _checkL1GasFeeEmittedLogs(uint256 expectedL1GasFee) internal {
+  function _checkL1GasFeeEmittedLogs(
+    uint256 expectedL1GasFee
+  ) internal {
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 1);
     assertEq(entries[0].topics.length, 1);

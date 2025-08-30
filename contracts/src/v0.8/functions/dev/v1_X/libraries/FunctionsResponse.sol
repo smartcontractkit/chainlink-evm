@@ -26,6 +26,7 @@ library FunctionsResponse {
     INSUFFICIENT_GAS_PROVIDED, // 4
     SUBSCRIPTION_BALANCE_INVARIANT_VIOLATION, // 5
     INVALID_COMMITMENT // 6
+
   }
 
   struct Commitment {

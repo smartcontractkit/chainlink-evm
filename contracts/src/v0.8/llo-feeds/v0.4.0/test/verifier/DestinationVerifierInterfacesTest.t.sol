@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
-import {VerifierWithFeeManager} from "./BaseDestinationVerifierTest.t.sol";
+import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
+
+import {Common} from "../../../libraries/Common.sol";
 import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
 import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
-import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {IDestinationFeeManager} from "../../../v0.4.0/interfaces/IDestinationFeeManager.sol";
 import {IDestinationRewardManager} from "../../../v0.4.0/interfaces/IDestinationRewardManager.sol";
 import {IDestinationVerifierProxy} from "../../../v0.4.0/interfaces/IDestinationVerifierProxy.sol";
-import {Common} from "../../../libraries/Common.sol";
+import {VerifierWithFeeManager} from "./BaseDestinationVerifierTest.t.sol";
+
 import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 import {IERC20} from "@openzeppelin/contracts@4.8.3/interfaces/IERC20.sol";
+import {Test} from "forge-std/Test.sol";
 
 /*
 This test checks the interfaces of destination verifier matches the expectations.
@@ -116,7 +118,7 @@ contract VerifierInterfacesTest is VerifierWithFeeManager {
     IDestinationRewardManager rewardManager = IDestinationRewardManager(address(feeManager.i_rewardManager()));
 
     address feeTokenAddress = feeManager.i_linkAddress();
-    (Common.Asset memory fee, , ) = feeManager.getFeeAndReward(address(this), reportData, feeTokenAddress);
+    (Common.Asset memory fee,,) = feeManager.getFeeAndReward(address(this), reportData, feeTokenAddress);
 
     // Approve rewardManager to spend this contract's balance in fees
     _approveLink(address(rewardManager), fee.amount, USER);

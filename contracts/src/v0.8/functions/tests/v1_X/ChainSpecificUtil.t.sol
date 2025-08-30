@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {FunctionsClient} from "../../dev/v1_X/FunctionsClient.sol";
 import {FunctionsRouter} from "../../dev/v1_X/FunctionsRouter.sol";
 import {FunctionsSubscriptions} from "../../dev/v1_X/FunctionsSubscriptions.sol";
 import {FunctionsRequest} from "../../dev/v1_X/libraries/FunctionsRequest.sol";
 import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 import {FunctionsFulfillmentSetup} from "./Setup.t.sol";
 
@@ -43,8 +43,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Arbitrum is FunctionsFulfillmentS
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,
@@ -64,8 +64,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Arbitrum is FunctionsFulfillmentS
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,
@@ -85,8 +85,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Arbitrum is FunctionsFulfillmentS
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,
@@ -130,8 +130,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Optimism is FunctionsFulfillmentS
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,
@@ -151,8 +151,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Optimism is FunctionsFulfillmentS
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,
@@ -172,8 +172,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Optimism is FunctionsFulfillmentS
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,
@@ -214,8 +214,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Base is FunctionsFulfillmentSetup
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,
@@ -235,8 +235,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Base is FunctionsFulfillmentSetup
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,
@@ -256,8 +256,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Base is FunctionsFulfillmentSetup
     FunctionsFulfillmentSetup.setUp();
 
     // Check request cost estimate
-    uint96 expectedEstimatedTotalCostJuels = _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) +
-      l1FeeEstimateJuels;
+    uint96 expectedEstimatedTotalCostJuels =
+      _getExpectedCostEstimate(s_requests[1].requestData.callbackGasLimit) + l1FeeEstimateJuels;
     assertEq(
       s_requests[1].commitment.estimatedTotalCostJuels,
       expectedEstimatedTotalCostJuels,

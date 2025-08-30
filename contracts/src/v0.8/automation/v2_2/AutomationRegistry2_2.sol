@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
-import {AutomationRegistryBase2_2} from "./AutomationRegistryBase2_2.sol";
-import {AutomationRegistryLogicB2_2} from "./AutomationRegistryLogicB2_2.sol";
-import {Chainable} from "../Chainable.sol";
 import {IERC677Receiver} from "../../shared/interfaces/IERC677Receiver.sol";
 import {OCR2Abstract} from "../../shared/ocr2/OCR2Abstract.sol";
+import {Chainable} from "../Chainable.sol";
+import {AutomationRegistryBase2_2} from "./AutomationRegistryBase2_2.sol";
+import {AutomationRegistryLogicB2_2} from "./AutomationRegistryLogicB2_2.sol";
+import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 /**
  * @notice Registry for adding work for Chainlink nodes to perform on client
@@ -107,12 +107,8 @@ contract AutomationRegistry2_2 is AutomationRegistryBase2_2, OCR2Abstract, Chain
 
   function _handleReport(HotVars memory hotVars, Report memory report, uint256 gasOverhead) private {
     UpkeepTransmitInfo[] memory upkeepTransmitInfo = new UpkeepTransmitInfo[](report.upkeepIds.length);
-    TransmitVars memory transmitVars = TransmitVars({
-      numUpkeepsPassedChecks: 0,
-      totalCalldataWeight: 0,
-      totalReimbursement: 0,
-      totalPremium: 0
-    });
+    TransmitVars memory transmitVars =
+      TransmitVars({numUpkeepsPassedChecks: 0, totalCalldataWeight: 0, totalReimbursement: 0, totalPremium: 0});
 
     uint256 blocknumber = hotVars.chainModule.blockNumber();
     uint256 l1Fee = hotVars.chainModule.getCurrentL1Fee(msg.data.length);
@@ -121,13 +117,8 @@ contract AutomationRegistry2_2 is AutomationRegistryBase2_2, OCR2Abstract, Chain
       upkeepTransmitInfo[i].upkeep = s_upkeep[report.upkeepIds[i]];
       upkeepTransmitInfo[i].triggerType = _getTriggerType(report.upkeepIds[i]);
 
-      (upkeepTransmitInfo[i].earlyChecksPassed, upkeepTransmitInfo[i].dedupID) = _prePerformChecks(
-        report.upkeepIds[i],
-        blocknumber,
-        report.triggers[i],
-        upkeepTransmitInfo[i],
-        hotVars
-      );
+      (upkeepTransmitInfo[i].earlyChecksPassed, upkeepTransmitInfo[i].dedupID) =
+        _prePerformChecks(report.upkeepIds[i], blocknumber, report.triggers[i], upkeepTransmitInfo[i], hotVars);
 
       if (upkeepTransmitInfo[i].earlyChecksPassed) {
         transmitVars.numUpkeepsPassedChecks += 1;
@@ -136,18 +127,13 @@ contract AutomationRegistry2_2 is AutomationRegistryBase2_2, OCR2Abstract, Chain
       }
 
       // Actually perform the target upkeep
-      (upkeepTransmitInfo[i].performSuccess, upkeepTransmitInfo[i].gasUsed) = _performUpkeep(
-        upkeepTransmitInfo[i].upkeep.forwarder,
-        report.gasLimits[i],
-        report.performDatas[i]
-      );
+      (upkeepTransmitInfo[i].performSuccess, upkeepTransmitInfo[i].gasUsed) =
+        _performUpkeep(upkeepTransmitInfo[i].upkeep.forwarder, report.gasLimits[i], report.performDatas[i]);
 
       // To split L1 fee across the upkeeps, assign a weight to this upkeep based on the length
       // of the perform data and calldata overhead
-      upkeepTransmitInfo[i].calldataWeight =
-        report.performDatas[i].length +
-        TRANSMIT_CALLDATA_FIXED_BYTES_OVERHEAD +
-        (TRANSMIT_CALLDATA_PER_SIGNER_BYTES_OVERHEAD * (hotVars.f + 1));
+      upkeepTransmitInfo[i].calldataWeight = report.performDatas[i].length + TRANSMIT_CALLDATA_FIXED_BYTES_OVERHEAD
+        + (TRANSMIT_CALLDATA_PER_SIGNER_BYTES_OVERHEAD * (hotVars.f + 1));
       transmitVars.totalCalldataWeight += upkeepTransmitInfo[i].calldataWeight;
 
       // Deduct that gasUsed by upkeep from our running counter
@@ -251,12 +237,7 @@ contract AutomationRegistry2_2 is AutomationRegistryBase2_2, OCR2Abstract, Chain
     bytes memory offchainConfig
   ) external override {
     setConfigTypeSafe(
-      signers,
-      transmitters,
-      f,
-      abi.decode(onchainConfigBytes, (OnchainConfig)),
-      offchainConfigVersion,
-      offchainConfig
+      signers, transmitters, f, abi.decode(onchainConfigBytes, (OnchainConfig)), offchainConfigVersion, offchainConfig
     );
   }
 

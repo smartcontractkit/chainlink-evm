@@ -9,7 +9,9 @@ contract Broken {
     revert Unauthorized("param", 121);
   }
 
-  function revertWithMessage(string memory message) public pure {
+  function revertWithMessage(
+    string memory message
+  ) public pure {
     require(false, message);
   }
 

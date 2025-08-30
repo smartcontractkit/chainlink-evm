@@ -50,7 +50,9 @@ library SortedSetValidationUtil {
   /// @dev Iterates through the array to check that each element is greater than the previous.
   /// @param set The array of bytes32 to validate.
   /// @custom:revert NotASortedSet If any element is not greater than its predecessor or if any two consecutive elements are equal.
-  function _checkIsValidSet(bytes32[] memory set) private pure {
+  function _checkIsValidSet(
+    bytes32[] memory set
+  ) private pure {
     for (uint256 i = 1; i < set.length; ++i) {
       if (set[i] <= set[i - 1]) {
         revert NotASortedSet(set);

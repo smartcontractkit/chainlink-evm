@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ConfirmedOwner} from "./ConfirmedOwner.sol";
 import {AccessControllerInterface} from "../interfaces/AccessControllerInterface.sol";
+import {ConfirmedOwner} from "./ConfirmedOwner.sol";
 
 /// @title SimpleWriteAccessController
 /// @notice Gives access to accounts explicitly added to an access list by the controller's owner.
@@ -28,7 +28,9 @@ contract SimpleWriteAccessController is AccessControllerInterface, ConfirmedOwne
 
   /// @notice Adds an address to the access list
   /// @param _user The address to add
-  function addAccess(address _user) external onlyOwner {
+  function addAccess(
+    address _user
+  ) external onlyOwner {
     if (!s_accessList[_user]) {
       s_accessList[_user] = true;
 
@@ -38,7 +40,9 @@ contract SimpleWriteAccessController is AccessControllerInterface, ConfirmedOwne
 
   /// @notice Removes an address from the access list
   /// @param _user The address to remove
-  function removeAccess(address _user) external onlyOwner {
+  function removeAccess(
+    address _user
+  ) external onlyOwner {
     if (s_accessList[_user]) {
       s_accessList[_user] = false;
 

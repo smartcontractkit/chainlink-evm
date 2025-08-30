@@ -5,8 +5,8 @@ import {ISequencerUptimeFeed} from "../interfaces/ISequencerUptimeFeed.sol";
 
 import {BaseValidator} from "../base/BaseValidator.sol";
 
-import {IL1MessageQueueV2} from "@scroll-tech/contracts/L1/rollup/IL1MessageQueueV2.sol";
 import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
+import {IL1MessageQueueV2} from "@scroll-tech/contracts/L1/rollup/IL1MessageQueueV2.sol";
 
 /// @title ScrollValidator - makes cross chain call to update the Sequencer Uptime Feed on L2
 contract ScrollValidator is BaseValidator {
@@ -42,9 +42,7 @@ contract ScrollValidator is BaseValidator {
       L2_UPTIME_FEED_ADDR,
       0,
       abi.encodeWithSelector(
-        ISequencerUptimeFeed.updateStatus.selector,
-        currentAnswer == ANSWER_SEQ_OFFLINE,
-        uint64(block.timestamp)
+        ISequencerUptimeFeed.updateStatus.selector, currentAnswer == ANSWER_SEQ_OFFLINE, uint64(block.timestamp)
       ),
       s_gasLimit
     );

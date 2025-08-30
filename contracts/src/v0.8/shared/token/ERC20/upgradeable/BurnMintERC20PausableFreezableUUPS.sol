@@ -45,7 +45,9 @@ contract BurnMintERC20PausableFreezableUUPS is BurnMintERC20PausableUUPS {
   /// @notice Freezes an account, disallowing transfers, minting and burning from/to it.
   /// @dev Requires the caller to have the FREEZER_ROLE.
   /// @dev Can be called even if the contract is paused.
-  function freeze(address account) public onlyRole(FREEZER_ROLE) {
+  function freeze(
+    address account
+  ) public onlyRole(FREEZER_ROLE) {
     if (account == address(0)) revert BurnMintERC20PausableFreezableUUPS__InvalidRecipient(account);
     if (account == address(this)) revert BurnMintERC20PausableFreezableUUPS__InvalidRecipient(account);
 
@@ -60,7 +62,9 @@ contract BurnMintERC20PausableFreezableUUPS is BurnMintERC20PausableUUPS {
   /// @notice Unfreezes an account
   /// @dev Requires the caller to have the FREEZER_ROLE.
   /// @dev Can be called even if the contract is paused.
-  function unfreeze(address account) public onlyRole(FREEZER_ROLE) {
+  function unfreeze(
+    address account
+  ) public onlyRole(FREEZER_ROLE) {
     BurnMintERC20PausableFreezableUUPSStorage storage $ = _getBurnMintERC20PausableFreezableUUPSStorage();
     if (!$.isFrozen[account]) revert BurnMintERC20PausableFreezableUUPS__AccountNotFrozen(account);
 
@@ -69,7 +73,9 @@ contract BurnMintERC20PausableFreezableUUPS is BurnMintERC20PausableUUPS {
     emit AccountUnfrozen(account);
   }
 
-  function isFrozen(address account) public view returns (bool) {
+  function isFrozen(
+    address account
+  ) public view returns (bool) {
     return _getBurnMintERC20PausableFreezableUUPSStorage().isFrozen[account];
   }
 

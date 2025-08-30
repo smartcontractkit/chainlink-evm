@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {IKeeperRegistryMaster} from "../interfaces/v2_1/IKeeperRegistryMaster.sol";
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {IERC677Receiver} from "../../shared/interfaces/IERC677Receiver.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {IKeeperRegistryMaster} from "../interfaces/v2_1/IKeeperRegistryMaster.sol";
 
 /**
  * @notice Contract to accept requests for upkeep registrations
@@ -153,9 +153,7 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
     setConfig(keeperRegistry, minLINKJuels);
     for (uint256 idx = 0; idx < triggerConfigs.length; idx++) {
       setTriggerConfig(
-        triggerConfigs[idx].triggerType,
-        triggerConfigs[idx].autoApproveType,
-        triggerConfigs[idx].autoApproveMaxAllowed
+        triggerConfigs[idx].triggerType, triggerConfigs[idx].autoApproveType, triggerConfigs[idx].autoApproveMaxAllowed
       );
     }
   }
@@ -210,7 +208,9 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @notice Allows external users to register upkeeps; assumes amount is approved for transfer by the contract
    * @param requestParams struct of all possible registration parameters
    */
-  function registerUpkeep(RegistrationParams calldata requestParams) external returns (uint256) {
+  function registerUpkeep(
+    RegistrationParams calldata requestParams
+  ) external returns (uint256) {
     if (requestParams.amount < s_config.minLINKJuels) {
       revert InsufficientPayment();
     }
@@ -266,7 +266,9 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @notice cancel will remove a registration request and return the refunds to the request.admin
    * @param hash the request hash
    */
-  function cancel(bytes32 hash) external {
+  function cancel(
+    bytes32 hash
+  ) external {
     PendingRequest memory request = s_pendingRequests[hash];
     if (!(msg.sender == request.admin || msg.sender == owner())) {
       revert OnlyAdminOrOwner();
@@ -323,7 +325,9 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @notice read the allowlist status of senderAddress
    * @param senderAddress address to read the allowlist status for
    */
-  function getAutoApproveAllowedSender(address senderAddress) external view returns (bool) {
+  function getAutoApproveAllowedSender(
+    address senderAddress
+  ) external view returns (bool) {
     return s_autoApproveAllowedSenders[senderAddress];
   }
 
@@ -339,14 +343,18 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @notice read the config for this upkeep type
    * @param triggerType upkeep type to read config for
    */
-  function getTriggerRegistrationDetails(uint8 triggerType) external view returns (TriggerRegistrationStorage memory) {
+  function getTriggerRegistrationDetails(
+    uint8 triggerType
+  ) external view returns (TriggerRegistrationStorage memory) {
     return s_triggerRegistrations[triggerType];
   }
 
   /**
    * @notice gets the admin address and the current balance of a registration request
    */
-  function getPendingRequest(bytes32 hash) external view returns (address, uint96) {
+  function getPendingRequest(
+    bytes32 hash
+  ) external view returns (address, uint96) {
     PendingRequest memory request = s_pendingRequests[hash];
     return (request.admin, request.balance);
   }
@@ -372,7 +380,7 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
     if (amount < s_config.minLINKJuels) {
       revert InsufficientPayment();
     }
-    (bool success, ) = address(this).delegatecall(data);
+    (bool success,) = address(this).delegatecall(data);
     // calls register
     if (!success) {
       revert RegistrationRequestFailed();
@@ -484,7 +492,9 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @dev Reverts if the given data does not begin with the `register` function selector
    * @param _data The data payload of the request
    */
-  modifier permittedFunctionsForLINK(bytes memory _data) {
+  modifier permittedFunctionsForLINK(
+    bytes memory _data
+  ) {
     bytes4 funcSelector;
     assembly {
       // solhint-disable-next-line avoid-low-level-calls
@@ -503,10 +513,8 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    */
   modifier isActualAmount(uint256 expected, bytes calldata data) {
     // decode register function arguments to get actual amount
-    (, , , , , , , , , uint96 amount, ) = abi.decode(
-      data[4:],
-      (string, bytes, address, uint32, address, uint8, bytes, bytes, bytes, uint96, address)
-    );
+    (,,,,,,,,, uint96 amount,) =
+      abi.decode(data[4:], (string, bytes, address, uint32, address, uint8, bytes, bytes, bytes, uint96, address));
     if (expected != amount) {
       revert AmountMismatch();
     }
@@ -520,10 +528,8 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    */
   modifier isActualSender(address expected, bytes calldata data) {
     // decode register function arguments to get actual sender
-    (, , , , , , , , , , address sender) = abi.decode(
-      data[4:],
-      (string, bytes, address, uint32, address, uint8, bytes, bytes, bytes, uint96, address)
-    );
+    (,,,,,,,,,, address sender) =
+      abi.decode(data[4:], (string, bytes, address, uint32, address, uint8, bytes, bytes, bytes, uint96, address));
     if (expected != sender) {
       revert SenderMismatch();
     }

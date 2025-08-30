@@ -3,8 +3,8 @@
 // contract.
 pragma solidity ^0.8.4;
 
-import {VRFConsumerBase} from "../VRFConsumerBase.sol";
 import {IERC677Receiver} from "../../shared/interfaces/IERC677Receiver.sol";
+import {VRFConsumerBase} from "../VRFConsumerBase.sol";
 
 contract VRFOwnerlessConsumerExample is VRFConsumerBase, IERC677Receiver {
   uint256 public s_randomnessOutput;
@@ -27,7 +27,7 @@ contract VRFOwnerlessConsumerExample is VRFConsumerBase, IERC677Receiver {
    * @param _amount The amount of LINK transferred to pay for this request.
    * @param _data The data passed to transferAndCall on LinkToken. Must be an abi-encoded key hash.
    */
-  function onTokenTransfer(address /* sender */, uint256 _amount, bytes calldata _data) external override {
+  function onTokenTransfer(address, /* sender */ uint256 _amount, bytes calldata _data) external override {
     if (msg.sender != address(LINK)) {
       revert OnlyCallableFromLink();
     }

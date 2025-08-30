@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
-import {DestinationRewardManager} from "../../../v0.4.0/DestinationRewardManager.sol";
 import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
+import {DestinationRewardManager} from "../../../v0.4.0/DestinationRewardManager.sol";
 import {IDestinationRewardManager} from "../../interfaces/IDestinationRewardManager.sol";
+import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 
 /**
  * @title DestinationRewardManagerSetupTest

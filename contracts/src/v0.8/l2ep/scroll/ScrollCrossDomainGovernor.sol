@@ -9,8 +9,8 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 import {CrossDomainForwarder} from "../CrossDomainForwarder.sol";
 import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
-import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 
 /// @title ScrollCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Scroll
 /// @notice L2 Contract which receives messages from a specific L1 address and transparently forwards them to the destination.
@@ -63,8 +63,7 @@ contract ScrollCrossDomainGovernor is IDelegateForwarder, ITypeAndVersion, Cross
     // 1. The delegatecall MUST come from either the L1 owner (via cross-chain message) or the L2 owner
     // solhint-disable-next-line gas-custom-errors
     require(
-      msg.sender == i_scrollCrossDomainMessenger || msg.sender == owner(),
-      "Sender is not the L2 messenger or owner"
+      msg.sender == i_scrollCrossDomainMessenger || msg.sender == owner(), "Sender is not the L2 messenger or owner"
     );
     // 2. The L2 Messenger's caller MUST be the L1 Owner
     if (msg.sender == i_scrollCrossDomainMessenger) {

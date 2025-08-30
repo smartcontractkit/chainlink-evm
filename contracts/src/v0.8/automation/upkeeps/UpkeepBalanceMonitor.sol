@@ -3,8 +3,9 @@
 pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
-import {IAutomationRegistryConsumer} from "../interfaces/IAutomationRegistryConsumer.sol";
+
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {IAutomationRegistryConsumer} from "../interfaces/IAutomationRegistryConsumer.sol";
 import {Pausable} from "@openzeppelin/contracts@4.9.6/security/Pausable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
@@ -124,8 +125,9 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
     uint96[] memory topUpAmounts
   ) public whenNotPaused {
     if (msg.sender != address(s_forwarderAddress) && msg.sender != owner()) revert OnlyForwarderOrOwner();
-    if (upkeepIDs.length != registryAddresses.length || upkeepIDs.length != topUpAmounts.length)
+    if (upkeepIDs.length != registryAddresses.length || upkeepIDs.length != topUpAmounts.length) {
       revert InvalidTopUpData();
+    }
     for (uint256 i = 0; i < upkeepIDs.length; i++) {
       try LINK_TOKEN.transferAndCall(registryAddresses[i], topUpAmounts[i], abi.encode(upkeepIDs[i])) returns (
         bool success
@@ -145,12 +147,11 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
 
   /// @notice Gets list of upkeeps ids that are underfunded and returns a keeper-compatible payload.
   /// @return upkeepNeeded signals if upkeep is needed, performData is an abi encoded list of subscription ids that need funds
-  function checkUpkeep(bytes calldata) external view returns (bool upkeepNeeded, bytes memory performData) {
-    (
-      uint256[] memory needsFunding,
-      address[] memory registryAddresses,
-      uint96[] memory topUpAmounts
-    ) = getUnderfundedUpkeeps();
+  function checkUpkeep(
+    bytes calldata
+  ) external view returns (bool upkeepNeeded, bytes memory performData) {
+    (uint256[] memory needsFunding, address[] memory registryAddresses, uint96[] memory topUpAmounts) =
+      getUnderfundedUpkeeps();
     upkeepNeeded = needsFunding.length > 0;
     if (upkeepNeeded) {
       performData = abi.encode(needsFunding, registryAddresses, topUpAmounts);
@@ -160,11 +161,11 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
 
   /// @notice Called by the keeper to send funds to underfunded addresses.
   /// @param performData the abi encoded list of addresses to fund
-  function performUpkeep(bytes calldata performData) external {
-    (uint256[] memory upkeepIDs, address[] memory registryAddresses, uint96[] memory topUpAmounts) = abi.decode(
-      performData,
-      (uint256[], address[], uint96[])
-    );
+  function performUpkeep(
+    bytes calldata performData
+  ) external {
+    (uint256[] memory upkeepIDs, address[] memory registryAddresses, uint96[] memory topUpAmounts) =
+      abi.decode(performData, (uint256[], address[], uint96[]));
     topUp(upkeepIDs, registryAddresses, topUpAmounts);
   }
 
@@ -211,12 +212,12 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
 
   /// @notice Sets the contract config
   /// @param config the new config
-  function setConfig(Config memory config) public onlyOwner {
+  function setConfig(
+    Config memory config
+  ) public onlyOwner {
     if (
-      config.maxBatchSize == 0 ||
-      config.minPercentage < 100 ||
-      config.targetPercentage <= config.minPercentage ||
-      config.maxTopUpAmount == 0
+      config.maxBatchSize == 0 || config.minPercentage < 100 || config.targetPercentage <= config.minPercentage
+        || config.maxTopUpAmount == 0
     ) {
       revert InvalidConfig();
     }
@@ -227,7 +228,9 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
   /// @notice Sets the upkeep's forwarder contract
   /// @param forwarderAddress the new forwarder
   /// @dev this should only need to be called once, after registering the contract with the registry
-  function setForwarder(address forwarderAddress) external onlyOwner {
+  function setForwarder(
+    address forwarderAddress
+  ) external onlyOwner {
     s_forwarderAddress = forwarderAddress;
     emit ForwarderSet(forwarderAddress);
   }

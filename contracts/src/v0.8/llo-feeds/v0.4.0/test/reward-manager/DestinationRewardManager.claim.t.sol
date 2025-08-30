@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 
 /**
  * @title DestinationRewardManagerClaimTest
@@ -550,11 +550,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
 
   function test_getRewardsAvailableToRecipientInBothPools() public {
     //get index 0 as this recipient is in both default pools
-    bytes32[] memory poolIds = rewardManager.getAvailableRewardPoolIds(
-      getPrimaryRecipients()[0].addr,
-      0,
-      type(uint256).max
-    );
+    bytes32[] memory poolIds =
+      rewardManager.getAvailableRewardPoolIds(getPrimaryRecipients()[0].addr, 0, type(uint256).max);
 
     //check the recipient is in both pools
     assertEq(poolIds[0], PRIMARY_POOL_ID);
@@ -563,11 +560,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
 
   function test_getRewardsAvailableToRecipientInSinglePool() public {
     //get index 0 as this recipient is in both default pools
-    bytes32[] memory poolIds = rewardManager.getAvailableRewardPoolIds(
-      getPrimaryRecipients()[1].addr,
-      0,
-      type(uint256).max
-    );
+    bytes32[] memory poolIds =
+      rewardManager.getAvailableRewardPoolIds(getPrimaryRecipients()[1].addr, 0, type(uint256).max);
 
     //check the recipient is in both pools
     assertEq(poolIds[0], PRIMARY_POOL_ID);
@@ -585,11 +579,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
 
   function test_getRewardsAvailableToRecipientInBothPoolsWhereAlreadyClaimed() public {
     //get index 0 as this recipient is in both default pools
-    bytes32[] memory poolIds = rewardManager.getAvailableRewardPoolIds(
-      getPrimaryRecipients()[0].addr,
-      0,
-      type(uint256).max
-    );
+    bytes32[] memory poolIds =
+      rewardManager.getAvailableRewardPoolIds(getPrimaryRecipients()[0].addr, 0, type(uint256).max);
 
     //check the recipient is in both pools
     assertEq(poolIds[0], PRIMARY_POOL_ID);

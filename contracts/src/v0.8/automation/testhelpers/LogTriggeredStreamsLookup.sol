@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
+import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import {ILogAutomation, Log} from "../interfaces/ILogAutomation.sol";
 import "../interfaces/StreamsLookupCompatibleInterface.sol";
-import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 
 interface IVerifierProxy {
   /**
@@ -12,7 +12,9 @@ interface IVerifierProxy {
    * @param signedReport The encoded data to be verified.
    * @return verifierResponse The encoded response from the verifier.
    */
-  function verify(bytes memory signedReport) external returns (bytes memory verifierResponse);
+  function verify(
+    bytes memory signedReport
+  ) external returns (bytes memory verifierResponse);
 }
 
 contract LogTriggeredStreamsLookup is ILogAutomation, StreamsLookupCompatibleInterface {
@@ -57,15 +59,21 @@ contract LogTriggeredStreamsLookup is ILogAutomation, StreamsLookupCompatibleInt
     emit LimitOrderExecuted(1, 100, address(0x0));
   }
 
-  function setTimeParamKey(string memory timeParam) external {
+  function setTimeParamKey(
+    string memory timeParam
+  ) external {
     timeParamKey = timeParam;
   }
 
-  function setFeedParamKey(string memory feedParam) external {
+  function setFeedParamKey(
+    string memory feedParam
+  ) external {
     feedParamKey = feedParam;
   }
 
-  function setFeedsHex(string[] memory newFeeds) external {
+  function setFeedsHex(
+    string[] memory newFeeds
+  ) external {
     feedsHex = newFeeds;
   }
 
@@ -86,26 +94,22 @@ contract LogTriggeredStreamsLookup is ILogAutomation, StreamsLookupCompatibleInt
       address exchange = abi.decode(t3, (address));
 
       revert StreamsLookup(
-        feedParamKey,
-        feedsHex,
-        timeParamKey,
-        blockNum,
-        abi.encode(orderId, amount, exchange, executedSig)
+        feedParamKey, feedsHex, timeParamKey, blockNum, abi.encode(orderId, amount, exchange, executedSig)
       );
     }
     revert("could not find matching event sig");
   }
 
-  function performUpkeep(bytes calldata performData) external override {
+  function performUpkeep(
+    bytes calldata performData
+  ) external override {
     if (performData.length == 0) {
       emit IgnoringErrorHandlerData();
       return;
     }
     (bytes[] memory values, bytes memory extraData) = abi.decode(performData, (bytes[], bytes));
-    (uint256 orderId, uint256 amount, address exchange, bytes32 logTopic0) = abi.decode(
-      extraData,
-      (uint256, uint256, address, bytes32)
-    );
+    (uint256 orderId, uint256 amount, address exchange, bytes32 logTopic0) =
+      abi.decode(extraData, (uint256, uint256, address, bytes32));
 
     bytes memory verifiedResponse = "";
     if (verify) {
@@ -117,15 +121,7 @@ contract LogTriggeredStreamsLookup is ILogAutomation, StreamsLookupCompatibleInt
       emit LimitOrderExecuted(1, 100, address(0x0));
     }
 
-    emit PerformingLogTriggerUpkeep(
-      tx.origin,
-      orderId,
-      amount,
-      exchange,
-      getBlockNumber(),
-      values[0],
-      verifiedResponse
-    );
+    emit PerformingLogTriggerUpkeep(tx.origin, orderId, amount, exchange, getBlockNumber(), values[0], verifiedResponse);
   }
 
   function checkCallback(

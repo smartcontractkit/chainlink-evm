@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Common} from "../../libraries/Common.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IRewardManager is IERC165 {
   /**
@@ -16,7 +16,9 @@ interface IRewardManager is IERC165 {
    * @notice Claims the rewards in a specific pool
    * @param poolIds array of poolIds to claim rewards for
    */
-  function claimRewards(bytes32[] calldata poolIds) external;
+  function claimRewards(
+    bytes32[] calldata poolIds
+  ) external;
 
   /**
    * @notice Set the RewardRecipients and weights for a specific pool. This should only be called once per pool Id. Else updateRewardRecipients should be used.
@@ -43,7 +45,9 @@ interface IRewardManager is IERC165 {
    * @notice Sets the fee manager. This needs to be done post construction to prevent a circular dependency.
    * @param newFeeManager address of the new verifier proxy
    */
-  function setFeeManager(address newFeeManager) external;
+  function setFeeManager(
+    address newFeeManager
+  ) external;
 
   /**
    * @notice Gets a list of pool ids which have reward for a specific recipient.

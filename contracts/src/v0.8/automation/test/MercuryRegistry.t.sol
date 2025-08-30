@@ -1,9 +1,9 @@
 pragma solidity ^0.8.0;
 
-import {Test} from "forge-std/Test.sol";
 import "../dev/MercuryRegistry.sol";
 import "../dev/MercuryRegistryBatchUpkeep.sol";
 import "../interfaces/StreamsLookupCompatibleInterface.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract MercuryRegistryTest is Test {
   address internal constant OWNER = 0x00007e64E1fB0C487F25dd6D3601ff6aF8d32e4e;
@@ -51,7 +51,7 @@ contract MercuryRegistryTest is Test {
     // Set owner, and fork Arbitrum Goerli Testnet (chain ID 421613).
     // The fork is only used with the `FORK_TEST` flag enabeld, as to not disrupt CI. For CI, a mock verifier is used instead.
     vm.startPrank(OWNER);
-    try vm.envBool("FORK_TEST") returns (bool /* fork testing enabled */) {
+    try vm.envBool("FORK_TEST") returns (bool /* fork testing enabled */ ) {
       vm.selectFork(vm.createFork("https://goerli-rollup.arbitrum.io/rpc"));
     } catch {
       s_verifier = address(new MockVerifierProxy());
@@ -194,10 +194,7 @@ contract MercuryRegistryTest is Test {
     // Ensure stale reports cannot be included.
     vm.expectRevert(
       abi.encodeWithSelector(
-        MercuryRegistry.StaleReport.selector,
-        feedIds[0],
-        feeds[0].observationsTimestamp,
-        oldObservationsTimestamp
+        MercuryRegistry.StaleReport.selector, feedIds[0], feeds[0].observationsTimestamp, oldObservationsTimestamp
       )
     );
     s_testRegistry.performUpkeep(oldPerformData);
@@ -329,8 +326,10 @@ contract MercuryRegistryTest is Test {
 }
 
 contract MockVerifierProxy is IVerifierProxy {
-  function verify(bytes calldata payload) external payable override returns (bytes memory) {
-    (, bytes memory reportData, , , ) = abi.decode(payload, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
+  function verify(
+    bytes calldata payload
+  ) external payable override returns (bytes memory) {
+    (, bytes memory reportData,,,) = abi.decode(payload, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
     return reportData;
   }
 }

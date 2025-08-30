@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/** ****************************************************************************
+/**
+ *
  * @notice Interface for contracts using VRF randomness
  * *****************************************************************************
  * @dev PURPOSE
@@ -95,7 +96,6 @@ pragma solidity ^0.8.4;
  * @dev responding to the request (however this is not enforced in the contract
  * @dev and so remains effective only in the case of unmodified oracle software).
  */
-
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -107,6 +107,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 abstract contract VRFConsumerBaseV2Upgradeable is Initializable {
   error OnlyCoordinatorCanFulfill(address have, address want);
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+
   address private vrfCoordinator;
 
   // See https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37.
@@ -120,7 +121,9 @@ abstract contract VRFConsumerBaseV2Upgradeable is Initializable {
    * @dev addresses on your preferred network.
    */
   // solhint-disable-next-line func-name-mixedcase
-  function __VRFConsumerBaseV2_init(address _vrfCoordinator) internal onlyInitializing {
+  function __VRFConsumerBaseV2_init(
+    address _vrfCoordinator
+  ) internal onlyInitializing {
     if (_vrfCoordinator == address(0)) {
       // solhint-disable-next-line gas-custom-errors
       revert("must give valid coordinator address");

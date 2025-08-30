@@ -35,7 +35,9 @@ contract VRFMaliciousConsumerV2Plus is VRFConsumerBaseV2Plus {
     s_vrfCoordinator.requestRandomWords(req);
   }
 
-  function createSubscriptionAndFund(uint96 amount) external {
+  function createSubscriptionAndFund(
+    uint96 amount
+  ) external {
     if (s_subId == 0) {
       s_subId = s_vrfCoordinator.createSubscription();
       s_vrfCoordinator.addConsumer(s_subId, address(this));
@@ -44,7 +46,9 @@ contract VRFMaliciousConsumerV2Plus is VRFConsumerBaseV2Plus {
     LINKTOKEN.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_subId));
   }
 
-  function updateSubscription(address[] memory consumers) external {
+  function updateSubscription(
+    address[] memory consumers
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(s_subId != 0, "subID not set");
     for (uint256 i = 0; i < consumers.length; i++) {
@@ -52,7 +56,9 @@ contract VRFMaliciousConsumerV2Plus is VRFConsumerBaseV2Plus {
     }
   }
 
-  function requestRandomness(bytes32 keyHash) external returns (uint256) {
+  function requestRandomness(
+    bytes32 keyHash
+  ) external returns (uint256) {
     s_keyHash = keyHash;
     VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
       keyHash: keyHash,

@@ -12,7 +12,9 @@ interface ITermsOfServiceAllowList {
   /// @notice Check if the address is blocked for usage
   /// @param sender The transaction sender's address
   /// @return True or false
-  function isBlockedSender(address sender) external returns (bool);
+  function isBlockedSender(
+    address sender
+  ) external returns (bool);
 
   /// @notice Get a list of all allowed senders
   /// @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
@@ -48,11 +50,15 @@ interface ITermsOfServiceAllowList {
 
   /// @notice Removes a sender's access if already authorized, and disallows re-accepting the Terms of Service
   /// @param sender - Address of the sender to block
-  function blockSender(address sender) external;
+  function blockSender(
+    address sender
+  ) external;
 
   /// @notice Re-allows a previously blocked sender to accept the Terms of Service
   /// @param sender - Address of the sender to unblock
-  function unblockSender(address sender) external;
+  function unblockSender(
+    address sender
+  ) external;
 
   /// @notice Get details about the total number of blocked senders
   /// @return count - total number of blocked senders in the system
@@ -72,7 +78,9 @@ interface ITermsOfServiceAllowList {
 
   /// @notice Enables migrating any previously allowed senders to the new contract
   /// @param previousSendersToAdd - List of addresses to migrate. These address must be allowed on the previous ToS contract and not blocked
-  function migratePreviouslyAllowedSenders(address[] memory previousSendersToAdd) external;
+  function migratePreviouslyAllowedSenders(
+    address[] memory previousSendersToAdd
+  ) external;
 }
 
 // ================================================================

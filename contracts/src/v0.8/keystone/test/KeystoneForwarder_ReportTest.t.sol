@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {BaseTest} from "./KeystoneForwarderBaseTest.t.sol";
+import {KeystoneForwarder} from "../KeystoneForwarder.sol";
 import {IRouter} from "../interfaces/IRouter.sol";
+import {BaseTest} from "./KeystoneForwarderBaseTest.t.sol";
 import {MaliciousReportReceiver} from "./mocks/MaliciousReportReceiver.sol";
 import {MaliciousRevertingReceiver} from "./mocks/MaliciousRevertingReceiver.sol";
-import {KeystoneForwarder} from "../KeystoneForwarder.sol";
 
 contract KeystoneForwarder_ReportTest is BaseTest {
   event MessageReceived(bytes metadata, bytes[] mercuryReports);
   event ReportProcessed(
-    address indexed receiver,
-    bytes32 indexed workflowExecutionId,
-    bytes2 indexed reportId,
-    bool result
+    address indexed receiver, bytes32 indexed workflowExecutionId, bytes2 indexed reportId, bool result
   );
 
   uint8 internal version = 1;
@@ -126,10 +123,8 @@ contract KeystoneForwarder_ReportTest is BaseTest {
     uint256 mockPK = 999;
 
     Signer memory maliciousSigner = Signer({mockPrivateKey: mockPK, signerAddress: vm.addr(mockPK)});
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-      maliciousSigner.mockPrivateKey,
-      keccak256(abi.encodePacked(keccak256(report), reportContext))
-    );
+    (uint8 v, bytes32 r, bytes32 s) =
+      vm.sign(maliciousSigner.mockPrivateKey, keccak256(abi.encodePacked(keccak256(report), reportContext)));
     signatures[1] = bytes.concat(r, s, bytes1(v - 27));
 
     vm.expectRevert(abi.encodeWithSelector(KeystoneForwarder.InvalidSigner.selector, maliciousSigner.signerAddress));
@@ -170,11 +165,8 @@ contract KeystoneForwarder_ReportTest is BaseTest {
   }
 
   function test_Report_SuccessfulDelivery() public {
-    IRouter.TransmissionInfo memory transmissionInfo = s_forwarder.getTransmissionInfo(
-      address(s_receiver),
-      executionId,
-      reportId
-    );
+    IRouter.TransmissionInfo memory transmissionInfo =
+      s_forwarder.getTransmissionInfo(address(s_receiver), executionId, reportId);
     assertEq(uint8(transmissionInfo.state), uint8(IRouter.TransmissionState.NOT_ATTEMPTED), "state mismatch");
 
     vm.expectEmit(address(s_receiver));
@@ -195,11 +187,8 @@ contract KeystoneForwarder_ReportTest is BaseTest {
   function test_Report_SuccessfulRetryWithMoreGas() public {
     s_forwarder.report{gas: 200_000}(address(s_receiver), report, reportContext, signatures);
 
-    IRouter.TransmissionInfo memory transmissionInfo = s_forwarder.getTransmissionInfo(
-      address(s_receiver),
-      executionId,
-      reportId
-    );
+    IRouter.TransmissionInfo memory transmissionInfo =
+      s_forwarder.getTransmissionInfo(address(s_receiver), executionId, reportId);
     // Expect to fail with the receiver running out of gas
     assertEq(uint8(transmissionInfo.state), uint8(IRouter.TransmissionState.FAILED), "state mismatch");
     assertGt(transmissionInfo.gasLimit, 100_000, "gas limit mismatch");
@@ -245,11 +234,8 @@ contract KeystoneForwarder_ReportTest is BaseTest {
     // This POC requires pretty specific initial gas, so that 1/64 of gas passed to `onReport()` is insufficient to store the success
     s_forwarder.report{gas: 200_000}(address(maliciousReceiver), report, reportContext, signatures);
 
-    IRouter.TransmissionInfo memory transmissionInfo = s_forwarder.getTransmissionInfo(
-      address(maliciousReceiver),
-      executionId,
-      reportId
-    );
+    IRouter.TransmissionInfo memory transmissionInfo =
+      s_forwarder.getTransmissionInfo(address(maliciousReceiver), executionId, reportId);
 
     assertEq(transmissionInfo.transmitter, TRANSMITTER, "transmitter mismatch");
     assertEq(uint8(transmissionInfo.state), uint8(IRouter.TransmissionState.SUCCEEDED), "state mismatch");
@@ -259,11 +245,8 @@ contract KeystoneForwarder_ReportTest is BaseTest {
     MaliciousReportReceiver s_maliciousReceiver = new MaliciousReportReceiver();
     s_forwarder.report{gas: 500_000}(address(s_maliciousReceiver), report, reportContext, signatures);
 
-    IRouter.TransmissionInfo memory transmissionInfo = s_forwarder.getTransmissionInfo(
-      address(s_maliciousReceiver),
-      executionId,
-      reportId
-    );
+    IRouter.TransmissionInfo memory transmissionInfo =
+      s_forwarder.getTransmissionInfo(address(s_maliciousReceiver), executionId, reportId);
 
     assertEq(transmissionInfo.transmitter, TRANSMITTER, "transmitter mismatch");
     assertEq(uint8(transmissionInfo.state), uint8(IRouter.TransmissionState.FAILED), "state mismatch");
@@ -298,14 +281,8 @@ contract KeystoneForwarder_ReportTest is BaseTest {
     // but new config does
     bytes32 newExecutionId = hex"6d795f657865637574696f6e5f69640000000000000000000000000000000001";
     bytes memory newMetadata = abi.encodePacked(workflowId, workflowName, workflowOwner, reportId);
-    bytes memory newHeader = abi.encodePacked(
-      version,
-      newExecutionId,
-      timestamp,
-      DON_ID,
-      CONFIG_VERSION + 1,
-      newMetadata
-    );
+    bytes memory newHeader =
+      abi.encodePacked(version, newExecutionId, timestamp, DON_ID, CONFIG_VERSION + 1, newMetadata);
     bytes memory newReport = abi.encodePacked(newHeader, rawReports);
     // resign the new report
     bytes[] memory newSignatures = _signReport(newReport, reportContext, requiredSignaturesNum);

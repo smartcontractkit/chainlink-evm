@@ -4,8 +4,9 @@ pragma solidity ^0.8.0;
 // solhint-disable-next-line no-unused-import
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 // solhint-disable-next-line no-unused-import
-import {IForwarder} from "../interfaces/IForwarder.sol";
+
 import {IDelegateForwarder} from "../interfaces/IDelegateForwarder.sol";
+import {IForwarder} from "../interfaces/IForwarder.sol";
 
 import {ArbitrumCrossDomainForwarder} from "./ArbitrumCrossDomainForwarder.sol";
 
@@ -23,7 +24,9 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @param l1OwnerAddr the L1 owner address that will be allowed to call the forward fn
    * @dev Empty constructor required due to inheriting from abstract contract CrossDomainForwarder
    */
-  constructor(address l1OwnerAddr) ArbitrumCrossDomainForwarder(l1OwnerAddr) {}
+  constructor(
+    address l1OwnerAddr
+  ) ArbitrumCrossDomainForwarder(l1OwnerAddr) {}
 
   /**
    * @notice versions:

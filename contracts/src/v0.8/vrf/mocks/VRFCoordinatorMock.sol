@@ -11,7 +11,9 @@ contract VRFCoordinatorMock {
 
   event RandomnessRequest(address indexed sender, bytes32 indexed keyHash, uint256 indexed seed, uint256 fee);
 
-  constructor(address linkAddress) {
+  constructor(
+    address linkAddress
+  ) {
     LINK = LinkTokenInterface(linkAddress);
   }
 
@@ -26,7 +28,7 @@ contract VRFCoordinatorMock {
     uint256 b = 206000;
     require(gasleft() >= b, "not enough gas for consumer");
     // solhint-disable-next-line avoid-low-level-calls, no-unused-vars
-    (bool success, ) = consumerContract.call(resp);
+    (bool success,) = consumerContract.call(resp);
   }
 
   modifier onlyLINK() {

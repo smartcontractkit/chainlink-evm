@@ -36,10 +36,7 @@ contract DummyProtocol {
    * @param targetContract the address of contract where events will be emitted from
    * @param t0 the signature of the event to listen to
    */
-  function getBasicLogTriggerConfig(
-    address targetContract,
-    bytes32 t0
-  ) external view returns (bytes memory logTrigger) {
+  function getBasicLogTriggerConfig(address targetContract, bytes32 t0) external view returns (bytes memory logTrigger) {
     LogTriggerConfig memory cfg = LogTriggerConfig({
       contractAddress: targetContract,
       filterSelector: 0,

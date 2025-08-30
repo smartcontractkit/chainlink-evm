@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {IChannelConfigStore} from "../interfaces/IChannelConfigStore.sol";
-import {Test} from "forge-std/Test.sol";
 import {ChannelConfigStore} from "../ChannelConfigStore.sol";
+import {IChannelConfigStore} from "../interfaces/IChannelConfigStore.sol";
 import {ExposedChannelConfigStore} from "./mocks/ExposedChannelConfigStore.sol";
+import {Test} from "forge-std/Test.sol";
 
 /**
  * @title ChannelConfigStoreTest
@@ -13,6 +13,7 @@ import {ExposedChannelConfigStore} from "./mocks/ExposedChannelConfigStore.sol";
  */
 contract ChannelConfigStoreTest is Test {
   ExposedChannelConfigStore public channelConfigStore;
+
   event NewChannelDefinition(uint256 indexed donId, uint32 version, string url, bytes32 sha);
 
   function setUp() public virtual {

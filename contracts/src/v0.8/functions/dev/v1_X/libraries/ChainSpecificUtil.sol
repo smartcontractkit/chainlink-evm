@@ -41,11 +41,13 @@ library ChainSpecificUtil {
   /// @notice Returns the upper limit estimate of the L1 fees in wei that will be paid for L2 chains
   /// @notice based on the size of the transaction data and the current gas conditions.
   /// @notice This is an "upper limit" as it assumes the transaction data is uncompressed when posted on L1.
-  function _getL1FeeUpperLimit(uint256 calldataSizeBytes) internal view returns (uint256 l1FeeWei) {
+  function _getL1FeeUpperLimit(
+    uint256 calldataSizeBytes
+  ) internal view returns (uint256 l1FeeWei) {
     uint256 chainid = block.chainid;
     if (_isArbitrumChainId(chainid)) {
       // https://docs.arbitrum.io/build-decentralized-apps/how-to-estimate-gas#where-do-we-get-all-this-information-from
-      (, uint256 l1PricePerByte, , , , ) = ARBGAS.getPricesInWei();
+      (, uint256 l1PricePerByte,,,,) = ARBGAS.getPricesInWei();
       return l1PricePerByte * (calldataSizeBytes + ARB_DATA_PADDING_SIZE);
     } else if (_isOptimismChainId(chainid)) {
       return GAS_PRICE_ORACLE.getL1FeeUpperBound(calldataSizeBytes);
@@ -54,22 +56,19 @@ library ChainSpecificUtil {
   }
 
   /// @notice Return true if and only if the provided chain ID is an Arbitrum chain ID.
-  function _isArbitrumChainId(uint256 chainId) internal pure returns (bool) {
-    return
-      chainId == ARB_MAINNET_CHAIN_ID ||
-      chainId == ARB_GOERLI_TESTNET_CHAIN_ID ||
-      chainId == ARB_SEPOLIA_TESTNET_CHAIN_ID;
+  function _isArbitrumChainId(
+    uint256 chainId
+  ) internal pure returns (bool) {
+    return chainId == ARB_MAINNET_CHAIN_ID || chainId == ARB_GOERLI_TESTNET_CHAIN_ID
+      || chainId == ARB_SEPOLIA_TESTNET_CHAIN_ID;
   }
 
   /// @notice Return true if and only if the provided chain ID is an Optimism (or Base) chain ID.
   /// @notice Note that optimism chain id's are also OP stack chain id's.
-  function _isOptimismChainId(uint256 chainId) internal pure returns (bool) {
-    return
-      chainId == OP_MAINNET_CHAIN_ID ||
-      chainId == OP_GOERLI_CHAIN_ID ||
-      chainId == OP_SEPOLIA_CHAIN_ID ||
-      chainId == BASE_MAINNET_CHAIN_ID ||
-      chainId == BASE_GOERLI_CHAIN_ID ||
-      chainId == BASE_SEPOLIA_CHAIN_ID;
+  function _isOptimismChainId(
+    uint256 chainId
+  ) internal pure returns (bool) {
+    return chainId == OP_MAINNET_CHAIN_ID || chainId == OP_GOERLI_CHAIN_ID || chainId == OP_SEPOLIA_CHAIN_ID
+      || chainId == BASE_MAINNET_CHAIN_ID || chainId == BASE_GOERLI_CHAIN_ID || chainId == BASE_SEPOLIA_CHAIN_ID;
   }
 }

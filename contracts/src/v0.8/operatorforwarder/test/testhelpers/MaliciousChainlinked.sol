@@ -1,8 +1,8 @@
 pragma solidity ^0.8.0;
 
-import {MaliciousChainlink} from "./MaliciousChainlink.sol";
-import {Chainlinked, Chainlink} from "./Chainlinked.sol";
 import {LinkTokenInterface} from "../../../shared/interfaces/LinkTokenInterface.sol";
+import {Chainlink, Chainlinked} from "./Chainlinked.sol";
+import {MaliciousChainlink} from "./MaliciousChainlink.sol";
 
 // solhint-disable
 contract MaliciousChainlinked is Chainlinked {
@@ -33,8 +33,7 @@ contract MaliciousChainlinked is Chainlinked {
     emit ChainlinkRequested(requestId);
     LinkTokenInterface link = LinkTokenInterface(chainlinkToken());
     require(
-      link.transferAndCall(oracleAddress(), _amount, encodeTargetRequest(_req)),
-      "Unable to transferAndCall to oracle"
+      link.transferAndCall(oracleAddress(), _amount, encodeTargetRequest(_req)), "Unable to transferAndCall to oracle"
     );
     s_maliciousRequests += 1;
 
@@ -48,8 +47,7 @@ contract MaliciousChainlinked is Chainlinked {
     emit ChainlinkRequested(requestId);
     LinkTokenInterface link = LinkTokenInterface(chainlinkToken());
     require(
-      link.transferAndCall(oracleAddress(), _amount, encodePriceRequest(_req)),
-      "Unable to transferAndCall to oracle"
+      link.transferAndCall(oracleAddress(), _amount, encodePriceRequest(_req)), "Unable to transferAndCall to oracle"
     );
     s_maliciousRequests += 1;
 
@@ -66,51 +64,53 @@ contract MaliciousChainlinked is Chainlinked {
     emit ChainlinkRequested(requestId);
     LinkTokenInterface link = LinkTokenInterface(chainlinkToken());
     require(
-      link.transferAndCall(oracleAddress(), _wei, encodeWithdrawRequest(_req)),
-      "Unable to transferAndCall to oracle"
+      link.transferAndCall(oracleAddress(), _wei, encodeWithdrawRequest(_req)), "Unable to transferAndCall to oracle"
     );
     s_maliciousRequests += 1;
     return requestId;
   }
 
-  function encodeWithdrawRequest(MaliciousChainlink.WithdrawRequest memory _req) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        bytes4(keccak256("withdraw(address,uint256)")),
-        _req.callbackAddress,
-        _req.callbackFunctionId,
-        _req.nonce,
-        _req.buf.buf
-      );
+  function encodeWithdrawRequest(
+    MaliciousChainlink.WithdrawRequest memory _req
+  ) internal pure returns (bytes memory) {
+    return abi.encodeWithSelector(
+      bytes4(keccak256("withdraw(address,uint256)")),
+      _req.callbackAddress,
+      _req.callbackFunctionId,
+      _req.nonce,
+      _req.buf.buf
+    );
   }
 
-  function encodeTargetRequest(Chainlink.Request memory _req) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        bytes4(keccak256("oracleRequest(address,uint256,bytes32,address,bytes4,uint256,uint256,bytes)")),
-        0, // overridden by onTokenTransfer
-        0, // overridden by onTokenTransfer
-        _req.id,
-        _req.callbackAddress,
-        _req.callbackFunctionId,
-        _req.nonce,
-        1,
-        _req.buf.buf
-      );
+  function encodeTargetRequest(
+    Chainlink.Request memory _req
+  ) internal pure returns (bytes memory) {
+    return abi.encodeWithSelector(
+      bytes4(keccak256("oracleRequest(address,uint256,bytes32,address,bytes4,uint256,uint256,bytes)")),
+      0, // overridden by onTokenTransfer
+      0, // overridden by onTokenTransfer
+      _req.id,
+      _req.callbackAddress,
+      _req.callbackFunctionId,
+      _req.nonce,
+      1,
+      _req.buf.buf
+    );
   }
 
-  function encodePriceRequest(Chainlink.Request memory _req) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        bytes4(keccak256("oracleRequest(address,uint256,bytes32,address,bytes4,uint256,uint256,bytes)")),
-        0, // overridden by onTokenTransfer
-        2000000000000000000, // overridden by onTokenTransfer
-        _req.id,
-        _req.callbackAddress,
-        _req.callbackFunctionId,
-        _req.nonce,
-        1,
-        _req.buf.buf
-      );
+  function encodePriceRequest(
+    Chainlink.Request memory _req
+  ) internal pure returns (bytes memory) {
+    return abi.encodeWithSelector(
+      bytes4(keccak256("oracleRequest(address,uint256,bytes32,address,bytes4,uint256,uint256,bytes)")),
+      0, // overridden by onTokenTransfer
+      2000000000000000000, // overridden by onTokenTransfer
+      _req.id,
+      _req.callbackAddress,
+      _req.callbackFunctionId,
+      _req.nonce,
+      1,
+      _req.buf.buf
+    );
   }
 }

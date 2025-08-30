@@ -3,9 +3,10 @@ pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
+
 import {IDestinationVerifierProxy} from "./interfaces/IDestinationVerifierProxy.sol";
 import {IDestinationVerifierProxyVerifier} from "./interfaces/IDestinationVerifierProxyVerifier.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 /**
  * @title DestinationVerifierProxy
@@ -43,10 +44,13 @@ contract DestinationVerifierProxy is IDestinationVerifierProxy, ConfirmedOwner, 
   }
 
   /// @inheritdoc IDestinationVerifierProxy
-  function setVerifier(address verifierAddress) external onlyOwner {
+  function setVerifier(
+    address verifierAddress
+  ) external onlyOwner {
     //check it supports the functions we need
-    if (!IERC165(verifierAddress).supportsInterface(type(IDestinationVerifierProxyVerifier).interfaceId))
+    if (!IERC165(verifierAddress).supportsInterface(type(IDestinationVerifierProxyVerifier).interfaceId)) {
       revert VerifierInvalid(verifierAddress);
+    }
 
     s_verifier = IDestinationVerifierProxyVerifier(verifierAddress);
   }
@@ -64,7 +68,9 @@ contract DestinationVerifierProxy is IDestinationVerifierProxy, ConfirmedOwner, 
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) external pure override returns (bool) {
     return interfaceId == type(IDestinationVerifierProxy).interfaceId;
   }
 }

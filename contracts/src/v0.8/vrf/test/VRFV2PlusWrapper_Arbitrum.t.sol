@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
-import {VRFV2PlusWrapper_Arbitrum} from "../dev/VRFV2PlusWrapper_Arbitrum.sol";
+
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
+import {VRFV2PlusWrapper_Arbitrum} from "../dev/VRFV2PlusWrapper_Arbitrum.sol";
+import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract VRFV2PlusWrapperArbitrumTest is BaseTest {
   /// @dev ARBGAS_ADDR is the address of the ArbGasInfo precompile on Arbitrum.
@@ -44,10 +45,7 @@ contract VRFV2PlusWrapperArbitrumTest is BaseTest {
 
     // Deploy wrapper.
     s_wrapper = new VRFV2PlusWrapper_Arbitrum(
-      address(s_linkToken),
-      address(s_linkNativeFeed),
-      address(s_testCoordinator),
-      uint256(s_wrapperSubscriptionId)
+      address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(s_wrapperSubscriptionId)
     );
 
     // Configure the wrapper.

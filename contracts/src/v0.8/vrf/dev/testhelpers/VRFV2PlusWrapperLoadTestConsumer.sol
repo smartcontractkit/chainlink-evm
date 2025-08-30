@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {VRFV2PlusWrapperConsumerBase} from "../VRFV2PlusWrapperConsumerBase.sol";
 import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
 import {ChainSpecificUtil} from "../../../shared/util/ChainSpecificUtil.sol";
+import {VRFV2PlusWrapperConsumerBase} from "../VRFV2PlusWrapperConsumerBase.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 
 contract VRFV2PlusWrapperLoadTestConsumer is VRFV2PlusWrapperConsumerBase, ConfirmedOwner {
@@ -34,7 +34,9 @@ contract VRFV2PlusWrapperLoadTestConsumer is VRFV2PlusWrapperConsumerBase, Confi
 
   mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
 
-  constructor(address _vrfV2PlusWrapper) ConfirmedOwner(msg.sender) VRFV2PlusWrapperConsumerBase(_vrfV2PlusWrapper) {}
+  constructor(
+    address _vrfV2PlusWrapper
+  ) ConfirmedOwner(msg.sender) VRFV2PlusWrapperConsumerBase(_vrfV2PlusWrapper) {}
 
   function makeRequests(
     uint32 _callbackGasLimit,
@@ -44,12 +46,8 @@ contract VRFV2PlusWrapperLoadTestConsumer is VRFV2PlusWrapperConsumerBase, Confi
   ) external {
     for (uint16 i = 0; i < _requestCount; i++) {
       bytes memory extraArgs = VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}));
-      (uint256 requestId, uint256 paid) = requestRandomness(
-        _callbackGasLimit,
-        _requestConfirmations,
-        _numWords,
-        extraArgs
-      );
+      (uint256 requestId, uint256 paid) =
+        requestRandomness(_callbackGasLimit, _requestConfirmations, _numWords, extraArgs);
       s_lastRequestId = requestId;
 
       uint256 requestBlockNumber = ChainSpecificUtil._getBlockNumber();
@@ -77,12 +75,8 @@ contract VRFV2PlusWrapperLoadTestConsumer is VRFV2PlusWrapperConsumerBase, Confi
   ) external {
     for (uint16 i = 0; i < _requestCount; i++) {
       bytes memory extraArgs = VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true}));
-      (uint256 requestId, uint256 paid) = requestRandomnessPayInNative(
-        _callbackGasLimit,
-        _requestConfirmations,
-        _numWords,
-        extraArgs
-      );
+      (uint256 requestId, uint256 paid) =
+        requestRandomnessPayInNative(_callbackGasLimit, _requestConfirmations, _numWords, extraArgs);
       s_lastRequestId = requestId;
 
       uint256 requestBlockNumber = ChainSpecificUtil._getBlockNumber();
@@ -183,14 +177,18 @@ contract VRFV2PlusWrapperLoadTestConsumer is VRFV2PlusWrapperConsumerBase, Confi
 
   /// @notice withdrawLink withdraws the amount specified in amount to the owner
   /// @param amount the amount to withdraw, in juels
-  function withdrawLink(uint256 amount) external onlyOwner {
+  function withdrawLink(
+    uint256 amount
+  ) external onlyOwner {
     i_linkToken.transfer(owner(), amount);
   }
 
   /// @notice withdrawNative withdraws the amount specified in amount to the owner
   /// @param amount the amount to withdraw, in wei
-  function withdrawNative(uint256 amount) external onlyOwner {
-    (bool success, ) = payable(owner()).call{value: amount}("");
+  function withdrawNative(
+    uint256 amount
+  ) external onlyOwner {
+    (bool success,) = payable(owner()).call{value: amount}("");
     // solhint-disable-next-line gas-custom-errors
     require(success, "withdrawNative failed");
   }

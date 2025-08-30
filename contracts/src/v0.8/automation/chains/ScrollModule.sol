@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {IScrollL1GasPriceOracle} from "../../vendor/@scroll-tech/contracts/src/L2/predeploys/IScrollL1GasPriceOracle.sol";
-import {ChainModuleBase} from "./ChainModuleBase.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {IScrollL1GasPriceOracle} from
+  "../../vendor/@scroll-tech/contracts/src/L2/predeploys/IScrollL1GasPriceOracle.sol";
+import {ChainModuleBase} from "./ChainModuleBase.sol";
 
 contract ScrollModule is ChainModuleBase, ConfirmedOwner {
   error InvalidL1FeeCoefficient(uint8 coefficient);
+
   event L1FeeCoefficientSet(uint8 coefficient);
 
   /// @dev SCROLL_L1_FEE_DATA_PADDING includes 140 bytes for L1 data padding for Scroll
@@ -26,11 +28,15 @@ contract ScrollModule is ChainModuleBase, ConfirmedOwner {
 
   constructor() ConfirmedOwner(msg.sender) {}
 
-  function getCurrentL1Fee(uint256 dataSize) external view override returns (uint256) {
+  function getCurrentL1Fee(
+    uint256 dataSize
+  ) external view override returns (uint256) {
     return (s_l1FeeCoefficient * _getL1Fee(dataSize)) / 100;
   }
 
-  function getMaxL1Fee(uint256 dataSize) external view override returns (uint256) {
+  function getMaxL1Fee(
+    uint256 dataSize
+  ) external view override returns (uint256) {
     return _getL1Fee(dataSize);
   }
 
@@ -38,7 +44,9 @@ contract ScrollModule is ChainModuleBase, ConfirmedOwner {
    * @param dataSize the size of calldata
    * @return l1Fee the L1 fee
    */
-  function _getL1Fee(uint256 dataSize) internal view returns (uint256 l1Fee) {
+  function _getL1Fee(
+    uint256 dataSize
+  ) internal view returns (uint256 l1Fee) {
     // fee is 4 per 0 byte, 16 per non-zero byte. Worst case we can have all non zero-bytes.
     // Instead of setting bytes to non-zero, we initialize 'new bytes' of length 4*dataSize to cover for zero bytes.
     // this is the same as OP.
@@ -59,7 +67,9 @@ contract ScrollModule is ChainModuleBase, ConfirmedOwner {
    * @dev this function can only be invoked by contract owner
    * @param coefficient the new coefficient
    */
-  function setL1FeeCalculation(uint8 coefficient) external onlyOwner {
+  function setL1FeeCalculation(
+    uint8 coefficient
+  ) external onlyOwner {
     if (coefficient > 100) {
       revert InvalidL1FeeCoefficient(coefficient);
     }

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {AutomationCompatibleInterface as KeeperCompatibleInterface} from "../automation/interfaces/AutomationCompatibleInterface.sol";
+import {AutomationCompatibleInterface as KeeperCompatibleInterface} from
+  "../automation/interfaces/AutomationCompatibleInterface.sol";
 import {VRFConsumerBaseV2} from "./VRFConsumerBaseV2.sol";
 import {VRFCoordinatorV2Interface} from "./interfaces/VRFCoordinatorV2Interface.sol";
 
@@ -35,6 +36,7 @@ contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
     uint32 callbackGasLimit;
     uint256 randomness;
   }
+
   mapping(uint256 => RequestRecord) public s_requests; /* request ID */ /* request record */
 
   constructor(
@@ -64,7 +66,7 @@ contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
   // solhint-disable-next-line chainlink-solidity/explicit-returns
   function checkUpkeep(
     bytes calldata /* checkData */
-  ) external view override returns (bool upkeepNeeded, bytes memory /* performData */) {
+  ) external view override returns (bool upkeepNeeded, bytes memory /* performData */ ) {
     upkeepNeeded = (block.timestamp - s_lastTimeStamp) > UPKEEP_INTERVAL;
   }
 
@@ -72,7 +74,9 @@ contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
    * @notice Requests random words from the VRF coordinator if UPKEEP_INTERVAL seconds have elapsed
    * since the last upkeep or since construction of the contract.
    */
-  function performUpkeep(bytes calldata /* performData */) external override {
+  function performUpkeep(
+    bytes calldata /* performData */
+  ) external override {
     if ((block.timestamp - s_lastTimeStamp) > UPKEEP_INTERVAL) {
       s_lastTimeStamp = block.timestamp;
 
@@ -108,12 +112,8 @@ contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
       150000, // callback gas limit
       1 // num words
     );
-    s_requests[requestId] = RequestRecord({
-      requestId: requestId,
-      fulfilled: false,
-      callbackGasLimit: 150000,
-      randomness: 0
-    });
+    s_requests[requestId] =
+      RequestRecord({requestId: requestId, fulfilled: false, callbackGasLimit: 150000, randomness: 0});
     s_vrfRequestCounter++;
   }
 }

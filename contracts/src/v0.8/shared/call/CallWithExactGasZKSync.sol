@@ -16,6 +16,7 @@ library CallWithExactGasZKSync {
   error NotEnoughGasForPubdata();
   /// @notice We assume that no more than `CALL_RETURN_OVERHEAD` ergs are used for the O(1) operations at the end of the execution,
   /// as such relaying the return.
+
   uint256 internal constant CALL_RETURN_OVERHEAD = 400;
 
   bytes4 internal constant NO_CONTRACT_SIG = 0x0c3b563c;
@@ -69,9 +70,7 @@ library CallWithExactGasZKSync {
     assembly {
       // limit our copy to maxReturnBytes bytes
       let toCopy := returndatasize()
-      if gt(toCopy, _maxReturnBytes) {
-        toCopy := _maxReturnBytes
-      }
+      if gt(toCopy, _maxReturnBytes) { toCopy := _maxReturnBytes }
       // Store the length of the copied bytes
       mstore(returnData, toCopy)
       // copy the bytes from retData[0:_toCopy]
@@ -82,9 +81,8 @@ library CallWithExactGasZKSync {
 
     // It is possible that pubdataPublishedAfter < pubdataPublishedBefore if the call, e.g. removes
     // some of the previously created state diffs
-    uint256 pubdataSpent = pubdataPublishedAfter > pubdataPublishedBefore
-      ? pubdataPublishedAfter - pubdataPublishedBefore
-      : 0;
+    uint256 pubdataSpent =
+      pubdataPublishedAfter > pubdataPublishedBefore ? pubdataPublishedAfter - pubdataPublishedBefore : 0;
 
     uint256 pubdataGasRate = SYSTEM_CONTEXT_CONTRACT.gasPerPubdataByte();
 

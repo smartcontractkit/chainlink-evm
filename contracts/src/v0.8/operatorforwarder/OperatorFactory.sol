@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Operator} from "./Operator.sol";
 import {AuthorizedForwarder} from "./AuthorizedForwarder.sol";
+import {Operator} from "./Operator.sol";
 
 // @title Operator Factory
 // @notice Creates Operator contracts for node operators
@@ -16,7 +16,9 @@ contract OperatorFactory {
   event AuthorizedForwarderCreated(address indexed forwarder, address indexed owner, address indexed sender);
 
   // @param linkAddress address
-  constructor(address linkAddress) {
+  constructor(
+    address linkAddress
+  ) {
     linkToken = linkAddress;
   }
 
@@ -67,7 +69,9 @@ contract OperatorFactory {
   }
 
   // @notice indicates whether this factory deployed an address
-  function created(address query) external view returns (bool) {
+  function created(
+    address query
+  ) external view returns (bool) {
     return s_created[query];
   }
 }

@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
-import {FunctionsClientHarness} from "./testhelpers/FunctionsClientHarness.sol";
-import {ZKSyncFunctionsRouterHarness, ZKSyncFunctionsRouter} from "./testhelpers/ZKSyncFunctionsRouterHarness.sol";
-import {FunctionsRouter as FunctionsRouterStable} from "../../v1_0_0/FunctionsRouter.sol";
-import {FunctionsRouterHarness, FunctionsRouter} from "./testhelpers/FunctionsRouterHarness.sol";
-import {FunctionsCoordinatorHarness} from "./testhelpers/FunctionsCoordinatorHarness.sol";
-import {FunctionsBilling} from "../../dev/v1_X/FunctionsBilling.sol";
-import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
 import {MockV3Aggregator} from "../../../shared/mocks/MockV3Aggregator.sol";
+import {FunctionsBilling} from "../../dev/v1_X/FunctionsBilling.sol";
 import {TermsOfServiceAllowList} from "../../dev/v1_X/accessControl/TermsOfServiceAllowList.sol";
 import {TermsOfServiceAllowListConfig} from "../../dev/v1_X/accessControl/interfaces/ITermsOfServiceAllowList.sol";
-import {MockLinkToken} from "./testhelpers/MockLinkToken.sol";
+
 import {FunctionsBillingConfig} from "../../dev/v1_X/interfaces/IFunctionsBilling.sol";
+import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
+import {FunctionsRouter as FunctionsRouterStable} from "../../v1_0_0/FunctionsRouter.sol";
+import {BaseTest} from "./BaseTest.t.sol";
+import {FunctionsClientHarness} from "./testhelpers/FunctionsClientHarness.sol";
+
+import {FunctionsCoordinatorHarness} from "./testhelpers/FunctionsCoordinatorHarness.sol";
+import {FunctionsRouter, FunctionsRouterHarness} from "./testhelpers/FunctionsRouterHarness.sol";
+
+import {MockLinkToken} from "./testhelpers/MockLinkToken.sol";
+import {ZKSyncFunctionsRouter, ZKSyncFunctionsRouterHarness} from "./testhelpers/ZKSyncFunctionsRouterHarness.sol";
 
 import "forge-std/Vm.sol";
 
@@ -50,18 +53,12 @@ contract FunctionsRouterSetup is BaseTest {
     s_linkEthFeed = new MockV3Aggregator(LINK_ETH_DECIMALS, LINK_ETH_RATE);
     s_linkUsdFeed = new MockV3Aggregator(LINK_USD_DECIMALS, LINK_USD_RATE);
     s_functionsCoordinator = new FunctionsCoordinatorHarness(
-      address(s_functionsRouter),
-      getCoordinatorConfig(),
-      address(s_linkEthFeed),
-      address(s_linkUsdFeed)
+      address(s_functionsRouter), getCoordinatorConfig(), address(s_linkEthFeed), address(s_linkUsdFeed)
     );
     address[] memory initialAllowedSenders;
     address[] memory initialBlockedSenders;
     s_termsOfServiceAllowList = new TermsOfServiceAllowList(
-      getTermsOfServiceConfig(),
-      initialAllowedSenders,
-      initialBlockedSenders,
-      MOCK_PREVIOUS_TOS_ADDRESS
+      getTermsOfServiceConfig(), initialAllowedSenders, initialBlockedSenders, MOCK_PREVIOUS_TOS_ADDRESS
     );
   }
 
@@ -71,35 +68,33 @@ contract FunctionsRouterSetup is BaseTest {
     maxCallbackGasLimits[1] = 500_000;
     maxCallbackGasLimits[2] = 1_000_000;
 
-    return
-      FunctionsRouter.Config({
-        maxConsumersPerSubscription: s_maxConsumersPerSubscription,
-        adminFee: s_adminFee,
-        handleOracleFulfillmentSelector: s_handleOracleFulfillmentSelector,
-        maxCallbackGasLimits: maxCallbackGasLimits,
-        gasForCallExactCheck: 5000,
-        subscriptionDepositMinimumRequests: s_subscriptionDepositMinimumRequests,
-        subscriptionDepositJuels: s_subscriptionDepositJuels
-      });
+    return FunctionsRouter.Config({
+      maxConsumersPerSubscription: s_maxConsumersPerSubscription,
+      adminFee: s_adminFee,
+      handleOracleFulfillmentSelector: s_handleOracleFulfillmentSelector,
+      maxCallbackGasLimits: maxCallbackGasLimits,
+      gasForCallExactCheck: 5000,
+      subscriptionDepositMinimumRequests: s_subscriptionDepositMinimumRequests,
+      subscriptionDepositJuels: s_subscriptionDepositJuels
+    });
   }
 
   function getCoordinatorConfig() public view returns (FunctionsBillingConfig memory) {
-    return
-      FunctionsBillingConfig({
-        feedStalenessSeconds: 24 * 60 * 60, // 1 day
-        gasOverheadAfterCallback: 93_942,
-        gasOverheadBeforeCallback: 105_000,
-        requestTimeoutSeconds: 60 * 5, // 5 minutes
-        donFeeCentsUsd: s_donFee,
-        operationFeeCentsUsd: s_operationFee,
-        maxSupportedRequestDataVersion: 1,
-        fulfillmentGasPriceOverEstimationBP: 5000,
-        fallbackNativePerUnitLink: 5000000000000000,
-        fallbackUsdPerUnitLink: 1400000000,
-        fallbackUsdPerUnitLinkDecimals: 8,
-        minimumEstimateGasPriceWei: 1000000000, // 1 gwei
-        transmitTxSizeBytes: 1764
-      });
+    return FunctionsBillingConfig({
+      feedStalenessSeconds: 24 * 60 * 60, // 1 day
+      gasOverheadAfterCallback: 93_942,
+      gasOverheadBeforeCallback: 105_000,
+      requestTimeoutSeconds: 60 * 5, // 5 minutes
+      donFeeCentsUsd: s_donFee,
+      operationFeeCentsUsd: s_operationFee,
+      maxSupportedRequestDataVersion: 1,
+      fulfillmentGasPriceOverEstimationBP: 5000,
+      fallbackNativePerUnitLink: 5000000000000000,
+      fallbackUsdPerUnitLink: 1400000000,
+      fallbackUsdPerUnitLinkDecimals: 8,
+      minimumEstimateGasPriceWei: 1000000000, // 1 gwei
+      transmitTxSizeBytes: 1764
+    });
   }
 
   function getTermsOfServiceConfig() public view returns (TermsOfServiceAllowListConfig memory) {
@@ -130,16 +125,15 @@ contract ZKSyncFunctionsRouterSetup is BaseTest {
     maxCallbackGasLimits[1] = 500_000;
     maxCallbackGasLimits[2] = 1_000_000;
 
-    return
-      FunctionsRouterStable.Config({
-        maxConsumersPerSubscription: s_maxConsumersPerSubscription,
-        adminFee: s_adminFee,
-        handleOracleFulfillmentSelector: s_handleOracleFulfillmentSelector,
-        maxCallbackGasLimits: maxCallbackGasLimits,
-        gasForCallExactCheck: 5000,
-        subscriptionDepositMinimumRequests: s_subscriptionDepositMinimumRequests,
-        subscriptionDepositJuels: s_subscriptionDepositJuels
-      });
+    return FunctionsRouterStable.Config({
+      maxConsumersPerSubscription: s_maxConsumersPerSubscription,
+      adminFee: s_adminFee,
+      handleOracleFulfillmentSelector: s_handleOracleFulfillmentSelector,
+      maxCallbackGasLimits: maxCallbackGasLimits,
+      gasForCallExactCheck: 5000,
+      subscriptionDepositMinimumRequests: s_subscriptionDepositMinimumRequests,
+      subscriptionDepositJuels: s_subscriptionDepositJuels
+    });
   }
 }
 
@@ -170,14 +164,12 @@ contract FunctionsDONSetup is FunctionsRouterSetup {
   uint64 internal s_offchainConfigVersion = 1;
   bytes internal s_offchainConfig = new bytes(0);
 
-  bytes s_thresholdKey =
-    vm.parseBytes(
-      "0x7b2247726f7570223a2250323536222c22475f626172223a22424f2f344358424575792f64547a436a612b614e774d666c2b645a77346d325036533246536b4966472f6633527547327337392b494e79642b4639326a346f586e67433657427561556a752b4a637a32377834484251343d222c2248223a224250532f72485065377941467232416c447a79395549466258776d46384666756632596d514177666e3342373844336f474845643247474536466e616f34552b4c6a4d4d5756792b464f7075686e77554f6a75427a64773d222c22484172726179223a5b22424d75546862414473337768316e67764e56792f6e3841316d42674b5a4b4c475259385937796a39695769337242502f316a32347571695869534531437554384c6f51446a386248466d384345477667517158494e62383d222c224248687974716d6e34314373322f4658416f43737548687151486236382f597930524b2b41354c6647654f645a78466f4e386c442b45656e4b587a544943784f6d3231636d535447364864484a6e336342645663714c673d222c22424d794e7a4534616e596258474d72694f52664c52634e7239766c347878654279316432452f4464335a744630546372386267567435582b2b42355967552b4b7875726e512f4d656b6857335845782b79506e4e4f584d3d222c22424d6a753272375a657a4a45545539413938746a6b6d547966796a79493735345742555835505174724a6578346d6766366130787373426d50325a7472412b55576d504e592b6d4664526b46674f7944694c53614e59453d225d7d"
-    );
-  bytes s_donKey =
-    vm.parseBytes(
-      "0xf2f9c47363202d89aa9fa70baf783d70006fe493471ac8cfa82f1426fd09f16a5f6b32b7c4b5d5165cd147a6e513ba4c0efd39d969d6b20a8a21126f0411b9c6"
-    );
+  bytes s_thresholdKey = vm.parseBytes(
+    "0x7b2247726f7570223a2250323536222c22475f626172223a22424f2f344358424575792f64547a436a612b614e774d666c2b645a77346d325036533246536b4966472f6633527547327337392b494e79642b4639326a346f586e67433657427561556a752b4a637a32377834484251343d222c2248223a224250532f72485065377941467232416c447a79395549466258776d46384666756632596d514177666e3342373844336f474845643247474536466e616f34552b4c6a4d4d5756792b464f7075686e77554f6a75427a64773d222c22484172726179223a5b22424d75546862414473337768316e67764e56792f6e3841316d42674b5a4b4c475259385937796a39695769337242502f316a32347571695869534531437554384c6f51446a386248466d384345477667517158494e62383d222c224248687974716d6e34314373322f4658416f43737548687151486236382f597930524b2b41354c6647654f645a78466f4e386c442b45656e4b587a544943784f6d3231636d535447364864484a6e336342645663714c673d222c22424d794e7a4534616e596258474d72694f52664c52634e7239766c347878654279316432452f4464335a744630546372386267567435582b2b42355967552b4b7875726e512f4d656b6857335845782b79506e4e4f584d3d222c22424d6a753272375a657a4a45545539413938746a6b6d547966796a79493735345742555835505174724a6578346d6766366130787373426d50325a7472412b55576d504e592b6d4664526b46674f7944694c53614e59453d225d7d"
+  );
+  bytes s_donKey = vm.parseBytes(
+    "0xf2f9c47363202d89aa9fa70baf783d70006fe493471ac8cfa82f1426fd09f16a5f6b32b7c4b5d5165cd147a6e513ba4c0efd39d969d6b20a8a21126f0411b9c6"
+  );
 
   function setUp() public virtual override {
     FunctionsRouterSetup.setUp();
@@ -196,12 +188,7 @@ contract FunctionsDONSetup is FunctionsRouterSetup {
 
     // set OCR config
     s_functionsCoordinator.setConfig(
-      s_signers,
-      s_transmitters,
-      s_f,
-      s_onchainConfig,
-      s_offchainConfigVersion,
-      s_offchainConfig
+      s_signers, s_transmitters, s_f, s_onchainConfig, s_offchainConfigVersion, s_offchainConfig
     );
   }
 
@@ -299,6 +286,7 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
     bytes[] bytesArgs;
     uint32 callbackGasLimit;
   }
+
   struct Request {
     RequestData requestData;
     bytes32 requestId;
@@ -333,39 +321,35 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
 
   /// @notice Predicts the estimated cost (maximum cost) of a request
   /// @dev Meant only for Ethereum, does not add L2 chains' L1 fee
-  function _getExpectedCostEstimate(uint256 callbackGas) internal view returns (uint96) {
+  function _getExpectedCostEstimate(
+    uint256 callbackGas
+  ) internal view returns (uint96) {
     uint256 gasPrice = TX_GASPRICE_START < getCoordinatorConfig().minimumEstimateGasPriceWei
       ? getCoordinatorConfig().minimumEstimateGasPriceWei
       : TX_GASPRICE_START;
-    uint256 gasPriceWithOverestimation = gasPrice +
-      ((gasPrice * getCoordinatorConfig().fulfillmentGasPriceOverEstimationBP) / 10_000);
+    uint256 gasPriceWithOverestimation =
+      gasPrice + ((gasPrice * getCoordinatorConfig().fulfillmentGasPriceOverEstimationBP) / 10_000);
     uint96 juelsPerGas = uint96((1e18 * gasPriceWithOverestimation) / uint256(LINK_ETH_RATE));
-    uint96 gasOverheadJuels = juelsPerGas *
-      ((getCoordinatorConfig().gasOverheadBeforeCallback + getCoordinatorConfig().gasOverheadAfterCallback));
+    uint96 gasOverheadJuels = juelsPerGas
+      * ((getCoordinatorConfig().gasOverheadBeforeCallback + getCoordinatorConfig().gasOverheadAfterCallback));
     uint96 callbackGasCostJuels = uint96(juelsPerGas * callbackGas);
     bytes memory emptyData = new bytes(0);
-    return
-      gasOverheadJuels +
-      s_functionsCoordinator.getDONFeeJuels(emptyData) +
-      s_adminFee +
-      s_functionsCoordinator.getOperationFeeJuels() +
-      callbackGasCostJuels;
+    return gasOverheadJuels + s_functionsCoordinator.getDONFeeJuels(emptyData) + s_adminFee
+      + s_functionsCoordinator.getOperationFeeJuels() + callbackGasCostJuels;
   }
 
   /// @notice Predicts the actual cost of a request
   /// @dev Meant only for Ethereum, does not add L2 chains' L1 fee
-  function _getExpectedCost(uint256 gasUsed) internal view returns (uint96) {
+  function _getExpectedCost(
+    uint256 gasUsed
+  ) internal view returns (uint96) {
     uint96 juelsPerGas = uint96((1e18 * TX_GASPRICE_START) / uint256(LINK_ETH_RATE));
-    uint96 gasOverheadJuels = juelsPerGas *
-      (getCoordinatorConfig().gasOverheadBeforeCallback + getCoordinatorConfig().gasOverheadAfterCallback);
+    uint96 gasOverheadJuels =
+      juelsPerGas * (getCoordinatorConfig().gasOverheadBeforeCallback + getCoordinatorConfig().gasOverheadAfterCallback);
     uint96 callbackGasCostJuels = uint96(juelsPerGas * gasUsed);
     bytes memory emptyData = new bytes(0);
-    return
-      gasOverheadJuels +
-      s_functionsCoordinator.getDONFeeJuels(emptyData) +
-      s_adminFee +
-      s_functionsCoordinator.getOperationFeeJuels() +
-      callbackGasCostJuels;
+    return gasOverheadJuels + s_functionsCoordinator.getDONFeeJuels(emptyData) + s_adminFee
+      + s_functionsCoordinator.getOperationFeeJuels() + callbackGasCostJuels;
   }
 
   /// @notice Send a request and store information about it in s_requests
@@ -392,20 +376,13 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
     vm.recordLogs();
 
     bytes32 requestId = FunctionsClientHarness(client).sendRequest(
-      s_donId,
-      sourceCode,
-      secrets,
-      args,
-      bytesArgs,
-      s_subscriptionId,
-      callbackGasLimit
+      s_donId, sourceCode, secrets, args, bytesArgs, s_subscriptionId, callbackGasLimit
     );
 
     // Get commitment data from OracleRequest event log
     Vm.Log[] memory entries = vm.getRecordedLogs();
-    (, , , , , , , FunctionsResponse.Commitment memory commitment) = abi.decode(
-      entries[0].data,
-      (address, uint64, address, bytes, uint16, bytes32, uint64, FunctionsResponse.Commitment)
+    (,,,,,,, FunctionsResponse.Commitment memory commitment) = abi.decode(
+      entries[0].data, (address, uint64, address, bytes, uint16, bytes32, uint64, FunctionsResponse.Commitment)
     );
     s_requests[requestNumberKey] = Request({
       requestData: RequestData({
@@ -451,13 +428,7 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
     uint32 callbackGasLimit
   ) internal {
     _sendAndStoreRequest(
-      requestNumberKey,
-      sourceCode,
-      secrets,
-      args,
-      bytesArgs,
-      callbackGasLimit,
-      address(s_functionsClient)
+      requestNumberKey, sourceCode, secrets, args, bytesArgs, callbackGasLimit, address(s_functionsClient)
     );
   }
 
@@ -549,11 +520,8 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
     signerPrivateKeys[0] = NOP_SIGNER_PRIVATE_KEY_1;
     signerPrivateKeys[1] = NOP_SIGNER_PRIVATE_KEY_2;
     signerPrivateKeys[2] = NOP_SIGNER_PRIVATE_KEY_3;
-    (bytes32[] memory rawRs, bytes32[] memory rawSs, bytes32 rawVs) = _signReport(
-      report,
-      reportContext,
-      signerPrivateKeys
-    );
+    (bytes32[] memory rawRs, bytes32[] memory rawSs, bytes32 rawVs) =
+      _signReport(report, reportContext, signerPrivateKeys);
 
     return Report({report: report, reportContext: reportContext, rs: rawRs, ss: rawSs, vs: rawVs});
   }
@@ -597,7 +565,7 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
 
     if (expectedToSucceed) {
       // Get actual cost from RequestProcessed event log
-      (uint96 totalCostJuels, , , , , ) = abi.decode(
+      (uint96 totalCostJuels,,,,,) = abi.decode(
         vm.getRecordedLogs()[requestProcessedStartIndex].data,
         (uint96, address, FunctionsResponse.FulfillResult, bytes, bytes, bytes)
       );
@@ -679,11 +647,7 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
   /// @dev @param expectedToSucceed is overloaded to give the value as true - The report transmission is expected to produce a RequestProcessed event for every fulfillment
   /// @dev @param requestProcessedIndex is overloaded to give requestProcessedIndex as 3 (happy path value)] - On a successful fulfillment the Router will emit a RequestProcessed event. To grab that event we must know the order at which this event was thrown in the report transmission lifecycle. This can change depending on the test setup (e.g. the Client contract gives an extra event during its callback)
   /// @dev @param transmitterGasToUse is overloaded to give transmitterGasToUse as 0] - Sends the `.report` transaction with the default amount of gas
-  function _reportAndStore(
-    uint256[] memory requestNumberKeys,
-    string[] memory results,
-    bytes[] memory errors
-  ) internal {
+  function _reportAndStore(uint256[] memory requestNumberKeys, string[] memory results, bytes[] memory errors) internal {
     _reportAndStore(requestNumberKeys, results, errors, NOP_TRANSMITTER_ADDRESS_1);
   }
 }

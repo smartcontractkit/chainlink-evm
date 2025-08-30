@@ -23,7 +23,9 @@ interface IFunctionsSubscriptions {
   /// @notice Get details about a subscription.
   /// @param subscriptionId - the ID of the subscription
   /// @return subscription - see IFunctionsSubscriptions.Subscription for more information on the structure
-  function getSubscription(uint64 subscriptionId) external view returns (Subscription memory);
+  function getSubscription(
+    uint64 subscriptionId
+  ) external view returns (Subscription memory);
 
   /// @notice Retrieve details about multiple subscriptions using an inclusive range
   /// @param subscriptionIdStart - the ID of the subscription to start the range at
@@ -51,7 +53,9 @@ interface IFunctionsSubscriptions {
   /// @notice Time out all expired requests: unlocks funds and removes the ability for the request to be fulfilled
   /// @param requestsToTimeoutByCommitment - A list of request commitments to time out
   /// @dev The commitment can be found on the "OracleRequest" event created when sending the request.
-  function timeoutRequests(FunctionsResponse.Commitment[] calldata requestsToTimeoutByCommitment) external;
+  function timeoutRequests(
+    FunctionsResponse.Commitment[] calldata requestsToTimeoutByCommitment
+  ) external;
 
   /// @notice Oracle withdraw LINK earned through fulfilling requests
   /// @notice If amount is 0 the full balance will be withdrawn
@@ -64,12 +68,16 @@ interface IFunctionsSubscriptions {
   /// @dev Only callable by the Router Owner
   /// @param subscriptionId subscription id
   /// @dev notably can be called even if there are pending requests, outstanding ones may fail onchain
-  function ownerCancelSubscription(uint64 subscriptionId) external;
+  function ownerCancelSubscription(
+    uint64 subscriptionId
+  ) external;
 
   /// @notice Recover link sent with transfer instead of transferAndCall.
   /// @dev Only callable by the Router Owner
   /// @param to address to send link to
-  function recoverFunds(address to) external;
+  function recoverFunds(
+    address to
+  ) external;
 
   /// @notice Create a new subscription.
   /// @return subscriptionId - A unique subscription id.
@@ -89,7 +97,9 @@ interface IFunctionsSubscriptions {
   /// @dev    address(ROUTER),
   /// @dev    amount,
   /// @dev    abi.encode(subscriptionId));
-  function createSubscriptionWithConsumer(address consumer) external returns (uint64 subscriptionId);
+  function createSubscriptionWithConsumer(
+    address consumer
+  ) external returns (uint64 subscriptionId);
 
   /// @notice Propose a new owner for a subscription.
   /// @dev Only callable by the Subscription's owner
@@ -100,7 +110,9 @@ interface IFunctionsSubscriptions {
   /// @notice Accept an ownership transfer.
   /// @param subscriptionId - ID of the subscription
   /// @dev will revert if original owner of subscriptionId has not requested that msg.sender become the new owner.
-  function acceptSubscriptionOwnerTransfer(uint64 subscriptionId) external;
+  function acceptSubscriptionOwnerTransfer(
+    uint64 subscriptionId
+  ) external;
 
   /// @notice Remove a consumer from a Chainlink Functions subscription.
   /// @dev Only callable by the Subscription's owner
@@ -125,7 +137,9 @@ interface IFunctionsSubscriptions {
   /// @return true if there exists at least one unfulfilled request for the subscription, false otherwise.
   /// @dev Looping is bounded to MAX_CONSUMERS*(number of DONs).
   /// @dev Used to disable subscription canceling while outstanding request are present.
-  function pendingRequestExists(uint64 subscriptionId) external view returns (bool);
+  function pendingRequestExists(
+    uint64 subscriptionId
+  ) external view returns (bool);
 
   /// @notice Set subscription specific flags for a subscription.
   /// Each byte of the flag is used to represent a resource tier that the subscription can utilize.
@@ -136,5 +150,7 @@ interface IFunctionsSubscriptions {
   /// @notice Get flags for a given subscription.
   /// @param subscriptionId - ID of the subscription
   /// @return flags - current flag values
-  function getFlags(uint64 subscriptionId) external view returns (bytes32);
+  function getFlags(
+    uint64 subscriptionId
+  ) external view returns (bytes32);
 }

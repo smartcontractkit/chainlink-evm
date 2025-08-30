@@ -3,11 +3,11 @@ pragma solidity 0.8.24;
 
 import {ISequencerUptimeFeed} from "../../../interfaces/ISequencerUptimeFeed.sol";
 
+import {BaseValidator} from "../../../base/BaseValidator.sol";
+import {OptimismSequencerUptimeFeed} from "../../../optimism/OptimismSequencerUptimeFeed.sol";
+import {OptimismValidator} from "../../../optimism/OptimismValidator.sol";
 import {MockOptimismL1CrossDomainMessenger} from "../../mocks/MockOptimismL1CrossDomainMessenger.sol";
 import {MockOptimismL2CrossDomainMessenger} from "../../mocks/MockOptimismL2CrossDomainMessenger.sol";
-import {OptimismSequencerUptimeFeed} from "../../../optimism/OptimismSequencerUptimeFeed.sol";
-import {BaseValidator} from "../../../base/BaseValidator.sol";
-import {OptimismValidator} from "../../../optimism/OptimismValidator.sol";
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract OptimismValidator_Setup is L2EPTest {
@@ -30,15 +30,11 @@ contract OptimismValidator_Setup is L2EPTest {
     s_mockOptimismL2CrossDomainMessenger = new MockOptimismL2CrossDomainMessenger();
 
     s_optimismSequencerUptimeFeed = new OptimismSequencerUptimeFeed(
-      address(s_mockOptimismL1CrossDomainMessenger),
-      address(s_mockOptimismL2CrossDomainMessenger),
-      true
+      address(s_mockOptimismL1CrossDomainMessenger), address(s_mockOptimismL2CrossDomainMessenger), true
     );
 
     s_optimismValidator = new OptimismValidator(
-      address(s_mockOptimismL1CrossDomainMessenger),
-      address(s_optimismSequencerUptimeFeed),
-      INIT_GAS_LIMIT
+      address(s_mockOptimismL1CrossDomainMessenger), address(s_optimismSequencerUptimeFeed), INIT_GAS_LIMIT
     );
   }
 }

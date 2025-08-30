@@ -29,7 +29,9 @@ contract MockV3Aggregator is AggregatorV2V3Interface {
     updateAnswer(_initialAnswer);
   }
 
-  function updateAnswer(int256 _answer) public {
+  function updateAnswer(
+    int256 _answer
+  ) public {
     latestAnswer = _answer;
     latestTimestamp = block.timestamp;
     latestRound++;

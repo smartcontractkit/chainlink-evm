@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/** ****************************************************************************
+/**
+ *
  * @notice Interface for contracts using VRF randomness
  * *****************************************************************************
  * @dev PURPOSE
@@ -97,12 +98,15 @@ pragma solidity ^0.8.4;
 abstract contract VRFConsumerBaseV2 {
   error OnlyCoordinatorCanFulfill(address have, address want);
   // solhint-disable-next-line chainlink-solidity/prefix-immutable-variables-with-i
+
   address private immutable vrfCoordinator;
 
   /**
    * @param _vrfCoordinator address of VRFCoordinator contract
    */
-  constructor(address _vrfCoordinator) {
+  constructor(
+    address _vrfCoordinator
+  ) {
     vrfCoordinator = _vrfCoordinator;
   }
 

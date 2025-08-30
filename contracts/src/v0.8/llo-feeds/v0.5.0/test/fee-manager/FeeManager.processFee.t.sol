@@ -2,8 +2,9 @@
 pragma solidity 0.8.19;
 
 import {Common} from "../../../libraries/Common.sol";
-import "./BaseFeeManager.t.sol";
+
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
+import "./BaseFeeManager.t.sol";
 
 /**
  * @title BaseFeeManagerTest
@@ -79,11 +80,7 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
   function test_processFeeWithWithCorruptQuotePayload() public {
     //get the default payload
     bytes memory payload = abi.encode(
-      [DEFAULT_CONFIG_DIGEST, 0, 0],
-      getV3Report(DEFAULT_FEED_1_V3),
-      new bytes32[](1),
-      new bytes32[](1),
-      bytes32("")
+      [DEFAULT_CONFIG_DIGEST, 0, 0], getV3Report(DEFAULT_FEED_1_V3), new bytes32[](1), new bytes32[](1), bytes32("")
     );
 
     //expect an evm revert as the quote is corrupt
@@ -291,11 +288,7 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
   function test_V1PayloadVerifies() public {
     //replicate a default payload
     bytes memory payload = abi.encode(
-      [DEFAULT_CONFIG_DIGEST, 0, 0],
-      getV2Report(DEFAULT_FEED_1_V1),
-      new bytes32[](1),
-      new bytes32[](1),
-      bytes32("")
+      [DEFAULT_CONFIG_DIGEST, 0, 0], getV2Report(DEFAULT_FEED_1_V1), new bytes32[](1), new bytes32[](1), bytes32("")
     );
 
     //processing the fee will transfer the link from the user to the rewardManager
@@ -356,9 +349,8 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
 
   function test_processFeeWithZeroNativeNonZeroLinkWithNativeQuote() public {
     //get the default payload
-    bytes memory payload = getPayload(
-      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, DEFAULT_REPORT_LINK_FEE, 0)
-    );
+    bytes memory payload =
+      getPayload(getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, DEFAULT_REPORT_LINK_FEE, 0));
 
     //call processFee should not revert as the fee is 0
     processFee(payload, PROXY, address(native), 0);
@@ -366,9 +358,8 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
 
   function test_processFeeWithZeroNativeNonZeroLinkWithLinkQuote() public {
     //get the default payload
-    bytes memory payload = getPayload(
-      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, DEFAULT_REPORT_LINK_FEE, 0)
-    );
+    bytes memory payload =
+      getPayload(getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, DEFAULT_REPORT_LINK_FEE, 0));
 
     //approve the link to be transferred from the from the subscriber to the rewardManager
     approveLink(address(rewardManager), DEFAULT_REPORT_LINK_FEE, USER);
@@ -388,9 +379,8 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
     mintLink(address(feeManager), DEFAULT_REPORT_LINK_FEE);
 
     //get the default payload
-    bytes memory payload = getPayload(
-      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, 0, DEFAULT_REPORT_NATIVE_FEE)
-    );
+    bytes memory payload =
+      getPayload(getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, 0, DEFAULT_REPORT_NATIVE_FEE));
 
     //approve the native to be transferred from the user
     approveNative(address(feeManager), DEFAULT_REPORT_NATIVE_FEE, USER);
@@ -413,9 +403,8 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
 
   function test_processFeeWithZeroLinkNonZeroNativeWithLinkQuote() public {
     //get the default payload
-    bytes memory payload = getPayload(
-      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, 0, DEFAULT_REPORT_NATIVE_FEE)
-    );
+    bytes memory payload =
+      getPayload(getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, 0, DEFAULT_REPORT_NATIVE_FEE));
 
     //call processFee should not revert as the fee is 0
     processFee(payload, USER, address(link), 0);
@@ -423,9 +412,8 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
 
   function test_processFeeWithZeroNativeNonZeroLinkReturnsChange() public {
     //get the default payload
-    bytes memory payload = getPayload(
-      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, 0, DEFAULT_REPORT_NATIVE_FEE)
-    );
+    bytes memory payload =
+      getPayload(getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, block.timestamp, 0, DEFAULT_REPORT_NATIVE_FEE));
 
     //call processFee should not revert as the fee is 0
     processFee(payload, USER, address(link), DEFAULT_REPORT_NATIVE_FEE);

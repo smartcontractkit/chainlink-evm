@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {BlockhashStoreInterface} from "../../interfaces/BlockhashStoreInterface.sol";
-import {VRFOld} from "./VRFOld.sol";
-import {VRFTypes} from "../../VRFTypes.sol";
-import {VRFConsumerBaseV2Plus, IVRFMigratableConsumerV2Plus} from "../VRFConsumerBaseV2Plus.sol";
 import {ChainSpecificUtil} from "../../../shared/util/ChainSpecificUtil.sol";
+import {VRFTypes} from "../../VRFTypes.sol";
+import {BlockhashStoreInterface} from "../../interfaces/BlockhashStoreInterface.sol";
+
 import {SubscriptionAPI} from "../SubscriptionAPI.sol";
-import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
+import {IVRFMigratableConsumerV2Plus, VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
+
 import {IVRFCoordinatorV2PlusMigration} from "../interfaces/IVRFCoordinatorV2PlusMigration.sol";
+import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
+import {VRFOld} from "./VRFOld.sol";
 // solhint-disable-next-line no-unused-import
 import {IVRFCoordinatorV2Plus, IVRFSubscriptionV2Plus} from "../interfaces/IVRFCoordinatorV2Plus.sol";
 
@@ -26,6 +28,7 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
   uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5_000;
   // upper bound limit for premium percentages to make sure fee calculations don't overflow
   uint8 private constant PREMIUM_PERCENTAGE_MAX = 155;
+
   error InvalidRequestConfirmations(uint16 have, uint16 min, uint16 max);
   error GasLimitTooBig(uint32 have, uint32 want);
   error NumWordsTooBig(uint32 have, uint32 want);
@@ -50,6 +53,7 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
   mapping(bytes32 => ProvingKey) /* keyHash */ /* provingKey */ public s_provingKeys;
   bytes32[] public s_provingKeyHashes;
   mapping(uint256 => bytes32) /* requestID */ /* commitment */ public s_requestCommitments;
+
   event ProvingKeyRegistered(bytes32 keyHash, uint64 maxGas);
   event ProvingKeyDeregistered(bytes32 keyHash, uint64 maxGas);
 
@@ -91,7 +95,9 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
 
   event FallbackWeiPerUnitLinkUsed(uint256 requestId, int256 fallbackWeiPerUnitLink);
 
-  constructor(address blockhashStore) SubscriptionAPI() {
+  constructor(
+    address blockhashStore
+  ) SubscriptionAPI() {
     BLOCKHASH_STORE = BlockhashStoreInterface(blockhashStore);
   }
 
@@ -113,7 +119,9 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
    * @notice Deregisters a proving key.
    * @param publicProvingKey key that oracle can use to submit vrf fulfillments
    */
-  function deregisterProvingKey(uint256[2] calldata publicProvingKey) external onlyOwner {
+  function deregisterProvingKey(
+    uint256[2] calldata publicProvingKey
+  ) external onlyOwner {
     bytes32 kh = hashOfKey(publicProvingKey);
     ProvingKey memory key = s_provingKeys[kh];
     if (!key.exists) {
@@ -136,7 +144,9 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
    * @notice Returns the proving key hash key associated with this public key
    * @param publicKey the key to return the hash of
    */
-  function hashOfKey(uint256[2] memory publicKey) public pure returns (bytes32) {
+  function hashOfKey(
+    uint256[2] memory publicKey
+  ) public pure returns (bytes32) {
     return keccak256(abi.encode(publicKey));
   }
 
@@ -165,9 +175,7 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
   ) external onlyOwner {
     if (minimumRequestConfirmations > MAX_REQUEST_CONFIRMATIONS) {
       revert InvalidRequestConfirmations(
-        minimumRequestConfirmations,
-        minimumRequestConfirmations,
-        MAX_REQUEST_CONFIRMATIONS
+        minimumRequestConfirmations, minimumRequestConfirmations, MAX_REQUEST_CONFIRMATIONS
       );
     }
     if (fallbackWeiPerUnitLink <= 0) {
@@ -210,7 +218,9 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
   /// @dev Convert the extra args bytes into a struct
   /// @param extraArgs The extra args bytes
   /// @return The extra args struct
-  function _fromBytes(bytes calldata extraArgs) internal pure returns (VRFV2PlusClient.ExtraArgsV1 memory) {
+  function _fromBytes(
+    bytes calldata extraArgs
+  ) internal pure returns (VRFV2PlusClient.ExtraArgsV1 memory) {
     if (extraArgs.length == 0) {
       return VRFV2PlusClient.ExtraArgsV1({nativePayment: false});
     }
@@ -261,13 +271,11 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
     }
     // Input validation using the config storage word.
     if (
-      req.requestConfirmations < s_config.minimumRequestConfirmations ||
-      req.requestConfirmations > MAX_REQUEST_CONFIRMATIONS
+      req.requestConfirmations < s_config.minimumRequestConfirmations
+        || req.requestConfirmations > MAX_REQUEST_CONFIRMATIONS
     ) {
       revert InvalidRequestConfirmations(
-        req.requestConfirmations,
-        s_config.minimumRequestConfirmations,
-        MAX_REQUEST_CONFIRMATIONS
+        req.requestConfirmations, s_config.minimumRequestConfirmations, MAX_REQUEST_CONFIRMATIONS
       );
     }
     // No lower bound on the requested gas limit. A user could request 0
@@ -339,19 +347,13 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
       // as we do not want to provide them with less, however that check itself costs
       // gas.  GAS_FOR_CALL_EXACT_CHECK ensures we have at least enough gas to be able
       // to revert if gasAmount >  63//64*gas available.
-      if lt(g, GAS_FOR_CALL_EXACT_CHECK) {
-        revert(0, 0)
-      }
+      if lt(g, GAS_FOR_CALL_EXACT_CHECK) { revert(0, 0) }
       g := sub(g, GAS_FOR_CALL_EXACT_CHECK)
       // if g - g//64 <= gasAmount, revert
       // (we subtract g//64 because of EIP-150)
-      if iszero(gt(sub(g, div(g, 64)), gasAmount)) {
-        revert(0, 0)
-      }
+      if iszero(gt(sub(g, div(g, 64)), gasAmount)) { revert(0, 0) }
       // solidity calls check that a contract actually exists at the destination, so we do the same
-      if iszero(extcodesize(target)) {
-        revert(0, 0)
-      }
+      if iszero(extcodesize(target)) { revert(0, 0) }
       // call and return whether we succeeded. ignore return data
       // call(gas,addr,value,argsOffset,argsLength,retOffset,retLength)
       success := call(gasAmount, target, 0, add(data, 0x20), mload(data), 0, 0)
@@ -381,8 +383,10 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
       revert NoCorrespondingRequest();
     }
     if (
-      commitment !=
-      keccak256(abi.encode(requestId, rc.blockNum, rc.subId, rc.callbackGasLimit, rc.numWords, rc.sender, rc.extraArgs))
+      commitment
+        != keccak256(
+          abi.encode(requestId, rc.blockNum, rc.subId, rc.callbackGasLimit, rc.numWords, rc.sender, rc.extraArgs)
+        )
     ) {
       revert IncorrectCommitment();
     }
@@ -581,12 +585,12 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
     // Will return non-zero on chains that have this enabled
     uint256 l1CostWei = ChainSpecificUtil._getCurrentTxL1GasFees(msg.data);
     // (1e18 juels/link) ((wei/gas * gas) + l1wei) / (wei/link) = juels
-    uint256 paymentNoFee = (1e18 *
-      (weiPerUnitGas * (s_config.gasAfterPaymentCalculation + startGas - gasleft()) + l1CostWei)) /
-      uint256(weiPerUnitLink);
+    uint256 paymentNoFee = (
+      1e18 * (weiPerUnitGas * (s_config.gasAfterPaymentCalculation + startGas - gasleft()) + l1CostWei)
+    ) / uint256(weiPerUnitLink);
     // calculate the flat fee in wei
-    uint256 flatFeeWei = 1e12 *
-      uint256(s_config.fulfillmentFlatFeeNativePPM - s_config.fulfillmentFlatFeeLinkDiscountPPM);
+    uint256 flatFeeWei =
+      1e12 * uint256(s_config.fulfillmentFlatFeeNativePPM - s_config.fulfillmentFlatFeeLinkDiscountPPM);
     uint256 flatFeeJuels = (1e18 * flatFeeWei) / uint256(weiPerUnitLink);
     uint256 payment;
     if (onlyPremium) {
@@ -603,7 +607,7 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
   function _getFeedData() private view returns (int256 weiPerUnitLink, bool isFeedStale) {
     uint32 stalenessSeconds = s_config.stalenessSeconds;
     uint256 timestamp;
-    (, weiPerUnitLink, , timestamp, ) = LINK_NATIVE_FEED.latestRoundData();
+    (, weiPerUnitLink,, timestamp,) = LINK_NATIVE_FEED.latestRoundData();
     // solhint-disable-next-line not-rely-on-time
     isFeedStale = stalenessSeconds > 0 && stalenessSeconds < block.timestamp - timestamp;
     if (isFeedStale) {
@@ -615,7 +619,9 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
   /**
    * @inheritdoc IVRFSubscriptionV2Plus
    */
-  function pendingRequestExists(uint256 subId) public view override returns (bool) {
+  function pendingRequestExists(
+    uint256 subId
+  ) public view override returns (bool) {
     address[] storage consumers = s_subscriptionConfigs[subId].consumers;
     uint256 consumersLength = consumers.length;
     if (consumersLength == 0) {
@@ -666,10 +672,11 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
     _cancelSubscriptionHelper(subId, to);
   }
 
-  /***************************************************************************
+  /**
+   *
    * Section: Migration
-   ***************************************************************************/
-
+   *
+   */
   address[] internal s_migrationTargets;
 
   /// @dev Emitted when new coordinator is registered as migratable target
@@ -700,7 +707,9 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
     uint96 nativeBalance;
   }
 
-  function _isTargetRegistered(address target) internal view returns (bool) {
+  function _isTargetRegistered(
+    address target
+  ) internal view returns (bool) {
     uint256 migrationTargetsLength = s_migrationTargets.length;
     for (uint256 i = 0; i < migrationTargetsLength; ++i) {
       if (s_migrationTargets[i] == target) {
@@ -710,7 +719,9 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
     return false;
   }
 
-  function registerMigratableCoordinator(address target) external onlyOwner {
+  function registerMigratableCoordinator(
+    address target
+  ) external onlyOwner {
     if (_isTargetRegistered(target)) {
       revert CoordinatorAlreadyRegistered(target);
     }
@@ -718,7 +729,9 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
     emit CoordinatorRegistered(target);
   }
 
-  function deregisterMigratableCoordinator(address target) external onlyOwner {
+  function deregisterMigratableCoordinator(
+    address target
+  ) external onlyOwner {
     uint256 nTargets = s_migrationTargets.length;
     for (uint256 i = 0; i < nTargets; ++i) {
       if (s_migrationTargets[i] == target) {
@@ -735,7 +748,7 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
     if (!_isTargetRegistered(newCoordinator)) {
       revert CoordinatorNotRegistered(newCoordinator);
     }
-    (uint96 balance, uint96 nativeBalance, , address subOwner, address[] memory consumers) = getSubscription(subId);
+    (uint96 balance, uint96 nativeBalance,, address subOwner, address[] memory consumers) = getSubscription(subId);
     // solhint-disable-next-line gas-custom-errors
     require(subOwner == msg.sender, "Not subscription owner");
     // solhint-disable-next-line gas-custom-errors

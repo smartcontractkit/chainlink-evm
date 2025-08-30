@@ -7,8 +7,8 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 import {CrossDomainForwarder} from "../CrossDomainForwarder.sol";
 import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
-import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 
 /// @title ScrollCrossDomainForwarder - L1 xDomain account representation
 /// @notice L2 Contract which receives messages from a specific L1 address and transparently forwards them to the destination.

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseConfiguratorTest.t.sol";
 import {Configurator} from "../../Configurator.sol";
+import {BaseTest} from "./BaseConfiguratorTest.t.sol";
 
 contract ConfiguratorPromoteStagingConfigTest is BaseTest {
   function setUp() public virtual override {
@@ -32,8 +32,7 @@ contract ConfiguratorPromoteStagingConfigTest is BaseTest {
   function test_revertsIfStagingConfigDigestIsZero() public {
     // isGreenProduction = false
     s_exposedConfigurator.exposedSetConfigurationState(
-      CONFIG_ID_1,
-      Configurator.ConfigurationState(1, uint32(block.number), false, [bytes32(0), bytes32(0)])
+      CONFIG_ID_1, Configurator.ConfigurationState(1, uint32(block.number), false, [bytes32(0), bytes32(0)])
     );
 
     vm.expectRevert(abi.encodeWithSelector(Configurator.ConfigUnsetStaging.selector, CONFIG_ID_1, false));
@@ -41,8 +40,7 @@ contract ConfiguratorPromoteStagingConfigTest is BaseTest {
 
     // isGreenProduction = true
     s_exposedConfigurator.exposedSetConfigurationState(
-      CONFIG_ID_1,
-      Configurator.ConfigurationState(1, uint32(block.number), true, [bytes32(0), bytes32(0)])
+      CONFIG_ID_1, Configurator.ConfigurationState(1, uint32(block.number), true, [bytes32(0), bytes32(0)])
     );
 
     vm.expectRevert(abi.encodeWithSelector(Configurator.ConfigUnsetStaging.selector, CONFIG_ID_1, true));
@@ -75,10 +73,7 @@ contract ConfiguratorPromoteStagingConfigTest is BaseTest {
     s_exposedConfigurator.exposedSetConfigurationState(
       CONFIG_ID_1,
       Configurator.ConfigurationState(
-        1,
-        uint32(block.number),
-        false,
-        [keccak256("productionConfigDigest"), keccak256("stagingConfigDigest")]
+        1, uint32(block.number), false, [keccak256("productionConfigDigest"), keccak256("stagingConfigDigest")]
       )
     );
 
@@ -93,10 +88,7 @@ contract ConfiguratorPromoteStagingConfigTest is BaseTest {
     s_exposedConfigurator.exposedSetConfigurationState(
       CONFIG_ID_1,
       Configurator.ConfigurationState(
-        1,
-        uint32(block.number),
-        true,
-        [keccak256("stagingConfigDigest"), keccak256("productionConfigDigest")]
+        1, uint32(block.number), true, [keccak256("stagingConfigDigest"), keccak256("productionConfigDigest")]
       )
     );
 

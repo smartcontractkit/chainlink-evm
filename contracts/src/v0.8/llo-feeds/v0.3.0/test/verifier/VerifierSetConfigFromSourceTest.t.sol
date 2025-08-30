@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest, BaseTestWithMultipleConfiguredDigests} from "./BaseVerifierTest.t.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {BaseTest, BaseTestWithMultipleConfiguredDigests} from "./BaseVerifierTest.t.sol";
 
 contract VerifierSetConfigFromSourceTest is BaseTest {
   function setUp() public virtual override {
@@ -48,7 +48,7 @@ contract VerifierSetConfigFromSourceMultipleDigestsTest is BaseTestWithMultipleC
       new Common.AddressAndWeight[](0)
     );
 
-    (, , bytes32 configDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (,, bytes32 configDigest) = s_verifier.latestConfigDetails(FEED_ID);
     address verifierAddr = s_verifierProxy.getVerifier(configDigest);
     assertEq(verifierAddr, address(s_verifier));
   }
@@ -70,7 +70,7 @@ contract VerifierSetConfigFromSourceMultipleDigestsTest is BaseTestWithMultipleC
       new Common.AddressAndWeight[](0)
     );
 
-    (, , bytes32 configDigest) = s_verifier.latestConfigDetails(FEED_ID_2);
+    (,, bytes32 configDigest) = s_verifier.latestConfigDetails(FEED_ID_2);
     address verifierAddr = s_verifierProxy.getVerifier(configDigest);
     assertEq(verifierAddr, address(s_verifier));
 
@@ -88,7 +88,7 @@ contract VerifierSetConfigFromSourceMultipleDigestsTest is BaseTestWithMultipleC
       new Common.AddressAndWeight[](0)
     );
 
-    (, , bytes32 configDigest2) = s_verifier_2.latestConfigDetails(FEED_ID_3);
+    (,, bytes32 configDigest2) = s_verifier_2.latestConfigDetails(FEED_ID_3);
     address verifierAddr2 = s_verifierProxy.getVerifier(configDigest2);
     assertEq(verifierAddr2, address(s_verifier_2));
   }

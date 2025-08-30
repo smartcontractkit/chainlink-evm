@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {IVRFCoordinatorV2Plus} from "./interfaces/IVRFCoordinatorV2Plus.sol";
 import {IVRFMigratableConsumerV2Plus} from "./interfaces/IVRFMigratableConsumerV2Plus.sol";
-import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 
-/** ****************************************************************************
+/**
+ *
  * @notice Interface for contracts using VRF randomness
  * *****************************************************************************
  * @dev PURPOSE
@@ -110,7 +111,9 @@ abstract contract VRFConsumerBaseV2Plus is IVRFMigratableConsumerV2Plus, Confirm
   /**
    * @param _vrfCoordinator address of VRFCoordinator contract
    */
-  constructor(address _vrfCoordinator) ConfirmedOwner(msg.sender) {
+  constructor(
+    address _vrfCoordinator
+  ) ConfirmedOwner(msg.sender) {
     if (_vrfCoordinator == address(0)) {
       revert ZeroAddress();
     }
@@ -147,7 +150,9 @@ abstract contract VRFConsumerBaseV2Plus is IVRFMigratableConsumerV2Plus, Confirm
   /**
    * @inheritdoc IVRFMigratableConsumerV2Plus
    */
-  function setCoordinator(address _vrfCoordinator) external override onlyOwnerOrCoordinator {
+  function setCoordinator(
+    address _vrfCoordinator
+  ) external override onlyOwnerOrCoordinator {
     if (_vrfCoordinator == address(0)) {
       revert ZeroAddress();
     }

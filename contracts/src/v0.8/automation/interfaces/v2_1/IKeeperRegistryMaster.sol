@@ -56,6 +56,7 @@ interface IKeeperRegistryMaster {
   error UpkeepNotCanceled();
   error UpkeepNotNeeded();
   error ValueNotChanged();
+
   event AdminPrivilegeConfigSet(address indexed admin, bytes privilegeConfig);
   event CancelledUpkeepReport(uint256 indexed id, bytes trigger);
   event ConfigSet(
@@ -94,18 +95,14 @@ interface IKeeperRegistryMaster {
   event UpkeepOffchainConfigSet(uint256 indexed id, bytes offchainConfig);
   event UpkeepPaused(uint256 indexed id);
   event UpkeepPerformed(
-    uint256 indexed id,
-    bool indexed success,
-    uint96 totalPayment,
-    uint256 gasUsed,
-    uint256 gasOverhead,
-    bytes trigger
+    uint256 indexed id, bool indexed success, uint96 totalPayment, uint256 gasUsed, uint256 gasOverhead, bytes trigger
   );
   event UpkeepPrivilegeConfigSet(uint256 indexed id, bytes privilegeConfig);
   event UpkeepReceived(uint256 indexed id, uint256 startingBalance, address importedFrom);
   event UpkeepRegistered(uint256 indexed id, uint32 performGas, address admin);
   event UpkeepTriggerConfigSet(uint256 indexed id, bytes triggerConfig);
   event UpkeepUnpaused(uint256 indexed id);
+
   fallback() external;
   function acceptOwnership() external;
   function fallbackTo() external view returns (address);
@@ -133,7 +130,9 @@ interface IKeeperRegistryMaster {
     uint256 id,
     bytes memory performData
   ) external view returns (bool success, uint256 gasUsed);
-  function transferOwnership(address to) external;
+  function transferOwnership(
+    address to
+  ) external;
   function transmit(
     bytes32[3] memory reportContext,
     bytes memory rawReport,
@@ -144,7 +143,9 @@ interface IKeeperRegistryMaster {
   function typeAndVersion() external view returns (string memory);
 
   function addFunds(uint256 id, uint96 amount) external;
-  function cancelUpkeep(uint256 id) external;
+  function cancelUpkeep(
+    uint256 id
+  ) external;
   function checkCallback(
     uint256 id,
     bytes[] memory values,
@@ -184,7 +185,9 @@ interface IKeeperRegistryMaster {
     bytes memory payload
   ) external returns (bool upkeepNeeded, bytes memory performData, uint8 upkeepFailureReason, uint256 gasUsed);
   function migrateUpkeeps(uint256[] memory ids, address destination) external;
-  function receiveUpkeeps(bytes memory encodedUpkeeps) external;
+  function receiveUpkeeps(
+    bytes memory encodedUpkeeps
+  ) external;
   function registerUpkeep(
     address target,
     uint32 gasLimit,
@@ -203,27 +206,45 @@ interface IKeeperRegistryMaster {
   ) external returns (uint256 id);
   function setUpkeepTriggerConfig(uint256 id, bytes memory triggerConfig) external;
 
-  function acceptPayeeship(address transmitter) external;
-  function acceptUpkeepAdmin(uint256 id) external;
+  function acceptPayeeship(
+    address transmitter
+  ) external;
+  function acceptUpkeepAdmin(
+    uint256 id
+  ) external;
   function getActiveUpkeepIDs(uint256 startIndex, uint256 maxCount) external view returns (uint256[] memory);
-  function getAdminPrivilegeConfig(address admin) external view returns (bytes memory);
+  function getAdminPrivilegeConfig(
+    address admin
+  ) external view returns (bytes memory);
   function getAutomationForwarderLogic() external view returns (address);
-  function getBalance(uint256 id) external view returns (uint96 balance);
+  function getBalance(
+    uint256 id
+  ) external view returns (uint96 balance);
   function getCancellationDelay() external pure returns (uint256);
   function getConditionalGasOverhead() external pure returns (uint256);
   function getFastGasFeedAddress() external view returns (address);
-  function getForwarder(uint256 upkeepID) external view returns (address);
+  function getForwarder(
+    uint256 upkeepID
+  ) external view returns (address);
   function getLinkAddress() external view returns (address);
   function getLinkNativeFeedAddress() external view returns (address);
   function getLogGasOverhead() external pure returns (uint256);
   function getMaxPaymentForGas(uint8 triggerType, uint32 gasLimit) external view returns (uint96 maxPayment);
-  function getMinBalance(uint256 id) external view returns (uint96);
-  function getMinBalanceForUpkeep(uint256 id) external view returns (uint96 minBalance);
+  function getMinBalance(
+    uint256 id
+  ) external view returns (uint96);
+  function getMinBalanceForUpkeep(
+    uint256 id
+  ) external view returns (uint96 minBalance);
   function getMode() external view returns (uint8);
-  function getPeerRegistryMigrationPermission(address peer) external view returns (uint8);
+  function getPeerRegistryMigrationPermission(
+    address peer
+  ) external view returns (uint8);
   function getPerPerformByteGasOverhead() external pure returns (uint256);
   function getPerSignerGasOverhead() external pure returns (uint256);
-  function getSignerInfo(address query) external view returns (bool active, uint8 index);
+  function getSignerInfo(
+    address query
+  ) external view returns (bool active, uint8 index);
   function getState()
     external
     view
@@ -237,16 +258,30 @@ interface IKeeperRegistryMaster {
   function getTransmitterInfo(
     address query
   ) external view returns (bool active, uint8 index, uint96 balance, uint96 lastCollected, address payee);
-  function getTriggerType(uint256 upkeepId) external pure returns (uint8);
-  function getUpkeep(uint256 id) external view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory upkeepInfo);
-  function getUpkeepPrivilegeConfig(uint256 upkeepId) external view returns (bytes memory);
-  function getUpkeepTriggerConfig(uint256 upkeepId) external view returns (bytes memory);
-  function hasDedupKey(bytes32 dedupKey) external view returns (bool);
+  function getTriggerType(
+    uint256 upkeepId
+  ) external pure returns (uint8);
+  function getUpkeep(
+    uint256 id
+  ) external view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory upkeepInfo);
+  function getUpkeepPrivilegeConfig(
+    uint256 upkeepId
+  ) external view returns (bytes memory);
+  function getUpkeepTriggerConfig(
+    uint256 upkeepId
+  ) external view returns (bytes memory);
+  function hasDedupKey(
+    bytes32 dedupKey
+  ) external view returns (bool);
   function pause() external;
-  function pauseUpkeep(uint256 id) external;
+  function pauseUpkeep(
+    uint256 id
+  ) external;
   function recoverFunds() external;
   function setAdminPrivilegeConfig(address admin, bytes memory newPrivilegeConfig) external;
-  function setPayees(address[] memory payees) external;
+  function setPayees(
+    address[] memory payees
+  ) external;
   function setPeerRegistryMigrationPermission(address peer, uint8 permission) external;
   function setUpkeepCheckData(uint256 id, bytes memory newCheckData) external;
   function setUpkeepGasLimit(uint256 id, uint32 gasLimit) external;
@@ -255,7 +290,9 @@ interface IKeeperRegistryMaster {
   function transferPayeeship(address transmitter, address proposed) external;
   function transferUpkeepAdmin(uint256 id, address proposed) external;
   function unpause() external;
-  function unpauseUpkeep(uint256 id) external;
+  function unpauseUpkeep(
+    uint256 id
+  ) external;
   function upkeepTranscoderVersion() external pure returns (uint8);
   function upkeepVersion() external pure returns (uint8);
   function withdrawFunds(uint256 id, address to) external;

@@ -37,7 +37,9 @@ abstract contract VRFV2PlusWrapperConsumerBase {
   /**
    * @param _vrfV2PlusWrapper is the address of the VRFV2Wrapper contract
    */
-  constructor(address _vrfV2PlusWrapper) {
+  constructor(
+    address _vrfV2PlusWrapper
+  ) {
     IVRFV2PlusWrapper vrfV2PlusWrapper = IVRFV2PlusWrapper(_vrfV2PlusWrapper);
 
     i_linkToken = LinkTokenInterface(vrfV2PlusWrapper.link());
@@ -65,9 +67,7 @@ abstract contract VRFV2PlusWrapperConsumerBase {
   ) internal returns (uint256 requestId, uint256 reqPrice) {
     reqPrice = i_vrfV2PlusWrapper.calculateRequestPrice(_callbackGasLimit, _numWords);
     i_linkToken.transferAndCall(
-      address(i_vrfV2PlusWrapper),
-      reqPrice,
-      abi.encode(_callbackGasLimit, _requestConfirmations, _numWords, extraArgs)
+      address(i_vrfV2PlusWrapper), reqPrice, abi.encode(_callbackGasLimit, _requestConfirmations, _numWords, extraArgs)
     );
     return (i_vrfV2PlusWrapper.lastRequestId(), reqPrice);
   }
@@ -82,10 +82,7 @@ abstract contract VRFV2PlusWrapperConsumerBase {
     requestPrice = i_vrfV2PlusWrapper.calculateRequestPriceNative(_callbackGasLimit, _numWords);
     return (
       i_vrfV2PlusWrapper.requestRandomWordsInNative{value: requestPrice}(
-        _callbackGasLimit,
-        _requestConfirmations,
-        _numWords,
-        extraArgs
+        _callbackGasLimit, _requestConfirmations, _numWords, extraArgs
       ),
       requestPrice
     );

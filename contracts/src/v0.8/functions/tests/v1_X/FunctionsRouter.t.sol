@@ -1,16 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import {FunctionsBilling} from "../../dev/v1_X/FunctionsBilling.sol";
+import {FunctionsCoordinator} from "../../dev/v1_X/FunctionsCoordinator.sol";
 import {FunctionsRouter} from "../../dev/v1_X/FunctionsRouter.sol";
 import {FunctionsSubscriptions} from "../../dev/v1_X/FunctionsSubscriptions.sol";
-import {FunctionsCoordinator} from "../../dev/v1_X/FunctionsCoordinator.sol";
-import {FunctionsBilling} from "../../dev/v1_X/FunctionsBilling.sol";
+
 import {FunctionsRequest} from "../../dev/v1_X/libraries/FunctionsRequest.sol";
 import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
-import {FunctionsCoordinatorTestHelper} from "./testhelpers/FunctionsCoordinatorTestHelper.sol";
-import {FunctionsClientTestHelper} from "./testhelpers/FunctionsClientTestHelper.sol";
 
-import {FunctionsRouterSetup, FunctionsRoutesSetup, FunctionsSubscriptionSetup, FunctionsClientRequestSetup} from "./Setup.t.sol";
+import {FunctionsClientTestHelper} from "./testhelpers/FunctionsClientTestHelper.sol";
+import {FunctionsCoordinatorTestHelper} from "./testhelpers/FunctionsCoordinatorTestHelper.sol";
+
+import {
+  FunctionsClientRequestSetup,
+  FunctionsRouterSetup,
+  FunctionsRoutesSetup,
+  FunctionsSubscriptionSetup
+} from "./Setup.t.sol";
 
 import "forge-std/Vm.sol";
 
@@ -190,7 +197,7 @@ contract FunctionsRouter_SetAllowListId is FunctionsRouterSetup {
 
 /// @notice #_getMaxConsumers
 contract FunctionsRouter__GetMaxConsumers is FunctionsRouterSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #sendRequest
@@ -207,10 +214,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -218,11 +222,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
 
     vm.expectRevert(abi.encodeWithSelector(FunctionsRouter.RouteNotFound.selector, invalidDonId));
     s_functionsRouter.sendRequest(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5_000,
-      invalidDonId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, invalidDonId
     );
   }
 
@@ -231,10 +231,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -243,11 +240,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     // Low level revert from incorrect call
     vm.expectRevert();
     s_functionsRouter.sendRequest(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5_000,
-      incorrectDonId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, incorrectDonId
     );
   }
 
@@ -258,10 +251,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -274,10 +264,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -285,11 +272,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
 
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
     s_functionsRouter.sendRequest(
-      invalidSubscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5000,
-      s_donId
+      invalidSubscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, s_donId
     );
   }
 
@@ -301,10 +284,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -317,10 +297,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -334,11 +311,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
 
     vm.expectRevert(abi.encodeWithSelector(FunctionsRouter.GasLimitTooBig.selector, maxCallbackGasLimit));
     s_functionsRouter.sendRequest(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      500_000,
-      s_donId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 500_000, s_donId
     );
   }
 
@@ -348,11 +321,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
 
     vm.expectRevert(FunctionsRouter.EmptyRequestData.selector);
     s_functionsRouter.sendRequest(
-      s_subscriptionId,
-      emptyRequestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5_000,
-      s_donId
+      s_subscriptionId, emptyRequestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, s_donId
     );
   }
 
@@ -365,10 +334,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -376,11 +342,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     vm.expectRevert(FunctionsBilling.InsufficientBalance.selector);
 
     s_functionsRouter.sendRequest(
-      subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      s_donId
+      subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, s_donId
     );
   }
 
@@ -389,21 +351,14 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     uint32 callbackGasLimit = 5_000;
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
     // Send a first request that will remain pending
     bytes32 requestId = s_functionsRouter.sendRequest(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      s_donId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, s_donId
     );
 
     // Mock the Coordinator to always give back the first requestId
@@ -429,11 +384,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
 
     vm.expectRevert(abi.encodeWithSelector(FunctionsRouter.DuplicateRequestId.selector, requestId));
     s_functionsRouter.sendRequest(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      s_donId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, s_donId
     );
   }
 
@@ -455,30 +406,19 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
     uint32 callbackGasLimit = 5000;
 
-    uint96 costEstimate = s_functionsCoordinator.estimateCost(
-      s_subscriptionId,
-      requestData,
-      callbackGasLimit,
-      tx.gasprice
-    );
+    uint96 costEstimate =
+      s_functionsCoordinator.estimateCost(s_subscriptionId, requestData, callbackGasLimit, tx.gasprice);
 
     vm.recordLogs();
 
     bytes32 requestIdFromReturn = s_functionsRouter.sendRequest(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      s_donId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, s_donId
     );
 
     // Get requestId from RequestStart event log topic 1
@@ -516,10 +456,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
 
     // Deploy new Coordinator contract
     s_functionsCoordinator2 = new FunctionsCoordinatorTestHelper(
-      address(s_functionsRouter),
-      getCoordinatorConfig(),
-      address(s_linkEthFeed),
-      address(s_linkUsdFeed)
+      address(s_functionsRouter), getCoordinatorConfig(), address(s_linkEthFeed), address(s_linkUsdFeed)
     );
 
     // Propose new Coordinator contract
@@ -536,10 +473,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -547,11 +481,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
 
     vm.expectRevert(abi.encodeWithSelector(FunctionsRouter.RouteNotFound.selector, invalidDonId));
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5_000,
-      invalidDonId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, invalidDonId
     );
   }
 
@@ -560,10 +490,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -572,11 +499,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     // Low level revert from incorrect call
     vm.expectRevert();
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5_000,
-      incorrectDonId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, incorrectDonId
     );
   }
 
@@ -587,20 +510,13 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
     vm.expectRevert("Pausable: paused");
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5000,
-      s_donId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, s_donId
     );
   }
 
@@ -609,10 +525,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -620,11 +533,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
 
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
     s_functionsRouter.sendRequestToProposed(
-      invalidSubscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5000,
-      s_donId
+      invalidSubscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, s_donId
     );
   }
 
@@ -636,20 +545,13 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
     vm.expectRevert(FunctionsSubscriptions.InvalidConsumer.selector);
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5000,
-      s_donId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, s_donId
     );
   }
 
@@ -658,10 +560,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -675,11 +574,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
 
     vm.expectRevert(abi.encodeWithSelector(FunctionsRouter.GasLimitTooBig.selector, maxCallbackGasLimit));
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      500_000,
-      s_donId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 500_000, s_donId
     );
   }
 
@@ -689,11 +584,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
 
     vm.expectRevert(FunctionsRouter.EmptyRequestData.selector);
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId,
-      emptyRequestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      5_000,
-      s_donId
+      s_subscriptionId, emptyRequestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, s_donId
     );
   }
 
@@ -706,10 +597,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -717,11 +605,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     vm.expectRevert(FunctionsBilling.InsufficientBalance.selector);
 
     s_functionsRouter.sendRequestToProposed(
-      subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      s_donId
+      subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, s_donId
     );
   }
 
@@ -743,30 +627,19 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
     uint32 callbackGasLimit = 5000;
 
-    uint96 costEstimate = s_functionsCoordinator2.estimateCost(
-      s_subscriptionId,
-      requestData,
-      callbackGasLimit,
-      tx.gasprice
-    );
+    uint96 costEstimate =
+      s_functionsCoordinator2.estimateCost(s_subscriptionId, requestData, callbackGasLimit, tx.gasprice);
 
     vm.recordLogs();
 
     bytes32 requestIdFromReturn = s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      s_donId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, s_donId
     );
 
     // Get requestId from RequestStart event log topic 1
@@ -794,7 +667,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
 
 /// @notice #_sendRequest
 contract FunctionsRouter__SendRequest is FunctionsRouterSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #fulfill
@@ -836,10 +709,7 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
   }
 
   event RequestNotProcessed(
-    bytes32 indexed requestId,
-    address coordinator,
-    address transmitter,
-    FunctionsResponse.FulfillResult resultCode
+    bytes32 indexed requestId, address coordinator, address transmitter, FunctionsResponse.FulfillResult resultCode
   );
 
   function test_Fulfill_RequestNotProcessedInvalidRequestId() public {
@@ -870,16 +740,10 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
       resultCode: FunctionsResponse.FulfillResult.INVALID_REQUEST_ID
     });
 
-    (FunctionsResponse.FulfillResult resultCode, uint96 callbackGasCostJuels) = s_functionsRouter.fulfill(
-      response,
-      err,
-      juelsPerGas,
-      costWithoutCallback,
-      transmitter,
-      commitment
-    );
+    (FunctionsResponse.FulfillResult resultCode, uint96 callbackGasCostJuels) =
+      s_functionsRouter.fulfill(response, err, juelsPerGas, costWithoutCallback, transmitter, commitment);
 
-    assertEq(uint(resultCode), uint(FunctionsResponse.FulfillResult.INVALID_REQUEST_ID));
+    assertEq(uint256(resultCode), uint256(FunctionsResponse.FulfillResult.INVALID_REQUEST_ID));
     assertEq(callbackGasCostJuels, 0);
   }
 
@@ -910,16 +774,10 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
       resultCode: FunctionsResponse.FulfillResult.INVALID_COMMITMENT
     });
 
-    (FunctionsResponse.FulfillResult resultCode, uint96 callbackGasCostJuels) = s_functionsRouter.fulfill(
-      response,
-      err,
-      juelsPerGas,
-      costWithoutCallback,
-      transmitter,
-      commitment
-    );
+    (FunctionsResponse.FulfillResult resultCode, uint96 callbackGasCostJuels) =
+      s_functionsRouter.fulfill(response, err, juelsPerGas, costWithoutCallback, transmitter, commitment);
 
-    assertEq(uint(resultCode), uint(FunctionsResponse.FulfillResult.INVALID_COMMITMENT));
+    assertEq(uint256(resultCode), uint256(FunctionsResponse.FulfillResult.INVALID_COMMITMENT));
     assertEq(callbackGasCostJuels, 0);
   }
 
@@ -961,7 +819,7 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     // Find the storage slot that the Subscription is on
     vm.record();
     s_functionsRouter.getSubscription(s_subscriptionId);
-    (bytes32[] memory reads, ) = vm.accesses(address(s_functionsRouter));
+    (bytes32[] memory reads,) = vm.accesses(address(s_functionsRouter));
     // The first read is from '_isExistingSubscription' which checks Subscription.owner on slot 0
     // Slot 0 is shared with the Subscription.balance
     uint256 slot = uint256(reads[0]);
@@ -1064,17 +922,13 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
 
     vm.recordLogs();
     bytes32 requestId = s_clientWithFailingCallback.sendSimpleRequestWithJavaScript(
-      sourceCode,
-      s_subscriptionId,
-      s_donId,
-      callbackGasLimit
+      sourceCode, s_subscriptionId, s_donId, callbackGasLimit
     );
 
     // Get commitment data from OracleRequest event log
     Vm.Log[] memory entries = vm.getRecordedLogs();
-    (, , , , , , , FunctionsResponse.Commitment memory _commitment) = abi.decode(
-      entries[0].data,
-      (address, uint64, address, bytes, uint16, bytes32, uint64, FunctionsResponse.Commitment)
+    (,,,,,,, FunctionsResponse.Commitment memory _commitment) = abi.decode(
+      entries[0].data, (address, uint64, address, bytes, uint16, bytes32, uint64, FunctionsResponse.Commitment)
     );
 
     s_requests[requestKey] = Request({
@@ -1248,7 +1102,7 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
 
 /// @notice #_callback
 contract FunctionsRouter__Callback is FunctionsRouterSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #getContractById
@@ -1283,10 +1137,7 @@ contract FunctionsRouter_GetProposedContractById is FunctionsRoutesSetup {
 
     // Deploy new Coordinator contract
     s_functionsCoordinator2 = new FunctionsCoordinatorTestHelper(
-      address(s_functionsRouter),
-      getCoordinatorConfig(),
-      address(s_linkEthFeed),
-      address(s_linkUsdFeed)
+      address(s_functionsRouter), getCoordinatorConfig(), address(s_linkEthFeed), address(s_linkUsdFeed)
     );
 
     // Propose new Coordinator contract
@@ -1330,10 +1181,7 @@ contract FunctionsRouter_GetProposedContractSet is FunctionsRoutesSetup {
 
     // Deploy new Coordinator contract
     s_functionsCoordinator2 = new FunctionsCoordinatorTestHelper(
-      address(s_functionsRouter),
-      getCoordinatorConfig(),
-      address(s_linkEthFeed),
-      address(s_linkUsdFeed)
+      address(s_functionsRouter), getCoordinatorConfig(), address(s_linkEthFeed), address(s_linkUsdFeed)
     );
 
     // Propose new Coordinator contract
@@ -1350,8 +1198,8 @@ contract FunctionsRouter_GetProposedContractSet is FunctionsRoutesSetup {
     vm.stopPrank();
     vm.startPrank(STRANGER_ADDRESS);
 
-    (bytes32[] memory proposedContractSetIds, address[] memory proposedContractSetAddresses) = s_functionsRouter
-      .getProposedContractSet();
+    (bytes32[] memory proposedContractSetIds, address[] memory proposedContractSetAddresses) =
+      s_functionsRouter.getProposedContractSet();
 
     assertEq(proposedContractSetIds.length, 1);
     assertEq(proposedContractSetIds[0], s_donId);
@@ -1371,10 +1219,7 @@ contract FunctionsRouter_ProposeContractsUpdate is FunctionsRoutesSetup {
 
     // Deploy new Coordinator contract
     s_functionsCoordinator2 = new FunctionsCoordinatorTestHelper(
-      address(s_functionsRouter),
-      getCoordinatorConfig(),
-      address(s_linkEthFeed),
-      address(s_linkUsdFeed)
+      address(s_functionsRouter), getCoordinatorConfig(), address(s_linkEthFeed), address(s_linkUsdFeed)
     );
 
     // Propose new Coordinator contract
@@ -1413,7 +1258,7 @@ contract FunctionsRouter_ProposeContractsUpdate is FunctionsRoutesSetup {
     }
     address[] memory proposedContractSetAddresses = new address[](INVALID_PROPOSAL_SET_LENGTH);
     for (uint256 i = 0; i < INVALID_PROPOSAL_SET_LENGTH; ++i) {
-      proposedContractSetAddresses[i] = address(uint160(uint(keccak256(abi.encodePacked(i + 111)))));
+      proposedContractSetAddresses[i] = address(uint160(uint256(keccak256(abi.encodePacked(i + 111)))));
     }
 
     vm.expectRevert(FunctionsRouter.InvalidProposal.selector);
@@ -1441,9 +1286,7 @@ contract FunctionsRouter_ProposeContractsUpdate is FunctionsRoutesSetup {
   }
 
   event ContractProposed(
-    bytes32 proposedContractSetId,
-    address proposedContractSetFromAddress,
-    address proposedContractSetToAddress
+    bytes32 proposedContractSetId, address proposedContractSetFromAddress, address proposedContractSetToAddress
   );
 
   function test_ProposeContractsUpdate_Success() public {
@@ -1474,10 +1317,7 @@ contract FunctionsRouter_UpdateContracts is FunctionsRoutesSetup {
 
     // Deploy new Coordinator contract
     s_functionsCoordinator2 = new FunctionsCoordinatorTestHelper(
-      address(s_functionsRouter),
-      getCoordinatorConfig(),
-      address(s_linkEthFeed),
-      address(s_linkUsdFeed)
+      address(s_functionsRouter), getCoordinatorConfig(), address(s_linkEthFeed), address(s_linkUsdFeed)
     );
 
     // Propose new Coordinator contract
@@ -1515,8 +1355,8 @@ contract FunctionsRouter_UpdateContracts is FunctionsRoutesSetup {
 
     s_functionsRouter.updateContracts();
 
-    (bytes32[] memory proposedContractSetIds, address[] memory proposedContractSetAddresses) = s_functionsRouter
-      .getProposedContractSet();
+    (bytes32[] memory proposedContractSetIds, address[] memory proposedContractSetAddresses) =
+      s_functionsRouter.getProposedContractSet();
 
     assertEq(proposedContractSetIds.length, 0);
     assertEq(proposedContractSetAddresses.length, 0);
@@ -1525,17 +1365,17 @@ contract FunctionsRouter_UpdateContracts is FunctionsRoutesSetup {
 
 /// @notice #_whenNotPaused
 contract FunctionsRouter__WhenNotPaused is FunctionsRouterSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #_onlyRouterOwner
 contract FunctionsRouter__OnlyRouterOwner is FunctionsRouterSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #_onlySenderThatAcceptedToS
 contract FunctionsRouter__OnlySenderThatAcceptedToS is FunctionsRouterSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #pause

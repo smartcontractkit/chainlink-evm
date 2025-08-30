@@ -7,7 +7,9 @@ contract VRFMockETHLINKAggregator is AggregatorV3Interface {
   int256 public answer;
   uint256 private blockTimestampDeduction = 0;
 
-  constructor(int256 _answer) {
+  constructor(
+    int256 _answer
+  ) {
     answer = _answer;
   }
 
@@ -47,7 +49,9 @@ contract VRFMockETHLINKAggregator is AggregatorV3Interface {
     return block.timestamp - blockTimestampDeduction;
   }
 
-  function setBlockTimestampDeduction(uint256 _blockTimestampDeduction) external {
+  function setBlockTimestampDeduction(
+    uint256 _blockTimestampDeduction
+  ) external {
     blockTimestampDeduction = _blockTimestampDeduction;
   }
 }

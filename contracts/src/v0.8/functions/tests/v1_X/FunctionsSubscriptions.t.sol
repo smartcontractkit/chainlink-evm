@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {FunctionsRouter} from "../../dev/v1_X/FunctionsRouter.sol";
 import {FunctionsSubscriptions} from "../../dev/v1_X/FunctionsSubscriptions.sol";
 import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
 
-import {FunctionsRouterSetup, FunctionsOwnerAcceptTermsOfServiceSetup, FunctionsClientSetup, FunctionsSubscriptionSetup, FunctionsClientRequestSetup, FunctionsFulfillmentSetup} from "./Setup.t.sol";
+import {
+  FunctionsClientRequestSetup,
+  FunctionsClientSetup,
+  FunctionsFulfillmentSetup,
+  FunctionsOwnerAcceptTermsOfServiceSetup,
+  FunctionsRouterSetup,
+  FunctionsSubscriptionSetup
+} from "./Setup.t.sol";
 
 import "forge-std/Vm.sol";
 
@@ -17,7 +24,9 @@ import "forge-std/Vm.sol";
 // ================================================================
 
 contract FunctionsSubscriptions_Constructor_Helper is FunctionsSubscriptions {
-  constructor(address link) FunctionsSubscriptions(link) {}
+  constructor(
+    address link
+  ) FunctionsSubscriptions(link) {}
 
   function getLinkToken() public view returns (IERC20) {
     return IERC20(i_linkToken);
@@ -56,12 +65,12 @@ contract FunctionsSubscriptions_Constructor is BaseTest {
 
 /// @notice #_markRequestInFlight
 contract FunctionsSubscriptions__MarkRequestInFlight {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #_pay
 contract FunctionsSubscriptions__Pay {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #ownerCancelSubscription
@@ -387,7 +396,8 @@ contract FunctionsSubscriptions_GetSubscriptionsInRange is FunctionsSubscription
     FunctionsSubscriptionSetup.setUp();
 
     // Create 2 more subscriptions
-    /* uint64 subscriptionId2 = */ s_functionsRouter.createSubscription();
+    /* uint64 subscriptionId2 = */
+    s_functionsRouter.createSubscription();
     uint64 subscriptionId3 = s_functionsRouter.createSubscription();
 
     // Give each one unique state
@@ -421,10 +431,8 @@ contract FunctionsSubscriptions_GetSubscriptionsInRange is FunctionsSubscription
     vm.startPrank(STRANGER_ADDRESS);
 
     uint64 lastSubscriptionId = s_functionsRouter.getSubscriptionCount();
-    FunctionsSubscriptions.Subscription[] memory subscriptions = s_functionsRouter.getSubscriptionsInRange(
-      s_subscriptionId,
-      lastSubscriptionId
-    );
+    FunctionsSubscriptions.Subscription[] memory subscriptions =
+      s_functionsRouter.getSubscriptionsInRange(s_subscriptionId, lastSubscriptionId);
 
     assertEq(subscriptions.length, 3);
 
@@ -479,10 +487,8 @@ contract FunctionsSubscriptions_GetConsumer is FunctionsSubscriptionSetup {
     vm.stopPrank();
     vm.startPrank(STRANGER_ADDRESS);
 
-    FunctionsSubscriptions.Consumer memory consumer = s_functionsRouter.getConsumer(
-      address(s_functionsClient),
-      s_subscriptionId
-    );
+    FunctionsSubscriptions.Consumer memory consumer =
+      s_functionsRouter.getConsumer(address(s_functionsClient), s_subscriptionId);
 
     assertEq(consumer.allowed, true);
     assertEq(consumer.initiatedRequests, 0);
@@ -492,12 +498,12 @@ contract FunctionsSubscriptions_GetConsumer is FunctionsSubscriptionSetup {
 
 /// @notice #_isExistingSubscription
 contract FunctionsSubscriptions__IsExistingSubscription is FunctionsSubscriptionSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #_isAllowedConsumer
 contract FunctionsSubscriptions__IsAllowedConsumer {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #createSubscription
@@ -625,13 +631,7 @@ contract FunctionsSubscriptions_ProposeSubscriptionOwnerTransfer is FunctionsSub
     bytes32 message2 = s_termsOfServiceAllowList.getMessage(NEW_OWNER_ADDRESS_WITH_TOS2, NEW_OWNER_ADDRESS_WITH_TOS2);
     bytes32 prefixedMessage2 = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", message2));
     (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(TOS_SIGNER_PRIVATE_KEY, prefixedMessage2);
-    s_termsOfServiceAllowList.acceptTermsOfService(
-      NEW_OWNER_ADDRESS_WITH_TOS2,
-      NEW_OWNER_ADDRESS_WITH_TOS2,
-      r2,
-      s2,
-      v2
-    );
+    s_termsOfServiceAllowList.acceptTermsOfService(NEW_OWNER_ADDRESS_WITH_TOS2, NEW_OWNER_ADDRESS_WITH_TOS2, r2, s2, v2);
 
     vm.stopPrank();
     vm.startPrank(OWNER_ADDRESS);
@@ -899,7 +899,7 @@ contract FunctionsSubscriptions_RemoveConsumer is FunctionsSubscriptionSetup {
 
 /// @notice #_getMaxConsumers
 contract FunctionsSubscriptions__GetMaxConsumers is FunctionsRouterSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #addConsumer
@@ -1148,7 +1148,7 @@ contract FunctionsSubscriptions_CancelSubscription_ReceiveDeposit is FunctionsFu
 
 /// @notice #_cancelSubscriptionHelper
 contract FunctionsSubscriptions__CancelSubscriptionHelper {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #pendingRequestExists
@@ -1256,9 +1256,8 @@ contract FunctionsSubscriptions_TimeoutRequests is FunctionsClientRequestSetup {
   event RequestTimedOut(bytes32 indexed requestId);
 
   function test_TimeoutRequests_Success() public {
-    uint64 consumerCompletedRequestsBefore = s_functionsRouter
-      .getConsumer(address(s_functionsClient), s_subscriptionId)
-      .completedRequests;
+    uint64 consumerCompletedRequestsBefore =
+      s_functionsRouter.getConsumer(address(s_functionsClient), s_subscriptionId).completedRequests;
 
     // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
     bool checkTopic1 = false;
@@ -1278,14 +1277,13 @@ contract FunctionsSubscriptions_TimeoutRequests is FunctionsClientRequestSetup {
     // Releases blocked balance and increments completed requests
     uint96 subscriptionBlockedBalanceAfter = s_functionsRouter.getSubscription(s_subscriptionId).blockedBalance;
     assertEq(0, subscriptionBlockedBalanceAfter);
-    uint64 consumerCompletedRequestsAfter = s_functionsRouter
-      .getConsumer(address(s_functionsClient), s_subscriptionId)
-      .completedRequests;
+    uint64 consumerCompletedRequestsAfter =
+      s_functionsRouter.getConsumer(address(s_functionsClient), s_subscriptionId).completedRequests;
     assertEq(consumerCompletedRequestsBefore + 1, consumerCompletedRequestsAfter);
   }
 }
 
 // @notice #_onlySubscriptionOwner
 contract FunctionsSubscriptions__OnlySubscriptionOwner {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }

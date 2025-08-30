@@ -62,6 +62,7 @@ interface IZKSyncAutomationRegistryMaster2_3 {
   error UpkeepNotNeeded();
   error ValueNotChanged();
   error ZeroAddressNotAllowed();
+
   event AdminPrivilegeConfigSet(address indexed admin, bytes privilegeConfig);
   event BillingConfigOverridden(uint256 indexed id, ZKSyncAutomationRegistryBase2_3.BillingOverrides overrides);
   event BillingConfigOverrideRemoved(uint256 indexed id);
@@ -106,18 +107,14 @@ interface IZKSyncAutomationRegistryMaster2_3 {
   event UpkeepOffchainConfigSet(uint256 indexed id, bytes offchainConfig);
   event UpkeepPaused(uint256 indexed id);
   event UpkeepPerformed(
-    uint256 indexed id,
-    bool indexed success,
-    uint96 totalPayment,
-    uint256 gasUsed,
-    uint256 gasOverhead,
-    bytes trigger
+    uint256 indexed id, bool indexed success, uint96 totalPayment, uint256 gasUsed, uint256 gasOverhead, bytes trigger
   );
   event UpkeepPrivilegeConfigSet(uint256 indexed id, bytes privilegeConfig);
   event UpkeepReceived(uint256 indexed id, uint256 startingBalance, address importedFrom);
   event UpkeepRegistered(uint256 indexed id, uint32 performGas, address admin);
   event UpkeepTriggerConfigSet(uint256 indexed id, bytes triggerConfig);
   event UpkeepUnpaused(uint256 indexed id);
+
   fallback() external payable;
   function acceptOwnership() external;
   function fallbackTo() external view returns (address);
@@ -142,7 +139,9 @@ interface IZKSyncAutomationRegistryMaster2_3 {
     address[] memory billingTokens,
     ZKSyncAutomationRegistryBase2_3.BillingConfig[] memory billingConfigs
   ) external;
-  function transferOwnership(address to) external;
+  function transferOwnership(
+    address to
+  ) external;
   function transmit(
     bytes32[3] memory reportContext,
     bytes memory rawReport,
@@ -152,10 +151,14 @@ interface IZKSyncAutomationRegistryMaster2_3 {
   ) external;
   function typeAndVersion() external view returns (string memory);
 
-  function cancelUpkeep(uint256 id) external;
+  function cancelUpkeep(
+    uint256 id
+  ) external;
   function migrateUpkeeps(uint256[] memory ids, address destination) external;
   function onTokenTransfer(address sender, uint256 amount, bytes memory data) external;
-  function receiveUpkeeps(bytes memory encodedUpkeeps) external;
+  function receiveUpkeeps(
+    bytes memory encodedUpkeeps
+  ) external;
   function registerUpkeep(
     address target,
     uint32 gasLimit,
@@ -167,7 +170,9 @@ interface IZKSyncAutomationRegistryMaster2_3 {
     bytes memory offchainConfig
   ) external returns (uint256 id);
 
-  function acceptUpkeepAdmin(uint256 id) external;
+  function acceptUpkeepAdmin(
+    uint256 id
+  ) external;
   function addFunds(uint256 id, uint96 amount) external payable;
   function checkCallback(
     uint256 id,
@@ -207,8 +212,12 @@ interface IZKSyncAutomationRegistryMaster2_3 {
     uint256 id,
     bytes memory payload
   ) external returns (bool upkeepNeeded, bytes memory performData, uint8 upkeepFailureReason, uint256 gasUsed);
-  function pauseUpkeep(uint256 id) external;
-  function removeBillingOverrides(uint256 id) external;
+  function pauseUpkeep(
+    uint256 id
+  ) external;
+  function removeBillingOverrides(
+    uint256 id
+  ) external;
   function setBillingOverrides(
     uint256 id,
     ZKSyncAutomationRegistryBase2_3.BillingOverrides memory billingOverrides
@@ -222,27 +231,41 @@ interface IZKSyncAutomationRegistryMaster2_3 {
     bytes memory performData
   ) external view returns (bool success, uint256 gasUsed);
   function transferUpkeepAdmin(uint256 id, address proposed) external;
-  function unpauseUpkeep(uint256 id) external;
+  function unpauseUpkeep(
+    uint256 id
+  ) external;
   function withdrawERC20Fees(address asset, address to, uint256 amount) external;
   function withdrawFunds(uint256 id, address to) external;
   function withdrawLink(address to, uint256 amount) external;
 
-  function acceptPayeeship(address transmitter) external;
+  function acceptPayeeship(
+    address transmitter
+  ) external;
   function disableOffchainPayments() external;
   function getActiveUpkeepIDs(uint256 startIndex, uint256 maxCount) external view returns (uint256[] memory);
-  function getAdminPrivilegeConfig(address admin) external view returns (bytes memory);
+  function getAdminPrivilegeConfig(
+    address admin
+  ) external view returns (bytes memory);
   function getAllowedReadOnlyAddress() external view returns (address);
   function getAutomationForwarderLogic() external view returns (address);
-  function getAvailableERC20ForPayment(address billingToken) external view returns (uint256);
-  function getBalance(uint256 id) external view returns (uint96 balance);
+  function getAvailableERC20ForPayment(
+    address billingToken
+  ) external view returns (uint256);
+  function getBalance(
+    uint256 id
+  ) external view returns (uint96 balance);
   function getBillingConfig(
     address billingToken
   ) external view returns (ZKSyncAutomationRegistryBase2_3.BillingConfig memory);
   function getBillingOverrides(
     uint256 upkeepID
   ) external view returns (ZKSyncAutomationRegistryBase2_3.BillingOverrides memory);
-  function getBillingOverridesEnabled(uint256 upkeepID) external view returns (bool);
-  function getBillingToken(uint256 upkeepID) external view returns (address);
+  function getBillingOverridesEnabled(
+    uint256 upkeepID
+  ) external view returns (bool);
+  function getBillingToken(
+    uint256 upkeepID
+  ) external view returns (address);
   function getBillingTokenConfig(
     address token
   ) external view returns (ZKSyncAutomationRegistryBase2_3.BillingConfig memory);
@@ -253,7 +276,9 @@ interface IZKSyncAutomationRegistryMaster2_3 {
   function getConfig() external view returns (ZKSyncAutomationRegistryBase2_3.OnchainConfig memory);
   function getFallbackNativePrice() external view returns (uint256);
   function getFastGasFeedAddress() external view returns (address);
-  function getForwarder(uint256 upkeepID) external view returns (address);
+  function getForwarder(
+    uint256 upkeepID
+  ) external view returns (address);
   function getHotVars() external view returns (ZKSyncAutomationRegistryBase2_3.HotVars memory);
   function getLinkAddress() external view returns (address);
   function getLinkUSDFeedAddress() external view returns (address);
@@ -264,16 +289,26 @@ interface IZKSyncAutomationRegistryMaster2_3 {
     uint32 gasLimit,
     address billingToken
   ) external view returns (uint96 maxPayment);
-  function getMinBalance(uint256 id) external view returns (uint96);
-  function getMinBalanceForUpkeep(uint256 id) external view returns (uint96 minBalance);
+  function getMinBalance(
+    uint256 id
+  ) external view returns (uint96);
+  function getMinBalanceForUpkeep(
+    uint256 id
+  ) external view returns (uint96 minBalance);
   function getNativeUSDFeedAddress() external view returns (address);
   function getNumUpkeeps() external view returns (uint256);
   function getPayoutMode() external view returns (uint8);
-  function getPeerRegistryMigrationPermission(address peer) external view returns (uint8);
+  function getPeerRegistryMigrationPermission(
+    address peer
+  ) external view returns (uint8);
   function getPerSignerGasOverhead() external pure returns (uint256);
   function getReorgProtectionEnabled() external view returns (bool reorgProtectionEnabled);
-  function getReserveAmount(address billingToken) external view returns (uint256);
-  function getSignerInfo(address query) external view returns (bool active, uint8 index);
+  function getReserveAmount(
+    address billingToken
+  ) external view returns (uint256);
+  function getSignerInfo(
+    address query
+  ) external view returns (bool active, uint8 index);
   function getState()
     external
     view
@@ -292,20 +327,34 @@ interface IZKSyncAutomationRegistryMaster2_3 {
     external
     view
     returns (ZKSyncAutomationRegistryBase2_3.TransmitterPayeeInfo[] memory);
-  function getTriggerType(uint256 upkeepId) external pure returns (uint8);
-  function getUpkeep(uint256 id) external view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory upkeepInfo);
-  function getUpkeepPrivilegeConfig(uint256 upkeepId) external view returns (bytes memory);
-  function getUpkeepTriggerConfig(uint256 upkeepId) external view returns (bytes memory);
+  function getTriggerType(
+    uint256 upkeepId
+  ) external pure returns (uint8);
+  function getUpkeep(
+    uint256 id
+  ) external view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory upkeepInfo);
+  function getUpkeepPrivilegeConfig(
+    uint256 upkeepId
+  ) external view returns (bytes memory);
+  function getUpkeepTriggerConfig(
+    uint256 upkeepId
+  ) external view returns (bytes memory);
   function getWrappedNativeTokenAddress() external view returns (address);
-  function hasDedupKey(bytes32 dedupKey) external view returns (bool);
+  function hasDedupKey(
+    bytes32 dedupKey
+  ) external view returns (bool);
   function linkAvailableForPayment() external view returns (int256);
   function pause() external;
   function setAdminPrivilegeConfig(address admin, bytes memory newPrivilegeConfig) external;
-  function setPayees(address[] memory payees) external;
+  function setPayees(
+    address[] memory payees
+  ) external;
   function setPeerRegistryMigrationPermission(address peer, uint8 permission) external;
   function setUpkeepPrivilegeConfig(uint256 upkeepId, bytes memory newPrivilegeConfig) external;
   function settleNOPsOffchain() external;
-  function supportsBillingToken(address token) external view returns (bool);
+  function supportsBillingToken(
+    address token
+  ) external view returns (bool);
   function transferPayeeship(address transmitter, address proposed) external;
   function unpause() external;
   function upkeepVersion() external pure returns (uint8);

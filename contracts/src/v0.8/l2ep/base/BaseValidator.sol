@@ -60,7 +60,9 @@ abstract contract BaseValidator is SimpleWriteAccessController, AggregatorValida
 
   /// @notice sets the new gas cost to spend when sending cross chain message
   /// @param gasLimit the updated gas cost
-  function setGasLimit(uint32 gasLimit) external onlyOwner {
+  function setGasLimit(
+    uint32 gasLimit
+  ) external onlyOwner {
     s_gasLimit = gasLimit;
     emit GasLimitUpdated(gasLimit);
   }

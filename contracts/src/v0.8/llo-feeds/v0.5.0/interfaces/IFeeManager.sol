@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Common} from "../../libraries/Common.sol";
 import {IVerifierFeeManager} from "./IVerifierFeeManager.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IFeeManager is IERC165, IVerifierFeeManager {
   /**
@@ -23,7 +23,9 @@ interface IFeeManager is IERC165, IVerifierFeeManager {
    * @notice Sets the native surcharge
    * @param surcharge surcharge to be paid if paying in native
    */
-  function setNativeSurcharge(uint64 surcharge) external;
+  function setNativeSurcharge(
+    uint64 surcharge
+  ) external;
 
   /**
    * @notice Adds a subscriber to the fee manager
@@ -52,7 +54,9 @@ interface IFeeManager is IERC165, IVerifierFeeManager {
    * @notice Admin function to pay the LINK deficit for a given config digest
    * @param configDigest the config digest to pay the deficit for
    */
-  function payLinkDeficit(bytes32 configDigest) external;
+  function payLinkDeficit(
+    bytes32 configDigest
+  ) external;
 
   /**
    * @notice Adds a subscriber to the fee manager
@@ -67,7 +71,7 @@ interface IFeeManager is IERC165, IVerifierFeeManager {
    * @param digest the digest linked to the fee and reward
    * @param fee the fee paid to verify the report
    * @param reward the reward paid upon verification
-   & @param appliedDiscount the discount applied to the reward
+   *  & @param appliedDiscount the discount applied to the reward
    */
   struct FeeAndReward {
     bytes32 configDigest;

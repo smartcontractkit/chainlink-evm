@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {BaseSequencerUptimeFeed} from "../../../base/BaseSequencerUptimeFeed.sol";
+import {ScrollSequencerUptimeFeed} from "../../../scroll/ScrollSequencerUptimeFeed.sol";
 import {MockScrollL1CrossDomainMessenger} from "../../mocks/scroll/MockScrollL1CrossDomainMessenger.sol";
 import {MockScrollL2CrossDomainMessenger} from "../../mocks/scroll/MockScrollL2CrossDomainMessenger.sol";
-import {ScrollSequencerUptimeFeed} from "../../../scroll/ScrollSequencerUptimeFeed.sol";
-import {BaseSequencerUptimeFeed} from "../../../base/BaseSequencerUptimeFeed.sol";
+
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract ScrollSequencerUptimeFeedTestWrapper is ScrollSequencerUptimeFeed {
@@ -15,7 +16,9 @@ contract ScrollSequencerUptimeFeedTestWrapper is ScrollSequencerUptimeFeed {
   ) ScrollSequencerUptimeFeed(l1SenderAddress, l2CrossDomainMessengerAddr, initialStatus) {}
 
   /// @notice It exposes the internal _validateSender function for testing
-  function validateSenderTestWrapper(address l1Sender) external view {
+  function validateSenderTestWrapper(
+    address l1Sender
+  ) external view {
     super._validateSender(l1Sender);
   }
 }
@@ -39,11 +42,8 @@ contract ScrollSequencerUptimeFeed_Setup is L2EPTest {
     // Deploys contracts
     s_mockScrollL1CrossDomainMessenger = new MockScrollL1CrossDomainMessenger();
     s_mockScrollL2CrossDomainMessenger = new MockScrollL2CrossDomainMessenger();
-    s_scrollSequencerUptimeFeed = new ScrollSequencerUptimeFeedTestWrapper(
-      s_l1OwnerAddr,
-      address(s_mockScrollL2CrossDomainMessenger),
-      false
-    );
+    s_scrollSequencerUptimeFeed =
+      new ScrollSequencerUptimeFeedTestWrapper(s_l1OwnerAddr, address(s_mockScrollL2CrossDomainMessenger), false);
 
     // Sets mock sender in mock L2 messenger contract
     s_mockScrollL2CrossDomainMessenger.setSender(s_l1OwnerAddr);
@@ -64,7 +64,7 @@ contract ScrollSequencerUptimeFeed_Constructor is ScrollSequencerUptimeFeed_Setu
     assertEq(actualL1Addr, s_l1OwnerAddr);
 
     // Checks latest round data
-    (uint80 roundId, int256 answer, , , ) = s_scrollSequencerUptimeFeed.latestRoundData();
+    (uint80 roundId, int256 answer,,,) = s_scrollSequencerUptimeFeed.latestRoundData();
     assertEq(roundId, 1);
     assertEq(answer, 0);
   }
@@ -72,18 +72,15 @@ contract ScrollSequencerUptimeFeed_Constructor is ScrollSequencerUptimeFeed_Setu
   /// @notice Tests initial state with valid L2 Cross Domain Messenger
   function test_Constructor_InitialState_WhenValidL2XDomainMessenger() public {
     vm.startPrank(s_l1OwnerAddr, s_l1OwnerAddr);
-    ScrollSequencerUptimeFeed scrollSequencerUptimeFeed = new ScrollSequencerUptimeFeed(
-      s_l1OwnerAddr,
-      address(s_mockScrollL2CrossDomainMessenger),
-      false
-    );
+    ScrollSequencerUptimeFeed scrollSequencerUptimeFeed =
+      new ScrollSequencerUptimeFeed(s_l1OwnerAddr, address(s_mockScrollL2CrossDomainMessenger), false);
 
     // Checks L1 sender
     address actualL1Addr = scrollSequencerUptimeFeed.l1Sender();
     assertEq(actualL1Addr, s_l1OwnerAddr);
 
     // Checks latest round data
-    (uint80 roundId, int256 answer, , , ) = scrollSequencerUptimeFeed.latestRoundData();
+    (uint80 roundId, int256 answer,,,) = scrollSequencerUptimeFeed.latestRoundData();
     assertEq(roundId, 1);
     assertEq(answer, 0);
   }

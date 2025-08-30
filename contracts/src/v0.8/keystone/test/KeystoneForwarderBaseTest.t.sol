@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {Test} from "forge-std/Test.sol";
-import {Receiver} from "./mocks/Receiver.sol";
 import {KeystoneForwarder} from "../KeystoneForwarder.sol";
+import {Receiver} from "./mocks/Receiver.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract BaseTest is Test {
   address internal ADMIN = address(1);
@@ -47,7 +47,9 @@ contract BaseTest is Test {
     return signerAddrs;
   }
 
-  function _getSignerAddresses(uint256 limit) internal view returns (address[] memory) {
+  function _getSignerAddresses(
+    uint256 limit
+  ) internal view returns (address[] memory) {
     address[] memory signerAddrs = new address[](limit);
     for (uint256 i = 0; i < limit; ++i) {
       signerAddrs[i] = s_signers[i].signerAddress;
@@ -62,10 +64,8 @@ contract BaseTest is Test {
   ) internal view returns (bytes[] memory signatures) {
     signatures = new bytes[](requiredSignatures);
     for (uint256 i = 0; i < requiredSignatures; ++i) {
-      (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-        s_signers[i].mockPrivateKey,
-        keccak256(abi.encodePacked(keccak256(report), reportContext))
-      );
+      (uint8 v, bytes32 r, bytes32 s) =
+        vm.sign(s_signers[i].mockPrivateKey, keccak256(abi.encodePacked(keccak256(report), reportContext)));
       signatures[i] = bytes.concat(r, s, bytes1(v - 27));
     }
     return signatures;

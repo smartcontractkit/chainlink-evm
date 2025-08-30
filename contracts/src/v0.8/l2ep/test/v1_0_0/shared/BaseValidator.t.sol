@@ -17,11 +17,7 @@ contract BaseValidator_Setup is L2EPTest {
 
   /// Setup
   function setUp() public {
-    s_baseValidator = new MockBaseValidator(
-      DUMMY_L1_XDOMAIN_MSNGR_ADDR,
-      L2_SEQ_STATUS_RECORDER_ADDRESS,
-      INIT_GAS_LIMIT
-    );
+    s_baseValidator = new MockBaseValidator(DUMMY_L1_XDOMAIN_MSNGR_ADDR, L2_SEQ_STATUS_RECORDER_ADDRESS, INIT_GAS_LIMIT);
   }
 }
 

@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import {Chainlinked, Chainlink} from "./Chainlinked.sol";
+import {Chainlink, Chainlinked} from "./Chainlinked.sol";
 
 // solhint-disable
 contract MaliciousConsumer is Chainlinked {
@@ -33,7 +33,7 @@ contract MaliciousConsumer is Chainlinked {
   }
 
   function stealEthCall(bytes32 _requestId, bytes32) public recordChainlinkFulfillment(_requestId) {
-    (bool success, ) = address(this).call{value: 100}("");
+    (bool success,) = address(this).call{value: 100}("");
     require(success, "Call failed");
   }
 

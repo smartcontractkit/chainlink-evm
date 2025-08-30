@@ -2,9 +2,9 @@
 // A mock for testing code that relies on VRFCoordinatorV2.
 pragma solidity ^0.8.4;
 
-import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
-import {VRFConsumerBaseV2} from "../VRFConsumerBaseV2.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {VRFConsumerBaseV2} from "../VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
 
 // solhint-disable chainlink-solidity/prefix-immutable-variables-with-i
 // solhint-disable gas-custom-errors
@@ -45,14 +45,17 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     // Reentrancy protection.
     bool reentrancyLock;
   }
+
   Config private s_config;
   uint64 internal s_currentSubId;
   uint256 internal s_nextRequestId = 1;
   uint256 internal s_nextPreSeed = 100;
+
   struct Subscription {
     address owner;
     uint96 balance;
   }
+
   mapping(uint64 => Subscription) internal s_subscriptions; /* subId */ /* subscription */
   mapping(uint64 => address[]) internal s_consumers; /* subId */ /* consumers */
 
@@ -61,6 +64,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     uint32 callbackGasLimit;
     uint32 numWords;
   }
+
   mapping(uint256 => Request) internal s_requests; /* requestId */ /* request */
 
   constructor(uint96 _baseFee, uint96 _gasPriceLink) ConfirmedOwner(msg.sender) {
@@ -135,7 +139,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     VRFConsumerBaseV2 v;
     bytes memory callReq = abi.encodeWithSelector(v.rawFulfillRandomWords.selector, _requestId, _words);
     s_config.reentrancyLock = true;
-    (bool success, ) = _consumer.call{gas: req.callbackGasLimit}(callReq);
+    (bool success,) = _consumer.call{gas: req.callbackGasLimit}(callReq);
     s_config.reentrancyLock = false;
 
     uint96 payment = uint96(BASE_FEE + ((startGas - gasleft()) * GAS_PRICE_LINK));
@@ -179,14 +183,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     s_requests[requestId] = Request({subId: _subId, callbackGasLimit: _callbackGasLimit, numWords: _numWords});
 
     emit RandomWordsRequested(
-      _keyHash,
-      requestId,
-      preSeed,
-      _subId,
-      _minimumRequestConfirmations,
-      _callbackGasLimit,
-      _numWords,
-      msg.sender
+      _keyHash, requestId, preSeed, _subId, _minimumRequestConfirmations, _callbackGasLimit, _numWords, msg.sender
     );
     return requestId;
   }
@@ -212,7 +209,9 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     delete (s_subscriptions[_subId]);
   }
 
-  modifier onlySubOwner(uint64 _subId) {
+  modifier onlySubOwner(
+    uint64 _subId
+  ) {
     address owner = s_subscriptions[_subId].owner;
     if (owner == address(0)) {
       revert InvalidSubscription();
@@ -309,15 +308,19 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     return 4000000000000000; // 0.004 Ether
   }
 
-  function requestSubscriptionOwnerTransfer(uint64 /*_subId*/, address /*_newOwner*/) external pure override {
+  function requestSubscriptionOwnerTransfer(uint64, /*_subId*/ address /*_newOwner*/ ) external pure override {
     revert("not implemented");
   }
 
-  function acceptSubscriptionOwnerTransfer(uint64 /*_subId*/) external pure override {
+  function acceptSubscriptionOwnerTransfer(
+    uint64 /*_subId*/
+  ) external pure override {
     revert("not implemented");
   }
 
-  function pendingRequestExists(uint64 /*subId*/) public pure override returns (bool) {
+  function pendingRequestExists(
+    uint64 /*subId*/
+  ) public pure override returns (bool) {
     revert("not implemented");
   }
 }

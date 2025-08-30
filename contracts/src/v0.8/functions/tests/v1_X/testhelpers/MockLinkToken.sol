@@ -27,7 +27,9 @@ contract MockLinkToken {
     return true;
   }
 
-  function balanceOf(address _address) external view returns (uint256) {
+  function balanceOf(
+    address _address
+  ) external view returns (uint256) {
     return balances[_address];
   }
 
@@ -39,7 +41,9 @@ contract MockLinkToken {
     return true;
   }
 
-  function isContract(address _addr) private view returns (bool hasCode) {
+  function isContract(
+    address _addr
+  ) private view returns (bool hasCode) {
     uint256 length;
     assembly {
       length := extcodesize(_addr)

@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import {ChainlinkClient, Chainlink} from "../../ChainlinkClient.sol";
+import {Chainlink, ChainlinkClient} from "../../ChainlinkClient.sol";
 
 /**
  * @title The Chainlinked contract
@@ -57,7 +57,9 @@ contract Chainlinked is ChainlinkClient {
    * @notice Sets the stored oracle address
    * @param _oracle The address of the oracle contract
    */
-  function setOracle(address _oracle) internal {
+  function setOracle(
+    address _oracle
+  ) internal {
     _setChainlinkOracle(_oracle);
   }
 
@@ -65,7 +67,9 @@ contract Chainlinked is ChainlinkClient {
    * @notice Sets the LINK token address
    * @param _link The address of the LINK token contract
    */
-  function setLinkToken(address _link) internal {
+  function setLinkToken(
+    address _link
+  ) internal {
     _setChainlinkToken(_link);
   }
 

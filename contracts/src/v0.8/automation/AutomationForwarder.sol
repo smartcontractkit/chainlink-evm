@@ -39,19 +39,13 @@ contract AutomationForwarder {
     assembly {
       let g := gas()
       // Compute g -= PERFORM_GAS_CUSHION and check for underflow
-      if lt(g, PERFORM_GAS_CUSHION) {
-        revert(0, 0)
-      }
+      if lt(g, PERFORM_GAS_CUSHION) { revert(0, 0) }
       g := sub(g, PERFORM_GAS_CUSHION)
       // if g - g//64 <= gasAmount, revert
       // (we subtract g//64 because of EIP-150)
-      if iszero(gt(sub(g, div(g, 64)), gasAmount)) {
-        revert(0, 0)
-      }
+      if iszero(gt(sub(g, div(g, 64)), gasAmount)) { revert(0, 0) }
       // solidity calls check that a contract actually exists at the destination, so we do the same
-      if iszero(extcodesize(target)) {
-        revert(0, 0)
-      }
+      if iszero(extcodesize(target)) { revert(0, 0) }
       // call with exact gas
       success := call(gasAmount, target, 0, add(data, 0x20), mload(data), 0, 0)
     }
@@ -81,12 +75,8 @@ contract AutomationForwarder {
 
       switch result
       // delegatecall returns 0 on error.
-      case 0 {
-        revert(0, returndatasize())
-      }
-      default {
-        return(0, returndatasize())
-      }
+      case 0 { revert(0, returndatasize()) }
+      default { return(0, returndatasize()) }
     }
   }
 }

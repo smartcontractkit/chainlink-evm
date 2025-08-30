@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import {ArbSys} from "../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import {ArbGasInfo} from "../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
-import {OVM_GasPriceOracle} from "../vendor/@eth-optimism/contracts/v0.8.6/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
+import {ArbSys} from "../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
+import {OVM_GasPriceOracle} from
+  "../vendor/@eth-optimism/contracts/v0.8.6/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
 
 /// @dev A library that abstracts out opcodes that behave differently across chains.
 /// @dev The methods below return values that are pertinent to the given chain.
@@ -54,7 +55,9 @@ library ChainSpecificUtil {
    * @notice Otherwise, it uses the blockhash opcode.
    * @notice Note that the blockhash opcode will return the L2 blockhash on Optimism.
    */
-  function _getBlockhash(uint64 blockNumber) internal view returns (bytes32) {
+  function _getBlockhash(
+    uint64 blockNumber
+  ) internal view returns (bytes32) {
     uint256 chainid = block.chainid;
     if (_isArbitrumChainId(chainid)) {
       if ((_getBlockNumber() - blockNumber) > 256 || blockNumber >= _getBlockNumber()) {
@@ -87,7 +90,9 @@ library ChainSpecificUtil {
    * @notice On Optimism, the provided calldata is passed to the OVM_GasPriceOracle predeploy
    * @notice and getL1Fee is called to get the fees.
    */
-  function _getCurrentTxL1GasFees(bytes memory txCallData) internal view returns (uint256) {
+  function _getCurrentTxL1GasFees(
+    bytes memory txCallData
+  ) internal view returns (uint256) {
     uint256 chainid = block.chainid;
     if (_isArbitrumChainId(chainid)) {
       return ARBGAS.getCurrentTxL1GasFees();
@@ -101,10 +106,12 @@ library ChainSpecificUtil {
    * @notice Returns the gas cost in wei of calldataSizeBytes of calldata being posted
    * @notice to L1.
    */
-  function _getL1CalldataGasCost(uint256 calldataSizeBytes) internal view returns (uint256) {
+  function _getL1CalldataGasCost(
+    uint256 calldataSizeBytes
+  ) internal view returns (uint256) {
     uint256 chainid = block.chainid;
     if (_isArbitrumChainId(chainid)) {
-      (, uint256 l1PricePerByte, , , , ) = ARBGAS.getPricesInWei();
+      (, uint256 l1PricePerByte,,,,) = ARBGAS.getPricesInWei();
       // see https://developer.arbitrum.io/devs-how-tos/how-to-estimate-gas#where-do-we-get-all-this-information-from
       // for the justification behind the 140 number.
       return l1PricePerByte * (calldataSizeBytes + 140);
@@ -117,28 +124,27 @@ library ChainSpecificUtil {
   /**
    * @notice Return true if and only if the provided chain ID is an Arbitrum chain ID.
    */
-  function _isArbitrumChainId(uint256 chainId) internal pure returns (bool) {
-    return
-      chainId == ARB_MAINNET_CHAIN_ID ||
-      chainId == ARB_GOERLI_TESTNET_CHAIN_ID ||
-      chainId == ARB_SEPOLIA_TESTNET_CHAIN_ID;
+  function _isArbitrumChainId(
+    uint256 chainId
+  ) internal pure returns (bool) {
+    return chainId == ARB_MAINNET_CHAIN_ID || chainId == ARB_GOERLI_TESTNET_CHAIN_ID
+      || chainId == ARB_SEPOLIA_TESTNET_CHAIN_ID;
   }
 
   /**
    * @notice Return true if and only if the provided chain ID is an Optimism chain ID.
    * @notice Note that optimism chain id's are also OP stack chain id's (e.g. Base).
    */
-  function _isOptimismChainId(uint256 chainId) internal pure returns (bool) {
-    return
-      chainId == OP_MAINNET_CHAIN_ID ||
-      chainId == OP_GOERLI_CHAIN_ID ||
-      chainId == OP_SEPOLIA_CHAIN_ID ||
-      chainId == BASE_MAINNET_CHAIN_ID ||
-      chainId == BASE_GOERLI_CHAIN_ID ||
-      chainId == BASE_SEPOLIA_CHAIN_ID;
+  function _isOptimismChainId(
+    uint256 chainId
+  ) internal pure returns (bool) {
+    return chainId == OP_MAINNET_CHAIN_ID || chainId == OP_GOERLI_CHAIN_ID || chainId == OP_SEPOLIA_CHAIN_ID
+      || chainId == BASE_MAINNET_CHAIN_ID || chainId == BASE_GOERLI_CHAIN_ID || chainId == BASE_SEPOLIA_CHAIN_ID;
   }
 
-  function _calculateOptimismL1DataFee(uint256 calldataSizeBytes) internal view returns (uint256) {
+  function _calculateOptimismL1DataFee(
+    uint256 calldataSizeBytes
+  ) internal view returns (uint256) {
     // from: https://community.optimism.io/docs/developers/build/transaction-fees/#the-l1-data-fee
     // l1_data_fee = l1_gas_price * (tx_data_gas + fixed_overhead) * dynamic_overhead
     // tx_data_gas = count_zero_bytes(tx_data) * 4 + count_non_zero_bytes(tx_data) * 16

@@ -52,18 +52,17 @@ contract ExposedVerifier {
     uint64 _encodedConfigVersion,
     bytes memory _encodedConfig
   ) public pure returns (bytes32) {
-    return
-      _configDigestFromConfigData(
-        _feedId,
-        _chainId,
-        _contractAddress,
-        _configCount,
-        _signers,
-        _offchainTransmitters,
-        _f,
-        _onchainConfig,
-        _encodedConfigVersion,
-        _encodedConfig
-      );
+    return _configDigestFromConfigData(
+      _feedId,
+      _chainId,
+      _contractAddress,
+      _configCount,
+      _signers,
+      _offchainTransmitters,
+      _f,
+      _onchainConfig,
+      _encodedConfigVersion,
+      _encodedConfig
+    );
   }
 }

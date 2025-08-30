@@ -126,7 +126,9 @@ library EnumerableSet {
   /**
    * @dev Returns the number of values on the set. O(1).
    */
-  function _length(Set storage set) private view returns (uint256) {
+  function _length(
+    Set storage set
+  ) private view returns (uint256) {
     return set._values.length;
   }
 
@@ -152,7 +154,9 @@ library EnumerableSet {
    * this function has an unbounded cost, and using it as part of a state-changing function may render the function
    * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
    */
-  function _values(Set storage set) private view returns (bytes32[] memory) {
+  function _values(
+    Set storage set
+  ) private view returns (bytes32[] memory) {
     return set._values;
   }
 
@@ -192,7 +196,9 @@ library EnumerableSet {
   /**
    * @dev Returns the number of values in the set. O(1).
    */
-  function length(Bytes32Set storage set) internal view returns (uint256) {
+  function length(
+    Bytes32Set storage set
+  ) internal view returns (uint256) {
     return _length(set._inner);
   }
 
@@ -218,7 +224,9 @@ library EnumerableSet {
    * this function has an unbounded cost, and using it as part of a state-changing function may render the function
    * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
    */
-  function values(Bytes32Set storage set) internal view returns (bytes32[] memory) {
+  function values(
+    Bytes32Set storage set
+  ) internal view returns (bytes32[] memory) {
     bytes32[] memory store = _values(set._inner);
     bytes32[] memory result;
 
@@ -266,7 +274,9 @@ library EnumerableSet {
   /**
    * @dev Returns the number of values in the set. O(1).
    */
-  function length(AddressSet storage set) internal view returns (uint256) {
+  function length(
+    AddressSet storage set
+  ) internal view returns (uint256) {
     return _length(set._inner);
   }
 
@@ -292,7 +302,9 @@ library EnumerableSet {
    * this function has an unbounded cost, and using it as part of a state-changing function may render the function
    * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
    */
-  function values(AddressSet storage set) internal view returns (address[] memory) {
+  function values(
+    AddressSet storage set
+  ) internal view returns (address[] memory) {
     bytes32[] memory store = _values(set._inner);
     address[] memory result;
 
@@ -340,7 +352,9 @@ library EnumerableSet {
   /**
    * @dev Returns the number of values in the set. O(1).
    */
-  function length(UintSet storage set) internal view returns (uint256) {
+  function length(
+    UintSet storage set
+  ) internal view returns (uint256) {
     return _length(set._inner);
   }
 
@@ -366,7 +380,9 @@ library EnumerableSet {
    * this function has an unbounded cost, and using it as part of a state-changing function may render the function
    * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
    */
-  function values(UintSet storage set) internal view returns (uint256[] memory) {
+  function values(
+    UintSet storage set
+  ) internal view returns (uint256[] memory) {
     bytes32[] memory store = _values(set._inner);
     uint256[] memory result;
 
@@ -414,7 +430,9 @@ library EnumerableSet {
   /**
    * @dev Returns the number of values in the set. O(1).
    */
-  function length(Bytes16Set storage set) internal view returns (uint256) {
+  function length(
+    Bytes16Set storage set
+  ) internal view returns (uint256) {
     return _length(set._inner);
   }
 
@@ -440,7 +458,9 @@ library EnumerableSet {
    * this function has an unbounded cost, and using it as part of a state-changing function may render the function
    * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
    */
-  function values(Bytes16Set storage set) internal view returns (bytes16[] memory) {
+  function values(
+    Bytes16Set storage set
+  ) internal view returns (bytes16[] memory) {
     bytes32[] memory store = _values(set._inner);
     bytes16[] memory result;
 

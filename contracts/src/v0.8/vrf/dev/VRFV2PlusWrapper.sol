@@ -2,13 +2,15 @@
 pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {VRFConsumerBaseV2Plus} from "./VRFConsumerBaseV2Plus.sol";
-import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+
 import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
-import {VRFV2PlusClient} from "./libraries/VRFV2PlusClient.sol";
-import {IVRFV2PlusWrapper} from "./interfaces/IVRFV2PlusWrapper.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {VRFConsumerBaseV2Plus} from "./VRFConsumerBaseV2Plus.sol";
+
 import {VRFV2PlusWrapperConsumerBase} from "./VRFV2PlusWrapperConsumerBase.sol";
+import {IVRFV2PlusWrapper} from "./interfaces/IVRFV2PlusWrapper.sol";
+import {VRFV2PlusClient} from "./libraries/VRFV2PlusClient.sol";
 
 /**
  * @notice A wrapper for VRFCoordinatorV2 that provides an interface better suited to one-off
@@ -159,6 +161,7 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
     uint64 requestGasPrice;
   }
   /* Storage Slot 6: BEGIN */
+
   mapping(uint256 => Callback) /* requestID */ /* callback */ public s_callbacks;
   /* Storage Slot 6: END */
 
@@ -190,7 +193,9 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    * @notice setFulfillmentTxSize sets the size of the fulfillment transaction in bytes.
    * @param _size is the size of the fulfillment transaction in bytes.
    */
-  function setFulfillmentTxSize(uint32 _size) external onlyOwner {
+  function setFulfillmentTxSize(
+    uint32 _size
+  ) external onlyOwner {
     s_fulfillmentTxSizeBytes = _size;
 
     emit FulfillmentTxSizeSet(_size);
@@ -375,7 +380,7 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
     uint32 _callbackGasLimit,
     uint32 _numWords
   ) external view override onlyConfiguredNotDisabled returns (uint256) {
-    (int256 weiPerUnitLink, ) = _getFeedData();
+    (int256 weiPerUnitLink,) = _getFeedData();
     return _calculateRequestPrice(_callbackGasLimit, _numWords, tx.gasprice, weiPerUnitLink);
   }
 
@@ -400,7 +405,7 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
     uint32 _numWords,
     uint256 _requestGasPriceWei
   ) external view override onlyConfiguredNotDisabled returns (uint256) {
-    (int256 weiPerUnitLink, ) = _getFeedData();
+    (int256 weiPerUnitLink,) = _getFeedData();
     return _calculateRequestPrice(_callbackGasLimit, _numWords, _requestGasPriceWei, weiPerUnitLink);
   }
 
@@ -431,14 +436,14 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
 
     // coordinatorCostWei takes into account the L1 posting costs of the VRF fulfillment transaction, if we are on an L2.
     // (wei/gas) * gas + l1wei
-    uint256 coordinatorCostWei = _requestGasPrice *
-      (_gas + _getCoordinatorGasOverhead(_numWords, true)) +
-      _getL1CostWei();
+    uint256 coordinatorCostWei =
+      _requestGasPrice * (_gas + _getCoordinatorGasOverhead(_numWords, true)) + _getL1CostWei();
 
     // coordinatorCostWithPremiumAndFlatFeeWei is the coordinator cost with the percentage premium and flat fee applied
     // coordinator cost * premium multiplier + flat fee
-    uint256 coordinatorCostWithPremiumAndFlatFeeWei = ((coordinatorCostWei *
-      (s_coordinatorNativePremiumPercentage + 100)) / 100) + (1e12 * uint256(s_fulfillmentFlatFeeNativePPM));
+    uint256 coordinatorCostWithPremiumAndFlatFeeWei = (
+      (coordinatorCostWei * (s_coordinatorNativePremiumPercentage + 100)) / 100
+    ) + (1e12 * uint256(s_fulfillmentFlatFeeNativePPM));
 
     return wrapperCostWei + coordinatorCostWithPremiumAndFlatFeeWei;
   }
@@ -455,15 +460,14 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
 
     // coordinatorCostWei takes into account the L1 posting costs of the VRF fulfillment transaction, if we are on an L2.
     // (wei/gas) * gas + l1wei
-    uint256 coordinatorCostWei = _requestGasPrice *
-      (_gas + _getCoordinatorGasOverhead(_numWords, false)) +
-      _getL1CostWei();
+    uint256 coordinatorCostWei =
+      _requestGasPrice * (_gas + _getCoordinatorGasOverhead(_numWords, false)) + _getL1CostWei();
 
     // coordinatorCostWithPremiumAndFlatFeeWei is the coordinator cost with the percentage premium and flat fee applied
     // coordinator cost * premium multiplier + flat fee
-    uint256 coordinatorCostWithPremiumAndFlatFeeWei = ((coordinatorCostWei *
-      (s_coordinatorLinkPremiumPercentage + 100)) / 100) +
-      (1e12 * uint256(s_fulfillmentFlatFeeNativePPM - s_fulfillmentFlatFeeLinkDiscountPPM));
+    uint256 coordinatorCostWithPremiumAndFlatFeeWei = (
+      (coordinatorCostWei * (s_coordinatorLinkPremiumPercentage + 100)) / 100
+    ) + (1e12 * uint256(s_fulfillmentFlatFeeNativePPM - s_fulfillmentFlatFeeLinkDiscountPPM));
 
     // requestPrice is denominated in juels (link)
     // (1e18 juels/link) * wei / (wei/link) = juels
@@ -487,10 +491,8 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
     // solhint-disable-next-line gas-custom-errors
     require(msg.sender == address(i_link), "only callable from LINK");
 
-    (uint32 callbackGasLimit, uint16 requestConfirmations, uint32 numWords, bytes memory extraArgs) = abi.decode(
-      _data,
-      (uint32, uint16, uint32, bytes)
-    );
+    (uint32 callbackGasLimit, uint16 requestConfirmations, uint32 numWords, bytes memory extraArgs) =
+      abi.decode(_data, (uint32, uint16, uint32, bytes));
     checkPaymentMode(extraArgs, true);
     uint32 eip150Overhead = _getEIP150Overhead(callbackGasLimit);
     (int256 weiPerUnitLink, bool isFeedStale) = _getFeedData();
@@ -508,11 +510,8 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
       extraArgs: extraArgs // empty extraArgs defaults to link payment
     });
     uint256 requestId = s_vrfCoordinator.requestRandomWords(req);
-    s_callbacks[requestId] = Callback({
-      callbackAddress: _sender,
-      callbackGasLimit: callbackGasLimit,
-      requestGasPrice: uint64(tx.gasprice)
-    });
+    s_callbacks[requestId] =
+      Callback({callbackAddress: _sender, callbackGasLimit: callbackGasLimit, requestGasPrice: uint64(tx.gasprice)});
     lastRequestId = requestId;
 
     if (isFeedStale) {
@@ -567,11 +566,8 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
       extraArgs: extraArgs
     });
     requestId = s_vrfCoordinator.requestRandomWords(req);
-    s_callbacks[requestId] = Callback({
-      callbackAddress: msg.sender,
-      callbackGasLimit: _callbackGasLimit,
-      requestGasPrice: uint64(tx.gasprice)
-    });
+    s_callbacks[requestId] =
+      Callback({callbackAddress: msg.sender, callbackGasLimit: _callbackGasLimit, requestGasPrice: uint64(tx.gasprice)});
 
     return requestId;
   }
@@ -581,7 +577,9 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    *
    * @param _recipient is the address that should receive the LINK funds.
    */
-  function withdraw(address _recipient) external onlyOwner {
+  function withdraw(
+    address _recipient
+  ) external onlyOwner {
     uint256 amount = i_link.balanceOf(address(this));
     if (!i_link.transfer(_recipient, amount)) {
       revert FailedToTransferLink();
@@ -595,9 +593,11 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    *
    * @param _recipient is the address that should receive the native funds.
    */
-  function withdrawNative(address _recipient) external onlyOwner {
+  function withdrawNative(
+    address _recipient
+  ) external onlyOwner {
     uint256 amount = address(this).balance;
-    (bool success, ) = payable(_recipient).call{value: amount}("");
+    (bool success,) = payable(_recipient).call{value: amount}("");
     // solhint-disable-next-line gas-custom-errors
     require(success, "failed to withdraw native");
 
@@ -652,7 +652,7 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
   function _getFeedData() private view returns (int256 weiPerUnitLink, bool isFeedStale) {
     uint32 stalenessSeconds = s_stalenessSeconds;
     uint256 timestamp;
-    (, weiPerUnitLink, , timestamp, ) = i_link_native_feed.latestRoundData();
+    (, weiPerUnitLink,, timestamp,) = i_link_native_feed.latestRoundData();
     // solhint-disable-next-line not-rely-on-time
     isFeedStale = stalenessSeconds > 0 && stalenessSeconds < block.timestamp - timestamp;
     if (isFeedStale) {
@@ -666,7 +666,9 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
   /**
    * @dev Calculates extra amount of gas required for running an assembly call() post-EIP150.
    */
-  function _getEIP150Overhead(uint32 gas) private pure returns (uint32) {
+  function _getEIP150Overhead(
+    uint32 gas
+  ) private pure returns (uint32) {
     return gas / 63 + 1;
   }
 
@@ -691,19 +693,13 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
       // as we do not want to provide them with less, however that check itself costs
       // gas.  GAS_FOR_CALL_EXACT_CHECK ensures we have at least enough gas to be able
       // to revert if gasAmount >  63//64*gas available.
-      if lt(g, GAS_FOR_CALL_EXACT_CHECK) {
-        revert(0, 0)
-      }
+      if lt(g, GAS_FOR_CALL_EXACT_CHECK) { revert(0, 0) }
       g := sub(g, GAS_FOR_CALL_EXACT_CHECK)
       // if g - g//64 <= gasAmount, revert
       // (we subtract g//64 because of EIP-150)
-      if iszero(gt(sub(g, div(g, 64)), gasAmount)) {
-        revert(0, 0)
-      }
+      if iszero(gt(sub(g, div(g, 64)), gasAmount)) { revert(0, 0) }
       // solidity calls check that a contract actually exists at the destination, so we do the same
-      if iszero(extcodesize(target)) {
-        revert(0, 0)
-      }
+      if iszero(extcodesize(target)) { revert(0, 0) }
       // call and return whether we succeeded. ignore return data
       // call(gas,addr,value,argsOffset,argsLength,retOffset,retLength)
       success := call(gasAmount, target, 0, add(data, 0x20), mload(data), 0, 0)

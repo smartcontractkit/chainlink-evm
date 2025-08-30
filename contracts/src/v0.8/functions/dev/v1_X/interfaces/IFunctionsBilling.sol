@@ -15,7 +15,9 @@ interface IFunctionsBilling {
   /// @notice Determine the fee that will be split between Node Operators for servicing a request
   /// @param requestCBOR - CBOR encoded Chainlink Functions request data, use FunctionsRequest library to encode a request
   /// @return fee - Cost in Juels (1e18) of LINK
-  function getDONFeeJuels(bytes memory requestCBOR) external view returns (uint72);
+  function getDONFeeJuels(
+    bytes memory requestCBOR
+  ) external view returns (uint72);
 
   /// @notice Determine the fee that will be paid to the Coordinator owner for operating the network
   /// @return fee - Cost in Juels (1e18) of LINK
@@ -40,7 +42,9 @@ interface IFunctionsBilling {
 
   /// @notice Remove a request commitment that the Router has determined to be stale
   /// @param requestId - The request ID to remove
-  function deleteCommitment(bytes32 requestId) external;
+  function deleteCommitment(
+    bytes32 requestId
+  ) external;
 
   /// @notice Oracle withdraw LINK earned through fulfilling requests
   /// @notice If amount is 0 the full balance will be withdrawn

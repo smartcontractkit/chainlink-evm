@@ -82,7 +82,9 @@ contract KeystoneFeedsConsumer is IReceiver, OwnerIsCreator {
   }
 
   // solhint-disable-next-line chainlink-solidity/explicit-returns
-  function _getInfo(bytes memory metadata) internal pure returns (bytes10 workflowName, address workflowOwner) {
+  function _getInfo(
+    bytes memory metadata
+  ) internal pure returns (bytes10 workflowName, address workflowOwner) {
     // (first 32 bytes contain length of the byte array)
     // workflow_cid             // offset 32, size 32
     // workflow_name            // offset 64, size 10
@@ -96,12 +98,16 @@ contract KeystoneFeedsConsumer is IReceiver, OwnerIsCreator {
     }
   }
 
-  function getPrice(bytes32 feedId) external view returns (uint224, uint32) {
+  function getPrice(
+    bytes32 feedId
+  ) external view returns (uint224, uint32) {
     StoredFeedReport memory report = s_feedReports[feedId];
     return (report.Price, report.Timestamp);
   }
 
-  function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public pure override returns (bool) {
     return interfaceId == type(IReceiver).interfaceId || interfaceId == type(IERC165).interfaceId;
   }
 }

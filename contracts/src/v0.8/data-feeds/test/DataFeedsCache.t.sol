@@ -2,9 +2,9 @@
 pragma solidity 0.8.26;
 
 import {ERC20Mock} from "../../shared/mocks/ERC20Mock.sol";
-import {IERC20Metadata as IERC20} from
-  "@openzeppelin/contracts@5.0.2/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {BundleAggregatorProxy} from "../BundleAggregatorProxy.sol";
+import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {DataFeedsCache} from "../DataFeedsCache.sol";
 import {IDataFeedsCache} from "../interfaces/IDataFeedsCache.sol";

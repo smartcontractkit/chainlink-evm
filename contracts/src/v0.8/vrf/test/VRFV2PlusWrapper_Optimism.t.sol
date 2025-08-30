@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {ExposedVRFCoordinatorV2_5_Optimism} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
-import {VRFV2PlusWrapper_Optimism} from "../dev/VRFV2PlusWrapper_Optimism.sol";
+
+import {GasPriceOracle as OVM_GasPriceOracle} from
+  "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
 import {OptimismL1Fees} from "../dev/OptimismL1Fees.sol";
-import {GasPriceOracle as OVM_GasPriceOracle} from "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
+import {VRFV2PlusWrapper_Optimism} from "../dev/VRFV2PlusWrapper_Optimism.sol";
+import {ExposedVRFCoordinatorV2_5_Optimism} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
+import {BaseTest} from "./BaseTest.t.sol";
+
 import {VmSafe} from "forge-std/Vm.sol";
 
 contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
@@ -57,10 +60,7 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
 
     // Deploy wrapper.
     s_wrapper = new VRFV2PlusWrapper_Optimism(
-      address(s_linkToken),
-      address(s_linkNativeFeed),
-      address(s_testCoordinator),
-      uint256(s_wrapperSubscriptionId)
+      address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(s_wrapperSubscriptionId)
     );
 
     // Configure the wrapper.
@@ -97,24 +97,14 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
   function _mockGasOraclePriceFeeMethods() internal {
     // these values are taken from an example transaction on Base Sepolia
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))),
-      abi.encode(64273426165)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))), abi.encode(64273426165)
+    );
+    vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("baseFeeScalar()"))), abi.encode(1101));
+    vm.mockCall(
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))), abi.encode(659851)
     );
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("baseFeeScalar()"))),
-      abi.encode(1101)
-    );
-    vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))),
-      abi.encode(659851)
-    );
-    vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))),
-      abi.encode(2126959908362)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))), abi.encode(2126959908362)
     );
     vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("decimals()"))), abi.encode(6));
   }

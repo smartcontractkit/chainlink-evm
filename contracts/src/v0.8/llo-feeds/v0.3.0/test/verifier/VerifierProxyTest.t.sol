@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTestWithConfiguredVerifierAndFeeManager} from "./BaseVerifierTest.t.sol";
-import {VerifierProxy} from "../../../v0.3.0/VerifierProxy.sol";
 import {FeeManager} from "../../../v0.3.0/FeeManager.sol";
+import {VerifierProxy} from "../../../v0.3.0/VerifierProxy.sol";
+import {BaseTestWithConfiguredVerifierAndFeeManager} from "./BaseVerifierTest.t.sol";
 
 contract VerifierProxyInitializeVerifierTest is BaseTestWithConfiguredVerifierAndFeeManager {
   function test_setFeeManagerZeroAddress() public {

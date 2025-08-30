@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
 import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
-import {RewardManager} from "../../../v0.3.0/RewardManager.sol";
+
 import {Common} from "../../../libraries/Common.sol";
+import {RewardManager} from "../../../v0.3.0/RewardManager.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
+import {Test} from "forge-std/Test.sol";
 
 /**
  * @title BaseRewardManagerTest
@@ -192,11 +193,15 @@ contract BaseRewardManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function getAsset(uint256 quantity) public view returns (Common.Asset memory) {
+  function getAsset(
+    uint256 quantity
+  ) public view returns (Common.Asset memory) {
     return Common.Asset(address(asset), quantity);
   }
 
-  function getAssetBalance(address addr) public view returns (uint256) {
+  function getAssetBalance(
+    address addr
+  ) public view returns (uint256) {
     return asset.balanceOf(addr);
   }
 

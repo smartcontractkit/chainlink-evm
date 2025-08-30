@@ -1,12 +1,15 @@
 pragma solidity 0.8.19;
 
-import "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {ExposedVRFCoordinatorV2_5_Optimism} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
-import {OptimismL1Fees} from "../dev/OptimismL1Fees.sol";
+
+import {GasPriceOracle as OVM_GasPriceOracle} from
+  "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
 import {BlockhashStore} from "../dev/BlockhashStore.sol";
-import {GasPriceOracle as OVM_GasPriceOracle} from "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
+import {OptimismL1Fees} from "../dev/OptimismL1Fees.sol";
+import {ExposedVRFCoordinatorV2_5_Optimism} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
+import "./BaseTest.t.sol";
+
 import {VmSafe} from "forge-std/Vm.sol";
 
 contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
@@ -78,13 +81,12 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
     uint256 weiPerUnitGas,
     bool onlyPremium
   ) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ExposedVRFCoordinatorV2_5_Optimism.calculatePaymentAmountNativeExternal.selector,
-        startGas,
-        weiPerUnitGas,
-        onlyPremium
-      );
+    return abi.encodeWithSelector(
+      ExposedVRFCoordinatorV2_5_Optimism.calculatePaymentAmountNativeExternal.selector,
+      startGas,
+      weiPerUnitGas,
+      onlyPremium
+    );
   }
 
   function _encodeCalculatePaymentAmountLinkExternal(
@@ -92,13 +94,12 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
     uint256 weiPerUnitGas,
     bool onlyPremium
   ) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ExposedVRFCoordinatorV2_5_Optimism.calculatePaymentAmountLinkExternal.selector,
-        startGas,
-        weiPerUnitGas,
-        onlyPremium
-      );
+    return abi.encodeWithSelector(
+      ExposedVRFCoordinatorV2_5_Optimism.calculatePaymentAmountLinkExternal.selector,
+      startGas,
+      weiPerUnitGas,
+      onlyPremium
+    );
   }
 
   function _mockGasOraclePriceGetL1FeeUpperBoundCall() internal {
@@ -114,29 +115,21 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
   function _mockGasOraclePriceFeeMethods() internal {
     // these values are taken from an example transaction on Base Sepolia
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))),
-      abi.encode(64273426165)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))), abi.encode(64273426165)
+    );
+    vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("baseFeeScalar()"))), abi.encode(1101));
+    vm.mockCall(
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))), abi.encode(659851)
     );
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("baseFeeScalar()"))),
-      abi.encode(1101)
-    );
-    vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))),
-      abi.encode(659851)
-    );
-    vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))),
-      abi.encode(2126959908362)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))), abi.encode(2126959908362)
     );
     vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("decimals()"))), abi.encode(6));
   }
 
-  function _mockGasOraclePriceGetL1FeeCall(bytes memory txMsgData) internal {
+  function _mockGasOraclePriceGetL1FeeCall(
+    bytes memory txMsgData
+  ) internal {
     vm.mockCall(
       OVM_GASPRICEORACLE_ADDR,
       abi.encodeWithSelector(OVM_GasPriceOracle.getL1Fee.selector, bytes.concat(txMsgData, L1_FEE_DATA_PADDING)),
@@ -144,7 +137,9 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
     );
   }
 
-  function _checkL1GasFeeEmittedLogs(uint256 expectedL1GasFee) internal {
+  function _checkL1GasFeeEmittedLogs(
+    uint256 expectedL1GasFee
+  ) internal {
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 1);
     assertEq(entries[0].topics.length, 1);

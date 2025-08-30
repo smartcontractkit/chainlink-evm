@@ -11,7 +11,9 @@ contract UpkeepReverter is AutomationCompatible {
     return (true, data);
   }
 
-  function performUpkeep(bytes calldata) external pure override {
+  function performUpkeep(
+    bytes calldata
+  ) external pure override {
     require(false, "!working");
   }
 }

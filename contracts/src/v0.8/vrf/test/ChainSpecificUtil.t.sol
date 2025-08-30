@@ -1,11 +1,12 @@
 pragma solidity 0.8.6;
 
-import "./BaseTest.t.sol";
 import {ChainSpecificUtil} from "../ChainSpecificUtil_v0_8_6.sol";
+import "./BaseTest.t.sol";
 
-import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
-import {OVM_GasPriceOracle} from "../../vendor/@eth-optimism/contracts/v0.8.6/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
+import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
+import {OVM_GasPriceOracle} from
+  "../../vendor/@eth-optimism/contracts/v0.8.6/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
 
 contract ChainSpecificUtilTest is BaseTest {
   // ------------ Start Arbitrum Constants ------------
@@ -59,9 +60,7 @@ contract ChainSpecificUtilTest is BaseTest {
       bytes32 expectedBlockHash = expectedBlockHashes[i];
       uint256 expectedBlockNumber = expectedBlockNumbers[i];
       vm.mockCall(
-        ARBSYS_ADDR,
-        abi.encodeWithSelector(ArbSys.arbBlockNumber.selector),
-        abi.encode(expectedBlockNumber + 1)
+        ARBSYS_ADDR, abi.encodeWithSelector(ArbSys.arbBlockNumber.selector), abi.encode(expectedBlockNumber + 1)
       );
       vm.mockCall(
         ARBSYS_ADDR,
@@ -104,9 +103,7 @@ contract ChainSpecificUtilTest is BaseTest {
       vm.chainId(chainIds[i]);
       uint256 expectedGasFee = expectedGasFees[i];
       vm.mockCall(
-        ARBGAS_ADDR,
-        abi.encodeWithSelector(ArbGasInfo.getCurrentTxL1GasFees.selector),
-        abi.encode(expectedGasFee)
+        ARBGAS_ADDR, abi.encodeWithSelector(ArbGasInfo.getCurrentTxL1GasFees.selector), abi.encode(expectedGasFee)
       );
       uint256 actualGasFee = ChainSpecificUtil._getCurrentTxL1GasFees("");
       assertEq(expectedGasFee, actualGasFee, "incorrect gas fees");
@@ -115,13 +112,8 @@ contract ChainSpecificUtilTest is BaseTest {
 
   function testGetCurrentTxL1GasFeesOptimism() public {
     // set optimism chain id
-    uint256[5] memory chainIds = [
-      OP_MAINNET_CHAIN_ID,
-      OP_GOERLI_CHAIN_ID,
-      OP_SEPOLIA_CHAIN_ID,
-      BASE_MAINNET_CHAIN_ID,
-      BASE_GOERLI_CHAIN_ID
-    ];
+    uint256[5] memory chainIds =
+      [OP_MAINNET_CHAIN_ID, OP_GOERLI_CHAIN_ID, OP_SEPOLIA_CHAIN_ID, BASE_MAINNET_CHAIN_ID, BASE_GOERLI_CHAIN_ID];
     uint256[5] memory expectedGasFees = [uint256(10 gwei), 12 gwei, 14 gwei, 16 gwei, 18 gwei];
     for (uint256 i = 0; i < chainIds.length; i++) {
       vm.chainId(chainIds[i]);
@@ -142,9 +134,7 @@ contract ChainSpecificUtilTest is BaseTest {
     for (uint256 i = 0; i < chainIds.length; i++) {
       vm.chainId(chainIds[i]);
       vm.mockCall(
-        ARBGAS_ADDR,
-        abi.encodeWithSelector(ArbGasInfo.getPricesInWei.selector),
-        abi.encode(0, 10, 0, 0, 0, 0)
+        ARBGAS_ADDR, abi.encodeWithSelector(ArbGasInfo.getPricesInWei.selector), abi.encode(0, 10, 0, 0, 0, 0)
       );
 
       // fee = l1PricePerByte * (calldataSizeBytes + 140)
@@ -155,13 +145,8 @@ contract ChainSpecificUtilTest is BaseTest {
   }
 
   function testGetL1CalldataGasCostOptimism() public {
-    uint256[5] memory chainIds = [
-      OP_MAINNET_CHAIN_ID,
-      OP_GOERLI_CHAIN_ID,
-      OP_SEPOLIA_CHAIN_ID,
-      BASE_MAINNET_CHAIN_ID,
-      BASE_GOERLI_CHAIN_ID
-    ];
+    uint256[5] memory chainIds =
+      [OP_MAINNET_CHAIN_ID, OP_GOERLI_CHAIN_ID, OP_SEPOLIA_CHAIN_ID, BASE_MAINNET_CHAIN_ID, BASE_GOERLI_CHAIN_ID];
     for (uint256 i = 0; i < chainIds.length; i++) {
       vm.chainId(chainIds[i]);
       vm.mockCall(

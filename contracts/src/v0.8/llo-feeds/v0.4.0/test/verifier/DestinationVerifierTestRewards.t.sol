@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {VerifierWithFeeManager} from "./BaseDestinationVerifierTest.t.sol";
-import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
-import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
+import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
+import {VerifierWithFeeManager} from "./BaseDestinationVerifierTest.t.sol";
 
 contract VerifierBillingTests is VerifierWithFeeManager {
   uint8 MINIMAL_FAULT_TOLERANCE = 2;
@@ -38,20 +38,21 @@ contract VerifierBillingTests is VerifierWithFeeManager {
     s_testReport = generateReportAtTimestamp(block.timestamp);
   }
 
-  function generateReportAtTimestamp(uint256 timestamp) public pure returns (V3Report memory) {
-    return
-      V3Report({
-        feedId: FEED_ID_V3,
-        observationsTimestamp: OBSERVATIONS_TIMESTAMP,
-        validFromTimestamp: uint32(timestamp),
-        nativeFee: uint192(DEFAULT_REPORT_NATIVE_FEE),
-        linkFee: uint192(DEFAULT_REPORT_LINK_FEE),
-        // ask michael about this expires at, is it usually set at what blocks
-        expiresAt: uint32(timestamp) + 500,
-        benchmarkPrice: MEDIAN,
-        bid: BID,
-        ask: ASK
-      });
+  function generateReportAtTimestamp(
+    uint256 timestamp
+  ) public pure returns (V3Report memory) {
+    return V3Report({
+      feedId: FEED_ID_V3,
+      observationsTimestamp: OBSERVATIONS_TIMESTAMP,
+      validFromTimestamp: uint32(timestamp),
+      nativeFee: uint192(DEFAULT_REPORT_NATIVE_FEE),
+      linkFee: uint192(DEFAULT_REPORT_LINK_FEE),
+      // ask michael about this expires at, is it usually set at what blocks
+      expiresAt: uint32(timestamp) + 500,
+      benchmarkPrice: MEDIAN,
+      bid: BID,
+      ask: ASK
+    });
   }
 
   function getRecipientAndWeightsGroup2() public pure returns (Common.AddressAndWeight[] memory, address[] memory) {

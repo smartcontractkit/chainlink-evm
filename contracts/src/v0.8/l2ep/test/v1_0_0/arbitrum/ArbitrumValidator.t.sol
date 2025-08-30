@@ -7,8 +7,9 @@ import {SimpleWriteAccessController} from "../../../../shared/access/SimpleWrite
 import {ArbitrumSequencerUptimeFeed} from "../../../arbitrum/ArbitrumSequencerUptimeFeed.sol";
 import {ArbitrumValidator} from "../../../arbitrum/ArbitrumValidator.sol";
 import {BaseValidator} from "../../../base/BaseValidator.sol";
-import {MockArbitrumInbox} from "../../mocks/MockArbitrumInbox.sol";
+
 import {MockAggregatorV2V3} from "../../mocks/MockAggregatorV2V3.sol";
+import {MockArbitrumInbox} from "../../mocks/MockArbitrumInbox.sol";
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract ArbitrumValidatorTest is L2EPTest {

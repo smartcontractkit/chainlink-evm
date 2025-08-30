@@ -1,13 +1,14 @@
 pragma solidity 0.8.19;
 
-import {console} from "forge-std/console.sol";
 import {VRF} from "../VRF.sol";
 import {VRFTypes} from "../VRFTypes.sol";
 import {BatchVRFCoordinatorV2Plus} from "../dev/BatchVRFCoordinatorV2Plus.sol";
-import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
+
 import {VRFCoordinatorV2_5} from "../dev/VRFCoordinatorV2_5.sol";
+import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
 import "./BaseTest.t.sol";
 import {FixtureVRFCoordinatorV2_5} from "./FixtureVRFCoordinatorV2_5.t.sol";
+import {console} from "forge-std/console.sol";
 
 contract BatchVRFCoordinatorV2PlusTest is FixtureVRFCoordinatorV2_5 {
   BatchVRFCoordinatorV2Plus private s_batchCoordinator;
@@ -105,10 +106,8 @@ contract BatchVRFCoordinatorV2PlusTest is FixtureVRFCoordinatorV2_5 {
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true}))
     });
 
-    VRFCoordinatorV2_5.Output memory output = s_coordinator.getRandomnessFromProofExternal(
-      abi.decode(abi.encode(proofs[0]), (VRF.Proof)),
-      rcs[0]
-    );
+    VRFCoordinatorV2_5.Output memory output =
+      s_coordinator.getRandomnessFromProofExternal(abi.decode(abi.encode(proofs[0]), (VRF.Proof)), rcs[0]);
 
     requestBlock = 20;
     vm.roll(requestBlock);
@@ -178,10 +177,8 @@ contract BatchVRFCoordinatorV2PlusTest is FixtureVRFCoordinatorV2_5 {
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
     });
 
-    VRFCoordinatorV2_5.Output memory output1 = s_coordinator.getRandomnessFromProofExternal(
-      abi.decode(abi.encode(proofs[1]), (VRF.Proof)),
-      rcs[1]
-    );
+    VRFCoordinatorV2_5.Output memory output1 =
+      s_coordinator.getRandomnessFromProofExternal(abi.decode(abi.encode(proofs[1]), (VRF.Proof)), rcs[1]);
 
     // The payments are NOT pre-calculated and simply copied from the actual event.
     // We can assert and ignore the payment field but the code will be considerably longer.

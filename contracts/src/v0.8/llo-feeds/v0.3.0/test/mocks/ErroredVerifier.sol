@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {IVerifier} from "../../interfaces/IVerifier.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {IVerifier} from "../../interfaces/IVerifier.sol";
 
 contract ErroredVerifier is IVerifier {
-  function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public pure override returns (bool) {
     return interfaceId == this.verify.selector;
   }
 
@@ -77,19 +79,27 @@ contract ErroredVerifier is IVerifier {
     revert FailedToDeactivateConfig();
   }
 
-  function activateFeed(bytes32) external pure {
+  function activateFeed(
+    bytes32
+  ) external pure {
     revert FailedToActivateFeed();
   }
 
-  function deactivateFeed(bytes32) external pure {
+  function deactivateFeed(
+    bytes32
+  ) external pure {
     revert FailedToDeactivateFeed();
   }
 
-  function latestConfigDigestAndEpoch(bytes32) external pure override returns (bool, bytes32, uint32) {
+  function latestConfigDigestAndEpoch(
+    bytes32
+  ) external pure override returns (bool, bytes32, uint32) {
     revert FailedToGetLatestConfigDigestAndEpoch();
   }
 
-  function latestConfigDetails(bytes32) external pure override returns (uint32, uint32, bytes32) {
+  function latestConfigDetails(
+    bytes32
+  ) external pure override returns (uint32, uint32, bytes32) {
     revert FailedToGetLatestConfigDetails();
   }
 }

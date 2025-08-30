@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FunctionsCoordinator} from "../../../dev/v1_X/FunctionsCoordinator.sol";
 import {FunctionsBilling} from "../../../dev/v1_X/FunctionsBilling.sol";
-import {FunctionsResponse} from "../../../dev/v1_X/libraries/FunctionsResponse.sol";
+import {FunctionsCoordinator} from "../../../dev/v1_X/FunctionsCoordinator.sol";
+
 import {FunctionsBillingConfig} from "../../../dev/v1_X/interfaces/IFunctionsBilling.sol";
+import {FunctionsResponse} from "../../../dev/v1_X/libraries/FunctionsResponse.sol";
 
 /// @title Functions Coordinator Test Harness
 /// @notice Contract to expose internal functions for testing purposes
@@ -24,7 +25,9 @@ contract FunctionsCoordinatorHarness is FunctionsCoordinator {
     s_router_HARNESS = router;
   }
 
-  function isTransmitter_HARNESS(address node) external view returns (bool) {
+  function isTransmitter_HARNESS(
+    address node
+  ) external view returns (bool) {
     return super._isTransmitter(node);
   }
 
@@ -37,7 +40,9 @@ contract FunctionsCoordinatorHarness is FunctionsCoordinator {
     return super._getTransmitters();
   }
 
-  function report_HARNESS(DecodedReport memory decodedReport) external {
+  function report_HARNESS(
+    DecodedReport memory decodedReport
+  ) external {
     return super._report(decodedReport);
   }
 
@@ -111,17 +116,16 @@ contract FunctionsCoordinatorHarness is FunctionsCoordinator {
     uint64 _encodedConfigVersion,
     bytes memory _encodedConfig
   ) internal pure returns (bytes32) {
-    return
-      super._configDigestFromConfigData(
-        _chainId,
-        _contractAddress,
-        _configCount,
-        _signers,
-        _transmitters,
-        _f,
-        _onchainConfig,
-        _encodedConfigVersion,
-        _encodedConfig
-      );
+    return super._configDigestFromConfigData(
+      _chainId,
+      _contractAddress,
+      _configCount,
+      _signers,
+      _transmitters,
+      _f,
+      _onchainConfig,
+      _encodedConfigVersion,
+      _encodedConfig
+    );
   }
 }

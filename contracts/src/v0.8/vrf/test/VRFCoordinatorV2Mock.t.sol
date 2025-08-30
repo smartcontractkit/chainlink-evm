@@ -1,11 +1,11 @@
 pragma solidity 0.8.6;
 
-import "./BaseTest.t.sol";
-import {VRF} from "../VRF.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
+import {VRF} from "../VRF.sol";
 import {VRFCoordinatorV2Mock} from "../mocks/VRFCoordinatorV2Mock.sol";
 import {VRFConsumerV2} from "../testhelpers/VRFConsumerV2.sol";
+import "./BaseTest.t.sol";
 
 contract VRFCoordinatorV2MockTest is BaseTest {
   MockLinkToken internal s_linkToken;
@@ -82,8 +82,8 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     uint64 subId = s_vrfCoordinatorV2Mock.createSubscription();
     assertEq(subId, 1);
 
-    (uint96 balance, uint64 reqCount, address owner, address[] memory consumers) = s_vrfCoordinatorV2Mock
-      .getSubscription(subId);
+    (uint96 balance, uint64 reqCount, address owner, address[] memory consumers) =
+      s_vrfCoordinatorV2Mock.getSubscription(subId);
     assertEq(balance, 0);
     assertEq(reqCount, 0);
     assertEq(owner, s_subOwner);
@@ -105,8 +105,8 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     emit ConsumerAdded(subId, address(s_vrfConsumerV2));
     s_vrfCoordinatorV2Mock.addConsumer(subId, address(s_vrfConsumerV2));
 
-    (uint96 balance, uint64 reqCount, address owner, address[] memory consumers) = s_vrfCoordinatorV2Mock
-      .getSubscription(subId);
+    (uint96 balance, uint64 reqCount, address owner, address[] memory consumers) =
+      s_vrfCoordinatorV2Mock.getSubscription(subId);
     assertEq(balance, 0);
     assertEq(reqCount, 0);
     assertEq(owner, s_subOwner);
@@ -146,7 +146,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
 
     s_vrfCoordinatorV2Mock.addConsumer(subId, address(s_vrfConsumerV2));
 
-    (, , , address[] memory consumers) = s_vrfCoordinatorV2Mock.getSubscription(subId);
+    (,,, address[] memory consumers) = s_vrfCoordinatorV2Mock.getSubscription(subId);
     assertEq(consumers.length, 1);
     assertEq(consumers[0], address(s_vrfConsumerV2));
 
@@ -173,7 +173,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
 
     s_vrfCoordinatorV2Mock.addConsumer(subId, address(s_vrfConsumerV2));
 
-    (, , , address[] memory consumers) = s_vrfCoordinatorV2Mock.getSubscription(subId);
+    (,,, address[] memory consumers) = s_vrfCoordinatorV2Mock.getSubscription(subId);
     assertEq(consumers.length, 1);
     assertEq(consumers[0], address(s_vrfConsumerV2));
 
@@ -197,7 +197,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     emit SubscriptionFunded(subId, 0, oneLink);
     s_vrfCoordinatorV2Mock.fundSubscription(subId, oneLink);
 
-    (uint96 balance, , , address[] memory consumers) = s_vrfCoordinatorV2Mock.getSubscription(subId);
+    (uint96 balance,,, address[] memory consumers) = s_vrfCoordinatorV2Mock.getSubscription(subId);
     assertEq(balance, oneLink);
     assertEq(consumers.length, 0);
     vm.stopPrank();
@@ -243,11 +243,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     bytes4 reason = bytes4(keccak256("InvalidConsumer()"));
     vm.expectRevert(toBytes(reason));
     s_vrfCoordinatorV2Mock.requestRandomWords(
-      KEY_HASH,
-      subId,
-      DEFAULT_REQUEST_CONFIRMATIONS,
-      DEFAULT_CALLBACK_GAS_LIMIT,
-      DEFAULT_NUM_WORDS
+      KEY_HASH, subId, DEFAULT_REQUEST_CONFIRMATIONS, DEFAULT_CALLBACK_GAS_LIMIT, DEFAULT_NUM_WORDS
     );
     vm.stopPrank();
   }
@@ -276,11 +272,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
       address(s_subOwner)
     );
     uint256 reqId = s_vrfCoordinatorV2Mock.requestRandomWords(
-      KEY_HASH,
-      subId,
-      DEFAULT_REQUEST_CONFIRMATIONS,
-      DEFAULT_CALLBACK_GAS_LIMIT,
-      DEFAULT_NUM_WORDS
+      KEY_HASH, subId, DEFAULT_REQUEST_CONFIRMATIONS, DEFAULT_CALLBACK_GAS_LIMIT, DEFAULT_NUM_WORDS
     );
 
     bytes4 reason = bytes4(keccak256("InsufficientBalance()"));
@@ -312,11 +304,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
       address(s_subOwner)
     );
     uint256 reqId = s_vrfConsumerV2.requestRandomness(
-      KEY_HASH,
-      subId,
-      DEFAULT_REQUEST_CONFIRMATIONS,
-      DEFAULT_CALLBACK_GAS_LIMIT,
-      DEFAULT_NUM_WORDS
+      KEY_HASH, subId, DEFAULT_REQUEST_CONFIRMATIONS, DEFAULT_CALLBACK_GAS_LIMIT, DEFAULT_NUM_WORDS
     );
 
     vm.expectEmit(true, false, false, true);
@@ -338,22 +326,10 @@ contract VRFCoordinatorV2MockTest is BaseTest {
 
     vm.expectEmit(true, false, false, true);
     emit RandomWordsRequested(
-      KEY_HASH,
-      1,
-      100,
-      subId,
-      DEFAULT_REQUEST_CONFIRMATIONS,
-      DEFAULT_CALLBACK_GAS_LIMIT,
-      2,
-      address(s_subOwner)
+      KEY_HASH, 1, 100, subId, DEFAULT_REQUEST_CONFIRMATIONS, DEFAULT_CALLBACK_GAS_LIMIT, 2, address(s_subOwner)
     );
-    uint256 reqId = s_vrfConsumerV2.requestRandomness(
-      KEY_HASH,
-      subId,
-      DEFAULT_REQUEST_CONFIRMATIONS,
-      DEFAULT_CALLBACK_GAS_LIMIT,
-      2
-    );
+    uint256 reqId =
+      s_vrfConsumerV2.requestRandomness(KEY_HASH, subId, DEFAULT_REQUEST_CONFIRMATIONS, DEFAULT_CALLBACK_GAS_LIMIT, 2);
 
     bytes4 reason = bytes4(keccak256("InvalidRandomWords()"));
     vm.expectRevert(toBytes(reason));
@@ -375,7 +351,9 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     vm.stopPrank();
   }
 
-  function toBytes(bytes4 _data) public pure returns (bytes memory) {
+  function toBytes(
+    bytes4 _data
+  ) public pure returns (bytes memory) {
     return abi.encodePacked(_data);
   }
 }
