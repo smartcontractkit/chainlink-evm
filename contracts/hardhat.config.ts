@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
   paths: {
     artifacts: './artifacts',
     cache: './cache',
-    sources: './src/v0.8/operatorforwarder',
+    sources: './src/v0.8/automation',
     tests: './test',
   },
   solidity: {

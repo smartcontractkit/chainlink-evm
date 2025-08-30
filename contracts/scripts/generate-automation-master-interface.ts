@@ -1,13 +1,14 @@
 /**
  * @description this script generates a master interface for interacting with the automation registry
- * @notice run this script with pnpm ts-node ./scripts/generate-automation-master-interface.ts
+ * @notice run this script with pnpm tsx ./scripts/generate-automation-master-interface.ts
  */
-import { AutomationRegistry2_2__factory as Registry } from '../typechain/factories/AutomationRegistry2_2__factory'
-import { AutomationRegistryLogicA2_2__factory as RegistryLogicA } from '../typechain/factories/AutomationRegistryLogicA2_2__factory'
-import { AutomationRegistryLogicB2_2__factory as RegistryLogicB } from '../typechain/factories/AutomationRegistryLogicB2_2__factory'
-import { utils } from 'ethers'
+import Registry from '../artifacts/src/v0.8/automation/v2_2/AutomationRegistry2_2.sol/AutomationRegistry2_2.json'
+import RegistryLogicA from '../artifacts/src/v0.8/automation/v2_2/AutomationRegistryLogicA2_2.sol/AutomationRegistryLogicA2_2.json'
+import RegistryLogicB from '../artifacts/src/v0.8/automation/v2_2/AutomationRegistryLogicB2_2.sol/AutomationRegistryLogicB2_2.json'
+
 import fs from 'fs'
 import { exec } from 'child_process'
+import { createHash } from 'crypto'
 
 const dest = 'src/v0.8/automation/interfaces/v2_2'
 const srcDest = `${dest}/IAutomationRegistryMaster.sol`
@@ -19,7 +20,7 @@ const abis = [Registry.abi, RegistryLogicA.abi, RegistryLogicB.abi]
 
 for (const abi of abis) {
   for (const entry of abi) {
-    const id = utils.id(JSON.stringify(entry))
+    const id = createHash('sha256').update(JSON.stringify(entry)).digest('hex')
     if (!abiSet.has(id)) {
       abiSet.add(id)
       if (
@@ -35,7 +36,7 @@ for (const abi of abis) {
   }
 }
 
-const checksum = utils.id(abis.join(''))
+const checksum = createHash('sha256').update(JSON.stringify(abis)).digest('hex')
 
 fs.writeFileSync(`${tmpDest}`, JSON.stringify(combinedABI))
 
