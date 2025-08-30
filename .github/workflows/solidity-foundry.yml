@@ -75,7 +75,6 @@ jobs:
             non_src:
               - '.github/workflows/solidity-foundry.yml'
               - 'contracts/foundry.toml'
-              - 'contracts/gas-snapshots/*.gas-snapshot'
               - 'contracts/package.json'
               - 'contracts/GNUmakefile'
             sol:

@@ -64,9 +64,6 @@ importers:
       '@eslint/js':
         specifier: ^9.34.0
         version: 9.34.0
-      '@ethereum-waffle/mock-contract':
-        specifier: ^3.4.4
-        version: 3.4.4
       '@types/cbor':
         specifier: ~5.0.1
         version: 5.0.1
@@ -424,10 +421,6 @@ packages:
 
   '@eth-optimism/core-utils@0.12.0':
     resolution: {integrity: sha512-qW+7LZYCz7i8dRa7SRlUKIo1VBU8lvN0HeXCxJR+z+xtMzMQpPds20XJNCMclszxYQHkXY00fOT6GvFw9ZL6nw==}
-
-  '@ethereum-waffle/mock-contract@3.4.4':
-    resolution: {integrity: sha512-Mp0iB2YNWYGUV+VMl5tjPsaXKbKo8MDH9wSJ702l9EBjdxFf/vBvnMBAC1Fub1lLtmD0JHtp1pq+mWzg/xlLnA==}
-    engines: {node: '>=10.0'}
 
   '@ethersproject/abi@5.8.0':
     resolution: {integrity: sha512-b9YS/43ObplgyV6SlyQsG53/vkSal0MNA1fskSC4mbnCMi8R+NkcH8K9FPYNESf6jUefBUniE4SOKms0E/KK1Q==}
@@ -2816,14 +2809,6 @@ snapshots:
       '@ethersproject/web': 5.8.0
       bufio: 1.2.3
       chai: 4.5.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@ethereum-waffle/mock-contract@3.4.4':
-    dependencies:
-      '@ethersproject/abi': 5.8.0
-      ethers: 5.8.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate

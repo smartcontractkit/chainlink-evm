@@ -58,7 +58,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
-    "@ethereum-waffle/mock-contract": "^3.4.4",
     "@types/cbor": "~5.0.1",
     "@types/chai": "^4.3.20",
     "@types/debug": "^4.1.12",
