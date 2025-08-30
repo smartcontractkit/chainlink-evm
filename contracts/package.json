@@ -73,7 +73,6 @@
     "solhint": "^5.2.0",
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1",
     "tsx": "^4.20.5",
-    "typechain": "^8.3.2",
     "typescript": "^5.9.2"
   },
   "dependencies": {
