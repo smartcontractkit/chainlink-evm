@@ -2,15 +2,13 @@
 pragma solidity 0.8.19;
 
 import {BlockhashStoreInterface} from "../../interfaces/BlockhashStoreInterface.sol";
-// solhint-disable-next-line no-unused-import
-
 import {ChainSpecificUtil} from "../../../shared/util/ChainSpecificUtil.sol";
 import {VRF} from "../../../vrf/VRF.sol";
 import {VRFTypes} from "../../VRFTypes.sol";
 import {SubscriptionAPI} from "../SubscriptionAPI.sol";
 import {IVRFMigratableConsumerV2Plus, VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
+// solhint-disable-next-line no-unused-import
 import {IVRFCoordinatorV2Plus, IVRFSubscriptionV2Plus} from "../interfaces/IVRFCoordinatorV2Plus.sol";
-
 import {IVRFCoordinatorV2PlusMigration} from "../interfaces/IVRFCoordinatorV2PlusMigration.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
@@ -24,7 +22,6 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
   using EnumerableSet for EnumerableSet.UintSet;
   /// @dev should always be available
   // solhint-disable-next-line chainlink-solidity/prefix-immutable-variables-with-i
-
   BlockhashStoreInterface public immutable BLOCKHASH_STORE;
 
   // Set this maximum to 200 to give us a 56 block window to fulfill

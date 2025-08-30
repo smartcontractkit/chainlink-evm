@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 // solhint-disable-next-line no-unused-import
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-// solhint-disable-next-line no-unused-import
-
 import {IDelegateForwarder} from "../interfaces/IDelegateForwarder.sol";
+// solhint-disable-next-line no-unused-import
 import {IForwarder} from "../interfaces/IForwarder.sol";
 
 import {ArbitrumCrossDomainForwarder} from "./ArbitrumCrossDomainForwarder.sol";
