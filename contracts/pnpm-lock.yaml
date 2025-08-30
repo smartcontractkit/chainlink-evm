@@ -127,18 +127,12 @@ importers:
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
-      prettier-plugin-solidity:
-        specifier: ^1.4.3
-        version: 1.4.3(prettier@3.6.2)
       solhint:
         specifier: ^5.2.0
         version: 5.2.0(typescript@5.9.2)
       solhint-plugin-chainlink-solidity:
         specifier: github:smartcontractkit/chainlink-solhint-rules#v1.2.1
         version: '@chainlink/solhint-plugin-chainlink-solidity@https://codeload.github.com/smartcontractkit/chainlink-solhint-rules/tar.gz/1b4c0c2663fcd983589d4f33a2e73908624ed43c'
-      solhint-plugin-prettier:
-        specifier: ^0.1.0
-        version: 0.1.0(prettier-plugin-solidity@1.4.3(prettier@3.6.2))(prettier@3.6.2)
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.18.0)(typescript@5.9.2)
@@ -710,11 +704,6 @@ packages:
   '@pnpm/npm-conf@2.3.1':
     resolution: {integrity: sha512-c83qWb22rNRuB0UaVCI0uRPNRr8Z0FWnEIvT47jiHAmOIUHbBOg5XvV7pM5x+rKn9HRpjxquDbXYSXr3fAKFcw==}
     engines: {node: '>=12'}
-
-  '@prettier/sync@0.3.0':
-    resolution: {integrity: sha512-3dcmCyAxIcxy036h1I7MQU/uEEBq8oLwf1CE3xeze+MPlgkdlb/+w6rGR/1dhp6Hqi17fRS6nvwnOzkESxEkOw==}
-    peerDependencies:
-      prettier: ^3.0.0
 
   '@scroll-tech/contracts@2.0.0':
     resolution: {integrity: sha512-O8sVaA/bVKH/mp+bBfUjZ/vYr5mdBExCpKRLre4r9TbXTtiaY9Uo5xU8dcG3weLxyK0BZqDTP2aCNp4Q0f7SeA==}
@@ -2248,12 +2237,6 @@ packages:
   solady@0.0.182:
     resolution: {integrity: sha512-FW6xo1akJoYpkXMzu58/56FcNU3HYYNamEbnFO3iSibXk0nSHo0DV2Gu/zI3FPg3So5CCX6IYli1TT1IWATnvg==}
 
-  solhint-plugin-prettier@0.1.0:
-    resolution: {integrity: sha512-SDOTSM6tZxZ6hamrzl3GUgzF77FM6jZplgL2plFBclj/OjKP8Z3eIPojKU73gRr0MvOS8ACZILn8a5g0VTz/Gw==}
-    peerDependencies:
-      prettier: ^3.0.0
-      prettier-plugin-solidity: ^1.0.0
-
   solhint@5.2.0:
     resolution: {integrity: sha512-9NZC1zt+O2K7zEZOhTT9rFeB6GdxC6qTX5pWX70RaQoflR9RejJQUC+/19LNi+e7K9Ptb4k7XAWO9wY5mkprHg==}
     hasBin: true
@@ -3287,10 +3270,6 @@ snapshots:
       '@pnpm/config.env-replace': 1.1.0
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
-
-  '@prettier/sync@0.3.0(prettier@3.6.2)':
-    dependencies:
-      prettier: 3.6.2
 
   '@scroll-tech/contracts@2.0.0': {}
 
@@ -4816,12 +4795,6 @@ snapshots:
       semver: 7.7.2
     optional: true
 
-  prettier-plugin-solidity@1.4.3(prettier@3.6.2):
-    dependencies:
-      '@solidity-parser/parser': 0.20.2
-      prettier: 3.6.2
-      semver: 7.7.2
-
   prettier@2.8.8: {}
 
   prettier@3.6.2: {}
@@ -4981,13 +4954,6 @@ snapshots:
       no-case: 2.3.2
 
   solady@0.0.182: {}
-
-  solhint-plugin-prettier@0.1.0(prettier-plugin-solidity@1.4.3(prettier@3.6.2))(prettier@3.6.2):
-    dependencies:
-      '@prettier/sync': 0.3.0(prettier@3.6.2)
-      prettier: 3.6.2
-      prettier-linter-helpers: 1.0.0
-      prettier-plugin-solidity: 1.4.3(prettier@3.6.2)
 
   solhint@5.2.0(typescript@5.9.2):
     dependencies:

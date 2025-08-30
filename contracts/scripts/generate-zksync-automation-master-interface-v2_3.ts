@@ -48,7 +48,7 @@ fs.writeFileSync(`${tmpDest}`, JSON.stringify(combinedABI))
 const cmd = `
 cat ${tmpDest} | pnpm abi-to-sol --solidity-version ^0.8.19 --license MIT > ${srcDest} IZKSyncAutomationRegistryMaster2_3;
 echo "// solhint-disable \n// abi-checksum: ${checksum}" | cat - ${srcDest} > ${tmpDest} && mv ${tmpDest} ${srcDest};
-pnpm prettier --write ${srcDest};
+export FOUNDRY_PROFILE=automation; forge fmt ${srcDest};
 `
 
 exec(cmd)
