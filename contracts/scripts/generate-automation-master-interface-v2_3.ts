@@ -15,7 +15,6 @@ const dest = 'src/v0.8/automation/interfaces/v2_3'
 const srcDest = `${dest}/IAutomationRegistryMaster2_3.sol`
 const tmpDest = `${dest}/tmp.txt`
 
-
 const combinedABI = []
 const abiSet = new Set()
 const abis = [

@@ -5,8 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@ethersproject/logger': 5.0.6
-  '@ethersproject/providers@5.7.2>ws': 7.5.10
   '@openzeppelin/contracts-upgradeable': 4.9.6
   '@openzeppelin/contracts': 4.9.6
   cookie: ^0.7.0
@@ -64,9 +62,6 @@ importers:
       '@eslint/js':
         specifier: ^9.34.0
         version: 9.34.0
-      '@types/deep-equal-in-any-order':
-        specifier: ^1.0.4
-        version: 1.0.4
       '@types/node':
         specifier: ^22.18.0
         version: 22.18.0
@@ -79,9 +74,6 @@ importers:
       abi-to-sol:
         specifier: ^0.8.0
         version: 0.8.0
-      deep-equal-in-any-order:
-        specifier: ^2.0.6
-        version: 2.0.6
       eslint:
         specifier: ^9.34.0
         version: 9.34.0
@@ -436,8 +428,8 @@ packages:
   '@ethersproject/keccak256@5.8.0':
     resolution: {integrity: sha512-A1pkKLZSz8pDaQ1ftutZoaN46I6+jvuqugx5KYNeQOPqq+JZ0Txm7dlWesCHB5cndJSu5vP2VKptKf7cksERng==}
 
-  '@ethersproject/logger@5.0.6':
-    resolution: {integrity: sha512-FrX0Vnb3JZ1md/7GIZfmJ06XOAA8r3q9Uqt9O5orr4ZiksnbpXKlyDzQtlZ5Yv18RS8CAUbiKH9vwidJg1BPmQ==}
+  '@ethersproject/logger@5.8.0':
+    resolution: {integrity: sha512-Qe6knGmY+zPPWTC+wQrpitodgBfH7XoceCGL5bJVejmH+yCS3R8jJm8iiWuvWbG76RUmyEG53oqv6GMVWqunjA==}
 
   '@ethersproject/networks@5.8.0':
     resolution: {integrity: sha512-egPJh3aPVAzbHwq8DD7Po53J4OUSsA1MjQp8Vf/OZPav5rlmWUaFLiq8cvQiGK0Z5K6LYzm29+VA/p4RL1FzNg==}
@@ -714,9 +706,6 @@ packages:
 
   '@types/bn.js@5.2.0':
     resolution: {integrity: sha512-DLbJ1BPqxvQhIGbeu8VbUC1DiAiahHtAYvA0ZEAa4P31F7IaArc8z3C3BRQdWX4mtLQuABG4yzp76ZrS02Ui1Q==}
-
-  '@types/deep-equal-in-any-order@1.0.4':
-    resolution: {integrity: sha512-nkgl+KTkRWeybgMSBCrWrc1YHFrLADVxZ6Kllj40p9U499NGsCrFUjzgHgQY+Upsa/VWOc3YlsFEvhg+drUmkA==}
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
@@ -1094,9 +1083,6 @@ packages:
   deep-eql@4.1.4:
     resolution: {integrity: sha512-SUwdGfqdKOwxCPeVYjwSyRpJ7Z+fhpwIAtmCUdZIWZ/YP5R9WAsyuSgpLVDi9bjWoN2LXHNss/dk3urXtdQxGg==}
     engines: {node: '>=6'}
-
-  deep-equal-in-any-order@2.0.6:
-    resolution: {integrity: sha512-RfnWHQzph10YrUjvWwhd15Dne8ciSJcZ3U6OD7owPwiVwsdE5IFSoZGg8rlwJD11ES+9H5y8j3fCofviRHOqLQ==}
 
   deep-extend@0.6.0:
     resolution: {integrity: sha512-LOHxIOaPYdHlJRtCQfDIVZtfw/ufM8+rVj649RIHzcm/vGwQRXFt6OPqIFWsm2XEMrNIEtWR64sY1LEKD2vAOA==}
@@ -1653,9 +1639,6 @@ packages:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
 
-  lodash.mapvalues@4.6.0:
-    resolution: {integrity: sha512-JPFqXFeZQ7BfS00H58kClY7SPVeHertPE0lNuCyZ26/XlN8TvakYD7b9bGyNmXbT/D3BbtPAAmq90gPWqLkxlQ==}
-
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
@@ -2104,9 +2087,6 @@ packages:
   solhint@5.2.0:
     resolution: {integrity: sha512-9NZC1zt+O2K7zEZOhTT9rFeB6GdxC6qTX5pWX70RaQoflR9RejJQUC+/19LNi+e7K9Ptb4k7XAWO9wY5mkprHg==}
     hasBin: true
-
-  sort-any@2.0.0:
-    resolution: {integrity: sha512-T9JoiDewQEmWcnmPn/s9h/PH9t3d/LSWi0RgVmXSuDYeZXTZOZ1/wrK2PHaptuR1VXe3clLLt0pD6sgVOwjNEA==}
 
   source-map-support@0.5.21:
     resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
@@ -2638,7 +2618,7 @@ snapshots:
       '@ethersproject/constants': 5.8.0
       '@ethersproject/hash': 5.8.0
       '@ethersproject/keccak256': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
 
@@ -2646,7 +2626,7 @@ snapshots:
     dependencies:
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/networks': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/transactions': 5.8.0
@@ -2657,7 +2637,7 @@ snapshots:
       '@ethersproject/abstract-provider': 5.8.0
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
 
   '@ethersproject/address@5.8.0':
@@ -2665,7 +2645,7 @@ snapshots:
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/keccak256': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/rlp': 5.8.0
 
   '@ethersproject/base64@5.8.0':
@@ -2680,12 +2660,12 @@ snapshots:
   '@ethersproject/bignumber@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       bn.js: 5.2.2
 
   '@ethersproject/bytes@5.8.0':
     dependencies:
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
 
   '@ethersproject/constants@5.8.0':
     dependencies:
@@ -2700,7 +2680,7 @@ snapshots:
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/transactions': 5.8.0
 
@@ -2712,7 +2692,7 @@ snapshots:
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/keccak256': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
 
@@ -2722,7 +2702,7 @@ snapshots:
       '@ethersproject/basex': 5.8.0
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/pbkdf2': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/sha2': 5.8.0
@@ -2738,7 +2718,7 @@ snapshots:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/hdnode': 5.8.0
       '@ethersproject/keccak256': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/pbkdf2': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/random': 5.8.0
@@ -2752,11 +2732,11 @@ snapshots:
       '@ethersproject/bytes': 5.8.0
       js-sha3: 0.8.0
 
-  '@ethersproject/logger@5.0.6': {}
+  '@ethersproject/logger@5.8.0': {}
 
   '@ethersproject/networks@5.8.0':
     dependencies:
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
 
   '@ethersproject/pbkdf2@5.8.0':
     dependencies:
@@ -2765,7 +2745,7 @@ snapshots:
 
   '@ethersproject/properties@5.8.0':
     dependencies:
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
 
   '@ethersproject/providers@5.8.0':
     dependencies:
@@ -2778,7 +2758,7 @@ snapshots:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
       '@ethersproject/hash': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/networks': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/random': 5.8.0
@@ -2796,23 +2776,23 @@ snapshots:
   '@ethersproject/random@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
 
   '@ethersproject/rlp@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
 
   '@ethersproject/sha2@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       hash.js: 1.1.7
 
   '@ethersproject/signing-key@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       bn.js: 5.2.2
       elliptic: 6.6.1
@@ -2823,7 +2803,7 @@ snapshots:
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/keccak256': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/sha2': 5.8.0
       '@ethersproject/strings': 5.8.0
 
@@ -2831,7 +2811,7 @@ snapshots:
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
 
   '@ethersproject/transactions@5.8.0':
     dependencies:
@@ -2840,7 +2820,7 @@ snapshots:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
       '@ethersproject/keccak256': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/rlp': 5.8.0
       '@ethersproject/signing-key': 5.8.0
@@ -2849,7 +2829,7 @@ snapshots:
     dependencies:
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/constants': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
 
   '@ethersproject/wallet@5.8.0':
     dependencies:
@@ -2862,7 +2842,7 @@ snapshots:
       '@ethersproject/hdnode': 5.8.0
       '@ethersproject/json-wallets': 5.8.0
       '@ethersproject/keccak256': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/random': 5.8.0
       '@ethersproject/signing-key': 5.8.0
@@ -2873,7 +2853,7 @@ snapshots:
     dependencies:
       '@ethersproject/base64': 5.8.0
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
 
@@ -2881,7 +2861,7 @@ snapshots:
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/hash': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
 
@@ -3117,8 +3097,6 @@ snapshots:
   '@types/bn.js@5.2.0':
     dependencies:
       '@types/node': 22.18.0
-
-  '@types/deep-equal-in-any-order@1.0.4': {}
 
   '@types/estree@1.0.8': {}
 
@@ -3580,11 +3558,6 @@ snapshots:
     dependencies:
       type-detect: 4.1.0
 
-  deep-equal-in-any-order@2.0.6:
-    dependencies:
-      lodash.mapvalues: 4.6.0
-      sort-any: 2.0.0
-
   deep-extend@0.6.0: {}
 
   deep-is@0.1.4: {}
@@ -3815,7 +3788,7 @@ snapshots:
       '@ethersproject/hdnode': 5.8.0
       '@ethersproject/json-wallets': 5.8.0
       '@ethersproject/keccak256': 5.8.0
-      '@ethersproject/logger': 5.0.6
+      '@ethersproject/logger': 5.8.0
       '@ethersproject/networks': 5.8.0
       '@ethersproject/pbkdf2': 5.8.0
       '@ethersproject/properties': 5.8.0
@@ -4257,8 +4230,6 @@ snapshots:
     dependencies:
       p-locate: 5.0.0
 
-  lodash.mapvalues@4.6.0: {}
-
   lodash.merge@4.6.2: {}
 
   lodash.startcase@4.4.0: {}
@@ -4692,10 +4663,6 @@ snapshots:
       prettier: 2.8.8
     transitivePeerDependencies:
       - typescript
-
-  sort-any@2.0.0:
-    dependencies:
-      lodash: 4.17.21
 
   source-map-support@0.5.21:
     dependencies:

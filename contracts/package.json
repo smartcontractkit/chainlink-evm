@@ -30,11 +30,7 @@
     ".solhintignore-test"
   ],
   "pnpm": {
-    "_comment": "See https://github.com/ethers-io/ethers.js/discussions/2849#discussioncomment-2696454",
-    "_comment2_logger": "See https://github.com/ethers-io/ethers.js/issues/379 we pin this version since that's what was used in the old yarn lockfile",
     "overrides": {
-      "@ethersproject/logger": "5.0.6",
-      "@ethersproject/providers@5.7.2>ws": "7.5.10",
       "@openzeppelin/contracts-upgradeable": "4.9.6",
       "@openzeppelin/contracts": "4.9.6",
       "cookie": "^0.7.0",
@@ -53,17 +49,15 @@
     ]
   },
   "engines": {
-    "node": ">=18",
+    "node": ">=22",
     "pnpm": ">=10"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
-    "@types/deep-equal-in-any-order": "^1.0.4",
     "@types/node": "^22.18.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
     "abi-to-sol": "^0.8.0",
-    "deep-equal-in-any-order": "^2.0.6",
     "eslint": "^9.34.0",
     "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.3.0",
