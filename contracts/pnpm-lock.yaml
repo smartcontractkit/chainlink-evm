@@ -109,9 +109,6 @@ importers:
       eslint:
         specifier: ^9.34.0
         version: 9.34.0
-      eslint-config-prettier:
-        specifier: ^10.1.8
-        version: 10.1.8(eslint@9.34.0)
       eslint-plugin-prettier:
         specifier: ^5.5.4
         version: 5.5.4(eslint-config-prettier@10.1.8(eslint@9.34.0))(eslint@9.34.0)(prettier@3.6.2)
@@ -3944,6 +3941,7 @@ snapshots:
   eslint-config-prettier@10.1.8(eslint@9.34.0):
     dependencies:
       eslint: 9.34.0
+    optional: true
 
   eslint-plugin-prettier@5.5.4(eslint-config-prettier@10.1.8(eslint@9.34.0))(eslint@9.34.0)(prettier@3.6.2):
     dependencies:
