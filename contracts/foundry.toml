@@ -21,6 +21,7 @@ tab_width = 2
 multiline_func_header = "params_first"
 sort_imports = true
 single_line_statement_blocks = "preserve"
+ignore = ["src/v0.8/vendor/**/*.sol"]
 
 [profile.functions]
 optimizer_runs = 1_000_000

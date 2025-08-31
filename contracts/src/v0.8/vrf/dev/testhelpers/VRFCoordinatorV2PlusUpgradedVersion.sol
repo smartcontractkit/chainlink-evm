@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {BlockhashStoreInterface} from "../../interfaces/BlockhashStoreInterface.sol";
 import {ChainSpecificUtil} from "../../../shared/util/ChainSpecificUtil.sol";
 import {VRF} from "../../../vrf/VRF.sol";
 import {VRFTypes} from "../../VRFTypes.sol";
+import {BlockhashStoreInterface} from "../../interfaces/BlockhashStoreInterface.sol";
 import {SubscriptionAPI} from "../SubscriptionAPI.sol";
 import {IVRFMigratableConsumerV2Plus, VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
 // solhint-disable-next-line no-unused-import
@@ -21,6 +21,7 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
 {
   using EnumerableSet for EnumerableSet.UintSet;
   /// @dev should always be available
+
   // solhint-disable-next-line chainlink-solidity/prefix-immutable-variables-with-i
   BlockhashStoreInterface public immutable BLOCKHASH_STORE;
 

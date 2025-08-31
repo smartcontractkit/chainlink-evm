@@ -106,6 +106,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
  */
 abstract contract VRFConsumerBaseV2Upgradeable is Initializable {
   error OnlyCoordinatorCanFulfill(address have, address want);
+
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   address private vrfCoordinator;
 

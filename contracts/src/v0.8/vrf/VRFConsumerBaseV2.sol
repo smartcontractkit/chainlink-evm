@@ -97,6 +97,7 @@ pragma solidity ^0.8.4;
  */
 abstract contract VRFConsumerBaseV2 {
   error OnlyCoordinatorCanFulfill(address have, address want);
+
   // solhint-disable-next-line chainlink-solidity/prefix-immutable-variables-with-i
   address private immutable vrfCoordinator;
 
