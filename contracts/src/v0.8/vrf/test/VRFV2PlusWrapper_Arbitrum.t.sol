@@ -35,7 +35,7 @@ contract VRFV2PlusWrapperArbitrumTest is BaseTest {
 
     // Deploy link token and link/native feed.
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Deploy coordinator.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5_Arbitrum(address(0));
@@ -59,7 +59,7 @@ contract VRFV2PlusWrapperArbitrumTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500_000, // fulfillmentFlatFeeNativePPM
       100_000 // fulfillmentFlatFeeLinkDiscountPPM
     );

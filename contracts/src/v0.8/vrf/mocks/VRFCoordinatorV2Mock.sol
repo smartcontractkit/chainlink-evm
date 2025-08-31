@@ -223,7 +223,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
   }
 
   function getRequestConfig() external pure override returns (uint16, uint32, bytes32[] memory) {
-    return (3, 2000000, new bytes32[](0));
+    return (3, 2_000_000, new bytes32[](0));
   }
 
   function addConsumer(uint64 _subId, address _consumer) external override onlySubOwner(_subId) {
@@ -266,7 +266,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
       uint32 gasAfterPaymentCalculation
     )
   {
-    return (4, 2_500_000, 2_700, 33285);
+    return (4, 2_500_000, 2700, 33_285);
   }
 
   function getFeeConfig()
@@ -285,11 +285,11 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     )
   {
     return (
-      100000, // 0.1 LINK
-      100000, // 0.1 LINK
-      100000, // 0.1 LINK
-      100000, // 0.1 LINK
-      100000, // 0.1 LINK
+      100_000, // 0.1 LINK
+      100_000, // 0.1 LINK
+      100_000, // 0.1 LINK
+      100_000, // 0.1 LINK
+      100_000, // 0.1 LINK
       0,
       0,
       0,
@@ -305,7 +305,7 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
   }
 
   function getFallbackWeiPerUnitLink() external pure returns (int256) {
-    return 4000000000000000; // 0.004 Ether
+    return 4_000_000_000_000_000; // 0.004 Ether
   }
 
   function requestSubscriptionOwnerTransfer(uint64, /*_subId*/ address /*_newOwner*/ ) external pure override {

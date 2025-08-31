@@ -25,7 +25,7 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
 
   // 5k is plenty for an EXTCODESIZE call (2600) + warm CALL (100)
   // and some arithmetic operations.
-  uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5_000;
+  uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5000;
   uint16 private constant EXPECTED_MIN_LENGTH = 36;
 
   // solhint-disable-next-line chainlink-solidity/prefix-immutable-variables-with-i

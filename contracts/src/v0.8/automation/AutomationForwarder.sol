@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import {IAutomationRegistryConsumer} from "./interfaces/IAutomationRegistryConsumer.sol";
 
-uint256 constant PERFORM_GAS_CUSHION = 5_000;
+uint256 constant PERFORM_GAS_CUSHION = 5000;
 
 /**
  * @title AutomationForwarder is a relayer that sits between the registry and the customer's target contract

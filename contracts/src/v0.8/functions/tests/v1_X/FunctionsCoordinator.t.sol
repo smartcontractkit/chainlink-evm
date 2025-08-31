@@ -137,7 +137,7 @@ contract FunctionsCoordinator_StartRequest is FunctionsSubscriptionSetup {
         subscriptionId: s_subscriptionId,
         dataVersion: FunctionsRequest.REQUEST_DATA_VERSION,
         flags: bytes32(0),
-        callbackGasLimit: 5_500,
+        callbackGasLimit: 5500,
         adminFee: s_adminFee,
         initiatedRequests: 0,
         completedRequests: 0,
@@ -167,7 +167,7 @@ contract FunctionsCoordinator_StartRequest is FunctionsSubscriptionSetup {
     (,, address txOrigin) = vm.readCallers();
 
     bytes memory _requestData = new bytes(0);
-    uint32 _callbackGasLimit = 5_500;
+    uint32 _callbackGasLimit = 5500;
     uint96 costEstimate =
       s_functionsCoordinator.estimateCost(s_subscriptionId, _requestData, _callbackGasLimit, tx.gasprice);
     uint32 timeoutTimestamp = uint32(block.timestamp + getCoordinatorConfig().requestTimeoutSeconds);
@@ -223,7 +223,7 @@ contract FunctionsCoordinator_StartRequest is FunctionsSubscriptionSetup {
         subscriptionId: s_subscriptionId,
         dataVersion: FunctionsRequest.REQUEST_DATA_VERSION,
         flags: bytes32(0),
-        callbackGasLimit: 5_500,
+        callbackGasLimit: 5500,
         adminFee: s_adminFee,
         initiatedRequests: 0,
         completedRequests: 0,

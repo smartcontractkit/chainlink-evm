@@ -13,7 +13,7 @@ contract ZKSyncValidator_Setup is L2EPTest {
   address internal immutable DUMMY_L1_XDOMAIN_MSNGR_ADDR = makeAddr("DUMMY_L1_XDOMAIN_MSNGR_ADDR");
   address internal immutable DUMMY_L2_UPTIME_FEED_ADDR = makeAddr("DUMMY_L2_UPTIME_FEED_ADDR");
   uint32 internal constant INIT_GAS_PER_PUBDATA_BYTE_LIMIT = 800;
-  uint32 internal constant INIT_GAS_LIMIT = 1900000;
+  uint32 internal constant INIT_GAS_LIMIT = 1_900_000;
   uint32 internal constant MAIN_NET_CHAIN_ID = 300;
   uint32 internal constant BAD_CHAIN_ID = 0;
 
@@ -74,7 +74,7 @@ contract ZKSyncValidator_GetSetL2GasPerPubdataByteLimit is ZKSyncValidator_Setup
   function test_GetSetL2GasPerPubdataByteLimit_CorrectlyHandlesGasPerPubdataByteLimit() public {
     assertEq(s_zksyncValidator.getL2GasPerPubdataByteLimit(), INIT_GAS_PER_PUBDATA_BYTE_LIMIT);
 
-    uint32 newGasPerPubDataByteLimit = 2000000;
+    uint32 newGasPerPubDataByteLimit = 2_000_000;
     s_zksyncValidator.setL2GasPerPubdataByteLimit(newGasPerPubDataByteLimit);
     assertEq(s_zksyncValidator.getL2GasPerPubdataByteLimit(), newGasPerPubDataByteLimit);
   }
@@ -133,7 +133,7 @@ contract ZKSyncValidator_Validate is ZKSyncValidator_Setup {
     uint256 currentRoundId = 1;
     int256 currentAnswer = 1;
     // Sets block.timestamp to a later date
-    uint256 futureTimestampInSeconds = block.timestamp + 10000;
+    uint256 futureTimestampInSeconds = block.timestamp + 10_000;
     vm.startPrank(s_eoaValidator);
     vm.warp(futureTimestampInSeconds);
 

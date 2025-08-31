@@ -15,7 +15,7 @@ import {L2EPTest} from "../L2EPTest.t.sol";
 contract ScrollValidator_Setup is L2EPTest {
   /// Helper constants
   address internal immutable L2_SEQ_STATUS_RECORDER_ADDRESS = makeAddr("L2_SEQ_STATUS_RECORDER_ADDRESS");
-  uint32 internal constant INIT_GAS_LIMIT = 1900000;
+  uint32 internal constant INIT_GAS_LIMIT = 1_900_000;
 
   /// L2EP contracts
   MockScrollL1CrossDomainMessenger internal s_mockScrollL1CrossDomainMessenger;
@@ -108,7 +108,7 @@ contract ScrollValidator_Validate is ScrollValidator_Setup {
     uint256 currentRoundId = 1;
     int256 currentAnswer = 1;
     // Sets block.timestamp to a later date
-    uint256 futureTimestampInSeconds = block.timestamp + 10000;
+    uint256 futureTimestampInSeconds = block.timestamp + 10_000;
     vm.startPrank(s_eoaValidator);
     vm.warp(futureTimestampInSeconds);
 

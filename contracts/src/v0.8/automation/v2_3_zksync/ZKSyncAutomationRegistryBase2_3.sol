@@ -34,7 +34,7 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   bytes4 internal constant PERFORM_SELECTOR = KeeperCompatibleInterface.performUpkeep.selector;
   bytes4 internal constant CHECK_CALLBACK_SELECTOR = StreamsLookupCompatibleInterface.checkCallback.selector;
   bytes4 internal constant CHECK_LOG_SELECTOR = ILogAutomation.checkLog.selector;
-  uint256 internal constant PERFORM_GAS_MIN = 2_300;
+  uint256 internal constant PERFORM_GAS_MIN = 2300;
   uint256 internal constant CANCELLATION_DELAY = 50;
   uint32 internal constant UINT32_MAX = type(uint32).max;
   // The first byte of the mask can be 0, because we only ever have 31 oracles
@@ -46,7 +46,7 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   // the variables result in accurate estimation
   uint256 internal constant REGISTRY_CONDITIONAL_OVERHEAD = 98_200; // Fixed gas overhead for conditional upkeeps
   uint256 internal constant REGISTRY_LOG_OVERHEAD = 122_500; // Fixed gas overhead for log upkeeps
-  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5_600; // Value scales with f
+  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5600; // Value scales with f
 
   // Next block of constants are used in actual payment calculation. We calculate the exact gas used within the
   // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed constants

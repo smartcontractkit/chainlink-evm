@@ -25,7 +25,7 @@ contract UpkeepCounterNew {
   address public forwarder;
 
   constructor() {
-    testRange = 1000000;
+    testRange = 1_000_000;
     interval = 40;
     previousPerformBlock = 0;
     lastTimestamp = block.timestamp;
@@ -34,8 +34,8 @@ contract UpkeepCounterNew {
     useMoreCheckGas = false;
     useMorePerformData = false;
     useMorePerformGas = false;
-    checkGasToBurn = 9700000;
-    performGasToBurn = 7700000;
+    checkGasToBurn = 9_700_000;
+    performGasToBurn = 7_700_000;
   }
 
   function setPerformGasToBurn(

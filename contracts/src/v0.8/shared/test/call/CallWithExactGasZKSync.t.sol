@@ -59,7 +59,7 @@ contract CallWithExactGasZKSync__callWithExactGasSafeReturnData is CallWithExact
   function test__callWithExactGasSafeReturnData_RevertWhen_NoContract() public {
     (bool successCall, bytes memory retData) = _limitedGasCallWithExactGas(
       2_000_000,
-      address(12345), // no code
+      address(12_345), // no code
       1_000_000,
       abi.encodeWithSelector(TestTarget.returnData.selector),
       100
@@ -121,7 +121,7 @@ contract CallWithExactGasZKSync__callWithExactGasSafeReturnData is CallWithExact
   /// @notice Succeeds under normal conditions, returning data.
   function test__callWithExactGasSafeReturnData_Success() public {
     (bool successCall, bytes memory retData) = _limitedGasCallWithExactGas(
-      5_000_000, address(s_target), 4_000_000, abi.encodeWithSelector(TestTarget.returnData.selector), 10000
+      5_000_000, address(s_target), 4_000_000, abi.encodeWithSelector(TestTarget.returnData.selector), 10_000
     );
     assertTrue(successCall, "Subcall itself must not revert");
     (bool success, bytes memory returnedData, uint256 pubdata) = _decodeResult(retData);

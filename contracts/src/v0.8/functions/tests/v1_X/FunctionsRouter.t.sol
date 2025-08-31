@@ -222,7 +222,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
 
     vm.expectRevert(abi.encodeWithSelector(FunctionsRouter.RouteNotFound.selector, invalidDonId));
     s_functionsRouter.sendRequest(
-      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, invalidDonId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, invalidDonId
     );
   }
 
@@ -240,7 +240,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     // Low level revert from incorrect call
     vm.expectRevert();
     s_functionsRouter.sendRequest(
-      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, incorrectDonId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, incorrectDonId
     );
   }
 
@@ -268,7 +268,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
 
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
     s_functionsRouter.sendRequest(
@@ -321,7 +321,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
 
     vm.expectRevert(FunctionsRouter.EmptyRequestData.selector);
     s_functionsRouter.sendRequest(
-      s_subscriptionId, emptyRequestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, s_donId
+      s_subscriptionId, emptyRequestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, s_donId
     );
   }
 
@@ -353,7 +353,7 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
     FunctionsRequest._initializeRequest(
       request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
-    uint32 callbackGasLimit = 5_000;
+    uint32 callbackGasLimit = 5000;
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
     // Send a first request that will remain pending
@@ -481,7 +481,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
 
     vm.expectRevert(abi.encodeWithSelector(FunctionsRouter.RouteNotFound.selector, invalidDonId));
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, invalidDonId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, invalidDonId
     );
   }
 
@@ -499,7 +499,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     // Low level revert from incorrect call
     vm.expectRevert();
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, incorrectDonId
+      s_subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, incorrectDonId
     );
   }
 
@@ -529,7 +529,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
 
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
     s_functionsRouter.sendRequestToProposed(
@@ -584,7 +584,7 @@ contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
 
     vm.expectRevert(FunctionsRouter.EmptyRequestData.selector);
     s_functionsRouter.sendRequestToProposed(
-      s_subscriptionId, emptyRequestData, FunctionsRequest.REQUEST_DATA_VERSION, 5_000, s_donId
+      s_subscriptionId, emptyRequestData, FunctionsRequest.REQUEST_DATA_VERSION, 5000, s_donId
     );
   }
 

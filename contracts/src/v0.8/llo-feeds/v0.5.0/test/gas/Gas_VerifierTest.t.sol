@@ -194,7 +194,7 @@ contract Verifier_accessControlledVerifyV05 is BaseTestWithConfiguredVerifierAnd
   SimpleWriteAccessController s_accessController;
 
   address internal constant CLIENT = address(9000);
-  address internal constant ACCESS_CONTROLLER_ADDR = address(10000);
+  address internal constant ACCESS_CONTROLLER_ADDR = address(10_000);
 
   function setUp() public override {
     BaseTestWithConfiguredVerifierAndFeeManager.setUp();

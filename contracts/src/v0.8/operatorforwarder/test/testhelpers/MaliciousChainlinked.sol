@@ -104,7 +104,7 @@ contract MaliciousChainlinked is Chainlinked {
     return abi.encodeWithSelector(
       bytes4(keccak256("oracleRequest(address,uint256,bytes32,address,bytes4,uint256,uint256,bytes)")),
       0, // overridden by onTokenTransfer
-      2000000000000000000, // overridden by onTokenTransfer
+      2_000_000_000_000_000_000, // overridden by onTokenTransfer
       _req.id,
       _req.callbackAddress,
       _req.callbackFunctionId,

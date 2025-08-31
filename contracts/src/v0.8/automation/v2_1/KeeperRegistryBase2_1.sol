@@ -35,9 +35,9 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
   bytes4 internal constant PERFORM_SELECTOR = KeeperCompatibleInterface.performUpkeep.selector;
   bytes4 internal constant CHECK_CALLBACK_SELECTOR = StreamsLookupCompatibleInterface.checkCallback.selector;
   bytes4 internal constant CHECK_LOG_SELECTOR = ILogAutomation.checkLog.selector;
-  uint256 internal constant PERFORM_GAS_MIN = 2_300;
+  uint256 internal constant PERFORM_GAS_MIN = 2300;
   uint256 internal constant CANCELLATION_DELAY = 50;
-  uint256 internal constant PERFORM_GAS_CUSHION = 5_000;
+  uint256 internal constant PERFORM_GAS_CUSHION = 5000;
   uint256 internal constant PPB_BASE = 1_000_000_000;
   uint32 internal constant UINT32_MAX = type(uint32).max;
   uint96 internal constant LINK_TOTAL_SUPPLY = 1e27;
@@ -57,11 +57,11 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
   uint256 internal constant REGISTRY_CONDITIONAL_OVERHEAD = 90_000; // Used in maxPayment estimation, and in capping overheads during actual payment
   uint256 internal constant REGISTRY_LOG_OVERHEAD = 110_000; // Used only in maxPayment estimation, and in capping overheads during actual payment.
   uint256 internal constant REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD = 20; // Used only in maxPayment estimation, and in capping overheads during actual payment. Value scales with performData length.
-  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 7_500; // Used only in maxPayment estimation, and in capping overheads during actual payment. Value scales with f.
+  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 7500; // Used only in maxPayment estimation, and in capping overheads during actual payment. Value scales with f.
 
   uint256 internal constant ACCOUNTING_FIXED_GAS_OVERHEAD = 27_500; // Used in actual payment. Fixed overhead per tx
-  uint256 internal constant ACCOUNTING_PER_SIGNER_GAS_OVERHEAD = 1_100; // Used in actual payment. overhead per signer
-  uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 7_000; // Used in actual payment. overhead per upkeep performed
+  uint256 internal constant ACCOUNTING_PER_SIGNER_GAS_OVERHEAD = 1100; // Used in actual payment. overhead per signer
+  uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 7000; // Used in actual payment. overhead per upkeep performed
 
   OVM_GasPriceOracle internal constant OPTIMISM_ORACLE = OVM_GasPriceOracle(0x420000000000000000000000000000000000000F);
   ArbGasInfo internal constant ARB_NITRO_ORACLE = ArbGasInfo(0x000000000000000000000000000000000000006C);

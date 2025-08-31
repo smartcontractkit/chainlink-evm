@@ -35,18 +35,18 @@ contract DataFeedsSetupGas is BaseTest {
   bytes16[] internal s_batchValueIds = new bytes16[](5);
 
   bytes32[] internal s_paddedDataIds = new bytes32[](5);
-  uint256 internal s_price1 = 123456;
-  uint256 internal s_price2 = 456789;
+  uint256 internal s_price1 = 123_456;
+  uint256 internal s_price2 = 456_789;
   uint32 internal s_timestamp1 = 0;
   uint32 internal s_timestamp2 = 0;
   uint32 internal s_timestamp3 = 0;
 
-  address internal s_reportSender = address(10002);
+  address internal s_reportSender = address(10_002);
   string internal s_description = "description";
   bytes32 internal s_workflowId = hex"6d795f6964000000000000000000000000000000000000000000000000000000";
   bytes2 internal s_reportId = hex"0001";
   address[] internal s_senders = [s_reportSender, s_reportSender];
-  address[] internal s_workflowOwners = [address(10004), address(10005)];
+  address[] internal s_workflowOwners = [address(10_004), address(10_005)];
   bytes10[] internal s_workflowNames = [bytes10("abc"), bytes10("xyz")];
 
   DataFeedsCache.WorkflowMetadata internal s_workflowMetadata1 = DataFeedsCache.WorkflowMetadata({

@@ -44,7 +44,7 @@ contract BaseTest is Test {
   uint64 internal constant BLOCKNUMBER_LOWER_BOUND = 1000;
   uint64 internal constant BLOCKNUMBER_UPPER_BOUND = BLOCKNUMBER_LOWER_BOUND + 5;
   int192 internal constant MEDIAN = 1 ether;
-  int192 internal constant BID = 500000000 gwei;
+  int192 internal constant BID = 500_000_000 gwei;
   int192 internal constant ASK = 2 ether;
 
   bytes32 internal constant EMPTY_BYTES = bytes32("");

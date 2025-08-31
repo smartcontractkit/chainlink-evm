@@ -39,7 +39,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
 
     // Deploy link token and link/native feed.
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Deploy coordinator.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5(address(0));
@@ -74,7 +74,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       2_500_000, // maxGasLimit
       1, // stalenessSeconds
       50_000, // gasAfterPaymentCalculation
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0, // fulfillmentFlatFeeLinkDiscountPPM
       0, // nativePremiumPercentage
@@ -94,7 +94,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash,
       10,
       1,
-      50000000000000000,
+      50_000_000_000_000_000,
       0,
       0
     );
@@ -108,7 +108,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -197,7 +197,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
 
   function testVRFV2PlusWrapperWithInvalidSubscriptionId() public {
     vm.expectRevert(SubscriptionAPI.InvalidSubscription.selector);
-    new VRFV2PlusWrapper(address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(123456));
+    new VRFV2PlusWrapper(address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(123_456));
   }
 
   function testSetFulfillmentTxSize() public {
@@ -295,7 +295,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500, // fulfillmentFlatFeeNativePPM
       501 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -313,7 +313,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       450, // fulfillmentFlatFeeNativePPM
       450 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -334,7 +334,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -355,7 +355,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );

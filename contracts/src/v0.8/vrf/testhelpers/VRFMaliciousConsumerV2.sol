@@ -25,7 +25,7 @@ contract VRFMaliciousConsumerV2 is VRFConsumerBaseV2 {
     s_randomWords = randomWords;
     s_requestId = requestId;
     // Should revert
-    COORDINATOR.requestRandomWords(s_keyHash, s_subId, 1, 200000, 1);
+    COORDINATOR.requestRandomWords(s_keyHash, s_subId, 1, 200_000, 1);
   }
 
   function createSubscriptionAndFund(
@@ -52,6 +52,6 @@ contract VRFMaliciousConsumerV2 is VRFConsumerBaseV2 {
     bytes32 keyHash
   ) external returns (uint256) {
     s_keyHash = keyHash;
-    return COORDINATOR.requestRandomWords(keyHash, s_subId, 1, 500000, 1);
+    return COORDINATOR.requestRandomWords(keyHash, s_subId, 1, 500_000, 1);
   }
 }

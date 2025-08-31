@@ -59,7 +59,7 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
     // Deploy coordinator, LINK token and LINK/Native feed.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5_Optimism(address(s_bhs));
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Configure the coordinator.
     s_testCoordinator.setLINKAndLINKNativeFeed(address(s_linkToken), address(s_linkNativeFeed));
@@ -68,7 +68,7 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
       2_500_000, // maxGasLimit
       1, // stalenessSeconds
       50_000, // gasAfterPaymentCalculation
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500_000, // fulfillmentFlatFeeNativePPM
       100_000, // fulfillmentFlatFeeLinkDiscountPPM
       15, // nativePremiumPercentage
@@ -115,14 +115,14 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
   function _mockGasOraclePriceFeeMethods() internal {
     // these values are taken from an example transaction on Base Sepolia
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))), abi.encode(64273426165)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))), abi.encode(64_273_426_165)
     );
     vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("baseFeeScalar()"))), abi.encode(1101));
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))), abi.encode(659851)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))), abi.encode(659_851)
     );
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))), abi.encode(2126959908362)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))), abi.encode(2_126_959_908_362)
     );
     vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("decimals()"))), abi.encode(6));
   }

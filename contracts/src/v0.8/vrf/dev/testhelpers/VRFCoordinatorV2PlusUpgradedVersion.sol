@@ -31,7 +31,7 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
   uint32 public constant MAX_NUM_WORDS = 500;
   // 5k is plenty for an EXTCODESIZE call (2600) + warm CALL (100)
   // and some arithmetic operations.
-  uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5_000;
+  uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5000;
   // upper bound limit for premium percentages to make sure fee calculations don't overflow
   uint8 private constant PREMIUM_PERCENTAGE_MAX = 155;
 

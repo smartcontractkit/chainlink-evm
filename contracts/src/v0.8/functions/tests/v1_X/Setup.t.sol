@@ -89,10 +89,10 @@ contract FunctionsRouterSetup is BaseTest {
       operationFeeCentsUsd: s_operationFee,
       maxSupportedRequestDataVersion: 1,
       fulfillmentGasPriceOverEstimationBP: 5000,
-      fallbackNativePerUnitLink: 5000000000000000,
-      fallbackUsdPerUnitLink: 1400000000,
+      fallbackNativePerUnitLink: 5_000_000_000_000_000,
+      fallbackUsdPerUnitLink: 1_400_000_000,
       fallbackUsdPerUnitLinkDecimals: 8,
-      minimumEstimateGasPriceWei: 1000000000, // 1 gwei
+      minimumEstimateGasPriceWei: 1_000_000_000, // 1 gwei
       transmitTxSizeBytes: 1764
     });
   }

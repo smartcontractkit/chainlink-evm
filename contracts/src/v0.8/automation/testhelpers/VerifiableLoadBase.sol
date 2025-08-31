@@ -43,7 +43,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   // check if an upkeep is eligible for adding funds at this interval
   uint256 public upkeepTopUpCheckInterval = 5;
   // an upkeep will get this amount of LINK for every top up
-  uint96 public addLinkAmount = 200000000000000000; // 0.2 LINK
+  uint96 public addLinkAmount = 200_000_000_000_000_000; // 0.2 LINK
   // if an upkeep's balance is less than this threshold * min balance, this upkeep is eligible for adding funds
   uint8 public minBalanceThresholdMultiplier = 20;
   // if this contract is using arbitrum block number
@@ -329,7 +329,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
 
   function burnPerformGas(uint256 upkeepId, uint256 startGas, uint256 blockNum) public {
     uint256 performGasToBurn = performGasToBurns[upkeepId];
-    while (startGas - gasleft() + 10000 < performGasToBurn) {
+    while (startGas - gasleft() + 10_000 < performGasToBurn) {
       dummyMap[blockhash(blockNum)] = false;
     }
   }

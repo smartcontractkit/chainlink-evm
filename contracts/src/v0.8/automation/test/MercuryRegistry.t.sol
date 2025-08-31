@@ -56,7 +56,7 @@ contract MercuryRegistryTest is Test {
     } catch {
       s_verifier = address(new MockVerifierProxy());
     }
-    vm.chainId(31337); // restore chain Id
+    vm.chainId(31_337); // restore chain Id
 
     // Use a BTC feed and ETH feed.
     feedIds = new string[](2);
@@ -133,10 +133,10 @@ contract MercuryRegistryTest is Test {
         int192 deviationPercentagePPM,
         uint32 stalenessSeconds
       ) = s_testRegistry.s_feedMapping(s_BTCUSDFeedId);
-      assertEq(observationsTimestamp, 1692732568); // Tuesday, August 22, 2023 7:29:28 PM
-      assertEq(bid, 2585674416498); //   $25,856.74416498
-      assertEq(price, 2585711126720); // $25,857.11126720
-      assertEq(ask, 2585747836943); //   $25,857.47836943
+      assertEq(observationsTimestamp, 1_692_732_568); // Tuesday, August 22, 2023 7:29:28 PM
+      assertEq(bid, 2_585_674_416_498); //   $25,856.74416498
+      assertEq(price, 2_585_711_126_720); // $25,857.11126720
+      assertEq(ask, 2_585_747_836_943); //   $25,857.47836943
       assertEq(feedName, "BTC/USD");
       assertEq(localFeedId, s_BTCUSDFeedId);
       assertEq(active, true);
@@ -163,18 +163,18 @@ contract MercuryRegistryTest is Test {
     MercuryRegistry.Feed[] memory feeds = s_testRegistry.getLatestFeedData(feedIds);
 
     // Check state of BTC/USD feed to ensure update was propagated.
-    assertEq(feeds[0].observationsTimestamp, 1692820502); // Wednesday, August 23, 2023 7:55:02 PM
-    assertEq(feeds[0].bid, 2672027981674); //   $26,720.27981674
-    assertEq(feeds[0].price, 2672037346975); // $26,720.37346975
-    assertEq(feeds[0].ask, 2672046712275); //   $26,720.46712275
+    assertEq(feeds[0].observationsTimestamp, 1_692_820_502); // Wednesday, August 23, 2023 7:55:02 PM
+    assertEq(feeds[0].bid, 2_672_027_981_674); //   $26,720.27981674
+    assertEq(feeds[0].price, 2_672_037_346_975); // $26,720.37346975
+    assertEq(feeds[0].ask, 2_672_046_712_275); //   $26,720.46712275
     assertEq(feeds[0].feedName, "BTC/USD");
     assertEq(feeds[0].feedId, s_BTCUSDFeedId);
 
     // Check state of ETH/USD feed to ensure update was propagated.
-    assertEq(feeds[1].observationsTimestamp, 1692820501); // Wednesday, August 23, 2023 7:55:01 PM
-    assertEq(feeds[1].bid, 169056689850); //   $1,690.56689850
-    assertEq(feeds[1].price, 169076482169); // $1,690.76482169
-    assertEq(feeds[1].ask, 169086456584); //   $16,90.86456584
+    assertEq(feeds[1].observationsTimestamp, 1_692_820_501); // Wednesday, August 23, 2023 7:55:01 PM
+    assertEq(feeds[1].bid, 169_056_689_850); //   $1,690.56689850
+    assertEq(feeds[1].price, 169_076_482_169); // $1,690.76482169
+    assertEq(feeds[1].ask, 169_086_456_584); //   $16,90.86456584
     assertEq(feeds[1].feedName, "ETH/USD");
     assertEq(feeds[1].feedId, s_ETHUSDFeedId);
     assertEq(feeds[1].active, true);
@@ -258,10 +258,10 @@ contract MercuryRegistryTest is Test {
       int192 deviationPercentagePPM,
       uint32 stalenessSeconds
     ) = s_testRegistry.s_feedMapping(s_BTCUSDFeedId);
-    assertEq(observationsTimestamp, 1692732568); // Tuesday, August 22, 2023 7:29:28 PM
-    assertEq(bid, 2585674416498); //   $25,856.74416498
-    assertEq(price, 2585711126720); // $25,857.11126720
-    assertEq(ask, 2585747836943); //   $25,857.47836943
+    assertEq(observationsTimestamp, 1_692_732_568); // Tuesday, August 22, 2023 7:29:28 PM
+    assertEq(bid, 2_585_674_416_498); //   $25,856.74416498
+    assertEq(price, 2_585_711_126_720); // $25,857.11126720
+    assertEq(ask, 2_585_747_836_943); //   $25,857.47836943
     assertEq(feedName, "BTC/USD");
     assertEq(localFeedId, s_BTCUSDFeedId);
     assertEq(active, true);
@@ -284,10 +284,10 @@ contract MercuryRegistryTest is Test {
     MercuryRegistry.Feed[] memory feeds = s_testRegistry.getLatestFeedData(feedIds);
 
     // Check state of BTC/USD feed to ensure update was propagated.
-    assertEq(feeds[0].observationsTimestamp, 1692820502); // Wednesday, August 23, 2023 7:55:02 PM
-    assertEq(feeds[0].bid, 2672027981674); //   $26,720.27981674
-    assertEq(feeds[0].price, 2672037346975); // $26,720.37346975
-    assertEq(feeds[0].ask, 2672046712275); //   $26,720.46712275
+    assertEq(feeds[0].observationsTimestamp, 1_692_820_502); // Wednesday, August 23, 2023 7:55:02 PM
+    assertEq(feeds[0].bid, 2_672_027_981_674); //   $26,720.27981674
+    assertEq(feeds[0].price, 2_672_037_346_975); // $26,720.37346975
+    assertEq(feeds[0].ask, 2_672_046_712_275); //   $26,720.46712275
     assertEq(feeds[0].feedName, "BTC/USD");
     assertEq(feeds[0].feedId, s_BTCUSDFeedId);
 
@@ -307,10 +307,10 @@ contract MercuryRegistryTest is Test {
     feeds = s_testRegistry.getLatestFeedData(feedIds);
 
     // Check state of ETH/USD feed to ensure update was propagated.
-    assertEq(feeds[1].observationsTimestamp, 1692820501); // Wednesday, August 23, 2023 7:55:01 PM
-    assertEq(feeds[1].bid, 169056689850); //   $1,690.56689850
-    assertEq(feeds[1].price, 169076482169); // $1,690.76482169
-    assertEq(feeds[1].ask, 169086456584); //   $16,90.86456584
+    assertEq(feeds[1].observationsTimestamp, 1_692_820_501); // Wednesday, August 23, 2023 7:55:01 PM
+    assertEq(feeds[1].bid, 169_056_689_850); //   $1,690.56689850
+    assertEq(feeds[1].price, 169_076_482_169); // $1,690.76482169
+    assertEq(feeds[1].ask, 169_086_456_584); //   $16,90.86456584
     assertEq(feeds[1].feedName, "ETH/USD");
     assertEq(feeds[1].feedId, s_ETHUSDFeedId);
 

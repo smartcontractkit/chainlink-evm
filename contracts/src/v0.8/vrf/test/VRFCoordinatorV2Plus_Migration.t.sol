@@ -55,7 +55,7 @@ contract VRFCoordinatorV2Plus_Migration is BaseTest {
     subId = v1Coordinator.createSubscription();
     subId_noLink = v1Coordinator_noLink.createSubscription();
     linkToken = new MockLinkToken();
-    linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
     v1Coordinator.setLINKAndLINKNativeFeed(address(linkToken), address(linkNativeFeed));
     linkTokenAddr = address(linkToken);
     v2Coordinator = new VRFCoordinatorV2Plus_V2Example(address(linkToken), address(v1Coordinator));

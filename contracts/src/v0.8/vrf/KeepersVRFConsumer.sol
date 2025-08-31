@@ -109,11 +109,11 @@ contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
       KEY_HASH,
       SUBSCRIPTION_ID,
       REQUEST_CONFIRMATIONS,
-      150000, // callback gas limit
+      150_000, // callback gas limit
       1 // num words
     );
     s_requests[requestId] =
-      RequestRecord({requestId: requestId, fulfilled: false, callbackGasLimit: 150000, randomness: 0});
+      RequestRecord({requestId: requestId, fulfilled: false, callbackGasLimit: 150_000, randomness: 0});
     s_vrfRequestCounter++;
   }
 }

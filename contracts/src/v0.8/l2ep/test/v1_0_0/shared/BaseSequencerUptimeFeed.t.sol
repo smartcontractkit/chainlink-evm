@@ -202,7 +202,7 @@ contract BaseSequencerUptimeFeed_UpdateStatus is BaseSequencerUptimeFeed_Setup {
     vm.startPrank(s_aliasedL1OwnerAddress, s_aliasedL1OwnerAddress);
 
     // Submits a status update
-    uint256 timestamp = s_sequencerUptimeFeed.latestTimestamp() + 10000;
+    uint256 timestamp = s_sequencerUptimeFeed.latestTimestamp() + 10_000;
     vm.expectEmit();
     emit AnswerUpdated(1, 2, timestamp);
     s_sequencerUptimeFeed.updateStatus(true, uint64(timestamp));

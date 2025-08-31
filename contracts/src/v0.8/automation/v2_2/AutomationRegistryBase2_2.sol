@@ -31,9 +31,9 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   bytes4 internal constant PERFORM_SELECTOR = KeeperCompatibleInterface.performUpkeep.selector;
   bytes4 internal constant CHECK_CALLBACK_SELECTOR = StreamsLookupCompatibleInterface.checkCallback.selector;
   bytes4 internal constant CHECK_LOG_SELECTOR = ILogAutomation.checkLog.selector;
-  uint256 internal constant PERFORM_GAS_MIN = 2_300;
+  uint256 internal constant PERFORM_GAS_MIN = 2300;
   uint256 internal constant CANCELLATION_DELAY = 50;
-  uint256 internal constant PERFORM_GAS_CUSHION = 5_000;
+  uint256 internal constant PERFORM_GAS_CUSHION = 5000;
   uint256 internal constant PPB_BASE = 1_000_000_000;
   uint32 internal constant UINT32_MAX = type(uint32).max;
   uint96 internal constant LINK_TOTAL_SUPPLY = 1e27;
@@ -52,7 +52,7 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   // the variables result in accurate estimation
   uint256 internal constant REGISTRY_CONDITIONAL_OVERHEAD = 60_000; // Fixed gas overhead for conditional upkeeps
   uint256 internal constant REGISTRY_LOG_OVERHEAD = 85_000; // Fixed gas overhead for log upkeeps
-  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5_600; // Value scales with f
+  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5600; // Value scales with f
   uint256 internal constant REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD = 24; // Per perform data byte overhead
 
   // The overhead (in bytes) in addition to perform data for upkeep sent in calldata
@@ -66,7 +66,7 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates various cases and verifies that
   // the variables result in accurate estimation
   uint256 internal constant ACCOUNTING_FIXED_GAS_OVERHEAD = 22_000; // Fixed overhead per tx
-  uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 7_000; // Overhead per upkeep performed in batch
+  uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 7000; // Overhead per upkeep performed in batch
 
   LinkTokenInterface internal immutable i_link;
   AggregatorV3Interface internal immutable i_linkNativeFeed;

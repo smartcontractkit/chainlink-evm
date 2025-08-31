@@ -181,7 +181,7 @@ contract FunctionsBilling_EstimateCost is FunctionsSubscriptionSetup {
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
-    uint32 callbackGasLimit = 5_500;
+    uint32 callbackGasLimit = 5500;
     uint256 gasPriceWei = REASONABLE_GAS_PRICE_CEILING + 1;
 
     vm.expectRevert(FunctionsBilling.InvalidCalldata.selector);
@@ -198,13 +198,13 @@ contract FunctionsBilling_EstimateCost is FunctionsSubscriptionSetup {
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
-    uint32 callbackGasLimit = 5_500;
+    uint32 callbackGasLimit = 5500;
     uint256 gasPriceWei = 1;
 
     uint96 costEstimate =
       s_functionsCoordinator.estimateCost(s_subscriptionId, requestData, callbackGasLimit, gasPriceWei);
-    uint96 expectedCostEstimate = 51110500000000000 + s_adminFee + s_functionsCoordinator.getDONFeeJuels(requestData)
-      + s_functionsCoordinator.getOperationFeeJuels();
+    uint96 expectedCostEstimate = 51_110_500_000_000_000 + s_adminFee
+      + s_functionsCoordinator.getDONFeeJuels(requestData) + s_functionsCoordinator.getOperationFeeJuels();
     assertEq(costEstimate, expectedCostEstimate);
   }
 
@@ -217,13 +217,13 @@ contract FunctionsBilling_EstimateCost is FunctionsSubscriptionSetup {
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
-    uint32 callbackGasLimit = 5_500;
-    uint256 gasPriceWei = 5000000000; // 5 gwei
+    uint32 callbackGasLimit = 5500;
+    uint256 gasPriceWei = 5_000_000_000; // 5 gwei
 
     uint96 costEstimate =
       s_functionsCoordinator.estimateCost(s_subscriptionId, requestData, callbackGasLimit, gasPriceWei);
-    uint96 expectedCostEstimate = 255552500000000000 + s_adminFee + s_functionsCoordinator.getDONFeeJuels(requestData)
-      + s_functionsCoordinator.getOperationFeeJuels();
+    uint96 expectedCostEstimate = 255_552_500_000_000_000 + s_adminFee
+      + s_functionsCoordinator.getDONFeeJuels(requestData) + s_functionsCoordinator.getOperationFeeJuels();
     assertEq(costEstimate, expectedCostEstimate);
   }
 }

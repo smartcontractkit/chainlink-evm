@@ -16,8 +16,8 @@ contract VerifierSetConfigFromSourceTest is BaseTest {
     changePrank(USER);
     s_verifier.setConfigFromSource(
       FEED_ID,
-      12345,
-      address(12345),
+      12_345,
+      address(12_345),
       0,
       _getSignerAddresses(signers),
       s_offchaintransmitters,
@@ -36,8 +36,8 @@ contract VerifierSetConfigFromSourceMultipleDigestsTest is BaseTestWithMultipleC
 
     s_verifier.setConfigFromSource(
       FEED_ID,
-      12345,
-      address(12345),
+      12_345,
+      address(12_345),
       0,
       _getSignerAddresses(newSigners),
       s_offchaintransmitters,
@@ -58,8 +58,8 @@ contract VerifierSetConfigFromSourceMultipleDigestsTest is BaseTestWithMultipleC
 
     s_verifier.setConfigFromSource(
       FEED_ID_2,
-      12345,
-      address(12345),
+      12_345,
+      address(12_345),
       0,
       _getSignerAddresses(newSigners),
       s_offchaintransmitters,
@@ -76,8 +76,8 @@ contract VerifierSetConfigFromSourceMultipleDigestsTest is BaseTestWithMultipleC
 
     s_verifier_2.setConfigFromSource(
       FEED_ID_3,
-      12345,
-      address(12345),
+      12_345,
+      address(12_345),
       0,
       _getSignerAddresses(newSigners),
       s_offchaintransmitters,
@@ -100,7 +100,7 @@ contract VerifierSetConfigFromSourceMultipleDigestsTest is BaseTestWithMultipleC
 
     s_verifier.setConfigFromSource(
       FEED_ID,
-      12345,
+      12_345,
       address(s_verifier),
       0,
       _getSignerAddresses(newSigners),
@@ -114,7 +114,7 @@ contract VerifierSetConfigFromSourceMultipleDigestsTest is BaseTestWithMultipleC
 
     bytes32 expectedConfigDigest = _configDigestFromConfigData(
       FEED_ID,
-      12345,
+      12_345,
       address(s_verifier),
       s_numConfigsSet + 1,
       _getSignerAddresses(newSigners),

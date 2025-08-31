@@ -34,9 +34,9 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
   bytes4 internal constant PERFORM_SELECTOR = KeeperCompatibleInterface.performUpkeep.selector;
   bytes4 internal constant CHECK_CALLBACK_SELECTOR = StreamsLookupCompatibleInterface.checkCallback.selector;
   bytes4 internal constant CHECK_LOG_SELECTOR = ILogAutomation.checkLog.selector;
-  uint256 internal constant PERFORM_GAS_MIN = 2_300;
+  uint256 internal constant PERFORM_GAS_MIN = 2300;
   uint256 internal constant CANCELLATION_DELAY = 50;
-  uint256 internal constant PERFORM_GAS_CUSHION = 5_000;
+  uint256 internal constant PERFORM_GAS_CUSHION = 5000;
   uint256 internal constant PPB_BASE = 1_000_000_000;
   uint32 internal constant UINT32_MAX = type(uint32).max;
   // The first byte of the mask can be 0, because we only ever have 31 oracles
@@ -48,7 +48,7 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
   // the variables result in accurate estimation
   uint256 internal constant REGISTRY_CONDITIONAL_OVERHEAD = 98_200; // Fixed gas overhead for conditional upkeeps
   uint256 internal constant REGISTRY_LOG_OVERHEAD = 123_500; // Fixed gas overhead for log upkeeps
-  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5_600; // Value scales with f
+  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5600; // Value scales with f
   uint256 internal constant REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD = 24; // Per perform data byte overhead
 
   // The overhead (in bytes) in addition to perform data for upkeep sent in calldata

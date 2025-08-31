@@ -24,7 +24,7 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
 
   uint256 public constant EXPIRYTIME = 5 minutes;
   uint256 private constant MAXIMUM_DATA_VERSION = 256;
-  uint256 private constant MINIMUM_CONSUMER_GAS_LIMIT = 400000;
+  uint256 private constant MINIMUM_CONSUMER_GAS_LIMIT = 400_000;
   uint256 private constant SELECTOR_LENGTH = 4;
   uint256 private constant EXPECTED_REQUEST_WORDS = 2;
   uint256 private constant MINIMUM_REQUEST_LENGTH = SELECTOR_LENGTH + (32 * EXPECTED_REQUEST_WORDS);

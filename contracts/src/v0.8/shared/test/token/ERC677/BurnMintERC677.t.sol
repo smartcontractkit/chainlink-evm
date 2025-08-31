@@ -19,7 +19,7 @@ contract BurnMintERC677Setup is BaseTest {
 
   BurnMintERC677 internal s_burnMintERC677;
 
-  address internal s_mockPool = address(6243783892);
+  address internal s_mockPool = address(6_243_783_892);
   uint256 internal s_amount = 1e18;
 
   function setUp() public virtual override {

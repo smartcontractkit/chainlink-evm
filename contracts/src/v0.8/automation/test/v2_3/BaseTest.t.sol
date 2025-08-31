@@ -39,7 +39,7 @@ contract BaseTest is Test {
   // constants
   address internal constant ZERO_ADDRESS = address(0);
   uint32 internal constant DEFAULT_GAS_FEE_PPB = 10_000_000;
-  uint24 internal constant DEFAULT_FLAT_FEE_MILLI_CENTS = 2_000;
+  uint24 internal constant DEFAULT_FLAT_FEE_MILLI_CENTS = 2000;
 
   // config
   uint8 internal constant F = 1; // number of faulty nodes
@@ -262,9 +262,9 @@ contract BaseTest is Test {
       stalenessSeconds: 90_000,
       gasCeilingMultiplier: 2,
       maxPerformGas: 10_000_000,
-      maxCheckDataSize: 5_000,
-      maxPerformDataSize: 5_000,
-      maxRevertDataSize: 5_000,
+      maxCheckDataSize: 5000,
+      maxPerformDataSize: 5000,
+      maxRevertDataSize: 5000,
       fallbackGasPrice: 20_000_000_000,
       fallbackLinkPrice: 2_000_000_000, // $20
       fallbackNativePrice: 400_000_000_000, // $4,000
@@ -375,7 +375,7 @@ contract BaseTest is Test {
       }
 
       AutoBase.Report memory report =
-        AutoBase.Report(uint256(1000000000), uint256(2000000000), upkeepIds, gasLimits, triggers, performDatas);
+        AutoBase.Report(uint256(1_000_000_000), uint256(2_000_000_000), upkeepIds, gasLimits, triggers, performDatas);
 
       reportBytes = _encodeReport(report);
     }
@@ -421,7 +421,7 @@ contract BaseTest is Test {
       }
 
       AutoBase.Report memory report =
-        AutoBase.Report(uint256(1000000000), uint256(2000000000), upkeepIds, gasLimits, triggers, performDatas);
+        AutoBase.Report(uint256(1_000_000_000), uint256(2_000_000_000), upkeepIds, gasLimits, triggers, performDatas);
 
       reportBytes = _encodeReport(report);
     }

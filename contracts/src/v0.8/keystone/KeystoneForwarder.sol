@@ -97,7 +97,7 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
 
   /// @dev This is the gas required to store `success` after the report is processed.
   /// It is a warm storage write because of the packed struct. In practice it will cost less.
-  uint256 internal constant INTERNAL_GAS_REQUIREMENTS_AFTER_REPORT = 5_000;
+  uint256 internal constant INTERNAL_GAS_REQUIREMENTS_AFTER_REPORT = 5000;
   /// @dev This is the gas required to store the transmission struct and perform other checks.
   uint256 internal constant INTERNAL_GAS_REQUIREMENTS = 25_000 + INTERNAL_GAS_REQUIREMENTS_AFTER_REPORT;
   /// @dev This is the minimum gas required to route a report. This includes internal gas requirements

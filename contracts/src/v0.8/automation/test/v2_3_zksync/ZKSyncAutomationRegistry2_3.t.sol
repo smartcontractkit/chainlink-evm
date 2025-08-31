@@ -338,7 +338,7 @@ contract Withdraw is SetUp {
     (Registry registry,) = deployAndConfigureZKSyncRegistryAndRegistrar(AutoBase.PayoutMode.OFF_CHAIN);
 
     // register an upkeep and add funds
-    uint256 id = registry.registerUpkeep(address(TARGET1), 1000000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
+    uint256 id = registry.registerUpkeep(address(TARGET1), 1_000_000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
     _mintERC20_18Decimals(UPKEEP_ADMIN, 1e20);
     vm.startPrank(UPKEEP_ADMIN);
     usdToken18.approve(address(registry), 1e20);
@@ -396,9 +396,9 @@ contract SetConfig is SetUp {
     stalenessSeconds: 90_000,
     gasCeilingMultiplier: 0,
     maxPerformGas: 10_000_000,
-    maxCheckDataSize: 5_000,
-    maxPerformDataSize: 5_000,
-    maxRevertDataSize: 5_000,
+    maxCheckDataSize: 5000,
+    maxPerformDataSize: 5000,
+    maxRevertDataSize: 5000,
     fallbackGasPrice: 20_000_000_000,
     fallbackLinkPrice: 2_000_000_000, // $20
     fallbackNativePrice: 400_000_000_000, // $4,000
@@ -420,7 +420,7 @@ contract SetConfig is SetUp {
 
     AutomationRegistryBase2_3.BillingConfig[] memory billingConfigs = new AutomationRegistryBase2_3.BillingConfig[](1);
     billingConfigs[0] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_000,
+      gasFeePPB: 5000,
       flatFeeMilliCents: 20_000,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 2_000_000_000, // $20
@@ -467,7 +467,7 @@ contract SetConfig is SetUp {
     assertEq(f, F);
 
     AutomationRegistryBase2_3.BillingConfig memory config = registry.getBillingTokenConfig(billingTokenAddress);
-    assertEq(config.gasFeePPB, 5_000);
+    assertEq(config.gasFeePPB, 5000);
     assertEq(config.flatFeeMilliCents, 20_000);
     assertEq(config.priceFeed, address(USDTOKEN_USD_FEED));
     assertEq(config.minSpend, 100_000);
@@ -488,7 +488,7 @@ contract SetConfig is SetUp {
 
     AutomationRegistryBase2_3.BillingConfig[] memory billingConfigs = new AutomationRegistryBase2_3.BillingConfig[](2);
     billingConfigs[0] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_001,
+      gasFeePPB: 5001,
       flatFeeMilliCents: 20_001,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 100,
@@ -496,7 +496,7 @@ contract SetConfig is SetUp {
       decimals: 18
     });
     billingConfigs[1] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_002,
+      gasFeePPB: 5002,
       flatFeeMilliCents: 20_002,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 200,
@@ -517,14 +517,14 @@ contract SetConfig is SetUp {
     assertEq(f, F);
 
     AutomationRegistryBase2_3.BillingConfig memory config1 = registry.getBillingTokenConfig(billingTokenAddress1);
-    assertEq(config1.gasFeePPB, 5_001);
+    assertEq(config1.gasFeePPB, 5001);
     assertEq(config1.flatFeeMilliCents, 20_001);
     assertEq(config1.priceFeed, address(USDTOKEN_USD_FEED));
     assertEq(config1.fallbackPrice, 100);
     assertEq(config1.minSpend, 100);
 
     AutomationRegistryBase2_3.BillingConfig memory config2 = registry.getBillingTokenConfig(billingTokenAddress2);
-    assertEq(config2.gasFeePPB, 5_002);
+    assertEq(config2.gasFeePPB, 5002);
     assertEq(config2.flatFeeMilliCents, 20_002);
     assertEq(config2.priceFeed, address(USDTOKEN_USD_FEED));
     assertEq(config2.fallbackPrice, 200);
@@ -545,7 +545,7 @@ contract SetConfig is SetUp {
 
     AutomationRegistryBase2_3.BillingConfig[] memory billingConfigs1 = new AutomationRegistryBase2_3.BillingConfig[](1);
     billingConfigs1[0] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_001,
+      gasFeePPB: 5001,
       flatFeeMilliCents: 20_001,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 100,
@@ -571,7 +571,7 @@ contract SetConfig is SetUp {
 
     AutomationRegistryBase2_3.BillingConfig[] memory billingConfigs2 = new AutomationRegistryBase2_3.BillingConfig[](1);
     billingConfigs2[0] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_002,
+      gasFeePPB: 5002,
       flatFeeMilliCents: 20_002,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 200,
@@ -590,9 +590,9 @@ contract SetConfig is SetUp {
       stalenessSeconds: 90_000,
       gasCeilingMultiplier: 0,
       maxPerformGas: 10_000_000,
-      maxCheckDataSize: 5_000,
-      maxPerformDataSize: 5_000,
-      maxRevertDataSize: 5_000,
+      maxCheckDataSize: 5000,
+      maxPerformDataSize: 5000,
+      maxRevertDataSize: 5000,
       fallbackGasPrice: 20_000_000_000,
       fallbackLinkPrice: 2_000_000_000, // $20
       fallbackNativePrice: 400_000_000_000, // $4,000
@@ -629,7 +629,7 @@ contract SetConfig is SetUp {
     assertEq(f, F);
 
     AutomationRegistryBase2_3.BillingConfig memory config2 = registry.getBillingTokenConfig(billingTokenAddress2);
-    assertEq(config2.gasFeePPB, 5_002);
+    assertEq(config2.gasFeePPB, 5002);
     assertEq(config2.flatFeeMilliCents, 20_002);
     assertEq(config2.priceFeed, address(USDTOKEN_USD_FEED));
     assertEq(config2.fallbackPrice, 200);
@@ -651,7 +651,7 @@ contract SetConfig is SetUp {
 
     AutomationRegistryBase2_3.BillingConfig[] memory billingConfigs = new AutomationRegistryBase2_3.BillingConfig[](2);
     billingConfigs[0] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_001,
+      gasFeePPB: 5001,
       flatFeeMilliCents: 20_001,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 100,
@@ -659,7 +659,7 @@ contract SetConfig is SetUp {
       decimals: 18
     });
     billingConfigs[1] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_002,
+      gasFeePPB: 5002,
       flatFeeMilliCents: 20_002,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 200,
@@ -682,7 +682,7 @@ contract SetConfig is SetUp {
 
     AutomationRegistryBase2_3.BillingConfig[] memory billingConfigs = new AutomationRegistryBase2_3.BillingConfig[](1);
     billingConfigs[0] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_000,
+      gasFeePPB: 5000,
       flatFeeMilliCents: 20_000,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 2_000_000_000, // $20
@@ -705,7 +705,7 @@ contract SetConfig is SetUp {
 
     AutomationRegistryBase2_3.BillingConfig[] memory billingConfigs = new AutomationRegistryBase2_3.BillingConfig[](1);
     billingConfigs[0] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_000,
+      gasFeePPB: 5000,
       flatFeeMilliCents: 20_000,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 2_000_000_000, // $20
@@ -748,7 +748,7 @@ contract SetConfig is SetUp {
 
     AutomationRegistryBase2_3.BillingConfig[] memory billingConfigs = new AutomationRegistryBase2_3.BillingConfig[](1);
     billingConfigs[0] = AutomationRegistryBase2_3.BillingConfig({
-      gasFeePPB: 5_000,
+      gasFeePPB: 5000,
       flatFeeMilliCents: 20_000,
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 2_000_000_000, // $20
@@ -911,7 +911,7 @@ contract NOPsSettlement is SetUp {
     registry.setPayees(PAYEES);
 
     // register an upkeep and add funds
-    uint256 id = registry.registerUpkeep(address(TARGET1), 1000000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
+    uint256 id = registry.registerUpkeep(address(TARGET1), 1_000_000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
     _mintERC20_18Decimals(UPKEEP_ADMIN, 1e20);
     vm.startPrank(UPKEEP_ADMIN);
     usdToken18.approve(address(registry), 1e20);
@@ -992,7 +992,7 @@ contract NOPsSettlement is SetUp {
       deployAndConfigureZKSyncRegistryAndRegistrar(AutoBase.PayoutMode.OFF_CHAIN);
 
     // register an upkeep and add funds
-    uint256 id = registry.registerUpkeep(address(TARGET1), 1000000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
+    uint256 id = registry.registerUpkeep(address(TARGET1), 1_000_000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
     _mintERC20_18Decimals(UPKEEP_ADMIN, 1e20);
     vm.startPrank(UPKEEP_ADMIN);
     usdToken18.approve(address(registry), 1e20);
@@ -1106,7 +1106,7 @@ contract NOPsSettlement is SetUp {
     registry.setPayees(PAYEES);
 
     // register an upkeep and add funds
-    uint256 id = registry.registerUpkeep(address(TARGET1), 1000000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
+    uint256 id = registry.registerUpkeep(address(TARGET1), 1_000_000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
     _mintERC20_18Decimals(UPKEEP_ADMIN, 1e20);
     vm.startPrank(UPKEEP_ADMIN);
     usdToken18.approve(address(registry), 1e20);
@@ -1145,7 +1145,7 @@ contract NOPsSettlement is SetUp {
     registry.setPayees(PAYEES);
 
     // register an upkeep and add funds
-    uint256 id = registry.registerUpkeep(address(TARGET1), 1000000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
+    uint256 id = registry.registerUpkeep(address(TARGET1), 1_000_000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
     _mintERC20_18Decimals(UPKEEP_ADMIN, 1e20);
     vm.startPrank(UPKEEP_ADMIN);
     usdToken18.approve(address(registry), 1e20);
@@ -1203,7 +1203,7 @@ contract NOPsSettlement is SetUp {
       new AutomationRegistryBase2_3.BillingConfig[](billingTokens.length);
     billingTokenConfigs[0] = AutomationRegistryBase2_3.BillingConfig({
       gasFeePPB: 10_000_000, // 15%
-      flatFeeMilliCents: 2_000, // 2 cents
+      flatFeeMilliCents: 2000, // 2 cents
       priceFeed: address(USDTOKEN_USD_FEED),
       fallbackPrice: 1e8, // $1
       minSpend: 1e18, // 1 USD
@@ -1218,9 +1218,9 @@ contract NOPsSettlement is SetUp {
       stalenessSeconds: 90_000,
       gasCeilingMultiplier: 2,
       maxPerformGas: 10_000_000,
-      maxCheckDataSize: 5_000,
-      maxPerformDataSize: 5_000,
-      maxRevertDataSize: 5_000,
+      maxCheckDataSize: 5000,
+      maxPerformDataSize: 5000,
+      maxRevertDataSize: 5000,
       fallbackGasPrice: 20_000_000_000,
       fallbackLinkPrice: 2_000_000_000, // $20
       fallbackNativePrice: 400_000_000_000, // $4,000
@@ -1425,7 +1425,7 @@ contract BillingOverrides is SetUp {
 
   function test_RevertsWhen_NotPrivilegeManager() public {
     AutomationRegistryBase2_3.BillingOverrides memory billingOverrides =
-      AutomationRegistryBase2_3.BillingOverrides({gasFeePPB: 5_000, flatFeeMilliCents: 20_000});
+      AutomationRegistryBase2_3.BillingOverrides({gasFeePPB: 5000, flatFeeMilliCents: 20_000});
 
     vm.expectRevert(Registry.OnlyCallableByUpkeepPrivilegeManager.selector);
     registry.setBillingOverrides(linkUpkeepID, billingOverrides);
@@ -1433,7 +1433,7 @@ contract BillingOverrides is SetUp {
 
   function test_RevertsWhen_UpkeepCancelled() public {
     AutomationRegistryBase2_3.BillingOverrides memory billingOverrides =
-      AutomationRegistryBase2_3.BillingOverrides({gasFeePPB: 5_000, flatFeeMilliCents: 20_000});
+      AutomationRegistryBase2_3.BillingOverrides({gasFeePPB: 5000, flatFeeMilliCents: 20_000});
 
     registry.cancelUpkeep(linkUpkeepID);
 
@@ -1444,7 +1444,7 @@ contract BillingOverrides is SetUp {
 
   function test_Happy_SetBillingOverrides() public {
     AutomationRegistryBase2_3.BillingOverrides memory billingOverrides =
-      AutomationRegistryBase2_3.BillingOverrides({gasFeePPB: 5_000, flatFeeMilliCents: 20_000});
+      AutomationRegistryBase2_3.BillingOverrides({gasFeePPB: 5000, flatFeeMilliCents: 20_000});
 
     vm.startPrank(PRIVILEGE_MANAGER);
 
@@ -1702,7 +1702,7 @@ contract Transmit is SetUp {
 
     // register an upkeep and add funds
     uint256 upkeepID =
-      registry.registerUpkeep(address(TARGET1), 1000000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
+      registry.registerUpkeep(address(TARGET1), 1_000_000, UPKEEP_ADMIN, 0, address(usdToken18), "", "", "");
     _mintERC20_18Decimals(UPKEEP_ADMIN, 1e20);
     vm.startPrank(UPKEEP_ADMIN);
     usdToken18.approve(address(registry), 1e20);
@@ -1742,7 +1742,7 @@ contract Transmit is SetUp {
 
     // register an upkeep and add funds
     uint256 upkeepID =
-      registry.registerUpkeep(address(TARGET1), 1000000, UPKEEP_ADMIN, 0, address(usdToken6), "", "", "");
+      registry.registerUpkeep(address(TARGET1), 1_000_000, UPKEEP_ADMIN, 0, address(usdToken6), "", "", "");
     vm.prank(OWNER);
     usdToken6.mint(UPKEEP_ADMIN, 1e20);
 
@@ -2010,13 +2010,13 @@ contract CancelUpkeep is SetUp {
   function test_RevertsWhen_IdIsInvalid_CalledByAdmin() external {
     vm.startPrank(UPKEEP_ADMIN);
     vm.expectRevert(Registry.CannotCancel.selector);
-    registry.cancelUpkeep(1111111);
+    registry.cancelUpkeep(1_111_111);
   }
 
   function test_RevertsWhen_IdIsInvalid_CalledByOwner() external {
     vm.startPrank(registry.owner());
     vm.expectRevert(Registry.CannotCancel.selector);
-    registry.cancelUpkeep(1111111);
+    registry.cancelUpkeep(1_111_111);
   }
 
   function test_RevertsWhen_NotCalledByOwnerOrAdmin() external {
@@ -2442,7 +2442,7 @@ contract SetUpkeepGasLimit is SetUp {
     vm.startPrank(UPKEEP_ADMIN);
 
     vm.expectRevert(Registry.OnlyCallableByAdmin.selector);
-    registry.setUpkeepGasLimit(linkUpkeepID + 1, 1230000);
+    registry.setUpkeepGasLimit(linkUpkeepID + 1, 1_230_000);
   }
 
   function test_RevertsWhen_UpkeepAlreadyCanceled() external {
@@ -2450,7 +2450,7 @@ contract SetUpkeepGasLimit is SetUp {
     registry.cancelUpkeep(linkUpkeepID);
 
     vm.expectRevert(Registry.UpkeepCancelled.selector);
-    registry.setUpkeepGasLimit(linkUpkeepID, 1230000);
+    registry.setUpkeepGasLimit(linkUpkeepID, 1_230_000);
   }
 
   function test_RevertsWhen_NewGasLimitOutOfRange() external {
@@ -2460,24 +2460,24 @@ contract SetUpkeepGasLimit is SetUp {
     registry.setUpkeepGasLimit(linkUpkeepID, 300);
 
     vm.expectRevert(Registry.GasLimitOutsideRange.selector);
-    registry.setUpkeepGasLimit(linkUpkeepID, 3000000000);
+    registry.setUpkeepGasLimit(linkUpkeepID, 3_000_000_000);
   }
 
   function test_RevertsWhen_NotCalledByAdmin() external {
     vm.startPrank(STRANGER);
 
     vm.expectRevert(Registry.OnlyCallableByAdmin.selector);
-    registry.setUpkeepGasLimit(linkUpkeepID, 1230000);
+    registry.setUpkeepGasLimit(linkUpkeepID, 1_230_000);
   }
 
   function test_UpdateGasLimit_CalledByAdmin() external {
     vm.startPrank(UPKEEP_ADMIN);
 
     vm.expectEmit();
-    emit UpkeepGasLimitSet(linkUpkeepID, 1230000);
-    registry.setUpkeepGasLimit(linkUpkeepID, 1230000);
+    emit UpkeepGasLimitSet(linkUpkeepID, 1_230_000);
+    registry.setUpkeepGasLimit(linkUpkeepID, 1_230_000);
 
-    assertEq(registry.getUpkeep(linkUpkeepID).performGas, 1230000);
+    assertEq(registry.getUpkeep(linkUpkeepID).performGas, 1_230_000);
   }
 }
 

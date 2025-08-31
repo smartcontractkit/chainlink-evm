@@ -16,9 +16,9 @@ library ChainSpecificUtil {
   /// @dev reference: https://docs.arbitrum.io/build-decentralized-apps/how-to-estimate-gas#where-do-we-get-all-this-information-from
   uint256 private constant ARB_DATA_PADDING_SIZE = 140;
 
-  uint256 private constant ARB_MAINNET_CHAIN_ID = 42161;
-  uint256 private constant ARB_GOERLI_TESTNET_CHAIN_ID = 421613;
-  uint256 private constant ARB_SEPOLIA_TESTNET_CHAIN_ID = 421614;
+  uint256 private constant ARB_MAINNET_CHAIN_ID = 42_161;
+  uint256 private constant ARB_GOERLI_TESTNET_CHAIN_ID = 421_613;
+  uint256 private constant ARB_SEPOLIA_TESTNET_CHAIN_ID = 421_614;
 
   // ------------ End Arbitrum Constants ------------
 
@@ -29,12 +29,12 @@ library ChainSpecificUtil {
 
   uint256 private constant OP_MAINNET_CHAIN_ID = 10;
   uint256 private constant OP_GOERLI_CHAIN_ID = 420;
-  uint256 private constant OP_SEPOLIA_CHAIN_ID = 11155420;
+  uint256 private constant OP_SEPOLIA_CHAIN_ID = 11_155_420;
 
   /// @dev Base is a OP stack based rollup and follows the same L1 pricing logic as Optimism.
   uint256 private constant BASE_MAINNET_CHAIN_ID = 8453;
-  uint256 private constant BASE_GOERLI_CHAIN_ID = 84531;
-  uint256 private constant BASE_SEPOLIA_CHAIN_ID = 84532;
+  uint256 private constant BASE_GOERLI_CHAIN_ID = 84_531;
+  uint256 private constant BASE_SEPOLIA_CHAIN_ID = 84_532;
 
   // ------------ End Optimism Constants ------------
 

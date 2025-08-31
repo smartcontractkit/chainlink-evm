@@ -17,7 +17,7 @@ contract VerifiableLoadUpkeep is VerifiableLoadBase {
     bytes memory pData = abi.encode(upkeepId, new bytes(performDataSize));
     uint256 blockNum = getBlockNumber();
     bool needed = eligible(upkeepId);
-    while (startGas - gasleft() + 10000 < checkGasToBurn) {
+    while (startGas - gasleft() + 10_000 < checkGasToBurn) {
       dummyMap[blockhash(blockNum)] = false;
       blockNum--;
     }

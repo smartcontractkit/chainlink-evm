@@ -42,7 +42,7 @@ contract CapabilitiesRegistry_AddNodesTest is BaseTest {
     bytes32[] memory hashedCapabilityIds = new bytes32[](1);
     hashedCapabilityIds[0] = s_basicHashedCapabilityId;
 
-    uint32 invalidNodeOperatorId = 10000;
+    uint32 invalidNodeOperatorId = 10_000;
 
     nodes[0] = CapabilitiesRegistry.NodeParams({
       nodeOperatorId: invalidNodeOperatorId, // Invalid NOP

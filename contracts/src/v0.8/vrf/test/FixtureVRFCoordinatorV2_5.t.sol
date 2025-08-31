@@ -49,7 +49,7 @@ contract FixtureVRFCoordinatorV2_5 is BaseTest, VRF {
     // Deploy coordinator.
     s_coordinator = new ExposedVRFCoordinatorV2_5(address(s_bhs));
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Configure the coordinator.
     s_coordinator.setLINKAndLINKNativeFeed(address(s_linkToken), address(s_linkNativeFeed));
@@ -69,7 +69,7 @@ contract FixtureVRFCoordinatorV2_5 is BaseTest, VRF {
       2_500_000, // maxGasLimit
       1, // stalenessSeconds
       50_000, // gasAfterPaymentCalculation
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500_000, // fulfillmentFlatFeeNativePPM
       100_000, // fulfillmentFlatFeeLinkDiscountPPM
       15, // nativePremiumPercentage

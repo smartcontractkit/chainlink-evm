@@ -16,7 +16,7 @@ contract MockSystemContext is ISystemContext {
 
   // Example placeholders for block number & timestamp
   uint128 private s_mockBlockNumber = 1000;
-  uint128 private s_mockBlockTimestamp = 123456789;
+  uint128 private s_mockBlockTimestamp = 123_456_789;
 
   // ---------------------------------------
   // Functions required by ISystemContext
@@ -35,7 +35,7 @@ contract MockSystemContext is ISystemContext {
 
   function gasPrice() external pure override returns (uint256) {
     // Return a dummy gas price
-    return 1000000000; // 1 gwei, for example
+    return 1_000_000_000; // 1 gwei, for example
   }
 
   function blockGasLimit() external pure override returns (uint256) {

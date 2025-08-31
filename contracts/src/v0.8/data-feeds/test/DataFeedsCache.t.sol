@@ -15,14 +15,14 @@ contract DataFeedsCacheTest is BaseTest {
   BundleAggregatorProxy internal s_dataFeedsAggregatorProxy;
   DataFeedsCacheHarness internal s_dataFeedsCache;
 
-  address internal constant ILLEGAL_CALLER = address(11111); // address used as incorrect caller in tests
-  address internal constant REPORT_SENDER = address(12222); // mocks keystone forwarder address
+  address internal constant ILLEGAL_CALLER = address(11_111); // address used as incorrect caller in tests
+  address internal constant REPORT_SENDER = address(12_222); // mocks keystone forwarder address
 
   ERC20Mock internal s_link = new ERC20Mock(18);
 
   bytes32 internal constant WORKFLOWID = hex"6d795f6964000000000000000000000000000000000000000000000000000000";
   bytes10 internal constant WORKFLOWNAME = bytes10("abc");
-  address internal constant WORKFLOWOWNER = address(10004);
+  address internal constant WORKFLOWOWNER = address(10_004);
   bytes2 internal constant REPORTID = hex"0001";
   string[] internal s_descriptions = ["description"];
 
@@ -33,7 +33,7 @@ contract DataFeedsCacheTest is BaseTest {
   bytes internal constant METADATA = abi.encodePacked(WORKFLOWID, WORKFLOWNAME, WORKFLOWOWNER, REPORTID);
 
   address[] internal s_allowedSendersList = [REPORT_SENDER, REPORT_SENDER];
-  address[] internal s_allowedWorkflowOwnersList = [address(10004), address(10005)];
+  address[] internal s_allowedWorkflowOwnersList = [address(10_004), address(10_005)];
   bytes10[] internal s_allowedWorkflowNamesList = [bytes10("abc"), bytes10("xyz")];
 
   address[] internal s_singleProxyList = new address[](1);
@@ -77,12 +77,12 @@ contract DataFeedsCacheTest is BaseTest {
   bytes16 internal constant DATA_ID_3 = bytes16(keccak256("45678"));
   bytes16 internal constant DATA_ID_4 = bytes16(keccak256("56789"));
   bytes16 internal constant DATA_ID_5 = bytes16(keccak256("67890"));
-  uint256 internal constant PRICE1 = 123456;
-  uint256 internal constant PRICE2 = 456789;
-  uint256 internal constant PRICE3 = 789456;
-  uint256 internal constant PRICE4 = 890123;
-  uint256 internal constant PRICE5 = 654321;
-  uint256 internal constant PRICE6 = 987654;
+  uint256 internal constant PRICE1 = 123_456;
+  uint256 internal constant PRICE2 = 456_789;
+  uint256 internal constant PRICE3 = 789_456;
+  uint256 internal constant PRICE4 = 890_123;
+  uint256 internal constant PRICE5 = 654_321;
+  uint256 internal constant PRICE6 = 987_654;
   uint32 internal constant TIMESTAMP1 = 100;
   uint32 internal constant TIMESTAMP2 = 200;
 
@@ -189,21 +189,21 @@ contract DataFeedsCacheTest is BaseTest {
     s_workflowMetadata.push(s_workflowMetadata1);
     s_workflowMetadata.push(s_workflowMetadata2);
 
-    s_singleProxyList[0] = address(10002);
+    s_singleProxyList[0] = address(10_002);
 
     s_proxyList[0] = address(s_dataFeedsAggregatorProxy);
-    s_proxyList[1] = address(10002);
-    s_proxyList[2] = address(10004);
-    s_proxyList[3] = address(10005);
-    s_proxyList[4] = address(10006);
+    s_proxyList[1] = address(10_002);
+    s_proxyList[2] = address(10_004);
+    s_proxyList[3] = address(10_005);
+    s_proxyList[4] = address(10_006);
 
-    s_newSingleProxyList[0] = address(10007);
+    s_newSingleProxyList[0] = address(10_007);
 
-    s_newProxyList[0] = address(10002);
-    s_newProxyList[1] = address(10003);
-    s_newProxyList[2] = address(10004);
-    s_newProxyList[3] = address(10005);
-    s_newProxyList[4] = address(10006);
+    s_newProxyList[0] = address(10_002);
+    s_newProxyList[1] = address(10_003);
+    s_newProxyList[2] = address(10_004);
+    s_newProxyList[3] = address(10_005);
+    s_newProxyList[4] = address(10_006);
 
     s_singleValueId = new bytes16[](1);
     s_singleValueId[0] = bytes16(DATAID1);
@@ -238,7 +238,7 @@ contract DataFeedsCacheTest is BaseTest {
 
   function test_updateDataIdMappingsForProxiesRevertInvalidLengths() public {
     address[] memory s_proxyList = new address[](1);
-    s_proxyList[0] = address(10002);
+    s_proxyList[0] = address(10_002);
 
     bytes16[] memory dataIdList = new bytes16[](2);
     dataIdList[0] = bytes16(keccak256("12345"));
@@ -251,7 +251,7 @@ contract DataFeedsCacheTest is BaseTest {
 
   function test_updateDataIdMappingsForProxiesRevertUnauthorizedOwner() public {
     address[] memory s_proxyList = new address[](1);
-    s_proxyList[0] = address(10002);
+    s_proxyList[0] = address(10_002);
 
     bytes16[] memory dataIdList = new bytes16[](1);
     dataIdList[0] = bytes16(keccak256("12345"));
@@ -268,7 +268,7 @@ contract DataFeedsCacheTest is BaseTest {
 
   function test_updateDataIdMappingsForProxiesSuccess() public {
     address[] memory s_proxyList = new address[](1);
-    s_proxyList[0] = address(10002);
+    s_proxyList[0] = address(10_002);
 
     bytes16[] memory dataIdList = new bytes16[](1);
     dataIdList[0] = bytes16(keccak256("12345"));
@@ -327,7 +327,7 @@ contract DataFeedsCacheTest is BaseTest {
 
   function test_updateDataIdMappingsForProxies_and_RevertOnWrongCaller() public {
     address[] memory s_proxyList = new address[](1);
-    s_proxyList[0] = address(10002);
+    s_proxyList[0] = address(10_002);
 
     bytes16[] memory dataIdList = new bytes16[](1);
     dataIdList[0] = bytes16(keccak256("12345"));
@@ -348,7 +348,7 @@ contract DataFeedsCacheTest is BaseTest {
 
   function test_removeDataIdMappingsForProxiesSuccess() public {
     address[] memory s_proxyList = new address[](1);
-    s_proxyList[0] = address(10002);
+    s_proxyList[0] = address(10_002);
 
     bytes16[] memory dataIdList = new bytes16[](1);
     dataIdList[0] = bytes16(keccak256("12345"));
@@ -366,7 +366,7 @@ contract DataFeedsCacheTest is BaseTest {
 
   function test_removeDataIdMappingsForProxiesSuccess_and_call_decimals() public {
     address[] memory s_proxyList = new address[](1);
-    s_proxyList[0] = address(10002);
+    s_proxyList[0] = address(10_002);
 
     bytes16[] memory dataIdList = new bytes16[](1);
     dataIdList[0] = bytes16(keccak256("12345"));
@@ -915,14 +915,14 @@ contract DataFeedsCacheTest is BaseTest {
 
   function test_isFeedAdmin() public view {
     assertEq(s_dataFeedsCache.isFeedAdmin(OWNER), true);
-    assertEq(s_dataFeedsCache.isFeedAdmin(address(10002)), false);
+    assertEq(s_dataFeedsCache.isFeedAdmin(address(10_002)), false);
   }
 
   function test_removeFeedAdminSuccess() public {
-    s_dataFeedsCache.setFeedAdmin(address(10003), true);
+    s_dataFeedsCache.setFeedAdmin(address(10_003), true);
     vm.expectEmit();
-    emit DataFeedsCache.FeedAdminSet(address(10003), false);
-    s_dataFeedsCache.setFeedAdmin(address(10003), false);
+    emit DataFeedsCache.FeedAdminSet(address(10_003), false);
+    s_dataFeedsCache.setFeedAdmin(address(10_003), false);
   }
 
   function testFuzz_checkFeedPermissionFalse(
@@ -1144,7 +1144,7 @@ contract DataFeedsCacheTest is BaseTest {
     s_dataFeedsCache.setDecimalFeedConfigs(dataIds, s_descriptions, s_workflowMetadata);
 
     // workFlowOwner in report is address(10004);
-    address invalidWorkflowOwner = address(10005);
+    address invalidWorkflowOwner = address(10_005);
     bytes memory thisMetadata = abi.encodePacked(WORKFLOWID, WORKFLOWNAME, invalidWorkflowOwner, REPORTID);
 
     vm.startPrank(REPORT_SENDER);
@@ -1591,12 +1591,12 @@ contract DataFeedsCacheTest is BaseTest {
     vm.startPrank(ILLEGAL_CALLER);
 
     vm.expectRevert("Only callable by owner");
-    s_dataFeedsCache.recoverTokens(IERC20(address(s_link)), address(10008), 1 ether);
+    s_dataFeedsCache.recoverTokens(IERC20(address(s_link)), address(10_008), 1 ether);
   }
 
   function test_recoverTokensERC20RevertNoBalance() public {
     vm.expectRevert(abi.encodeWithSelector(DataFeedsCache.InsufficientBalance.selector, 0, 1));
-    s_dataFeedsCache.recoverTokens(IERC20(address(s_link)), address(10007), 1);
+    s_dataFeedsCache.recoverTokens(IERC20(address(s_link)), address(10_007), 1);
   }
 
   function testFuzzy_recoverTokensERC20Success(
@@ -1606,15 +1606,15 @@ contract DataFeedsCacheTest is BaseTest {
     s_link.mint(address(s_dataFeedsCache), amount);
 
     vm.expectEmit();
-    emit DataFeedsCache.TokenRecovered(address(s_link), address(10008), amount);
-    s_dataFeedsCache.recoverTokens(IERC20(address(s_link)), address(10008), amount);
-    assertEq(s_link.balanceOf(address(10008)), amount);
+    emit DataFeedsCache.TokenRecovered(address(s_link), address(10_008), amount);
+    s_dataFeedsCache.recoverTokens(IERC20(address(s_link)), address(10_008), amount);
+    assertEq(s_link.balanceOf(address(10_008)), amount);
     assertEq(s_link.balanceOf(address(s_dataFeedsCache)), 0);
   }
 
   function test_recoverTokensNativeRevertNoBalance() public {
     vm.expectRevert(abi.encodeWithSelector(DataFeedsCache.InsufficientBalance.selector, 0, 1 ether));
-    s_dataFeedsCache.recoverTokens(IERC20(address(0)), address(10007), 1 ether);
+    s_dataFeedsCache.recoverTokens(IERC20(address(0)), address(10_007), 1 ether);
   }
 
   function testFuzzy_recoverTokensNativeSuccess(
@@ -1625,10 +1625,10 @@ contract DataFeedsCacheTest is BaseTest {
     assertEq(address(s_dataFeedsCache).balance, amount);
 
     vm.expectEmit();
-    emit DataFeedsCache.TokenRecovered(address(0), address(10007), amount);
-    s_dataFeedsCache.recoverTokens(IERC20(address(0)), address(10007), amount);
+    emit DataFeedsCache.TokenRecovered(address(0), address(10_007), amount);
+    s_dataFeedsCache.recoverTokens(IERC20(address(0)), address(10_007), amount);
     assertEq(address(s_dataFeedsCache).balance, 0);
-    assertEq(address(10007).balance, amount);
+    assertEq(address(10_007).balance, amount);
   }
 
   function test_getLatestByFeedId() public {

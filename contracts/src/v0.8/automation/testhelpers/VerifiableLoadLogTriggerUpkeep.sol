@@ -52,7 +52,7 @@ contract VerifiableLoadLogTriggerUpkeep is VerifiableLoadBase, StreamsLookupComp
       address addr = abi.decode(t3, (address));
 
       uint256 checkGasToBurn = checkGasToBurns[upkeepId];
-      while (startGas - gasleft() + 15000 < checkGasToBurn) {
+      while (startGas - gasleft() + 15_000 < checkGasToBurn) {
         dummyMap[blockhash(blockNum)] = false;
       }
 

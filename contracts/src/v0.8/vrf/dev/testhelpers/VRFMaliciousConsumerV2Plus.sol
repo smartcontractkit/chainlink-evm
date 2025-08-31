@@ -27,7 +27,7 @@ contract VRFMaliciousConsumerV2Plus is VRFConsumerBaseV2Plus {
       keyHash: s_keyHash,
       subId: s_subId,
       requestConfirmations: 1,
-      callbackGasLimit: 200000,
+      callbackGasLimit: 200_000,
       numWords: 1,
       extraArgs: "" // empty extraArgs defaults to link payment
     });
@@ -64,7 +64,7 @@ contract VRFMaliciousConsumerV2Plus is VRFConsumerBaseV2Plus {
       keyHash: keyHash,
       subId: s_subId,
       requestConfirmations: 1,
-      callbackGasLimit: 500000,
+      callbackGasLimit: 500_000,
       numWords: 1,
       extraArgs: "" // empty extraArgs defaults to link payment
     });

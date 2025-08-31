@@ -50,7 +50,7 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
 
     // Deploy link token and link/native feed.
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Deploy coordinator.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5_Optimism(address(0));
@@ -74,7 +74,7 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500_000, // fulfillmentFlatFeeNativePPM
       100_000 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -97,14 +97,14 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
   function _mockGasOraclePriceFeeMethods() internal {
     // these values are taken from an example transaction on Base Sepolia
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))), abi.encode(64273426165)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))), abi.encode(64_273_426_165)
     );
     vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("baseFeeScalar()"))), abi.encode(1101));
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))), abi.encode(659851)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))), abi.encode(659_851)
     );
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))), abi.encode(2126959908362)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))), abi.encode(2_126_959_908_362)
     );
     vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("decimals()"))), abi.encode(6));
   }

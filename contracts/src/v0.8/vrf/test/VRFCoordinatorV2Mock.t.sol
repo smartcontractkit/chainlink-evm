@@ -57,7 +57,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
 
     // Deploy link token and link/eth feed.
     s_linkToken = new MockLinkToken();
-    s_linkEthFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkEthFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Deploy coordinator and consumer.
     s_vrfCoordinatorV2Mock = new VRFCoordinatorV2Mock(
@@ -308,7 +308,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     );
 
     vm.expectEmit(true, false, false, true);
-    emit RandomWordsFulfilled(reqId, 1, 100090236000000000, true);
+    emit RandomWordsFulfilled(reqId, 1, 100_090_236_000_000_000, true);
     s_vrfCoordinatorV2Mock.fulfillRandomWords(reqId, consumerAddr);
 
     vm.stopPrank();
@@ -345,7 +345,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     uint256[] memory words2 = new uint256[](2);
     words1[0] = 2533;
     words1[1] = 1768;
-    emit RandomWordsFulfilled(reqId, 1, 100072314000000000, true);
+    emit RandomWordsFulfilled(reqId, 1, 100_072_314_000_000_000, true);
     s_vrfCoordinatorV2Mock.fulfillRandomWordsWithOverride(reqId, consumerAddr, words2);
 
     vm.stopPrank();

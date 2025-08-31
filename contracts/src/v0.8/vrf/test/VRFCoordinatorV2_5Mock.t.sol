@@ -406,7 +406,7 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
     uint256 reqId = s_vrfConsumerV2Plus.requestRandomness(req);
 
     vm.expectEmit(true, false, false, true);
-    emit RandomWordsFulfilled(reqId, 1, subId, 1432960000000000000, false, true, false);
+    emit RandomWordsFulfilled(reqId, 1, subId, 1_432_960_000_000_000_000, false, true, false);
     s_vrfCoordinatorV2_5Mock.fulfillRandomWords(reqId, consumerAddr);
 
     vm.stopPrank();
@@ -446,7 +446,7 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
     uint256 reqId = s_vrfConsumerV2Plus.requestRandomness(req);
 
     vm.expectEmit(true, false, false, true);
-    emit RandomWordsFulfilled(reqId, 1, subId, 5731840000000000, true, true, false);
+    emit RandomWordsFulfilled(reqId, 1, subId, 5_731_840_000_000_000, true, true, false);
     s_vrfCoordinatorV2_5Mock.fulfillRandomWords(reqId, consumerAddr);
 
     vm.stopPrank();
@@ -461,10 +461,10 @@ contract VRFCoordinatorV2_5MockTest is BaseTest {
 
     uint96 expectedPayment;
     if (nativePayment) {
-      expectedPayment = 5011440000000000;
+      expectedPayment = 5_011_440_000_000_000;
       s_vrfCoordinatorV2_5Mock.fundSubscriptionWithNative{value: oneNative}(subId);
     } else {
-      expectedPayment = 1252860000000000000;
+      expectedPayment = 1_252_860_000_000_000_000;
       s_vrfCoordinatorV2_5Mock.fundSubscription(subId, twoLink);
     }
 

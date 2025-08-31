@@ -86,7 +86,7 @@ contract FunctionsSubscriptions_OwnerCancelSubscription is FunctionsSubscription
 
   function test_OwnerCancelSubscription_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.ownerCancelSubscription(invalidSubscriptionId);
   }
 
@@ -351,7 +351,7 @@ contract FunctionsSubscriptions_OnTokenTransfer is FunctionsClientSetup {
     // Funding amount must be less than or equal to LINK total supply
     uint256 totalSupplyJuels = 1_000_000_000 * 1e18;
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_linkToken.transferAndCall(address(s_functionsRouter), totalSupplyJuels, abi.encode(invalidSubscriptionId));
   }
 
@@ -646,7 +646,7 @@ contract FunctionsSubscriptions_ProposeSubscriptionOwnerTransfer is FunctionsSub
 
   function test_ProposeSubscriptionOwnerTransfer_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.proposeSubscriptionOwnerTransfer(invalidSubscriptionId, NEW_OWNER_ADDRESS_WITH_TOS);
   }
 
@@ -833,7 +833,7 @@ contract FunctionsSubscriptions_RemoveConsumer is FunctionsSubscriptionSetup {
 
   function test_RemoveConsumer_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.removeConsumer(invalidSubscriptionId, address(s_functionsClient));
   }
 
@@ -913,7 +913,7 @@ contract FunctionsSubscriptions_AddConsumer is FunctionsSubscriptionSetup {
 
   function test_AddConsumer_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.addConsumer(invalidSubscriptionId, address(1));
   }
 
@@ -1002,7 +1002,7 @@ contract FunctionsSubscriptions_CancelSubscription is FunctionsSubscriptionSetup
 
   function test_CancelSubscription_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.cancelSubscription(invalidSubscriptionId, OWNER_ADDRESS);
   }
 
@@ -1186,7 +1186,7 @@ contract FunctionsSubscriptions_SetFlags is FunctionsSubscriptionSetup {
 
   function test_SetFlags_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     bytes32 flagsToSet = bytes32("1");
     s_functionsRouter.setFlags(invalidSubscriptionId, flagsToSet);
   }
@@ -1206,7 +1206,7 @@ contract FunctionsSubscriptions_GetFlags is FunctionsSubscriptionSetup {
     vm.stopPrank();
     vm.startPrank(STRANGER_ADDRESS);
 
-    uint64 invalidSubscriptionId = 999999;
+    uint64 invalidSubscriptionId = 999_999;
 
     bytes32 flags = s_functionsRouter.getFlags(invalidSubscriptionId);
     assertEq(flags, bytes32(0));
@@ -1239,7 +1239,7 @@ contract FunctionsSubscriptions_TimeoutRequests is FunctionsClientRequestSetup {
 
   function test_TimeoutRequests_RevertInvalidRequest() public {
     // Modify the commitment so that it doesn't match
-    s_requests[1].commitmentOnchain.donFee = 123456789;
+    s_requests[1].commitmentOnchain.donFee = 123_456_789;
     FunctionsResponse.Commitment[] memory commitments = new FunctionsResponse.Commitment[](1);
     commitments[0] = s_requests[1].commitmentOnchain;
     vm.expectRevert(FunctionsSubscriptions.InvalidCalldata.selector);

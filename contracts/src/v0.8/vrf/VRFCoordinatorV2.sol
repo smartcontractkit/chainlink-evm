@@ -87,7 +87,7 @@ contract VRFCoordinatorV2 is VRF, ConfirmedOwner, ITypeAndVersion, VRFCoordinato
   uint32 public constant MAX_NUM_WORDS = 500;
   // 5k is plenty for an EXTCODESIZE call (2600) + warm CALL (100)
   // and some arithmetic operations.
-  uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5_000;
+  uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5000;
 
   error InvalidRequestConfirmations(uint16 have, uint16 min, uint16 max);
   error GasLimitTooBig(uint32 have, uint32 want);

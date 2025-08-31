@@ -145,7 +145,7 @@ contract Gas_SendRequest is FunctionsSubscriptionSetup {
     // Pull storage variables into memory
     bytes memory minimalRequestData = s_minimalRequestData;
     uint64 subscriptionId = s_subscriptionId;
-    uint32 callbackGasLimit = 5_500;
+    uint32 callbackGasLimit = 5500;
     bytes32 donId = s_donId;
     vm.resumeGasMetering();
 
@@ -233,7 +233,7 @@ contract Gas_FulfillRequest_Setup is FunctionsClientRequestSetup {
       bytes memory secrets = new bytes(0);
       string[] memory args = new string[](0);
       bytes[] memory bytesArgs = new bytes[](0);
-      uint32 callbackGasLimit = 5_500;
+      uint32 callbackGasLimit = 5500;
 
       for (uint256 i = 0; i < requestsToSend; ++i) {
         _sendAndStoreRequest(i + requestNumberOffset, sourceCode, secrets, args, bytesArgs, callbackGasLimit);

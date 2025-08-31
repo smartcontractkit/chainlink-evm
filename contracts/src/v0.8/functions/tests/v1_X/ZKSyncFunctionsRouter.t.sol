@@ -36,7 +36,7 @@ contract ZKSyncFunctionsRouter__Callback is ZKSyncFunctionsRouterSetup {
     bytes memory err = bytes("errData");
     uint32 totalGas = 5_000_000;
     uint32 callbackGasLimit = 4_000_000;
-    address noCodeAddress = address(12345);
+    address noCodeAddress = address(12_345);
 
     ZKSyncFunctionsRouter.CallbackResult memory result =
       _callback(reqId, resp, err, totalGas, callbackGasLimit, noCodeAddress);

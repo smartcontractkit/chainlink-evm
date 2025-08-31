@@ -73,8 +73,8 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
 
   bytes32 private constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   bytes32 private constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-  uint96 private constant DEFAULT_TOP_UP_AMOUNT_JUELS = 3000000000000000000;
-  uint96 private constant DEFAULT_MIN_BALANCE_JUELS = 1000000000000000000;
+  uint96 private constant DEFAULT_TOP_UP_AMOUNT_JUELS = 3_000_000_000_000_000_000;
+  uint96 private constant DEFAULT_MIN_BALANCE_JUELS = 1_000_000_000_000_000_000;
   IERC20 private immutable i_linkToken;
 
   uint256 private s_minWaitPeriodSeconds;

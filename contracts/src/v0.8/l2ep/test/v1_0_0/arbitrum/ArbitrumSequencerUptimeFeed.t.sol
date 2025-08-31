@@ -119,7 +119,7 @@ contract ArbitrumSequencerUptimeFeed_UpdateStatus is ArbitrumSequencerUptimeFeed
     vm.startPrank(s_l2MessengerAddr, s_l2MessengerAddr);
 
     // Submits a status update
-    uint256 timestamp = s_arbitrumSequencerUptimeFeed.latestTimestamp() + 10000;
+    uint256 timestamp = s_arbitrumSequencerUptimeFeed.latestTimestamp() + 10_000;
     vm.expectEmit();
     emit AnswerUpdated(1, 2, timestamp);
     s_arbitrumSequencerUptimeFeed.updateStatus(true, uint64(timestamp));

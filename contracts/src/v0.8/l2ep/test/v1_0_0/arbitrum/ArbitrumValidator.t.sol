@@ -15,9 +15,9 @@ import {L2EPTest} from "../L2EPTest.t.sol";
 contract ArbitrumValidatorTest is L2EPTest {
   /// Helper constants
   address internal constant L2_SEQ_STATUS_RECORDER_ADDRESS = 0x491B1dDA0A8fa069bbC1125133A975BF4e85a91b;
-  uint256 internal constant GAS_PRICE_BID = 1000000;
-  uint256 internal constant BASE_FEE = 14000000000;
-  uint256 internal constant MAX_GAS = 1000000;
+  uint256 internal constant GAS_PRICE_BID = 1_000_000;
+  uint256 internal constant BASE_FEE = 14_000_000_000;
+  uint256 internal constant MAX_GAS = 1_000_000;
 
   /// L2EP contracts
   AccessControllerInterface internal s_accessController;
@@ -75,7 +75,7 @@ contract ArbitrumValidator_Validate is ArbitrumValidatorTest {
     emit RetryableTicketNoRefundAliasRewriteCreated(
       L2_SEQ_STATUS_RECORDER_ADDRESS, // destAddr
       0, // arbTxCallValue
-      25312000000000, // maxSubmissionCost
+      25_312_000_000_000, // maxSubmissionCost
       arbitrumValidatorL2Addr, // submissionRefundAddress
       arbitrumValidatorL2Addr, // valueRefundAddress
       MAX_GAS, // maxGas

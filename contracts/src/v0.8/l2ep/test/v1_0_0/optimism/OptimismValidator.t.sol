@@ -13,7 +13,7 @@ import {L2EPTest} from "../L2EPTest.t.sol";
 contract OptimismValidator_Setup is L2EPTest {
   /// Helper constants
   address internal constant L2_SEQ_STATUS_RECORDER_ADDRESS = 0x491B1dDA0A8fa069bbC1125133A975BF4e85a91b;
-  uint32 internal constant INIT_GAS_LIMIT = 1900000;
+  uint32 internal constant INIT_GAS_LIMIT = 1_900_000;
 
   /// L2EP contracts
   MockOptimismL1CrossDomainMessenger internal s_mockOptimismL1CrossDomainMessenger;
@@ -86,7 +86,7 @@ contract OptimismValidator_Validate is OptimismValidator_Setup {
     uint256 currentRoundId = 1;
     int256 currentAnswer = 1;
     // Sets block.timestamp to a later date
-    uint256 futureTimestampInSeconds = block.timestamp + 10000;
+    uint256 futureTimestampInSeconds = block.timestamp + 10_000;
     vm.startPrank(s_eoaValidator);
     vm.warp(futureTimestampInSeconds);
 

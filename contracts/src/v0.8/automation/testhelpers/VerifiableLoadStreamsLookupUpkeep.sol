@@ -35,7 +35,7 @@ contract VerifiableLoadStreamsLookupUpkeep is VerifiableLoadBase, StreamsLookupC
     bytes memory pData = abi.encode(upkeepId, new bytes(performDataSize));
     uint256 blockNum = getBlockNumber();
     bool needed = eligible(upkeepId);
-    while (startGas - gasleft() + 10000 < checkGasToBurn) {
+    while (startGas - gasleft() + 10_000 < checkGasToBurn) {
       // 10K margin over gas to burn
       // Hard coded check gas to burn
       dummyMap[blockhash(blockNum)] = false; // arbitrary storage writes
