@@ -51,8 +51,9 @@ contract AutomationRegistry2_2_SetUp is BaseTest {
     AutomationRegistryLogicB2_2 logicB2_2 =
       new AutomationRegistryLogicB2_2(LINK_TOKEN, LINK_ETH_FEED, FAST_GAS_FEED, address(forwarderLogic), ZERO_ADDRESS);
     AutomationRegistryLogicA2_2 logicA2_2 = new AutomationRegistryLogicA2_2(logicB2_2);
-    registryMaster =
-      IAutomationRegistryMaster(address(new AutomationRegistry2_2(AutomationRegistryLogicB2_2(address(logicA2_2)))));
+    registryMaster = IAutomationRegistryMaster(
+      payable(address(new AutomationRegistry2_2(AutomationRegistryLogicB2_2(address(logicA2_2)))))
+    );
   }
 }
 
