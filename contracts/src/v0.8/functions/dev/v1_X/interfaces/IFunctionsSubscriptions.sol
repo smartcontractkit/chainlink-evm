@@ -6,7 +6,8 @@ import {FunctionsResponse} from "../libraries/FunctionsResponse.sol";
 /// @title Chainlink Functions Subscription interface.
 interface IFunctionsSubscriptions {
   struct Subscription {
-    uint96 balance; // ═════════╗ Common LINK balance that is controlled by the Router to be used for all consumer requests.
+    uint96 balance; // ═════════╗ Common LINK balance that is controlled by the Router to be used
+      // for all consumer requests.
     address owner; // ══════════╝ The owner can fund/withdraw/cancel the subscription.
     uint96 blockedBalance; // ══╗ LINK balance that is reserved to pay for pending consumer requests.
     address proposedOwner; // ══╝ For safely transferring sub ownership.

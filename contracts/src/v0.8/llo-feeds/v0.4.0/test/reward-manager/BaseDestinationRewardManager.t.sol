@@ -12,7 +12,8 @@ import {Test} from "forge-std/Test.sol";
  * @title DestinationRewardManagerTest
  * @author Michael Fletcher
  * @notice Base class for all reward manager tests
- * @dev This contract is intended to be inherited from and not used directly. It contains functionality to setup a primary and secondary pool
+ * @dev This contract is intended to be inherited from and not used directly. It contains functionality to setup a
+ * primary and secondary pool
  */
 contract BaseDestinationRewardManagerTest is Test {
   //contracts
@@ -116,7 +117,8 @@ contract BaseDestinationRewardManagerTest is Test {
     rewardManager.setRewardRecipients(SECONDARY_POOL_ID, getSecondaryRecipients());
   }
 
-  //override this to test variations of different recipients. changing this function will require existing tests to be updated as constants are hardcoded to be explicit
+  //override this to test variations of different recipients. changing this function will require existing tests to be
+  // updated as constants are hardcoded to be explicit
   function getPrimaryRecipients() public virtual returns (Common.AddressAndWeight[] memory) {
     //array of recipients
     Common.AddressAndWeight[] memory recipients = new Common.AddressAndWeight[](4);

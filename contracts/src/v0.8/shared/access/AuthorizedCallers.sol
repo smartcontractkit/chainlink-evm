@@ -5,7 +5,8 @@ import {Ownable2StepMsgSender} from "./Ownable2StepMsgSender.sol";
 import {EnumerableSet} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableSet.sol";
 
 /// @title The AuthorizedCallers contract
-/// @notice A contract that manages multiple authorized callers. Enables restricting access to certain functions to a set of addresses.
+/// @notice A contract that manages multiple authorized callers. Enables restricting access to certain functions to a
+/// set of addresses.
 contract AuthorizedCallers is Ownable2StepMsgSender {
   using EnumerableSet for EnumerableSet.AddressSet;
 

@@ -12,7 +12,8 @@ contract ScrollModule is ChainModuleBase, ConfirmedOwner {
   event L1FeeCoefficientSet(uint8 coefficient);
 
   /// @dev SCROLL_L1_FEE_DATA_PADDING includes 140 bytes for L1 data padding for Scroll
-  /// @dev according to testing, this padding allows automation registry to properly estimates L1 data fee with 3-5% buffer
+  /// @dev according to testing, this padding allows automation registry to properly estimates L1 data fee with 3-5%
+  /// buffer
   /// @dev this MAY NOT work for a different product and this may get out of date if transmit function is changed
   bytes private constant SCROLL_L1_FEE_DATA_PADDING =
     hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";

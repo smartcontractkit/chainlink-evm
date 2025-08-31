@@ -62,8 +62,10 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   uint256 internal constant TRANSMIT_CALLDATA_PER_SIGNER_BYTES_OVERHEAD = 64;
 
   // Next block of constants are used in actual payment calculation. We calculate the exact gas used within the
-  // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed constants
-  // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates various cases and verifies that
+  // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed
+  // constants
+  // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates
+  // various cases and verifies that
   // the variables result in accurate estimation
   uint256 internal constant ACCOUNTING_FIXED_GAS_OVERHEAD = 22_000; // Fixed overhead per tx
   uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 7000; // Overhead per upkeep performed in batch
@@ -100,11 +102,14 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   uint256 internal s_fallbackGasPrice;
   uint256 internal s_fallbackLinkPrice;
   uint256 internal s_expectedLinkBalance; // Used in case of erroneous LINK transfers to contract
-  mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to and fro
+  mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to
+    // and fro
   mapping(uint256 => bytes) internal s_upkeepTriggerConfig; // upkeep triggers
   mapping(uint256 => bytes) internal s_upkeepOffchainConfig; // general config set by users for each upkeep
-  mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an upkeep
-  mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an admin
+  mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an
+    // upkeep
+  mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an
+    // admin
 
   error ArrayHasNoEntries();
   error CannotCancel();

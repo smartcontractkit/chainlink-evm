@@ -124,7 +124,8 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
   /**
    * @notice Construct the FeeManager contract
    * @param _linkAddress The address of the LINK token
-   * @param _nativeAddress The address of the wrapped ERC-20 version of the native token (represents fee in native or wrapped)
+   * @param _nativeAddress The address of the wrapped ERC-20 version of the native token (represents fee in native or
+   * wrapped)
    * @param _proxyAddress The address of the proxy contract
    * @param _rewardManagerAddress The address of the reward manager contract
    */
@@ -186,7 +187,8 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
   ) external payable override onlyProxy {
     FeeAndReward[] memory feesAndRewards = new IFeeManager.FeeAndReward[](payloads.length);
 
-    //keep track of the number of fees to prevent over initialising the FeePayment array within _convertToLinkAndNativeFees
+    //keep track of the number of fees to prevent over initialising the FeePayment array within
+    // _convertToLinkAndNativeFees
     uint256 numberOfLinkFees;
     uint256 numberOfNativeFees;
 

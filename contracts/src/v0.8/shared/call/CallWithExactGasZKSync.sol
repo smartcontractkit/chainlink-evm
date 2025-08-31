@@ -9,12 +9,14 @@ ISystemContext constant SYSTEM_CONTEXT_CONTRACT = ISystemContext(address(0x800b)
  * @title CallWithExactGasZKSync
  * @notice Library that attempts to call a target contract with exactly `gasAmount` gas on zkSync
  *         and measures how much gas was actually used.
- * Implementation based on the GasBoundCaller contract, https://github.com/matter-labs/era-contracts/blob/main/gas-bound-caller/contracts/GasBoundCaller.sol
+ * Implementation based on the GasBoundCaller contract,
+ * https://github.com/matter-labs/era-contracts/blob/main/gas-bound-caller/contracts/GasBoundCaller.sol
  */
 library CallWithExactGasZKSync {
   error NoContract();
   error NotEnoughGasForPubdata();
-  /// @notice We assume that no more than `CALL_RETURN_OVERHEAD` ergs are used for the O(1) operations at the end of the execution,
+  /// @notice We assume that no more than `CALL_RETURN_OVERHEAD` ergs are used for the O(1) operations at the end of the
+  /// execution,
   /// as such relaying the return.
 
   uint256 internal constant CALL_RETURN_OVERHEAD = 400;
@@ -28,8 +30,10 @@ library CallWithExactGasZKSync {
   /// (`CALL_ENTRY_OVERHEAD` + `CALL_RETURN_OVERHEAD`) to ensure that the call will not exceed the limit, so it may
   /// actually spend a bit less than `_maxTotalGas` in the end.
   /// @dev The entire `gas` passed to this function could be used, regardless
-  /// of the `_maxTotalGas` parameter. In other words, `max(gas(), _maxTotalGas)` is the maximum amount of gas that can be spent by this function.
-  /// @dev The function relays the `returndata` returned by the callee. In case the `callee` reverts, it reverts with the same error.
+  /// of the `_maxTotalGas` parameter. In other words, `max(gas(), _maxTotalGas)` is the maximum amount of gas that can
+  /// be spent by this function.
+  /// @dev The function relays the `returndata` returned by the callee. In case the `callee` reverts, it reverts with
+  /// the same error.
   /// @param _to The address of the contract to call.
   /// @param _maxTotalGas the maximum amount of gas that can be spent by the call.
   /// @param _data The calldata for the call.

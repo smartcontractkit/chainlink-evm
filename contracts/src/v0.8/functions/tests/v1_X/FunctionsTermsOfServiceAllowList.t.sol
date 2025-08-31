@@ -48,7 +48,8 @@ contract FunctionsTermsOfServiceAllowList_UpdateConfig is FunctionsRoutesSetup {
     TermsOfServiceAllowListConfig memory configToSet =
       TermsOfServiceAllowListConfig({enabled: false, signerPublicKey: TOS_SIGNER});
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -185,7 +186,8 @@ contract FunctionsTermsOfServiceAllowList_AcceptTermsOfService is FunctionsRoute
     bytes32 prefixedMessage = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", message));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(TOS_SIGNER_PRIVATE_KEY, prefixedMessage);
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -217,7 +219,8 @@ contract FunctionsTermsOfServiceAllowList_AcceptTermsOfService is FunctionsRoute
     bytes32 prefixedMessage = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", message));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(TOS_SIGNER_PRIVATE_KEY, prefixedMessage);
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -370,7 +373,8 @@ contract FunctionsTermsOfServiceAllowList_BlockSender is FunctionsRoutesSetup {
   function test_BlockSender_Success() public {
     assertFalse(s_termsOfServiceAllowList.isBlockedSender(STRANGER_ADDRESS));
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -411,7 +415,8 @@ contract FunctionsTermsOfServiceAllowList_UnblockSender is FunctionsRoutesSetup 
   event UnblockedAccess(address user);
 
   function test_UnblockSender_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;

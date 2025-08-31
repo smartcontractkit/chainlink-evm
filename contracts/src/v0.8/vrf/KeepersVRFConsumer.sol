@@ -60,7 +60,8 @@ contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
   /**
    * @notice Returns true if and only if at least UPKEEP_INTERVAL seconds have elapsed
    * since the last upkeep or since construction of the contract.
-   * @return upkeepNeeded true if and only if at least UPKEEP_INTERVAL seconds have elapsed since the last upkeep or since construction
+   * @return upkeepNeeded true if and only if at least UPKEEP_INTERVAL seconds have elapsed since the last upkeep or
+   * since construction
    * of the contract.
    */
   // solhint-disable-next-line chainlink-solidity/explicit-returns

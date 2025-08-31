@@ -111,7 +111,8 @@ abstract contract VRFConsumerBaseV2Upgradeable is Initializable {
   address private vrfCoordinator;
 
   // See https://github.com/OpenZeppelin/openzeppelin-sdk/issues/37.
-  // Each uint256 covers a single storage slot, see https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html.
+  // Each uint256 covers a single storage slot, see
+  // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html.
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[49] private __gap;
 

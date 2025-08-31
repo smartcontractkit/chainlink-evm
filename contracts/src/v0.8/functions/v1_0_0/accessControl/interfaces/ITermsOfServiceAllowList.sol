@@ -17,7 +17,8 @@ interface ITermsOfServiceAllowList {
   ) external returns (bool);
 
   /// @notice Get a list of all allowed senders
-  /// @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+  /// @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is
+  /// designed
   /// to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
   /// this function has an unbounded cost, and using it as part of a state-changing function may render the function
   /// uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.

@@ -36,7 +36,8 @@ contract BurnMintERC20Transparent is
 
   /// @custom:storage-location erc7201:chainlink.storage.BurnMintERC20Transparent
   struct BurnMintERC20TransparentStorage {
-    /// @dev the CCIPAdmin can be used to register with the CCIP token admin registry, but has no other special powers, and can only be transferred by the owner.
+    /// @dev the CCIPAdmin can be used to register with the CCIP token admin registry, but has no other special powers,
+    /// and can only be transferred by the owner.
     address ccipAdmin;
     /// @dev The number of decimals for the token
     uint8 decimals;
@@ -44,7 +45,8 @@ contract BurnMintERC20Transparent is
     uint256 maxSupply;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.BurnMintERC20Transparent")) - 1)) & ~bytes32(uint256(0xff));
+  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.BurnMintERC20Transparent")) - 1)) &
+  // ~bytes32(uint256(0xff));
   bytes32 private constant BURN_MINT_ERC20_TRANSPARENT_STORAGE_LOCATION =
     0xc5ce4c6194754ec56151469c4af5ff17dd2a95dab96bf61ba95b3ff079048900;
 

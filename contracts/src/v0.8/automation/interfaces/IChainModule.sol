@@ -39,7 +39,7 @@ interface IChainModule {
 
   /* @notice this function provides the overheads of calling this chain module.
    * @return chainModuleFixedOverhead the fixed overhead incurred by calling this chain module
-   * @return chainModulePerByteOverhead the fixed overhead per byte incurred by calling this chain module with calldata
+  * @return chainModulePerByteOverhead the fixed overhead per byte incurred by calling this chain module with calldata
    */
   function getGasOverhead()
     external

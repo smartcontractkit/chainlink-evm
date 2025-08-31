@@ -222,8 +222,10 @@ contract AutomationRegistry2_3 is AutomationRegistryBase2_3, OCR2Abstract, Chain
 
   /**
    * @inheritdoc OCR2Abstract
-   * @dev prefer the type-safe version of setConfig (below) whenever possible. The OnchainConfig could differ between registry versions
-   * @dev this function takes up precious space on the root contract, but must be implemented to conform to the OCR2Abstract interface
+   * @dev prefer the type-safe version of setConfig (below) whenever possible. The OnchainConfig could differ between
+   * registry versions
+   * @dev this function takes up precious space on the root contract, but must be implemented to conform to the
+   * OCR2Abstract interface
    */
   function setConfig(
     address[] memory signers,
@@ -341,7 +343,8 @@ contract AutomationRegistry2_3 is AutomationRegistryBase2_3, OCR2Abstract, Chain
 
   /**
    * @inheritdoc OCR2Abstract
-   * @dev this function takes up precious space on the root contract, but must be implemented to conform to the OCR2Abstract interface
+   * @dev this function takes up precious space on the root contract, but must be implemented to conform to the
+   * OCR2Abstract interface
    */
   function latestConfigDetails()
     external
@@ -354,7 +357,8 @@ contract AutomationRegistry2_3 is AutomationRegistryBase2_3, OCR2Abstract, Chain
 
   /**
    * @inheritdoc OCR2Abstract
-   * @dev this function takes up precious space on the root contract, but must be implemented to conform to the OCR2Abstract interface
+   * @dev this function takes up precious space on the root contract, but must be implemented to conform to the
+   * OCR2Abstract interface
    */
   function latestConfigDigestAndEpoch()
     external

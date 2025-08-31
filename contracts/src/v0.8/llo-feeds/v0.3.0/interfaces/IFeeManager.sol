@@ -7,7 +7,8 @@ import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IFeeManager is IERC165, IVerifierFeeManager {
   /**
-   * @notice Calculate the applied fee and the reward from a report. If the sender is a subscriber, they will receive a discount.
+   * @notice Calculate the applied fee and the reward from a report. If the sender is a subscriber, they will receive a
+   * discount.
    * @param subscriber address trying to verify
    * @param report report to calculate the fee for
    * @param quoteAddress address of the quote payment token

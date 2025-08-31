@@ -89,7 +89,8 @@ contract FunctionsRouter_UpdateConfig is FunctionsRouterSetup {
   event ConfigUpdated(FunctionsRouter.Config config);
 
   function test_UpdateConfig_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -446,7 +447,8 @@ contract FunctionsRouter_SendRequest is FunctionsSubscriptionSetup {
 
 /// @notice #sendRequestToProposed
 contract FunctionsRouter_SendRequestToProposed is FunctionsSubscriptionSetup {
-  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of helper
+  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of
+    // helper
 
   function setUp() public virtual override {
     FunctionsSubscriptionSetup.setUp();
@@ -727,7 +729,8 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     bytes32 invalidRequestId = bytes32("this does not exist");
     commitment.requestId = invalidRequestId;
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -761,7 +764,8 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     // Modify request commitment to have charge more than quoted
     commitment.estimatedTotalCostJuels = 10 * JUELS_PER_LINK; // 10 LINK
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -799,7 +803,8 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     // Coordinator sends enough gas that would get through callback and payment, but fail after
     uint256 gasToUse = getCoordinatorConfig().gasOverheadBeforeCallback + callbackGasLimit + 10_000;
 
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1RequestId = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -843,7 +848,8 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     bytes memory err = new bytes(0);
     errors[0] = err;
 
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1RequestId = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -877,7 +883,8 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     bytes memory err = new bytes(0);
     errors[0] = err;
 
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1RequestId = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -970,7 +977,8 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     bytes memory err = new bytes(0);
     errors[0] = err;
 
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1RequestId = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -1014,7 +1022,8 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     bytes memory err = new bytes(0);
     errors[0] = err;
 
-    // topic0 (function signature, always checked), topic1: request ID(true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1: request ID(true), NOT topic2 (false), NOT topic3 (false),
+    // and data (true).
     vm.expectEmit(true, false, false, true);
     emit RequestProcessed({
       requestId: s_requests[requestToFulfill].requestId,
@@ -1080,7 +1089,8 @@ contract FunctionsRouter_Fulfill is FunctionsClientRequestSetup {
     bytes memory err = new bytes(0);
     errors[0] = err;
 
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1RequestId = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -1130,7 +1140,8 @@ contract FunctionsRouter_GetContractById is FunctionsRoutesSetup {
 
 /// @notice #getProposedContractById
 contract FunctionsRouter_GetProposedContractById is FunctionsRoutesSetup {
-  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of helper
+  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of
+    // helper
 
   function setUp() public virtual override {
     FunctionsRoutesSetup.setUp();
@@ -1172,7 +1183,8 @@ contract FunctionsRouter_GetProposedContractById is FunctionsRoutesSetup {
 
 /// @notice #getProposedContractSet
 contract FunctionsRouter_GetProposedContractSet is FunctionsRoutesSetup {
-  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of helper
+  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of
+    // helper
   bytes32[] s_proposedContractSetIds;
   address[] s_proposedContractSetAddresses;
 
@@ -1210,7 +1222,8 @@ contract FunctionsRouter_GetProposedContractSet is FunctionsRoutesSetup {
 
 /// @notice #proposeContractsUpdate
 contract FunctionsRouter_ProposeContractsUpdate is FunctionsRoutesSetup {
-  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of helper
+  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of
+    // helper
   bytes32[] s_proposedContractSetIds;
   address[] s_proposedContractSetAddresses;
 
@@ -1290,7 +1303,8 @@ contract FunctionsRouter_ProposeContractsUpdate is FunctionsRoutesSetup {
   );
 
   function test_ProposeContractsUpdate_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -1308,7 +1322,8 @@ contract FunctionsRouter_ProposeContractsUpdate is FunctionsRoutesSetup {
 
 /// @notice #updateContracts
 contract FunctionsRouter_UpdateContracts is FunctionsRoutesSetup {
-  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of helper
+  FunctionsCoordinatorTestHelper internal s_functionsCoordinator2; // TODO: use actual FunctionsCoordinator instead of
+    // helper
   bytes32[] s_proposedContractSetIds;
   address[] s_proposedContractSetAddresses;
 
@@ -1341,7 +1356,8 @@ contract FunctionsRouter_UpdateContracts is FunctionsRoutesSetup {
   event ContractUpdated(bytes32 id, address from, address to);
 
   function test_UpdateContracts_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;

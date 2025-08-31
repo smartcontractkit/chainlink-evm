@@ -11,7 +11,9 @@ import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 /**
  * @title DestinationVerifierProxy
  * @author Michael Fletcher
- * @notice This contract will be used to route all requests through to the assigned verifier contract. This contract does not support individual feed configurations and is aimed at being a simple proxy for the verifier contract on any destination chain.
+ * @notice This contract will be used to route all requests through to the assigned verifier contract. This contract
+ * does not support individual feed configurations and is aimed at being a simple proxy for the verifier contract on any
+ * destination chain.
  */
 contract DestinationVerifierProxy is IDestinationVerifierProxy, ConfirmedOwner, ITypeAndVersion {
   /// @notice The active verifier for this proxy

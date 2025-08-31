@@ -155,7 +155,8 @@ contract ERC20BalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterf
 
   /**
    * @notice Gets list of subscription ids that are underfunded and returns a keeper-compatible payload.
-   * @return upkeepNeeded signals if upkeep is needed, performData is an abi encoded list of subscription ids that need funds
+   * @return upkeepNeeded signals if upkeep is needed, performData is an abi encoded list of subscription ids that need
+   * funds
    */
   function checkUpkeep(
     bytes calldata

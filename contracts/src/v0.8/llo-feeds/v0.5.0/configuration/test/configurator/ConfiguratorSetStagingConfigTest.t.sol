@@ -187,7 +187,8 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
 
     // when isGreenProduction=true
     s_exposedConfigurator.exposedSetIsGreenProduction(CONFIG_ID_1, true);
-    onchainConfig = abi.encodePacked(uint256(1), cd2); // predecessorConfigDigest the production digest is now the green digest
+    onchainConfig = abi.encodePacked(uint256(1), cd2); // predecessorConfigDigest the production digest is now the green
+      // digest
 
     // go to new block
     vm.roll(15);
@@ -226,7 +227,8 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
     );
 
     configurationState = s_exposedConfigurator.exposedReadConfigurationStates(CONFIG_ID_1);
-    assertEq(configurationState.configDigest[0], cd3); // new config is on blue now because blue is staging due to isGreenProduction=true
+    assertEq(configurationState.configDigest[0], cd3); // new config is on blue now because blue is staging due to
+      // isGreenProduction=true
     assertEq(configurationState.configDigest[1], cd2); // the previous config left unchanged
     assertEq(configurationState.configCount, 4);
     assertEq(configurationState.isGreenProduction, true);

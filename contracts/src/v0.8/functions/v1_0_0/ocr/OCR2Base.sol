@@ -274,7 +274,8 @@ abstract contract OCR2Base is ConfirmedOwner, OCR2Abstract {
     bytes32[] calldata ss
   ) private pure {
     // calldata will never be big enough to make this overflow
-    uint256 expected = uint256(TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT) + report.length // one byte pure entry in _report
+    uint256 expected = uint256(TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT) + report.length // one byte pure entry in
+      // _report
       + rs.length * 32 // 32 bytes per entry in _rs
       + ss.length * 32 // 32 bytes per entry in _ss
       + 0; // placeholder

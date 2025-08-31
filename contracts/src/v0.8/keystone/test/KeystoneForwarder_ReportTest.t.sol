@@ -231,7 +231,8 @@ contract KeystoneForwarder_ReportTest is BaseTest {
     MaliciousRevertingReceiver maliciousReceiver = new MaliciousRevertingReceiver();
     // This should not revert if gas tracking is effective
     // It may revert if it fails to reserve sufficient gas for routing
-    // This POC requires pretty specific initial gas, so that 1/64 of gas passed to `onReport()` is insufficient to store the success
+    // This POC requires pretty specific initial gas, so that 1/64 of gas passed to `onReport()` is insufficient to
+    // store the success
     s_forwarder.report{gas: 200_000}(address(maliciousReceiver), report, reportContext, signatures);
 
     IRouter.TransmissionInfo memory transmissionInfo =

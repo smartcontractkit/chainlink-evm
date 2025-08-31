@@ -121,9 +121,12 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     // if certain chains do not implement certain EIP's.
     // 21000 + // base cost of the transaction
     // 100 + 5000 + // warm subscription balance read and update. See https://eips.ethereum.org/EIPS/eip-2929
-    // 2*2100 + 5000 - // cold read oracle address and oracle balance and first time oracle balance update, note first time will be 20k, but 5k subsequently
-    // 4800 + // request delete refund (refunds happen after execution), note pre-london fork was 15k. See https://eips.ethereum.org/EIPS/eip-3529
-    // 6685 + // Positive static costs of argument encoding etc. note that it varies by +/- x*12 for every x bytes of non-zero data in the proof.
+    // 2*2100 + 5000 - // cold read oracle address and oracle balance and first time oracle balance update, note first
+    // time will be 20k, but 5k subsequently
+    // 4800 + // request delete refund (refunds happen after execution), note pre-london fork was 15k. See
+    // https://eips.ethereum.org/EIPS/eip-3529
+    // 6685 + // Positive static costs of argument encoding etc. note that it varies by +/- x*12 for every x bytes of
+    // non-zero data in the proof.
     // Total: 37,185 gas.
     uint32 gasAfterPaymentCalculation;
     // Flat fee charged per fulfillment in millionths of native.
@@ -133,7 +136,8 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     // Should not exceed fulfillmentFlatFeeNativePPM
     // So fee range is [0, 2^32/10^6].
     uint32 fulfillmentFlatFeeLinkDiscountPPM;
-    // nativePremiumPercentage is the percentage of the total gas costs that is added to the final premium for native payment
+    // nativePremiumPercentage is the percentage of the total gas costs that is added to the final premium for native
+    // payment
     // nativePremiumPercentage = 10 means 10% of the total gas costs is added. only integral percentage is allowed
     uint8 nativePremiumPercentage;
     // linkPremiumPercentage is the percentage of total gas costs that is added to the final premium for link payment

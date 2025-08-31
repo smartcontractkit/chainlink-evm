@@ -71,7 +71,8 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   uint32 private constant MIN_GAS_FOR_PERFORM = 200_000;
 
   string private constant FEED_PARAM_KEY = "feedIdHex"; // for Mercury v0.2 - format by which feeds are identified
-  string private constant TIME_PARAM_KEY = "blockNumber"; // for Mercury v0.2 - format by which feeds are filtered to be sufficiently recent
+  string private constant TIME_PARAM_KEY = "blockNumber"; // for Mercury v0.2 - format by which feeds are filtered to be
+    // sufficiently recent
   IVerifierProxy public s_verifier; // for Mercury v0.2 - verifies off-chain reports
 
   int192 private constant SCALE = 1_000_000; // a scalar used for measuring deviation with precision

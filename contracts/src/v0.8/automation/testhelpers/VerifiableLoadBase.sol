@@ -17,9 +17,11 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   using EnumerableSet for EnumerableSet.UintSet;
 
   ArbSys internal constant ARB_SYS = ArbSys(0x0000000000000000000000000000000000000064);
-  //bytes32 public constant emittedSig = 0x97009585a4d2440f981ab6f6eec514343e1e6b2aa9b991a26998e6806f41bf08; //keccak256(LogEmitted(uint256,uint256,address))
+  //bytes32 public constant emittedSig = 0x97009585a4d2440f981ab6f6eec514343e1e6b2aa9b991a26998e6806f41bf08;
+  // //keccak256(LogEmitted(uint256,uint256,address))
   bytes32 public immutable emittedSig = LogEmitted.selector;
-  // bytes32 public constant emittedAgainSig = 0xc76416badc8398ce17c93eab7b4f60f263241694cf503e4df24f233a8cc1c50d; //keccak256(LogEmittedAgain(uint256,uint256,address))
+  // bytes32 public constant emittedAgainSig = 0xc76416badc8398ce17c93eab7b4f60f263241694cf503e4df24f233a8cc1c50d;
+  // //keccak256(LogEmittedAgain(uint256,uint256,address))
   bytes32 public immutable emittedAgainSig = LogEmittedAgain.selector;
 
   mapping(uint256 => uint256) public lastTopUpBlocks;
@@ -32,7 +34,8 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   mapping(uint256 => uint256) public performDataSizes;
   mapping(uint256 => uint256) public gasLimits;
   mapping(bytes32 => bool) public dummyMap; // used to force storage lookup
-  mapping(uint256 => uint256[]) public delays; // how to query for delays for a certain past period: calendar day and/or past 24 hours
+  mapping(uint256 => uint256[]) public delays; // how to query for delays for a certain past period: calendar day and/or
+    // past 24 hours
 
   mapping(uint256 => mapping(uint16 => uint256[])) public bucketedDelays;
   mapping(uint256 => uint16) public buckets;
@@ -345,7 +348,8 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   }
 
   /**
-   * @notice updates pipeline data for an upkeep. In order for the upkeep to be performed, the pipeline data must be the abi encoded upkeep ID.
+   * @notice updates pipeline data for an upkeep. In order for the upkeep to be performed, the pipeline data must be the
+   * abi encoded upkeep ID.
    * @param upkeepId the upkeep ID
    * @param pipelineData the new pipeline data for the upkeep
    */

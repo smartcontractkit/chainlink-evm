@@ -37,7 +37,8 @@ contract DestinationFeeManagerProcessFeeTest is BaseDestinationFeeManagerTest {
     assertEq(getLinkBalance(address(feeManager)), 0);
     assertEq(getLinkBalance(USER), DEFAULT_LINK_MINT_QUANTITY - DEFAULT_REPORT_LINK_FEE * NUMBER_OF_REPORTS);
 
-    //the subscriber (user) should receive funds back and not the proxy, although when live the proxy will forward the funds sent and not cover it seen here
+    //the subscriber (user) should receive funds back and not the proxy, although when live the proxy will forward the
+    // funds sent and not cover it seen here
     assertEq(USER.balance, DEFAULT_NATIVE_MINT_QUANTITY);
     assertEq(PROXY.balance, DEFAULT_NATIVE_MINT_QUANTITY);
   }

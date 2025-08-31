@@ -431,7 +431,8 @@ contract VRFV2Plus is BaseTest {
     // gasAfterPaymentCalculation is 50_000.
     //
     // The cost of the VRF fulfillment charged to the user is:
-    // paymentNoFee = (weiPerUnitGas * (gasAfterPaymentCalculation + startGas - gasleft() + l1CostWei) / link_native_ratio)
+    // paymentNoFee = (weiPerUnitGas * (gasAfterPaymentCalculation + startGas - gasleft() + l1CostWei) /
+    // link_native_ratio)
     // paymentNoFee = (1e11 * (50_000 + 86_000 + 0)) / .5
     // paymentNoFee = 2.72e16
     // flatFeeWei = 1e12 * (fulfillmentFlatFeeNativePPM - fulfillmentFlatFeeLinkDiscountPPM)
@@ -492,7 +493,8 @@ contract VRFV2Plus is BaseTest {
       MIN_CONFIRMATIONS,
       CALLBACK_GAS_LIMIT,
       NUM_WORDS,
-      VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})), // nativePayment, // nativePayment
+      VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})), // nativePayment, //
+        // nativePayment
       address(s_testConsumer) // requester
     );
     s_testConsumer.requestRandomWords(CALLBACK_GAS_LIMIT, MIN_CONFIRMATIONS, NUM_WORDS, vrfKeyHash, false);
@@ -741,7 +743,8 @@ contract VRFV2Plus is BaseTest {
     // gasAfterPaymentCalculation is 50_000.
     //
     // The cost of the VRF fulfillment charged to the user is:
-    // paymentNoFee = (weiPerUnitGas * (gasAfterPaymentCalculation + startGas - gasleft() + l1CostWei) / link_native_ratio)
+    // paymentNoFee = (weiPerUnitGas * (gasAfterPaymentCalculation + startGas - gasleft() + l1CostWei) /
+    // link_native_ratio)
     // network gas price is capped at gas lane max gas (5000 gwei)
     // paymentNoFee = (5e12 * (50_000 + 89_100 + 0)) / .5
     // paymentNoFee = 1.391e+18
@@ -904,7 +907,8 @@ contract VRFV2Plus is BaseTest {
       MIN_CONFIRMATIONS,
       CALLBACK_GAS_LIMIT,
       NUM_WORDS,
-      VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})), // nativePayment, // nativePayment
+      VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})), // nativePayment, //
+        // nativePayment
       address(consumer) // requester
     );
     consumer.requestRandomWords(

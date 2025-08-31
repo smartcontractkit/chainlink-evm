@@ -102,7 +102,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Arbitrum is FunctionsFulfillmentS
 /// @notice #_getL1FeeUpperLimit Optimism
 /// @dev Optimism gas formula: https://docs.optimism.io/stack/transactions/fees#ecotone
 /// @dev Note that the docs fail to mention the calculation also requires a division by 10^6
-/// @dev See here: https://github.com/ethereum-optimism/specs/blob/main/specs/protocol/exec-engine.md#ecotone-l1-cost-fee-changes-eip-4844-da
+/// @dev See here:
+/// https://github.com/ethereum-optimism/specs/blob/main/specs/protocol/exec-engine.md#ecotone-l1-cost-fee-changes-eip-4844-da
 /// @dev Also, we conservatively assume all non-zero bytes: tx_compressed_size = tx_data_size_bytes
 contract ChainSpecificUtil__getL1FeeUpperLimit_Optimism is FunctionsFulfillmentSetup {
   address private constant GAS_PRICE_ORACLE_ADDR = address(0x420000000000000000000000000000000000000F);
@@ -187,7 +188,8 @@ contract ChainSpecificUtil__getL1FeeUpperLimit_Optimism is FunctionsFulfillmentS
 }
 
 /// @notice #_getL1FeeUpperLimit Base
-/// @dev Base gas formula uses Optimism formula since it is build on the OP chain stack (See comments above for Optimism tests)
+/// @dev Base gas formula uses Optimism formula since it is build on the OP chain stack (See comments above for Optimism
+/// tests)
 contract ChainSpecificUtil__getL1FeeUpperLimit_Base is FunctionsFulfillmentSetup {
   address private constant GAS_PRICE_ORACLE_ADDR = address(0x420000000000000000000000000000000000000F);
   GasPriceOracle private constant GAS_PRICE_ORACLE = GasPriceOracle(GAS_PRICE_ORACLE_ADDR);

@@ -10,7 +10,8 @@ import {AutomationRegistryBase2_3} from "./AutomationRegistryBase2_3.sol";
  */
 contract AutomationUtils2_3 {
   /**
-   * @dev this uses the v2.3 Report, which uses linkUSD instead of linkNative (as in v2.2 and prior). This should be used only in typescript tests.
+   * @dev this uses the v2.3 Report, which uses linkUSD instead of linkNative (as in v2.2 and prior). This should be
+   * used only in typescript tests.
    */
   function _report(
     AutomationRegistryBase2_3.Report memory

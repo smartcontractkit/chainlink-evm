@@ -39,7 +39,8 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
   /// @dev fulfillment calldata payload (number of non-zero bytes estimated based on historical data)
   /// @dev This option is available for the Coordinator and the Wrapper contract
   uint8 internal constant L1_CALLDATA_GAS_COST_MODE = 1;
-  /// @dev Option 3: getL1FeeUpperBound() function from predeploy GasPriceOracle contract (available after Fjord upgrade)
+  /// @dev Option 3: getL1FeeUpperBound() function from predeploy GasPriceOracle contract (available after Fjord
+  /// upgrade)
   /// @dev This option is available for the Coordinator and the Wrapper contract
   uint8 internal constant L1_GAS_FEES_UPPER_BOUND_MODE = 2;
 

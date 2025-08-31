@@ -88,7 +88,8 @@ contract DestinationVerifierSetConfigTest is BaseTest {
 
     vm.warp(block.timestamp + 1);
 
-    // testing adding a different set of Signers with same FAULT_TOLERENCE does not result in DonConfigAlreadyExists revert
+    // testing adding a different set of Signers with same FAULT_TOLERENCE does not result in DonConfigAlreadyExists
+    // revert
     address[] memory signerAddrsMinusOne = new address[](signerAddrs.length - 1);
     for (uint256 i = 0; i < signerAddrs.length - 1; i++) {
       signerAddrsMinusOne[i] = signerAddrs[i];

@@ -82,7 +82,7 @@ contract MultiVerifierBillingTests is MultipleVerifierWithMultipleFeeManagers {
        - feeManager is used by verifier3
        - Rewardmanager is used by feeManager and feeManager2
       
-      In this test we do verificatons via verifier1, verifier2 and verifier3 and check that rewards are set accordingly
+    In this test we do verificatons via verifier1, verifier2 and verifier3 and check that rewards are set accordingly
    
     */
     Signer[] memory signers = _getSigners(MAX_ORACLES);

@@ -67,7 +67,8 @@ contract ByteUtilTest is Test {
     //read the first 32 bytes
     uint256 result = B_512._readUint256(31);
 
-    //the result should be the last byte from the first word (ff), and 31 bytes from the second word (0000) (0xFF...0000)
+    //the result should be the last byte from the first word (ff), and 31 bytes from the second word (0000)
+    // (0xFF...0000)
     assertEq(result, type(uint256).max << 248);
   }
 
@@ -75,7 +76,8 @@ contract ByteUtilTest is Test {
     //read the first 24 bytes
     uint256 result = B_512._readUint192(31);
 
-    //the result should be the last byte from the first word (ff), and 23 bytes from the second word (0000) (0xFF...0000)
+    //the result should be the last byte from the first word (ff), and 23 bytes from the second word (0000)
+    // (0xFF...0000)
     assertEq(result, type(uint192).max << 184);
   }
 
@@ -164,7 +166,8 @@ contract ByteUtilTest is Test {
     //read the first 20 bytes after byte 13
     address result = B_512._readAddress(13);
 
-    //the result should be the value last 19 bytes of the first word (ffff..) and the first byte of the second word (00) (0xFFFF..00)
+    //the result should be the value last 19 bytes of the first word (ffff..) and the first byte of the second word (00)
+    // (0xFFFF..00)
     assertEq(result, address(type(uint160).max << 8));
   }
 

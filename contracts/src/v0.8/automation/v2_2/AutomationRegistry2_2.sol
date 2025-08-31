@@ -226,7 +226,8 @@ contract AutomationRegistry2_2 is AutomationRegistryBase2_2, OCR2Abstract, Chain
 
   /**
    * @inheritdoc OCR2Abstract
-   * @dev prefer the type-safe version of setConfig (below) whenever possible. The OnchainConfig could differ between registry versions
+   * @dev prefer the type-safe version of setConfig (below) whenever possible. The OnchainConfig could differ between
+   * registry versions
    */
   function setConfig(
     address[] memory signers,

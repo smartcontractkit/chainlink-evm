@@ -10,11 +10,14 @@ import {IKeeperRegistryMaster} from "../interfaces/v2_1/IKeeperRegistryMaster.so
 /**
  * @notice Contract to accept requests for upkeep registrations
  * @dev There are 2 registration workflows in this contract
- * Flow 1. auto approve OFF / manual registration - UI calls `register` function on this contract, this contract owner at a later time then manually
+ * Flow 1. auto approve OFF / manual registration - UI calls `register` function on this contract, this contract owner
+ * at a later time then manually
  *  calls `approve` to register upkeep and emit events to inform UI and others interested.
- * Flow 2. auto approve ON / real time registration - UI calls `register` function as before, which calls the `registerUpkeep` function directly on
+ * Flow 2. auto approve ON / real time registration - UI calls `register` function as before, which calls the
+ * `registerUpkeep` function directly on
  *  keeper registry and then emits approved event to finish the flow automatically without manual intervention.
- * The idea is to have same interface(functions,events) for UI or anyone using this contract irrespective of auto approve being enabled or not.
+ * The idea is to have same interface(functions,events) for UI or anyone using this contract irrespective of auto
+ * approve being enabled or not.
  * they can just listen to `RegistrationRequested` & `RegistrationApproved` events and know the status on registrations.
  */
 contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Receiver {

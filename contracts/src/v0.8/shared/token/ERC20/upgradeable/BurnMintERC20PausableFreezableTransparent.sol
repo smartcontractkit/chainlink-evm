@@ -23,7 +23,8 @@ contract BurnMintERC20PausableFreezableTransparent is BurnMintERC20PausableTrans
     mapping(address => bool) isFrozen;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.BurnMintERC20PausableFreezableTransparent")) - 1)) & ~bytes32(uint256(0xff));
+  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.BurnMintERC20PausableFreezableTransparent")) - 1)) &
+  // ~bytes32(uint256(0xff));
   bytes32 private constant BURN_MINT_ERC20_PAUSABLE_FREEZABLE_TRANSPARENT_STORAGE_LOCATION =
     0xe4a0d511ce93f7d3bf378a3a2c82dfeda12e9faf72c0533ddcd2be06e2d60f00;
 
@@ -83,7 +84,8 @@ contract BurnMintERC20PausableFreezableTransparent is BurnMintERC20PausableTrans
   // │                            ERC20                             │
   // ================================================================
 
-  /// @dev Uses BurnMintERC20PausableTransparent _update hook to disallow transfers, minting and burning from/to frozen addresses.
+  /// @dev Uses BurnMintERC20PausableTransparent _update hook to disallow transfers, minting and burning from/to frozen
+  /// addresses.
   function _update(address from, address to, uint256 value) internal virtual override {
     BurnMintERC20PausableFreezableTransparentStorage storage $ = _getBurnMintERC20PausableFreezableTransparentStorage();
     if ($.isFrozen[from]) revert BurnMintERC20PausableFreezableTransparent__AccountFrozen(from);

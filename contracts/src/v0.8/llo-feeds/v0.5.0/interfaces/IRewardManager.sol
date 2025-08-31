@@ -21,14 +21,16 @@ interface IRewardManager is IERC165 {
   ) external;
 
   /**
-   * @notice Set the RewardRecipients and weights for a specific pool. This should only be called once per pool Id. Else updateRewardRecipients should be used.
+   * @notice Set the RewardRecipients and weights for a specific pool. This should only be called once per pool Id. Else
+   * updateRewardRecipients should be used.
    * @param poolId poolId to set RewardRecipients and weights for
    * @param rewardRecipientAndWeights array of each RewardRecipient and associated weight
    */
   function setRewardRecipients(bytes32 poolId, Common.AddressAndWeight[] calldata rewardRecipientAndWeights) external;
 
   /**
-   * @notice Updates a subset the reward recipients for a specific poolId. The collective weight of the recipients should add up to the recipients existing weights. Any recipients with a weight of 0 will be removed.
+   * @notice Updates a subset the reward recipients for a specific poolId. The collective weight of the recipients
+   * should add up to the recipients existing weights. Any recipients with a weight of 0 will be removed.
    * @param poolId the poolId to update
    * @param newRewardRecipients array of new reward recipients
    */

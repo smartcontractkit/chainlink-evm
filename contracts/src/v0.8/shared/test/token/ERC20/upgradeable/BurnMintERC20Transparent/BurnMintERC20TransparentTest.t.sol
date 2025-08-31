@@ -101,7 +101,8 @@ contract BurnMintERC20TransparentTest is
     s_burnMintERC20Transparent.initialize(NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN);
   }
 
-  /// @dev Adding _disableInitializers() function to implementation's constructor ensures that no one can call initialize directly on the implementation.
+  /// @dev Adding _disableInitializers() function to implementation's constructor ensures that no one can call
+  /// initialize directly on the implementation.
   /// @dev The initialize should be only callable through Proxy.
   /// @dev This test tests that case.
   function test_Initialize_RevertWhen_CallIsNotThroughProxy() public {

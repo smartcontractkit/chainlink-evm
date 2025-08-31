@@ -19,7 +19,8 @@ interface IDestinationVerifierProxyVerifier is IERC165 {
   ) external payable returns (bytes memory verifierResponse);
 
   /**
-   * @notice Bulk verifies that the data encoded has been signed correctly using the signatures included within the payload.
+   * @notice Bulk verifies that the data encoded has been signed correctly using the signatures included within the
+   * payload.
    * @param signedReports The encoded data to be verified.
    * @param parameterPayload The encoded parameters to be used in the verification and billing process.
    * @param sender The address that requested to verify the contract. Used for logging and applying the fee.

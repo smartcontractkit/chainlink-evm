@@ -8,7 +8,8 @@ interface IFunctionsBilling {
   function getWeiPerUnitLink() external view returns (uint256);
 
   /// @notice Determine the fee that will be split between Node Operators for servicing a request
-  /// @param requestCBOR - CBOR encoded Chainlink Functions request data, use FunctionsRequest library to encode a request
+  /// @param requestCBOR - CBOR encoded Chainlink Functions request data, use FunctionsRequest library to encode a
+  /// request
   /// @return fee - Cost in Juels (1e18) of LINK
   function getDONFee(
     bytes memory requestCBOR
@@ -18,7 +19,8 @@ interface IFunctionsBilling {
   /// @return fee - Cost in Juels (1e18) of LINK
   function getAdminFee() external view returns (uint72);
 
-  /// @notice Estimate the total cost that will be charged to a subscription to make a request: transmitter gas re-reimbursement, plus DON fee, plus Registry fee
+  /// @notice Estimate the total cost that will be charged to a subscription to make a request: transmitter gas
+  /// re-reimbursement, plus DON fee, plus Registry fee
   /// @param - subscriptionId An identifier of the billing account
   /// @param - data Encoded Chainlink Functions request data, use FunctionsClient API to encode a request
   /// @param - callbackGasLimit Gas limit for the fulfillment callback

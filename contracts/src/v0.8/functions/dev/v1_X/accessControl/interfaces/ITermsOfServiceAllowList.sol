@@ -17,7 +17,8 @@ interface ITermsOfServiceAllowList {
   ) external returns (bool);
 
   /// @notice Get a list of all allowed senders
-  /// @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+  /// @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is
+  /// designed
   /// to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
   /// this function has an unbounded cost, and using it as part of a state-changing function may render the function
   /// uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
@@ -77,7 +78,8 @@ interface ITermsOfServiceAllowList {
   ) external view returns (address[] memory blockedSenders);
 
   /// @notice Enables migrating any previously allowed senders to the new contract
-  /// @param previousSendersToAdd - List of addresses to migrate. These address must be allowed on the previous ToS contract and not blocked
+  /// @param previousSendersToAdd - List of addresses to migrate. These address must be allowed on the previous ToS
+  /// contract and not blocked
   function migratePreviouslyAllowedSenders(
     address[] memory previousSendersToAdd
   ) external;
@@ -87,6 +89,7 @@ interface ITermsOfServiceAllowList {
 // |                     Configuration state                      |
 // ================================================================
 struct TermsOfServiceAllowListConfig {
-  bool enabled; // ═════════════╗ When enabled, access will be checked against s_allowedSenders. When disabled, all access will be allowed.
+  bool enabled; // ═════════════╗ When enabled, access will be checked against
+    // s_allowedSenders. When disabled, all access will be allowed.
   address signerPublicKey; // ══╝ The key pair that needs to sign the acceptance data
 }

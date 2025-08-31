@@ -37,7 +37,8 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
     address gasPriceL1FeedAddr;
   }
 
-  /// @dev Precompiled contract that exists in every Arbitrum chain at address(100). Exposes a variety of system-level functionality.
+  /// @dev Precompiled contract that exists in every Arbitrum chain at address(100). Exposes a variety of system-level
+  /// functionality.
   address internal constant ARBSYS_ADDR = address(0x0000000000000000000000000000000000000064);
 
   int256 private constant ANSWER_SEQ_OFFLINE = 1;
@@ -65,7 +66,8 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    * @notice emitted when a new gas configuration is set
    * @param maxGas gas limit for immediate L2 execution attempt.
    * @param gasPriceBid maximum L2 gas price to pay
-   * @param gasPriceL1FeedAddr address of the L1 gas price feed (used to approximate Arbitrum retryable ticket submission cost)
+   * @param gasPriceL1FeedAddr address of the L1 gas price feed (used to approximate Arbitrum retryable ticket
+   * submission cost)
    */
   event GasConfigSet(uint256 maxGas, uint256 gasPriceBid, address indexed gasPriceL1FeedAddr);
 
@@ -89,7 +91,8 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    * @param configACAddr address of the access controller for managing gas price on Arbitrum
    * @param maxGas gas limit for immediate L2 execution attempt. A value around 1M should be sufficient
    * @param gasPriceBid maximum L2 gas price to pay
-   * @param gasPriceL1FeedAddr address of the L1 gas price feed (used to approximate Arbitrum retryable ticket submission cost)
+   * @param gasPriceL1FeedAddr address of the L1 gas price feed (used to approximate Arbitrum retryable ticket
+   * submission cost)
    * @param _paymentStrategy strategy describing how the contract pays for xDomain calls
    */
   constructor(
@@ -197,7 +200,8 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
     uint256 gasPriceBid = s_gasConfig.gasPriceBid;
     uint256 l1PaymentValue =
       s_paymentStrategy == PaymentStrategy.L1 ? _maxRetryableTicketCost(maxSubmissionCost, maxGas, gasPriceBid) : 0;
-    // NOTICE: In the case of PaymentStrategy.L2 the L2 xDomain alias address needs to be funded, as it will be paying the fee.
+    // NOTICE: In the case of PaymentStrategy.L2 the L2 xDomain alias address needs to be funded, as it will be paying
+    // the fee.
     id = IArbitrumDelayedInbox(CROSS_DOMAIN_MESSENGER).createRetryableTicketNoRefundAliasRewrite{value: l1PaymentValue}(
       ARBSYS_ADDR, // target
       amount, // L2 call value (requested)
@@ -229,7 +233,8 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    * @dev access control provided by `configAC`
    * @param maxGas gas limit for immediate L2 execution attempt. A value around 1M should be sufficient
    * @param gasPriceBid maximum L2 gas price to pay
-   * @param gasPriceL1FeedAddr address of the L1 gas price feed (used to approximate Arbitrum retryable ticket submission cost)
+   * @param gasPriceL1FeedAddr address of the L1 gas price feed (used to approximate Arbitrum retryable ticket
+   * submission cost)
    */
   function setGasConfig(
     uint256 maxGas,
@@ -285,7 +290,8 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
     uint256 gasPriceBid = s_gasConfig.gasPriceBid;
     uint256 l1PaymentValue =
       s_paymentStrategy == PaymentStrategy.L1 ? _maxRetryableTicketCost(maxSubmissionCost, maxGas, gasPriceBid) : 0;
-    // NOTICE: In the case of PaymentStrategy.L2 the L2 xDomain alias address needs to be funded, as it will be paying the fee.
+    // NOTICE: In the case of PaymentStrategy.L2 the L2 xDomain alias address needs to be funded, as it will be paying
+    // the fee.
     // We also ignore the returned msg number, that can be queried via the `InboxMessageDelivered` event.
     IArbitrumDelayedInbox(CROSS_DOMAIN_MESSENGER).createRetryableTicketNoRefundAliasRewrite{value: l1PaymentValue}(
       L2_SEQ_STATUS_RECORDER, // target

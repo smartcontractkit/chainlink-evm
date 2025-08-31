@@ -12,8 +12,10 @@ library ChainSpecificUtil {
   /// @dev reference: https://github.com/OffchainLabs/nitro/blob/v2.0.14/contracts/src/precompiles/ArbGasInfo.sol#L10
   address private constant ARBGAS_ADDR = address(0x000000000000000000000000000000000000006C);
   ArbGasInfo private constant ARBGAS = ArbGasInfo(ARBGAS_ADDR);
-  /// @dev ARB_DATA_PADDING_SIZE is the max size of the "static" data on Arbitrum for the transaction which refers to the tx data that is not the calldata (signature, etc.)
-  /// @dev reference: https://docs.arbitrum.io/build-decentralized-apps/how-to-estimate-gas#where-do-we-get-all-this-information-from
+  /// @dev ARB_DATA_PADDING_SIZE is the max size of the "static" data on Arbitrum for the transaction which refers to
+  /// the tx data that is not the calldata (signature, etc.)
+  /// @dev reference:
+  /// https://docs.arbitrum.io/build-decentralized-apps/how-to-estimate-gas#where-do-we-get-all-this-information-from
   uint256 private constant ARB_DATA_PADDING_SIZE = 140;
 
   uint256 private constant ARB_MAINNET_CHAIN_ID = 42_161;

@@ -13,7 +13,8 @@ import {SafeERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/utils/SafeERC
  * @title RewardManager
  * @author Michael Fletcher
  * @author Austin Born
- * @notice This contract will be used to reward any configured recipients within a pool. Recipients will receive a share of their pool relative to their configured weight.
+ * @notice This contract will be used to reward any configured recipients within a pool. Recipients will receive a share
+ * of their pool relative to their configured weight.
  */
 contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
   using SafeERC20 for IERC20;
@@ -21,10 +22,12 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
   // @dev The mapping of total fees collected for a particular pot: s_totalRewardRecipientFees[poolId]
   mapping(bytes32 => uint256) public s_totalRewardRecipientFees;
 
-  // @dev The mapping of fee balances for each pot last time the recipient claimed: s_totalRewardRecipientFeesLastClaimedAmounts[poolId][recipient]
+  // @dev The mapping of fee balances for each pot last time the recipient claimed:
+  // s_totalRewardRecipientFeesLastClaimedAmounts[poolId][recipient]
   mapping(bytes32 => mapping(address => uint256)) public s_totalRewardRecipientFeesLastClaimedAmounts;
 
-  // @dev The mapping of RewardRecipient weights for a particular poolId: s_rewardRecipientWeights[poolId][rewardRecipient].
+  // @dev The mapping of RewardRecipient weights for a particular poolId:
+  // s_rewardRecipientWeights[poolId][rewardRecipient].
   mapping(bytes32 => mapping(address => uint256)) public s_rewardRecipientWeights;
 
   // @dev Keep track of the reward recipient weights that have been set to prevent duplicates
@@ -111,7 +114,8 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
     for (uint256 i; i < payments.length; ++i) {
       unchecked {
         //the total amount for any ERC-20 asset cannot exceed 2^256 - 1
-        //see https://github.com/OpenZeppelin/openzeppelin-contracts/blob/36bf1e46fa811f0f07d38eb9cfbc69a955f300ce/contracts/token/ERC20/ERC20.sol#L266
+        //see
+        // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/36bf1e46fa811f0f07d38eb9cfbc69a955f300ce/contracts/token/ERC20/ERC20.sol#L266
         //for example implementation.
         s_totalRewardRecipientFees[payments[i].poolId] += payments[i].amount;
 
@@ -153,7 +157,9 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
         //get the claimable amount for this recipient, this calculation will never exceed the amount in the pot
         uint256 claimableAmount = totalFeesInPot - s_totalRewardRecipientFeesLastClaimedAmounts[poolId][recipient];
 
-        //calculate the recipients share of the fees, which is their weighted share of the difference between the last amount they claimed and the current amount in the pot. This can never be more than the total amount in existence
+        //calculate the recipients share of the fees, which is their weighted share of the difference between the last
+        // amount they claimed and the current amount in the pot. This can never be more than the total amount in
+        // existence
         uint256 recipientShare = (claimableAmount * s_rewardRecipientWeights[poolId][recipient]) / PERCENTAGE_SCALAR;
 
         //if there's no fees to claim, continue as there's nothing to update
@@ -196,7 +202,8 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
     //keep track of which pools have had their reward recipients set
     s_rewardRecipientWeightsSet[poolId] = true;
 
-    //set the reward recipients, this will only be called once and contain the full set of RewardRecipients with a total weight of 100%
+    //set the reward recipients, this will only be called once and contain the full set of RewardRecipients with a total
+    // weight of 100%
     _setRewardRecipientWeights(poolId, rewardRecipientAndWeights, PERCENTAGE_SCALAR);
 
     emit RewardRecipientsUpdated(poolId, rewardRecipientAndWeights);
@@ -260,7 +267,8 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
       }
     }
 
-    //update the reward recipients, if the new collective weight isn't equal to the previous collective weight, the fees will either be under or over distributed
+    //update the reward recipients, if the new collective weight isn't equal to the previous collective weight, the fees
+    // will either be under or over distributed
     _setRewardRecipientWeights(poolId, newRewardRecipients, existingTotalWeight);
 
     //emit event
@@ -319,7 +327,8 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
         uint256 totalPoolAmount = s_totalRewardRecipientFees[poolId];
         //if the recipient has any LINK, then add the poolId to the array
         unchecked {
-          //s_totalRewardRecipientFeesLastClaimedAmounts can never exceed total pool amount, and the number of pools can't exceed the max array length
+          //s_totalRewardRecipientFeesLastClaimedAmounts can never exceed total pool amount, and the number of pools
+          // can't exceed the max array length
           if (totalPoolAmount - s_totalRewardRecipientFeesLastClaimedAmounts[poolId][recipient] != 0) {
             claimablePoolIds[poolIdArrayIndex++] = poolId;
           }

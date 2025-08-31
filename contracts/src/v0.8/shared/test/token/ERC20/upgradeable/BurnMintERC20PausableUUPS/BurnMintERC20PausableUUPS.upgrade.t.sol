@@ -12,7 +12,8 @@ interface IUpgradeableProxy {
 
 /// @dev Mock contract with limited functionality used for testing only.
 /// @dev It adds a new freeze functionality to the BurnMintERC20PausableUUPS contract.
-/// @dev We want to test that the new implementation works as expected and keeps track of the balances from previous version.
+/// @dev We want to test that the new implementation works as expected and keeps track of the balances from previous
+/// version.
 contract MockBurnMintERC20PausableUUPSV2 is BurnMintERC20PausableUUPS {
   error MockBurnMintERC20PausableUUPSV2__AccountFrozen(address account);
 
@@ -23,7 +24,8 @@ contract MockBurnMintERC20PausableUUPSV2 is BurnMintERC20PausableUUPS {
     mapping(address => bool) s_isFrozen;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.MockBurnMintERC20PausableUUPSV2")) - 1)) & ~bytes32(uint256(0xff));
+  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.MockBurnMintERC20PausableUUPSV2")) - 1)) &
+  // ~bytes32(uint256(0xff));
   bytes32 private constant V2_STORAGE_LOCATION = 0x98bca5456fc57bb77324f8627b5055944605eb027b3a0652fea6ac1ede88a400;
 
   function _getV2Storage() private pure returns (MockBurnMintERC20PausableUUPSV2Storage storage $) {

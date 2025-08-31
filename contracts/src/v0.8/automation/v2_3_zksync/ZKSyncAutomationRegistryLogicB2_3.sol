@@ -152,7 +152,8 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
   }
 
   /**
-   * @dev checkCallback is used specifically for automation data streams lookups (see StreamsLookupCompatibleInterface.sol)
+   * @dev checkCallback is used specifically for automation data streams lookups (see
+   * StreamsLookupCompatibleInterface.sol)
    * @param id the upkeepID to execute a callback for
    * @param values the values returned from the data streams lookup
    * @param extraData the user-provided extra context data

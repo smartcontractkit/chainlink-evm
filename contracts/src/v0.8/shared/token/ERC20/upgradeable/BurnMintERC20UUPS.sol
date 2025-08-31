@@ -41,7 +41,8 @@ contract BurnMintERC20UUPS is
 
   /// @custom:storage-location erc7201:chainlink.storage.BurnMintERC20UUPS
   struct BurnMintERC20UUPSStorage {
-    /// @dev the CCIPAdmin can be used to register with the CCIP token admin registry, but has no other special powers, and can only be transferred by the owner.
+    /// @dev the CCIPAdmin can be used to register with the CCIP token admin registry, but has no other special powers,
+    /// and can only be transferred by the owner.
     address ccipAdmin;
     /// @dev The number of decimals for the token
     uint8 decimals;

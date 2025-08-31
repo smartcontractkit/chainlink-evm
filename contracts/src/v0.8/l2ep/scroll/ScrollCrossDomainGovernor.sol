@@ -13,7 +13,8 @@ import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
 import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 
 /// @title ScrollCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Scroll
-/// @notice L2 Contract which receives messages from a specific L1 address and transparently forwards them to the destination.
+/// @notice L2 Contract which receives messages from a specific L1 address and transparently forwards them to the
+/// destination.
 /// @dev Any other L2 contract which uses this contract's address as a privileged position,
 /// can be considered to be simultaneously owned by the `l1Owner` and L2 `owner`
 contract ScrollCrossDomainGovernor is IDelegateForwarder, ITypeAndVersion, CrossDomainForwarder {

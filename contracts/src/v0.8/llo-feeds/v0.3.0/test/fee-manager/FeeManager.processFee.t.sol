@@ -224,7 +224,8 @@ contract FeeManagerProcessFeeTest is BaseFeeManagerTest {
     //get the default payload
     bytes memory payload = getPayload(getV3Report(DEFAULT_FEED_1_V3));
 
-    //call processFee from the proxy to test whether the funds are returned to the subscriber. In reality, the funds would be returned to the caller of the proxy.
+    //call processFee from the proxy to test whether the funds are returned to the subscriber. In reality, the funds
+    // would be returned to the caller of the proxy.
     processFee(payload, PROXY, address(link), DEFAULT_REPORT_NATIVE_FEE);
 
     //check the native unwrapped is no longer in the account
@@ -248,7 +249,8 @@ contract FeeManagerProcessFeeTest is BaseFeeManagerTest {
     //get the default payload
     bytes memory payload = getPayload(getV3Report(DEFAULT_FEED_1_V3));
 
-    //call processFee from the proxy to test whether the funds are returned to the subscriber. In reality, the funds would be returned to the caller of the proxy.
+    //call processFee from the proxy to test whether the funds are returned to the subscriber. In reality, the funds
+    // would be returned to the caller of the proxy.
     processFee(payload, PROXY, address(native), DEFAULT_REPORT_NATIVE_FEE * 2);
 
     //check the native has been transferred and converted to wrapped native

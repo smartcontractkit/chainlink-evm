@@ -261,7 +261,8 @@ contract ConfiguratorSetProductionConfigTest is BaseTest {
 
     configurationState = s_exposedConfigurator.exposedReadConfigurationStates(CONFIG_ID_1);
     assertEq(configurationState.configDigest[0], cd2); // the previous config left unchanged
-    assertEq(configurationState.configDigest[1], cd3); // new config is on green now because green is production due to isGreenProduction=true
+    assertEq(configurationState.configDigest[1], cd3); // new config is on green now because green is production due to
+      // isGreenProduction=true
     assertEq(configurationState.configCount, 3);
     assertEq(configurationState.isGreenProduction, true);
     assertEq(configurationState.latestConfigBlockNumber, block.number);

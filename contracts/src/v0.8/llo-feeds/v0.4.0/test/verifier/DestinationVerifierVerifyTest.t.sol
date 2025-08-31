@@ -174,8 +174,8 @@ contract VerifierVerifyTest is BaseTest {
           - DonConfigA has signers {A, B, C, E} is set at time T1
           - DonConfigB has signers {A, B, C, D} is set at time T2
           - checks we can verify a report with {B, C, D} signers (via DonConfigB)
-          - checks we can verify a report with {B, C, E} signers and timestamp below T2 (via DonConfigA historical config)
-          - checks we can't verify a report with {B, C, E} signers and timestamp above T2 (it gets verivied via DonConfigB)
+    - checks we can verify a report with {B, C, E} signers and timestamp below T2 (via DonConfigA historical config)
+    - checks we can't verify a report with {B, C, E} signers and timestamp above T2 (it gets verivied via DonConfigB)
           - sets DonConfigA as deactivated
           - checks we can't verify a report with {B, C, E} signers and timestamp below T2 (via DonConfigA)
          */
@@ -374,7 +374,8 @@ contract VerifierVerifyTest is BaseTest {
           - checks we can verify a report with {D, E, F} signers (via DonConfigB) at time between T2 and T3
           - checks we can verify a report with {D, E, F} signers (via DonConfigC) at time > T3
           - checks we can't verify a report with {A, B, C} signers (via DonConfigC) and timestamp >T3 at time > T3
-          - checks we can verify a report with {A, B, C} signers (via DonConfigC) and timestamp between T2 and T3  at time > T3 (historical check)
+    - checks we can verify a report with {A, B, C} signers (via DonConfigC) and timestamp between T2 and T3  at time >
+    T3 (historical check)
 
          */
 

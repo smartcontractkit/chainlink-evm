@@ -250,7 +250,8 @@ contract VRFCoordinatorTestV2_5 is VRFOld, SubscriptionAPI, IVRFCoordinatorV2Plu
    * in your fulfillRandomWords callback. Note these numbers are expanded in a
    * secure way by the VRFCoordinator from a single random value supplied by the oracle.
    * extraArgs - Encoded extra arguments that has a boolean flag for whether payment
-   * should be made in native or LINK. Payment in LINK is only available if the LINK token is available to this contract.
+   * should be made in native or LINK. Payment in LINK is only available if the LINK token is available to this
+   * contract.
    * @return requestId - A unique identifier of the request. Can be used to match
    * a request to a response in fulfillRandomWords.
    */

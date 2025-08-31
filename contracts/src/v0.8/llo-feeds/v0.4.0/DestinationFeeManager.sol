@@ -136,7 +136,8 @@ contract DestinationFeeManager is
   /**
    * @notice Construct the FeeManager contract
    * @param _linkAddress The address of the LINK token
-   * @param _nativeAddress The address of the wrapped ERC-20 version of the native token (represents fee in native or wrapped)
+   * @param _nativeAddress The address of the wrapped ERC-20 version of the native token (represents fee in native or
+   * wrapped)
    * @param _verifierAddress The address of the verifier contract
    * @param _rewardManagerAddress The address of the reward manager contract
    */
@@ -215,7 +216,8 @@ contract DestinationFeeManager is
     IDestinationFeeManager.FeeAndReward[] memory feesAndRewards =
       new IDestinationFeeManager.FeeAndReward[](payloads.length);
 
-    //keep track of the number of fees to prevent over initialising the FeePayment array within _convertToLinkAndNativeFees
+    //keep track of the number of fees to prevent over initialising the FeePayment array within
+    // _convertToLinkAndNativeFees
     uint256 numberOfLinkFees;
     uint256 numberOfNativeFees;
 

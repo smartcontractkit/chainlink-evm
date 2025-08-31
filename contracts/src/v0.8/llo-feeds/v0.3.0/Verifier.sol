@@ -69,7 +69,8 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// It is used to keep a historical record of verified reports.
   event ReportVerified(bytes32 indexed feedId, address requester);
 
-  /// @notice This event is emitted whenever a new configuration is set for a feed.  It triggers a new run of the offchain reporting protocol.
+  /// @notice This event is emitted whenever a new configuration is set for a feed.  It triggers a new run of the
+  /// offchain reporting protocol.
   event ConfigSet(
     bytes32 indexed feedId,
     uint32 previousConfigBlockNumber,
@@ -278,8 +279,10 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// signers and that enough signers have signed the reports.
   /// @param hashedReport The keccak256 hash of the raw report's bytes
   /// @param reportContext The context the report was signed in
-  /// @param rs ith element is the R components of the ith signature on report. Must have at most MAX_NUM_ORACLES entries
-  /// @param ss ith element is the S components of the ith signature on report. Must have at most MAX_NUM_ORACLES entries
+  /// @param rs ith element is the R components of the ith signature on report. Must have at most MAX_NUM_ORACLES
+  /// entries
+  /// @param ss ith element is the S components of the ith signature on report. Must have at most MAX_NUM_ORACLES
+  /// entries
   /// @param rawVs ith element is the the V component of the ith signature
   /// @param s_config The config digest the report was signed for
   function _verifySignatures(
@@ -374,7 +377,8 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// @param f number of faulty oracles the system can tolerate
   /// @param onchainConfig serialized configuration used by the contract (and possibly oracles)
   /// @param offchainConfigVersion version number for offchainEncoding schema
-  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the contract
+  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the
+  /// contract
   /// @param recipientAddressesAndWeights the addresses and weights of all the recipients to receive rewards
   function _setConfig(
     bytes32 feedId,
@@ -453,11 +457,13 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// @param sourceAddress Address of source config Verifier
   /// @param configCount ordinal number of this config setting among all config settings over the life of this contract
   /// @param signers ith element is address ith oracle uses to sign a report
-  /// @param offchainTransmitters ith element is address ith oracle used to transmit reports (in this case used for flexible additional field, such as CSA pub keys)
+  /// @param offchainTransmitters ith element is address ith oracle used to transmit reports (in this case used for
+  /// flexible additional field, such as CSA pub keys)
   /// @param f maximum number of faulty/dishonest oracles the protocol can tolerate while still working correctly
   /// @param onchainConfig serialized configuration used by the contract (and possibly oracles)
   /// @param offchainConfigVersion version of the serialization format used for "offchainConfig" parameter
-  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the contract
+  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the
+  /// contract
   /// @dev This function is a modified version of the method from OCR2Abstract
   function _configDigestFromConfigData(
     bytes32 feedId,

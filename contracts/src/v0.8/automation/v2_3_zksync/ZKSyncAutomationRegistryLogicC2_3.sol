@@ -102,8 +102,10 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
   }
 
   /**
-   * @notice this is used by the owner to set the initial payees for newly added transmitters. The owner is not allowed to change payees for existing transmitters.
-   * @dev the IGNORE_ADDRESS is a "helper" that makes it easier to construct a list of payees when you only care about setting the payee for a small number of transmitters.
+   * @notice this is used by the owner to set the initial payees for newly added transmitters. The owner is not allowed
+   * to change payees for existing transmitters.
+   * @dev the IGNORE_ADDRESS is a "helper" that makes it easier to construct a list of payees when you only care about
+   * setting the payee for a small number of transmitters.
    */
   function setPayees(
     address[] calldata payees
@@ -321,7 +323,8 @@ contract ZKSyncAutomationRegistryLogicC2_3 is ZKSyncAutomationRegistryBase2_3 {
       admin: s_upkeepAdmin[id],
       maxValidBlocknumber: reg.maxValidBlocknumber,
       lastPerformedBlockNumber: reg.lastPerformedBlockNumber,
-      amountSpent: uint96(reg.amountSpent), // force casting to uint96 for backwards compatibility. Not an issue if it overflows.
+      amountSpent: uint96(reg.amountSpent), // force casting to uint96 for backwards compatibility. Not an issue if it
+        // overflows.
       paused: reg.paused,
       offchainConfig: s_upkeepOffchainConfig[id]
     });

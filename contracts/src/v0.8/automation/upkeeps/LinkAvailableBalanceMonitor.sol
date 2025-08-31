@@ -180,7 +180,8 @@ contract LinkAvailableBalanceMonitor is AccessControl, AutomationCompatibleInter
     if (s_targets[targetAddress].isActive) revert DuplicateAddress(targetAddress);
     if (targetAddress == address(0) && dstChainSelector == 0) revert InvalidAddress(targetAddress);
     bool onRampExists = s_onRampAddresses.contains(dstChainSelector);
-    // if targetAddress is an existing onRamp, there's a need of cleaning the previous onRamp associated to this dstChainSelector
+    // if targetAddress is an existing onRamp, there's a need of cleaning the previous onRamp associated to this
+    // dstChainSelector
     // there's no need to remove any other address that's not an onRamp
     if (dstChainSelector > 0 && onRampExists) {
       address oldAddress = s_onRampAddresses.get(dstChainSelector);

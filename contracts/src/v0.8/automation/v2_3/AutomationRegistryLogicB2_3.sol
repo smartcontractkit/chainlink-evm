@@ -152,7 +152,8 @@ contract AutomationRegistryLogicB2_3 is AutomationRegistryBase2_3, Chainable {
   }
 
   /**
-   * @dev checkCallback is used specifically for automation data streams lookups (see StreamsLookupCompatibleInterface.sol)
+   * @dev checkCallback is used specifically for automation data streams lookups (see
+   * StreamsLookupCompatibleInterface.sol)
    * @param id the upkeepID to execute a callback for
    * @param values the values returned from the data streams lookup
    * @param extraData the user-provided extra context data

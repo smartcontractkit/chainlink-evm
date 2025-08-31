@@ -33,7 +33,8 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
   // |                     Configuration state                      |
   // ================================================================
   struct Config {
-    bool enabled; // ═════════════╗ When enabled, access will be checked against s_allowedSenders. When disabled, all access will be allowed.
+    bool enabled; // ═════════════╗ When enabled, access will be checked against
+      // s_allowedSenders. When disabled, all access will be allowed.
     address signerPublicKey; // ══╝ The key pair that needs to sign the acceptance data
   }
 

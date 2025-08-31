@@ -320,7 +320,8 @@ contract Withdraw is SetUp {
 
   // default is ON_CHAIN mode
   function test_WithdrawERC20Fees_RevertsWhen_LinkAvailableForPaymentIsNegative() public {
-    _transmit(usdUpkeepID18, registry, bytes4(0)); // adds USD token to finance withdrawable, and gives NOPs a LINK balance
+    _transmit(usdUpkeepID18, registry, bytes4(0)); // adds USD token to finance withdrawable, and gives NOPs a LINK
+      // balance
     require(registry.linkAvailableForPayment() < 0, "linkAvailableForPayment should be negative");
     require(
       registry.getAvailableERC20ForPayment(address(usdToken18)) > 0, "ERC20AvailableForPayment should be positive"
@@ -904,7 +905,8 @@ contract NOPsSettlement is SetUp {
     registry.settleNOPsOffchain();
   }
 
-  // 1. transmitter balance zeroed after settlement, 2. admin can withdraw ERC20, 3. switch to onchain mode, 4. link amount owed to NOPs stays the same
+  // 1. transmitter balance zeroed after settlement, 2. admin can withdraw ERC20, 3. switch to onchain mode, 4. link
+  // amount owed to NOPs stays the same
   function testSettleNOPsOffchainSuccessWithERC20MultiSteps() public {
     // deploy and configure a registry with OFF_CHAIN payout
     (Registry registry,) = deployAndConfigureZKSyncRegistryAndRegistrar(AutoBase.PayoutMode.OFF_CHAIN);
@@ -1134,7 +1136,8 @@ contract NOPsSettlement is SetUp {
     registry.cancelUpkeep(id);
     vm.roll(100 + block.number);
     vm.expectEmit();
-    // the upkeep spent less than minimum spending limit so upkeep admin can only withdraw upkeep balance - min spend value
+    // the upkeep spent less than minimum spending limit so upkeep admin can only withdraw upkeep balance - min spend
+    // value
     emit FundsWithdrawn(id, 9.9e19, UPKEEP_ADMIN);
     registry.withdrawFunds(id, UPKEEP_ADMIN);
   }

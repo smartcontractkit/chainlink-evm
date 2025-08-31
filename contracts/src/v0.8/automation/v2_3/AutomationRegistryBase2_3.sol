@@ -58,8 +58,10 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
   uint256 internal constant TRANSMIT_CALLDATA_PER_SIGNER_BYTES_OVERHEAD = 64;
 
   // Next block of constants are used in actual payment calculation. We calculate the exact gas used within the
-  // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed constants
-  // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates various cases and verifies that
+  // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed
+  // constants
+  // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates
+  // various cases and verifies that
   // the variables result in accurate estimation
   uint256 internal constant ACCOUNTING_FIXED_GAS_OVERHEAD = 51_000; // Fixed overhead per tx
   uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 14_900; // Overhead per upkeep performed in batch
@@ -99,15 +101,21 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
   uint256 internal s_fallbackGasPrice;
   uint256 internal s_fallbackLinkPrice;
   uint256 internal s_fallbackNativePrice;
-  mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to and fro
+  mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to
+    // and fro
   mapping(uint256 => bytes) internal s_upkeepTriggerConfig; // upkeep triggers
   mapping(uint256 => bytes) internal s_upkeepOffchainConfig; // general config set by users for each upkeep
-  mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an upkeep
-  mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an admin
+  mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an
+    // upkeep
+  mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an
+    // admin
   // billing
-  mapping(IERC20 billingToken => uint256 reserveAmount) internal s_reserveAmounts; // unspent user deposits + unwithdrawn NOP payments
-  mapping(IERC20 billingToken => BillingConfig billingConfig) internal s_billingConfigs; // billing configurations for different tokens
-  mapping(uint256 upkeepID => BillingOverrides billingOverrides) internal s_billingOverrides; // billing overrides for specific upkeeps
+  mapping(IERC20 billingToken => uint256 reserveAmount) internal s_reserveAmounts; // unspent user deposits +
+    // unwithdrawn NOP payments
+  mapping(IERC20 billingToken => BillingConfig billingConfig) internal s_billingConfigs; // billing configurations for
+    // different tokens
+  mapping(uint256 upkeepID => BillingOverrides billingOverrides) internal s_billingOverrides; // billing overrides for
+    // specific upkeeps
   IERC20[] internal s_billingTokens; // list of billing tokens
   PayoutMode internal s_payoutMode;
 
@@ -288,7 +296,8 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
     uint32 nonce; // Nonce for each upkeep created
     // 1 EVM word full
     address upkeepPrivilegeManager; // address which can set privilege for upkeeps
-    uint32 configCount; // incremented each time a new config is posted, The count is incorporated into the config digest to prevent replay attacks.
+    uint32 configCount; // incremented each time a new config is posted, The count is incorporated into the config
+      // digest to prevent replay attacks.
     uint32 latestConfigBlockNumber; // makes it easier for offchain systems to extract config from logs
     uint32 maxCheckDataSize; // max length of checkData bytes
     // 2 EVM word full
@@ -438,7 +447,8 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
   /**
    * @notice struct containing receipt information about a payment or cost estimation
    * @member gasChargeInBillingToken the amount to charge a user for gas spent using the billing token's native decimals
-   * @member premiumInBillingToken the premium charged to the user, shared between all nodes, using the billing token's native decimals
+   * @member premiumInBillingToken the premium charged to the user, shared between all nodes, using the billing token's
+   * native decimals
    * @member gasReimbursementInJuels the amount to reimburse a node for gas spent
    * @member premiumInJuels the premium paid to NOPs, shared between all nodes
    */
@@ -673,7 +683,8 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
    * @dev use of PaymentParams struct is necessary to avoid stack too deep errors
    * @dev calculates LINK paid for gas spent plus a configure premium percentage
    * @dev 1 USD = 1e18 attoUSD
-   * @dev 1 USD = 1e26 hexaicosaUSD (had to borrow this prefix from geometry because there is no metric prefix for 1e-26)
+   * @dev 1 USD = 1e26 hexaicosaUSD (had to borrow this prefix from geometry because there is no metric prefix for
+   * 1e-26)
    * @dev 1 millicent = 1e-5 USD = 1e13 attoUSD
    */
   function _calculatePaymentAmount(
@@ -695,7 +706,8 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
     uint256 gasPaymentHexaicosaUSD = (
       gasWei * (paymentParams.gasLimit + paymentParams.gasOverhead) + paymentParams.l1CostWei
     ) * paymentParams.nativeUSD; // gasPaymentHexaicosaUSD has an extra 8 zeros because of decimals on nativeUSD feed
-    // gasChargeInBillingToken is scaled by the billing token's decimals. Round up to ensure a minimum billing token is charged for gas
+    // gasChargeInBillingToken is scaled by the billing token's decimals. Round up to ensure a minimum billing token is
+    // charged for gas
     receipt.gasChargeInBillingToken = SafeCast.toUint96(
       (
         (gasPaymentHexaicosaUSD * numeratorScalingFactor)
@@ -706,7 +718,8 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
     receipt.gasReimbursementInJuels = SafeCast.toUint96(gasPaymentHexaicosaUSD / paymentParams.linkUSD);
 
     // premium calculation
-    uint256 flatFeeHexaicosaUSD = uint256(paymentParams.billingTokenParams.flatFeeMilliCents) * 1e21; // 1e13 for milliCents to attoUSD and 1e8 for attoUSD to hexaicosaUSD
+    uint256 flatFeeHexaicosaUSD = uint256(paymentParams.billingTokenParams.flatFeeMilliCents) * 1e21; // 1e13 for
+      // milliCents to attoUSD and 1e8 for attoUSD to hexaicosaUSD
     uint256 premiumHexaicosaUSD = (
       (
         ((gasWei * paymentParams.gasLimit) + paymentParams.l1CostWei) * paymentParams.billingTokenParams.gasFeePPB
@@ -1041,7 +1054,8 @@ abstract contract AutomationRegistryBase2_3 is ConfirmedOwner {
     // this shouldn't happen, but in rare edge cases, we charge the full balance in case the user
     // can't cover the amount owed
     if (balance < receipt.gasChargeInBillingToken) {
-      // if the user can't cover the gas fee, then direct all of the payment to the transmitter and distribute no premium to the DON
+      // if the user can't cover the gas fee, then direct all of the payment to the transmitter and distribute no
+      // premium to the DON
       payment = balance;
       receipt.gasReimbursementInJuels = SafeCast.toUint96(
         (balance * paymentParams.billingTokenParams.priceUSD * scalingFactor1)

@@ -60,7 +60,8 @@ contract FunctionsClient_HandleOracleFulfillment is FunctionsClientRequestSetup 
     vm.stopPrank();
     vm.startPrank(address(s_functionsRouter));
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;

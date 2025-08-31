@@ -155,7 +155,7 @@ contract VerifierBillingTests is VerifierWithFeeManager {
 
   function test_rewardsAreDistributedAccordingToWeightsUsingHistoricalConfigs() public {
     /*
-          Verifies that reports verified with historical give rewards according to the verifying config AddressAndWeight.
+    Verifies that reports verified with historical give rewards according to the verifying config AddressAndWeight.
           - Sets two Configs: ConfigA and ConfigB, These two Configs have different Recipient and Weights 
           - Verifies a couple reports with each config
           - Pays recipients

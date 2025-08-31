@@ -30,7 +30,8 @@ interface IVerifierProxy {
    * correctly by routing to the correct verifier, and bills the user if applicable.
    * @param payload The encoded data to be verified, including the signed
    * report.
-   * @param parameterPayload Fee metadata for billing. For the current implementation this is just the abi-encoded fee token ERC-20 address.
+   * @param parameterPayload Fee metadata for billing. For the current implementation this is just the abi-encoded fee
+   * token ERC-20 address.
    * @return verifierResponse The encoded report from the verifier.
    */
   function verify(
@@ -44,7 +45,8 @@ interface IVerifierProxy {
 interface IFeeManager {
   /**
    * @notice Calculates the fee and reward associated with verifying a report, including discounts for subscribers.
-   * This function assesses the fee and reward for report verification, applying a discount for recognized subscriber addresses.
+   * This function assesses the fee and reward for report verification, applying a discount for recognized subscriber
+   * addresses.
    * @param subscriber The address attempting to verify the report. A discount is applied if this address
    * is recognized as a subscriber.
    * @param unverifiedReport The report data awaiting verification. The content of this report is used to

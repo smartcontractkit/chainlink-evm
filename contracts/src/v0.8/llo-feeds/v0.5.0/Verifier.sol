@@ -209,8 +209,10 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// signers and that enough signers have signed the reports.
   /// @param hashedReport The keccak256 hash of the raw report's bytes
   /// @param reportContext The context the report was signed in
-  /// @param rs ith element is the R components of the ith signature on report. Must have at most MAX_NUM_ORACLES entries
-  /// @param ss ith element is the S components of the ith signature on report. Must have at most MAX_NUM_ORACLES entries
+  /// @param rs ith element is the R components of the ith signature on report. Must have at most MAX_NUM_ORACLES
+  /// entries
+  /// @param ss ith element is the S components of the ith signature on report. Must have at most MAX_NUM_ORACLES
+  /// entries
   /// @param rawVs ith element is the the V component of the ith signature
   /// @param config The config digest the report was signed for
   function _verifySignatures(

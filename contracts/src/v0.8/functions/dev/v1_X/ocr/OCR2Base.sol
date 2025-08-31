@@ -270,7 +270,8 @@ abstract contract OCR2Base is ConfirmedOwner, OCR2Abstract {
     bytes32[] calldata ss
   ) private pure {
     // calldata will never be big enough to make this overflow
-    uint256 expected = uint256(TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT) + report.length // one byte pure entry in _report
+    uint256 expected = uint256(TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT) + report.length // one byte pure entry in
+      // _report
       + rs.length * 32 // 32 bytes per entry in _rs
       + ss.length * 32 // 32 bytes per entry in _ss
       + 0; // placeholder
@@ -313,8 +314,10 @@ abstract contract OCR2Base is ConfirmedOwner, OCR2Abstract {
 
       emit Transmitted(configDigest, uint32(epochAndRound >> 8));
 
-      // The following check is disabled to allow both current and proposed routes to submit reports using the same OCR config digest
-      // Chainlink Functions uses globally unique request IDs. Metadata about the request is stored and checked in the Coordinator and Router
+      // The following check is disabled to allow both current and proposed routes to submit reports using the same OCR
+      // config digest
+      // Chainlink Functions uses globally unique request IDs. Metadata about the request is stored and checked in the
+      // Coordinator and Router
       // require(configInfo.latestConfigDigest == configDigest, "configDigest mismatch");
 
       _requireExpectedMsgDataLength(report, rs, ss);

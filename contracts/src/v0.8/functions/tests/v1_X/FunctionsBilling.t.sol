@@ -83,7 +83,8 @@ contract FunctionsBilling_UpdateConfig is FunctionsRouterSetup {
   event ConfigUpdated(FunctionsBillingConfig config);
 
   function test_UpdateConfig_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -301,7 +302,8 @@ contract FunctionsBilling__FulfillAndBill is FunctionsClientRequestSetup {
     uint96 callbackCostGas = 5072; // Taken manually
     uint96 callbackCostJuels = juelsPerGas * callbackCostGas;
 
-    // topic0 (function signature, always checked), check topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), check topic1 (true), NOT topic2 (false), NOT topic3 (false), and
+    // data (true).
     bool checkTopic1 = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -343,7 +345,8 @@ contract FunctionsBilling_DeleteCommitment is FunctionsClientRequestSetup {
     vm.stopPrank();
     vm.startPrank(address(s_functionsRouter));
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;

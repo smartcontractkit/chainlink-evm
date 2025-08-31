@@ -70,7 +70,8 @@ contract TermsOfServiceAllowList is ITermsOfServiceAllowList, IAccessController,
   }
 
   /// @notice Sets the contracts's configuration
-  /// @param config - See the contents of the TermsOfServiceAllowListConfig struct in ITermsOfServiceAllowList.sol for more information
+  /// @param config - See the contents of the TermsOfServiceAllowListConfig struct in ITermsOfServiceAllowList.sol for
+  /// more information
   function updateConfig(
     TermsOfServiceAllowListConfig memory config
   ) public onlyOwner {

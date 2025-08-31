@@ -16,11 +16,14 @@ import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
 /**
  * @notice Contract to accept requests for upkeep registrations
  * @dev There are 2 registration workflows in this contract
- * Flow 1. auto approve OFF / manual registration - UI calls `register` function on this contract, this contract owner at a later time then manually
+ * Flow 1. auto approve OFF / manual registration - UI calls `register` function on this contract, this contract owner
+ * at a later time then manually
  *  calls `approve` to register upkeep and emit events to inform UI and others interested.
- * Flow 2. auto approve ON / real time registration - UI calls `register` function as before, which calls the `registerUpkeep` function directly on
+ * Flow 2. auto approve ON / real time registration - UI calls `register` function as before, which calls the
+ * `registerUpkeep` function directly on
  *  keeper registry and then emits approved event to finish the flow automatically without manual intervention.
- * The idea is to have same interface(functions,events) for UI or anyone using this contract irrespective of auto approve being enabled or not.
+ * The idea is to have same interface(functions,events) for UI or anyone using this contract irrespective of auto
+ * approve being enabled or not.
  * they can just listen to `RegistrationRequested` & `RegistrationApproved` events and know the status on registrations.
  */
 contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Receiver {
@@ -225,7 +228,8 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
   }
 
   /**
-   * @notice cancel will remove a registration request from the pending request queue and return the refunds to the request.admin
+   * @notice cancel will remove a registration request from the pending request queue and return the refunds to the
+   * request.admin
    * @param hash the request hash
    */
   function cancel(
@@ -348,7 +352,8 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
     if (msg.sender != address(i_LINK)) revert OnlyLink();
     RegistrationParams memory params = abi.decode(data, (RegistrationParams));
     if (address(params.billingToken) != address(i_LINK)) revert OnlyLink();
-    params.amount = uint96(amount); // ignore whatever is sent in registration params, use actual value; casting safe because max supply LINK < 2^96
+    params.amount = uint96(amount); // ignore whatever is sent in registration params, use actual value; casting safe
+      // because max supply LINK < 2^96
     _register(params, sender);
   }
 
@@ -406,8 +411,10 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
 
   /**
    * @dev register upkeep on AutomationRegistry contract and emit RegistrationApproved event
-   * @dev safeApprove is deprecated and removed from the latest (v5) OZ release, Use safeIncreaseAllowance when we upgrade OZ (we are on v4.8)
-   * @dev we stick to the safeApprove because of the older version (v4.8) of safeIncreaseAllowance can't handle USDT correctly, but newer version can
+   * @dev safeApprove is deprecated and removed from the latest (v5) OZ release, Use safeIncreaseAllowance when we
+   * upgrade OZ (we are on v4.8)
+   * @dev we stick to the safeApprove because of the older version (v4.8) of safeIncreaseAllowance can't handle USDT
+   * correctly, but newer version can
    */
   function _approve(RegistrationParams memory params, bytes32 hash) private returns (uint256) {
     IAutomationRegistryMaster2_3 registry = s_registry;

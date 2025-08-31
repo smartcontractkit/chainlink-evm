@@ -15,7 +15,8 @@ import {Test} from "forge-std/Test.sol";
  * @title BaseFeeManagerTest
  * @author Michael Fletcher
  * @notice Base class for all feeManager tests
- * @dev This contract is intended to be inherited from and not used directly. It contains functionality to setup the feeManager
+ * @dev This contract is intended to be inherited from and not used directly. It contains functionality to setup the
+ * feeManager
  */
 contract BaseFeeManagerTest is Test {
   //contracts

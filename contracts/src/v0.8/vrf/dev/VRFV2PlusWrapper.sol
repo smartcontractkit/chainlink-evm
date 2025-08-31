@@ -219,9 +219,11 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    * @param _coordinatorGasOverheadPerWord reflects the gas overhead per word of the coordinator's
    *        fulfillRandomWords function.
    *
-   * @param _coordinatorNativePremiumPercentage is the coordinator's premium ratio in percentage for requests paid in native.
+   * @param _coordinatorNativePremiumPercentage is the coordinator's premium ratio in percentage for requests paid in
+   * native.
    *
-   * @param _coordinatorLinkPremiumPercentage is the coordinator's premium ratio in percentage for requests paid in link.
+   * @param _coordinatorLinkPremiumPercentage is the coordinator's premium ratio in percentage for requests paid in
+   * link.
    *
    * @param _keyHash to use for requesting randomness.
    * @param _maxNumWords is the max number of words that can be requested in a single wrapped VRF request
@@ -234,7 +236,8 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    * @param _fulfillmentFlatFeeNativePPM is the flat fee in millionths of native that VRFCoordinatorV2Plus
    *        charges for native payment.
    *
-   * @param _fulfillmentFlatFeeLinkDiscountPPM is the flat fee discount in millionths of native that VRFCoordinatorV2Plus
+   * @param _fulfillmentFlatFeeLinkDiscountPPM is the flat fee discount in millionths of native that
+   * VRFCoordinatorV2Plus
    *        charges for link payment.
    */
   /// @dev This function while having only 12 parameters is causing a Stack too deep error when running forge coverage.
@@ -306,7 +309,8 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    * @return fulfillmentFlatFeeNativePPM is the flat fee in millionths of native that VRFCoordinatorV2Plus
    *         charges for native payment.
    *
-   * @return fulfillmentFlatFeeLinkDiscountPPM is the flat fee discount in millionths of native that VRFCoordinatorV2Plus
+   * @return fulfillmentFlatFeeLinkDiscountPPM is the flat fee discount in millionths of native that
+   * VRFCoordinatorV2Plus
    *         charges for link payment.
    *
    * @return wrapperGasOverhead reflects the gas overhead of the wrapper's fulfillRandomWords
@@ -321,7 +325,8 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    * @return coordinatorGasOverheadPerWord reflects the gas overhead per word of the coordinator's
    *         fulfillRandomWords function.
    *
-   * @return wrapperNativePremiumPercentage is the premium ratio in percentage for native payment. For example, a value of 0
+   * @return wrapperNativePremiumPercentage is the premium ratio in percentage for native payment. For example, a value
+   * of 0
    *         indicates no premium. A value of 15 indicates a 15 percent premium.
    *
    * @return wrapperLinkPremiumPercentage is the premium ratio in percentage for link payment. For example, a value of 0
@@ -434,7 +439,8 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
     // (wei/gas) * gas
     uint256 wrapperCostWei = _requestGasPrice * s_wrapperGasOverhead;
 
-    // coordinatorCostWei takes into account the L1 posting costs of the VRF fulfillment transaction, if we are on an L2.
+    // coordinatorCostWei takes into account the L1 posting costs of the VRF fulfillment transaction, if we are on an
+    // L2.
     // (wei/gas) * gas + l1wei
     uint256 coordinatorCostWei =
       _requestGasPrice * (_gas + _getCoordinatorGasOverhead(_numWords, true)) + _getL1CostWei();
@@ -458,7 +464,8 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
     // (wei/gas) * gas
     uint256 wrapperCostWei = _requestGasPrice * s_wrapperGasOverhead;
 
-    // coordinatorCostWei takes into account the L1 posting costs of the VRF fulfillment transaction, if we are on an L2.
+    // coordinatorCostWei takes into account the L1 posting costs of the VRF fulfillment transaction, if we are on an
+    // L2.
     // (wei/gas) * gas + l1wei
     uint256 coordinatorCostWei =
       _requestGasPrice * (_gas + _getCoordinatorGasOverhead(_numWords, false)) + _getL1CostWei();
