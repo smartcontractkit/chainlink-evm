@@ -150,7 +150,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	}
 
 	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil {
-		meta, err := a.SendRequest(ctx, tx, attempt, meta.DualBroadcastParams, *meta.FwdrDestAddress)
+		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, *meta.FwdrDestAddress)
 		if err != nil {
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
 		}
@@ -211,13 +211,13 @@ type DO struct {
 }
 
 type Metacalldata struct {
-	UOP                  UO             `abi:"userOp"`
-	SOPs                 []SO           `abi:"solverOps"`
-	DOP                  DO             `abi:"dAppOp"`
-	GasRefundBeneficiary common.Address `abi:"gasRefundBeneficiary"`
+	UOP                  UO
+	SOPs                 []SO
+	DOP                  DO
+	GasRefundBeneficiary common.Address
 }
 
-func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams *string, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
+func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams string, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
 	ctx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 
@@ -297,8 +297,8 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	return VerifyResponse(response.Result.MetacalldataResponse, dualBroadcastParams, tx.Data, tx.FromAddress, fwdrDestAddress)
 }
 
-func VerifyResponse(metacalldata MetacalldataResponse, dualBroadcastParams *string, txData []byte, fromAddress common.Address, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
-	params, err := url.ParseQuery(*dualBroadcastParams)
+func VerifyResponse(metacalldata MetacalldataResponse, dualBroadcastParams string, txData []byte, fromAddress common.Address, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
+	params, err := url.ParseQuery(dualBroadcastParams)
 	if err != nil {
 		return nil, err
 	}
