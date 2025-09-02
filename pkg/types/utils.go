@@ -13,3 +13,5 @@ func MustGetABI(json string) abi.ABI {
 	}
 	return abi
 }
+
+const NullClientChainID = 1399100
