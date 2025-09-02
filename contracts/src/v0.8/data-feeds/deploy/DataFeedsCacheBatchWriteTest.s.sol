@@ -14,7 +14,7 @@ contract DataFeedsCacheBatchWriteTest is Script {
     bytes internal payload;
 
     function run() external {
-        address reportSender = 0x82EEd7C3a79Cb05578272ACF032d9935C759A898;
+        address reportSender = address(11111);
 
         bytes32 workflowId = hex"6d795f6964000000000000000000000000000000000000000000000000000000";
         bytes2 reportId = hex"0001";
@@ -23,8 +23,8 @@ contract DataFeedsCacheBatchWriteTest is Script {
         senders[0] = reportSender;
         senders[1] = reportSender;
         address[] memory workflowOwners = new address[](2);
-        workflowOwners[0] = 0x82EEd7C3a79Cb05578272ACF032d9935C759A898;
-        workflowOwners[1] = 0x82EEd7C3a79Cb05578272ACF032d9935C759A898;
+        workflowOwners[0] = address(11111);
+        workflowOwners[1] = address(11111);
         bytes10[] memory workflowNames = new bytes10[](2);
         workflowNames[0] = bytes10("abc");
         workflowNames[1] = bytes10("xyz");
@@ -79,7 +79,7 @@ contract DataFeedsCacheBatchWriteTest is Script {
 
         s_dataFeedsCache = new DataFeedsCache();
 
-        s_dataFeedsCache.setFeedAdmin(0x82EEd7C3a79Cb05578272ACF032d9935C759A898, true);
+        s_dataFeedsCache.setFeedAdmin(address(11111), true);
 
         // Setup i_maxBatchSize feed configs
         s_dataFeedsCache.setDecimalFeedConfigs(dataIds, descriptions, workflowMetadata);

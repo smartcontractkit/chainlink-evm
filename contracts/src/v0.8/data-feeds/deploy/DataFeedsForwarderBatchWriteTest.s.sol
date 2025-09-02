@@ -107,7 +107,7 @@ contract DataFeedsForwarderBatchWriteTest is Script {
 
         s_keystoneForwarder.setConfig(DON_ID, CONFIG_VERSION, F, signers);
 
-        s_dataFeedsCache.setFeedAdmin(0x82EEd7C3a79Cb05578272ACF032d9935C759A898, true);
+        s_dataFeedsCache.setFeedAdmin(address(11111), true);
 
         // Setup i_maxBatchSize feed configs
         s_dataFeedsCache.setDecimalFeedConfigs{gas: 1000000000000}(dataIds, descriptions, workflowMetadata);
