@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
 import {ICapabilityConfiguration} from "../interfaces/ICapabilityConfiguration.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
   function setUp() public override {
@@ -60,8 +60,8 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
     nodes[0] = P2P_ID;
     nodes[1] = P2P_ID_THREE;
 
-    CapabilitiesRegistry.CapabilityConfiguration[]
-      memory capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](2);
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](2);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG
@@ -76,11 +76,7 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
     vm.expectCall(
       address(s_capabilityConfigurationContract),
       abi.encodeWithSelector(
-        ICapabilityConfiguration.beforeCapabilityConfigSet.selector,
-        nodes,
-        CONFIG_CAPABILITY_CONFIG,
-        1,
-        DON_ID
+        ICapabilityConfiguration.beforeCapabilityConfigSet.selector, nodes, CONFIG_CAPABILITY_CONFIG, 1, DON_ID
       ),
       1
     );

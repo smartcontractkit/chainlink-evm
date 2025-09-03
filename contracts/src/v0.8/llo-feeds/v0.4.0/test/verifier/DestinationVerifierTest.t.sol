@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
 import {IDestinationVerifier} from "../../../v0.4.0/interfaces/IDestinationVerifier.sol";
 import {IDestinationVerifierProxyVerifier} from "../../../v0.4.0/interfaces/IDestinationVerifierProxyVerifier.sol";
+import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 
 contract DestinationVerifierConstructorTest is BaseTest {
   bytes32[3] internal s_reportContext;
@@ -27,8 +27,8 @@ contract DestinationVerifierConstructorTest is BaseTest {
   }
 
   function test_trueIfIsCorrectInterface() public view {
-    bool isInterface = s_verifier.supportsInterface(type(IDestinationVerifier).interfaceId) &&
-      s_verifier.supportsInterface(type(IDestinationVerifierProxyVerifier).interfaceId);
+    bool isInterface = s_verifier.supportsInterface(type(IDestinationVerifier).interfaceId)
+      && s_verifier.supportsInterface(type(IDestinationVerifierProxyVerifier).interfaceId);
     assertEq(isInterface, true);
   }
 }

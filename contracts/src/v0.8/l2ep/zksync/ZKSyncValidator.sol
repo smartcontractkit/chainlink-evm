@@ -5,7 +5,9 @@ import {ISequencerUptimeFeed} from "./../interfaces/ISequencerUptimeFeed.sol";
 
 import {BaseValidator} from "../base/BaseValidator.sol";
 
-import {IBridgehub, L2TransactionRequestDirect} from "@zksync/contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
+import {
+  IBridgehub, L2TransactionRequestDirect
+} from "@zksync/contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
 
 /// @title ZKSyncValidator - makes cross chain call to update the Sequencer Uptime Feed on L2
 contract ZKSyncValidator is BaseValidator {
@@ -45,7 +47,9 @@ contract ZKSyncValidator is BaseValidator {
 
   /// @notice sets the l2GasPerPubdataByteLimit for the L2 transaction request
   /// @param l2GasPerPubdataByteLimit the updated l2GasPerPubdataByteLimit
-  function setL2GasPerPubdataByteLimit(uint32 l2GasPerPubdataByteLimit) external onlyOwner {
+  function setL2GasPerPubdataByteLimit(
+    uint32 l2GasPerPubdataByteLimit
+  ) external onlyOwner {
     if (s_l2GasPerPubdataByteLimit != l2GasPerPubdataByteLimit) {
       s_l2GasPerPubdataByteLimit = l2GasPerPubdataByteLimit;
       emit GasPerPubdataByteLimitUpdated(l2GasPerPubdataByteLimit);
@@ -73,12 +77,8 @@ contract ZKSyncValidator is BaseValidator {
   ) external override checkAccess returns (bool) {
     IBridgehub bridgeHub = IBridgehub(L1_CROSS_DOMAIN_MESSENGER_ADDRESS);
 
-    uint256 transactionBaseCostEstimate = bridgeHub.l2TransactionBaseCost(
-      CHAIN_ID,
-      tx.gasprice,
-      s_gasLimit,
-      s_l2GasPerPubdataByteLimit
-    );
+    uint256 transactionBaseCostEstimate =
+      bridgeHub.l2TransactionBaseCost(CHAIN_ID, tx.gasprice, s_gasLimit, s_l2GasPerPubdataByteLimit);
 
     L2TransactionRequestDirect memory l2TransactionRequestDirect = L2TransactionRequestDirect({
       chainId: CHAIN_ID,
@@ -86,9 +86,7 @@ contract ZKSyncValidator is BaseValidator {
       l2Contract: L2_UPTIME_FEED_ADDR,
       l2Value: 0,
       l2Calldata: abi.encodeWithSelector(
-        ISequencerUptimeFeed.updateStatus.selector,
-        currentAnswer == ANSWER_SEQ_OFFLINE,
-        uint64(block.timestamp)
+        ISequencerUptimeFeed.updateStatus.selector, currentAnswer == ANSWER_SEQ_OFFLINE, uint64(block.timestamp)
       ),
       l2GasLimit: s_gasLimit,
       l2GasPerPubdataByteLimit: s_l2GasPerPubdataByteLimit,

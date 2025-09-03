@@ -67,8 +67,7 @@ contract ArbitrumCrossDomainGovernor_Forward is ArbitrumCrossDomainGovernorTest 
 
     // Sends the message
     s_arbitrumCrossDomainGovernor.forward(
-      address(s_greeter),
-      abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
+      address(s_greeter), abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
     );
 
     // Checks that the greeter got the message
@@ -85,8 +84,7 @@ contract ArbitrumCrossDomainGovernor_Forward is ArbitrumCrossDomainGovernorTest 
 
     // Sends the message
     s_arbitrumCrossDomainGovernor.forward(
-      address(s_greeter),
-      abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
+      address(s_greeter), abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
     );
 
     // Checks that the greeter message was updated
@@ -101,8 +99,7 @@ contract ArbitrumCrossDomainGovernor_Forward is ArbitrumCrossDomainGovernorTest 
     // Sends an invalid message
     vm.expectRevert("Invalid greeting length");
     s_arbitrumCrossDomainGovernor.forward(
-      address(s_greeter),
-      abi.encodeWithSelector(s_greeter.setGreeting.selector, "")
+      address(s_greeter), abi.encodeWithSelector(s_greeter.setGreeting.selector, "")
     );
   }
 }
@@ -178,8 +175,7 @@ contract ArbitrumCrossDomainGovernor_ForwardDelegate is ArbitrumCrossDomainGover
     // Sends an invalid message (empty transaction data is not allowed)
     vm.expectRevert("Greeter: revert triggered");
     s_arbitrumCrossDomainGovernor.forwardDelegate(
-      address(s_greeter),
-      abi.encodeWithSelector(Greeter.triggerRevert.selector)
+      address(s_greeter), abi.encodeWithSelector(Greeter.triggerRevert.selector)
     );
   }
 }

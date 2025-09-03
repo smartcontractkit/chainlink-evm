@@ -6,7 +6,9 @@ import {FunctionsSubscriptions} from "../../../dev/v1_X/FunctionsSubscriptions.s
 /// @title Functions Subscriptions Test Harness
 /// @notice Contract to expose internal functions for testing purposes
 contract FunctionsSubscriptionsHarness is FunctionsSubscriptions {
-  constructor(address link) FunctionsSubscriptions(link) {}
+  constructor(
+    address link
+  ) FunctionsSubscriptions(link) {}
 
   function markRequestInFlight_HARNESS(address client, uint64 subscriptionId, uint96 estimatedTotalCostJuels) external {
     return super._markRequestInFlight(client, subscriptionId, estimatedTotalCostJuels);
@@ -21,19 +23,14 @@ contract FunctionsSubscriptionsHarness is FunctionsSubscriptions {
     uint96 gasUsed,
     uint96 costWithoutCallbackJuels
   ) external returns (Receipt memory) {
-    return
-      super._pay(
-        subscriptionId,
-        estimatedTotalCostJuels,
-        client,
-        adminFee,
-        juelsPerGas,
-        gasUsed,
-        costWithoutCallbackJuels
-      );
+    return super._pay(
+      subscriptionId, estimatedTotalCostJuels, client, adminFee, juelsPerGas, gasUsed, costWithoutCallbackJuels
+    );
   }
 
-  function isExistingSubscription_HARNESS(uint64 subscriptionId) external view {
+  function isExistingSubscription_HARNESS(
+    uint64 subscriptionId
+  ) external view {
     return super._isExistingSubscription(subscriptionId);
   }
 

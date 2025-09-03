@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.6;
 
+import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {Cron as CronExternal, Spec} from "../libraries/external/Cron.sol";
 import {CronUpkeep} from "./CronUpkeep.sol";
 import {CronUpkeepDelegate} from "./CronUpkeepDelegate.sol";
-import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
-import {Spec, Cron as CronExternal} from "../libraries/external/Cron.sol";
 
 /**
  * @title The CronUpkeepFactory contract
@@ -33,14 +33,18 @@ contract CronUpkeepFactory is ConfirmedOwner {
   /**
    * @notice Creates a new CronUpkeep contract, with msg.sender as the owner, and registers a cron job
    */
-  function newCronUpkeepWithJob(bytes memory encodedJob) public {
+  function newCronUpkeepWithJob(
+    bytes memory encodedJob
+  ) public {
     emit NewCronUpkeepCreated(address(new CronUpkeep(msg.sender, s_cronDelegate, s_maxJobs, encodedJob)), msg.sender);
   }
 
   /**
    * @notice Sets the max job limit on new cron upkeeps
    */
-  function setMaxJobs(uint256 maxJobs) external onlyOwner {
+  function setMaxJobs(
+    uint256 maxJobs
+  ) external onlyOwner {
     s_maxJobs = maxJobs;
   }
 
@@ -58,7 +62,9 @@ contract CronUpkeepFactory is ConfirmedOwner {
    * @param cronString the cron string to convert and encode
    * @return the abi encoding of the Spec struct representing the cron string
    */
-  function encodeCronString(string memory cronString) external pure returns (bytes memory) {
+  function encodeCronString(
+    string memory cronString
+  ) external pure returns (bytes memory) {
     return CronExternal.toEncodedSpec(cronString);
   }
 

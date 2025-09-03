@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
-import {VRFV2PlusWrapper_Arbitrum} from "../dev/VRFV2PlusWrapper_Arbitrum.sol";
+
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
+import {VRFV2PlusWrapper_Arbitrum} from "../dev/VRFV2PlusWrapper_Arbitrum.sol";
+import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract VRFV2PlusWrapperArbitrumTest is BaseTest {
   /// @dev ARBGAS_ADDR is the address of the ArbGasInfo precompile on Arbitrum.
@@ -34,7 +35,7 @@ contract VRFV2PlusWrapperArbitrumTest is BaseTest {
 
     // Deploy link token and link/native feed.
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Deploy coordinator.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5_Arbitrum(address(0));
@@ -44,10 +45,7 @@ contract VRFV2PlusWrapperArbitrumTest is BaseTest {
 
     // Deploy wrapper.
     s_wrapper = new VRFV2PlusWrapper_Arbitrum(
-      address(s_linkToken),
-      address(s_linkNativeFeed),
-      address(s_testCoordinator),
-      uint256(s_wrapperSubscriptionId)
+      address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(s_wrapperSubscriptionId)
     );
 
     // Configure the wrapper.
@@ -61,7 +59,7 @@ contract VRFV2PlusWrapperArbitrumTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500_000, // fulfillmentFlatFeeNativePPM
       100_000 // fulfillmentFlatFeeLinkDiscountPPM
     );

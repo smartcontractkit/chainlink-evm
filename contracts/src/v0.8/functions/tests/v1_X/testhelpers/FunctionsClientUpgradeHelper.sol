@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FunctionsRequest} from "../../../dev/v1_X/libraries/FunctionsRequest.sol";
-import {FunctionsClient} from "../../../dev/v1_X/FunctionsClient.sol";
 import {ConfirmedOwner} from "../../../../shared/access/ConfirmedOwner.sol";
+import {FunctionsClient} from "../../../dev/v1_X/FunctionsClient.sol";
+import {FunctionsRequest} from "../../../dev/v1_X/libraries/FunctionsRequest.sol";
 
 contract FunctionsClientUpgradeHelper is FunctionsClient, ConfirmedOwner {
   using FunctionsRequest for FunctionsRequest.Request;
 
-  constructor(address router) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
+  constructor(
+    address router
+  ) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
 
   event ResponseReceived(bytes32 indexed requestId, bytes result, bytes err);
 
@@ -83,11 +85,7 @@ contract FunctionsClientUpgradeHelper is FunctionsClient, ConfirmedOwner {
     bytes32 donId
   ) internal returns (bytes32) {
     bytes32 requestId = i_functionsRouter.sendRequestToProposed(
-      subscriptionId,
-      data,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      donId
+      subscriptionId, data, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, donId
     );
     emit RequestSent(requestId);
     return requestId;

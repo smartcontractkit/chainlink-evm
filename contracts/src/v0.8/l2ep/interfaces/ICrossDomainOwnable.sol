@@ -9,7 +9,9 @@ interface ICrossDomainOwnable {
 
   function l1Owner() external returns (address);
 
-  function transferL1Ownership(address recipient) external;
+  function transferL1Ownership(
+    address recipient
+  ) external;
 
   function acceptL1Ownership() external;
 }

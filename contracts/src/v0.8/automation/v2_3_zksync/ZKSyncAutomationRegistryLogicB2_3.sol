@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {ZKSyncAutomationRegistryBase2_3} from "./ZKSyncAutomationRegistryBase2_3.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
-import {ZKSyncAutomationRegistryLogicC2_3} from "./ZKSyncAutomationRegistryLogicC2_3.sol";
 import {Chainable} from "../Chainable.sol";
+import {ZKSyncAutomationRegistryBase2_3} from "./ZKSyncAutomationRegistryBase2_3.sol";
+import {ZKSyncAutomationRegistryLogicC2_3} from "./ZKSyncAutomationRegistryLogicC2_3.sol";
 import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/utils/SafeERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
+import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, Chainable {
   using Address for address;
@@ -73,20 +73,13 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
       uint256 nativeUSD;
       uint96 maxPayment;
       if (hotVars.paused) return (false, bytes(""), UpkeepFailureReason.REGISTRY_PAUSED, 0, upkeep.performGas, 0, 0);
-      if (upkeep.maxValidBlocknumber != UINT32_MAX)
+      if (upkeep.maxValidBlocknumber != UINT32_MAX) {
         return (false, bytes(""), UpkeepFailureReason.UPKEEP_CANCELLED, 0, upkeep.performGas, 0, 0);
+      }
       if (upkeep.paused) return (false, bytes(""), UpkeepFailureReason.UPKEEP_PAUSED, 0, upkeep.performGas, 0, 0);
       (fastGasWei, linkUSD, nativeUSD) = _getFeedData(hotVars);
-      maxPayment = _getMaxPayment(
-        id,
-        hotVars,
-        triggerType,
-        upkeep.performGas,
-        fastGasWei,
-        linkUSD,
-        nativeUSD,
-        upkeep.billingToken
-      );
+      maxPayment =
+        _getMaxPayment(id, hotVars, triggerType, upkeep.performGas, fastGasWei, linkUSD, nativeUSD, upkeep.billingToken);
       if (upkeep.balance < maxPayment) {
         return (false, bytes(""), UpkeepFailureReason.INSUFFICIENT_BALANCE, 0, upkeep.performGas, 0, 0);
       }
@@ -113,21 +106,16 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
         );
       }
       return (
-        upkeepNeeded,
-        result,
-        UpkeepFailureReason.TARGET_CHECK_REVERTED,
-        gasUsed,
-        upkeep.performGas,
-        fastGasWei,
-        linkUSD
+        upkeepNeeded, result, UpkeepFailureReason.TARGET_CHECK_REVERTED, gasUsed, upkeep.performGas, fastGasWei, linkUSD
       );
     }
 
     (upkeepNeeded, performData) = abi.decode(result, (bool, bytes));
-    if (!upkeepNeeded)
+    if (!upkeepNeeded) {
       return (false, bytes(""), UpkeepFailureReason.UPKEEP_NOT_NEEDED, gasUsed, upkeep.performGas, fastGasWei, linkUSD);
+    }
 
-    if (performData.length > s_storage.maxPerformDataSize)
+    if (performData.length > s_storage.maxPerformDataSize) {
       return (
         false,
         bytes(""),
@@ -137,6 +125,7 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
         fastGasWei,
         linkUSD
       );
+    }
 
     return (upkeepNeeded, performData, upkeepFailureReason, gasUsed, upkeep.performGas, fastGasWei, linkUSD);
   }
@@ -163,7 +152,8 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
   }
 
   /**
-   * @dev checkCallback is used specifically for automation data streams lookups (see StreamsLookupCompatibleInterface.sol)
+   * @dev checkCallback is used specifically for automation data streams lookups (see
+   * StreamsLookupCompatibleInterface.sol)
    * @param id the upkeepID to execute a callback for
    * @param values the values returned from the data streams lookup
    * @param extraData the user-provided extra context data
@@ -284,7 +274,9 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
    * @notice remove the overridden billing config for an upkeep
    * @param id the upkeepID
    */
-  function removeBillingOverrides(uint256 id) external {
+  function removeBillingOverrides(
+    uint256 id
+  ) external {
     _onlyPrivilegeManagerAllowed();
 
     s_upkeep[id].overridesEnabled = false;
@@ -308,7 +300,9 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
   /**
    * @notice accepts the transfer of an upkeep admin
    */
-  function acceptUpkeepAdmin(uint256 id) external {
+  function acceptUpkeepAdmin(
+    uint256 id
+  ) external {
     Upkeep memory upkeep = s_upkeep[id];
     if (upkeep.maxValidBlocknumber != UINT32_MAX) revert UpkeepCancelled();
     if (s_proposedAdmin[id] != msg.sender) revert OnlyCallableByProposedAdmin();
@@ -322,7 +316,9 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
   /**
    * @notice pauses an upkeep - an upkeep will be neither checked nor performed while paused
    */
-  function pauseUpkeep(uint256 id) external {
+  function pauseUpkeep(
+    uint256 id
+  ) external {
     _requireAdminAndNotCancelled(id);
     Upkeep memory upkeep = s_upkeep[id];
     if (upkeep.paused) revert OnlyUnpausedUpkeep();
@@ -334,7 +330,9 @@ contract ZKSyncAutomationRegistryLogicB2_3 is ZKSyncAutomationRegistryBase2_3, C
   /**
    * @notice unpauses an upkeep
    */
-  function unpauseUpkeep(uint256 id) external {
+  function unpauseUpkeep(
+    uint256 id
+  ) external {
     _requireAdminAndNotCancelled(id);
     Upkeep memory upkeep = s_upkeep[id];
     if (!upkeep.paused) revert OnlyPausedUpkeep();

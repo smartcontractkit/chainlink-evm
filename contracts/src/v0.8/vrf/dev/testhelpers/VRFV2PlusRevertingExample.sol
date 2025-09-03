@@ -24,7 +24,9 @@ contract VRFV2PlusRevertingExample is VRFConsumerBaseV2Plus {
     revert();
   }
 
-  function createSubscriptionAndFund(uint96 amount) external {
+  function createSubscriptionAndFund(
+    uint96 amount
+  ) external {
     if (s_subId == 0) {
       s_subId = s_vrfCoordinator.createSubscription();
       s_vrfCoordinator.addConsumer(s_subId, address(this));
@@ -33,14 +35,18 @@ contract VRFV2PlusRevertingExample is VRFConsumerBaseV2Plus {
     LINKTOKEN.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_subId));
   }
 
-  function topUpSubscription(uint96 amount) external {
+  function topUpSubscription(
+    uint96 amount
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(s_subId != 0, "sub not set");
     // Approve the link transfer.
     LINKTOKEN.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_subId));
   }
 
-  function updateSubscription(address[] memory consumers) external {
+  function updateSubscription(
+    address[] memory consumers
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(s_subId != 0, "subID not set");
     for (uint256 i = 0; i < consumers.length; i++) {

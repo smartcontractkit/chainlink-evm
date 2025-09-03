@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {VerifierWithFeeManager} from "./BaseDestinationVerifierTest.t.sol";
-import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
-import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
+import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
+import {VerifierWithFeeManager} from "./BaseDestinationVerifierTest.t.sol";
 
 contract VerifierBillingTests is VerifierWithFeeManager {
   bytes32[3] internal s_reportContext;
@@ -52,11 +52,8 @@ contract VerifierBillingTests is VerifierWithFeeManager {
     weights[0] = Common.AddressAndWeight(signerAddrs[0], ONE_PERCENT * 100);
 
     s_verifier.setConfig(signerAddrs, FAULT_TOLERANCE, weights);
-    bytes memory signedReport = _generateV3EncodedBlob(
-      s_testReportThree,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(s_testReportThree, s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
     _approveNative(address(feeManager), DEFAULT_REPORT_NATIVE_FEE, USER);
     _verify(signedReport, address(native), 0, USER);
     assertEq(native.balanceOf(USER), DEFAULT_NATIVE_MINT_QUANTITY - DEFAULT_REPORT_NATIVE_FEE);
@@ -70,11 +67,8 @@ contract VerifierBillingTests is VerifierWithFeeManager {
     Common.AddressAndWeight[] memory weights = new Common.AddressAndWeight[](0);
 
     s_verifier.setConfig(signerAddrs, FAULT_TOLERANCE, weights);
-    bytes memory signedReport = _generateV3EncodedBlob(
-      s_testReportThree,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(s_testReportThree, s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
     _verify(signedReport, address(native), DEFAULT_REPORT_NATIVE_FEE, USER);
 
     assertEq(USER.balance, DEFAULT_NATIVE_MINT_QUANTITY - DEFAULT_REPORT_NATIVE_FEE);
@@ -87,11 +81,8 @@ contract VerifierBillingTests is VerifierWithFeeManager {
     Common.AddressAndWeight[] memory weights = new Common.AddressAndWeight[](0);
 
     s_verifier.setConfig(signerAddrs, FAULT_TOLERANCE, weights);
-    bytes memory signedReport = _generateV3EncodedBlob(
-      s_testReportThree,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(s_testReportThree, s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     _verify(signedReport, address(native), DEFAULT_REPORT_NATIVE_FEE * 2, USER);
     assertEq(USER.balance, DEFAULT_NATIVE_MINT_QUANTITY - DEFAULT_REPORT_NATIVE_FEE);
@@ -115,11 +106,8 @@ contract DestinationVerifierBulkVerifyBillingReport is VerifierWithFeeManager {
   }
 
   function test_verifyWithBulkLink() public {
-    bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(_generateV3Report(), s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     bytes[] memory signedReports = new bytes[](NUMBERS_OF_REPORTS);
     for (uint256 i = 0; i < NUMBERS_OF_REPORTS; i++) {
@@ -135,11 +123,8 @@ contract DestinationVerifierBulkVerifyBillingReport is VerifierWithFeeManager {
   }
 
   function test_verifyWithBulkNative() public {
-    bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(_generateV3Report(), s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     bytes[] memory signedReports = new bytes[](NUMBERS_OF_REPORTS);
     for (uint256 i = 0; i < NUMBERS_OF_REPORTS; i++) {
@@ -152,11 +137,8 @@ contract DestinationVerifierBulkVerifyBillingReport is VerifierWithFeeManager {
   }
 
   function test_verifyWithBulkNativeUnwrapped() public {
-    bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(_generateV3Report(), s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     bytes[] memory signedReports = new bytes[](NUMBERS_OF_REPORTS);
     for (uint256 i; i < NUMBERS_OF_REPORTS; i++) {
@@ -170,11 +152,8 @@ contract DestinationVerifierBulkVerifyBillingReport is VerifierWithFeeManager {
   }
 
   function test_verifyWithBulkNativeUnwrappedReturnsChange() public {
-    bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(_generateV3Report(), s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     bytes[] memory signedReports = new bytes[](NUMBERS_OF_REPORTS);
     for (uint256 i = 0; i < NUMBERS_OF_REPORTS; i++) {

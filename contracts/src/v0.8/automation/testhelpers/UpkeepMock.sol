@@ -17,27 +17,39 @@ contract UpkeepMock is AutomationCompatible {
 
   event UpkeepPerformedWith(bytes upkeepData);
 
-  function setShouldRevertCheck(bool value) public {
+  function setShouldRevertCheck(
+    bool value
+  ) public {
     shouldRevertCheck = value;
   }
 
-  function setPerformData(bytes calldata data) public {
+  function setPerformData(
+    bytes calldata data
+  ) public {
     performData = data;
   }
 
-  function setCanCheck(bool value) public {
+  function setCanCheck(
+    bool value
+  ) public {
     canCheck = value;
   }
 
-  function setCanPerform(bool value) public {
+  function setCanPerform(
+    bool value
+  ) public {
     canPerform = value;
   }
 
-  function setCheckRevertReason(string calldata value) public {
+  function setCheckRevertReason(
+    string calldata value
+  ) public {
     checkRevertReason = value;
   }
 
-  function setCheckGasToBurn(uint256 value) public {
+  function setCheckGasToBurn(
+    uint256 value
+  ) public {
     require(value > checkGasBuffer || value == 0, "checkGasToBurn must be 0 (disabled) or greater than buffer");
     if (value > 0) {
       checkGasToBurn = value - checkGasBuffer;
@@ -46,7 +58,9 @@ contract UpkeepMock is AutomationCompatible {
     }
   }
 
-  function setPerformGasToBurn(uint256 value) public {
+  function setPerformGasToBurn(
+    uint256 value
+  ) public {
     require(value > performGasBuffer || value == 0, "performGasToBurn must be 0 (disabled) or greater than buffer");
     if (value > 0) {
       performGasToBurn = value - performGasBuffer;
@@ -69,7 +83,9 @@ contract UpkeepMock is AutomationCompatible {
     return (couldCheck, performData);
   }
 
-  function performUpkeep(bytes calldata data) external override {
+  function performUpkeep(
+    bytes calldata data
+  ) external override {
     uint256 startGas = gasleft();
 
     require(canPerform, "Cannot perform");

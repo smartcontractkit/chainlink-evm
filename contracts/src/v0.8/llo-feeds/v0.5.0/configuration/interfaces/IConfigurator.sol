@@ -2,7 +2,8 @@
 pragma solidity 0.8.19;
 
 interface IConfigurator {
-  /// @notice This event is emitted whenever a new production configuration is set for a feed. It triggers a new run of the offchain reporting protocol.
+  /// @notice This event is emitted whenever a new production configuration is set for a feed. It triggers a new run of
+  /// the offchain reporting protocol.
   event ProductionConfigSet(
     bytes32 indexed configId,
     uint32 previousConfigBlockNumber,
@@ -17,7 +18,8 @@ interface IConfigurator {
     bool isGreenProduction
   );
 
-  /// @notice This event is emitted whenever a new staging configuration is set for a feed. It triggers a new run of the offchain reporting protocol.
+  /// @notice This event is emitted whenever a new staging configuration is set for a feed. It triggers a new run of the
+  /// offchain reporting protocol.
   event StagingConfigSet(
     bytes32 indexed configId,
     uint32 previousConfigBlockNumber,

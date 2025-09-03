@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
 import {AutomationForwarder} from "../AutomationForwarder.sol";
 import {AutomationForwarderLogic} from "../AutomationForwarderLogic.sol";
+import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
 import "forge-std/Test.sol";
 
 // in contracts directory, run
@@ -45,18 +45,18 @@ contract AutomationForwarderTest_constructor is AutomationForwarderTestSetUp {
 contract AutomationForwarderTest_forward is AutomationForwarderTestSetUp {
   function testOnlyCallableByTheRegistry() external {
     vm.prank(REGISTRY);
-    forwarder.forward(100000, abi.encodeWithSelector(Target.handler.selector));
+    forwarder.forward(100_000, abi.encodeWithSelector(Target.handler.selector));
     vm.prank(STRANGER);
     vm.expectRevert();
-    forwarder.forward(100000, abi.encodeWithSelector(Target.handler.selector));
+    forwarder.forward(100_000, abi.encodeWithSelector(Target.handler.selector));
   }
 
   function testReturnsSuccessValueAndGasUsed() external {
     vm.startPrank(REGISTRY);
-    (bool success, uint256 gasUsed) = forwarder.forward(100000, abi.encodeWithSelector(Target.handler.selector));
+    (bool success, uint256 gasUsed) = forwarder.forward(100_000, abi.encodeWithSelector(Target.handler.selector));
     assertTrue(success);
     assertGt(gasUsed, 0);
-    (success, gasUsed) = forwarder.forward(100000, abi.encodeWithSelector(Target.handlerRevert.selector));
+    (success, gasUsed) = forwarder.forward(100_000, abi.encodeWithSelector(Target.handlerRevert.selector));
     assertFalse(success);
     assertGt(gasUsed, 0);
   }

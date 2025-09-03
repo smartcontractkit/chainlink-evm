@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseRewardManagerTest} from "./BaseRewardManager.t.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
+import {BaseRewardManagerTest} from "./BaseRewardManager.t.sol";
 
 /**
  * @title BaseRewardManagerTest
@@ -141,10 +141,7 @@ contract RewardManagerPayRecipientsTest is BaseRewardManagerTest {
     }
 
     //check the pool has the remaining balance
-    assertEq(
-      getAssetBalance(address(rewardManager)),
-      POOL_DEPOSIT_AMOUNT - expectedRecipientAmount * recipients.length
-    );
+    assertEq(getAssetBalance(address(rewardManager)), POOL_DEPOSIT_AMOUNT - expectedRecipientAmount * recipients.length);
   }
 
   function test_payAllRecipientsFromNonAdminUser() public {

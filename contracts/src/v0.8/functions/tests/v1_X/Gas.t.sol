@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {FunctionsRouter} from "../../dev/v1_X/FunctionsRouter.sol";
 import {FunctionsSubscriptions} from "../../dev/v1_X/FunctionsSubscriptions.sol";
 import {FunctionsRequest} from "../../dev/v1_X/libraries/FunctionsRequest.sol";
 import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 import {FunctionsClientTestHelper} from "./testhelpers/FunctionsClientTestHelper.sol";
 
-import {FunctionsRoutesSetup, FunctionsOwnerAcceptTermsOfServiceSetup, FunctionsSubscriptionSetup, FunctionsClientRequestSetup} from "./Setup.t.sol";
+import {
+  FunctionsClientRequestSetup,
+  FunctionsOwnerAcceptTermsOfServiceSetup,
+  FunctionsRoutesSetup,
+  FunctionsSubscriptionSetup
+} from "./Setup.t.sol";
 
 import "forge-std/Vm.sol";
 
@@ -89,7 +94,9 @@ contract Gas_SendRequest is FunctionsSubscriptionSetup {
   bytes s_minimalRequestData;
   bytes s_maximalRequestData;
 
-  function _makeStringOfBytesSize(uint16 bytesSize) internal pure returns (string memory) {
+  function _makeStringOfBytesSize(
+    uint16 bytesSize
+  ) internal pure returns (string memory) {
     return vm.toString(new bytes((bytesSize - 2) / 2));
   }
 
@@ -103,10 +110,7 @@ contract Gas_SendRequest is FunctionsSubscriptionSetup {
       FunctionsRequest.Request memory minimalRequest;
       string memory minimalSourceCode = "return Functions.encodeString('hello world');";
       FunctionsRequest._initializeRequest(
-        minimalRequest,
-        FunctionsRequest.Location.Inline,
-        FunctionsRequest.CodeLanguage.JavaScript,
-        minimalSourceCode
+        minimalRequest, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, minimalSourceCode
       );
       s_minimalRequestData = FunctionsRequest._encodeCBOR(minimalRequest);
     }
@@ -118,10 +122,7 @@ contract Gas_SendRequest is FunctionsSubscriptionSetup {
       // Create maximum viable request data - 30 KB encoded data
       string memory maximalSourceCode = _makeStringOfBytesSize(29_898); // CBOR size without source code is 102 bytes
       FunctionsRequest._initializeRequest(
-        maxmimalRequest,
-        FunctionsRequest.Location.Inline,
-        FunctionsRequest.CodeLanguage.JavaScript,
-        maximalSourceCode
+        maxmimalRequest, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, maximalSourceCode
       );
       s_maximalRequestData = FunctionsRequest._encodeCBOR(maxmimalRequest);
       assertEq(s_maximalRequestData.length, 30_000);
@@ -144,7 +145,7 @@ contract Gas_SendRequest is FunctionsSubscriptionSetup {
     // Pull storage variables into memory
     bytes memory minimalRequestData = s_minimalRequestData;
     uint64 subscriptionId = s_subscriptionId;
-    uint32 callbackGasLimit = 5_500;
+    uint32 callbackGasLimit = 5500;
     bytes32 donId = s_donId;
     vm.resumeGasMetering();
 
@@ -158,7 +159,9 @@ contract Gas_FulfillRequest_Setup is FunctionsClientRequestSetup {
 
   FunctionsClientTestHelper s_functionsClientWithMaximumReturnData;
 
-  function _makeStringOfBytesSize(uint16 bytesSize) internal pure returns (string memory) {
+  function _makeStringOfBytesSize(
+    uint16 bytesSize
+  ) internal pure returns (string memory) {
     return vm.toString(new bytes((bytesSize - 2) / 2));
   }
 
@@ -169,7 +172,8 @@ contract Gas_FulfillRequest_Setup is FunctionsClientRequestSetup {
       // Deploy consumer that has large revert return data
       s_functionsClientWithMaximumReturnData = new FunctionsClientTestHelper(address(s_functionsRouter));
       s_functionsClientWithMaximumReturnData.setRevertFulfillRequest(true);
-      string memory revertMessage = _makeStringOfBytesSize(30_000); // 30kb - FunctionsRouter cuts off response at MAX_CALLBACK_RETURN_BYTES = 4 + 4 * 32 = 132bytes, go well above that
+      string memory revertMessage = _makeStringOfBytesSize(30_000); // 30kb - FunctionsRouter cuts off response at
+        // MAX_CALLBACK_RETURN_BYTES = 4 + 4 * 32 = 132bytes, go well above that
       s_functionsClientWithMaximumReturnData.setRevertFulfillRequestMessage(revertMessage);
       s_functionsRouter.addConsumer(s_subscriptionId, address(s_functionsClientWithMaximumReturnData));
     }
@@ -213,11 +217,8 @@ contract Gas_FulfillRequest_Setup is FunctionsClientRequestSetup {
       signerPrivateKeys[1] = NOP_SIGNER_PRIVATE_KEY_2;
       signerPrivateKeys[2] = NOP_SIGNER_PRIVATE_KEY_3;
 
-      (bytes32[] memory rawRs, bytes32[] memory rawSs, bytes32 rawVs) = _signReport(
-        report,
-        reportContext,
-        signerPrivateKeys
-      );
+      (bytes32[] memory rawRs, bytes32[] memory rawSs, bytes32 rawVs) =
+        _signReport(report, reportContext, signerPrivateKeys);
 
       // Store the report data
       s_reports[1] = Report({rs: rawRs, ss: rawSs, vs: rawVs, report: report, reportContext: reportContext});
@@ -227,13 +228,14 @@ contract Gas_FulfillRequest_Setup is FunctionsClientRequestSetup {
     {
       // Send requests minimum gas test
       uint8 requestsToSend = 1;
-      uint8 requestNumberOffset = 3; // the setup already has request #1 sent, and the previous test case uses request #2, start from request #3
+      uint8 requestNumberOffset = 3; // the setup already has request #1 sent, and the previous test case uses request
+        // #2, start from request #3
 
       string memory sourceCode = "return Functions.encodeString('hello world');";
       bytes memory secrets = new bytes(0);
       string[] memory args = new string[](0);
       bytes[] memory bytesArgs = new bytes[](0);
-      uint32 callbackGasLimit = 5_500;
+      uint32 callbackGasLimit = 5500;
 
       for (uint256 i = 0; i < requestsToSend; ++i) {
         _sendAndStoreRequest(i + requestNumberOffset, sourceCode, secrets, args, bytesArgs, callbackGasLimit);
@@ -256,11 +258,8 @@ contract Gas_FulfillRequest_Setup is FunctionsClientRequestSetup {
       signerPrivateKeys[1] = NOP_SIGNER_PRIVATE_KEY_2;
       signerPrivateKeys[2] = NOP_SIGNER_PRIVATE_KEY_3;
 
-      (bytes32[] memory rawRs, bytes32[] memory rawSs, bytes32 rawVs) = _signReport(
-        report,
-        reportContext,
-        signerPrivateKeys
-      );
+      (bytes32[] memory rawRs, bytes32[] memory rawSs, bytes32 rawVs) =
+        _signReport(report, reportContext, signerPrivateKeys);
 
       // Store the report data
       s_reports[2] = Report({rs: rawRs, ss: rawSs, vs: rawVs, report: report, reportContext: reportContext});

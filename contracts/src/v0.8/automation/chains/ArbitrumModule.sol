@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
+import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import {ChainModuleBase} from "./ChainModuleBase.sol";
 
 contract ArbitrumModule is ChainModuleBase {
@@ -19,7 +19,9 @@ contract ArbitrumModule is ChainModuleBase {
   uint256 private constant FIXED_GAS_OVERHEAD = 5000;
   uint256 private constant PER_CALLDATA_BYTE_GAS_OVERHEAD = 0;
 
-  function blockHash(uint256 n) external view override returns (bytes32) {
+  function blockHash(
+    uint256 n
+  ) external view override returns (bytes32) {
     uint256 blockNum = ARB_SYS.arbBlockNumber();
     if (n >= blockNum || blockNum - n > 256) {
       return "";
@@ -31,12 +33,16 @@ contract ArbitrumModule is ChainModuleBase {
     return ARB_SYS.arbBlockNumber();
   }
 
-  function getCurrentL1Fee(uint256) external view override returns (uint256) {
+  function getCurrentL1Fee(
+    uint256
+  ) external view override returns (uint256) {
     return ARB_GAS.getCurrentTxL1GasFees();
   }
 
-  function getMaxL1Fee(uint256 dataSize) external view override returns (uint256) {
-    (, uint256 perL1CalldataByte, , , , ) = ARB_GAS.getPricesInWei();
+  function getMaxL1Fee(
+    uint256 dataSize
+  ) external view override returns (uint256) {
+    (, uint256 perL1CalldataByte,,,,) = ARB_GAS.getPricesInWei();
     return perL1CalldataByte * dataSize;
   }
 

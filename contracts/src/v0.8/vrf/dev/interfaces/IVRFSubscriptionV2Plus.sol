@@ -31,7 +31,9 @@ interface IVRFSubscriptionV2Plus {
    * @dev will revert if original owner of subId has
    * not requested that msg.sender become the new owner.
    */
-  function acceptSubscriptionOwnerTransfer(uint256 subId) external;
+  function acceptSubscriptionOwnerTransfer(
+    uint256 subId
+  ) external;
 
   /**
    * @notice Request subscription owner transfer.
@@ -78,7 +80,9 @@ interface IVRFSubscriptionV2Plus {
    * @return true if there exists at least one unfulfilled request for the subscription, false
    * otherwise.
    */
-  function pendingRequestExists(uint256 subId) external view returns (bool);
+  function pendingRequestExists(
+    uint256 subId
+  ) external view returns (bool);
 
   /**
    * @notice Paginate through all active VRF subscriptions.
@@ -94,5 +98,7 @@ interface IVRFSubscriptionV2Plus {
    * @param subId - ID of the subscription
    * @notice This method expects msg.value to be greater than or equal to 0.
    */
-  function fundSubscriptionWithNative(uint256 subId) external payable;
+  function fundSubscriptionWithNative(
+    uint256 subId
+  ) external payable;
 }

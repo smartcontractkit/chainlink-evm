@@ -11,7 +11,9 @@ contract MockArbSys {
     return block.number;
   }
 
-  function arbBlockHash(uint256 arbBlockNum) external view returns (bytes32) {
+  function arbBlockHash(
+    uint256 arbBlockNum
+  ) external view returns (bytes32) {
     return blockhash(arbBlockNum);
   }
 }

@@ -1,8 +1,8 @@
 pragma solidity 0.8.16;
 
+import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 import "../interfaces/AutomationCompatibleInterface.sol";
 import "../interfaces/StreamsLookupCompatibleInterface.sol";
-import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 
 interface IVerifierProxy {
   /**
@@ -11,7 +11,9 @@ interface IVerifierProxy {
    * @param signedReport The encoded data to be verified.
    * @return verifierResponse The encoded response from the verifier.
    */
-  function verify(bytes memory signedReport) external returns (bytes memory verifierResponse);
+  function verify(
+    bytes memory signedReport
+  ) external returns (bytes memory verifierResponse);
 }
 
 contract StreamsLookupUpkeep is AutomationCompatibleInterface, StreamsLookupCompatibleInterface {
@@ -63,15 +65,21 @@ contract StreamsLookupUpkeep is AutomationCompatibleInterface, StreamsLookupComp
     timeParamKey = _timeParamKey;
   }
 
-  function setFeeds(string[] memory _feeds) external {
+  function setFeeds(
+    string[] memory _feeds
+  ) external {
     feeds = _feeds;
   }
 
-  function setShouldRevertCallback(bool value) public {
+  function setShouldRevertCallback(
+    bool value
+  ) public {
     shouldRevertCallback = value;
   }
 
-  function setCallbackReturnBool(bool value) public {
+  function setCallbackReturnBool(
+    bool value
+  ) public {
     callbackReturnBool = value;
   }
 
@@ -96,7 +104,9 @@ contract StreamsLookupUpkeep is AutomationCompatibleInterface, StreamsLookupComp
     return (false, new bytes(0));
   }
 
-  function checkUpkeep(bytes calldata data) external view returns (bool, bytes memory) {
+  function checkUpkeep(
+    bytes calldata data
+  ) external view returns (bool, bytes memory) {
     if (!eligible()) {
       return (false, data);
     }
@@ -117,7 +127,9 @@ contract StreamsLookupUpkeep is AutomationCompatibleInterface, StreamsLookupComp
     revert StreamsLookup(feedParamKey, feeds, timeParamKey, timeParam, abi.encodePacked(address(ARB_SYS)));
   }
 
-  function performUpkeep(bytes calldata performData) external {
+  function performUpkeep(
+    bytes calldata performData
+  ) external {
     uint256 blockNumber;
     if (useArbBlock) {
       blockNumber = ARB_SYS.arbBlockNumber();

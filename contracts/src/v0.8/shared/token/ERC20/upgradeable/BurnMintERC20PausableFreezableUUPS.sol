@@ -23,7 +23,8 @@ contract BurnMintERC20PausableFreezableUUPS is BurnMintERC20PausableUUPS {
     mapping(address => bool) isFrozen;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.BurnMintERC20PausableFreezableUUPS")) - 1)) & ~bytes32(uint256(0xff));
+  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.BurnMintERC20PausableFreezableUUPS")) - 1)) &
+  // ~bytes32(uint256(0xff));
   bytes32 private constant BURN_MINT_ERC20_PAUSABLE_FREEZABLE_UUPS_STORAGE_LOCATION =
     0x36a30f686feb055c8d90421e230dafb8f47433e358189345608518a408badc00;
 
@@ -45,7 +46,9 @@ contract BurnMintERC20PausableFreezableUUPS is BurnMintERC20PausableUUPS {
   /// @notice Freezes an account, disallowing transfers, minting and burning from/to it.
   /// @dev Requires the caller to have the FREEZER_ROLE.
   /// @dev Can be called even if the contract is paused.
-  function freeze(address account) public onlyRole(FREEZER_ROLE) {
+  function freeze(
+    address account
+  ) public onlyRole(FREEZER_ROLE) {
     if (account == address(0)) revert BurnMintERC20PausableFreezableUUPS__InvalidRecipient(account);
     if (account == address(this)) revert BurnMintERC20PausableFreezableUUPS__InvalidRecipient(account);
 
@@ -60,7 +63,9 @@ contract BurnMintERC20PausableFreezableUUPS is BurnMintERC20PausableUUPS {
   /// @notice Unfreezes an account
   /// @dev Requires the caller to have the FREEZER_ROLE.
   /// @dev Can be called even if the contract is paused.
-  function unfreeze(address account) public onlyRole(FREEZER_ROLE) {
+  function unfreeze(
+    address account
+  ) public onlyRole(FREEZER_ROLE) {
     BurnMintERC20PausableFreezableUUPSStorage storage $ = _getBurnMintERC20PausableFreezableUUPSStorage();
     if (!$.isFrozen[account]) revert BurnMintERC20PausableFreezableUUPS__AccountNotFrozen(account);
 
@@ -69,7 +74,9 @@ contract BurnMintERC20PausableFreezableUUPS is BurnMintERC20PausableUUPS {
     emit AccountUnfrozen(account);
   }
 
-  function isFrozen(address account) public view returns (bool) {
+  function isFrozen(
+    address account
+  ) public view returns (bool) {
     return _getBurnMintERC20PausableFreezableUUPSStorage().isFrozen[account];
   }
 
@@ -77,7 +84,8 @@ contract BurnMintERC20PausableFreezableUUPS is BurnMintERC20PausableUUPS {
   // │                            ERC20                             │
   // ================================================================
 
-  /// @dev Uses BurnMintERC20PausableUUPS _update hook to disallow transfers, minting and burning from/to frozen addresses.
+  /// @dev Uses BurnMintERC20PausableUUPS _update hook to disallow transfers, minting and burning from/to frozen
+  /// addresses.
   function _update(address from, address to, uint256 value) internal virtual override {
     BurnMintERC20PausableFreezableUUPSStorage storage $ = _getBurnMintERC20PausableFreezableUUPSStorage();
     if ($.isFrozen[from]) revert BurnMintERC20PausableFreezableUUPS__AccountFrozen(from);

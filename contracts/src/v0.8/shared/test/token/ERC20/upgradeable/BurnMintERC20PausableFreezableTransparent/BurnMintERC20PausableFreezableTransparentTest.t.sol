@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {BurnMintERC20PausableFreezableTransparent} from "../../../../../token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent.sol";
+import {BurnMintERC20PausableFreezableTransparent} from
+  "../../../../../token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent.sol";
 import {BurnMintERC20Transparent} from "../../../../../token/ERC20/upgradeable/BurnMintERC20Transparent.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from
+  "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {ERC20UpgradableBaseTest_freeze} from "../ERC20UpgradableBaseTest.freeze.t.sol";
 import {ERC20UpgradableBaseTest_unfreeze} from "../ERC20UpgradableBaseTest.unfreeze.t.sol";
@@ -22,8 +24,7 @@ contract BurnMintERC20PausableFreezableTransparentTest is
         implementation,
         INITIAL_OWNER_ADDRESS_FOR_PROXY_ADMIN,
         abi.encodeCall(
-          BurnMintERC20Transparent.initialize,
-          (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN)
+          BurnMintERC20Transparent.initialize, (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN)
         )
       )
     );
@@ -32,12 +33,10 @@ contract BurnMintERC20PausableFreezableTransparentTest is
 
     changePrank(DEFAULT_ADMIN);
     s_burnMintERC20PausableFreezableTransparent.grantRole(
-      s_burnMintERC20PausableFreezableTransparent.PAUSER_ROLE(),
-      DEFAULT_PAUSER
+      s_burnMintERC20PausableFreezableTransparent.PAUSER_ROLE(), DEFAULT_PAUSER
     );
     s_burnMintERC20PausableFreezableTransparent.grantRole(
-      s_burnMintERC20PausableFreezableTransparent.FREEZER_ROLE(),
-      DEFAULT_FREEZER
+      s_burnMintERC20PausableFreezableTransparent.FREEZER_ROLE(), DEFAULT_FREEZER
     );
   }
 
@@ -55,8 +54,7 @@ contract BurnMintERC20PausableFreezableTransparentTest is
 
   function test_Freeze_RevertWhen_CallerDoesNotHaveFreezerRole() public {
     should_Freeze_RevertWhen_CallerDoesNotHaveFreezerRole(
-      address(s_burnMintERC20PausableFreezableTransparent),
-      s_burnMintERC20PausableFreezableTransparent.FREEZER_ROLE()
+      address(s_burnMintERC20PausableFreezableTransparent), s_burnMintERC20PausableFreezableTransparent.FREEZER_ROLE()
     );
   }
 
@@ -116,8 +114,7 @@ contract BurnMintERC20PausableFreezableTransparentTest is
 
   function test_Unfreeze_RevertWhen_CallerDoesNotHaveFreezerRole() public {
     should_Unfreeze_RevertWhen_CallerDoesNotHaveFreezerRole(
-      address(s_burnMintERC20PausableFreezableTransparent),
-      s_burnMintERC20PausableFreezableTransparent.FREEZER_ROLE()
+      address(s_burnMintERC20PausableFreezableTransparent), s_burnMintERC20PausableFreezableTransparent.FREEZER_ROLE()
     );
   }
 

@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
-import {FeeManager} from "../../FeeManager.sol";
-import {RewardManager} from "../../RewardManager.sol";
-import {Common} from "../../../libraries/Common.sol";
 import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
 import {WERC20Mock} from "../../../../shared/mocks/WERC20Mock.sol";
+import {Common} from "../../../libraries/Common.sol";
+import {FeeManager} from "../../FeeManager.sol";
+import {RewardManager} from "../../RewardManager.sol";
+
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
 import {FeeManagerProxy} from "../mocks/FeeManagerProxy.sol";
+import {Test} from "forge-std/Test.sol";
 
 /**
  * @title BaseFeeManagerTest
  * @author Michael Fletcher
  * @notice Base class for all feeManager tests
- * @dev This contract is intended to be inherited from and not used directly. It contains functionality to setup the feeManager
+ * @dev This contract is intended to be inherited from and not used directly. It contains functionality to setup the
+ * feeManager
  */
 contract BaseFeeManagerTest is Test {
   //contracts
@@ -167,55 +169,59 @@ contract BaseFeeManagerTest is Test {
   // solium-disable-next-line no-unused-vars
   function getFee(bytes memory report, address quote, address subscriber) public view returns (Common.Asset memory) {
     //get the fee
-    (Common.Asset memory fee, , ) = feeManager.getFeeAndReward(subscriber, report, quote);
+    (Common.Asset memory fee,,) = feeManager.getFeeAndReward(subscriber, report, quote);
 
     return fee;
   }
 
   function getReward(bytes memory report, address quote, address subscriber) public view returns (Common.Asset memory) {
     //get the reward
-    (, Common.Asset memory reward, ) = feeManager.getFeeAndReward(subscriber, report, quote);
+    (, Common.Asset memory reward,) = feeManager.getFeeAndReward(subscriber, report, quote);
 
     return reward;
   }
 
   function getAppliedDiscount(bytes memory report, address quote, address subscriber) public view returns (uint256) {
     //get the reward
-    (, , uint256 appliedDiscount) = feeManager.getFeeAndReward(subscriber, report, quote);
+    (,, uint256 appliedDiscount) = feeManager.getFeeAndReward(subscriber, report, quote);
 
     return appliedDiscount;
   }
 
-  function getV1Report(bytes32 feedId) public pure returns (bytes memory) {
+  function getV1Report(
+    bytes32 feedId
+  ) public pure returns (bytes memory) {
     return abi.encode(feedId, uint32(0), int192(0), int192(0), int192(0), uint64(0), bytes32(0), uint64(0), uint64(0));
   }
 
-  function getV2Report(bytes32 feedId) public view returns (bytes memory) {
-    return
-      abi.encode(
-        feedId,
-        uint32(0),
-        uint32(0),
-        uint192(DEFAULT_REPORT_NATIVE_FEE),
-        uint192(DEFAULT_REPORT_LINK_FEE),
-        uint32(block.timestamp),
-        int192(0)
-      );
+  function getV2Report(
+    bytes32 feedId
+  ) public view returns (bytes memory) {
+    return abi.encode(
+      feedId,
+      uint32(0),
+      uint32(0),
+      uint192(DEFAULT_REPORT_NATIVE_FEE),
+      uint192(DEFAULT_REPORT_LINK_FEE),
+      uint32(block.timestamp),
+      int192(0)
+    );
   }
 
-  function getV3Report(bytes32 feedId) public view returns (bytes memory) {
-    return
-      abi.encode(
-        feedId,
-        uint32(0),
-        uint32(0),
-        uint192(DEFAULT_REPORT_NATIVE_FEE),
-        uint192(DEFAULT_REPORT_LINK_FEE),
-        uint32(block.timestamp),
-        int192(0),
-        int192(0),
-        int192(0)
-      );
+  function getV3Report(
+    bytes32 feedId
+  ) public view returns (bytes memory) {
+    return abi.encode(
+      feedId,
+      uint32(0),
+      uint32(0),
+      uint192(DEFAULT_REPORT_NATIVE_FEE),
+      uint192(DEFAULT_REPORT_LINK_FEE),
+      uint32(block.timestamp),
+      int192(0),
+      int192(0),
+      int192(0)
+    );
   }
 
   function getV3ReportWithCustomExpiryAndFee(
@@ -224,18 +230,17 @@ contract BaseFeeManagerTest is Test {
     uint256 linkFee,
     uint256 nativeFee
   ) public pure returns (bytes memory) {
-    return
-      abi.encode(
-        feedId,
-        uint32(0),
-        uint32(0),
-        uint192(nativeFee),
-        uint192(linkFee),
-        uint32(expiry),
-        int192(0),
-        int192(0),
-        int192(0)
-      );
+    return abi.encode(
+      feedId,
+      uint32(0),
+      uint32(0),
+      uint192(nativeFee),
+      uint192(linkFee),
+      uint32(expiry),
+      int192(0),
+      int192(0),
+      int192(0)
+    );
   }
 
   function getLinkQuote() public view returns (address) {
@@ -258,15 +263,21 @@ contract BaseFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function getLinkBalance(address balanceAddress) public view returns (uint256) {
+  function getLinkBalance(
+    address balanceAddress
+  ) public view returns (uint256) {
     return link.balanceOf(balanceAddress);
   }
 
-  function getNativeBalance(address balanceAddress) public view returns (uint256) {
+  function getNativeBalance(
+    address balanceAddress
+  ) public view returns (uint256) {
     return native.balanceOf(balanceAddress);
   }
 
-  function getNativeUnwrappedBalance(address balanceAddress) public view returns (uint256) {
+  function getNativeUnwrappedBalance(
+    address balanceAddress
+  ) public view returns (uint256) {
     return balanceAddress.balance;
   }
 
@@ -345,7 +356,9 @@ contract BaseFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function getPayload(bytes memory reportPayload) public pure returns (bytes memory) {
+  function getPayload(
+    bytes memory reportPayload
+  ) public pure returns (bytes memory) {
     return abi.encode([DEFAULT_CONFIG_DIGEST, 0, 0], reportPayload, new bytes32[](1), new bytes32[](1), bytes32(""));
   }
 
@@ -385,7 +398,9 @@ contract BaseFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function getLinkDeficit(bytes32 configDigest) public view returns (uint256) {
+  function getLinkDeficit(
+    bytes32 configDigest
+  ) public view returns (uint256) {
     return feeManager.s_linkDeficit(configDigest);
   }
 }

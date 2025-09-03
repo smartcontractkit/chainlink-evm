@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FunctionsRequest} from "../../../dev/v1_X/libraries/FunctionsRequest.sol";
 import {FunctionsClient} from "../../../dev/v1_X/FunctionsClient.sol";
+import {FunctionsRequest} from "../../../dev/v1_X/libraries/FunctionsRequest.sol";
 
 contract FunctionsClientWithEmptyCallback is FunctionsClient {
   using FunctionsRequest for FunctionsRequest.Request;
@@ -10,7 +10,9 @@ contract FunctionsClientWithEmptyCallback is FunctionsClient {
   event SendRequestInvoked(bytes32 requestId, string sourceCode, uint64 subscriptionId);
   event FulfillRequestInvoked(bytes32 requestId, bytes response, bytes err);
 
-  constructor(address router) FunctionsClient(router) {}
+  constructor(
+    address router
+  ) FunctionsClient(router) {}
 
   function sendSimpleRequestWithJavaScript(
     string memory sourceCode,
@@ -25,7 +27,7 @@ contract FunctionsClientWithEmptyCallback is FunctionsClient {
     emit SendRequestInvoked(requestId, sourceCode, subscriptionId);
   }
 
-  function _fulfillRequest(bytes32 /*requestId*/, bytes memory /*response*/, bytes memory /*err*/) internal override {
+  function _fulfillRequest(bytes32, /*requestId*/ bytes memory, /*response*/ bytes memory /*err*/ ) internal override {
     // Do nothing
   }
 }

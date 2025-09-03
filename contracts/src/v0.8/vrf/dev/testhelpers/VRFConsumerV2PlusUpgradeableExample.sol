@@ -2,10 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {LinkTokenInterface} from "../../../shared/interfaces/LinkTokenInterface.sol";
-import {IVRFCoordinatorV2Plus} from "../interfaces/IVRFCoordinatorV2Plus.sol";
+
 import {VRFConsumerBaseV2Upgradeable} from "../VRFConsumerBaseV2Upgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IVRFCoordinatorV2Plus} from "../interfaces/IVRFCoordinatorV2Plus.sol";
+
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract VRFConsumerV2PlusUpgradeableExample is Initializable, VRFConsumerBaseV2Upgradeable {
   uint256[] public s_randomWords;
@@ -30,7 +32,9 @@ contract VRFConsumerV2PlusUpgradeableExample is Initializable, VRFConsumerBaseV2
     s_randomWords = randomWords;
   }
 
-  function createSubscriptionAndFund(uint96 amount) external {
+  function createSubscriptionAndFund(
+    uint96 amount
+  ) external {
     if (s_subId == 0) {
       s_subId = COORDINATOR.createSubscription();
       COORDINATOR.addConsumer(s_subId, address(this));
@@ -39,14 +43,18 @@ contract VRFConsumerV2PlusUpgradeableExample is Initializable, VRFConsumerBaseV2
     LINKTOKEN.transferAndCall(address(COORDINATOR), amount, abi.encode(s_subId));
   }
 
-  function topUpSubscription(uint96 amount) external {
+  function topUpSubscription(
+    uint96 amount
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(s_subId != 0, "sub not set");
     // Approve the link transfer.
     LINKTOKEN.transferAndCall(address(COORDINATOR), amount, abi.encode(s_subId));
   }
 
-  function updateSubscription(address[] memory consumers) external {
+  function updateSubscription(
+    address[] memory consumers
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(s_subId != 0, "subID not set");
     for (uint256 i = 0; i < consumers.length; i++) {

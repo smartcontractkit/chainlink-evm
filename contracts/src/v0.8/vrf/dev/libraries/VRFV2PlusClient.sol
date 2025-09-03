@@ -5,6 +5,7 @@ pragma solidity ^0.8.4;
 library VRFV2PlusClient {
   // extraArgs will evolve to support new features
   bytes4 public constant EXTRA_ARGS_V1_TAG = bytes4(keccak256("VRF ExtraArgsV1"));
+
   struct ExtraArgsV1 {
     bool nativePayment;
   }
@@ -18,7 +19,9 @@ library VRFV2PlusClient {
     bytes extraArgs;
   }
 
-  function _argsToBytes(ExtraArgsV1 memory extraArgs) internal pure returns (bytes memory bts) {
+  function _argsToBytes(
+    ExtraArgsV1 memory extraArgs
+  ) internal pure returns (bytes memory bts) {
     return abi.encodeWithSelector(EXTRA_ARGS_V1_TAG, extraArgs);
   }
 }

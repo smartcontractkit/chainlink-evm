@@ -15,7 +15,9 @@ contract Chainable {
   /**
    * @param fallbackAddress the address of the next contract in the chain
    */
-  constructor(address fallbackAddress) {
+  constructor(
+    address fallbackAddress
+  ) {
     i_FALLBACK_ADDRESS = fallbackAddress;
   }
 
@@ -50,12 +52,8 @@ contract Chainable {
 
       switch result
       // delegatecall returns 0 on error.
-      case 0 {
-        revert(0, returndatasize())
-      }
-      default {
-        return(0, returndatasize())
-      }
+      case 0 { revert(0, returndatasize()) }
+      default { return(0, returndatasize()) }
     }
   }
 }

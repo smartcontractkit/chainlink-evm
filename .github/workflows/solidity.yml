@@ -148,28 +148,11 @@ jobs:
       - name: Run solhint on tests
         run: pnpm solhint-test
 
-  prettier:
-    defaults:
-      run:
-        working-directory: contracts
-    needs: [changes]
-    if: needs.changes.outputs.changes == 'true'
-    name: Prettier Formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repo
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Setup NodeJS
-        uses: ./.github/actions/setup-nodejs
-      - name: Run prettier check
-        run: pnpm prettier:check
 
   publish-beta:
     name: Publish Beta NPM
     environment: publish-contracts
-    needs: [tag-check, changes, lint, prettier, native-compile]
+    needs: [tag-check, changes, lint, native-compile]
     if: needs.tag-check.outputs.is-pre-release-core == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -216,7 +199,7 @@ jobs:
   publish-prod:
     name: Publish Prod NPM
     environment: publish-contracts
-    needs: [tag-check, changes, lint, prettier, native-compile]
+    needs: [tag-check, changes, lint, native-compile]
     if: needs.tag-check.outputs.is-release-core == 'true'
     runs-on: ubuntu-latest
     permissions:

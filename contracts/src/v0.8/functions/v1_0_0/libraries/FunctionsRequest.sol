@@ -14,19 +14,26 @@ library FunctionsRequest {
     Inline, // Provided within the Request
     Remote, // Hosted through remote location that can be accessed through a provided URL
     DONHosted // Hosted on the DON's storage
+
   }
 
   enum CodeLanguage {
     JavaScript
-    // In future version we may add other languages
   }
+  // In future version we may add other languages
 
   struct Request {
-    Location codeLocation; // ════════════╸ The location of the source code that will be executed on each node in the DON
-    Location secretsLocation; // ═════════╸ The location of secrets that will be passed into the source code. *Only Remote secrets are supported
+    Location codeLocation; // ════════════╸ The location of the source code that will be
+      // executed on each node in the DON
+    Location secretsLocation; // ═════════╸ The location of secrets that will be passed into the
+      // source code. *Only Remote secrets are supported
     CodeLanguage language; // ════════════╸ The coding language that the source code is written in
-    string source; // ════════════════════╸ Raw source code for Request.codeLocation of Location.Inline, URL for Request.codeLocation of Location.Remote, or slot decimal number for Request.codeLocation of Location.DONHosted
-    bytes encryptedSecretsReference; // ══╸ Encrypted URLs for Request.secretsLocation of Location.Remote (use addSecretsReference()), or CBOR encoded slotid+version for Request.secretsLocation of Location.DONHosted (use addDONHostedSecrets())
+    string source; // ════════════════════╸ Raw source code for
+      // Request.codeLocation of Location.Inline, URL for Request.codeLocation of Location.Remote, or slot decimal
+      // number for Request.codeLocation of Location.DONHosted
+    bytes encryptedSecretsReference; // ══╸ Encrypted URLs for Request.secretsLocation of Location.Remote (use
+      // addSecretsReference()), or CBOR encoded slotid+version for Request.secretsLocation of Location.DONHosted (use
+      // addDONHostedSecrets())
     string[] args; // ════════════════════╸ String arguments that will be passed into the source code
     bytes[] bytesArgs; // ════════════════╸ Bytes arguments that will be passed into the source code
   }
@@ -39,7 +46,9 @@ library FunctionsRequest {
   /// @notice Encodes a Request to CBOR encoded bytes
   /// @param self The request to encode
   /// @return CBOR encoded bytes
-  function encodeCBOR(Request memory self) internal pure returns (bytes memory) {
+  function encodeCBOR(
+    Request memory self
+  ) internal pure returns (bytes memory) {
     CBOR.CBORBuffer memory buffer = CBOR.create(DEFAULT_BUFFER_SIZE);
 
     buffer.writeString("codeLocation");

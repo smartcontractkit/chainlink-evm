@@ -1,12 +1,14 @@
 pragma solidity 0.8.19;
 
-import "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
-import {BlockhashStore} from "../dev/BlockhashStore.sol";
+
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
+import {BlockhashStore} from "../dev/BlockhashStore.sol";
+import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
+import "./BaseTest.t.sol";
+
 import {VmSafe} from "forge-std/Vm.sol";
 
 contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
@@ -46,7 +48,7 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
     // Deploy coordinator, LINK token and LINK/Native feed.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5_Arbitrum(address(s_bhs));
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Configure the coordinator.
     s_testCoordinator.setLINKAndLINKNativeFeed(address(s_linkToken), address(s_linkNativeFeed));
@@ -55,7 +57,7 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
       2_500_000, // maxGasLimit
       1, // stalenessSeconds
       50_000, // gasAfterPaymentCalculation
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500_000, // fulfillmentFlatFeeNativePPM
       100_000, // fulfillmentFlatFeeLinkDiscountPPM
       15, // nativePremiumPercentage
@@ -68,13 +70,12 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
     uint256 weiPerUnitGas,
     bool onlyPremium
   ) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ExposedVRFCoordinatorV2_5_Arbitrum.calculatePaymentAmountNativeExternal.selector,
-        startGas,
-        weiPerUnitGas,
-        onlyPremium
-      );
+    return abi.encodeWithSelector(
+      ExposedVRFCoordinatorV2_5_Arbitrum.calculatePaymentAmountNativeExternal.selector,
+      startGas,
+      weiPerUnitGas,
+      onlyPremium
+    );
   }
 
   function _encodeCalculatePaymentAmountLinkExternal(
@@ -82,16 +83,17 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
     uint256 weiPerUnitGas,
     bool onlyPremium
   ) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ExposedVRFCoordinatorV2_5_Arbitrum.calculatePaymentAmountLinkExternal.selector,
-        startGas,
-        weiPerUnitGas,
-        onlyPremium
-      );
+    return abi.encodeWithSelector(
+      ExposedVRFCoordinatorV2_5_Arbitrum.calculatePaymentAmountLinkExternal.selector,
+      startGas,
+      weiPerUnitGas,
+      onlyPremium
+    );
   }
 
-  function _checkL1GasFeeEmittedLogs(uint256 expectedL1GasFee) internal {
+  function _checkL1GasFeeEmittedLogs(
+    uint256 expectedL1GasFee
+  ) internal {
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 1);
     assertEq(entries[0].topics.length, 1);
@@ -103,20 +105,20 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
 
   function test_getBlockNumber() public {
     // sanity check that Arbitrum will use ArbSys to get the block number
-    vm.mockCall(ARBSYS_ADDR, abi.encodeWithSelector(ARBSYS.arbBlockNumber.selector), abi.encode(33691));
-    assertEq(33691, s_testCoordinator.getBlockNumberExternal());
+    vm.mockCall(ARBSYS_ADDR, abi.encodeWithSelector(ARBSYS.arbBlockNumber.selector), abi.encode(33_691));
+    assertEq(33_691, s_testCoordinator.getBlockNumberExternal());
   }
 
   function test_getBlockhash() public {
     // for blocks within 256 blocks from the current block return the blockhash using ArbSys
     bytes32 testBlockHash = bytes32(keccak256("testBlock"));
-    vm.mockCall(ARBSYS_ADDR, abi.encodeWithSelector(ARBSYS.arbBlockNumber.selector), abi.encode(45830));
-    vm.mockCall(ARBSYS_ADDR, abi.encodeWithSelector(ARBSYS.arbBlockHash.selector, 45825), abi.encode(testBlockHash));
-    assertEq(testBlockHash, s_testCoordinator.getBlockhashExternal(45825));
+    vm.mockCall(ARBSYS_ADDR, abi.encodeWithSelector(ARBSYS.arbBlockNumber.selector), abi.encode(45_830));
+    vm.mockCall(ARBSYS_ADDR, abi.encodeWithSelector(ARBSYS.arbBlockHash.selector, 45_825), abi.encode(testBlockHash));
+    assertEq(testBlockHash, s_testCoordinator.getBlockhashExternal(45_825));
     // for blocks outside 256 blocks from the current block return nothing
-    assertEq("", s_testCoordinator.getBlockhashExternal(33830));
+    assertEq("", s_testCoordinator.getBlockhashExternal(33_830));
     // for blocks greater than the current block return nothing
-    assertEq("", s_testCoordinator.getBlockhashExternal(50550));
+    assertEq("", s_testCoordinator.getBlockhashExternal(50_550));
   }
 
   function test_calculatePaymentAmountNative() public {

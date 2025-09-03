@@ -18,7 +18,9 @@ abstract contract OCR2Base is OwnerIsCreator, OCR2Abstract {
 
   bool internal immutable i_uniqueReports;
 
-  constructor(bool uniqueReports) OwnerIsCreator() {
+  constructor(
+    bool uniqueReports
+  ) OwnerIsCreator() {
     i_uniqueReports = uniqueReports;
   }
 
@@ -30,6 +32,7 @@ abstract contract OCR2Base is OwnerIsCreator, OCR2Abstract {
     uint8 f; // ───╮
     uint8 n; // ───╯
   }
+
   ConfigInfo internal s_configInfo;
 
   /// @dev Incremented each time a new config is posted. This count is incorporated
@@ -226,18 +229,16 @@ abstract contract OCR2Base is OwnerIsCreator, OCR2Abstract {
   // The constant-length components of the msg.data sent to transmit.
   // See the "If we wanted to call sam" example on for example reasoning
   // https://solidity.readthedocs.io/en/v0.7.2/abi-spec.html
-  uint16 private constant TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT =
-    4 + // function selector
-      32 *
-      3 + // 3 words containing reportContext
-      32 + // word containing start location of abiencoded report value
-      32 + // word containing location start of abiencoded rs value
-      32 + // word containing start location of abiencoded ss value
-      32 + // rawVs value
-      32 + // word containing length of report
-      32 + // word containing length rs
-      32 + // word containing length of ss
-      0; // placeholder
+  uint16 private constant TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT = 4 // function selector
+    + 32 * 3 // 3 words containing reportContext
+    + 32 // word containing start location of abiencoded report value
+    + 32 // word containing location start of abiencoded rs value
+    + 32 // word containing start location of abiencoded ss value
+    + 32 // rawVs value
+    + 32 // word containing length of report
+    + 32 // word containing length rs
+    + 32 // word containing length of ss
+    + 0; // placeholder
 
   function _requireExpectedMsgDataLength(
     bytes calldata report,
@@ -245,13 +246,11 @@ abstract contract OCR2Base is OwnerIsCreator, OCR2Abstract {
     bytes32[] calldata ss
   ) private pure {
     // calldata will never be big enough to make this overflow
-    uint256 expected = uint256(TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT) +
-      report.length + // one byte per entry in report
-      rs.length *
-      32 + // 32 bytes per entry in _rs
-      ss.length *
-      32 + // 32 bytes per entry in _ss
-      0; // placeholder
+    uint256 expected = uint256(TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT) + report.length // one byte per entry in
+      // report
+      + rs.length * 32 // 32 bytes per entry in _rs
+      + ss.length * 32 // 32 bytes per entry in _ss
+      + 0; // placeholder
     require(msg.data.length == expected, "calldata length mismatch");
   }
 

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {VRFV2PlusWrapperConsumerBase} from "../VRFV2PlusWrapperConsumerBase.sol";
 import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
+import {VRFV2PlusWrapperConsumerBase} from "../VRFV2PlusWrapperConsumerBase.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 
 contract VRFV2PlusWrapperConsumerExample is VRFV2PlusWrapperConsumerBase, ConfirmedOwner {
@@ -19,7 +19,9 @@ contract VRFV2PlusWrapperConsumerExample is VRFV2PlusWrapperConsumerBase, Confir
 
   mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
 
-  constructor(address _vrfV2Wrapper) ConfirmedOwner(msg.sender) VRFV2PlusWrapperConsumerBase(_vrfV2Wrapper) {}
+  constructor(
+    address _vrfV2Wrapper
+  ) ConfirmedOwner(msg.sender) VRFV2PlusWrapperConsumerBase(_vrfV2Wrapper) {}
 
   function makeRequest(
     uint32 _callbackGasLimit,
@@ -67,14 +69,18 @@ contract VRFV2PlusWrapperConsumerExample is VRFV2PlusWrapperConsumerBase, Confir
 
   /// @notice withdrawLink withdraws the amount specified in amount to the owner
   /// @param amount the amount to withdraw, in juels
-  function withdrawLink(uint256 amount) external onlyOwner {
+  function withdrawLink(
+    uint256 amount
+  ) external onlyOwner {
     i_linkToken.transfer(owner(), amount);
   }
 
   /// @notice withdrawNative withdraws the amount specified in amount to the owner
   /// @param amount the amount to withdraw, in wei
-  function withdrawNative(uint256 amount) external onlyOwner {
-    (bool success, ) = payable(owner()).call{value: amount}("");
+  function withdrawNative(
+    uint256 amount
+  ) external onlyOwner {
+    (bool success,) = payable(owner()).call{value: amount}("");
     // solhint-disable-next-line gas-custom-errors
     require(success, "withdrawNative failed");
   }

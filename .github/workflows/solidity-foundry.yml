@@ -28,16 +28,16 @@ jobs:
         run: |
           cat <<EOF > matrix.json
           [
-            { "name": "automation", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false, "run-forge-fmt": false }},
-            { "name": "functions", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": true, "run-forge-fmt": false }},
-            { "name": "keystone", "setup": { "run-coverage": true, "min-coverage": 72.8, "run-gas-snapshot": false, "run-forge-fmt": false }},
-            { "name": "l2ep", "setup": { "run-coverage": true, "min-coverage": 65.0, "run-gas-snapshot": true, "run-forge-fmt": false }},
-            { "name": "llo-feeds", "setup": { "run-coverage": true, "min-coverage": 49.3, "run-gas-snapshot": true, "run-forge-fmt": false }},
-            { "name": "operatorforwarder", "setup": { "run-coverage": true, "min-coverage": 55.7, "run-gas-snapshot": true, "run-forge-fmt": false }},
-            { "name": "shared", "setup": { "run-coverage": true, "extra-coverage-params": "--no-match-path='*CallWithExactGas*' --ir-minimum", "min-coverage": 29, "run-gas-snapshot": true, "run-forge-fmt": false }},
-            { "name": "vrf", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false, "run-forge-fmt": false }},
-            { "name": "workflow", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum --no-match-coverage='(.*v1/test.*)|(.*v2/test.*)'", "min-coverage": 93.0, "run-gas-snapshot": true, "run-forge-fmt": true }},
-            { "name": "data-feeds", "setup": { "run-coverage": true, "min-coverage": 98.5, "run-gas-snapshot": true, "extra-coverage-params": "--no-match-coverage='WIP*'", "run-forge-fmt": false }}
+            { "name": "automation", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false }},
+            { "name": "functions", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": true }},
+            { "name": "keystone", "setup": { "run-coverage": true, "min-coverage": 72.8, "run-gas-snapshot": false }},
+            { "name": "l2ep", "setup": { "run-coverage": true, "min-coverage": 65.0, "run-gas-snapshot": true }},
+            { "name": "llo-feeds", "setup": { "run-coverage": true, "min-coverage": 49.3, "run-gas-snapshot": true }},
+            { "name": "operatorforwarder", "setup": { "run-coverage": true, "min-coverage": 55.7, "run-gas-snapshot": true }},
+            { "name": "shared", "setup": { "run-coverage": true, "extra-coverage-params": "--no-match-path='*CallWithExactGas*' --ir-minimum", "min-coverage": 29, "run-gas-snapshot": true }},
+            { "name": "vrf", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false }},
+            { "name": "workflow", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum --no-match-coverage='(.*v1/test.*)|(.*v2/test.*)'", "min-coverage": 93.0, "run-gas-snapshot": true }},
+            { "name": "data-feeds", "setup": { "run-coverage": true, "min-coverage": 98.5, "run-gas-snapshot": true, "extra-coverage-params": "--no-match-coverage='WIP*'" }}
 
           ]
           EOF
@@ -75,7 +75,6 @@ jobs:
             non_src:
               - '.github/workflows/solidity-foundry.yml'
               - 'contracts/foundry.toml'
-              - 'contracts/gas-snapshots/*.gas-snapshot'
               - 'contracts/package.json'
               - 'contracts/GNUmakefile'
             sol:
@@ -100,9 +99,6 @@ jobs:
               - 'contracts/src/v0.8/vrf/**/*.sol'
             shared:
               - 'contracts/src/v0.8/shared/**/*.sol'
-              - 'contracts/src/v0.8/*.sol'
-              - 'contracts/src/v0.8/mocks/**/*.sol'
-              - 'contracts/src/v0.8/tests/**/*.sol'
               - 'contracts/src/v0.8/vendor/**/*.sol'
             workflow:
               - 'contracts/src/v0.8/workflow/**/*.sol'
@@ -596,22 +592,22 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout the repo
-        if: ${{ (contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true') && matrix.product.setup.run-forge-fmt }}
+        if: ${{ contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true' }}
         uses: actions/checkout@v4
         with:
           persist-credentials: false
           submodules: recursive
 
       - name: Setup NodeJS
-        if: ${{ (contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true') && matrix.product.setup.run-forge-fmt }}
+        if: ${{ contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true' }}
         uses: ./.github/actions/setup-nodejs
 
       - name: Install Foundry
-        if: ${{ (contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true') && matrix.product.setup.run-forge-fmt }}
+        if: ${{ contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true' }}
         uses: ./.github/actions/install-solidity-foundry
 
       - name: Run Forge fmt
-        if: ${{ (contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true') && matrix.product.setup.run-forge-fmt }}
+        if: ${{ contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true' }}
         run: forge fmt --check
         id: fmt
         working-directory: contracts

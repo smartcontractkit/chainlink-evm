@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Consumer} from "./Consumer.sol";
 import {Chainlink} from "../../Chainlink.sol";
+import {Consumer} from "./Consumer.sol";
 
 contract GasGuzzlingConsumer is Consumer {
   using Chainlink for Chainlink.Request;
@@ -13,7 +13,9 @@ contract GasGuzzlingConsumer is Consumer {
     s_specId = _specId;
   }
 
-  function gassyRequestEthereumPrice(uint256 _payment) public {
+  function gassyRequestEthereumPrice(
+    uint256 _payment
+  ) public {
     Chainlink.Request memory req = _buildChainlinkRequest(s_specId, address(this), this.gassyFulfill.selector);
     req._add("get", "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,EUR,JPY");
     string[] memory path = new string[](1);
@@ -26,7 +28,9 @@ contract GasGuzzlingConsumer is Consumer {
     while (true) {}
   }
 
-  function gassyMultiWordRequest(uint256 _payment) public {
+  function gassyMultiWordRequest(
+    uint256 _payment
+  ) public {
     Chainlink.Request memory req = _buildChainlinkRequest(s_specId, address(this), this.gassyMultiWordFulfill.selector);
     req._add("get", "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,EUR,JPY");
     string[] memory path = new string[](1);

@@ -5,15 +5,21 @@ contract GenericReceiver {
   bool public s_toRevert;
   bytes private s_err;
 
-  constructor(bool toRevert) {
+  constructor(
+    bool toRevert
+  ) {
     s_toRevert = toRevert;
   }
 
-  function setRevert(bool toRevert) external {
+  function setRevert(
+    bool toRevert
+  ) external {
     s_toRevert = toRevert;
   }
 
-  function setErr(bytes memory err) external {
+  function setErr(
+    bytes memory err
+  ) external {
     s_err = err;
   }
 
