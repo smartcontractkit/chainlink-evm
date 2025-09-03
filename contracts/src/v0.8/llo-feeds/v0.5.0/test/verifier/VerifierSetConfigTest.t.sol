@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest, BaseTestWithMultipleConfiguredDigests} from "./BaseVerifierTest.t.sol";
-import {Verifier} from "../../Verifier.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {Verifier} from "../../Verifier.sol";
 import {MockConfigurator} from "../mocks/MockConfigurator.sol";
+import {BaseTest, BaseTestWithMultipleConfiguredDigests} from "./BaseVerifierTest.t.sol";
 
 contract VerifierSetConfigTestV05 is BaseTest {
   function setUp() public virtual override {
@@ -433,18 +433,12 @@ contract VerifierSetConfigWhenThereAreMultipleDigestsTest05 is BaseTestWithMulti
     // Convert addresses to bytes array
     Signer[] memory signers = _getSigners(15);
     bytes[] memory signersAsBytes = new bytes[](signers.length);
-    for (uint i; i < signers.length; ++i) {
+    for (uint256 i; i < signers.length; ++i) {
       signersAsBytes[i] = abi.encodePacked(signers[i].signerAddress);
     }
 
     configurator.setStagingConfig(
-      FEED_ID,
-      signersAsBytes,
-      s_offchaintransmitters,
-      4,
-      bytes(""),
-      VERIFIER_VERSION,
-      bytes("")
+      FEED_ID, signersAsBytes, s_offchaintransmitters, 4, bytes(""), VERIFIER_VERSION, bytes("")
     );
 
     bytes32 expectedConfigDigest = _configDigestFromConfigData(
@@ -460,7 +454,7 @@ contract VerifierSetConfigWhenThereAreMultipleDigestsTest05 is BaseTestWithMulti
       bytes("")
     );
 
-    (, , bytes32 configDigest) = configurator.s_configurationStates(FEED_ID);
+    (,, bytes32 configDigest) = configurator.s_configurationStates(FEED_ID);
 
     assertEq(configDigest, expectedConfigDigest);
   }

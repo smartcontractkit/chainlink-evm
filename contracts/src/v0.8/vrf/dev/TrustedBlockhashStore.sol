@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ChainSpecificUtil} from "../../shared/util/ChainSpecificUtil.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {ChainSpecificUtil} from "../../shared/util/ChainSpecificUtil.sol";
 import {BlockhashStore} from "./BlockhashStore.sol";
 
 contract TrustedBlockhashStore is ConfirmedOwner, BlockhashStore {
@@ -13,7 +13,9 @@ contract TrustedBlockhashStore is ConfirmedOwner, BlockhashStore {
   mapping(address => bool) public s_whitelistStatus;
   address[] public s_whitelist;
 
-  constructor(address[] memory whitelist) ConfirmedOwner(msg.sender) {
+  constructor(
+    address[] memory whitelist
+  ) ConfirmedOwner(msg.sender) {
     setWhitelist(whitelist);
   }
 
@@ -21,7 +23,9 @@ contract TrustedBlockhashStore is ConfirmedOwner, BlockhashStore {
    * @notice sets the whitelist of addresses that can store blockhashes
    * @param whitelist the whitelist of addresses that can store blockhashes
    */
-  function setWhitelist(address[] memory whitelist) public onlyOwner {
+  function setWhitelist(
+    address[] memory whitelist
+  ) public onlyOwner {
     address[] memory previousWhitelist = s_whitelist;
     s_whitelist = whitelist;
 

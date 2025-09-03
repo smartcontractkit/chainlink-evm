@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Vm} from "forge-std/Test.sol";
-import {AddressAliasHelper} from "../../../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
+import {AddressAliasHelper} from
+  "../../../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
 import {BaseSequencerUptimeFeed} from "../../../base/BaseSequencerUptimeFeed.sol";
 import {MockBaseSequencerUptimeFeed} from "../../../test/mocks/MockBaseSequencerUptimeFeed.sol";
 import {FeedConsumer} from "../../FeedConsumer.sol";
 import {L2EPTest} from "../L2EPTest.t.sol";
+import {Vm} from "forge-std/Test.sol";
 
 contract BaseSequencerUptimeFeed_Setup is L2EPTest {
   /// Helper Variables
@@ -39,7 +40,7 @@ contract BaseSequencerUptimeFeed_Constructor is BaseSequencerUptimeFeed_Setup {
     assertEq(actualL1Addr, s_l1OwnerAddr);
 
     // Checks latest round data
-    (uint80 roundId, int256 answer, , , ) = s_sequencerUptimeFeed.latestRoundData();
+    (uint80 roundId, int256 answer,,,) = s_sequencerUptimeFeed.latestRoundData();
     assertEq(roundId, 1);
     assertEq(answer, 0);
   }
@@ -88,11 +89,8 @@ contract BaseSequencerUptimeFeed_UpdateStatus is BaseSequencerUptimeFeed_Setup {
     // Sets msg.sender and tx.origin to an unauthorized address
     vm.startPrank(s_strangerAddr, s_strangerAddr);
 
-    BaseSequencerUptimeFeed s_sequencerUptimeFeedFailSenderCheck = new MockBaseSequencerUptimeFeed(
-      s_l1OwnerAddr,
-      false,
-      false
-    );
+    BaseSequencerUptimeFeed s_sequencerUptimeFeedFailSenderCheck =
+      new MockBaseSequencerUptimeFeed(s_l1OwnerAddr, false, false);
 
     // Tries to update the status from an unauthorized account
     vm.expectRevert(BaseSequencerUptimeFeed.InvalidSender.selector);
@@ -204,7 +202,7 @@ contract BaseSequencerUptimeFeed_UpdateStatus is BaseSequencerUptimeFeed_Setup {
     vm.startPrank(s_aliasedL1OwnerAddress, s_aliasedL1OwnerAddress);
 
     // Submits a status update
-    uint256 timestamp = s_sequencerUptimeFeed.latestTimestamp() + 10000;
+    uint256 timestamp = s_sequencerUptimeFeed.latestTimestamp() + 10_000;
     vm.expectEmit();
     emit AnswerUpdated(1, 2, timestamp);
     s_sequencerUptimeFeed.updateStatus(true, uint64(timestamp));
@@ -298,7 +296,7 @@ contract BaseSequencerUptimeFeed_AggregatorV3Interface is BaseSequencerUptimeFee
     vm.startPrank(s_aliasedL1OwnerAddress, s_aliasedL1OwnerAddress);
 
     uint256 startedAt;
-    (, , startedAt, , ) = s_sequencerUptimeFeed.latestRoundData();
+    (,, startedAt,,) = s_sequencerUptimeFeed.latestRoundData();
 
     s_sequencerUptimeFeed.updateStatus(true, uint64(startedAt + 1000));
 
@@ -321,7 +319,7 @@ contract BaseSequencerUptimeFeed_AggregatorV3Interface is BaseSequencerUptimeFee
     vm.startPrank(s_aliasedL1OwnerAddress, s_aliasedL1OwnerAddress);
 
     uint256 startedAt;
-    (, , startedAt, , ) = s_sequencerUptimeFeed.latestRoundData();
+    (,, startedAt,,) = s_sequencerUptimeFeed.latestRoundData();
 
     s_sequencerUptimeFeed.updateStatus(true, uint64(startedAt + 1000));
 
@@ -369,7 +367,7 @@ contract BaseSequencerUptimeFeed_ProtectReadsOnAggregatorV2V3InterfaceFunctions 
     assertEq(s_sequencerUptimeFeed.hasAccess(address(feedConsumer), abi.encode("")), true);
 
     // Asserts reads are possible from consuming contract
-    (uint80 roundId, int256 answer, , , ) = feedConsumer.latestRoundData();
+    (uint80 roundId, int256 answer,,,) = feedConsumer.latestRoundData();
     assertEq(feedConsumer.latestAnswer(), 0);
     assertEq(roundId, 1);
     assertEq(answer, 0);

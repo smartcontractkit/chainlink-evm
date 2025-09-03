@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {VRFConsumerBaseV2Plus} from "../dev/VRFConsumerBaseV2Plus.sol";
 import {IVRFCoordinatorV2Plus, IVRFSubscriptionV2Plus} from "../dev/interfaces/IVRFCoordinatorV2Plus.sol";
 import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
-import {VRFConsumerBaseV2Plus} from "../dev/VRFConsumerBaseV2Plus.sol";
-import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
 
 contract VRFConsumerV2Plus is VRFConsumerBaseV2Plus {
   uint256[] public s_randomWords;
@@ -26,7 +26,9 @@ contract VRFConsumerV2Plus is VRFConsumerBaseV2Plus {
     s_randomWords = randomWords;
   }
 
-  function createSubscriptionAndFund(uint96 amount) external {
+  function createSubscriptionAndFund(
+    uint96 amount
+  ) external {
     if (s_subId == 0) {
       s_subId = COORDINATOR.createSubscription();
       COORDINATOR.addConsumer(s_subId, address(this));
@@ -35,20 +37,26 @@ contract VRFConsumerV2Plus is VRFConsumerBaseV2Plus {
     LINKTOKEN.transferAndCall(address(COORDINATOR), amount, abi.encode(s_subId));
   }
 
-  function topUpSubscription(uint96 amount) external {
+  function topUpSubscription(
+    uint96 amount
+  ) external {
     require(s_subId != 0, "sub not set");
     // Approve the link transfer.
     LINKTOKEN.transferAndCall(address(COORDINATOR), amount, abi.encode(s_subId));
   }
 
-  function updateSubscription(address[] memory consumers) external {
+  function updateSubscription(
+    address[] memory consumers
+  ) external {
     require(s_subId != 0, "subID not set");
     for (uint256 i = 0; i < consumers.length; i++) {
       COORDINATOR.addConsumer(s_subId, consumers[i]);
     }
   }
 
-  function requestRandomness(VRFV2PlusClient.RandomWordsRequest calldata req) external returns (uint256) {
+  function requestRandomness(
+    VRFV2PlusClient.RandomWordsRequest calldata req
+  ) external returns (uint256) {
     s_requestId = COORDINATOR.requestRandomWords(req);
     return s_requestId;
   }

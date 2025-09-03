@@ -4,13 +4,17 @@ pragma solidity ^0.8.4;
 import {VRFCoordinatorV2_5_Arbitrum} from "../VRFCoordinatorV2_5_Arbitrum.sol";
 
 contract ExposedVRFCoordinatorV2_5_Arbitrum is VRFCoordinatorV2_5_Arbitrum {
-  constructor(address blockhashStore) VRFCoordinatorV2_5_Arbitrum(blockhashStore) {}
+  constructor(
+    address blockhashStore
+  ) VRFCoordinatorV2_5_Arbitrum(blockhashStore) {}
 
   function getBlockNumberExternal() external view returns (uint256) {
     return _getBlockNumber();
   }
 
-  function getBlockhashExternal(uint64 blockNumber) external view returns (bytes32) {
+  function getBlockhashExternal(
+    uint64 blockNumber
+  ) external view returns (bytes32) {
     return _getBlockhash(blockNumber);
   }
 

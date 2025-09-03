@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 import {ITermsOfServiceAllowList} from "../../../dev/v1_X/accessControl/interfaces/ITermsOfServiceAllowList.sol";
 import {IFunctionsSubscriptions} from "../../../dev/v1_X/interfaces/IFunctionsSubscriptions.sol";
 
-import {FunctionsRequest} from "../../../dev/v1_X/libraries/FunctionsRequest.sol";
 import {FunctionsClient} from "../../../dev/v1_X/FunctionsClient.sol";
+import {FunctionsRequest} from "../../../dev/v1_X/libraries/FunctionsRequest.sol";
 
 contract FunctionsClientTestHelper is FunctionsClient {
   using FunctionsRequest for FunctionsRequest.Request;
@@ -22,7 +22,9 @@ contract FunctionsClientTestHelper is FunctionsClient {
   uint64 private s_subscriptionId;
   bytes32 private s_donId;
 
-  constructor(address router) FunctionsClient(router) {}
+  constructor(
+    address router
+  ) FunctionsClient(router) {}
 
   function sendRequest(
     bytes32 donId,
@@ -65,11 +67,7 @@ contract FunctionsClientTestHelper is FunctionsClient {
     request._initializeRequestForInlineJavaScript(sourceCode);
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
     requestId = i_functionsRouter.sendRequestToProposed(
-      subscriptionId,
-      requestData,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      donId
+      subscriptionId, requestData, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, donId
     );
     emit RequestSent(requestId);
     emit SendRequestInvoked(requestId, sourceCode, subscriptionId);
@@ -81,7 +79,9 @@ contract FunctionsClientTestHelper is FunctionsClient {
     allowList.acceptTermsOfService(acceptor, recipient, r, s, v);
   }
 
-  function acceptSubscriptionOwnerTransfer(uint64 subscriptionId) external {
+  function acceptSubscriptionOwnerTransfer(
+    uint64 subscriptionId
+  ) external {
     IFunctionsSubscriptions(address(i_functionsRouter)).acceptSubscriptionOwnerTransfer(subscriptionId);
   }
 
@@ -103,15 +103,21 @@ contract FunctionsClientTestHelper is FunctionsClient {
     emit FulfillRequestInvoked(requestId, response, err);
   }
 
-  function setRevertFulfillRequest(bool on) external {
+  function setRevertFulfillRequest(
+    bool on
+  ) external {
     s_revertFulfillRequest = on;
   }
 
-  function setRevertFulfillRequestMessage(string memory message) external {
+  function setRevertFulfillRequestMessage(
+    string memory message
+  ) external {
     s_revertFulfillRequestMessage = message;
   }
 
-  function setDoInvalidOperation(bool on) external {
+  function setDoInvalidOperation(
+    bool on
+  ) external {
     s_doInvalidOperation = on;
   }
 

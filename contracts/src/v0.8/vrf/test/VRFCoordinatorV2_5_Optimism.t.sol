@@ -1,12 +1,15 @@
 pragma solidity 0.8.19;
 
-import "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {ExposedVRFCoordinatorV2_5_Optimism} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
-import {OptimismL1Fees} from "../dev/OptimismL1Fees.sol";
+
+import {GasPriceOracle as OVM_GasPriceOracle} from
+  "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
 import {BlockhashStore} from "../dev/BlockhashStore.sol";
-import {GasPriceOracle as OVM_GasPriceOracle} from "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
+import {OptimismL1Fees} from "../dev/OptimismL1Fees.sol";
+import {ExposedVRFCoordinatorV2_5_Optimism} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
+import "./BaseTest.t.sol";
+
 import {VmSafe} from "forge-std/Vm.sol";
 
 contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
@@ -36,7 +39,8 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
   /// @dev fulfillment calldata payload (number of non-zero bytes estimated based on historical data)
   /// @dev This option is available for the Coordinator and the Wrapper contract
   uint8 internal constant L1_CALLDATA_GAS_COST_MODE = 1;
-  /// @dev Option 3: getL1FeeUpperBound() function from predeploy GasPriceOracle contract (available after Fjord upgrade)
+  /// @dev Option 3: getL1FeeUpperBound() function from predeploy GasPriceOracle contract (available after Fjord
+  /// upgrade)
   /// @dev This option is available for the Coordinator and the Wrapper contract
   uint8 internal constant L1_GAS_FEES_UPPER_BOUND_MODE = 2;
 
@@ -56,7 +60,7 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
     // Deploy coordinator, LINK token and LINK/Native feed.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5_Optimism(address(s_bhs));
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Configure the coordinator.
     s_testCoordinator.setLINKAndLINKNativeFeed(address(s_linkToken), address(s_linkNativeFeed));
@@ -65,7 +69,7 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
       2_500_000, // maxGasLimit
       1, // stalenessSeconds
       50_000, // gasAfterPaymentCalculation
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500_000, // fulfillmentFlatFeeNativePPM
       100_000, // fulfillmentFlatFeeLinkDiscountPPM
       15, // nativePremiumPercentage
@@ -78,13 +82,12 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
     uint256 weiPerUnitGas,
     bool onlyPremium
   ) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ExposedVRFCoordinatorV2_5_Optimism.calculatePaymentAmountNativeExternal.selector,
-        startGas,
-        weiPerUnitGas,
-        onlyPremium
-      );
+    return abi.encodeWithSelector(
+      ExposedVRFCoordinatorV2_5_Optimism.calculatePaymentAmountNativeExternal.selector,
+      startGas,
+      weiPerUnitGas,
+      onlyPremium
+    );
   }
 
   function _encodeCalculatePaymentAmountLinkExternal(
@@ -92,13 +95,12 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
     uint256 weiPerUnitGas,
     bool onlyPremium
   ) internal pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        ExposedVRFCoordinatorV2_5_Optimism.calculatePaymentAmountLinkExternal.selector,
-        startGas,
-        weiPerUnitGas,
-        onlyPremium
-      );
+    return abi.encodeWithSelector(
+      ExposedVRFCoordinatorV2_5_Optimism.calculatePaymentAmountLinkExternal.selector,
+      startGas,
+      weiPerUnitGas,
+      onlyPremium
+    );
   }
 
   function _mockGasOraclePriceGetL1FeeUpperBoundCall() internal {
@@ -114,29 +116,21 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
   function _mockGasOraclePriceFeeMethods() internal {
     // these values are taken from an example transaction on Base Sepolia
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))),
-      abi.encode(64273426165)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("l1BaseFee()"))), abi.encode(64_273_426_165)
+    );
+    vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("baseFeeScalar()"))), abi.encode(1101));
+    vm.mockCall(
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))), abi.encode(659_851)
     );
     vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("baseFeeScalar()"))),
-      abi.encode(1101)
-    );
-    vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("blobBaseFeeScalar()"))),
-      abi.encode(659851)
-    );
-    vm.mockCall(
-      OVM_GASPRICEORACLE_ADDR,
-      abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))),
-      abi.encode(2126959908362)
+      OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("blobBaseFee()"))), abi.encode(2_126_959_908_362)
     );
     vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("decimals()"))), abi.encode(6));
   }
 
-  function _mockGasOraclePriceGetL1FeeCall(bytes memory txMsgData) internal {
+  function _mockGasOraclePriceGetL1FeeCall(
+    bytes memory txMsgData
+  ) internal {
     vm.mockCall(
       OVM_GASPRICEORACLE_ADDR,
       abi.encodeWithSelector(OVM_GasPriceOracle.getL1Fee.selector, bytes.concat(txMsgData, L1_FEE_DATA_PADDING)),
@@ -144,7 +138,9 @@ contract VRFV2CoordinatorV2_5_Optimism is BaseTest {
     );
   }
 
-  function _checkL1GasFeeEmittedLogs(uint256 expectedL1GasFee) internal {
+  function _checkL1GasFeeEmittedLogs(
+    uint256 expectedL1GasFee
+  ) internal {
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 1);
     assertEq(entries[0].topics.length, 1);

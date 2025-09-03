@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {Deployer} from "./testhelpers/Deployer.t.sol";
 import {AuthorizedForwarder} from "../AuthorizedForwarder.sol";
 import {Operator} from "../Operator.sol";
+import {Deployer} from "./testhelpers/Deployer.t.sol";
 
 contract FactoryTest is Deployer {
   function setUp() public {

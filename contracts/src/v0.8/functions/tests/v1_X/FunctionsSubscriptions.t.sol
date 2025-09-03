@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {FunctionsRouter} from "../../dev/v1_X/FunctionsRouter.sol";
 import {FunctionsSubscriptions} from "../../dev/v1_X/FunctionsSubscriptions.sol";
 import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
 
-import {FunctionsRouterSetup, FunctionsOwnerAcceptTermsOfServiceSetup, FunctionsClientSetup, FunctionsSubscriptionSetup, FunctionsClientRequestSetup, FunctionsFulfillmentSetup} from "./Setup.t.sol";
+import {
+  FunctionsClientRequestSetup,
+  FunctionsClientSetup,
+  FunctionsFulfillmentSetup,
+  FunctionsOwnerAcceptTermsOfServiceSetup,
+  FunctionsRouterSetup,
+  FunctionsSubscriptionSetup
+} from "./Setup.t.sol";
 
 import "forge-std/Vm.sol";
 
@@ -17,7 +24,9 @@ import "forge-std/Vm.sol";
 // ================================================================
 
 contract FunctionsSubscriptions_Constructor_Helper is FunctionsSubscriptions {
-  constructor(address link) FunctionsSubscriptions(link) {}
+  constructor(
+    address link
+  ) FunctionsSubscriptions(link) {}
 
   function getLinkToken() public view returns (IERC20) {
     return IERC20(i_linkToken);
@@ -56,12 +65,12 @@ contract FunctionsSubscriptions_Constructor is BaseTest {
 
 /// @notice #_markRequestInFlight
 contract FunctionsSubscriptions__MarkRequestInFlight {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #_pay
 contract FunctionsSubscriptions__Pay {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #ownerCancelSubscription
@@ -77,7 +86,7 @@ contract FunctionsSubscriptions_OwnerCancelSubscription is FunctionsSubscription
 
   function test_OwnerCancelSubscription_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.ownerCancelSubscription(invalidSubscriptionId);
   }
 
@@ -111,7 +120,8 @@ contract FunctionsSubscriptions_OwnerCancelSubscription is FunctionsSubscription
   function test_OwnerCancelSubscription_Success() public {
     uint256 subscriptionOwnerBalanceBefore = s_linkToken.balanceOf(OWNER_ADDRESS);
 
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1SubscriptionId = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -134,7 +144,8 @@ contract FunctionsSubscriptions_RecoverFunds is FunctionsRouterSetup {
     uint256 fundsTransferred = 1 * 1e18; // 1 LINK
     s_linkToken.transfer(address(s_functionsRouter), fundsTransferred);
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -207,7 +218,8 @@ contract FunctionsSubscriptions_OracleWithdraw is FunctionsFulfillmentSetup {
     // vm.startPrank(address(s_functionsCoordinator));
     // TODO: Use internal function helper contract to modify s_totalLinkBalance
     // uint96 amountToWithdraw = s_fulfillmentCoordinatorBalance;
-    // vm.expectRevert(abi.encodeWithSelector(FunctionsSubscriptions.TotalBalanceInvariantViolated.selector, 0, amountToWithdraw));
+    // vm.expectRevert(abi.encodeWithSelector(FunctionsSubscriptions.TotalBalanceInvariantViolated.selector, 0,
+    // amountToWithdraw));
     // s_functionsRouter.oracleWithdraw(NOP_TRANSMITTER_ADDRESS_1, amountToWithdraw);
   }
 
@@ -264,7 +276,8 @@ contract FunctionsSubscriptions_OwnerWithdraw is FunctionsFulfillmentSetup {
   function test_OwnerWithdraw_RevertIfBalanceInvariant() public {
     // TODO: Use internal function helper contract to modify s_totalLinkBalance
     // uint96 amountToWithdraw = s_fulfillmentRouterOwnerBalance;
-    // vm.expectRevert(abi.encodeWithSelector(FunctionsSubscriptions.TotalBalanceInvariantViolated.selector, 0, amountToWithdraw));
+    // vm.expectRevert(abi.encodeWithSelector(FunctionsSubscriptions.TotalBalanceInvariantViolated.selector, 0,
+    // amountToWithdraw));
     // s_functionsRouter.ownerWithdraw(OWNER_ADDRESS, amountToWithdraw);
   }
 
@@ -342,7 +355,7 @@ contract FunctionsSubscriptions_OnTokenTransfer is FunctionsClientSetup {
     // Funding amount must be less than or equal to LINK total supply
     uint256 totalSupplyJuels = 1_000_000_000 * 1e18;
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_linkToken.transferAndCall(address(s_functionsRouter), totalSupplyJuels, abi.encode(invalidSubscriptionId));
   }
 
@@ -387,7 +400,8 @@ contract FunctionsSubscriptions_GetSubscriptionsInRange is FunctionsSubscription
     FunctionsSubscriptionSetup.setUp();
 
     // Create 2 more subscriptions
-    /* uint64 subscriptionId2 = */ s_functionsRouter.createSubscription();
+    /* uint64 subscriptionId2 = */
+    s_functionsRouter.createSubscription();
     uint64 subscriptionId3 = s_functionsRouter.createSubscription();
 
     // Give each one unique state
@@ -421,10 +435,8 @@ contract FunctionsSubscriptions_GetSubscriptionsInRange is FunctionsSubscription
     vm.startPrank(STRANGER_ADDRESS);
 
     uint64 lastSubscriptionId = s_functionsRouter.getSubscriptionCount();
-    FunctionsSubscriptions.Subscription[] memory subscriptions = s_functionsRouter.getSubscriptionsInRange(
-      s_subscriptionId,
-      lastSubscriptionId
-    );
+    FunctionsSubscriptions.Subscription[] memory subscriptions =
+      s_functionsRouter.getSubscriptionsInRange(s_subscriptionId, lastSubscriptionId);
 
     assertEq(subscriptions.length, 3);
 
@@ -479,10 +491,8 @@ contract FunctionsSubscriptions_GetConsumer is FunctionsSubscriptionSetup {
     vm.stopPrank();
     vm.startPrank(STRANGER_ADDRESS);
 
-    FunctionsSubscriptions.Consumer memory consumer = s_functionsRouter.getConsumer(
-      address(s_functionsClient),
-      s_subscriptionId
-    );
+    FunctionsSubscriptions.Consumer memory consumer =
+      s_functionsRouter.getConsumer(address(s_functionsClient), s_subscriptionId);
 
     assertEq(consumer.allowed, true);
     assertEq(consumer.initiatedRequests, 0);
@@ -492,12 +502,12 @@ contract FunctionsSubscriptions_GetConsumer is FunctionsSubscriptionSetup {
 
 /// @notice #_isExistingSubscription
 contract FunctionsSubscriptions__IsExistingSubscription is FunctionsSubscriptionSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #_isAllowedConsumer
 contract FunctionsSubscriptions__IsAllowedConsumer {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #createSubscription
@@ -505,7 +515,8 @@ contract FunctionsSubscriptions_createSubscription is FunctionsOwnerAcceptTermsO
   event SubscriptionCreated(uint64 indexed subscriptionId, address owner);
 
   function test_CreateSubscription_Success() public {
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -550,7 +561,8 @@ contract FunctionsSubscriptions_CreateSubscriptionWithConsumer is FunctionsClien
   event SubscriptionConsumerAdded(uint64 indexed subscriptionId, address consumer);
 
   function test_CreateSubscriptionWithConsumer_Success() public {
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -625,13 +637,7 @@ contract FunctionsSubscriptions_ProposeSubscriptionOwnerTransfer is FunctionsSub
     bytes32 message2 = s_termsOfServiceAllowList.getMessage(NEW_OWNER_ADDRESS_WITH_TOS2, NEW_OWNER_ADDRESS_WITH_TOS2);
     bytes32 prefixedMessage2 = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", message2));
     (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(TOS_SIGNER_PRIVATE_KEY, prefixedMessage2);
-    s_termsOfServiceAllowList.acceptTermsOfService(
-      NEW_OWNER_ADDRESS_WITH_TOS2,
-      NEW_OWNER_ADDRESS_WITH_TOS2,
-      r2,
-      s2,
-      v2
-    );
+    s_termsOfServiceAllowList.acceptTermsOfService(NEW_OWNER_ADDRESS_WITH_TOS2, NEW_OWNER_ADDRESS_WITH_TOS2, r2, s2, v2);
 
     vm.stopPrank();
     vm.startPrank(OWNER_ADDRESS);
@@ -646,7 +652,7 @@ contract FunctionsSubscriptions_ProposeSubscriptionOwnerTransfer is FunctionsSub
 
   function test_ProposeSubscriptionOwnerTransfer_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.proposeSubscriptionOwnerTransfer(invalidSubscriptionId, NEW_OWNER_ADDRESS_WITH_TOS);
   }
 
@@ -682,7 +688,8 @@ contract FunctionsSubscriptions_ProposeSubscriptionOwnerTransfer is FunctionsSub
   event SubscriptionOwnerTransferRequested(uint64 indexed subscriptionId, address from, address to);
 
   function test_ProposeSubscriptionOwnerTransfer_Success() public {
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -695,7 +702,8 @@ contract FunctionsSubscriptions_ProposeSubscriptionOwnerTransfer is FunctionsSub
   }
 
   function test_ProposeSubscriptionOwnerTransfer_SuccessChangeProposedOwner() public {
-    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), topic1 (true), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -806,7 +814,8 @@ contract FunctionsSubscriptions_AcceptSubscriptionOwnerTransfer is FunctionsSubs
     vm.stopPrank();
     vm.startPrank(NEW_OWNER_ADDRESS_WITH_TOS);
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -833,7 +842,7 @@ contract FunctionsSubscriptions_RemoveConsumer is FunctionsSubscriptionSetup {
 
   function test_RemoveConsumer_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.removeConsumer(invalidSubscriptionId, address(s_functionsClient));
   }
 
@@ -883,7 +892,8 @@ contract FunctionsSubscriptions_RemoveConsumer is FunctionsSubscriptionSetup {
   event SubscriptionConsumerRemoved(uint64 indexed subscriptionId, address consumer);
 
   function test_RemoveConsumer_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -899,7 +909,7 @@ contract FunctionsSubscriptions_RemoveConsumer is FunctionsSubscriptionSetup {
 
 /// @notice #_getMaxConsumers
 contract FunctionsSubscriptions__GetMaxConsumers is FunctionsRouterSetup {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #addConsumer
@@ -913,7 +923,7 @@ contract FunctionsSubscriptions_AddConsumer is FunctionsSubscriptionSetup {
 
   function test_AddConsumer_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.addConsumer(invalidSubscriptionId, address(1));
   }
 
@@ -975,7 +985,8 @@ contract FunctionsSubscriptions_AddConsumer is FunctionsSubscriptionSetup {
   event SubscriptionConsumerAdded(uint64 indexed subscriptionId, address consumer);
 
   function test_AddConsumer_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -1002,7 +1013,7 @@ contract FunctionsSubscriptions_CancelSubscription is FunctionsSubscriptionSetup
 
   function test_CancelSubscription_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     s_functionsRouter.cancelSubscription(invalidSubscriptionId, OWNER_ADDRESS);
   }
 
@@ -1056,7 +1067,8 @@ contract FunctionsSubscriptions_CancelSubscription is FunctionsSubscriptionSetup
 
     uint96 expectedRefund = 0;
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -1091,7 +1103,8 @@ contract FunctionsSubscriptions_CancelSubscription is FunctionsSubscriptionSetup
     uint256 subscriptionOwnerBalanceBefore = s_linkToken.balanceOf(OWNER_ADDRESS);
 
     uint96 expectedRefund = (s_subscriptionInitialFunding * 2) - s_subscriptionDepositJuels;
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -1127,7 +1140,8 @@ contract FunctionsSubscriptions_CancelSubscription_ReceiveDeposit is FunctionsFu
     uint256 subscriptionOwnerBalanceBefore = s_linkToken.balanceOf(OWNER_ADDRESS);
 
     uint96 expectedRefund = s_subscriptionInitialFunding - totalCostJuels;
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -1148,7 +1162,7 @@ contract FunctionsSubscriptions_CancelSubscription_ReceiveDeposit is FunctionsFu
 
 /// @notice #_cancelSubscriptionHelper
 contract FunctionsSubscriptions__CancelSubscriptionHelper {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #pendingRequestExists
@@ -1186,7 +1200,7 @@ contract FunctionsSubscriptions_SetFlags is FunctionsSubscriptionSetup {
 
   function test_SetFlags_RevertIfNoSubscription() public {
     vm.expectRevert(FunctionsSubscriptions.InvalidSubscription.selector);
-    uint64 invalidSubscriptionId = 123456789;
+    uint64 invalidSubscriptionId = 123_456_789;
     bytes32 flagsToSet = bytes32("1");
     s_functionsRouter.setFlags(invalidSubscriptionId, flagsToSet);
   }
@@ -1206,7 +1220,7 @@ contract FunctionsSubscriptions_GetFlags is FunctionsSubscriptionSetup {
     vm.stopPrank();
     vm.startPrank(STRANGER_ADDRESS);
 
-    uint64 invalidSubscriptionId = 999999;
+    uint64 invalidSubscriptionId = 999_999;
 
     bytes32 flags = s_functionsRouter.getFlags(invalidSubscriptionId);
     assertEq(flags, bytes32(0));
@@ -1239,7 +1253,7 @@ contract FunctionsSubscriptions_TimeoutRequests is FunctionsClientRequestSetup {
 
   function test_TimeoutRequests_RevertInvalidRequest() public {
     // Modify the commitment so that it doesn't match
-    s_requests[1].commitmentOnchain.donFee = 123456789;
+    s_requests[1].commitmentOnchain.donFee = 123_456_789;
     FunctionsResponse.Commitment[] memory commitments = new FunctionsResponse.Commitment[](1);
     commitments[0] = s_requests[1].commitmentOnchain;
     vm.expectRevert(FunctionsSubscriptions.InvalidCalldata.selector);
@@ -1256,11 +1270,11 @@ contract FunctionsSubscriptions_TimeoutRequests is FunctionsClientRequestSetup {
   event RequestTimedOut(bytes32 indexed requestId);
 
   function test_TimeoutRequests_Success() public {
-    uint64 consumerCompletedRequestsBefore = s_functionsRouter
-      .getConsumer(address(s_functionsClient), s_subscriptionId)
-      .completedRequests;
+    uint64 consumerCompletedRequestsBefore =
+      s_functionsRouter.getConsumer(address(s_functionsClient), s_subscriptionId).completedRequests;
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -1278,14 +1292,13 @@ contract FunctionsSubscriptions_TimeoutRequests is FunctionsClientRequestSetup {
     // Releases blocked balance and increments completed requests
     uint96 subscriptionBlockedBalanceAfter = s_functionsRouter.getSubscription(s_subscriptionId).blockedBalance;
     assertEq(0, subscriptionBlockedBalanceAfter);
-    uint64 consumerCompletedRequestsAfter = s_functionsRouter
-      .getConsumer(address(s_functionsClient), s_subscriptionId)
-      .completedRequests;
+    uint64 consumerCompletedRequestsAfter =
+      s_functionsRouter.getConsumer(address(s_functionsClient), s_subscriptionId).completedRequests;
     assertEq(consumerCompletedRequestsBefore + 1, consumerCompletedRequestsAfter);
   }
 }
 
 // @notice #_onlySubscriptionOwner
 contract FunctionsSubscriptions__OnlySubscriptionOwner {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }

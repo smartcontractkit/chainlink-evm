@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 
 /**
  * @title DestinationRewardManagerSetRecipientsTest

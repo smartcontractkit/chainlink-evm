@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
-import {VRFConsumerBaseV2} from "../VRFConsumerBaseV2.sol";
-import {ChainSpecificUtil} from "../ChainSpecificUtil_v0_8_6.sol";
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {ChainSpecificUtil} from "../ChainSpecificUtil_v0_8_6.sol";
+import {VRFConsumerBaseV2} from "../VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
 
 /**
  * @title The VRFLoadTestExternalSubOwner contract.
@@ -26,15 +26,17 @@ contract VRFV2LoadTestWithMetrics is VRFConsumerBaseV2 {
   struct RequestStatus {
     bool fulfilled;
     uint256[] randomWords;
-    uint requestTimestamp;
-    uint fulfilmentTimestamp;
+    uint256 requestTimestamp;
+    uint256 fulfilmentTimestamp;
     uint256 requestBlockNumber;
     uint256 fulfilmentBlockNumber;
   }
 
   mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
 
-  constructor(address _vrfCoordinator) VRFConsumerBaseV2(_vrfCoordinator) {
+  constructor(
+    address _vrfCoordinator
+  ) VRFConsumerBaseV2(_vrfCoordinator) {
     COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
   }
 
@@ -108,8 +110,8 @@ contract VRFV2LoadTestWithMetrics is VRFConsumerBaseV2 {
     returns (
       bool fulfilled,
       uint256[] memory randomWords,
-      uint requestTimestamp,
-      uint fulfilmentTimestamp,
+      uint256 requestTimestamp,
+      uint256 fulfilmentTimestamp,
       uint256 requestBlockNumber,
       uint256 fulfilmentBlockNumber
     )
@@ -134,13 +136,8 @@ contract VRFV2LoadTestWithMetrics is VRFConsumerBaseV2 {
     uint16 _requestCount
   ) internal {
     for (uint16 i = 0; i < _requestCount; i++) {
-      uint256 requestId = COORDINATOR.requestRandomWords(
-        _keyHash,
-        _subId,
-        _requestConfirmations,
-        _callbackGasLimit,
-        _numWords
-      );
+      uint256 requestId =
+        COORDINATOR.requestRandomWords(_keyHash, _subId, _requestConfirmations, _callbackGasLimit, _numWords);
       s_lastRequestId = requestId;
       uint256 requestBlockNumber = ChainSpecificUtil._getBlockNumber();
       s_requests[requestId] = RequestStatus({

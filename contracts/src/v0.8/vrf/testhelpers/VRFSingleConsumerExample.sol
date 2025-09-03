@@ -3,8 +3,9 @@
 pragma solidity ^0.8.0;
 
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
+
 import {VRFConsumerBaseV2} from "../VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
 
 contract VRFSingleConsumerExample is VRFConsumerBaseV2 {
   VRFCoordinatorV2Interface internal COORDINATOR;
@@ -17,6 +18,7 @@ contract VRFSingleConsumerExample is VRFConsumerBaseV2 {
     uint32 numWords;
     bytes32 keyHash;
   }
+
   RequestConfig public s_requestConfig;
   uint256[] public s_randomWords;
   uint256 public s_requestId;
@@ -52,34 +54,28 @@ contract VRFSingleConsumerExample is VRFConsumerBaseV2 {
   function requestRandomWords() external onlyOwner {
     RequestConfig memory rc = s_requestConfig;
     // Will revert if subscription is not set and funded.
-    s_requestId = COORDINATOR.requestRandomWords(
-      rc.keyHash,
-      rc.subId,
-      rc.requestConfirmations,
-      rc.callbackGasLimit,
-      rc.numWords
-    );
+    s_requestId =
+      COORDINATOR.requestRandomWords(rc.keyHash, rc.subId, rc.requestConfirmations, rc.callbackGasLimit, rc.numWords);
   }
 
   // Assumes this contract owns link
   // This method is analogous to VRFv1, except the amount
   // should be selected based on the keyHash (each keyHash functions like a "gas lane"
   // with different link costs).
-  function fundAndRequestRandomWords(uint256 amount) external onlyOwner {
+  function fundAndRequestRandomWords(
+    uint256 amount
+  ) external onlyOwner {
     RequestConfig memory rc = s_requestConfig;
     LINKTOKEN.transferAndCall(address(COORDINATOR), amount, abi.encode(s_requestConfig.subId));
     // Will revert if subscription is not set and funded.
-    s_requestId = COORDINATOR.requestRandomWords(
-      rc.keyHash,
-      rc.subId,
-      rc.requestConfirmations,
-      rc.callbackGasLimit,
-      rc.numWords
-    );
+    s_requestId =
+      COORDINATOR.requestRandomWords(rc.keyHash, rc.subId, rc.requestConfirmations, rc.callbackGasLimit, rc.numWords);
   }
 
   // Assumes this contract owns link
-  function topUpSubscription(uint256 amount) external onlyOwner {
+  function topUpSubscription(
+    uint256 amount
+  ) external onlyOwner {
     LINKTOKEN.transferAndCall(address(COORDINATOR), amount, abi.encode(s_requestConfig.subId));
   }
 
@@ -87,7 +83,9 @@ contract VRFSingleConsumerExample is VRFConsumerBaseV2 {
     LINKTOKEN.transfer(to, amount);
   }
 
-  function unsubscribe(address to) external onlyOwner {
+  function unsubscribe(
+    address to
+  ) external onlyOwner {
     // Returns funds to this address
     COORDINATOR.cancelSubscription(s_requestConfig.subId, to);
     s_requestConfig.subId = 0;

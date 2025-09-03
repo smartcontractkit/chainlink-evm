@@ -98,9 +98,8 @@ contract EthBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterfac
     for (uint256 idx = 0; idx < watchList.length; idx++) {
       target = s_targets[watchList[idx]];
       if (
-        target.lastTopUpTimestamp + minWaitPeriod <= block.timestamp &&
-        balance >= target.topUpAmountWei &&
-        watchList[idx].balance < target.minBalanceWei
+        target.lastTopUpTimestamp + minWaitPeriod <= block.timestamp && balance >= target.topUpAmountWei
+          && watchList[idx].balance < target.minBalanceWei
       ) {
         needsFunding[count] = watchList[idx];
         count++;
@@ -119,15 +118,16 @@ contract EthBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterfac
    * @notice Send funds to the addresses provided
    * @param needsFunding the list of addresses to fund (addresses must be pre-approved)
    */
-  function topUp(address[] memory needsFunding) public whenNotPaused {
+  function topUp(
+    address[] memory needsFunding
+  ) public whenNotPaused {
     uint256 minWaitPeriodSeconds = s_minWaitPeriodSeconds;
     Target memory target;
     for (uint256 idx = 0; idx < needsFunding.length; idx++) {
       target = s_targets[needsFunding[idx]];
       if (
-        target.isActive &&
-        target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp &&
-        needsFunding[idx].balance < target.minBalanceWei
+        target.isActive && target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp
+          && needsFunding[idx].balance < target.minBalanceWei
       ) {
         bool success = payable(needsFunding[idx]).send(target.topUpAmountWei);
         if (success) {
@@ -160,7 +160,9 @@ contract EthBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterfac
    * @notice Called by keeper to send funds to underfunded addresses
    * @param performData The abi encoded list of addresses to fund
    */
-  function performUpkeep(bytes calldata performData) external override onlyKeeperRegistry whenNotPaused {
+  function performUpkeep(
+    bytes calldata performData
+  ) external override onlyKeeperRegistry whenNotPaused {
     address[] memory needsFunding = abi.decode(performData, (address[]));
     topUp(needsFunding);
   }
@@ -186,7 +188,9 @@ contract EthBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterfac
   /**
    * @notice Sets the keeper registry address
    */
-  function setKeeperRegistryAddress(address keeperRegistryAddress) public onlyOwner {
+  function setKeeperRegistryAddress(
+    address keeperRegistryAddress
+  ) public onlyOwner {
     require(keeperRegistryAddress != address(0));
     emit KeeperRegistryAddressUpdated(s_keeperRegistryAddress, keeperRegistryAddress);
     s_keeperRegistryAddress = keeperRegistryAddress;
@@ -195,7 +199,9 @@ contract EthBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterfac
   /**
    * @notice Sets the minimum wait period (in seconds) for addresses between funding
    */
-  function setMinWaitPeriodSeconds(uint256 period) public onlyOwner {
+  function setMinWaitPeriodSeconds(
+    uint256 period
+  ) public onlyOwner {
     emit MinWaitPeriodUpdated(s_minWaitPeriodSeconds, period);
     s_minWaitPeriodSeconds = period;
   }

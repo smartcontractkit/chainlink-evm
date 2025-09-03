@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ChainlinkClient, ChainlinkRequestInterface, LinkTokenInterface} from "../../ChainlinkClient.sol";
 import {Chainlink} from "../../Chainlink.sol";
+import {ChainlinkClient, ChainlinkRequestInterface, LinkTokenInterface} from "../../ChainlinkClient.sol";
 
 contract Consumer is ChainlinkClient {
   using Chainlink for Chainlink.Request;
@@ -10,10 +10,8 @@ contract Consumer is ChainlinkClient {
   bytes32 internal s_specId;
   bytes32 internal s_currentPrice;
 
-  event RequestFulfilled(
-    bytes32 indexed requestId, // User-defined ID
-    bytes32 indexed price
-  );
+  event RequestFulfilled( // User-defined ID
+  bytes32 indexed requestId, bytes32 indexed price);
 
   function requestEthereumPrice(string memory _currency, uint256 _payment) public {
     requestEthereumPriceByCallback(_currency, _payment, address(this));

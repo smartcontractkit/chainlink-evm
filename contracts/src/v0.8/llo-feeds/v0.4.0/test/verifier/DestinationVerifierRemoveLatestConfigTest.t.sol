@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
-import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
-import {DestinationRewardManager} from "../../../v0.4.0/DestinationRewardManager.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {DestinationRewardManager} from "../../../v0.4.0/DestinationRewardManager.sol";
+import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
+import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 
 contract DestinationVerifierSetConfigTest is BaseTest {
   bytes32[3] internal s_reportContext;

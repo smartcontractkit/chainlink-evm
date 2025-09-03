@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest, BaseTestWithConfiguredVerifierAndFeeManager} from "../verifier/BaseVerifierTest.t.sol";
 import {SimpleWriteAccessController} from "../../../../shared/access/SimpleWriteAccessController.sol";
 import {Common} from "../../../libraries/Common.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
+import {BaseTest, BaseTestWithConfiguredVerifierAndFeeManager} from "../verifier/BaseVerifierTest.t.sol";
 
 contract Verifier_setConfigV05 is BaseTest {
   address[] internal s_signerAddrs;
@@ -73,9 +73,7 @@ contract Verifier_verifyWithFeeV05 is BaseTestWithConfiguredVerifierAndFeeManage
 
   function testVerifyProxyWithLinkFeeSuccess_gas() public {
     bytes memory signedLinkPayload = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     s_verifierProxy.verify(signedLinkPayload, abi.encode(link));
@@ -83,9 +81,7 @@ contract Verifier_verifyWithFeeV05 is BaseTestWithConfiguredVerifierAndFeeManage
 
   function testVerifyProxyWithNativeFeeSuccess_gas() public {
     bytes memory signedNativePayload = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     s_verifierProxy.verify(signedNativePayload, abi.encode(native));
@@ -132,9 +128,7 @@ contract Verifier_bulkVerifyWithFeeV05 is BaseTestWithConfiguredVerifierAndFeeMa
 
   function testBulkVerifyProxyWithLinkFeeSuccess_gas() public {
     bytes memory signedLinkPayload = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedLinkPayloads = new bytes[](NUMBER_OF_REPORTS_TO_VERIFY);
@@ -147,9 +141,7 @@ contract Verifier_bulkVerifyWithFeeV05 is BaseTestWithConfiguredVerifierAndFeeMa
 
   function testBulkVerifyProxyWithNativeFeeSuccess_gas() public {
     bytes memory signedNativePayload = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedNativePayloads = new bytes[](NUMBER_OF_REPORTS_TO_VERIFY);
@@ -202,7 +194,7 @@ contract Verifier_accessControlledVerifyV05 is BaseTestWithConfiguredVerifierAnd
   SimpleWriteAccessController s_accessController;
 
   address internal constant CLIENT = address(9000);
-  address internal constant ACCESS_CONTROLLER_ADDR = address(10000);
+  address internal constant ACCESS_CONTROLLER_ADDR = address(10_000);
 
   function setUp() public override {
     BaseTestWithConfiguredVerifierAndFeeManager.setUp();

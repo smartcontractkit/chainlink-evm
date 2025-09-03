@@ -2,13 +2,14 @@
 pragma solidity 0.8.19;
 
 import {AutomationForwarderLogic} from "../AutomationForwarderLogic.sol";
-import {BaseTest} from "./BaseTest.t.sol";
+
+import {ChainModuleBase} from "../chains/ChainModuleBase.sol";
+import {IAutomationRegistryMaster} from "../interfaces/v2_2/IAutomationRegistryMaster.sol";
 import {AutomationRegistry2_2} from "../v2_2/AutomationRegistry2_2.sol";
 import {AutomationRegistryBase2_2} from "../v2_2/AutomationRegistryBase2_2.sol";
 import {AutomationRegistryLogicA2_2} from "../v2_2/AutomationRegistryLogicA2_2.sol";
 import {AutomationRegistryLogicB2_2} from "../v2_2/AutomationRegistryLogicB2_2.sol";
-import {IAutomationRegistryMaster} from "../interfaces/v2_2/IAutomationRegistryMaster.sol";
-import {ChainModuleBase} from "../chains/ChainModuleBase.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract AutomationRegistry2_2_SetUp is BaseTest {
   address internal constant LINK_ETH_FEED = 0x1111111111111111111111111111111111111110;
@@ -47,16 +48,11 @@ contract AutomationRegistry2_2_SetUp is BaseTest {
     s_registrars[0] = 0x3a0eDE26aa188BFE00b9A0C9A431A1a0CA5f7966;
 
     AutomationForwarderLogic forwarderLogic = new AutomationForwarderLogic();
-    AutomationRegistryLogicB2_2 logicB2_2 = new AutomationRegistryLogicB2_2(
-      LINK_TOKEN,
-      LINK_ETH_FEED,
-      FAST_GAS_FEED,
-      address(forwarderLogic),
-      ZERO_ADDRESS
-    );
+    AutomationRegistryLogicB2_2 logicB2_2 =
+      new AutomationRegistryLogicB2_2(LINK_TOKEN, LINK_ETH_FEED, FAST_GAS_FEED, address(forwarderLogic), ZERO_ADDRESS);
     AutomationRegistryLogicA2_2 logicA2_2 = new AutomationRegistryLogicA2_2(logicB2_2);
     registryMaster = IAutomationRegistryMaster(
-      address(new AutomationRegistry2_2(AutomationRegistryLogicB2_2(address(logicA2_2))))
+      payable(address(new AutomationRegistry2_2(AutomationRegistryLogicB2_2(address(logicA2_2)))))
     );
   }
 }
@@ -96,7 +92,7 @@ contract AutomationRegistry2_2_SetConfig is AutomationRegistry2_2_SetUp {
   );
 
   function testSetConfigSuccess() public {
-    (uint32 configCount, , ) = registryMaster.latestConfigDetails();
+    (uint32 configCount,,) = registryMaster.latestConfigDetails();
     assertEq(configCount, 0);
     ChainModuleBase module = new ChainModuleBase();
 
@@ -108,9 +104,9 @@ contract AutomationRegistry2_2_SetConfig is AutomationRegistry2_2_SetUp {
       gasCeilingMultiplier: 0,
       minUpkeepSpend: 0,
       maxPerformGas: 10_000_000,
-      maxCheckDataSize: 5_000,
-      maxPerformDataSize: 5_000,
-      maxRevertDataSize: 5_000,
+      maxCheckDataSize: 5000,
+      maxPerformDataSize: 5000,
+      maxRevertDataSize: 5000,
       fallbackGasPrice: 20_000_000_000,
       fallbackLinkPrice: 200_000_000_000,
       transcoder: 0xB1e66855FD67f6e85F0f0fA38cd6fBABdf00923c,
@@ -150,15 +146,10 @@ contract AutomationRegistry2_2_SetConfig is AutomationRegistry2_2_SetUp {
     );
 
     registryMaster.setConfig(
-      s_valid_signers,
-      s_valid_transmitters,
-      F,
-      onchainConfigBytes,
-      OFFCHAIN_CONFIG_VERSION,
-      offchainConfigBytes
+      s_valid_signers, s_valid_transmitters, F, onchainConfigBytes, OFFCHAIN_CONFIG_VERSION, offchainConfigBytes
     );
 
-    (, , address[] memory signers, address[] memory transmitters, uint8 f) = registryMaster.getState();
+    (,, address[] memory signers, address[] memory transmitters, uint8 f) = registryMaster.getState();
 
     assertEq(signers, s_valid_signers);
     assertEq(transmitters, s_valid_transmitters);

@@ -15,12 +15,16 @@ contract MockScrollL1MessageQueueV2 is IL1MessageQueueV2 {
   }
 
   /// @notice Return the message of in `queueIndex`.
-  function getCrossDomainMessage(uint256 /* queueIndex */) external pure returns (bytes32) {
+  function getCrossDomainMessage(
+    uint256 /* queueIndex */
+  ) external pure returns (bytes32) {
     return "";
   }
 
   /// @notice Return the amount of ETH should pay for cross domain message.
-  function estimateCrossDomainMessageFee(uint256 /* gasLimit */) external pure returns (uint256) {
+  function estimateCrossDomainMessageFee(
+    uint256 /* gasLimit */
+  ) external pure returns (uint256) {
     return 0;
   }
 
@@ -35,12 +39,16 @@ contract MockScrollL1MessageQueueV2 is IL1MessageQueueV2 {
   }
 
   /// @notice Return the message rolling hash of `queueIndex`.
-  function getMessageRollingHash(uint256 /* queueIndex */) external pure returns (bytes32) {
+  function getMessageRollingHash(
+    uint256 /* queueIndex */
+  ) external pure returns (bytes32) {
     return "";
   }
 
   /// @notice Return the message enqueue timestamp of `queueIndex`.
-  function getMessageEnqueueTimestamp(uint256 /*queueIndex*/) external pure returns (uint256) {
+  function getMessageEnqueueTimestamp(
+    uint256 /*queueIndex*/
+  ) external pure returns (uint256) {
     return 0;
   }
 
@@ -55,17 +63,19 @@ contract MockScrollL1MessageQueueV2 is IL1MessageQueueV2 {
   }
 
   /// @notice Return the amount of intrinsic gas fee should pay for cross domain message.
-  function calculateIntrinsicGasFee(bytes memory /* _calldata */) external pure returns (uint256) {
+  function calculateIntrinsicGasFee(
+    bytes memory /* _calldata */
+  ) external pure returns (uint256) {
     return 0;
   }
 
   /// @notice Return the hash of a L1 message.
   function computeTransactionHash(
-    address /* sender */,
-    uint256 /* queueIndex */,
-    uint256 /* value */,
-    address /* target */,
-    uint256 /* gasLimit */,
+    address, /* sender */
+    uint256, /* queueIndex */
+    uint256, /* value */
+    address, /* target */
+    uint256, /* gasLimit */
     bytes calldata /* data */
   ) external pure returns (bytes32) {
     return 0;
@@ -103,9 +113,13 @@ contract MockScrollL1MessageQueueV2 is IL1MessageQueueV2 {
   function popCrossDomainMessage(uint256 startIndex, uint256 count, uint256 skippedBitmap) external {}
 
   /// @notice Drop a skipped message from the queue.
-  function dropCrossDomainMessage(uint256 index) external {}
+  function dropCrossDomainMessage(
+    uint256 index
+  ) external {}
 
   /// @notice Mark cross-domain messages as finalized.
   /// @dev This function can only be called by `ScrollChain`.
-  function finalizePoppedCrossDomainMessage(uint256 /* nextUnfinalizedQueueIndex */) external {}
+  function finalizePoppedCrossDomainMessage(
+    uint256 /* nextUnfinalizedQueueIndex */
+  ) external {}
 }

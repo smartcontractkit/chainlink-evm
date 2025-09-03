@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.0;
 
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Common} from "../../libraries/Common.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IDestinationVerifierFeeManager is IERC165 {
   /**

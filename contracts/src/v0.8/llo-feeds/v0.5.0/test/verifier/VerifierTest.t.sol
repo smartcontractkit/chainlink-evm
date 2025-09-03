@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseVerifierTest.t.sol";
 import {Verifier} from "../../Verifier.sol";
+import {BaseTest} from "./BaseVerifierTest.t.sol";
 
 contract VerifierConstructorTestV05 is BaseTest {
   function test_revertsIfInitializedWithEmptyVerifierProxy() public {

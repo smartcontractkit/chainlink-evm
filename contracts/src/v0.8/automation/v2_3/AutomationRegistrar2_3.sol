@@ -1,24 +1,29 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {IAutomationRegistryMaster2_3} from "../interfaces/v2_3/IAutomationRegistryMaster2_3.sol";
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {IERC677Receiver} from "../../shared/interfaces/IERC677Receiver.sol";
-import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {IAutomationRegistryMaster2_3} from "../interfaces/v2_3/IAutomationRegistryMaster2_3.sol";
+
 import {IWrappedNative} from "../interfaces/v2_3/IWrappedNative.sol";
-import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
+import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {SafeERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/utils/SafeERC20.sol";
+import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
 
 /**
  * @notice Contract to accept requests for upkeep registrations
  * @dev There are 2 registration workflows in this contract
- * Flow 1. auto approve OFF / manual registration - UI calls `register` function on this contract, this contract owner at a later time then manually
+ * Flow 1. auto approve OFF / manual registration - UI calls `register` function on this contract, this contract owner
+ * at a later time then manually
  *  calls `approve` to register upkeep and emit events to inform UI and others interested.
- * Flow 2. auto approve ON / real time registration - UI calls `register` function as before, which calls the `registerUpkeep` function directly on
+ * Flow 2. auto approve ON / real time registration - UI calls `register` function as before, which calls the
+ * `registerUpkeep` function directly on
  *  keeper registry and then emits approved event to finish the flow automatically without manual intervention.
- * The idea is to have same interface(functions,events) for UI or anyone using this contract irrespective of auto approve being enabled or not.
+ * The idea is to have same interface(functions,events) for UI or anyone using this contract irrespective of auto
+ * approve being enabled or not.
  * they can just listen to `RegistrationRequested` & `RegistrationApproved` events and know the status on registrations.
  */
 contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Receiver {
@@ -93,6 +98,7 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @member triggerConfig the config for the trigger
    * @member offchainConfig offchainConfig for upkeep in bytes
    */
+
   struct RegistrationParams {
     address upkeepContract;
     uint96 amount;
@@ -177,9 +183,7 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
     setConfig(registry, billingTokens, minRegistrationFees);
     for (uint256 idx = 0; idx < triggerConfigs.length; idx++) {
       setTriggerConfig(
-        triggerConfigs[idx].triggerType,
-        triggerConfigs[idx].autoApproveType,
-        triggerConfigs[idx].autoApproveMaxAllowed
+        triggerConfigs[idx].triggerType, triggerConfigs[idx].autoApproveType, triggerConfigs[idx].autoApproveMaxAllowed
       );
     }
   }
@@ -190,7 +194,9 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @notice Allows external users to register upkeeps; assumes amount is approved for transfer by the contract
    * @param requestParams struct of all possible registration parameters
    */
-  function registerUpkeep(RegistrationParams memory requestParams) external payable returns (uint256) {
+  function registerUpkeep(
+    RegistrationParams memory requestParams
+  ) external payable returns (uint256) {
     if (requestParams.billingToken == IERC20(i_WRAPPED_NATIVE_TOKEN) && msg.value != 0) {
       requestParams.amount = SafeCast.toUint96(msg.value);
       // wrap and send native payment
@@ -207,7 +213,9 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @dev register upkeep on AutomationRegistry contract and emit RegistrationApproved event
    * @param requestParams struct of all possible registration parameters
    */
-  function approve(RegistrationParams calldata requestParams) external onlyOwner {
+  function approve(
+    RegistrationParams calldata requestParams
+  ) external onlyOwner {
     bytes32 hash = keccak256(abi.encode(requestParams));
 
     PendingRequest memory request = s_pendingRequests[hash];
@@ -220,10 +228,13 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
   }
 
   /**
-   * @notice cancel will remove a registration request from the pending request queue and return the refunds to the request.admin
+   * @notice cancel will remove a registration request from the pending request queue and return the refunds to the
+   * request.admin
    * @param hash the request hash
    */
-  function cancel(bytes32 hash) external {
+  function cancel(
+    bytes32 hash
+  ) external {
     PendingRequest memory request = s_pendingRequests[hash];
 
     if (!(msg.sender == request.admin || msg.sender == owner())) {
@@ -289,7 +300,9 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @notice read the allowlist status of senderAddress
    * @param senderAddress address to read the allowlist status for
    */
-  function getAutoApproveAllowedSender(address senderAddress) external view returns (bool) {
+  function getAutoApproveAllowedSender(
+    address senderAddress
+  ) external view returns (bool) {
     return s_autoApproveAllowedSenders[senderAddress];
   }
 
@@ -303,7 +316,9 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
   /**
    * @notice get the minimum registration fee for a particular billing token
    */
-  function getMinimumRegistrationAmount(IERC20 billingToken) external view returns (uint256) {
+  function getMinimumRegistrationAmount(
+    IERC20 billingToken
+  ) external view returns (uint256) {
     return s_minRegistrationAmounts[billingToken];
   }
 
@@ -311,14 +326,18 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @notice read the config for this upkeep type
    * @param triggerType upkeep type to read config for
    */
-  function getTriggerRegistrationDetails(uint8 triggerType) external view returns (TriggerRegistrationStorage memory) {
+  function getTriggerRegistrationDetails(
+    uint8 triggerType
+  ) external view returns (TriggerRegistrationStorage memory) {
     return s_triggerRegistrations[triggerType];
   }
 
   /**
    * @notice gets the admin address and the current balance of a registration request
    */
-  function getPendingRequest(bytes32 hash) external view returns (address, uint96) {
+  function getPendingRequest(
+    bytes32 hash
+  ) external view returns (address, uint96) {
     PendingRequest memory request = s_pendingRequests[hash];
     return (request.admin, request.balance);
   }
@@ -333,7 +352,8 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
     if (msg.sender != address(i_LINK)) revert OnlyLink();
     RegistrationParams memory params = abi.decode(data, (RegistrationParams));
     if (address(params.billingToken) != address(i_LINK)) revert OnlyLink();
-    params.amount = uint96(amount); // ignore whatever is sent in registration params, use actual value; casting safe because max supply LINK < 2^96
+    params.amount = uint96(amount); // ignore whatever is sent in registration params, use actual value; casting safe
+      // because max supply LINK < 2^96
     _register(params, sender);
   }
 
@@ -382,11 +402,8 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
       s_triggerRegistrations[params.triggerType].approvedCount++;
       upkeepId = _approve(params, hash);
     } else {
-      s_pendingRequests[hash] = PendingRequest({
-        admin: params.adminAddress,
-        balance: params.amount,
-        billingToken: params.billingToken
-      });
+      s_pendingRequests[hash] =
+        PendingRequest({admin: params.adminAddress, balance: params.amount, billingToken: params.billingToken});
     }
 
     return upkeepId;
@@ -394,8 +411,10 @@ contract AutomationRegistrar2_3 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
 
   /**
    * @dev register upkeep on AutomationRegistry contract and emit RegistrationApproved event
-   * @dev safeApprove is deprecated and removed from the latest (v5) OZ release, Use safeIncreaseAllowance when we upgrade OZ (we are on v4.8)
-   * @dev we stick to the safeApprove because of the older version (v4.8) of safeIncreaseAllowance can't handle USDT correctly, but newer version can
+   * @dev safeApprove is deprecated and removed from the latest (v5) OZ release, Use safeIncreaseAllowance when we
+   * upgrade OZ (we are on v4.8)
+   * @dev we stick to the safeApprove because of the older version (v4.8) of safeIncreaseAllowance can't handle USDT
+   * correctly, but newer version can
    */
   function _approve(RegistrationParams memory params, bytes32 hash) private returns (uint256) {
     IAutomationRegistryMaster2_3 registry = s_registry;

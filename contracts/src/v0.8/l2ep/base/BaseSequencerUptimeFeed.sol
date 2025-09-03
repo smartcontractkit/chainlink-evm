@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 import {AggregatorInterface} from "../../shared/interfaces/AggregatorInterface.sol";
-import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
+
 import {AggregatorV2V3Interface} from "../../shared/interfaces/AggregatorV2V3Interface.sol";
+import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+
 import {ISequencerUptimeFeed} from "./../interfaces/ISequencerUptimeFeed.sol";
 
 import {SimpleReadAccessController} from "../../shared/access/SimpleReadAccessController.sol";
@@ -70,7 +72,9 @@ abstract contract BaseSequencerUptimeFeed is
   /// @notice Check if a roundId is valid in this current contract state
   /// @dev Mainly used for AggregatorV2V3Interface functions
   /// @param roundId Round ID to check
-  function _isValidRound(uint256 roundId) private view returns (bool) {
+  function _isValidRound(
+    uint256 roundId
+  ) private view returns (bool) {
     return roundId > 0 && roundId <= type(uint80).max && s_feedState.latestRoundId >= roundId;
   }
 
@@ -82,12 +86,16 @@ abstract contract BaseSequencerUptimeFeed is
   /// @notice Set the allowed L1 sender for this contract to a new L1 sender
   /// @dev Can be disabled by setting the L1 sender as `address(0)`. Accessible only by owner.
   /// @param newSender new L1 sender that will be allowed to call `updateStatus` on this contract
-  function transferL1Sender(address newSender) external virtual onlyOwner {
+  function transferL1Sender(
+    address newSender
+  ) external virtual onlyOwner {
     _setL1Sender(newSender);
   }
 
   /// @notice internal method that stores the L1 sender
-  function _setL1Sender(address newSender) internal {
+  function _setL1Sender(
+    address newSender
+  ) internal {
     address oldSender = s_l1Sender;
     if (oldSender != newSender) {
       s_l1Sender = newSender;
@@ -97,7 +105,9 @@ abstract contract BaseSequencerUptimeFeed is
 
   /// @dev Returns an AggregatorV2V3Interface compatible answer from status flag
   /// @param status The status flag to convert to an aggregator-compatible answer
-  function _getStatusAnswer(bool status) internal pure returns (int256) {
+  function _getStatusAnswer(
+    bool status
+  ) internal pure returns (int256) {
     return status ? int256(1) : int256(0);
   }
 
@@ -147,7 +157,9 @@ abstract contract BaseSequencerUptimeFeed is
   }
 
   /// @inheritdoc AggregatorInterface
-  function getAnswer(uint256 roundId) external view override checkAccess returns (int256) {
+  function getAnswer(
+    uint256 roundId
+  ) external view override checkAccess returns (int256) {
     if (!_isValidRound(roundId)) {
       revert NoDataPresent();
     }
@@ -156,7 +168,9 @@ abstract contract BaseSequencerUptimeFeed is
   }
 
   /// @inheritdoc AggregatorInterface
-  function getTimestamp(uint256 roundId) external view override checkAccess returns (uint256) {
+  function getTimestamp(
+    uint256 roundId
+  ) external view override checkAccess returns (uint256) {
     if (!_isValidRound(roundId)) {
       revert NoDataPresent();
     }
@@ -186,7 +200,9 @@ abstract contract BaseSequencerUptimeFeed is
     }
   }
 
-  function _validateSender(address l1Sender) internal virtual;
+  function _validateSender(
+    address l1Sender
+  ) internal virtual;
 
   /// @inheritdoc AggregatorV3Interface
   function getRoundData(

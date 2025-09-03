@@ -303,7 +303,8 @@ var sei = ClientErrors{
 }
 
 var monad = ClientErrors{
-	Fatal: regexp.MustCompile("Gas limit too low"),
+	Fatal:           regexp.MustCompile("Gas limit too low"),
+	InsufficientEth: regexp.MustCompile("Signer had insufficient balance"),
 }
 
 const TerminallyStuckMsg = "transaction terminally stuck"

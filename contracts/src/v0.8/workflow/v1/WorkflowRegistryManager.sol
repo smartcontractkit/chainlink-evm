@@ -91,8 +91,10 @@ contract WorkflowRegistryManager is Ownable2StepMsgSender, ITypeAndVersion {
   }
 
   /// @notice Activates a specific WorkflowRegistry version by its version number.
-  /// @dev This contract uses a 1-based index, meaning the `versionNumber` parameter must start at 1, with 1 representing the
-  /// first version. Setting `versionNumber` to 0 will revert, as 0 is not a valid index in this context. Only one version
+  /// @dev This contract uses a 1-based index, meaning the `versionNumber` parameter must start at 1, with 1
+  /// representing the
+  /// first version. Setting `versionNumber` to 0 will revert, as 0 is not a valid index in this context. Only one
+  /// version
   /// can be active at a time; activating a new version automatically deactivates the currently active one (if any).
   /// @param versionNumber The 1-based version number to activate (minimum value is 1).
   /// @custom:throws VersionNotRegistered if the `versionNumber` is not valid or not registered.
@@ -102,7 +104,8 @@ contract WorkflowRegistryManager is Ownable2StepMsgSender, ITypeAndVersion {
     _activateVersion(versionNumber);
   }
 
-  /// @dev This private function deactivates the currently active version (if any) before activating the specified version. It
+  /// @dev This private function deactivates the currently active version (if any) before activating the specified
+  /// version. It
   /// emits events for both deactivation and activation.
   /// @param versionNumber The version number of the version to activate.
   /// @custom:throws IndexOutOfBounds if the version number does not exist.
@@ -139,13 +142,15 @@ contract WorkflowRegistryManager is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
 
   /// @notice Returns a paginated list of all WorkflowRegistry versions.
-  /// @dev This function retrieves a range of versions based on the provided `start` and `limit` parameters. The contract uses
+  /// @dev This function retrieves a range of versions based on the provided `start` and `limit` parameters. The
+  /// contract uses
   /// a 1-based index, so the `start` parameter must be at least 1, representing the first version. If `limit` is set to
   /// 0 or exceeds `MAX_PAGINATION_LIMIT`, it defaults to `MAX_PAGINATION_LIMIT`. If `start` exceeds the total number of
   /// versions, an empty array is returned.
   /// @param start The index at which to start retrieving versions (1-based index, minimum value is 1).
   /// @param limit The maximum number of versions to retrieve (maximum is `MAX_PAGINATION_LIMIT`).
-  /// @return versions An array of `Version` structs containing version details, starting from the `start` index up to the
+  /// @return versions An array of `Version` structs containing version details, starting from the `start` index up to
+  /// the
   /// specified `limit`.
   function getAllVersions(uint32 start, uint32 limit) external view returns (Version[] memory versions) {
     uint32 totalVersions = s_latestVersionNumber;
@@ -172,7 +177,8 @@ contract WorkflowRegistryManager is Ownable2StepMsgSender, ITypeAndVersion {
 
   /// @notice Retrieves the details of a specific WorkflowRegistry version by its version number.
   /// @dev This contract uses a 1-based index, so `versionNumber` must be at least 1. This means the first version is
-  /// represented by `versionNumber` of 1, not 0. Attempting to retrieve a version with a `versionNumber` of 0 or exceeding
+  /// represented by `versionNumber` of 1, not 0. Attempting to retrieve a version with a `versionNumber` of 0 or
+  /// exceeding
   /// `s_latestVersionNumber` will revert.
   /// @param versionNumber The 1-based version number of the version to retrieve (minimum value is 1).
   /// @return A `Version` struct containing the details of the specified version.

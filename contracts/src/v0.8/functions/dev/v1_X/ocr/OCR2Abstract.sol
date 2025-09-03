@@ -62,19 +62,19 @@ abstract contract OCR2Abstract is ITypeAndVersion {
     returns (uint32 configCount, uint32 blockNumber, bytes32 configDigest);
 
   /**
-    * @notice optionally emited to indicate the latest configDigest and epoch for
-     which a report was successfully transmited. Alternatively, the contract may
-     use latestConfigDigestAndEpoch with scanLogs set to false.
-  */
+   * @notice optionally emited to indicate the latest configDigest and epoch for
+   *    which a report was successfully transmited. Alternatively, the contract may
+   *    use latestConfigDigestAndEpoch with scanLogs set to false.
+   */
   event Transmitted(bytes32 configDigest, uint32 epoch);
 
   /**
-     * @notice optionally returns the latest configDigest and epoch for which a
-     report was successfully transmitted. Alternatively, the contract may return
-     scanLogs set to true and use Transmitted events to provide this information
-     to offchain watchers.
+   * @notice optionally returns the latest configDigest and epoch for which a
+   *    report was successfully transmitted. Alternatively, the contract may return
+   *    scanLogs set to true and use Transmitted events to provide this information
+   *    to offchain watchers.
    * @return scanLogs indicates whether to rely on the configDigest and epoch
-     returned or whether to scan logs for the Transmitted event instead.
+   *    returned or whether to scan logs for the Transmitted event instead.
    * @return configDigest
    * @return epoch
    */

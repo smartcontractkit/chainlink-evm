@@ -3,12 +3,9 @@ pragma solidity 0.8.16;
 
 contract UpkeepCounterNew {
   event PerformingUpkeep(
-    address indexed from,
-    uint256 initialTimestamp,
-    uint256 lastTimestamp,
-    uint256 previousBlock,
-    uint256 counter
+    address indexed from, uint256 initialTimestamp, uint256 lastTimestamp, uint256 previousBlock, uint256 counter
   );
+
   error InvalidCaller(address caller, address forwarder);
 
   uint256 public testRange;
@@ -28,7 +25,7 @@ contract UpkeepCounterNew {
   address public forwarder;
 
   constructor() {
-    testRange = 1000000;
+    testRange = 1_000_000;
     interval = 40;
     previousPerformBlock = 0;
     lastTimestamp = block.timestamp;
@@ -37,35 +34,49 @@ contract UpkeepCounterNew {
     useMoreCheckGas = false;
     useMorePerformData = false;
     useMorePerformGas = false;
-    checkGasToBurn = 9700000;
-    performGasToBurn = 7700000;
+    checkGasToBurn = 9_700_000;
+    performGasToBurn = 7_700_000;
   }
 
-  function setPerformGasToBurn(uint256 _performGasToBurn) external {
+  function setPerformGasToBurn(
+    uint256 _performGasToBurn
+  ) external {
     performGasToBurn = _performGasToBurn;
   }
 
-  function setCheckGasToBurn(uint256 _checkGasToBurn) external {
+  function setCheckGasToBurn(
+    uint256 _checkGasToBurn
+  ) external {
     checkGasToBurn = _checkGasToBurn;
   }
 
-  function setUseMoreCheckGas(bool _useMoreCheckGas) external {
+  function setUseMoreCheckGas(
+    bool _useMoreCheckGas
+  ) external {
     useMoreCheckGas = _useMoreCheckGas;
   }
 
-  function setUseMorePerformGas(bool _useMorePerformGas) external {
+  function setUseMorePerformGas(
+    bool _useMorePerformGas
+  ) external {
     useMorePerformGas = _useMorePerformGas;
   }
 
-  function setUseMorePerformData(bool _useMorePerformData) external {
+  function setUseMorePerformData(
+    bool _useMorePerformData
+  ) external {
     useMorePerformData = _useMorePerformData;
   }
 
-  function setData(bytes calldata _data) external {
+  function setData(
+    bytes calldata _data
+  ) external {
     data = _data;
   }
 
-  function checkUpkeep(bytes calldata) external view returns (bool, bytes memory) {
+  function checkUpkeep(
+    bytes calldata
+  ) external view returns (bool, bytes memory) {
     if (useMoreCheckGas) {
       uint256 startGas = gasleft();
       while (startGas - gasleft() < checkGasToBurn) {} // burn gas
@@ -77,11 +88,15 @@ contract UpkeepCounterNew {
     return (eligible(), "");
   }
 
-  function setTrickSimulation(bool _trickSimulation) external {
+  function setTrickSimulation(
+    bool _trickSimulation
+  ) external {
     trickSimulation = _trickSimulation;
   }
 
-  function performUpkeep(bytes calldata performData) external {
+  function performUpkeep(
+    bytes calldata performData
+  ) external {
     if (trickSimulation && tx.origin == address(0)) {
       return;
     }
@@ -120,7 +135,9 @@ contract UpkeepCounterNew {
     counter = 0;
   }
 
-  function setForwarder(address _forwarder) external {
+  function setForwarder(
+    address _forwarder
+  ) external {
     forwarder = _forwarder;
   }
 }

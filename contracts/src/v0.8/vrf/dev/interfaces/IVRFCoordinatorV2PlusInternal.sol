@@ -24,12 +24,7 @@ interface IVRFCoordinatorV2PlusInternal is IVRFCoordinatorV2Plus {
   );
 
   event RandomWordsFulfilled(
-    uint256 indexed requestId,
-    uint256 outputSeed,
-    uint256 indexed subId,
-    uint96 payment,
-    bool success,
-    bool onlyPremium
+    uint256 indexed requestId, uint256 outputSeed, uint256 indexed subId, uint96 payment, bool success, bool onlyPremium
   );
 
   struct RequestCommitment {
@@ -54,7 +49,9 @@ interface IVRFCoordinatorV2PlusInternal is IVRFCoordinatorV2Plus {
   }
 
   // solhint-disable-next-line func-name-mixedcase
-  function s_requestCommitments(uint256 requestID) external view returns (bytes32);
+  function s_requestCommitments(
+    uint256 requestID
+  ) external view returns (bytes32);
 
   function fulfillRandomWords(
     Proof calldata proof,

@@ -9,7 +9,9 @@ import {Configurator} from "../../Configurator.sol";
 contract ExposedConfigurator is Configurator {
   constructor() {}
 
-  function exposedReadConfigurationStates(bytes32 configId) public view returns (ConfigurationState memory) {
+  function exposedReadConfigurationStates(
+    bytes32 configId
+  ) public view returns (ConfigurationState memory) {
     return s_configurationStates[configId];
   }
 
@@ -33,18 +35,17 @@ contract ExposedConfigurator is Configurator {
     uint64 _encodedConfigVersion,
     bytes memory _encodedConfig
   ) public pure returns (bytes32) {
-    return
-      _configDigestFromConfigData(
-        _configId,
-        _chainId,
-        _contractAddress,
-        _configCount,
-        _signers,
-        _offchainTransmitters,
-        _f,
-        _onchainConfig,
-        _encodedConfigVersion,
-        _encodedConfig
-      );
+    return _configDigestFromConfigData(
+      _configId,
+      _chainId,
+      _contractAddress,
+      _configCount,
+      _signers,
+      _offchainTransmitters,
+      _f,
+      _onchainConfig,
+      _encodedConfigVersion,
+      _encodedConfig
+    );
   }
 }

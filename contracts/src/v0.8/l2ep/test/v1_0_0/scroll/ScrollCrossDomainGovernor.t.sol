@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {MockScrollCrossDomainMessenger} from "../../mocks/scroll/MockScrollCrossDomainMessenger.sol";
 import {ScrollCrossDomainGovernor} from "../../../scroll/ScrollCrossDomainGovernor.sol";
 import {Greeter} from "../../Greeter.sol";
+import {MockScrollCrossDomainMessenger} from "../../mocks/scroll/MockScrollCrossDomainMessenger.sol";
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 import {MultiSend} from "../../../../vendor/MultiSend.sol";
@@ -98,8 +98,7 @@ contract ScrollCrossDomainGovernor_Forward is ScrollCrossDomainGovernorTest {
 
     // Sends the message
     s_scrollCrossDomainGovernor.forward(
-      address(s_greeter),
-      abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
+      address(s_greeter), abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
     );
 
     // Checks that the greeter message was updated

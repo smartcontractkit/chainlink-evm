@@ -99,7 +99,9 @@ contract ChainReaderTester {
     );
   }
 
-  function setAlterablePrimitiveValue(uint64 value) public {
+  function setAlterablePrimitiveValue(
+    uint64 value
+  ) public {
     s_value = value;
   }
 
@@ -114,21 +116,22 @@ contract ChainReaderTester {
     MidLevelDynamicTestStruct calldata nestedDynamicStruct,
     MidLevelStaticTestStruct calldata nestedStaticStruct
   ) public pure returns (TestStruct memory) {
-    return
-      TestStruct(
-        field,
-        differentField,
-        oracleId,
-        oracleIds,
-        accountStruct,
-        accounts,
-        bigField,
-        nestedDynamicStruct,
-        nestedStaticStruct
-      );
+    return TestStruct(
+      field,
+      differentField,
+      oracleId,
+      oracleIds,
+      accountStruct,
+      accounts,
+      bigField,
+      nestedDynamicStruct,
+      nestedStaticStruct
+    );
   }
 
-  function getElementAtIndex(uint256 i) public view returns (TestStruct memory) {
+  function getElementAtIndex(
+    uint256 i
+  ) public view returns (TestStruct memory) {
     // See chain_reader_interface_tests.go in chainlink-relay
     return s_seen[i - 1];
   }
@@ -176,7 +179,9 @@ contract ChainReaderTester {
     );
   }
 
-  function triggerEventWithDynamicTopic(string calldata field) public {
+  function triggerEventWithDynamicTopic(
+    string calldata field
+  ) public {
     emit TriggeredEventWithDynamicTopic(field, field);
   }
 

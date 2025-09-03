@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
+
 import {VRFConsumerBaseV2} from "../VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
 
 contract VRFExternalSubOwnerExample is VRFConsumerBaseV2 {
   VRFCoordinatorV2Interface internal COORDINATOR;
@@ -35,7 +36,9 @@ contract VRFExternalSubOwnerExample is VRFConsumerBaseV2 {
     s_requestId = COORDINATOR.requestRandomWords(keyHash, subId, requestConfirmations, callbackGasLimit, numWords);
   }
 
-  function transferOwnership(address newOwner) external onlyOwner {
+  function transferOwnership(
+    address newOwner
+  ) external onlyOwner {
     s_owner = newOwner;
   }
 

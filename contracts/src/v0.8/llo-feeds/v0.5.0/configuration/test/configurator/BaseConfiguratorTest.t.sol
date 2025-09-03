@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {IConfigurator} from "../../interfaces/IConfigurator.sol";
-import {Test} from "forge-std/Test.sol";
 import {Configurator} from "../../Configurator.sol";
-import {ExposedConfigurator} from "../mocks/ExposedConfigurator.sol";
+import {IConfigurator} from "../../interfaces/IConfigurator.sol";
+
 import {ExposedChannelConfigStore} from "../mocks/ExposedChannelConfigStore.sol";
+import {ExposedConfigurator} from "../mocks/ExposedConfigurator.sol";
+import {Test} from "forge-std/Test.sol";
 
 /**
  * @title ConfiguratorTest
@@ -73,7 +74,9 @@ contract BaseTest is Test {
     }
   }
 
-  function _getSigners(uint256 numSigners) internal view returns (bytes[] memory) {
+  function _getSigners(
+    uint256 numSigners
+  ) internal view returns (bytes[] memory) {
     bytes[] memory signers = new bytes[](numSigners);
     for (uint256 i; i < numSigners; i++) {
       signers[i] = s_signers[i];
@@ -81,7 +84,9 @@ contract BaseTest is Test {
     return signers;
   }
 
-  function _getOffchainTransmitters(uint256 numTransmitters) internal pure returns (bytes32[] memory) {
+  function _getOffchainTransmitters(
+    uint256 numTransmitters
+  ) internal pure returns (bytes32[] memory) {
     bytes32[] memory transmitters = new bytes32[](numTransmitters);
     for (uint256 i; i < numTransmitters; i++) {
       transmitters[i] = bytes32(101 + i);

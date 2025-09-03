@@ -42,11 +42,15 @@ struct Config {
 interface IVRFCoordinatorV2 {
   function acceptOwnership() external;
 
-  function transferOwnership(address to) external;
+  function transferOwnership(
+    address to
+  ) external;
 
   function registerProvingKey(address oracle, uint256[2] calldata publicProvingKey) external;
 
-  function deregisterProvingKey(uint256[2] calldata publicProvingKey) external;
+  function deregisterProvingKey(
+    uint256[2] calldata publicProvingKey
+  ) external;
 
   function setConfig(
     uint16 minimumRequestConfirmations,
@@ -84,11 +88,17 @@ interface IVRFCoordinatorV2 {
 
   function getFallbackWeiPerUnitLink() external view returns (int256);
 
-  function ownerCancelSubscription(uint64 subId) external;
+  function ownerCancelSubscription(
+    uint64 subId
+  ) external;
 
-  function recoverFunds(address to) external;
+  function recoverFunds(
+    address to
+  ) external;
 
-  function hashOfKey(uint256[2] memory publicKey) external pure returns (bytes32);
+  function hashOfKey(
+    uint256[2] memory publicKey
+  ) external pure returns (bytes32);
 
   function fulfillRandomWords(
     VRFTypes.Proof calldata proof,
@@ -109,7 +119,9 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
 
   event RandomWordsForced(uint256 indexed requestId, uint64 indexed subId, address indexed sender);
 
-  constructor(address _vrfCoordinator) ConfirmedOwner(msg.sender) {
+  constructor(
+    address _vrfCoordinator
+  ) ConfirmedOwner(msg.sender) {
     // solhint-disable-next-line gas-custom-errors
     require(_vrfCoordinator != address(0), "vrf coordinator address must be non-zero");
     s_vrfCoordinator = IVRFCoordinatorV2(_vrfCoordinator);
@@ -126,7 +138,9 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
    * @notice Transfers ownership of the VRF coordinator to the specified address.
    * @param to the address to transfer ownership of the VRF Coordinator to.
    */
-  function transferVRFOwnership(address to) external onlyOwner {
+  function transferVRFOwnership(
+    address to
+  ) external onlyOwner {
     s_vrfCoordinator.transferOwnership(to);
   }
 
@@ -151,7 +165,9 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
    * @notice Deregisters a proving key to an oracle.
    * @param publicProvingKey key that oracle can use to submit vrf fulfillments
    */
-  function deregisterProvingKey(uint256[2] calldata publicProvingKey) external onlyOwner {
+  function deregisterProvingKey(
+    uint256[2] calldata publicProvingKey
+  ) external onlyOwner {
     s_vrfCoordinator.deregisterProvingKey(publicProvingKey);
   }
 
@@ -217,7 +233,9 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
    * @param subId subscription id
    * @dev notably can be called even if there are pending requests, outstanding ones may fail onchain
    */
-  function ownerCancelSubscription(uint64 subId) external onlyOwner {
+  function ownerCancelSubscription(
+    uint64 subId
+  ) external onlyOwner {
     s_vrfCoordinator.ownerCancelSubscription(subId);
   }
 
@@ -225,7 +243,9 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
    * @notice Recover link sent with transfer instead of transferAndCall.
    * @param to address to send link to
    */
-  function recoverFunds(address to) external onlyOwner {
+  function recoverFunds(
+    address to
+  ) external onlyOwner {
     s_vrfCoordinator.recoverFunds(to);
   }
 
@@ -236,12 +256,8 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
    * @return Config struct containing all relevant configs from the VRF coordinator.
    */
   function _getConfigs() private view returns (Config memory) {
-    (
-      uint16 minimumRequestConfirmations,
-      uint32 maxGasLimit,
-      uint32 stalenessSeconds,
-      uint32 gasAfterPaymentCalculation
-    ) = s_vrfCoordinator.getConfig();
+    (uint16 minimumRequestConfirmations, uint32 maxGasLimit, uint32 stalenessSeconds, uint32 gasAfterPaymentCalculation)
+    = s_vrfCoordinator.getConfig();
     (
       uint32 fulfillmentFlatFeeLinkPPMTier1,
       uint32 fulfillmentFlatFeeLinkPPMTier2,
@@ -254,25 +270,24 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
       uint24 reqsForTier5
     ) = s_vrfCoordinator.getFeeConfig();
     int256 fallbackWeiPerUnitLink = s_vrfCoordinator.getFallbackWeiPerUnitLink();
-    return
-      Config({
-        minimumRequestConfirmations: minimumRequestConfirmations,
-        maxGasLimit: maxGasLimit,
-        stalenessSeconds: stalenessSeconds,
-        gasAfterPaymentCalculation: gasAfterPaymentCalculation,
-        fallbackWeiPerUnitLink: fallbackWeiPerUnitLink,
-        feeConfig: FeeConfig({
-          fulfillmentFlatFeeLinkPPMTier1: fulfillmentFlatFeeLinkPPMTier1,
-          fulfillmentFlatFeeLinkPPMTier2: fulfillmentFlatFeeLinkPPMTier2,
-          fulfillmentFlatFeeLinkPPMTier3: fulfillmentFlatFeeLinkPPMTier3,
-          fulfillmentFlatFeeLinkPPMTier4: fulfillmentFlatFeeLinkPPMTier4,
-          fulfillmentFlatFeeLinkPPMTier5: fulfillmentFlatFeeLinkPPMTier5,
-          reqsForTier2: reqsForTier2,
-          reqsForTier3: reqsForTier3,
-          reqsForTier4: reqsForTier4,
-          reqsForTier5: reqsForTier5
-        })
-      });
+    return Config({
+      minimumRequestConfirmations: minimumRequestConfirmations,
+      maxGasLimit: maxGasLimit,
+      stalenessSeconds: stalenessSeconds,
+      gasAfterPaymentCalculation: gasAfterPaymentCalculation,
+      fallbackWeiPerUnitLink: fallbackWeiPerUnitLink,
+      feeConfig: FeeConfig({
+        fulfillmentFlatFeeLinkPPMTier1: fulfillmentFlatFeeLinkPPMTier1,
+        fulfillmentFlatFeeLinkPPMTier2: fulfillmentFlatFeeLinkPPMTier2,
+        fulfillmentFlatFeeLinkPPMTier3: fulfillmentFlatFeeLinkPPMTier3,
+        fulfillmentFlatFeeLinkPPMTier4: fulfillmentFlatFeeLinkPPMTier4,
+        fulfillmentFlatFeeLinkPPMTier5: fulfillmentFlatFeeLinkPPMTier5,
+        reqsForTier2: reqsForTier2,
+        reqsForTier3: reqsForTier3,
+        reqsForTier4: reqsForTier4,
+        reqsForTier5: reqsForTier5
+      })
+    });
   }
 
   /**

@@ -19,7 +19,7 @@ contract BurnMintERC677Setup is BaseTest {
 
   BurnMintERC677 internal s_burnMintERC677;
 
-  address internal s_mockPool = address(6243783892);
+  address internal s_mockPool = address(6_243_783_892);
   uint256 internal s_amount = 1e18;
 
   function setUp() public virtual override {
@@ -116,9 +116,7 @@ contract BurnMintERC677_mint is BurnMintERC677Setup {
     // Mint max supply
     s_burnMintERC677.mint(OWNER, s_burnMintERC677.maxSupply());
 
-    vm.expectRevert(
-      abi.encodeWithSelector(BurnMintERC677.MaxSupplyExceeded.selector, s_burnMintERC677.maxSupply() + 1)
-    );
+    vm.expectRevert(abi.encodeWithSelector(BurnMintERC677.MaxSupplyExceeded.selector, s_burnMintERC677.maxSupply() + 1));
 
     // Attempt to mint 1 more than max supply
     s_burnMintERC677.mint(OWNER, 1);

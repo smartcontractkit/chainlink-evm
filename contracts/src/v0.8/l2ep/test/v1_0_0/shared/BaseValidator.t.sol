@@ -11,17 +11,13 @@ contract BaseValidator_Setup is L2EPTest {
   address internal immutable L2_SEQ_STATUS_RECORDER_ADDRESS = makeAddr("L2_SEQ_STATUS_RECORDER_ADDRESS");
   address internal immutable DUMMY_L1_XDOMAIN_MSNGR_ADDR = makeAddr("DUMMY_L1_XDOMAIN_MSNGR_ADDR");
   address internal immutable DUMMY_L2_UPTIME_FEED_ADDR = makeAddr("DUMMY_L2_UPTIME_FEED_ADDR");
-  uint32 internal constant INIT_GAS_LIMIT = 1900000;
+  uint32 internal constant INIT_GAS_LIMIT = 1_900_000;
 
   BaseValidator internal s_baseValidator;
 
   /// Setup
   function setUp() public {
-    s_baseValidator = new MockBaseValidator(
-      DUMMY_L1_XDOMAIN_MSNGR_ADDR,
-      L2_SEQ_STATUS_RECORDER_ADDRESS,
-      INIT_GAS_LIMIT
-    );
+    s_baseValidator = new MockBaseValidator(DUMMY_L1_XDOMAIN_MSNGR_ADDR, L2_SEQ_STATUS_RECORDER_ADDRESS, INIT_GAS_LIMIT);
   }
 }
 

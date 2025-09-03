@@ -9,7 +9,9 @@ import {ChannelConfigStore} from "../../ChannelConfigStore.sol";
 contract ExposedChannelConfigStore is ChannelConfigStore {
   constructor() {}
 
-  function exposedReadChannelDefinitionStates(uint256 donId) public view returns (uint256) {
+  function exposedReadChannelDefinitionStates(
+    uint256 donId
+  ) public view returns (uint256) {
     return s_channelDefinitionVersions[donId];
   }
 }

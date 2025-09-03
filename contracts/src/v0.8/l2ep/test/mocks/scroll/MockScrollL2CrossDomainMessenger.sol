@@ -41,7 +41,9 @@ contract MockScrollL2CrossDomainMessenger is IL2ScrollMessenger {
   ) external override {}
 
   /// Needed for backwards compatibility in Hardhat tests
-  function setSender(address newSender) external {
+  function setSender(
+    address newSender
+  ) external {
     s_sender = newSender;
   }
 

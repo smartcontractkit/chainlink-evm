@@ -21,7 +21,7 @@ contract WorkflowRegistry_getWorkflow is WorkflowRegistrySetup {
     assertEq(metadata.workflowId, s_workflowId, "Expected workflowId to match");
   }
 
-  function test_getWorkflow_WhenTheWorkflowDoesNotExist() external {
+  function test_getWorkflow_WhenTheWorkflowDoesNotExist() external view {
     // it returns nothing with no errors
 
     // try to fetch by workfowId first

@@ -21,7 +21,9 @@ library Cron {
    * @param spec the spec to evaluate
    * @return the next tick
    */
-  function nextTick(Spec calldata spec) public view returns (uint256) {
+  function nextTick(
+    Spec calldata spec
+  ) public view returns (uint256) {
     return spec.nextTick();
   }
 
@@ -32,7 +34,9 @@ library Cron {
    * @param spec the spec to evaluate
    * @return the next tick
    */
-  function lastTick(Spec calldata spec) public view returns (uint256) {
+  function lastTick(
+    Spec calldata spec
+  ) public view returns (uint256) {
     return spec.lastTick();
   }
 
@@ -52,7 +56,9 @@ library Cron {
    * @param cronString the cron string
    * @return the spec struct
    */
-  function toSpec(string calldata cronString) public pure returns (Spec memory) {
+  function toSpec(
+    string calldata cronString
+  ) public pure returns (Spec memory) {
     return cronString.toSpec();
   }
 
@@ -62,7 +68,9 @@ library Cron {
    * @param cronString the cron string
    * @return the abi-encoded spec
    */
-  function toEncodedSpec(string calldata cronString) public pure returns (bytes memory) {
+  function toEncodedSpec(
+    string calldata cronString
+  ) public pure returns (bytes memory) {
     return cronString.toEncodedSpec();
   }
 
@@ -72,7 +80,9 @@ library Cron {
    * @param spec the cron spec
    * @return the corresponding cron string
    */
-  function toCronString(Spec calldata spec) public pure returns (string memory) {
+  function toCronString(
+    Spec calldata spec
+  ) public pure returns (string memory) {
     return spec.toCronString();
   }
 }

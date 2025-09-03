@@ -10,41 +10,58 @@ contract MockUpkeep {
   uint256 public performGasToBurn;
 
   event UpkeepPerformedWith(bytes upkeepData);
+
   error CheckRevert();
   error PerformRevert();
 
-  function setShouldCheckRevert(bool value) public {
+  function setShouldCheckRevert(
+    bool value
+  ) public {
     shouldCheckRevert = value;
   }
 
-  function setShouldPerformRevert(bool value) public {
+  function setShouldPerformRevert(
+    bool value
+  ) public {
     shouldPerformRevert = value;
   }
 
-  function setCheckResult(bool value) public {
+  function setCheckResult(
+    bool value
+  ) public {
     checkResult = value;
   }
 
-  function setPerformData(bytes calldata data) public {
+  function setPerformData(
+    bytes calldata data
+  ) public {
     performData = data;
   }
 
-  function setCheckGasToBurn(uint256 value) public {
+  function setCheckGasToBurn(
+    uint256 value
+  ) public {
     checkGasToBurn = value;
   }
 
-  function setPerformGasToBurn(uint256 value) public {
+  function setPerformGasToBurn(
+    uint256 value
+  ) public {
     performGasToBurn = value;
   }
 
-  function checkUpkeep(bytes calldata) external view returns (bool callable, bytes memory executedata) {
+  function checkUpkeep(
+    bytes calldata
+  ) external view returns (bool callable, bytes memory executedata) {
     if (shouldCheckRevert) revert CheckRevert();
     uint256 startGas = gasleft();
     while (startGas - gasleft() < checkGasToBurn) {} // burn gas
     return (checkResult, performData);
   }
 
-  function performUpkeep(bytes calldata data) external {
+  function performUpkeep(
+    bytes calldata data
+  ) external {
     if (shouldPerformRevert) revert PerformRevert();
     uint256 startGas = gasleft();
     while (startGas - gasleft() < performGasToBurn) {} // burn gas

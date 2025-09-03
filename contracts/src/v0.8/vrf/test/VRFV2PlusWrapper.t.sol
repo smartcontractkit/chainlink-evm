@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
+
 import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
-import {VRFV2PlusWrapperConsumerExample} from "../dev/testhelpers/VRFV2PlusWrapperConsumerExample.sol";
-import {VRFCoordinatorV2_5} from "../dev/VRFCoordinatorV2_5.sol";
+
 import {VRFConsumerBaseV2Plus} from "../dev/VRFConsumerBaseV2Plus.sol";
+import {VRFCoordinatorV2_5} from "../dev/VRFCoordinatorV2_5.sol";
 import {VRFV2PlusWrapper} from "../dev/VRFV2PlusWrapper.sol";
 import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
+import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
+import {VRFV2PlusWrapperConsumerExample} from "../dev/testhelpers/VRFV2PlusWrapperConsumerExample.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract VRFV2PlusWrapperTest is BaseTest {
   address internal constant LINK_WHALE = 0xD883a6A1C22fC4AbFE938a5aDF9B2Cc31b1BF18B;
@@ -37,7 +39,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
 
     // Deploy link token and link/native feed.
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Deploy coordinator.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5(address(0));
@@ -47,10 +49,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
 
     // Deploy wrapper.
     s_wrapper = new VRFV2PlusWrapper(
-      address(s_linkToken),
-      address(s_linkNativeFeed),
-      address(s_testCoordinator),
-      uint256(s_wrapperSubscriptionId)
+      address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(s_wrapperSubscriptionId)
     );
     assertEq(address(s_linkToken), address(s_wrapper.link()));
     assertEq(address(s_linkNativeFeed), address(s_wrapper.linkNativeFeed()));
@@ -75,7 +74,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       2_500_000, // maxGasLimit
       1, // stalenessSeconds
       50_000, // gasAfterPaymentCalculation
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0, // fulfillmentFlatFeeLinkDiscountPPM
       0, // nativePremiumPercentage
@@ -95,7 +94,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash,
       10,
       1,
-      50000000000000000,
+      50_000_000_000_000_000,
       0,
       0
     );
@@ -109,7 +108,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -186,10 +185,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
   function testCreationOfANewVRFV2PlusWrapper() public {
     // second wrapper contract will simply add itself to the same subscription
     VRFV2PlusWrapper nextWrapper = new VRFV2PlusWrapper(
-      address(s_linkToken),
-      address(s_linkNativeFeed),
-      address(s_testCoordinator),
-      s_wrapperSubscriptionId
+      address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), s_wrapperSubscriptionId
     );
     assertEq(s_wrapperSubscriptionId, nextWrapper.SUBSCRIPTION_ID());
   }
@@ -201,7 +197,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
 
   function testVRFV2PlusWrapperWithInvalidSubscriptionId() public {
     vm.expectRevert(SubscriptionAPI.InvalidSubscription.selector);
-    new VRFV2PlusWrapper(address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(123456));
+    new VRFV2PlusWrapper(address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(123_456));
   }
 
   function testSetFulfillmentTxSize() public {
@@ -238,12 +234,8 @@ contract VRFV2PlusWrapperTest is BaseTest {
     // Request randomness from wrapper.
     uint32 callbackGasLimit = 1_000_000;
     vm.expectEmit(true, true, true, true);
-    (uint256 requestId, uint256 preSeed) = s_testCoordinator.computeRequestIdExternal(
-      vrfKeyHash,
-      address(s_wrapper),
-      s_wrapper.SUBSCRIPTION_ID(),
-      1
-    );
+    (uint256 requestId, uint256 preSeed) =
+      s_testCoordinator.computeRequestIdExternal(vrfKeyHash, address(s_wrapper), s_wrapper.SUBSCRIPTION_ID(), 1);
     uint32 EIP150Overhead = callbackGasLimit / 63 + 1;
     emit RandomWordsRequested(
       vrfKeyHash,
@@ -269,7 +261,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
     assertEq(native, true);
     assertEq(address(s_consumer).balance, 10 ether - expectedPaid);
 
-    (, uint256 gasLimit, ) = s_wrapper.s_callbacks(requestId);
+    (, uint256 gasLimit,) = s_wrapper.s_callbacks(requestId);
     assertEq(gasLimit, callbackGasLimit);
 
     changePrank(address(s_testCoordinator));
@@ -303,7 +295,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500, // fulfillmentFlatFeeNativePPM
       501 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -321,7 +313,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       450, // fulfillmentFlatFeeNativePPM
       450 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -342,7 +334,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -363,7 +355,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -377,12 +369,8 @@ contract VRFV2PlusWrapperTest is BaseTest {
     // Request randomness from wrapper.
     uint32 callbackGasLimit = 1_000_000;
     vm.expectEmit(true, true, true, true);
-    (uint256 requestId, uint256 preSeed) = s_testCoordinator.computeRequestIdExternal(
-      vrfKeyHash,
-      address(s_wrapper),
-      s_wrapper.SUBSCRIPTION_ID(),
-      1
-    );
+    (uint256 requestId, uint256 preSeed) =
+      s_testCoordinator.computeRequestIdExternal(vrfKeyHash, address(s_wrapper), s_wrapper.SUBSCRIPTION_ID(), 1);
     uint32 EIP150Overhead = callbackGasLimit / 63 + 1;
     emit RandomWordsRequested(
       vrfKeyHash,
@@ -408,7 +396,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
     assertEq(fulfilled, false);
     assertEq(native, false);
     assertEq(s_linkToken.balanceOf(address(s_consumer)), 10 ether - expectedPaid);
-    (, uint256 gasLimit, ) = s_wrapper.s_callbacks(requestId);
+    (, uint256 gasLimit,) = s_wrapper.s_callbacks(requestId);
     assertEq(gasLimit, callbackGasLimit);
 
     // Fulfill the request.
@@ -436,20 +424,16 @@ contract VRFV2PlusWrapperTest is BaseTest {
     s_linkToken.transfer(address(s_consumer), 10 ether);
 
     // Set the link feed to be stale.
-    (, , , uint32 stalenessSeconds, , , , , ) = s_testCoordinator.s_config();
+    (,,, uint32 stalenessSeconds,,,,,) = s_testCoordinator.s_config();
     int256 fallbackWeiPerUnitLink = s_testCoordinator.s_fallbackWeiPerUnitLink();
-    (uint80 roundId, int256 answer, uint256 startedAt, , ) = s_linkNativeFeed.latestRoundData();
+    (uint80 roundId, int256 answer, uint256 startedAt,,) = s_linkNativeFeed.latestRoundData();
     uint256 timestamp = block.timestamp - stalenessSeconds - 1;
     s_linkNativeFeed.updateRoundData(roundId, answer, timestamp, startedAt);
 
     // Request randomness from wrapper.
     uint32 callbackGasLimit = 1_000_000;
-    (uint256 requestId, uint256 preSeed) = s_testCoordinator.computeRequestIdExternal(
-      vrfKeyHash,
-      address(s_wrapper),
-      s_wrapper.SUBSCRIPTION_ID(),
-      1
-    );
+    (uint256 requestId, uint256 preSeed) =
+      s_testCoordinator.computeRequestIdExternal(vrfKeyHash, address(s_wrapper), s_wrapper.SUBSCRIPTION_ID(), 1);
     uint32 EIP150Overhead = callbackGasLimit / 63 + 1;
     vm.expectEmit(true, true, true, true);
     emit FallbackWeiPerUnitLinkUsed(requestId, fallbackWeiPerUnitLink);
@@ -469,10 +453,7 @@ contract VRFV2PlusWrapperTest is BaseTest {
 
   function testRequestRandomWordsInNativeNotConfigured() public {
     VRFV2PlusWrapper wrapper = new VRFV2PlusWrapper(
-      address(s_linkToken),
-      address(s_linkNativeFeed),
-      address(s_testCoordinator),
-      uint256(s_wrapperSubscriptionId)
+      address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(s_wrapperSubscriptionId)
     );
 
     vm.expectRevert("wrapper is not configured");

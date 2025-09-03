@@ -42,12 +42,7 @@ interface IAutomationV21PlusCommon {
   event UpkeepOffchainConfigSet(uint256 indexed id, bytes offchainConfig);
   event UpkeepPaused(uint256 indexed id);
   event UpkeepPerformed(
-    uint256 indexed id,
-    bool indexed success,
-    uint96 totalPayment,
-    uint256 gasUsed,
-    uint256 gasOverhead,
-    bytes trigger
+    uint256 indexed id, bool indexed success, uint96 totalPayment, uint256 gasUsed, uint256 gasOverhead, bytes trigger
   );
   event UpkeepPrivilegeConfigSet(uint256 indexed id, bytes privilegeConfig);
   event UpkeepReceived(uint256 indexed id, uint256 startingBalance, address importedFrom);
@@ -242,13 +237,25 @@ interface IAutomationV21PlusCommon {
   ) external view returns (bool upkeepNeeded, bytes memory performData, uint8 upkeepFailureReason, uint256 gasUsed);
   function typeAndVersion() external view returns (string memory);
   function addFunds(uint256 id, uint96 amount) external;
-  function cancelUpkeep(uint256 id) external;
+  function cancelUpkeep(
+    uint256 id
+  ) external;
 
-  function getUpkeepPrivilegeConfig(uint256 upkeepId) external view returns (bytes memory);
-  function hasDedupKey(bytes32 dedupKey) external view returns (bool);
-  function getUpkeepTriggerConfig(uint256 upkeepId) external view returns (bytes memory);
-  function getUpkeep(uint256 id) external view returns (UpkeepInfoLegacy memory upkeepInfo);
-  function getMinBalance(uint256 id) external view returns (uint96);
+  function getUpkeepPrivilegeConfig(
+    uint256 upkeepId
+  ) external view returns (bytes memory);
+  function hasDedupKey(
+    bytes32 dedupKey
+  ) external view returns (bool);
+  function getUpkeepTriggerConfig(
+    uint256 upkeepId
+  ) external view returns (bytes memory);
+  function getUpkeep(
+    uint256 id
+  ) external view returns (UpkeepInfoLegacy memory upkeepInfo);
+  function getMinBalance(
+    uint256 id
+  ) external view returns (uint96);
   function getState()
     external
     view
@@ -261,12 +268,18 @@ interface IAutomationV21PlusCommon {
     );
   function setUpkeepGasLimit(uint256 id, uint32 gasLimit) external;
   function setUpkeepPrivilegeConfig(uint256 upkeepId, bytes memory newPrivilegeConfig) external;
-  function pauseUpkeep(uint256 id) external;
-  function unpauseUpkeep(uint256 id) external;
+  function pauseUpkeep(
+    uint256 id
+  ) external;
+  function unpauseUpkeep(
+    uint256 id
+  ) external;
   function getActiveUpkeepIDs(uint256 startIndex, uint256 maxCount) external view returns (uint256[] memory);
   function pause() external;
   function setUpkeepCheckData(uint256 id, bytes memory newCheckData) external;
   function setUpkeepTriggerConfig(uint256 id, bytes memory triggerConfig) external;
   function owner() external view returns (address);
-  function getTriggerType(uint256 upkeepId) external pure returns (uint8);
+  function getTriggerType(
+    uint256 upkeepId
+  ) external pure returns (uint8);
 }

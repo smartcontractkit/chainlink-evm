@@ -13,7 +13,9 @@ contract MockOptimismL2CrossDomainMessenger is IL2CrossDomainMessenger {
     return s_sender;
   }
 
-  function setSender(address newSender) external {
+  function setSender(
+    address newSender
+  ) external {
     s_sender = newSender;
   }
 

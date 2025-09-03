@@ -3,11 +3,7 @@ pragma solidity 0.8.16;
 
 contract UpkeepCounter {
   event PerformingUpkeep(
-    address indexed from,
-    uint256 initialTimestamp,
-    uint256 lastTimestamp,
-    uint256 previousBlock,
-    uint256 counter
+    address indexed from, uint256 initialTimestamp, uint256 lastTimestamp, uint256 previousBlock, uint256 counter
   );
 
   uint256 public testRange;
@@ -26,11 +22,15 @@ contract UpkeepCounter {
     counter = 0;
   }
 
-  function checkUpkeep(bytes calldata data) external view returns (bool, bytes memory) {
+  function checkUpkeep(
+    bytes calldata data
+  ) external view returns (bool, bytes memory) {
     return (eligible(), data);
   }
 
-  function performUpkeep(bytes calldata performData) external {
+  function performUpkeep(
+    bytes calldata performData
+  ) external {
     if (initialTimestamp == 0) {
       initialTimestamp = block.timestamp;
     }

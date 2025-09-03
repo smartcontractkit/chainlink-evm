@@ -22,6 +22,7 @@ contract VRFCoordinatorV2TestHelper {
     // We make it configurable in case those operations are repriced.
     uint32 gasAfterPaymentCalculation;
   }
+
   int256 private s_fallbackWeiPerUnitLink;
   Config private s_config;
 
@@ -36,12 +37,8 @@ contract VRFCoordinatorV2TestHelper {
     uint32 fulfillmentFlatFeeLinkPPM,
     uint256 weiPerUnitGas
   ) external {
-    s_paymentAmount = calculatePaymentAmount(
-      gasleft(),
-      gasAfterPaymentCalculation,
-      fulfillmentFlatFeeLinkPPM,
-      weiPerUnitGas
-    );
+    s_paymentAmount =
+      calculatePaymentAmount(gasleft(), gasAfterPaymentCalculation, fulfillmentFlatFeeLinkPPM, weiPerUnitGas);
   }
 
   error InvalidLinkWeiPrice(int256 linkWei);
@@ -52,7 +49,7 @@ contract VRFCoordinatorV2TestHelper {
     bool staleFallback = stalenessSeconds > 0;
     uint256 timestamp;
     int256 weiPerUnitLink;
-    (, weiPerUnitLink, , timestamp, ) = LINK_ETH_FEED.latestRoundData();
+    (, weiPerUnitLink,, timestamp,) = LINK_ETH_FEED.latestRoundData();
     // solhint-disable-next-line not-rely-on-time
     if (staleFallback && stalenessSeconds < block.timestamp - timestamp) {
       weiPerUnitLink = s_fallbackWeiPerUnitLink;
@@ -73,8 +70,8 @@ contract VRFCoordinatorV2TestHelper {
       revert InvalidLinkWeiPrice(weiPerUnitLink);
     }
     // (1e18 juels/link) (wei/gas * gas) / (wei/link) = juels
-    uint256 paymentNoFee = (1e18 * weiPerUnitGas * (gasAfterPaymentCalculation + startGas - gasleft())) /
-      uint256(weiPerUnitLink);
+    uint256 paymentNoFee =
+      (1e18 * weiPerUnitGas * (gasAfterPaymentCalculation + startGas - gasleft())) / uint256(weiPerUnitLink);
     uint256 fee = 1e12 * uint256(fulfillmentFlatFeeLinkPPM);
     if (paymentNoFee > (1e27 - fee)) {
       revert PaymentTooLarge(); // Payment + fee cannot be more than all of the link in existence.

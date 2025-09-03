@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {IVRFCoordinatorV2PlusMigration} from "../interfaces/IVRFCoordinatorV2PlusMigration.sol";
 import {VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
+import {IVRFCoordinatorV2PlusMigration} from "../interfaces/IVRFCoordinatorV2PlusMigration.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 
 /// @dev this contract is only meant for testing migration
@@ -35,9 +35,11 @@ contract VRFCoordinatorV2Plus_V2Example is IVRFCoordinatorV2PlusMigration {
     s_prevCoordinator = prevCoordinator;
   }
 
-  /***************************************************************************
+  /**
+   *
    * Section: Subscription
-   **************************************************************************/
+   *
+   */
 
   /// @dev Emitted when a subscription for a given ID cannot be found
   error InvalidSubscription();
@@ -61,9 +63,11 @@ contract VRFCoordinatorV2Plus_V2Example is IVRFCoordinatorV2PlusMigration {
     );
   }
 
-  /***************************************************************************
+  /**
+   *
    * Section: Migration
-   **************************************************************************/
+   *
+   */
 
   /// @notice emitted when caller is not a previous version of VRF coordinator
   /// @param sender caller
@@ -90,7 +94,9 @@ contract VRFCoordinatorV2Plus_V2Example is IVRFCoordinatorV2PlusMigration {
   /**
    * @inheritdoc IVRFCoordinatorV2PlusMigration
    */
-  function onMigration(bytes calldata encodedData) external payable override {
+  function onMigration(
+    bytes calldata encodedData
+  ) external payable override {
     if (msg.sender != s_prevCoordinator) {
       revert MustBePreviousCoordinator(msg.sender, s_prevCoordinator);
     }
@@ -128,30 +134,39 @@ contract VRFCoordinatorV2Plus_V2Example is IVRFCoordinatorV2PlusMigration {
     s_totalLinkBalance += migrationData.linkBalance;
   }
 
-  /***************************************************************************
+  /**
+   *
    * Section: Request/Response
-   **************************************************************************/
-
-  function requestRandomWords(VRFV2PlusClient.RandomWordsRequest calldata req) external returns (uint256 requestId) {
+   *
+   */
+  function requestRandomWords(
+    VRFV2PlusClient.RandomWordsRequest calldata req
+  ) external returns (uint256 requestId) {
     Subscription memory sub = s_subscriptions[req.subId];
     sub.reqCount = sub.reqCount + 1;
     return _handleRequest(msg.sender);
   }
 
-  function _handleRequest(address requester) private returns (uint256) {
+  function _handleRequest(
+    address requester
+  ) private returns (uint256) {
     s_requestId = s_requestId + 1;
     uint256 requestId = s_requestId;
     s_requestConsumerMapping[s_requestId] = requester;
     return requestId;
   }
 
-  function generateFakeRandomness(uint256 requestID) public pure returns (uint256[] memory) {
+  function generateFakeRandomness(
+    uint256 requestID
+  ) public pure returns (uint256[] memory) {
     uint256[] memory randomness = new uint256[](1);
     randomness[0] = uint256(keccak256(abi.encode(requestID, "not random")));
     return randomness;
   }
 
-  function fulfillRandomWords(uint256 requestId) external {
+  function fulfillRandomWords(
+    uint256 requestId
+  ) external {
     VRFConsumerBaseV2Plus consumer = VRFConsumerBaseV2Plus(s_requestConsumerMapping[requestId]);
     consumer.rawFulfillRandomWords(requestId, generateFakeRandomness(requestId));
   }

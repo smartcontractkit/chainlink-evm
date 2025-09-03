@@ -22,10 +22,4 @@ runs:
         path: |
           contracts/cache/
           contracts/artifacts/
-          contracts/typechain/
         key: ${{ format('contracts-{0}-{1}-{2}-{3}', runner.os, inputs.cache-version, inputs.namespace, hashFiles('contracts/pnpm-lock.yaml', 'contracts/hardhat.config.ts', 'contracts/src/**/*.sol')) }}
-
-    - name: Compile contracts
-      shell: bash
-      run: pnpm compile
-      working-directory: contracts

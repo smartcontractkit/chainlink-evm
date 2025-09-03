@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {BaseSequencerUptimeFeed} from "../../../base/BaseSequencerUptimeFeed.sol";
+import {OptimismSequencerUptimeFeed} from "../../../optimism/OptimismSequencerUptimeFeed.sol";
 import {MockOptimismL1CrossDomainMessenger} from "../../mocks/MockOptimismL1CrossDomainMessenger.sol";
 import {MockOptimismL2CrossDomainMessenger} from "../../mocks/MockOptimismL2CrossDomainMessenger.sol";
-import {OptimismSequencerUptimeFeed} from "../../../optimism/OptimismSequencerUptimeFeed.sol";
-import {BaseSequencerUptimeFeed} from "../../../base/BaseSequencerUptimeFeed.sol";
+
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract OptimismSequencerUptimeFeed_TestWrapper is OptimismSequencerUptimeFeed {
@@ -15,7 +16,9 @@ contract OptimismSequencerUptimeFeed_TestWrapper is OptimismSequencerUptimeFeed 
   ) OptimismSequencerUptimeFeed(l1SenderAddress, l2CrossDomainMessengerAddr, initialStatus) {}
 
   /// @notice Exposes the internal `_validateSender` function for testing
-  function validateSenderTestWrapper(address l1Sender) external view {
+  function validateSenderTestWrapper(
+    address l1Sender
+  ) external view {
     super._validateSender(l1Sender);
   }
 }
@@ -33,11 +36,8 @@ contract OptimismSequencerUptimeFeed_Setup is L2EPTest {
     // Deploy contracts
     s_mockOptimismL1CrossDomainMessenger = new MockOptimismL1CrossDomainMessenger();
     s_mockOptimismL2CrossDomainMessenger = new MockOptimismL2CrossDomainMessenger();
-    s_optimismSequencerUptimeFeed = new OptimismSequencerUptimeFeed_TestWrapper(
-      s_l1OwnerAddr,
-      address(s_mockOptimismL2CrossDomainMessenger),
-      false
-    );
+    s_optimismSequencerUptimeFeed =
+      new OptimismSequencerUptimeFeed_TestWrapper(s_l1OwnerAddr, address(s_mockOptimismL2CrossDomainMessenger), false);
 
     // Sets mock sender in mock L2 messenger contract
     s_mockOptimismL2CrossDomainMessenger.setSender(s_l1OwnerAddr);
@@ -57,7 +57,7 @@ contract OptimismSequencerUptimeFeed_Constructor is OptimismSequencerUptimeFeed_
     assertEq(actualL1Addr, s_l1OwnerAddr);
 
     // Checks latest round data
-    (uint80 roundId, int256 answer, , , ) = s_optimismSequencerUptimeFeed.latestRoundData();
+    (uint80 roundId, int256 answer,,,) = s_optimismSequencerUptimeFeed.latestRoundData();
     assertEq(roundId, 1);
     assertEq(answer, 0);
   }

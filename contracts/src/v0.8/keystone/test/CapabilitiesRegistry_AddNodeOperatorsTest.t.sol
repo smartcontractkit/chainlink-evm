@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_AddNodeOperatorsTest is BaseTest {
   function test_RevertWhen_CalledByNonAdmin() public {
@@ -24,27 +24,21 @@ contract CapabilitiesRegistry_AddNodeOperatorsTest is BaseTest {
 
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
     emit CapabilitiesRegistry.NodeOperatorAdded(
-      TEST_NODE_OPERATOR_ONE_ID,
-      NODE_OPERATOR_ONE_ADMIN,
-      NODE_OPERATOR_ONE_NAME
+      TEST_NODE_OPERATOR_ONE_ID, NODE_OPERATOR_ONE_ADMIN, NODE_OPERATOR_ONE_NAME
     );
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
     emit CapabilitiesRegistry.NodeOperatorAdded(
-      TEST_NODE_OPERATOR_TWO_ID,
-      NODE_OPERATOR_TWO_ADMIN,
-      NODE_OPERATOR_TWO_NAME
+      TEST_NODE_OPERATOR_TWO_ID, NODE_OPERATOR_TWO_ADMIN, NODE_OPERATOR_TWO_NAME
     );
     s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
 
-    CapabilitiesRegistry.NodeOperator memory nodeOperatorOne = s_CapabilitiesRegistry.getNodeOperator(
-      TEST_NODE_OPERATOR_ONE_ID
-    );
+    CapabilitiesRegistry.NodeOperator memory nodeOperatorOne =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ONE_ID);
     assertEq(nodeOperatorOne.admin, NODE_OPERATOR_ONE_ADMIN);
     assertEq(nodeOperatorOne.name, NODE_OPERATOR_ONE_NAME);
 
-    CapabilitiesRegistry.NodeOperator memory nodeOperatorTwo = s_CapabilitiesRegistry.getNodeOperator(
-      TEST_NODE_OPERATOR_TWO_ID
-    );
+    CapabilitiesRegistry.NodeOperator memory nodeOperatorTwo =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_TWO_ID);
     assertEq(nodeOperatorTwo.admin, NODE_OPERATOR_TWO_ADMIN);
     assertEq(nodeOperatorTwo.name, NODE_OPERATOR_TWO_NAME);
   }

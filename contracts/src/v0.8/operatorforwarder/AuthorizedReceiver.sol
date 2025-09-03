@@ -12,7 +12,9 @@ abstract contract AuthorizedReceiver is IAuthorizedReceiver {
 
   // @notice Sets the fulfillment permission for a given node. Use `true` to allow, `false` to disallow.
   // @param senders The addresses of the authorized Chainlink node
-  function setAuthorizedSenders(address[] calldata senders) external override validateAuthorizedSenderSetter {
+  function setAuthorizedSenders(
+    address[] calldata senders
+  ) external override validateAuthorizedSenderSetter {
     require(senders.length > 0, "Must have at least 1 sender");
     // Set previous authorized senders to false
     uint256 authorizedSendersLength = s_authorizedSenderList.length;
@@ -38,7 +40,9 @@ abstract contract AuthorizedReceiver is IAuthorizedReceiver {
   // @notice Use this to check if a node is authorized for fulfilling requests
   // @param sender The address of the Chainlink node
   // @return The authorization status of the node
-  function isAuthorizedSender(address sender) public view override returns (bool) {
+  function isAuthorizedSender(
+    address sender
+  ) public view override returns (bool) {
     return s_authorizedSenders[sender];
   }
 

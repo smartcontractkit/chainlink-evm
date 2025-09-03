@@ -14,13 +14,17 @@ contract FunctionsTestHelper {
     emit RequestData(s_req._encodeCBOR());
   }
 
-  function initializeRequestForInlineJavaScript(string memory sourceCode) public {
+  function initializeRequestForInlineJavaScript(
+    string memory sourceCode
+  ) public {
     FunctionsRequest.Request memory r;
     r._initializeRequestForInlineJavaScript(sourceCode);
     storeRequest(r);
   }
 
-  function addSecretsReference(bytes memory secrets) public {
+  function addSecretsReference(
+    bytes memory secrets
+  ) public {
     FunctionsRequest.Request memory r = s_req;
     r._addSecretsReference(secrets);
     storeRequest(r);
@@ -41,7 +45,9 @@ contract FunctionsTestHelper {
     storeRequest(r);
   }
 
-  function storeRequest(FunctionsRequest.Request memory r) private {
+  function storeRequest(
+    FunctionsRequest.Request memory r
+  ) private {
     s_req.codeLocation = r.codeLocation;
     s_req.language = r.language;
     s_req.source = r.source;

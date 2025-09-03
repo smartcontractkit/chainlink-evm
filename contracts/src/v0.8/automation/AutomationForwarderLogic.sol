@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.16;
 
-import {IAutomationRegistryConsumer} from "./interfaces/IAutomationRegistryConsumer.sol";
 import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
+import {IAutomationRegistryConsumer} from "./interfaces/IAutomationRegistryConsumer.sol";
 
 contract AutomationForwarderLogic is ITypeAndVersion {
   IAutomationRegistryConsumer private s_registry;
@@ -13,7 +13,9 @@ contract AutomationForwarderLogic is ITypeAndVersion {
    * @notice updateRegistry is called by the registry during migrations
    * @param newRegistry is the registry that this forwarder is being migrated to
    */
-  function updateRegistry(address newRegistry) external {
+  function updateRegistry(
+    address newRegistry
+  ) external {
     if (msg.sender != address(s_registry)) revert();
     s_registry = IAutomationRegistryConsumer(newRegistry);
   }
