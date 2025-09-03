@@ -1100,7 +1100,7 @@ func TestRPCClient_FilterLogsWithOpts(t *testing.T) {
 		_, err = rpcClient.FilterLogsWithOpts(t.Context(), filter, evmtypes.FilterLogsOpts{IsExternalRequest: false})
 		require.NoError(t, err)
 		_, err = rpcClient.FilterLogsWithOpts(t.Context(), filter, evmtypes.FilterLogsOpts{IsExternalRequest: true})
-		require.ErrorContains(t, err, "RPC call failed: reached read limit of 850 bytes: response is too large")
+		require.ErrorContains(t, err, fmt.Sprintf("RPC call failed: reached read limit of %d bytes: response is too large", responseSize-1))
 	})
 }
 
