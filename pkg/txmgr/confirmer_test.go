@@ -1281,7 +1281,7 @@ func TestEthConfirmer_RebroadcastWhereNecessary_TerminallyUnderpriced_ThenGoesTh
 
 	memKS := keystest.NewMemoryChainStore()
 	fromAddress := memKS.MustCreate(t)
-	kst := keys.NewChainStore(memKS, big.NewInt(0))
+	kst := keys.NewChainStore(memKS, testutils.FixtureChainID)
 
 	evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 		c.GasEstimator.PriceMax = assets.GWei(500)
@@ -1547,7 +1547,7 @@ func TestEthConfirmer_ForceRebroadcast(t *testing.T) {
 	memKS := keystest.NewMemoryChainStore()
 	fromAddress := memKS.MustCreate(t)
 	config := configtest.NewChainScopedConfig(t, nil)
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 
 	mustCreateUnstartedGeneratedTx(t, txStore, fromAddress, config.EVM().ChainID())
 	mustInsertInProgressEthTx(t, txStore, 0, fromAddress)
