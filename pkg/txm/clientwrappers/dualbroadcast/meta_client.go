@@ -22,6 +22,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -111,6 +112,8 @@ const (
   }
 ]`
 )
+
+var _ txm.Client = &MetaClient{}
 
 type MetaClientKeystore interface {
 	SignMessage(ctx context.Context, address common.Address, data []byte) ([]byte, error)

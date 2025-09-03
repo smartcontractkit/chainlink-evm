@@ -17,8 +17,11 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
+
+var _ txm.Client = &FlashbotsClient{}
 
 type FlashbotsClient struct {
 	c         client.Client
@@ -64,7 +67,7 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 			return err
 		}
 		params := ""
-		if meta.DualBroadcast != nil {
+		if meta.DualBroadcastParams != nil {
 			params = *meta.DualBroadcastParams
 		}
 		body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
