@@ -54,6 +54,7 @@ func BenchmarkEthBroadcaster_ProcessUnstartedEthTxs_Success(b *testing.B) {
 		FeeLimit:       gasLimit,
 		CreatedAt:      time.Unix(0, 0),
 		State:          txmgrcommon.TxUnstarted,
+		ChainID:        testutils.FixtureChainID,
 	}
 
 	evmcfg := configtest.NewChainScopedConfig(b, nil)

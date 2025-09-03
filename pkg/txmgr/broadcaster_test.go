@@ -253,6 +253,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Success(t *testing.T) {
 			FeeLimit:           gasLimit,
 			BroadcastAt:        &timeNow,
 			InitialBroadcastAt: &timeNow,
+			ChainID:            testutils.FixtureChainID,
 			Error:              null.String{},
 			State:              txmgrcommon.TxUnconfirmed,
 		}
@@ -285,6 +286,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Success(t *testing.T) {
 			FeeLimit:       gasLimit,
 			CreatedAt:      time.Unix(0, 0),
 			State:          txmgrcommon.TxUnstarted,
+			ChainID:        testutils.FixtureChainID,
 		}
 		ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
 			return tx.Nonce() == uint64(2) && tx.Value().Cmp(big.NewInt(242)) == 0
@@ -304,6 +306,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Success(t *testing.T) {
 			CreatedAt:      time.Unix(0, 1),
 			State:          txmgrcommon.TxUnstarted,
 			Meta:           &meta,
+			ChainID:        testutils.FixtureChainID,
 		}
 		ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
 			if tx.Nonce() != uint64(0) {
@@ -327,6 +330,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Success(t *testing.T) {
 			FeeLimit:       gasLimit,
 			CreatedAt:      time.Unix(1, 0),
 			State:          txmgrcommon.TxUnstarted,
+			ChainID:        testutils.FixtureChainID,
 		}
 		ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
 			if tx.Nonce() != uint64(1) {
@@ -786,6 +790,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_ResumingFromCrash(t *testing.T) {
 			FeeLimit:       gasLimit,
 			Error:          null.String{},
 			State:          txmgrcommon.TxInProgress,
+			ChainID:        testutils.FixtureChainID,
 		}
 
 		secondInProgress := txmgr.Tx{
@@ -797,6 +802,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_ResumingFromCrash(t *testing.T) {
 			FeeLimit:       gasLimit,
 			Error:          null.String{},
 			State:          txmgrcommon.TxInProgress,
+			ChainID:        testutils.FixtureChainID,
 		}
 
 		require.NoError(t, txStore.InsertTx(ctx, &firstInProgress))
@@ -1162,6 +1168,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 				State:             txmgrcommon.TxUnstarted,
 				PipelineTaskRunID: uuid.NullUUID{UUID: trID, Valid: true},
 				SignalCallback:    true,
+				ChainID:           testutils.FixtureChainID,
 			}
 
 			t.Run("with erroring callback bails out", func(t *testing.T) {
@@ -1464,6 +1471,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 		Value:          value,
 		FeeLimit:       gasLimit,
 		State:          txmgrcommon.TxUnstarted,
+		ChainID:        testutils.FixtureChainID,
 	}
 	require.NoError(t, txStore.InsertTx(ctx, &etxUnfinished))
 
@@ -1874,7 +1882,7 @@ func TestEthBroadcaster_NonceTracker_InProgressTx(t *testing.T) {
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	memKS := keystest.NewMemoryChainStore()
 	fromAddress := memKS.MustCreate(t)
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 	evmcfg := configtest.NewChainScopedConfig(t, nil)
@@ -1912,7 +1920,7 @@ func TestEthBroadcaster_HederaBroadcastValidation(t *testing.T) {
 	db := testutils.NewSqlxDB(t)
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	memKS := keystest.NewMemoryChainStore()
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 	evmcfg := configtest.NewChainScopedConfig(t, nil)
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 	lggr, observed := logger.TestObserved(t, zapcore.DebugLevel)
