@@ -650,7 +650,7 @@ func Test_FindTxWithIdempotencyKey(t *testing.T) {
 
 	t.Run("returns nil error if no results", func(t *testing.T) {
 		idempotencyKey := "777"
-		etx, err := txStore.FindTxWithIdempotencyKey(tests.Context(t), idempotencyKey, big.NewInt(0))
+		etx, err := txStore.FindTxWithIdempotencyKey(tests.Context(t), idempotencyKey, testutils.FixtureChainID)
 		require.NoError(t, err)
 		assert.Nil(t, etx)
 	})
@@ -658,11 +658,11 @@ func Test_FindTxWithIdempotencyKey(t *testing.T) {
 	t.Run("returns transaction if it exists", func(t *testing.T) {
 		idempotencyKey := "777"
 		cfg.EVM().ChainID()
-		etx := mustCreateUnstartedGeneratedTx(t, txStore, fromAddress, big.NewInt(0),
+		etx := mustCreateUnstartedGeneratedTx(t, txStore, fromAddress, testutils.FixtureChainID,
 			txRequestWithIdempotencyKey(idempotencyKey))
 		require.Equal(t, idempotencyKey, *etx.IdempotencyKey)
 
-		res, err := txStore.FindTxWithIdempotencyKey(tests.Context(t), idempotencyKey, big.NewInt(0))
+		res, err := txStore.FindTxWithIdempotencyKey(tests.Context(t), idempotencyKey, testutils.FixtureChainID)
 		require.NoError(t, err)
 		assert.Equal(t, etx.Sequence, res.Sequence)
 		require.Equal(t, idempotencyKey, *res.IdempotencyKey)
@@ -679,7 +679,7 @@ func Test_FindReceiptWithIdempotencyKey(t *testing.T) {
 
 	idempotencyKey := "654"
 	t.Run("returns nil error if no results", func(t *testing.T) {
-		r, err := txStore.FindReceiptWithIdempotencyKey(tests.Context(t), idempotencyKey, big.NewInt(0))
+		r, err := txStore.FindReceiptWithIdempotencyKey(tests.Context(t), idempotencyKey, testutils.FixtureChainID)
 		require.NoError(t, err)
 		assert.Nil(t, r)
 	})
@@ -1862,6 +1862,7 @@ func TestORM_UpdateTxStatesToFinalizedUsingTxHashes(t *testing.T) {
 			State:              txmgrcommon.TxConfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -2060,6 +2061,7 @@ func mustInsertTerminallyStuckTxWithAttempt(t testing.TB, txStore txmgr.TestEvmT
 		BroadcastAt:        &broadcast,
 		InitialBroadcastAt: &broadcast,
 		Error:              null.StringFrom(client.TerminallyStuckMsg),
+		ChainID:            testutils.FixtureChainID,
 	}
 	require.NoError(t, txStore.InsertTx(ctx, &tx))
 	attempt := txmgrtest.NewLegacyEthTxAttempt(t, tx.ID)
