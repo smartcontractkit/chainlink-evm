@@ -504,6 +504,7 @@ type sendTxService struct {
 	sentCount atomic.Int32
 }
 
+//nolint:revive // ChainId must match JSON-RPC method name eth_chainId, not ChainID
 func (x *sendTxService) ChainId(ctx context.Context) (*hexutil.Big, error) {
 	return (*hexutil.Big)(x.chainID), nil
 }
