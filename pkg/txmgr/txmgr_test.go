@@ -107,7 +107,7 @@ func TestTxm_SendNativeToken_DoesNotSendToZero(t *testing.T) {
 	txm, err := makeTestEvmTxm(t, db, ethClient, estimator, evmConfig, evmConfig.GasEstimator(), evmConfig.Transactions(), dbConfig, dbConfig.Listener(), &keystest.FakeChainStore{})
 	require.NoError(t, err)
 
-	_, err = txm.SendNativeToken(tests.Context(t), testutils.FixtureChainID, from, to, *value, 21000)
+	_, err = txm.SendNativeToken(t.Context(), testutils.FixtureChainID, from, to, *value, 21000)
 	require.Error(t, err)
 	require.EqualError(t, err, "cannot send native token to zero address")
 }
