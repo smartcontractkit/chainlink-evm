@@ -21,7 +21,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -120,15 +119,21 @@ type MetaClientKeystore interface {
 	SignTx(ctx context.Context, fromAddress common.Address, tx *evmtypes.Transaction) (*evmtypes.Transaction, error)
 }
 
+type MetaClientRPC interface {
+	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
+	PendingNonceAt(context.Context, common.Address) (uint64, error)
+	SendTransaction(context.Context, *evmtypes.Transaction) error
+}
+
 type MetaClient struct {
 	lggr      logger.SugaredLogger
-	c         client.Client
+	c         MetaClientRPC
 	ks        MetaClientKeystore
 	customURL *url.URL
 	chainID   *big.Int
 }
 
-func NewMetaClient(lggr logger.Logger, c client.Client, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) *MetaClient {
+func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) *MetaClient {
 	return &MetaClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "MetaClient")),
 		c:         c,
