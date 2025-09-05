@@ -33,6 +33,7 @@ func ConstructTxm(logger logger.Logger, cfg TxmConfig, nodes []*toml.Node, keyst
 	}
 
 	fixedEnergyValue := new(big.Int).SetUint64(cfg.LimitDefault()).Int64()
+	logger.Info("fixedEnergyValue", "fixedEnergyValue", fixedEnergyValue)
 
 	return trontxm.New(logger, tronkeystore.NewLoopKeystoreAdapter(keystore), combinedClient, trontxm.TronTxmConfig{
 		// Overrides the energy estimator to always use the fixed energy
