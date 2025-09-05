@@ -7,7 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
+	"path"
 	"slices"
 	"strings"
 
@@ -92,7 +92,9 @@ func initDefaults(
 		}
 
 		// read the file to bytes
-		path := filepath.Join(root, entry.Name())
+		// use path.Join() instead of filepath.Join() because embed.FS uses forward slashes even on Windows
+		// see https://pkg.go.dev/io/fs#ValidPath
+		path := path.Join(root, entry.Name())
 
 		chainID, chain, err := readConfig(path, fileReader)
 		if err != nil {

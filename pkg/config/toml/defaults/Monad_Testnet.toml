@@ -21,4 +21,7 @@ CacheTimeout = '2s'
 BlockHistorySize = 100
 
 [NodePool]
-NewHeadsPollInterval = '4s' 
+NewHeadsPollInterval = '4s'
+
+[HeadTracker]
+PersistenceEnabled = false

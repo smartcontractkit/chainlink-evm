@@ -35,6 +35,10 @@ type EVMConfig struct {
 	C *toml.EVMConfig
 }
 
+func (e *EVMConfig) ConfirmationTimeout() time.Duration {
+	return e.C.ConfirmationTimeout()
+}
+
 func (e *EVMConfig) IsEnabled() bool {
 	return e.C.IsEnabled()
 }
@@ -96,7 +100,12 @@ func (e *EVMConfig) FinalityDepth() uint32 {
 }
 
 func (e *EVMConfig) SafeDepth() uint32 {
-	return *e.C.SafeDepth
+	safeDepth := *e.C.SafeDepth
+	if safeDepth > 0 {
+		return safeDepth
+	}
+
+	return e.FinalityDepth()
 }
 
 func (e *EVMConfig) FinalityTagEnabled() bool {

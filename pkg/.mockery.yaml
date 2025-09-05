@@ -21,6 +21,8 @@ packages:
     interfaces:
       GasEstimator:
       ChainScopedConfig:
+      EVM:
+      Workflow:
   github.com/smartcontractkit/chainlink-evm/pkg/gas:
     interfaces:
       Config:
@@ -83,3 +85,4 @@ packages:
       filename: "mock_{{ .InterfaceName | snakecase }}_test.go"
     interfaces:
       Emitter:
+

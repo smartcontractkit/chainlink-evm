@@ -27,6 +27,7 @@ func TestClientConfigBuilder(t *testing.T) {
 	enforceRepeatableRead := ptr(true)
 	deathDeclarationDelay := time.Second * 3
 	noNewFinalizedBlocksThreshold := time.Second
+	confirmationTimeout := time.Second * 60
 	nodeConfigs := []client.NodeConfig{
 		{
 			Name:    ptr("foo"),
@@ -35,13 +36,14 @@ func TestClientConfigBuilder(t *testing.T) {
 		},
 	}
 	finalityDepth := ptr(uint32(10))
+	safeDepth := ptr(uint32(6))
 	finalityTagEnabled := ptr(true)
 	noNewHeadsThreshold := time.Second
 	newHeadsPollInterval := 0 * time.Second
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(selectionMode, leaseDuration, chainTypeStr, nodeConfigs,
 		pollFailureThreshold, pollInterval, syncThreshold, nodeIsSyncingEnabled, noNewHeadsThreshold, finalityDepth,
 		finalityTagEnabled, finalizedBlockOffset, enforceRepeatableRead, deathDeclarationDelay, noNewFinalizedBlocksThreshold,
-		pollInterval, newHeadsPollInterval)
+		pollInterval, newHeadsPollInterval, confirmationTimeout, safeDepth)
 	require.NoError(t, err)
 
 	// Validate node pool configs
@@ -64,6 +66,7 @@ func TestClientConfigBuilder(t *testing.T) {
 	// Validate chain config
 	require.Equal(t, noNewHeadsThreshold, chainCfg.NodeNoNewHeadsThreshold())
 	require.Equal(t, *finalityDepth, chainCfg.FinalityDepth())
+	require.Equal(t, *safeDepth, chainCfg.SafeDepth())
 	require.Equal(t, *finalityTagEnabled, chainCfg.FinalityTagEnabled())
 	require.Equal(t, *finalizedBlockOffset, chainCfg.FinalizedBlockOffset())
 	require.Equal(t, noNewFinalizedBlocksThreshold, chainCfg.NoNewFinalizedHeadsThreshold())

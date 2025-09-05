@@ -52,6 +52,14 @@ func (ht *simulatedHeadTracker) LatestAndFinalizedBlock(ctx context.Context) (*e
 	return latest, finalizedBlock, nil
 }
 
+func (ht *simulatedHeadTracker) LatestSafeBlock(ctx context.Context) (safe *evmtypes.Head, err error) {
+	_, finalizedBlock, err := ht.LatestAndFinalizedBlock(ctx)
+	if err != nil {
+		return nil, errors.New("simulatedHeadTracker failed to get latest safe block")
+	}
+	return finalizedBlock, nil
+}
+
 func (ht *simulatedHeadTracker) LatestChain() *evmtypes.Head {
 	return nil
 }

@@ -455,6 +455,8 @@ func Test_Eth_Errors_Fatal(t *testing.T) {
 		{"insufficient fee", true, "Sei"},
 
 		{"Gas limit too low", true, "monad"},
+
+		{"oversized data: transaction size 138074, limit 131072", true, "Optimism"},
 	}
 
 	for _, test := range tests {

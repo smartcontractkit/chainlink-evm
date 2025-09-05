@@ -31,7 +31,7 @@ var (
 	logsFields                = [...]string{"evm_chain_id", "log_index", "block_hash", "block_number",
 		"address", "event_sig", "topics", "tx_hash", "data", "created_at", "block_timestamp"}
 	blocksFields = [...]string{"evm_chain_id", "block_hash", "block_number", "block_timestamp",
-		"finalized_block_number", "created_at"}
+		"finalized_block_number", "created_at", "safe_block_number"}
 )
 
 // The parser builds SQL expressions piece by piece for each Accept function call and resets the error and expression
@@ -67,14 +67,10 @@ func (v *pgDSLParser) Block(p primitives.Block) {
 
 func (v *pgDSLParser) Confidence(p primitives.Confidence) {
 	switch p.ConfidenceLevel {
-	case primitives.Finalized:
-		// the highest level of confidence maps to finalized
-		v.expression = v.nestedConfQuery(true, 0)
-	case primitives.Unconfirmed:
-		v.expression = v.nestedConfQuery(false, 0)
+	case primitives.Finalized, primitives.Unconfirmed, primitives.Safe:
+		v.expression = v.nestedConfQuery(p.ConfidenceLevel, 0)
 	default:
 		v.err = errors.New("unrecognized confidence level; use confidence to confirmations mappings instead")
-
 		return
 	}
 }
@@ -128,7 +124,7 @@ func (v *pgDSLParser) visitEventSigFilter(p *eventSigFilter) {
 	)
 }
 
-func (v *pgDSLParser) nestedConfQuery(finalized bool, confs uint64) string {
+func (v *pgDSLParser) nestedConfQuery(confidenceLevel primitives.ConfidenceLevel, confs uint64) string {
 	var (
 		from     = "FROM evm.log_poller_blocks "
 		where    = "WHERE evm_chain_id = :evm_chain_id "
@@ -136,9 +132,12 @@ func (v *pgDSLParser) nestedConfQuery(finalized bool, confs uint64) string {
 		selector string
 	)
 
-	if finalized {
+	switch confidenceLevel {
+	case primitives.Finalized:
 		selector = "SELECT finalized_block_number "
-	} else {
+	case primitives.Safe:
+		selector = "SELECT safe_block_number "
+	default: // primitives.Unconfirmed scenario, as we won't fail in this function, it will be the default case
 		selector = fmt.Sprintf("SELECT greatest(block_number - :%s, 0) ",
 			v.args.withIndexedField("confs", confs),
 		)
@@ -214,9 +213,11 @@ func (v *pgDSLParser) VisitConfirmationsFilter(p *confirmationsFilter) {
 	switch p.Confirmations {
 	case evmtypes.Finalized:
 		// the highest level of confidence maps to finalized
-		v.expression = v.nestedConfQuery(true, 0)
+		v.expression = v.nestedConfQuery(primitives.Finalized, 0)
+	case evmtypes.Safe:
+		v.expression = v.nestedConfQuery(primitives.Safe, 0)
 	default:
-		v.expression = v.nestedConfQuery(false, uint64(p.Confirmations))
+		v.expression = v.nestedConfQuery(primitives.Unconfirmed, uint64(p.Confirmations)) //nolint:gosec // G115
 	}
 }
 

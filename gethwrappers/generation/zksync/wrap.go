@@ -26,7 +26,7 @@ func main() {
 
 	var outPath string
 	if project != "automation" {
-		outPath = filepath.Join(cwd, "..", project, "generated", packageName, packageName+"_zksync.go")
+		outPath = filepath.Join(cwd, "..", project, "generated/latest", packageName, packageName+"_zksync.go")
 	} else {
 		outPath = filepath.Join(cwd, "..", "generated", packageName, packageName+"_zksync.go")
 	}

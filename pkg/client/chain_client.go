@@ -38,6 +38,7 @@ type Client interface {
 
 	TokenBalance(ctx context.Context, address common.Address, contractAddress common.Address) (*big.Int, error)
 	BalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error)
+	BalanceAtWithOpts(ctx context.Context, account common.Address, blockNumber *big.Int, opts evmtypes.BalanceAtOpts) (*big.Int, error)
 	LINKBalance(ctx context.Context, address common.Address, linkAddress common.Address) (*commonassets.Link, error)
 
 	// Wrapped RPC methods
@@ -49,11 +50,12 @@ type Client interface {
 	// might have unexpected effects to use it for anything else.
 	BatchCallContextAll(ctx context.Context, b []rpc.BatchElem) error
 
-	// HeadByNumber and HeadByHash is a reimplemented version due to a
+	// HeadByNumber, HeaderByNumberWithOpts and HeadByHash is a reimplemented version due to a
 	// difference in how block header hashes are calculated by Parity nodes
 	// running on Kovan, Avalanche and potentially others. We have to return our own wrapper type to capture the
 	// correct hash from the RPC response.
 	HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error)
+	HeaderByNumberWithOpts(ctx context.Context, number *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error)
 	HeadByHash(ctx context.Context, n common.Hash) (*evmtypes.Head, error)
 	SubscribeToHeads(ctx context.Context) (<-chan *evmtypes.Head, ethereum.Subscription, error)
 	// LatestFinalizedBlock - returns the latest finalized block as it's returned from an RPC.
@@ -74,10 +76,13 @@ type Client interface {
 	PendingNonceAt(ctx context.Context, account common.Address) (uint64, error)
 	NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error)
 	TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, error)
+	TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error)
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
+	TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (*types.Receipt, error)
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
+	FilterLogsWithOpts(ctx context.Context, q ethereum.FilterQuery, opts evmtypes.FilterLogsOpts) ([]types.Log, error)
 	SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error)
 	EstimateGas(ctx context.Context, call ethereum.CallMsg) (uint64, error)
 	SuggestGasPrice(ctx context.Context) (*big.Int, error)
@@ -89,6 +94,7 @@ type Client interface {
 	HeaderByHash(ctx context.Context, h common.Hash) (*types.Header, error)
 
 	CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
+	CallContractWithOpts(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, opts evmtypes.CallContractOpts) ([]byte, error)
 	PendingCallContract(ctx context.Context, msg ethereum.CallMsg) ([]byte, error)
 
 	IsL2() bool
@@ -158,6 +164,14 @@ func (c *chainClient) BalanceAt(ctx context.Context, account common.Address, blo
 		return nil, err
 	}
 	return r.BalanceAt(ctx, account, blockNumber)
+}
+
+func (c *chainClient) BalanceAtWithOpts(ctx context.Context, account common.Address, blockNumber *big.Int, opts evmtypes.BalanceAtOpts) (*big.Int, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.BalanceAtWithOpts(ctx, account, blockNumber, opts)
 }
 
 // BatchCallContext - sends all given requests as a single batch.
@@ -254,6 +268,14 @@ func (c *chainClient) CallContract(ctx context.Context, msg ethereum.CallMsg, bl
 	return r.CallContract(ctx, msg, blockNumber)
 }
 
+func (c *chainClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int, opts evmtypes.CallContractOpts) ([]byte, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.CallContractWithOpts(ctx, msg, blockNumber, opts)
+}
+
 func (c *chainClient) PendingCallContract(ctx context.Context, msg ethereum.CallMsg) ([]byte, error) {
 	r, err := c.multiNode.SelectRPC(ctx)
 	if err != nil {
@@ -302,6 +324,15 @@ func (c *chainClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([
 	return r.FilterEvents(ctx, q)
 }
 
+func (c *chainClient) FilterLogsWithOpts(ctx context.Context, q ethereum.FilterQuery, opts evmtypes.FilterLogsOpts) ([]types.Log, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FilterLogsWithOpts(ctx, q, opts)
+}
+
 func (c *chainClient) HeaderByHash(ctx context.Context, h common.Hash) (head *types.Header, err error) {
 	r, err := c.multiNode.SelectRPC(ctx)
 	if err != nil {
@@ -332,6 +363,14 @@ func (c *chainClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.H
 		return nil, err
 	}
 	return r.BlockByNumber(ctx, n)
+}
+
+func (c *chainClient) HeaderByNumberWithOpts(ctx context.Context, number *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.HeaderByNumberWithOpts(ctx, number, opts)
 }
 
 func (c *chainClient) IsL2() bool {
@@ -465,6 +504,14 @@ func (c *chainClient) TransactionByHash(ctx context.Context, txHash common.Hash)
 	return r.TransactionByHash(ctx, txHash)
 }
 
+func (c *chainClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.TransactionByHashWithOpts(ctx, txHash, opts)
+}
+
 // TODO-1663: return custom Receipt type instead of geth's once client.go is deprecated.
 func (c *chainClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (receipt *types.Receipt, err error) {
 	r, err := c.multiNode.SelectRPC(ctx)
@@ -473,6 +520,14 @@ func (c *chainClient) TransactionReceipt(ctx context.Context, txHash common.Hash
 	}
 	// return rpc.TransactionReceipt(ctx, txHash)
 	return r.TransactionReceiptGeth(ctx, txHash)
+}
+
+func (c *chainClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *types.Receipt, err error) {
+	r, err := c.multiNode.SelectRPC(ctx)
+	if err != nil {
+		return receipt, err
+	}
+	return r.TransactionReceiptGethWithOpts(ctx, txHash, opts)
 }
 
 func (c *chainClient) LatestFinalizedBlock(ctx context.Context) (*evmtypes.Head, error) {

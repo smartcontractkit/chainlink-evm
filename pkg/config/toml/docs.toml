@@ -120,6 +120,8 @@ LogBroadcasterEnabled = true # Default
 NoNewFinalizedHeadsThreshold = '0' # Default
 
 [Transactions]
+# ConfirmationTimeout time to wait for a TX to get into a block in the blockchain. This is used for the EVMService.SubmitTransaction operation.
+ConfirmationTimeout = '60s' # Default
 # Enabled is a feature flag for the Transaction Manager. This flag also enables or disables the gas estimator since it is dependent on the TXM to start it.
 Enabled = true # Default
 # ForwardersEnabled enables or disables sending transactions through forwarder contracts.
@@ -387,6 +389,13 @@ MaxAllowedFinalityDepth = 10000 # Default
 # On chains with fast finality, the persistence layer does not improve the chain's load time and only consumes database resources (mainly IO).
 # NOTE: persistence should not be disabled for products that use LogBroadcaster, as it might lead to missed on-chain events.
 PersistenceEnabled = true # Default
+# PersistenceBatchSize is used to batch head tracker db transactions (inserts and deletes).
+# If set to 100, the head tracker will insert and delete to the db every 100 heads.
+# If the head tracker crashes before the batch size is reached (i.e it fails to write the current batch to the db).
+# Then it will have to load that batch of heads from the rpc on startup (check PersistenceEnabled above).
+# To limit that initial fetch while also improving db usage, 100 is the default for now.
+PersistenceBatchSize = 100 # Default
+
 
 [[KeySpecific]]
 # Key is the account to apply these settings to
@@ -456,6 +465,13 @@ DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
 # VerifyChainID enforces RPC Client ChainIDs to match configured ChainID
 VerifyChainID = true # Default
+# ExternalRequestMaxResponseSize sets the maximum allowed size (in bytes) for responses to external requests.
+# Responses larger than this value will be rejected to prevent the node from being overloaded.
+# Only CRE workflow requests are considered external requests.
+# Only applies for RPCs configured with HTTP urls. There is no limit for WS only RPCs, as WS RPCs only allow to define
+# global limits that are applied to both internal and external requests.
+# Set to 0 to disable the size check and allow responses of any size.
+ExternalRequestMaxResponseSize = 0 # Default
 # **ADVANCED**
 # Errors enable the node to provide custom regex patterns to match against error messages from RPCs.
 [NodePool.Errors]
@@ -523,6 +539,11 @@ HTTPURLExtraWrite = 'https://foo.web/extra' # Example
 SendOnly = false # Default
 # Order of the node in the pool, will takes effect if `SelectionMode` is `PriorityLevel` or will be used as a tie-breaker for `HighestHead` and `TotalDifficulty`
 Order = 100 # Default
+# IsLoadBalancedRPC indicates whether the http/ws url above has multiple rpc's behind it.
+# If true, we should try reconnecting to the node even when its the only node in the Nodes list.
+# If false and its the only node in the nodes list, we will mark it alive even when its out of sync, because it might still be able to send txs.
+IsLoadBalancedRPC = false # Example
+
 
 [OCR2.Automation]
 # GasLimit controls the gas limit for transmit transactions from ocr2automation job.

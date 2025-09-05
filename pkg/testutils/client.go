@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
 // JSONRPCHandler is called with the method and request param(s).
@@ -148,7 +150,7 @@ func (ts *testWSServer) handleNewMsg(chainID *big.Int, conn *websocket.Conn, cal
 		var responses []string
 		for i, reqElem := range req.Array() {
 			var response string
-			response, _, err = ts.handleRequest(chainID, callback, reqElem)
+			response, _, err = handleRequest(logger.Test(ts.t), chainID, callback, reqElem)
 			if err != nil {
 				return fmt.Errorf("failed to handle elem %d of batch request: %w", i, err)
 			}
@@ -158,7 +160,7 @@ func (ts *testWSServer) handleNewMsg(chainID *big.Int, conn *websocket.Conn, cal
 		return ts.writeMsg(conn, fmt.Sprintf("[%s]", strings.Join(responses, ",")))
 	}
 	// Handle single request
-	response, asyncResponse, err := ts.handleRequest(chainID, callback, req)
+	response, asyncResponse, err := handleRequest(logger.Test(ts.t), chainID, callback, req)
 	if err != nil {
 		return fmt.Errorf("failed to handle request: %w", err)
 	}
@@ -178,9 +180,9 @@ func (ts *testWSServer) handleNewMsg(chainID *big.Int, conn *websocket.Conn, cal
 	return nil
 }
 
-func (ts *testWSServer) handleRequest(chainID *big.Int, callback JSONRPCHandler, req gjson.Result) (response, asyncResponse string, err error) {
+func handleRequest(lggr logger.Logger, chainID *big.Int, callback JSONRPCHandler, req gjson.Result) (response, asyncResponse string, err error) {
 	if e := req.Get("error"); e.Exists() {
-		ts.t.Logf("Received jsonrpc error: %v", e)
+		lggr.Warnf("Received jsonrpc error: %v", e)
 		return
 	}
 

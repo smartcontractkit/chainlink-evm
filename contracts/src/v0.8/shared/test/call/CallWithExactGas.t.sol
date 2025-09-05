@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import {CallWithExactGas} from "../../call/CallWithExactGas.sol";
-import {CallWithExactGasHelper} from "./CallWithExactGasHelper.sol";
+
 import {BaseTest} from "../BaseTest.t.sol";
-import {GenericReceiver} from "../testhelpers/GenericReceiver.sol";
+
 import {GasConsumer} from "../testhelpers/GasConsumer.sol";
+import {GenericReceiver} from "../testhelpers/GenericReceiver.sol";
+import {CallWithExactGasHelper} from "./CallWithExactGasHelper.sol";
 
 contract CallWithExactGasSetup is BaseTest {
   GenericReceiver internal s_receiver;

@@ -20,6 +20,7 @@ NoNewFinalizedHeadsThreshold = '0'
 LogBroadcasterEnabled = true
 
 [Transactions]
+ConfirmationTimeout = '1m0s'
 Enabled = true
 ForwardersEnabled = false
 MaxInFlight = 16
@@ -72,6 +73,7 @@ SamplingInterval = '1s'
 FinalityTagBypass = false
 MaxAllowedFinalityDepth = 10000
 PersistenceEnabled = true
+PersistenceBatchSize = 100
 
 [NodePool]
 PollFailureThreshold = 5
@@ -85,6 +87,7 @@ EnforceRepeatableRead = true
 DeathDeclarationDelay = '1m'
 NewHeadsPollInterval = '0s'
 VerifyChainID = true
+ExternalRequestMaxResponseSize = 0
 
 [OCR]
 ContractConfirmations = 4

@@ -8,7 +8,7 @@ import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 import {Vm} from "forge-std/Test.sol";
 
 contract WorkflowRegistry_setDONRegistry is WorkflowRegistrySetup {
-  function test_WhenTheCallerIsNOTTheContractOwner() external {
+  function test_setDONRegistry_WhenTheCallerIsNOTTheContractOwner() external {
     // It should revert with caller is not the owner
     vm.prank(s_stranger);
     address donReg = makeAddr("don-registry-address");
@@ -17,7 +17,7 @@ contract WorkflowRegistry_setDONRegistry is WorkflowRegistrySetup {
   }
 
   // whenTheCallerISTheContractOwner
-  function test_WhenThereAreNoExistingRegistries() external {
+  function test_setDONRegistry_WhenThereAreNoExistingRegistries() external {
     // It should write to s_donRegistry with the pair and emit DONRegistryUpdated
     vm.prank(s_owner);
     address donReg = makeAddr("don-registry-address");
@@ -33,7 +33,7 @@ contract WorkflowRegistry_setDONRegistry is WorkflowRegistrySetup {
   }
 
   // whenTheCallerISTheContractOwner
-  function test_WhenBothRegistryAndChainSelectorDifferFromTheCurrentValues() external {
+  function test_setDONRegistry_WhenBothRegistryAndChainSelectorDifferFromTheCurrentValues() external {
     // It should overwrite s_donRegistry with the new pair and emit DONRegistryUpdated
 
     vm.startPrank(s_owner);
@@ -56,7 +56,7 @@ contract WorkflowRegistry_setDONRegistry is WorkflowRegistrySetup {
   }
 
   // whenTheCallerISTheContractOwner
-  function test_WhenBothRegistryAndChainSelectorAreTheSameAsCurrent() external {
+  function test_setDONRegistry_WhenBothRegistryAndChainSelectorAreTheSameAsCurrent() external {
     // It should do nothing
 
     vm.startPrank(s_owner);

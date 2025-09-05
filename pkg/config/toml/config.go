@@ -198,6 +198,9 @@ func legacyNode(n *Node, chainID *big.Big) (v2 types.Node) {
 	if n.Order != nil {
 		v2.Order = *n.Order
 	}
+	if n.IsLoadBalancedRPC != nil {
+		v2.IsLoadBalancedRPC = *n.IsLoadBalancedRPC
+	}
 	return
 }
 
@@ -294,6 +297,10 @@ type EVMConfig struct {
 	Enabled *bool
 	Chain
 	Nodes EVMNodes
+}
+
+func (c *EVMConfig) ConfirmationTimeout() time.Duration {
+	return c.Chain.Transactions.ConfirmationTimeout.Duration()
 }
 
 func (c *EVMConfig) IsEnabled() bool {
@@ -519,6 +526,7 @@ type Transactions struct {
 	ReaperInterval       *commonconfig.Duration
 	ReaperThreshold      *commonconfig.Duration
 	ResendAfterThreshold *commonconfig.Duration
+	ConfirmationTimeout  *commonconfig.Duration
 
 	AutoPurge            AutoPurgeConfig            `toml:",omitempty"`
 	TransactionManagerV2 TransactionManagerV2Config `toml:",omitempty"`
@@ -545,6 +553,9 @@ func (t *Transactions) setFrom(f *Transactions) {
 	}
 	if v := f.ResendAfterThreshold; v != nil {
 		t.ResendAfterThreshold = v
+	}
+	if v := f.ConfirmationTimeout; v != nil {
+		t.ConfirmationTimeout = v
 	}
 	t.AutoPurge.setFrom(&f.AutoPurge)
 	t.TransactionManagerV2.setFrom(&f.TransactionManagerV2)
@@ -958,6 +969,7 @@ type HeadTracker struct {
 	MaxAllowedFinalityDepth *uint32
 	FinalityTagBypass       *bool
 	PersistenceEnabled      *bool
+	PersistenceBatchSize    *int64
 }
 
 func (t *HeadTracker) setFrom(f *HeadTracker) {
@@ -978,6 +990,9 @@ func (t *HeadTracker) setFrom(f *HeadTracker) {
 	}
 	if v := f.PersistenceEnabled; v != nil {
 		t.PersistenceEnabled = v
+	}
+	if v := f.PersistenceBatchSize; v != nil {
+		t.PersistenceBatchSize = v
 	}
 }
 
@@ -1062,18 +1077,19 @@ func (r *ClientErrors) setFrom(f *ClientErrors) bool {
 }
 
 type NodePool struct {
-	PollFailureThreshold       *uint32
-	PollInterval               *commonconfig.Duration
-	SelectionMode              *string
-	SyncThreshold              *uint32
-	LeaseDuration              *commonconfig.Duration
-	NodeIsSyncingEnabled       *bool
-	FinalizedBlockPollInterval *commonconfig.Duration
-	Errors                     ClientErrors `toml:",omitempty"`
-	EnforceRepeatableRead      *bool
-	DeathDeclarationDelay      *commonconfig.Duration
-	NewHeadsPollInterval       *commonconfig.Duration
-	VerifyChainID              *bool
+	PollFailureThreshold           *uint32
+	PollInterval                   *commonconfig.Duration
+	SelectionMode                  *string
+	SyncThreshold                  *uint32
+	LeaseDuration                  *commonconfig.Duration
+	NodeIsSyncingEnabled           *bool
+	FinalizedBlockPollInterval     *commonconfig.Duration
+	Errors                         ClientErrors `toml:",omitempty"`
+	EnforceRepeatableRead          *bool
+	DeathDeclarationDelay          *commonconfig.Duration
+	NewHeadsPollInterval           *commonconfig.Duration
+	VerifyChainID                  *bool
+	ExternalRequestMaxResponseSize *uint32
 }
 
 func (p *NodePool) setFrom(f *NodePool) {
@@ -1113,6 +1129,10 @@ func (p *NodePool) setFrom(f *NodePool) {
 
 	if v := f.VerifyChainID; v != nil {
 		p.VerifyChainID = v
+	}
+
+	if v := f.ExternalRequestMaxResponseSize; v != nil {
+		p.ExternalRequestMaxResponseSize = v
 	}
 
 	p.Errors.setFrom(&f.Errors)
@@ -1172,6 +1192,7 @@ type Node struct {
 	HTTPURLExtraWrite *commonconfig.URL
 	SendOnly          *bool
 	Order             *int32
+	IsLoadBalancedRPC *bool
 }
 
 func (n *Node) ValidateConfig() (err error) {
@@ -1217,6 +1238,11 @@ func (n *Node) ValidateConfig() (err error) {
 		n.Order = &z
 	}
 
+	if n.IsLoadBalancedRPC == nil {
+		z := false
+		n.IsLoadBalancedRPC = &z
+	}
+
 	return
 }
 
@@ -1238,6 +1264,9 @@ func (n *Node) SetFrom(f *Node) {
 	}
 	if f.Order != nil {
 		n.Order = f.Order
+	}
+	if f.IsLoadBalancedRPC != nil {
+		n.IsLoadBalancedRPC = f.IsLoadBalancedRPC
 	}
 }
 

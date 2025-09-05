@@ -25,6 +25,8 @@ interface INodeInfoProvider {
     bytes32 p2pId;
     /// @notice Public key used to encrypt secrets for this node
     bytes32 encryptionPublicKey;
+    /// @notice CSA (Centralized Server Authentication) public key used as identity to non-P2P networks.
+    bytes32 csaKey;
     /// @notice The list of hashed capability IDs supported by the node
     string[] capabilityIds;
     /// @notice The list of capabilities DON Ids supported by the node. A node
