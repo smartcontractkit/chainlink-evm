@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
@@ -349,17 +350,17 @@ func VerifyResponse(metacalldata MetacalldataResponse, dualBroadcastParams strin
 	}
 
 	result := new(Metacalldata)
-	result.UOP, err = copyUserOp(args[0])
+	err = mapstructure.Decode(args[0], &result.UOP)
 	if err != nil {
-		return nil, fmt.Errorf("error unpacking UO: %w", err)
+		return nil, fmt.Errorf("error unpacking UOP: %w", err)
 	}
-	result.SOPs, err = copySolverOps(args[1])
+	err = mapstructure.Decode(args[1], &result.SOPs)
 	if err != nil {
-		return nil, fmt.Errorf("error unpacking SOs: %w", err)
+		return nil, fmt.Errorf("error unpacking SOPs: %w", err)
 	}
-	result.DOP, err = copyDAppOp(args[2])
+	err = mapstructure.Decode(args[2], &result.DOP)
 	if err != nil {
-		return nil, fmt.Errorf("error unpacking DO: %w", err)
+		return nil, fmt.Errorf("error unpacking DOP: %w", err)
 	}
 	return VerifyMetadata(txData, fromAddress, *result, fwdrDestAddress, dApp, to, metacalldata)
 }
@@ -474,151 +475,4 @@ func verifyRaw(raw any) (reflect.Value, error) {
 		return rv, fmt.Errorf("raw is not a struct, got %s", rv.Kind())
 	}
 	return rv, nil
-}
-
-func copyUserOp(raw any) (UO, error) {
-	var u UO
-
-	rv, err := verifyRaw(raw)
-	if err != nil {
-		return u, err
-	}
-
-	to, err := getFieldTyped[common.Address]("To", rv)
-	if err != nil {
-		return u, err
-	}
-	u.To = to
-
-	maxFeePerGas, err := getFieldTyped[*big.Int]("MaxFeePerGas", rv)
-	if err != nil {
-		return u, err
-	}
-	u.MaxFeePerGas = maxFeePerGas
-
-	dapp, err := getFieldTyped[common.Address]("Dapp", rv)
-	if err != nil {
-		return u, err
-	}
-	u.Dapp = dapp
-
-	control, err := getFieldTyped[common.Address]("Control", rv)
-	if err != nil {
-		return u, err
-	}
-	u.Control = control
-
-	f, err := getField("Data", rv)
-	if err != nil {
-		return u, err
-	}
-	if f.Kind() != reflect.Slice || f.Type().Elem().Kind() != reflect.Uint8 {
-		return u, errors.New("field Data not []byte")
-	}
-	u.Data = f.Bytes()
-
-	return u, nil
-}
-
-func copySolverOp(raw any) (SO, error) {
-	var s SO
-
-	rv, err := verifyRaw(raw)
-	if err != nil {
-		return s, err
-	}
-
-	to, err := getFieldTyped[common.Address]("To", rv)
-	if err != nil {
-		return s, err
-	}
-	s.To = to
-
-	control, err := getFieldTyped[common.Address]("Control", rv)
-	if err != nil {
-		return s, err
-	}
-	s.Control = control
-
-	return s, nil
-}
-
-func copySolverOps(raw any) ([]SO, error) {
-	sliceVal := reflect.ValueOf(raw)
-	if !sliceVal.IsValid() {
-		return nil, errors.New("raw is invalid")
-	}
-	if sliceVal.Kind() == reflect.Pointer || sliceVal.Kind() == reflect.Interface {
-		if sliceVal.IsNil() {
-			return nil, errors.New("raw is nil")
-		}
-		sliceVal = sliceVal.Elem()
-	}
-
-	if sliceVal.Kind() != reflect.Slice && sliceVal.Kind() != reflect.Array {
-		return nil, fmt.Errorf("raw is not a slice or array, got %s", sliceVal.Kind())
-	}
-
-	n := sliceVal.Len()
-	out := make([]SO, 0, n)
-	for i := range n {
-		solverOp, err := copySolverOp(sliceVal.Index(i).Interface())
-		if err != nil {
-			return nil, fmt.Errorf("failed to copy solverOp at index %d: %w", i, err)
-		}
-		out = append(out, solverOp)
-	}
-	return out, nil
-}
-
-func copyDAppOp(raw any) (DO, error) {
-	var d DO
-
-	rv, err := verifyRaw(raw)
-	if err != nil {
-		return d, err
-	}
-
-	to, err := getFieldTyped[common.Address]("To", rv)
-	if err != nil {
-		return d, err
-	}
-	d.To = to
-
-	control, err := getFieldTyped[common.Address]("Control", rv)
-	if err != nil {
-		return d, err
-	}
-	d.Control = control
-
-	bundler, err := getFieldTyped[common.Address]("Bundler", rv)
-	if err != nil {
-		return d, err
-	}
-	d.Bundler = bundler
-
-	return d, nil
-}
-
-func getField(name string, rv reflect.Value) (reflect.Value, error) {
-	f := rv.FieldByName(name)
-	if !f.IsValid() {
-		return reflect.Value{}, fmt.Errorf("field %s not found", name)
-	}
-	return f, nil
-}
-
-func getFieldTyped[T any](name string, rv reflect.Value) (value T, err error) {
-	f := rv.FieldByName(name)
-	if !f.IsValid() {
-		return value, fmt.Errorf("field %s not found", name)
-	}
-
-	var ok bool
-	value, ok = f.Interface().(T)
-	if !ok {
-		var t T
-		return value, fmt.Errorf("field %s is not of expected type %T", name, t)
-	}
-	return value, nil
 }
