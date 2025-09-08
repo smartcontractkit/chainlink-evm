@@ -166,7 +166,9 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
+			return nil
 		}
+		return errors.New("meta transaction was empty")
 	}
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)
 }
@@ -372,7 +374,7 @@ func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacallda
 	if !ok {
 		return nil, errors.New("update method not found in ABI")
 	}
-	if !bytes.HasPrefix(result.UOP.Data, updateFn.ID) {
+	if len(result.UOP.Data) < 4 || !bytes.HasPrefix(result.UOP.Data, updateFn.ID) {
 		return nil, fmt.Errorf("incorrect method id in uop.Data: %v", result.UOP.Data)
 	}
 
@@ -461,7 +463,7 @@ func verifyRaw(raw any) (reflect.Value, error) {
 		return rv, errors.New("raw is invalid")
 	}
 
-	if rv.Kind() == reflect.Ptr || rv.Kind() == reflect.Interface {
+	if rv.Kind() == reflect.Pointer || rv.Kind() == reflect.Interface {
 		if rv.IsNil() {
 			return rv, errors.New("raw is nil")
 		}
@@ -510,7 +512,7 @@ func copyUserOp(raw any) (UO, error) {
 	if err != nil {
 		return u, err
 	}
-	if !(f.Kind() == reflect.Slice && f.Type().Elem().Kind() == reflect.Uint8) {
+	if f.Kind() != reflect.Slice || f.Type().Elem().Kind() != reflect.Uint8 {
 		return u, errors.New("field Data not []byte")
 	}
 	u.Data = f.Bytes()
@@ -546,7 +548,7 @@ func copySolverOps(raw any) ([]SO, error) {
 	if !sliceVal.IsValid() {
 		return nil, errors.New("raw is invalid")
 	}
-	if sliceVal.Kind() == reflect.Ptr || sliceVal.Kind() == reflect.Interface {
+	if sliceVal.Kind() == reflect.Pointer || sliceVal.Kind() == reflect.Interface {
 		if sliceVal.IsNil() {
 			return nil, errors.New("raw is nil")
 		}
