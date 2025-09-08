@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {BurnMintERC20PausableTransparent} from "../../../../../token/ERC20/upgradeable/BurnMintERC20PausableTransparent.sol";
+import {BurnMintERC20PausableTransparent} from
+  "../../../../../token/ERC20/upgradeable/BurnMintERC20PausableTransparent.sol";
 import {BurnMintERC20Transparent} from "../../../../../token/ERC20/upgradeable/BurnMintERC20Transparent.sol";
 import {ERC20UpgradableBaseTest_pausing} from "../ERC20UpgradableBaseTest.pausing.t.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from
+  "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract BurnMintERC20PausableTransparentTest is ERC20UpgradableBaseTest_pausing {
   BurnMintERC20PausableTransparent internal s_burnMintERC20PausableTransparent;
@@ -17,8 +19,7 @@ contract BurnMintERC20PausableTransparentTest is ERC20UpgradableBaseTest_pausing
         implementation,
         INITIAL_OWNER_ADDRESS_FOR_PROXY_ADMIN,
         abi.encodeCall(
-          BurnMintERC20Transparent.initialize,
-          (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN)
+          BurnMintERC20Transparent.initialize, (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN)
         )
       )
     );
@@ -44,15 +45,13 @@ contract BurnMintERC20PausableTransparentTest is ERC20UpgradableBaseTest_pausing
 
   function test_Pause_RevertWhen_CallerDoesNotHavePauserRole() public {
     should_Pause_RevertWhen_CallerDoesNotHavePauserRole(
-      address(s_burnMintERC20PausableTransparent),
-      s_burnMintERC20PausableTransparent.PAUSER_ROLE()
+      address(s_burnMintERC20PausableTransparent), s_burnMintERC20PausableTransparent.PAUSER_ROLE()
     );
   }
 
   function test_Unpause_RevertWhen_CallerDoesNotHaveDefaultAdminRole() public {
     should_Unpause_RevertWhen_CallerDoesNotHaveDefaultAdminRole(
-      address(s_burnMintERC20PausableTransparent),
-      s_burnMintERC20PausableTransparent.DEFAULT_ADMIN_ROLE()
+      address(s_burnMintERC20PausableTransparent), s_burnMintERC20PausableTransparent.DEFAULT_ADMIN_ROLE()
     );
   }
 

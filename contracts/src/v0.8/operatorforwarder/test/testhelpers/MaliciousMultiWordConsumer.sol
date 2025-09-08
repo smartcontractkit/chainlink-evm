@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ChainlinkClient} from "../../ChainlinkClient.sol";
 import {Chainlink} from "../../Chainlink.sol";
+import {ChainlinkClient} from "../../ChainlinkClient.sol";
 
 contract MaliciousMultiWordConsumer is ChainlinkClient {
   uint256 private constant ORACLE_PAYMENT = 1 ether;
@@ -34,7 +34,7 @@ contract MaliciousMultiWordConsumer is ChainlinkClient {
   }
 
   function stealEthCall(bytes32 _requestId, bytes memory) public recordChainlinkFulfillment(_requestId) {
-    (bool success, ) = address(this).call{value: 100}(""); // solhint-disable-line avoid-call-value
+    (bool success,) = address(this).call{value: 100}(""); // solhint-disable-line avoid-call-value
     // solhint-disable-next-line gas-custom-errors
     require(success, "Call failed");
   }

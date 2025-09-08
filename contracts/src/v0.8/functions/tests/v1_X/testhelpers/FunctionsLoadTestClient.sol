@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FunctionsClient} from "../../../dev/v1_X/FunctionsClient.sol";
 import {ConfirmedOwner} from "../../../../shared/access/ConfirmedOwner.sol";
+import {FunctionsClient} from "../../../dev/v1_X/FunctionsClient.sol";
 import {FunctionsRequest} from "../../../dev/v1_X/libraries/FunctionsRequest.sol";
 
 /**
@@ -21,7 +21,9 @@ contract FunctionsLoadTestClient is FunctionsClient, ConfirmedOwner {
   uint32 public totalSucceededResponses;
   uint32 public totalFailedResponses;
 
-  constructor(address router) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
+  constructor(
+    address router
+  ) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
 
   /**
    * @notice Send a simple request
@@ -44,7 +46,7 @@ contract FunctionsLoadTestClient is FunctionsClient, ConfirmedOwner {
     req._initializeRequestForInlineJavaScript(source);
     if (encryptedSecretsReferences.length > 0) req._addSecretsReference(encryptedSecretsReferences);
     if (args.length > 0) req._setArgs(args);
-    uint i = 0;
+    uint256 i = 0;
     for (i = 0; i < times; i++) {
       lastRequestID = _sendRequest(req._encodeCBOR(), subscriptionId, MAX_CALLBACK_GAS, donId);
       totalRequests += 1;
@@ -74,7 +76,7 @@ contract FunctionsLoadTestClient is FunctionsClient, ConfirmedOwner {
     req._initializeRequestForInlineJavaScript(source);
     req._addDONHostedSecrets(slotId, slotVersion);
     if (args.length > 0) req._setArgs(args);
-    uint i = 0;
+    uint256 i = 0;
     for (i = 0; i < times; i++) {
       lastRequestID = _sendRequest(req._encodeCBOR(), subscriptionId, MAX_CALLBACK_GAS, donId);
       totalRequests += 1;
@@ -94,7 +96,7 @@ contract FunctionsLoadTestClient is FunctionsClient, ConfirmedOwner {
     uint64 subscriptionId,
     bytes32 donId
   ) public onlyOwner {
-    uint i = 0;
+    uint256 i = 0;
     for (i = 0; i < times; i++) {
       lastRequestID = _sendRequest(cborEncodedRequest, subscriptionId, MAX_CALLBACK_GAS, donId);
       totalRequests += 1;

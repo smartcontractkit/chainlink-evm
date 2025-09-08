@@ -37,8 +37,12 @@ interface IRouter {
     uint80 gasLimit;
   }
 
-  function addForwarder(address forwarder) external;
-  function removeForwarder(address forwarder) external;
+  function addForwarder(
+    address forwarder
+  ) external;
+  function removeForwarder(
+    address forwarder
+  ) external;
 
   function route(
     bytes32 transmissionId,

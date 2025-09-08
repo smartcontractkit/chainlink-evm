@@ -3,18 +3,19 @@ pragma solidity 0.8.24;
 
 import {ISequencerUptimeFeed} from "../../../interfaces/ISequencerUptimeFeed.sol";
 
-import {MockScrollL1CrossDomainMessenger} from "../../mocks/scroll/MockScrollL1CrossDomainMessenger.sol";
-import {MockScrollL2CrossDomainMessenger} from "../../mocks/scroll/MockScrollL2CrossDomainMessenger.sol";
-import {MockScrollL1MessageQueueV2} from "../../mocks/scroll/MockScrollL1MessageQueueV2.sol";
+import {BaseValidator} from "../../../base/BaseValidator.sol";
 import {ScrollSequencerUptimeFeed} from "../../../scroll/ScrollSequencerUptimeFeed.sol";
 import {ScrollValidator} from "../../../scroll/ScrollValidator.sol";
-import {BaseValidator} from "../../../base/BaseValidator.sol";
+import {MockScrollL1CrossDomainMessenger} from "../../mocks/scroll/MockScrollL1CrossDomainMessenger.sol";
+import {MockScrollL1MessageQueueV2} from "../../mocks/scroll/MockScrollL1MessageQueueV2.sol";
+import {MockScrollL2CrossDomainMessenger} from "../../mocks/scroll/MockScrollL2CrossDomainMessenger.sol";
+
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract ScrollValidator_Setup is L2EPTest {
   /// Helper constants
   address internal immutable L2_SEQ_STATUS_RECORDER_ADDRESS = makeAddr("L2_SEQ_STATUS_RECORDER_ADDRESS");
-  uint32 internal constant INIT_GAS_LIMIT = 1900000;
+  uint32 internal constant INIT_GAS_LIMIT = 1_900_000;
 
   /// L2EP contracts
   MockScrollL1CrossDomainMessenger internal s_mockScrollL1CrossDomainMessenger;
@@ -25,12 +26,7 @@ contract ScrollValidator_Setup is L2EPTest {
 
   /// https://github.com/scroll-tech/scroll/blob/03089eaeee1193ff44c532c7038611ae123e7ef3/contracts/src/libraries/IScrollMessenger.sol#L22
   event SentMessage(
-    address indexed sender,
-    address indexed target,
-    uint256 value,
-    uint256 messageNonce,
-    uint256 gasLimit,
-    bytes message
+    address indexed sender, address indexed target, uint256 value, uint256 messageNonce, uint256 gasLimit, bytes message
   );
 
   /// Setup
@@ -40,9 +36,7 @@ contract ScrollValidator_Setup is L2EPTest {
     s_mockScrollL1MessageQueue = new MockScrollL1MessageQueueV2();
 
     s_scrollSequencerUptimeFeed = new ScrollSequencerUptimeFeed(
-      address(s_mockScrollL1CrossDomainMessenger),
-      address(s_mockScrollL2CrossDomainMessenger),
-      true
+      address(s_mockScrollL1CrossDomainMessenger), address(s_mockScrollL2CrossDomainMessenger), true
     );
 
     s_scrollValidator = new ScrollValidator(
@@ -61,10 +55,7 @@ contract ScrollValidator_Constructor is ScrollValidator_Setup {
 
     vm.expectRevert("Invalid L1 message queue address");
     new ScrollValidator(
-      address(s_mockScrollL1CrossDomainMessenger),
-      address(s_scrollSequencerUptimeFeed),
-      address(0),
-      INIT_GAS_LIMIT
+      address(s_mockScrollL1CrossDomainMessenger), address(s_scrollSequencerUptimeFeed), address(0), INIT_GAS_LIMIT
     );
   }
 }
@@ -117,7 +108,7 @@ contract ScrollValidator_Validate is ScrollValidator_Setup {
     uint256 currentRoundId = 1;
     int256 currentAnswer = 1;
     // Sets block.timestamp to a later date
-    uint256 futureTimestampInSeconds = block.timestamp + 10000;
+    uint256 futureTimestampInSeconds = block.timestamp + 10_000;
     vm.startPrank(s_eoaValidator);
     vm.warp(futureTimestampInSeconds);
 

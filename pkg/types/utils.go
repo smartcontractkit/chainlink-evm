@@ -13,3 +13,8 @@ func MustGetABI(json string) abi.ABI {
 	}
 	return abi
 }
+
+// NullClientChainID is set to a chainID that is unlikely to be used in production.
+// It cannot be zero due to a breaking change in go-ethereum:
+// https://github.com/ethereum/go-ethereum/blob/master/core/types/transaction_signing.go#L193
+const NullClientChainID = 1399100

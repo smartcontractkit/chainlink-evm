@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
-import {ZKSyncFunctionsRouter} from "../../v1_3_0_zksync/ZKSyncFunctionsRouter.sol";
-import {FunctionsRouter} from "../../v1_0_0/FunctionsRouter.sol";
-import {ZKSyncFunctionsRouterHarness} from "./testhelpers/ZKSyncFunctionsRouterHarness.sol";
-import {ZKSyncFunctionsRouterSetup} from "./Setup.t.sol";
 import {MockSystemContext} from "../../../shared/test/mocks/MockSystemContext.sol";
+import {FunctionsRouter} from "../../v1_0_0/FunctionsRouter.sol";
+import {ZKSyncFunctionsRouter} from "../../v1_3_0_zksync/ZKSyncFunctionsRouter.sol";
+import {BaseTest} from "./BaseTest.t.sol";
+
+import {ZKSyncFunctionsRouterSetup} from "./Setup.t.sol";
+import {ZKSyncFunctionsRouterHarness} from "./testhelpers/ZKSyncFunctionsRouterHarness.sol";
 
 contract ZKSyncFunctionsRouter__Callback is ZKSyncFunctionsRouterSetup {
   MockClientSuccess internal s_mockClientSuccess;
@@ -35,16 +36,10 @@ contract ZKSyncFunctionsRouter__Callback is ZKSyncFunctionsRouterSetup {
     bytes memory err = bytes("errData");
     uint32 totalGas = 5_000_000;
     uint32 callbackGasLimit = 4_000_000;
-    address noCodeAddress = address(12345);
+    address noCodeAddress = address(12_345);
 
-    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(
-      reqId,
-      resp,
-      err,
-      totalGas,
-      callbackGasLimit,
-      noCodeAddress
-    );
+    ZKSyncFunctionsRouter.CallbackResult memory result =
+      _callback(reqId, resp, err, totalGas, callbackGasLimit, noCodeAddress);
 
     assertFalse(result.success, "Should skip => success=false");
     assertEq(result.gasUsed, 0, "gasUsed=0 for skip");
@@ -59,14 +54,7 @@ contract ZKSyncFunctionsRouter__Callback is ZKSyncFunctionsRouterSetup {
     uint32 callbackGasLimit = 4_000_000;
     address client = address(s_mockClientSuccess);
 
-    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(
-      reqId,
-      resp,
-      err,
-      totalGas,
-      callbackGasLimit,
-      client
-    );
+    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(reqId, resp, err, totalGas, callbackGasLimit, client);
 
     assertTrue(result.success, "callback should succeed");
     assertGt(result.gasUsed, 0, "some gas used");
@@ -81,14 +69,7 @@ contract ZKSyncFunctionsRouter__Callback is ZKSyncFunctionsRouterSetup {
     uint32 totalGas = 5_000_000;
     uint32 callbackGasLimit = 4_000_000;
     address client = address(s_mockClientRevert);
-    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(
-      reqId,
-      resp,
-      err,
-      totalGas,
-      callbackGasLimit,
-      client
-    );
+    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(reqId, resp, err, totalGas, callbackGasLimit, client);
 
     assertFalse(result.success, "client revert => success=false");
     assertGt(result.gasUsed, 0, "some gas is consumed");
@@ -106,14 +87,7 @@ contract ZKSyncFunctionsRouter__Callback is ZKSyncFunctionsRouterSetup {
     uint32 callbackGasLimit = 4_000_000;
     address client = address(s_mockClientSuccess);
     uint256 startGas = gasleft();
-    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(
-      reqId,
-      resp,
-      err,
-      totalGas,
-      callbackGasLimit,
-      client
-    );
+    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(reqId, resp, err, totalGas, callbackGasLimit, client);
     uint256 endGas = gasleft();
     uint256 actualUsed = startGas - endGas;
     assertTrue(result.success, "callback success");
@@ -134,14 +108,7 @@ contract ZKSyncFunctionsRouter__Callback is ZKSyncFunctionsRouterSetup {
     uint32 callbackGasLimit = 4_000_000;
     address client = address(bigClient);
 
-    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(
-      reqId,
-      resp,
-      err,
-      totalGas,
-      callbackGasLimit,
-      client
-    );
+    ZKSyncFunctionsRouter.CallbackResult memory result = _callback(reqId, resp, err, totalGas, callbackGasLimit, client);
     assertTrue(result.success, "Should succeed");
     uint256 expectedMax = s_functionsRouter.MAX_CALLBACK_RETURN_BYTES();
     // The returned data should be truncated exactly to expectedMax.
@@ -157,14 +124,8 @@ contract ZKSyncFunctionsRouter__Callback is ZKSyncFunctionsRouterSetup {
     uint32 callbackGasLimit,
     address client
   ) internal returns (FunctionsRouter.CallbackResult memory) {
-    bytes memory payload = abi.encodeWithSelector(
-      s_functionsRouter.exposed_callback.selector,
-      reqId,
-      resp,
-      err,
-      callbackGasLimit,
-      client
-    );
+    bytes memory payload =
+      abi.encodeWithSelector(s_functionsRouter.exposed_callback.selector, reqId, resp, err, callbackGasLimit, client);
     (bool ok, bytes memory retData) = address(s_functionsRouter).call{gas: totalGas}(payload);
     assertTrue(ok, "callback should succeed");
     return abi.decode(retData, (FunctionsRouter.CallbackResult));
@@ -181,7 +142,7 @@ contract MockClientLargeReturn {
   function handleOracleFulfillment(bytes32, bytes memory, bytes memory) external pure returns (bytes memory) {
     // Return ~1,000 bytes.
     bytes memory largeData = new bytes(1000);
-    for (uint i = 0; i < 1000; i++) {
+    for (uint256 i = 0; i < 1000; i++) {
       largeData[i] = bytes1(uint8(65 + (i % 26))); // Fill with A..Z.
     }
     return largeData;

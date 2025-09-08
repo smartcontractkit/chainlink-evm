@@ -116,9 +116,7 @@ library CallWithExactGas {
 
       // limit our copy to maxReturnBytes bytes
       let toCopy := returndatasize()
-      if gt(toCopy, maxReturnBytes) {
-        toCopy := maxReturnBytes
-      }
+      if gt(toCopy, maxReturnBytes) { toCopy := maxReturnBytes }
       // Store the length of the copied bytes
       mstore(retData, toCopy)
       // copy the bytes from retData[0:_toCopy]

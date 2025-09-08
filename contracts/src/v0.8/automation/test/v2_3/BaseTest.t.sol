@@ -3,24 +3,30 @@ pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
 
-import {LinkToken} from "../../../shared/token/ERC677/LinkToken.sol";
-import {MockV3Aggregator} from "../../../shared/mocks/MockV3Aggregator.sol";
 import {ERC20Mock} from "../../../shared/mocks/ERC20Mock.sol";
+import {MockV3Aggregator} from "../../../shared/mocks/MockV3Aggregator.sol";
+import {LinkToken} from "../../../shared/token/ERC677/LinkToken.sol";
+
 import {AutomationForwarderLogic} from "../../AutomationForwarderLogic.sol";
-import {UpkeepTranscoder5_0 as Transcoder} from "../../v2_3/UpkeepTranscoder5_0.sol";
+
+import {ChainModuleBase} from "../../chains/ChainModuleBase.sol";
+import {
+  AutomationRegistryBase2_3,
+  IAutomationRegistryMaster2_3 as Registry
+} from "../../interfaces/v2_3/IAutomationRegistryMaster2_3.sol";
+
+import {IWrappedNative} from "../../interfaces/v2_3/IWrappedNative.sol";
+import {MockUpkeep} from "../../mocks/MockUpkeep.sol";
+import {AutomationRegistrar2_3} from "../../v2_3/AutomationRegistrar2_3.sol";
 import {AutomationRegistry2_3} from "../../v2_3/AutomationRegistry2_3.sol";
 import {AutomationRegistryBase2_3 as AutoBase} from "../../v2_3/AutomationRegistryBase2_3.sol";
 import {AutomationRegistryLogicA2_3} from "../../v2_3/AutomationRegistryLogicA2_3.sol";
 import {AutomationRegistryLogicB2_3} from "../../v2_3/AutomationRegistryLogicB2_3.sol";
 import {AutomationRegistryLogicC2_3} from "../../v2_3/AutomationRegistryLogicC2_3.sol";
-import {IAutomationRegistryMaster2_3 as Registry, AutomationRegistryBase2_3} from "../../interfaces/v2_3/IAutomationRegistryMaster2_3.sol";
-import {AutomationRegistrar2_3} from "../../v2_3/AutomationRegistrar2_3.sol";
-import {ChainModuleBase} from "../../chains/ChainModuleBase.sol";
-import {MockUpkeep} from "../../mocks/MockUpkeep.sol";
-import {IWrappedNative} from "../../interfaces/v2_3/IWrappedNative.sol";
+import {UpkeepTranscoder5_0 as Transcoder} from "../../v2_3/UpkeepTranscoder5_0.sol";
 
-import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
 import {WETH9} from "../../../vendor/canonical-weth/WETH9.sol";
+import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
 
 /**
  * @title BaseTest provides basic test setup procedures and dependencies for use by other
@@ -33,7 +39,7 @@ contract BaseTest is Test {
   // constants
   address internal constant ZERO_ADDRESS = address(0);
   uint32 internal constant DEFAULT_GAS_FEE_PPB = 10_000_000;
-  uint24 internal constant DEFAULT_FLAT_FEE_MILLI_CENTS = 2_000;
+  uint24 internal constant DEFAULT_FLAT_FEE_MILLI_CENTS = 2000;
 
   // config
   uint8 internal constant F = 1; // number of faulty nodes
@@ -58,7 +64,8 @@ contract BaseTest is Test {
   address internal constant UPKEEP_ADMIN = address(uint160(uint256(keccak256("UPKEEP_ADMIN"))));
   address internal constant FINANCE_ADMIN = address(uint160(uint256(keccak256("FINANCE_ADMIN"))));
   address internal constant STRANGER = address(uint160(uint256(keccak256("STRANGER"))));
-  address internal constant BROKE_USER = address(uint160(uint256(keccak256("BROKE_USER")))); // do not mint to this address
+  address internal constant BROKE_USER = address(uint160(uint256(keccak256("BROKE_USER")))); // do not mint to this
+    // address
   address internal constant PRIVILEGE_MANAGER = address(uint160(uint256(keccak256("PRIVILEGE_MANAGER"))));
 
   // nodes
@@ -146,7 +153,9 @@ contract BaseTest is Test {
   }
 
   /// @notice deploys the component parts of a registry, but nothing more
-  function deployRegistry(AutoBase.PayoutMode payoutMode) internal returns (Registry) {
+  function deployRegistry(
+    AutoBase.PayoutMode payoutMode
+  ) internal returns (Registry) {
     AutomationForwarderLogic forwarderLogic = new AutomationForwarderLogic();
     AutomationRegistryLogicC2_3 logicC2_3 = new AutomationRegistryLogicC2_3(
       address(linkToken),
@@ -183,8 +192,8 @@ contract BaseTest is Test {
     for (uint256 i = 0; i < billingTokens.length; i++) {
       billingTokenAddresses[i] = address(billingTokens[i]);
     }
-    AutomationRegistryBase2_3.BillingConfig[]
-      memory billingTokenConfigs = new AutomationRegistryBase2_3.BillingConfig[](billingTokens.length);
+    AutomationRegistryBase2_3.BillingConfig[] memory billingTokenConfigs =
+      new AutomationRegistryBase2_3.BillingConfig[](billingTokens.length);
     billingTokenConfigs[0] = AutomationRegistryBase2_3.BillingConfig({
       gasFeePPB: DEFAULT_GAS_FEE_PPB, // 15%
       flatFeeMilliCents: DEFAULT_FLAT_FEE_MILLI_CENTS, // 2 cents
@@ -229,8 +238,8 @@ contract BaseTest is Test {
     }
 
     // deploy registrar
-    AutomationRegistrar2_3.InitialTriggerConfig[]
-      memory triggerConfigs = new AutomationRegistrar2_3.InitialTriggerConfig[](2);
+    AutomationRegistrar2_3.InitialTriggerConfig[] memory triggerConfigs =
+      new AutomationRegistrar2_3.InitialTriggerConfig[](2);
     triggerConfigs[0] = AutomationRegistrar2_3.InitialTriggerConfig({
       triggerType: 0, // condition
       autoApproveType: AutomationRegistrar2_3.AutoApproveType.DISABLED,
@@ -242,12 +251,7 @@ contract BaseTest is Test {
       autoApproveMaxAllowed: 0
     });
     AutomationRegistrar2_3 registrar = new AutomationRegistrar2_3(
-      address(linkToken),
-      registry,
-      triggerConfigs,
-      billingTokens,
-      minRegistrationFees,
-      IWrappedNative(address(weth))
+      address(linkToken), registry, triggerConfigs, billingTokens, minRegistrationFees, IWrappedNative(address(weth))
     );
 
     address[] memory registrars;
@@ -259,9 +263,9 @@ contract BaseTest is Test {
       stalenessSeconds: 90_000,
       gasCeilingMultiplier: 2,
       maxPerformGas: 10_000_000,
-      maxCheckDataSize: 5_000,
-      maxPerformDataSize: 5_000,
-      maxRevertDataSize: 5_000,
+      maxCheckDataSize: 5000,
+      maxPerformDataSize: 5000,
+      maxRevertDataSize: 5000,
       fallbackGasPrice: 20_000_000_000,
       fallbackLinkPrice: 2_000_000_000, // $20
       fallbackNativePrice: 400_000_000_000, // $4,000
@@ -274,14 +278,7 @@ contract BaseTest is Test {
     });
 
     registry.setConfigTypeSafe(
-      SIGNERS,
-      TRANSMITTERS,
-      F,
-      cfg,
-      OFFCHAIN_CONFIG_VERSION,
-      "",
-      billingTokenAddresses,
-      billingTokenConfigs
+      SIGNERS, TRANSMITTERS, F, cfg, OFFCHAIN_CONFIG_VERSION, "", billingTokenAddresses, billingTokenConfigs
     );
     return (registry, registrar);
   }
@@ -293,12 +290,12 @@ contract BaseTest is Test {
     address billingToken,
     AutomationRegistryBase2_3.BillingConfig memory newConfig
   ) internal {
-    (, , address[] memory signers, address[] memory transmitters, uint8 f) = registry.getState();
+    (,, address[] memory signers, address[] memory transmitters, uint8 f) = registry.getState();
     AutomationRegistryBase2_3.OnchainConfig memory config = registry.getConfig();
     address[] memory billingTokens = registry.getBillingTokens();
 
-    AutomationRegistryBase2_3.BillingConfig[]
-      memory billingTokenConfigs = new AutomationRegistryBase2_3.BillingConfig[](billingTokens.length);
+    AutomationRegistryBase2_3.BillingConfig[] memory billingTokenConfigs =
+      new AutomationRegistryBase2_3.BillingConfig[](billingTokens.length);
 
     bool found = false;
     for (uint256 i = 0; i < billingTokens.length; i++) {
@@ -312,26 +309,19 @@ contract BaseTest is Test {
     require(found, "could not find billing token provided on registry");
 
     registry.setConfigTypeSafe(
-      signers,
-      transmitters,
-      f,
-      config,
-      OFFCHAIN_CONFIG_VERSION,
-      "",
-      billingTokens,
-      billingTokenConfigs
+      signers, transmitters, f, config, OFFCHAIN_CONFIG_VERSION, "", billingTokens, billingTokenConfigs
     );
   }
 
   /// @notice this function removes a billing token from the registry
   function _removeBillingTokenConfig(Registry registry, address billingToken) internal {
-    (, , address[] memory signers, address[] memory transmitters, uint8 f) = registry.getState();
+    (,, address[] memory signers, address[] memory transmitters, uint8 f) = registry.getState();
     AutomationRegistryBase2_3.OnchainConfig memory config = registry.getConfig();
     address[] memory billingTokens = registry.getBillingTokens();
 
     address[] memory newBillingTokens = new address[](billingTokens.length - 1);
-    AutomationRegistryBase2_3.BillingConfig[]
-      memory billingTokenConfigs = new AutomationRegistryBase2_3.BillingConfig[](billingTokens.length - 1);
+    AutomationRegistryBase2_3.BillingConfig[] memory billingTokenConfigs =
+      new AutomationRegistryBase2_3.BillingConfig[](billingTokens.length - 1);
 
     uint256 j = 0;
     for (uint256 i = 0; i < billingTokens.length; i++) {
@@ -344,14 +334,7 @@ contract BaseTest is Test {
     }
 
     registry.setConfigTypeSafe(
-      signers,
-      transmitters,
-      f,
-      config,
-      OFFCHAIN_CONFIG_VERSION,
-      "",
-      newBillingTokens,
-      billingTokenConfigs
+      signers, transmitters, f, config, OFFCHAIN_CONFIG_VERSION, "", newBillingTokens, billingTokenConfigs
     );
   }
 
@@ -392,18 +375,12 @@ contract BaseTest is Test {
         }
       }
 
-      AutoBase.Report memory report = AutoBase.Report(
-        uint256(1000000000),
-        uint256(2000000000),
-        upkeepIds,
-        gasLimits,
-        triggers,
-        performDatas
-      );
+      AutoBase.Report memory report =
+        AutoBase.Report(uint256(1_000_000_000), uint256(2_000_000_000), upkeepIds, gasLimits, triggers, performDatas);
 
       reportBytes = _encodeReport(report);
     }
-    (, , bytes32 configDigest) = registry.latestConfigDetails();
+    (,, bytes32 configDigest) = registry.latestConfigDetails();
     bytes32[3] memory reportContext = [configDigest, configDigest, configDigest];
     uint256[] memory signerPKs = new uint256[](2);
     signerPKs[0] = SIGNING_KEY0;
@@ -444,18 +421,12 @@ contract BaseTest is Test {
         }
       }
 
-      AutoBase.Report memory report = AutoBase.Report(
-        uint256(1000000000),
-        uint256(2000000000),
-        upkeepIds,
-        gasLimits,
-        triggers,
-        performDatas
-      );
+      AutoBase.Report memory report =
+        AutoBase.Report(uint256(1_000_000_000), uint256(2_000_000_000), upkeepIds, gasLimits, triggers, performDatas);
 
       reportBytes = _encodeReport(report);
     }
-    (, , bytes32 configDigest) = registry.latestConfigDetails();
+    (,, bytes32 configDigest) = registry.latestConfigDetails();
     bytes32[3] memory reportContext = [configDigest, configDigest, configDigest];
     uint256[] memory signerPKs = new uint256[](2);
     signerPKs[0] = SIGNING_KEY0;
@@ -498,7 +469,9 @@ contract BaseTest is Test {
     return (rs, ss, bytes32(vs));
   }
 
-  function _encodeReport(AutoBase.Report memory report) internal pure returns (bytes memory reportBytes) {
+  function _encodeReport(
+    AutoBase.Report memory report
+  ) internal pure returns (bytes memory reportBytes) {
     return abi.encode(report);
   }
 
@@ -537,7 +510,9 @@ contract BaseTest is Test {
   }
 
   /// @dev returns a pseudo-random byte array
-  function randomBytes(uint256 length) internal returns (bytes memory) {
+  function randomBytes(
+    uint256 length
+  ) internal returns (bytes memory) {
     bytes memory result = new bytes(length);
     bytes32 entropy;
     for (uint256 i = 0; i < length; i++) {

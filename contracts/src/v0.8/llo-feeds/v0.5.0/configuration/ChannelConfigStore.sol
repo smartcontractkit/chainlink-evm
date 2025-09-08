@@ -2,8 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
-import {IChannelConfigStore} from "./interfaces/IChannelConfigStore.sol";
+
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
+import {IChannelConfigStore} from "./interfaces/IChannelConfigStore.sol";
 
 contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVersion {
   event NewChannelDefinition(uint256 indexed donId, uint32 version, string url, bytes32 sha);
@@ -23,7 +24,9 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
     return "ChannelConfigStore 0.0.1";
   }
 
-  function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) external pure returns (bool) {
     return interfaceId == type(IChannelConfigStore).interfaceId;
   }
 }

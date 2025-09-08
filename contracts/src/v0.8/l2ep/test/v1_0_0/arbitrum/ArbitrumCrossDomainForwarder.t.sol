@@ -63,8 +63,7 @@ contract ArbitrumCrossDomainForwarder_Forward is ArbitrumCrossDomainForwarderTes
 
     // Sends the message
     s_arbitrumCrossDomainForwarder.forward(
-      address(s_greeter),
-      abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
+      address(s_greeter), abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
     );
 
     // Checks that the greeter got the message
@@ -79,8 +78,7 @@ contract ArbitrumCrossDomainForwarder_Forward is ArbitrumCrossDomainForwarderTes
     // Sends an invalid message
     vm.expectRevert("Invalid greeting length");
     s_arbitrumCrossDomainForwarder.forward(
-      address(s_greeter),
-      abi.encodeWithSelector(s_greeter.setGreeting.selector, "")
+      address(s_greeter), abi.encodeWithSelector(s_greeter.setGreeting.selector, "")
     );
   }
 }

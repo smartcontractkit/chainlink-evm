@@ -20,6 +20,7 @@ contract VRFV2PlusSingleConsumerExample is VRFConsumerBaseV2Plus {
     bytes32 keyHash;
     bool nativePayment;
   }
+
   RequestConfig public s_requestConfig;
   uint256[] public s_randomWords;
   uint256 public s_requestId;
@@ -73,7 +74,9 @@ contract VRFV2PlusSingleConsumerExample is VRFConsumerBaseV2Plus {
   // This method is analogous to VRFv1, except the amount
   // should be selected based on the keyHash (each keyHash functions like a "gas lane"
   // with different link costs).
-  function fundAndRequestRandomWords(uint256 amount) external onlyOwner {
+  function fundAndRequestRandomWords(
+    uint256 amount
+  ) external onlyOwner {
     RequestConfig memory rc = s_requestConfig;
     LINKTOKEN.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_requestConfig.subId));
     VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
@@ -89,7 +92,9 @@ contract VRFV2PlusSingleConsumerExample is VRFConsumerBaseV2Plus {
   }
 
   // Assumes this contract owns link
-  function topUpSubscription(uint256 amount) external onlyOwner {
+  function topUpSubscription(
+    uint256 amount
+  ) external onlyOwner {
     LINKTOKEN.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_requestConfig.subId));
   }
 
@@ -97,7 +102,9 @@ contract VRFV2PlusSingleConsumerExample is VRFConsumerBaseV2Plus {
     LINKTOKEN.transfer(to, amount);
   }
 
-  function unsubscribe(address to) external onlyOwner {
+  function unsubscribe(
+    address to
+  ) external onlyOwner {
     // Returns funds to this address
     s_vrfCoordinator.cancelSubscription(s_requestConfig.subId, to);
     s_requestConfig.subId = 0;

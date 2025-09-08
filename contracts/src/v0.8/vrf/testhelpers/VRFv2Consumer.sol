@@ -2,16 +2,15 @@
 // An example of a consumer contract that relies on a subscription for funding.
 pragma solidity 0.8.6;
 
-import "../interfaces/VRFCoordinatorV2Interface.sol";
-import "../VRFConsumerBaseV2.sol";
 import "../../shared/access/ConfirmedOwner.sol";
+import "../VRFConsumerBaseV2.sol";
+import "../interfaces/VRFCoordinatorV2Interface.sol";
 
 /**
  * THIS IS AN EXAMPLE CONTRACT THAT USES HARDCODED VALUES FOR CLARITY.
  * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
  * DO NOT USE THIS CODE IN PRODUCTION.
  */
-
 contract VRFv2Consumer is VRFConsumerBaseV2, ConfirmedOwner {
   event RequestSent(uint256 requestId, uint32 numWords);
   event RequestFulfilled(uint256 requestId, uint256[] randomWords);
@@ -21,6 +20,7 @@ contract VRFv2Consumer is VRFConsumerBaseV2, ConfirmedOwner {
     bool exists; // whether a requestId exists
     uint256[] randomWords;
   }
+
   mapping(uint256 => RequestStatus) public s_requests; /* requestId --> requestStatus */
   VRFCoordinatorV2Interface COORDINATOR;
 
@@ -28,7 +28,9 @@ contract VRFv2Consumer is VRFConsumerBaseV2, ConfirmedOwner {
   uint256[] public requestIds;
   uint256 public lastRequestId;
 
-  constructor(address vrfCoordinator) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) {
+  constructor(
+    address vrfCoordinator
+  ) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) {
     COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
   }
 
@@ -56,7 +58,9 @@ contract VRFv2Consumer is VRFConsumerBaseV2, ConfirmedOwner {
     emit RequestFulfilled(_requestId, _randomWords);
   }
 
-  function getRequestStatus(uint256 _requestId) external view returns (bool fulfilled, uint256[] memory randomWords) {
+  function getRequestStatus(
+    uint256 _requestId
+  ) external view returns (bool fulfilled, uint256[] memory randomWords) {
     require(s_requests[_requestId].exists, "request not found");
     RequestStatus memory request = s_requests[_requestId];
     return (request.fulfilled, request.randomWords);

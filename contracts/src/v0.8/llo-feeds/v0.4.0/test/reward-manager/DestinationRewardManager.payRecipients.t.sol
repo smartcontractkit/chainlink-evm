@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 import {IDestinationRewardManager} from "../../interfaces/IDestinationRewardManager.sol";
+import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 
 /**
  * @title DestinationRewardManagerPayRecipientsTest
@@ -141,10 +141,7 @@ contract DestinationRewardManagerPayRecipientsTest is BaseDestinationRewardManag
     }
 
     //check the pool has the remaining balance
-    assertEq(
-      getAssetBalance(address(rewardManager)),
-      POOL_DEPOSIT_AMOUNT - expectedRecipientAmount * recipients.length
-    );
+    assertEq(getAssetBalance(address(rewardManager)), POOL_DEPOSIT_AMOUNT - expectedRecipientAmount * recipients.length);
   }
 
   function test_payAllRecipientsFromNonAdminUser() public {

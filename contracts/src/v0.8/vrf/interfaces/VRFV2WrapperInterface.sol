@@ -18,7 +18,9 @@ interface VRFV2WrapperInterface {
    *
    * @param _callbackGasLimit is the gas limit used to estimate the price.
    */
-  function calculateRequestPrice(uint32 _callbackGasLimit) external view returns (uint256);
+  function calculateRequestPrice(
+    uint32 _callbackGasLimit
+  ) external view returns (uint256);
 
   /**
    * @notice Estimates the price of a VRF request with a specific gas limit and gas price.

@@ -30,7 +30,7 @@ func NewNullClient(cid *big.Int, lggr logger.Logger) *NullClient {
 
 // NullClientChainID the ChainID that nullclient will return
 // 0 is never used as a real chain ID so makes sense as a dummy value here
-const NullClientChainID = 0
+const NullClientChainID = evmtypes.NullClientChainID
 
 //
 // Client methods

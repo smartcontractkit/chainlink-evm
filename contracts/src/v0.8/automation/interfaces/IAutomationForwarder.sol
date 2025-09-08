@@ -7,7 +7,9 @@ import {IAutomationRegistryConsumer} from "./IAutomationRegistryConsumer.sol";
 interface IAutomationForwarder is ITypeAndVersion {
   function forward(uint256 gasAmount, bytes memory data) external returns (bool success, uint256 gasUsed);
 
-  function updateRegistry(address newRegistry) external;
+  function updateRegistry(
+    address newRegistry
+  ) external;
 
   function getRegistry() external view returns (IAutomationRegistryConsumer);
 

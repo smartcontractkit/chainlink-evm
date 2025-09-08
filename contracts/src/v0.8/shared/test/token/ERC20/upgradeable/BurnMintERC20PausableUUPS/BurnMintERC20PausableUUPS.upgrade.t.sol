@@ -12,7 +12,8 @@ interface IUpgradeableProxy {
 
 /// @dev Mock contract with limited functionality used for testing only.
 /// @dev It adds a new freeze functionality to the BurnMintERC20PausableUUPS contract.
-/// @dev We want to test that the new implementation works as expected and keeps track of the balances from previous version.
+/// @dev We want to test that the new implementation works as expected and keeps track of the balances from previous
+/// version.
 contract MockBurnMintERC20PausableUUPSV2 is BurnMintERC20PausableUUPS {
   error MockBurnMintERC20PausableUUPSV2__AccountFrozen(address account);
 
@@ -23,7 +24,8 @@ contract MockBurnMintERC20PausableUUPSV2 is BurnMintERC20PausableUUPS {
     mapping(address => bool) s_isFrozen;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.MockBurnMintERC20PausableUUPSV2")) - 1)) & ~bytes32(uint256(0xff));
+  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.MockBurnMintERC20PausableUUPSV2")) - 1)) &
+  // ~bytes32(uint256(0xff));
   bytes32 private constant V2_STORAGE_LOCATION = 0x98bca5456fc57bb77324f8627b5055944605eb027b3a0652fea6ac1ede88a400;
 
   function _getV2Storage() private pure returns (MockBurnMintERC20PausableUUPSV2Storage storage $) {
@@ -32,11 +34,15 @@ contract MockBurnMintERC20PausableUUPSV2 is BurnMintERC20PausableUUPS {
     }
   }
 
-  function initializeFreezerRole(address defaultFreezer) public onlyRole(UPGRADER_ROLE) {
+  function initializeFreezerRole(
+    address defaultFreezer
+  ) public onlyRole(UPGRADER_ROLE) {
     _grantRole(FREEZER_ROLE, defaultFreezer);
   }
 
-  function freeze(address account) public onlyRole(FREEZER_ROLE) {
+  function freeze(
+    address account
+  ) public onlyRole(FREEZER_ROLE) {
     MockBurnMintERC20PausableUUPSV2Storage storage $ = _getV2Storage();
     $.s_isFrozen[account] = true;
   }
@@ -61,8 +67,7 @@ contract BurnMintERC20PausableUUPS_upgrade is ERC20UpgradableBaseTest_pausing {
       new ERC1967Proxy(
         implementation,
         abi.encodeCall(
-          BurnMintERC20UUPS.initialize,
-          (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN, DEFAULT_UPGRADER)
+          BurnMintERC20UUPS.initialize, (NAME, SYMBOL, DECIMALS, MAX_SUPPLY, PRE_MINT, DEFAULT_ADMIN, DEFAULT_UPGRADER)
         )
       )
     );
@@ -106,8 +111,7 @@ contract BurnMintERC20PausableUUPS_upgrade is ERC20UpgradableBaseTest_pausing {
     changePrank(STRANGER);
     vm.expectRevert(
       abi.encodeWithSelector(
-        MockBurnMintERC20PausableUUPSV2.MockBurnMintERC20PausableUUPSV2__AccountFrozen.selector,
-        STRANGER
+        MockBurnMintERC20PausableUUPSV2.MockBurnMintERC20PausableUUPSV2__AccountFrozen.selector, STRANGER
       )
     );
     newImplementation.transfer(OWNER, AMOUNT);

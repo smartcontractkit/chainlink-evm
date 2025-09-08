@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IBridgehub, L2TransactionRequestDirect, L2TransactionRequestTwoBridgesOuter} from "@zksync/contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
 import {IL1SharedBridge} from "@zksync/contracts/l1-contracts/contracts/bridge/interfaces/IL1SharedBridge.sol";
-import {L2Message, L2Log, TxStatus} from "@zksync/contracts/l1-contracts/contracts/common/Messaging.sol";
+import {
+  IBridgehub,
+  L2TransactionRequestDirect,
+  L2TransactionRequestTwoBridgesOuter
+} from "@zksync/contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
+import {L2Log, L2Message, TxStatus} from "@zksync/contracts/l1-contracts/contracts/common/Messaging.sol";
 
 contract MockBridgehub is IBridgehub {
   address public pendingAdmin;
   address public admin;
   address public sharedBridgeAddr;
 
-  mapping(address stateTransitionManager => bool stateTransitionManagerIsRegistered)
-    public registeredStateTransitionManagers;
+  mapping(address stateTransitionManager => bool stateTransitionManagerIsRegistered) public
+    registeredStateTransitionManagers;
   mapping(uint256 chainId => address stateTransitionManagerAddress) public stateTransitionManagers;
   mapping(address baseToken => bool tokenIsRegistered) public registeredTokens;
   mapping(uint256 chainId => address baseToken) public baseTokens;
@@ -24,7 +28,9 @@ contract MockBridgehub is IBridgehub {
   event SentMessage(address indexed sender, bytes message);
 
   /// Admin functions
-  function setPendingAdmin(address _newPendingAdmin) external override {
+  function setPendingAdmin(
+    address _newPendingAdmin
+  ) external override {
     emit NewPendingAdmin(pendingAdmin, _newPendingAdmin);
     pendingAdmin = _newPendingAdmin;
   }
@@ -40,19 +46,27 @@ contract MockBridgehub is IBridgehub {
   }
 
   /// Getters
-  function stateTransitionManagerIsRegistered(address _stateTransitionManager) external view override returns (bool) {
+  function stateTransitionManagerIsRegistered(
+    address _stateTransitionManager
+  ) external view override returns (bool) {
     return registeredStateTransitionManagers[_stateTransitionManager];
   }
 
-  function stateTransitionManager(uint256 _chainId) external view override returns (address) {
+  function stateTransitionManager(
+    uint256 _chainId
+  ) external view override returns (address) {
     return stateTransitionManagers[_chainId];
   }
 
-  function tokenIsRegistered(address _baseToken) external view override returns (bool) {
+  function tokenIsRegistered(
+    address _baseToken
+  ) external view override returns (bool) {
     return registeredTokens[_baseToken];
   }
 
-  function baseToken(uint256 _chainId) external view override returns (address) {
+  function baseToken(
+    uint256 _chainId
+  ) external view override returns (address) {
     return baseTokens[_chainId];
   }
 
@@ -60,7 +74,9 @@ contract MockBridgehub is IBridgehub {
     return IL1SharedBridge(sharedBridgeAddr);
   }
 
-  function getHyperchain(uint256 _chainId) external view override returns (address) {
+  function getHyperchain(
+    uint256 _chainId
+  ) external view override returns (address) {
     return hyperchains[_chainId];
   }
 
@@ -129,19 +145,27 @@ contract MockBridgehub is IBridgehub {
     return _chainId;
   }
 
-  function addStateTransitionManager(address _stateTransitionManager) external override {
+  function addStateTransitionManager(
+    address _stateTransitionManager
+  ) external override {
     registeredStateTransitionManagers[_stateTransitionManager] = true;
   }
 
-  function removeStateTransitionManager(address _stateTransitionManager) external override {
+  function removeStateTransitionManager(
+    address _stateTransitionManager
+  ) external override {
     registeredStateTransitionManagers[_stateTransitionManager] = false;
   }
 
-  function addToken(address _token) external override {
+  function addToken(
+    address _token
+  ) external override {
     registeredTokens[_token] = true;
   }
 
-  function setSharedBridge(address _sharedBridgeAddr) external override {
+  function setSharedBridge(
+    address _sharedBridgeAddr
+  ) external override {
     sharedBridgeAddr = _sharedBridgeAddr;
   }
 }

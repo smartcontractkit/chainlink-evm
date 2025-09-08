@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
-import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
-import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
+import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
+import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 
 contract VerifierVerifyTest is BaseTest {
   bytes32[3] internal s_reportContext;
@@ -174,8 +174,8 @@ contract VerifierVerifyTest is BaseTest {
           - DonConfigA has signers {A, B, C, E} is set at time T1
           - DonConfigB has signers {A, B, C, D} is set at time T2
           - checks we can verify a report with {B, C, D} signers (via DonConfigB)
-          - checks we can verify a report with {B, C, E} signers and timestamp below T2 (via DonConfigA historical config)
-          - checks we can't verify a report with {B, C, E} signers and timestamp above T2 (it gets verivied via DonConfigB)
+    - checks we can verify a report with {B, C, E} signers and timestamp below T2 (via DonConfigA historical config)
+    - checks we can't verify a report with {B, C, E} signers and timestamp above T2 (it gets verivied via DonConfigB)
           - sets DonConfigA as deactivated
           - checks we can't verify a report with {B, C, E} signers and timestamp below T2 (via DonConfigA)
          */
@@ -278,11 +278,8 @@ contract VerifierVerifyTest is BaseTest {
       abi.encodeWithSelector(AccessControllerInterface.hasAccess.selector, USER),
       abi.encode(false)
     );
-    bytes memory signedReport = _generateV3EncodedBlob(
-      s_testReportThree,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(s_testReportThree, s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     vm.expectRevert(abi.encodeWithSelector(DestinationVerifier.AccessForbidden.selector));
 
@@ -377,7 +374,8 @@ contract VerifierVerifyTest is BaseTest {
           - checks we can verify a report with {D, E, F} signers (via DonConfigB) at time between T2 and T3
           - checks we can verify a report with {D, E, F} signers (via DonConfigC) at time > T3
           - checks we can't verify a report with {A, B, C} signers (via DonConfigC) and timestamp >T3 at time > T3
-          - checks we can verify a report with {A, B, C} signers (via DonConfigC) and timestamp between T2 and T3  at time > T3 (historical check)
+    - checks we can verify a report with {A, B, C} signers (via DonConfigC) and timestamp between T2 and T3  at time >
+    T3 (historical check)
 
          */
 
@@ -603,10 +601,7 @@ contract VerifierVerifyTest is BaseTest {
     uint32 configATimestmap = 100;
     address[] memory signersAddrA = _getSignerAddresses(signersA);
     s_verifier.setConfigWithActivationTime(
-      signersAddrA,
-      MINIMAL_FAULT_TOLERANCE,
-      new Common.AddressAndWeight[](0),
-      configATimestmap
+      signersAddrA, MINIMAL_FAULT_TOLERANCE, new Common.AddressAndWeight[](0), configATimestmap
     );
 
     // ConfigB (historical config)
@@ -623,10 +618,7 @@ contract VerifierVerifyTest is BaseTest {
     signersB[6] = signers[14];
     address[] memory signersAddrsB = _getSignerAddresses(signersB);
     s_verifier.setConfigWithActivationTime(
-      signersAddrsB,
-      MINIMAL_FAULT_TOLERANCE,
-      new Common.AddressAndWeight[](0),
-      configBTimestmap
+      signersAddrsB, MINIMAL_FAULT_TOLERANCE, new Common.AddressAndWeight[](0), configBTimestmap
     );
 
     // ConfigC (config at current timestamp)
@@ -703,11 +695,8 @@ contract VerifierVerifyTest is BaseTest {
     s_verifierProxy.verify(signedReportC, abi.encode(native));
 
     // current report verified by historical report fails
-    bytes memory signedNewReportWithOldSignatures = _generateV3EncodedBlob(
-      s_testReportC,
-      s_reportContext,
-      reportSignersA
-    );
+    bytes memory signedNewReportWithOldSignatures =
+      _generateV3EncodedBlob(s_testReportC, s_reportContext, reportSignersA);
     vm.expectRevert(abi.encodeWithSelector(DestinationVerifier.BadVerification.selector));
     s_verifierProxy.verify(signedNewReportWithOldSignatures, abi.encode(native));
   }

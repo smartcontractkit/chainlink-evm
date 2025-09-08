@@ -14,7 +14,8 @@ library SortedSetValidationUtil {
 
   /// @notice Checks if `subset` is a valid and unique subset of `superset`.
   /// NOTE: Empty set is not considered a valid subset of superset for our use case.
-  /// @dev Both arrays must be valid sets (unique, sorted in ascending order) and `subset` must be entirely contained within `superset`.
+  /// @dev Both arrays must be valid sets (unique, sorted in ascending order) and `subset` must be entirely contained
+  /// within `superset`.
   /// @param subset The array of bytes32 to validate as a subset.
   /// @param superset The array of bytes32 in which subset is checked against.
   /// @custom:revert EmptySet If either `subset` or `superset` is empty.
@@ -49,8 +50,11 @@ library SortedSetValidationUtil {
   /// @notice Validates that a given set is sorted and has unique elements.
   /// @dev Iterates through the array to check that each element is greater than the previous.
   /// @param set The array of bytes32 to validate.
-  /// @custom:revert NotASortedSet If any element is not greater than its predecessor or if any two consecutive elements are equal.
-  function _checkIsValidSet(bytes32[] memory set) private pure {
+  /// @custom:revert NotASortedSet If any element is not greater than its predecessor or if any two consecutive elements
+  /// are equal.
+  function _checkIsValidSet(
+    bytes32[] memory set
+  ) private pure {
     for (uint256 i = 1; i < set.length; ++i) {
       if (set[i] <= set[i - 1]) {
         revert NotASortedSet(set);

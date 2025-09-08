@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {BaseTest} from "./KeystoneForwarderBaseTest.t.sol";
 import {KeystoneForwarder} from "../KeystoneForwarder.sol";
+import {BaseTest} from "./KeystoneForwarderBaseTest.t.sol";
 
 contract KeystoneForwarder_SetConfigTest is BaseTest {
   address internal constant STRANGER = address(2);

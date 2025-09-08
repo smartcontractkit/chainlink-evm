@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Common} from "../../libraries/Common.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IDestinationRewardManager is IERC165 {
   /**
@@ -16,17 +16,21 @@ interface IDestinationRewardManager is IERC165 {
    * @notice Claims the rewards in a specific pool
    * @param poolIds array of poolIds to claim rewards for
    */
-  function claimRewards(bytes32[] calldata poolIds) external;
+  function claimRewards(
+    bytes32[] calldata poolIds
+  ) external;
 
   /**
-   * @notice Set the RewardRecipients and weights for a specific pool. This should only be called once per pool Id. Else updateRewardRecipients should be used.
+   * @notice Set the RewardRecipients and weights for a specific pool. This should only be called once per pool Id. Else
+   * updateRewardRecipients should be used.
    * @param poolId poolId to set RewardRecipients and weights for
    * @param rewardRecipientAndWeights array of each RewardRecipient and associated weight
    */
   function setRewardRecipients(bytes32 poolId, Common.AddressAndWeight[] calldata rewardRecipientAndWeights) external;
 
   /**
-   * @notice Updates a subset the reward recipients for a specific poolId. The collective weight of the recipients should add up to the recipients existing weights. Any recipients with a weight of 0 will be removed.
+   * @notice Updates a subset the reward recipients for a specific poolId. The collective weight of the recipients
+   * should add up to the recipients existing weights. Any recipients with a weight of 0 will be removed.
    * @param poolId the poolId to update
    * @param newRewardRecipients array of new reward recipients
    */
@@ -43,13 +47,17 @@ interface IDestinationRewardManager is IERC165 {
    * @notice Add the fee manager to the list of feeManagers able to call the reward manager
    * @param newFeeManager address of the new verifier proxy
    */
-  function addFeeManager(address newFeeManager) external;
+  function addFeeManager(
+    address newFeeManager
+  ) external;
 
   /**
    * @notice Removes the fee manager. This needs to be done post construction to prevent a circular dependency.
    * @param feeManager address of the verifier proxy to remove
    */
-  function removeFeeManager(address feeManager) external;
+  function removeFeeManager(
+    address feeManager
+  ) external;
 
   /**
    * @notice Gets a list of pool ids which have reward for a specific recipient.

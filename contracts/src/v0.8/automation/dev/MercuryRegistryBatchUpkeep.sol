@@ -9,6 +9,7 @@ contract MercuryRegistryBatchUpkeep is ConfirmedOwner, AutomationCompatibleInter
   error BatchSizeTooLarge(uint256 batchsize, uint256 maxBatchSize);
   // Use a reasonable maximum batch size. Every Mercury report is ~750 bytes, too many reports
   // passed into a single batch could exceed the calldata or transaction size limit for some blockchains.
+
   uint256 public constant MAX_BATCH_SIZE = 50;
 
   MercuryRegistry public immutable i_registry; // master registry, where feed data is stored
@@ -23,7 +24,9 @@ contract MercuryRegistryBatchUpkeep is ConfirmedOwner, AutomationCompatibleInter
   }
 
   // Invoke a feed lookup for the feeds this upkeep is responsible for.
-  function checkUpkeep(bytes calldata /* data */) external view override returns (bool, bytes memory) {
+  function checkUpkeep(
+    bytes calldata /* data */
+  ) external view override returns (bool, bytes memory) {
     uint256 start = s_batchStart;
     uint256 end = s_batchEnd;
     string[] memory feeds = new string[](end - start);
@@ -35,7 +38,7 @@ contract MercuryRegistryBatchUpkeep is ConfirmedOwner, AutomationCompatibleInter
       // So, the batch will be partially empty.
       try i_registry.s_feeds(i) returns (string memory f) {
         feedId = f;
-      } catch (bytes memory /* data */) {
+      } catch (bytes memory) /* data */ {
         break;
       }
 
@@ -62,7 +65,7 @@ contract MercuryRegistryBatchUpkeep is ConfirmedOwner, AutomationCompatibleInter
   }
 
   function checkErrorHandler(
-    uint256 /* errCode */,
+    uint256, /* errCode */
     bytes memory /* extraData */
   ) external view override returns (bool upkeepNeeded, bytes memory performData) {
     // dummy function with default values
@@ -70,7 +73,9 @@ contract MercuryRegistryBatchUpkeep is ConfirmedOwner, AutomationCompatibleInter
   }
 
   // Use the master registry to update state.
-  function performUpkeep(bytes calldata performData) external override {
+  function performUpkeep(
+    bytes calldata performData
+  ) external override {
     i_registry.performUpkeep(performData);
   }
 

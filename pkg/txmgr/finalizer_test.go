@@ -78,6 +78,7 @@ func TestFinalizer_MarkTxFinalized(t *testing.T) {
 			State:              txmgrcommon.TxConfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		attemptHash := insertTxAndAttemptWithIdempotencyKey(t, txStore, tx, idempotencyKey)
 		// Insert receipt for unfinalized block num
@@ -108,6 +109,7 @@ func TestFinalizer_MarkTxFinalized(t *testing.T) {
 			State:              txmgrcommon.TxConfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		attemptHash := insertTxAndAttemptWithIdempotencyKey(t, txStore, tx, idempotencyKey)
 		// Insert receipt for finalized block num
@@ -140,6 +142,7 @@ func TestFinalizer_MarkTxFinalized(t *testing.T) {
 			State:              txmgrcommon.TxConfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		attemptHash := insertTxAndAttemptWithIdempotencyKey(t, txStore, tx, idempotencyKey)
 		// Insert receipt for finalized block num
@@ -170,6 +173,7 @@ func TestFinalizer_MarkTxFinalized(t *testing.T) {
 			State:              txmgrcommon.TxConfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		attemptHash := insertTxAndAttemptWithIdempotencyKey(t, txStore, tx, idempotencyKey)
 		// Insert receipt for finalized block num
@@ -186,6 +190,7 @@ func TestFinalizer_MarkTxFinalized(t *testing.T) {
 			State:              txmgrcommon.TxConfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		attemptHash = insertTxAndAttemptWithIdempotencyKey(t, txStore, tx, idempotencyKey)
 		// Insert receipt for finalized block num

@@ -20,7 +20,9 @@ contract BlockhashStore {
    * @notice stores blockhash of a given block, assuming it is available through BLOCKHASH
    * @param n the number of the block whose blockhash should be stored
    */
-  function store(uint256 n) public {
+  function store(
+    uint256 n
+  ) public {
     bytes32 h = ChainSpecificUtil._getBlockhash(uint64(n));
     // solhint-disable-next-line gas-custom-errors
     require(h != 0x0, "blockhash(n) failed");
@@ -62,7 +64,7 @@ contract BlockhashStore {
     bytes32 parentHash;
     assembly {
       parentHash := mload(add(header, 36)) // 36 = 32 byte offset for length prefix of ABI-encoded array
-      //    +  4 byte offset of PARENTHASH (see above)
+        //    +  4 byte offset of PARENTHASH (see above)
     }
 
     s_blockhashes[n] = parentHash;
@@ -72,7 +74,9 @@ contract BlockhashStore {
    * @notice gets a blockhash from the store. If no hash is known, this function reverts.
    * @param n the number of the block whose blockhash should be returned
    */
-  function getBlockhash(uint256 n) external view returns (bytes32) {
+  function getBlockhash(
+    uint256 n
+  ) external view returns (bytes32) {
     bytes32 h = s_blockhashes[n];
     // solhint-disable-next-line gas-custom-errors
     require(h != 0x0, "blockhash not found in store");

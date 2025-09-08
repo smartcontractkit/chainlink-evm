@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTestWithConfiguredVerifierAndFeeManager} from "./BaseVerifierTest.t.sol";
-import {IVerifier} from "../../interfaces/IVerifier.sol";
-import {VerifierProxy} from "../../../v0.3.0/VerifierProxy.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {VerifierProxy} from "../../../v0.3.0/VerifierProxy.sol";
+import {IVerifier} from "../../interfaces/IVerifier.sol";
+import {BaseTestWithConfiguredVerifierAndFeeManager} from "./BaseVerifierTest.t.sol";
+
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 contract VerifierProxyInitializeVerifierTest is BaseTestWithConfiguredVerifierAndFeeManager {
   function test_revertsIfNotCorrectVerifier() public {
@@ -14,7 +15,7 @@ contract VerifierProxyInitializeVerifierTest is BaseTestWithConfiguredVerifierAn
   }
 
   function test_revertsIfDigestAlreadySet() public {
-    (, , bytes32 takenDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (,, bytes32 takenDigest) = s_verifier.latestConfigDetails(FEED_ID);
 
     address maliciousVerifier = address(666);
     bytes32 maliciousDigest = bytes32("malicious-digest");
@@ -32,7 +33,7 @@ contract VerifierProxyInitializeVerifierTest is BaseTestWithConfiguredVerifierAn
   }
 
   function test_updatesVerifierIfVerifier() public {
-    (, , bytes32 prevDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    (,, bytes32 prevDigest) = s_verifier.latestConfigDetails(FEED_ID);
     changePrank(address(s_verifier));
     s_verifierProxy.setVerifier(prevDigest, bytes32("new-config"), new Common.AddressAndWeight[](0));
     assertEq(s_verifierProxy.getVerifier(bytes32("new-config")), address(s_verifier));

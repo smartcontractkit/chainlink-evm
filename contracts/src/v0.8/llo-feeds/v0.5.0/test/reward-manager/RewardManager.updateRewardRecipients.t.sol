@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseRewardManagerTest} from "./BaseRewardManager.t.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {BaseRewardManagerTest} from "./BaseRewardManager.t.sol";
 
 /**
  * @title BaseRewardManagerTest
@@ -294,12 +294,10 @@ contract RewardManagerUpdateRewardRecipientsTest is BaseRewardManagerTest {
 
     //manually check the balance of each recipient
     assertEq(
-      getAssetBalance(DEFAULT_RECIPIENT_1),
-      (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
+      getAssetBalance(DEFAULT_RECIPIENT_1), (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
     );
     assertEq(
-      getAssetBalance(DEFAULT_RECIPIENT_2),
-      (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
+      getAssetBalance(DEFAULT_RECIPIENT_2), (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
     );
     assertEq(
       getAssetBalance(DEFAULT_RECIPIENT_3),
@@ -343,8 +341,7 @@ contract RewardManagerUpdateRewardRecipientsTest is BaseRewardManagerTest {
 
     //manually check the balance of each recipient
     assertEq(
-      getAssetBalance(DEFAULT_RECIPIENT_1),
-      (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
+      getAssetBalance(DEFAULT_RECIPIENT_1), (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
     );
     assertEq(
       getAssetBalance(DEFAULT_RECIPIENT_2),
@@ -439,12 +436,10 @@ contract RewardManagerUpdateRewardRecipientsMultiplePoolsTest is BaseRewardManag
       (POOL_DEPOSIT_AMOUNT * TEN_PERCENT * 4) / POOL_SCALAR + expectedRecipientAmount
     );
     assertEq(
-      getAssetBalance(recipients[2].addr),
-      (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
+      getAssetBalance(recipients[2].addr), (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
     );
     assertEq(
-      getAssetBalance(recipients[3].addr),
-      (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
+      getAssetBalance(recipients[3].addr), (POOL_DEPOSIT_AMOUNT * TEN_PERCENT) / POOL_SCALAR + expectedRecipientAmount
     );
   }
 }

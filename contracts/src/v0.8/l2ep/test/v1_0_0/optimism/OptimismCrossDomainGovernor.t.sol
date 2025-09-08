@@ -2,8 +2,9 @@
 pragma solidity 0.8.24;
 
 import {OptimismCrossDomainGovernor} from "../../../optimism/OptimismCrossDomainGovernor.sol";
-import {MockOVMCrossDomainMessenger} from "../../mocks/optimism/MockOVMCrossDomainMessenger.sol";
+
 import {Greeter} from "../../Greeter.sol";
+import {MockOVMCrossDomainMessenger} from "../../mocks/optimism/MockOVMCrossDomainMessenger.sol";
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 import {MultiSend} from "../../../../vendor/MultiSend.sol";
@@ -99,8 +100,7 @@ contract OptimismCrossDomainGovernor_Forward is OptimismCrossDomainGovernorTest 
 
     // Sends the message
     s_optimismCrossDomainGovernor.forward(
-      address(s_greeter),
-      abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
+      address(s_greeter), abi.encodeWithSelector(s_greeter.setGreeting.selector, greeting)
     );
 
     // Checks that the greeter message was updated

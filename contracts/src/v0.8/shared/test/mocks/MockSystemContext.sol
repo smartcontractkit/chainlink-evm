@@ -16,7 +16,7 @@ contract MockSystemContext is ISystemContext {
 
   // Example placeholders for block number & timestamp
   uint128 private s_mockBlockNumber = 1000;
-  uint128 private s_mockBlockTimestamp = 123456789;
+  uint128 private s_mockBlockTimestamp = 123_456_789;
 
   // ---------------------------------------
   // Functions required by ISystemContext
@@ -35,7 +35,7 @@ contract MockSystemContext is ISystemContext {
 
   function gasPrice() external pure override returns (uint256) {
     // Return a dummy gas price
-    return 1000000000; // 1 gwei, for example
+    return 1_000_000_000; // 1 gwei, for example
   }
 
   function blockGasLimit() external pure override returns (uint256) {
@@ -63,12 +63,16 @@ contract MockSystemContext is ISystemContext {
     return 1;
   }
 
-  function getBlockHashEVM(uint256 _block) external view override returns (bytes32) {
+  function getBlockHashEVM(
+    uint256 _block
+  ) external view override returns (bytes32) {
     // Return a dummy value (or actual blockhash if you prefer)
     return blockhash(_block);
   }
 
-  function getBatchHash(uint256 _batchNumber) external pure override returns (bytes32) {
+  function getBatchHash(
+    uint256 _batchNumber
+  ) external pure override returns (bytes32) {
     // Return dummy
     return keccak256(abi.encodePacked("BatchHashMock", _batchNumber));
   }
@@ -106,22 +110,30 @@ contract MockSystemContext is ISystemContext {
   // ---------------------------------------
 
   /// @notice Lets you set the mock pubdata spent for testing
-  function setCurrentPubdataSpent(uint256 newVal) external {
+  function setCurrentPubdataSpent(
+    uint256 newVal
+  ) external {
     s_currentPubdataSpent = newVal;
   }
 
   /// @notice Lets you set the mock gas per pubdata byte for testing
-  function setGasPerPubdataByte(uint256 newVal) external {
+  function setGasPerPubdataByte(
+    uint256 newVal
+  ) external {
     s_gasPerPubdataByte = newVal;
   }
 
   /// @notice Lets you set the mock block number
-  function setMockBlockNumber(uint128 newVal) external {
+  function setMockBlockNumber(
+    uint128 newVal
+  ) external {
     s_mockBlockNumber = newVal;
   }
 
   /// @notice Lets you set the mock block timestamp
-  function setMockBlockTimestamp(uint128 newVal) external {
+  function setMockBlockTimestamp(
+    uint128 newVal
+  ) external {
     s_mockBlockTimestamp = newVal;
   }
 }

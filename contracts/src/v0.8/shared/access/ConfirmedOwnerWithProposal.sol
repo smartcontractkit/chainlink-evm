@@ -23,7 +23,9 @@ contract ConfirmedOwnerWithProposal is IOwnable {
   }
 
   /// @notice Allows an owner to begin transferring ownership to a new address.
-  function transferOwnership(address to) public override onlyOwner {
+  function transferOwnership(
+    address to
+  ) public override onlyOwner {
     _transferOwnership(to);
   }
 
@@ -45,7 +47,9 @@ contract ConfirmedOwnerWithProposal is IOwnable {
   }
 
   /// @notice validate, transfer ownership, and emit relevant events
-  function _transferOwnership(address to) private {
+  function _transferOwnership(
+    address to
+  ) private {
     // solhint-disable-next-line gas-custom-errors
     require(to != msg.sender, "Cannot transfer to self");
 

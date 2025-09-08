@@ -10,5 +10,7 @@ interface IVRFCoordinatorV2PlusMigration {
    * @notice supports transfer of native currency
    * @param encodedData - user data from older version of coordinator
    */
-  function onMigration(bytes calldata encodedData) external payable;
+  function onMigration(
+    bytes calldata encodedData
+  ) external payable;
 }

@@ -6,7 +6,9 @@ import {ChainlinkClient} from "../../ChainlinkClient.sol";
 contract ChainlinkClientHelper is ChainlinkClient {
   bytes4 public constant FULFILL_SELECTOR = this.fulfill.selector;
 
-  constructor(address link) {
+  constructor(
+    address link
+  ) {
     _setChainlinkToken(link);
   }
 
@@ -18,5 +20,7 @@ contract ChainlinkClientHelper is ChainlinkClient {
     _cancelChainlinkRequest(requestId, payment, this.fulfill.selector, expiration);
   }
 
-  function fulfill(bytes32) external {}
+  function fulfill(
+    bytes32
+  ) external {}
 }

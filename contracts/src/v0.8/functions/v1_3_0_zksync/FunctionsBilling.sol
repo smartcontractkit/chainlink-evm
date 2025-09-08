@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IFunctionsSubscriptions} from "../v1_0_0/interfaces/IFunctionsSubscriptions.sol";
 import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
-import {IFunctionsBilling, FunctionsBillingConfig} from "../v1_3_0/interfaces/IFunctionsBilling.sol";
+import {IFunctionsSubscriptions} from "../v1_0_0/interfaces/IFunctionsSubscriptions.sol";
+import {FunctionsBillingConfig, IFunctionsBilling} from "../v1_3_0/interfaces/IFunctionsBilling.sol";
 
 import {Routable} from "../v1_0_0/Routable.sol";
 import {FunctionsResponse} from "../v1_0_0/libraries/FunctionsResponse.sol";
@@ -90,8 +90,11 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
   }
 
   /// @notice Sets the Chainlink Coordinator's billing configuration
-  /// @param config - See the contents of the FunctionsBillingConfig struct in IFunctionsBilling.sol for more information
-  function updateConfig(FunctionsBillingConfig memory config) public {
+  /// @param config - See the contents of the FunctionsBillingConfig struct in IFunctionsBilling.sol for more
+  /// information
+  function updateConfig(
+    FunctionsBillingConfig memory config
+  ) public {
     _onlyOwner();
 
     s_config = config;
@@ -103,7 +106,9 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
   // ================================================================
 
   /// @inheritdoc IFunctionsBilling
-  function getDONFeeJuels(bytes memory /* requestData */) public view override returns (uint72) {
+  function getDONFeeJuels(
+    bytes memory /* requestData */
+  ) public view override returns (uint72) {
     // s_config.donFee is in cents of USD. Get Juel amount then convert to dollars.
     return SafeCast.toUint72(_getJuelsFromUsd(s_config.donFeeCentsUsd) / 100);
   }
@@ -121,7 +126,7 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
 
   /// @inheritdoc IFunctionsBilling
   function getWeiPerUnitLink() public view returns (uint256) {
-    (, int256 weiPerUnitLink, , uint256 timestamp, ) = s_linkToNativeFeed.latestRoundData();
+    (, int256 weiPerUnitLink,, uint256 timestamp,) = s_linkToNativeFeed.latestRoundData();
     // solhint-disable-next-line not-rely-on-time
     if (s_config.feedStalenessSeconds < block.timestamp - timestamp && s_config.feedStalenessSeconds > 0) {
       return s_config.fallbackNativePerUnitLink;
@@ -132,7 +137,9 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
     return uint256(weiPerUnitLink);
   }
 
-  function _getJuelsFromWei(uint256 amountWei) private view returns (uint96) {
+  function _getJuelsFromWei(
+    uint256 amountWei
+  ) private view returns (uint96) {
     // (1e18 juels/link) * wei / (wei/link) = juels
     // There are only 1e9*1e18 = 1e27 juels in existence, should not exceed uint96 (2^96 ~ 7e28)
     return SafeCast.toUint96((1e18 * amountWei) / getWeiPerUnitLink());
@@ -140,7 +147,7 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
 
   /// @inheritdoc IFunctionsBilling
   function getUsdPerUnitLink() public view returns (uint256, uint8) {
-    (, int256 usdPerUnitLink, , uint256 timestamp, ) = s_linkToUsdFeed.latestRoundData();
+    (, int256 usdPerUnitLink,, uint256 timestamp,) = s_linkToUsdFeed.latestRoundData();
     // solhint-disable-next-line not-rely-on-time
     if (s_config.feedStalenessSeconds < block.timestamp - timestamp && s_config.feedStalenessSeconds > 0) {
       return (s_config.fallbackUsdPerUnitLink, s_config.fallbackUsdPerUnitLinkDecimals);
@@ -151,7 +158,9 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
     return (uint256(usdPerUnitLink), s_linkToUsdFeed.decimals());
   }
 
-  function _getJuelsFromUsd(uint256 amountUsd) private view returns (uint96) {
+  function _getJuelsFromUsd(
+    uint256 amountUsd
+  ) private view returns (uint96) {
     (uint256 usdPerLink, uint8 decimals) = getUsdPerUnitLink();
     // (usd) * (10**18 juels/link) * (10**decimals) / (link / usd) = juels
     // There are only 1e9*1e18 = 1e27 juels in existence, should not exceed uint96 (2^96 ~ 7e28)
@@ -195,8 +204,8 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
       gasPriceWei = s_config.minimumEstimateGasPriceWei;
     }
 
-    uint256 gasPriceWithOverestimation = gasPriceWei +
-      ((gasPriceWei * s_config.fulfillmentGasPriceOverEstimationBP) / 10_000);
+    uint256 gasPriceWithOverestimation =
+      gasPriceWei + ((gasPriceWei * s_config.fulfillmentGasPriceOverEstimationBP) / 10_000);
     /// @NOTE: Basis Points are 1/100th of 1%, divide by 10_000 to bring back to original units
 
     uint256 executionGas = s_config.gasOverheadBeforeCallback + s_config.gasOverheadAfterCallback + callbackGasLimit;
@@ -225,13 +234,8 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
 
     uint72 donFee = getDONFeeJuels(request.data);
     operationFee = getOperationFeeJuels();
-    uint96 estimatedTotalCostJuels = _calculateCostEstimate(
-      request.callbackGasLimit,
-      tx.gasprice,
-      donFee,
-      request.adminFee,
-      operationFee
-    );
+    uint96 estimatedTotalCostJuels =
+      _calculateCostEstimate(request.callbackGasLimit, tx.gasprice, donFee, request.adminFee, operationFee);
 
     // Check that subscription can afford the estimated cost
     if ((request.availableBalance) < estimatedTotalCostJuels) {
@@ -274,7 +278,8 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
     return (commitment, operationFee);
   }
 
-  /// @notice Finalize billing process for an Functions request by sending a callback to the Client contract and then charging the subscription
+  /// @notice Finalize billing process for an Functions request by sending a callback to the Client contract and then
+  /// charging the subscription
   /// @param requestId identifier for the request that was generated by the Registry in the beginBilling commitment
   /// @param response response data from DON consensus
   /// @param err error from DON consensus
@@ -302,12 +307,14 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
       err,
       juelsPerGas,
       // The following line represents: "cost without callback or admin fee, those will be added by the Router"
-      // But because the _offchain_ Commitment is using operation fee in the place of the admin fee, this now adds admin fee (actually operation fee)
+      // But because the _offchain_ Commitment is using operation fee in the place of the admin fee, this now adds admin
+      // fee (actually operation fee)
       // Admin fee is configured to 0 in the Router
       gasOverheadJuels + commitment.donFee + commitment.adminFee,
       msg.sender,
       FunctionsResponse.Commitment({
-        adminFee: 0, // The Router should have adminFee set to 0. If it does not this will cause fulfillments to fail with INVALID_COMMITMENT instead of carrying out incorrect bookkeeping.
+        adminFee: 0, // The Router should have adminFee set to 0. If it does not this will cause fulfillments to fail
+          // with INVALID_COMMITMENT instead of carrying out incorrect bookkeeping.
         coordinator: commitment.coordinator,
         client: commitment.client,
         subscriptionId: commitment.subscriptionId,
@@ -325,8 +332,8 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
     // In these two fulfillment results the user has been charged
     // Otherwise, the Coordinator should hold on to the request commitment
     if (
-      resultCode == FunctionsResponse.FulfillResult.FULFILLED ||
-      resultCode == FunctionsResponse.FulfillResult.USER_CALLBACK_ERROR
+      resultCode == FunctionsResponse.FulfillResult.FULFILLED
+        || resultCode == FunctionsResponse.FulfillResult.USER_CALLBACK_ERROR
     ) {
       delete s_requestCommitments[requestId];
       // Reimburse the transmitter for the fulfillment gas cost
@@ -335,7 +342,8 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
       // Saves on storage writes that would otherwise be charged to the user
       s_feePool += commitment.donFee;
       // Pay the operation fee to the Coordinator owner
-      s_withdrawableTokens[_owner()] += commitment.adminFee; // OperationFee is used in the slot for Admin Fee in the Offchain Commitment. Admin Fee is set to 0 in the Router (enforced by line 316 in FunctionsBilling.sol).
+      s_withdrawableTokens[_owner()] += commitment.adminFee; // OperationFee is used in the slot for Admin Fee in the
+        // Offchain Commitment. Admin Fee is set to 0 in the Router (enforced by line 316 in FunctionsBilling.sol).
       emit RequestBilled({
         requestId: requestId,
         juelsPerGas: juelsPerGas,
@@ -357,7 +365,9 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
   /// @inheritdoc IFunctionsBilling
   /// @dev Only callable by the Router
   /// @dev Used by FunctionsRouter.sol during timeout of a request
-  function deleteCommitment(bytes32 requestId) external override onlyRouter {
+  function deleteCommitment(
+    bytes32 requestId
+  ) external override onlyRouter {
     // Delete commitment
     delete s_requestCommitments[requestId];
     emit CommitmentDeleted(requestId);
@@ -426,7 +436,9 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
   function _onlyOwner() internal view virtual;
 
   // Used in FunctionsCoordinator.sol
-  function _isExistingRequest(bytes32 requestId) internal view returns (bool) {
+  function _isExistingRequest(
+    bytes32 requestId
+  ) internal view returns (bool) {
     return s_requestCommitments[requestId] != bytes32(0);
   }
 

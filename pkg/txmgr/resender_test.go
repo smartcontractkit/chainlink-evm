@@ -1,7 +1,6 @@
 package txmgr_test
 
 import (
-	"math/big"
 	"testing"
 	"time"
 
@@ -41,7 +40,7 @@ func Test_EthResender_resendUnconfirmed(t *testing.T) {
 	fromAddress := memKS.MustCreate(t)
 	fromAddress2 := memKS.MustCreate(t)
 	fromAddress3 := memKS.MustCreate(t)
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 
 	txStore := txmgrtest.NewTestTxStore(t, db)
 
@@ -67,7 +66,7 @@ func Test_EthResender_resendUnconfirmed(t *testing.T) {
 		addr3TxesRawHex = append(addr3TxesRawHex, hexutil.Encode(etx.TxAttempts[0].SignedRawTx))
 	}
 
-	er := txmgr.NewEvmResender(lggr, txStore, txmgr.NewEvmTxmClient(ethClient, nil), txmgr.NewEvmTracker(txStore, ethKeyStore, big.NewInt(0), lggr), ethKeyStore, 100*time.Millisecond, ccfg.EVM(), ccfg.EVM().Transactions())
+	er := txmgr.NewEvmResender(lggr, txStore, txmgr.NewEvmTxmClient(ethClient, nil), txmgr.NewEvmTracker(txStore, ethKeyStore, testutils.FixtureChainID, lggr), ethKeyStore, 100*time.Millisecond, ccfg.EVM(), ccfg.EVM().Transactions())
 
 	var resentHex = make(map[string]struct{})
 	ethClient.On("BatchCallContextAll", mock.Anything, mock.MatchedBy(func(elems []rpc.BatchElem) bool {
@@ -108,13 +107,13 @@ func Test_EthResender_alertUnconfirmed(t *testing.T) {
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 	memKS := keystest.NewMemoryChainStore()
 	fromAddress := memKS.MustCreate(t)
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 
 	ethClient.On("IsL2").Return(false).Maybe()
 	// Set this to the smallest non-zero value possible for the attempt to be eligible for resend
 	delay := commonconfig.MustNewDuration(1 * time.Nanosecond)
 	ccfg := testutils.NewTestChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.Chain = toml.Defaults(ubig.New(big.NewInt(0)), &toml.Chain{
+		c.Chain = toml.Defaults(ubig.New(testutils.FixtureChainID), &toml.Chain{
 			Transactions: toml.Transactions{ResendAfterThreshold: delay},
 		})
 	})
@@ -122,7 +121,7 @@ func Test_EthResender_alertUnconfirmed(t *testing.T) {
 	txStore := txmgrtest.NewTestTxStore(t, db)
 
 	originalBroadcastAt := time.Unix(1616509100, 0)
-	er := txmgr.NewEvmResender(lggr, txStore, txmgr.NewEvmTxmClient(ethClient, nil), txmgr.NewEvmTracker(txStore, ethKeyStore, big.NewInt(0), lggr), ethKeyStore, 100*time.Millisecond, ccfg.EVM(), ccfg.EVM().Transactions())
+	er := txmgr.NewEvmResender(lggr, txStore, txmgr.NewEvmTxmClient(ethClient, nil), txmgr.NewEvmTracker(txStore, ethKeyStore, testutils.FixtureChainID, lggr), ethKeyStore, 100*time.Millisecond, ccfg.EVM(), ccfg.EVM().Transactions())
 
 	t.Run("alerts only once for unconfirmed transaction attempt within the unconfirmedTxAlertDelay duration", func(t *testing.T) {
 		_ = txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, int64(1), fromAddress, originalBroadcastAt)
@@ -153,7 +152,7 @@ func Test_EthResender_Start(t *testing.T) {
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	memKS := keystest.NewMemoryChainStore()
 	fromAddress := memKS.MustCreate(t)
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 	lggr := logger.Test(t)
 
 	t.Run("resends transactions that have been languishing unconfirmed for too long", func(t *testing.T) {
@@ -161,7 +160,7 @@ func Test_EthResender_Start(t *testing.T) {
 		ethClient := clienttest.NewClientWithDefaultChainID(t)
 		ethClient.On("IsL2").Return(false).Maybe()
 
-		er := txmgr.NewEvmResender(lggr, txStore, txmgr.NewEvmTxmClient(ethClient, nil), txmgr.NewEvmTracker(txStore, ethKeyStore, big.NewInt(0), lggr), ethKeyStore, 100*time.Millisecond, ccfg.EVM(), ccfg.EVM().Transactions())
+		er := txmgr.NewEvmResender(lggr, txStore, txmgr.NewEvmTxmClient(ethClient, nil), txmgr.NewEvmTracker(txStore, ethKeyStore, testutils.FixtureChainID, lggr), ethKeyStore, 100*time.Millisecond, ccfg.EVM(), ccfg.EVM().Transactions())
 
 		originalBroadcastAt := time.Unix(1616509100, 0)
 		etx := txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 0, fromAddress, originalBroadcastAt)

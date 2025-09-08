@@ -23,7 +23,9 @@ contract OperatorTest is Deployer {
     s_callback = new Callback(address(s_operator));
   }
 
-  function testFuzz_SendRequest_Success(uint96 payment) public {
+  function testFuzz_SendRequest_Success(
+    uint96 payment
+  ) public {
     vm.assume(payment > 0);
     deal(address(s_link), address(s_client), payment);
     // We're going to cancel one request and fulfill the other
@@ -47,7 +49,9 @@ contract OperatorTest is Deployer {
     assertEq(s_link.balanceOf(address(s_client)), payment);
   }
 
-  function testFuzz_SendRequestAndCancelRequest_Success(uint96 payment) public {
+  function testFuzz_SendRequestAndCancelRequest_Success(
+    uint96 payment
+  ) public {
     vm.assume(payment > 1);
     payment /= payment;
 
@@ -72,12 +76,7 @@ contract OperatorTest is Deployer {
     // Fulfill one request
     uint256 expiration = block.timestamp + s_operator.EXPIRYTIME();
     s_operator.fulfillOracleRequest(
-      requestId,
-      payment,
-      address(s_client),
-      s_client.FULFILL_SELECTOR(),
-      expiration,
-      bytes32(hex"01")
+      requestId, payment, address(s_client), s_client.FULFILL_SELECTOR(), expiration, bytes32(hex"01")
     );
     // 1 payment withdrawable from fulfilling `requestId`, 1 payment in escrow
     assertEq(s_operator.withdrawable(), payment);
@@ -280,12 +279,7 @@ contract OperatorTest is Deployer {
     vm.prank(BOB);
     vm.expectRevert(bytes("Not authorized sender"));
     s_operator.fulfillOracleRequest(
-      requestId,
-      payment,
-      address(s_callback),
-      callbackFunctionId,
-      expiration,
-      bytes32(keccak256(dataBytes))
+      requestId, payment, address(s_callback), callbackFunctionId, expiration, bytes32(keccak256(dataBytes))
     );
   }
 }

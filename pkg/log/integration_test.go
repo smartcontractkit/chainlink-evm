@@ -1545,7 +1545,7 @@ func TestBroadcaster_BroadcastsWithZeroConfirmations(t *testing.T) {
 
 	ethClient := clienttest.NewClient(t)
 	mockEth := &clienttest.MockEth{EthClient: ethClient}
-	ethClient.On("ConfiguredChainID").Return(big.NewInt(0)).Maybe()
+	ethClient.On("ConfiguredChainID").Return(testutils.FixtureChainID).Maybe()
 	logsChCh := make(chan testutils.RawSub[types.Log])
 	ethClient.On("SubscribeFilterLogs", mock.Anything, mock.Anything, mock.Anything).
 		Return(

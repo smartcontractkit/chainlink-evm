@@ -15,7 +15,7 @@ contract MockGasBoundCaller {
       revert TransactionFailed(target);
     }
 
-    uint256 pubdataGas = 500000;
+    uint256 pubdataGas = 500_000;
     bytes memory returnData = abi.encode(address(0), pubdataGas);
 
     uint256 paddedReturndataLen = returnData.length + 96;

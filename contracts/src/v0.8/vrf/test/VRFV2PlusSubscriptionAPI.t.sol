@@ -1,11 +1,12 @@
 pragma solidity 0.8.19;
 
-import "./BaseTest.t.sol";
-import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
-import {VRFV2PlusLoadTestWithMetrics} from "../dev/testhelpers/VRFV2PlusLoadTestWithMetrics.sol";
-import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
+import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
+import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
+import {VRFV2PlusLoadTestWithMetrics} from "../dev/testhelpers/VRFV2PlusLoadTestWithMetrics.sol";
+import "./BaseTest.t.sol";
+
 import "@openzeppelin/contracts@4.9.6/utils/Strings.sol"; // for Strings.toString
 import {VmSafe} from "forge-std/Vm.sol";
 
@@ -97,7 +98,7 @@ contract VRFV2PlusSubscriptionAPITest is BaseTest {
     // change back to owner and cancel the subscription
     changePrank(OWNER);
     vm.expectEmit(true, false, false, true);
-    emit SubscriptionCanceled(subId, subOwner, 0 /* link balance */, 5 ether /* native balance */);
+    emit SubscriptionCanceled(subId, subOwner, 0, /* link balance */ 5 ether /* native balance */ );
     s_subscriptionAPI.ownerCancelSubscription(subId);
 
     // assert that the subscription no longer exists
@@ -136,7 +137,7 @@ contract VRFV2PlusSubscriptionAPITest is BaseTest {
 
     // change back to owner and cancel the subscription
     vm.expectEmit(true, false, false, true);
-    emit SubscriptionCanceled(subId, subOwner, 5 ether /* link balance */, 0 /* native balance */);
+    emit SubscriptionCanceled(subId, subOwner, 5 ether, /* link balance */ 0 /* native balance */ );
     s_subscriptionAPI.ownerCancelSubscription(subId);
 
     // assert that the subscription no longer exists
@@ -181,7 +182,7 @@ contract VRFV2PlusSubscriptionAPITest is BaseTest {
     // change back to owner and cancel the subscription
     changePrank(OWNER);
     vm.expectEmit(true, false, false, true);
-    emit SubscriptionCanceled(subId, subOwner, 5 ether /* link balance */, 5 ether /* native balance */);
+    emit SubscriptionCanceled(subId, subOwner, 5 ether, /* link balance */ 5 ether /* native balance */ );
     s_subscriptionAPI.ownerCancelSubscription(subId);
 
     // assert that the subscription no longer exists

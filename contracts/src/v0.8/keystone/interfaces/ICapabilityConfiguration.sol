@@ -18,12 +18,15 @@ interface ICapabilityConfiguration {
   /// situation where configuration size grows too large.
   /// @param donId The DON instance ID. These are stored in the CapabilitiesRegistry.
   /// @return configuration DON's configuration for the capability.
-  function getCapabilityConfiguration(uint32 donId) external view returns (bytes memory configuration);
+  function getCapabilityConfiguration(
+    uint32 donId
+  ) external view returns (bytes memory configuration);
 
   /// @notice Called by the registry prior to the config being set for a particular DON.
   /// @param nodes The nodes that the configuration is being set for.
   /// @param donCapabilityConfig The configuration being set on the capability registry.
-  /// @param donCapabilityConfigCount The number of times the DON has been configured, tracked on the capability registry.
+  /// @param donCapabilityConfigCount The number of times the DON has been configured, tracked on the capability
+  /// registry.
   /// @param donId The DON ID on the capability registry.
   function beforeCapabilityConfigSet(
     bytes32[] calldata nodes,

@@ -17,7 +17,9 @@ contract MockBaseSequencerUptimeFeed is BaseSequencerUptimeFeed {
     s_validateSenderShouldPass = validateSenderShouldPass;
   }
 
-  function _validateSender(address /* l1Sender */) internal view override {
+  function _validateSender(
+    address /* l1Sender */
+  ) internal view override {
     if (!s_validateSenderShouldPass) {
       revert InvalidSender();
     }
