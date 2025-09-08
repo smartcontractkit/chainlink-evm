@@ -447,7 +447,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   // |                 Internal variables                            |
   // ================================================================
 
-  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0";
+  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0-dev";
 
   /// @notice Mapping of DON names to boolean indicating if the name is taken
   mapping(string donName => uint32 donId) private s_donNameToId;
