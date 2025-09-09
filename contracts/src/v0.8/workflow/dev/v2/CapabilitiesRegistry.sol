@@ -344,6 +344,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param nodeOperatorId The ID of the node operator that does not exist
   error NodeOperatorDoesNotExist(uint32 nodeOperatorId);
 
+  /// @notice This error is thrown when a node operator already exists
+  /// @param existingNodeOperatorId The ID of the node operator that already exists
+  error NodeOperatorAlreadyExists(uint32 existingNodeOperatorId);
+
   /// @notice This error is thrown when trying to remove a node that is still
   /// part of a capabilities DON
   /// @param donId The Id of the DON the node belongs to
@@ -447,7 +451,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   // |                 Internal variables                            |
   // ================================================================
 
-  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0";
+  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0-dev";
 
   /// @notice Mapping of DON names to boolean indicating if the name is taken
   mapping(string donName => uint32 donId) private s_donNameToId;
@@ -475,6 +479,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
 
   /// @notice Mapping of node operators
   mapping(uint32 nodeOperatorId => NodeOperator nodeOperator) private s_nodeOperators;
+
+  /// @notice Mapping of node operator data hash to node operator ID. Used to maintain unique node operators.
+  mapping(bytes32 nodeOperatorDataHash => uint32 nodeOperatorId) private s_nodeOperatorDataHashToId;
 
   /// @notice Mapping of nodes
   mapping(bytes32 p2pId => Node node) private s_nodes;
@@ -527,6 +534,11 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       if (nodeOperator.admin == address(0)) revert InvalidNodeOperatorAdmin();
       uint32 nodeOperatorId = s_nextNodeOperatorId;
       s_nodeOperators[nodeOperatorId] = NodeOperator({admin: nodeOperator.admin, name: nodeOperator.name});
+      bytes32 nodeOperatorDataHash = _nodeOperatorHash(nodeOperator);
+      if (s_nodeOperatorDataHashToId[nodeOperatorDataHash] != 0) {
+        revert NodeOperatorAlreadyExists(s_nodeOperatorDataHashToId[nodeOperatorDataHash]);
+      }
+      s_nodeOperatorDataHashToId[nodeOperatorDataHash] = nodeOperatorId;
       ++s_nextNodeOperatorId;
       emit NodeOperatorAdded(nodeOperatorId, nodeOperator.admin, nodeOperator.name);
     }
@@ -539,6 +551,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   ) external onlyOwner {
     for (uint32 i; i < nodeOperatorIds.length; ++i) {
       uint32 nodeOperatorId = nodeOperatorIds[i];
+      NodeOperator memory nodeOperator = s_nodeOperators[nodeOperatorId];
+      bytes32 nodeOperatorDataHash = _nodeOperatorHash(nodeOperator);
+      s_nodeOperatorDataHashToId[nodeOperatorDataHash] = 0;
       delete s_nodeOperators[nodeOperatorId];
       emit NodeOperatorRemoved(nodeOperatorId);
     }
@@ -562,6 +577,14 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       NodeOperator memory nodeOperator = nodeOperators[i];
       if (nodeOperator.admin == address(0)) revert InvalidNodeOperatorAdmin();
       if (msg.sender != currentNodeOperator.admin && msg.sender != owner) revert AccessForbidden(msg.sender);
+
+      bytes32 nodeOperatorDataHash = _nodeOperatorHash(nodeOperator);
+      if (s_nodeOperatorDataHashToId[nodeOperatorDataHash] != 0) {
+        revert NodeOperatorAlreadyExists(s_nodeOperatorDataHashToId[nodeOperatorDataHash]);
+      }
+      bytes32 currentNodeOperatorDataHash = _nodeOperatorHash(currentNodeOperator);
+      delete s_nodeOperatorDataHashToId[currentNodeOperatorDataHash];
+      s_nodeOperatorDataHashToId[nodeOperatorDataHash] = nodeOperatorId;
 
       if (
         currentNodeOperator.admin != nodeOperator.admin
@@ -1289,6 +1312,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       }
     }
 
+    s_dons[donParams.id].id = donParams.id;
+    s_dons[donParams.id].acceptsWorkflows = donParams.acceptsWorkflows;
+    s_dons[donParams.id].configCount = donParams.configCount;
+
+    donConfig.config = donParams.config;
+    donConfig.name = donParams.name;
+    donConfig.isPublic = donParams.isPublic;
+    donConfig.f = donParams.f;
+
     for (uint256 i; i < nodes.length; ++i) {
       if (!donConfig.nodes.add(nodes[i])) revert DuplicateDONNode(donParams.id, nodes[i]);
 
@@ -1328,14 +1360,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
 
       donConfig.capabilityIds.push(hashedCapabilityId);
       donConfig.capabilityConfigs[configuration.capabilityId] = configuration.config;
-      donConfig.config = donParams.config;
-      donConfig.name = donParams.name;
-      donConfig.isPublic = donParams.isPublic;
-      donConfig.f = donParams.f;
-
-      s_dons[donParams.id].id = donParams.id;
-      s_dons[donParams.id].acceptsWorkflows = donParams.acceptsWorkflows;
-      s_dons[donParams.id].configCount = donParams.configCount;
 
       _setCapabilityConfig(donParams.id, donParams.configCount, configuration.capabilityId, nodes, configuration.config);
     }
@@ -1407,5 +1431,14 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     string memory str
   ) internal pure returns (bytes32) {
     return keccak256(bytes(str));
+  }
+
+  /// @notice Generates a hash from the node operator's data which uniquely identifies it
+  /// @param nodeOperator The node operator's data
+  /// @return bytes32 The hash of the node operator's data
+  function _nodeOperatorHash(
+    NodeOperator memory nodeOperator
+  ) internal pure returns (bytes32) {
+    return keccak256(abi.encode(nodeOperator.admin, nodeOperator.name));
   }
 }

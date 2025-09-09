@@ -776,7 +776,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     uint256 count = _getPageCount(total, start, limit);
 
     list = new EventRecord[](count);
-    for (uint256 i = 0; i < count; i++) {
+    for (uint256 i = 0; i < count; ++i) {
       list[i] = s_events[start + i];
     }
 
