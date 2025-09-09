@@ -582,6 +582,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       if (s_nodeOperatorDataHashToId[nodeOperatorDataHash] != 0) {
         revert NodeOperatorAlreadyExists(s_nodeOperatorDataHashToId[nodeOperatorDataHash]);
       }
+      bytes32 currentNodeOperatorDataHash = _nodeOperatorHash(currentNodeOperator);
+      delete s_nodeOperatorDataHashToId[currentNodeOperatorDataHash];
       s_nodeOperatorDataHashToId[nodeOperatorDataHash] = nodeOperatorId;
 
       if (
