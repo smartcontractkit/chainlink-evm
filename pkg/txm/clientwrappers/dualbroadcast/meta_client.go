@@ -168,7 +168,8 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 			}
 			return nil
 		}
-		return errors.New("meta transaction was empty")
+		a.lggr.Info("No bids for transactionID(%d): ", tx.ID)
+		return nil
 	}
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)
 }
@@ -244,7 +245,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		ChainID:      &cid,
 		ToAddress:    tx.ToAddress,
 		Payload:      tx.Data,
-		ER:           true,
+		ER:           false,
 		FromAddress:  tx.FromAddress,
 		MaxFeePerGas: &fee,
 	}
@@ -301,7 +302,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	if response.Result == nil {
-		return nil, errors.New("empty response")
+		return nil, nil
 	}
 
 	return VerifyResponse(response.Result.MetacalldataResponse, dualBroadcastParams, tx.Data, tx.FromAddress, fwdrDestAddress)
@@ -400,16 +401,11 @@ func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacallda
 	}
 
 	// SOP
-	atLeastOne := false
 	for _, sop := range result.SOPs {
 		if sop.To != to || sop.Control != dApp {
 			// Exit early
 			return nil, fmt.Errorf("incorrect SOP: sop.To: %v, sop.Control: %v, to: %v, dApp: %v", sop.To, sop.Control, to, dApp)
 		}
-		atLeastOne = true
-	}
-	if !atLeastOne {
-		return nil, errors.New("no valid sop")
 	}
 
 	// UOP
