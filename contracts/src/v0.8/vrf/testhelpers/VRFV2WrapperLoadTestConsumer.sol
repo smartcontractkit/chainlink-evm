@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {VRFV2WrapperConsumerBase} from "../VRFV2WrapperConsumerBase.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {ChainSpecificUtil} from "../ChainSpecificUtil_v0_8_6.sol";
+import {VRFV2WrapperConsumerBase} from "../VRFV2WrapperConsumerBase.sol";
 import {VRFV2WrapperInterface} from "../interfaces/VRFV2WrapperInterface.sol";
 
 contract VRFV2WrapperLoadTestConsumer is VRFV2WrapperConsumerBase, ConfirmedOwner {
@@ -121,7 +121,9 @@ contract VRFV2WrapperLoadTestConsumer is VRFV2WrapperConsumerBase, ConfirmedOwne
 
   /// @notice withdrawLink withdraws the amount specified in amount to the owner
   /// @param amount the amount to withdraw, in juels
-  function withdrawLink(uint256 amount) external onlyOwner {
+  function withdrawLink(
+    uint256 amount
+  ) external onlyOwner {
     LINK.transfer(owner(), amount);
   }
 

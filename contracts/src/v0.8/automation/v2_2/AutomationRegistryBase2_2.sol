@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
-import {StreamsLookupCompatibleInterface} from "../interfaces/StreamsLookupCompatibleInterface.sol";
-import {ILogAutomation, Log} from "../interfaces/ILogAutomation.sol";
-import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {KeeperCompatibleInterface} from "../interfaces/KeeperCompatibleInterface.sol";
-import {UpkeepFormat} from "../interfaces/UpkeepTranscoderInterface.sol";
+import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
+
 import {IChainModule} from "../interfaces/IChainModule.sol";
+import {ILogAutomation, Log} from "../interfaces/ILogAutomation.sol";
+import {KeeperCompatibleInterface} from "../interfaces/KeeperCompatibleInterface.sol";
+import {StreamsLookupCompatibleInterface} from "../interfaces/StreamsLookupCompatibleInterface.sol";
+import {UpkeepFormat} from "../interfaces/UpkeepTranscoderInterface.sol";
+import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 /**
  * @notice Base Keeper Registry contract, contains shared logic between
@@ -30,9 +31,9 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   bytes4 internal constant PERFORM_SELECTOR = KeeperCompatibleInterface.performUpkeep.selector;
   bytes4 internal constant CHECK_CALLBACK_SELECTOR = StreamsLookupCompatibleInterface.checkCallback.selector;
   bytes4 internal constant CHECK_LOG_SELECTOR = ILogAutomation.checkLog.selector;
-  uint256 internal constant PERFORM_GAS_MIN = 2_300;
+  uint256 internal constant PERFORM_GAS_MIN = 2300;
   uint256 internal constant CANCELLATION_DELAY = 50;
-  uint256 internal constant PERFORM_GAS_CUSHION = 5_000;
+  uint256 internal constant PERFORM_GAS_CUSHION = 5000;
   uint256 internal constant PPB_BASE = 1_000_000_000;
   uint32 internal constant UINT32_MAX = type(uint32).max;
   uint96 internal constant LINK_TOTAL_SUPPLY = 1e27;
@@ -51,7 +52,7 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   // the variables result in accurate estimation
   uint256 internal constant REGISTRY_CONDITIONAL_OVERHEAD = 60_000; // Fixed gas overhead for conditional upkeeps
   uint256 internal constant REGISTRY_LOG_OVERHEAD = 85_000; // Fixed gas overhead for log upkeeps
-  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5_600; // Value scales with f
+  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5600; // Value scales with f
   uint256 internal constant REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD = 24; // Per perform data byte overhead
 
   // The overhead (in bytes) in addition to perform data for upkeep sent in calldata
@@ -61,11 +62,13 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   uint256 internal constant TRANSMIT_CALLDATA_PER_SIGNER_BYTES_OVERHEAD = 64;
 
   // Next block of constants are used in actual payment calculation. We calculate the exact gas used within the
-  // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed constants
-  // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates various cases and verifies that
+  // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed
+  // constants
+  // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates
+  // various cases and verifies that
   // the variables result in accurate estimation
   uint256 internal constant ACCOUNTING_FIXED_GAS_OVERHEAD = 22_000; // Fixed overhead per tx
-  uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 7_000; // Overhead per upkeep performed in batch
+  uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 7000; // Overhead per upkeep performed in batch
 
   LinkTokenInterface internal immutable i_link;
   AggregatorV3Interface internal immutable i_linkNativeFeed;
@@ -99,11 +102,14 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   uint256 internal s_fallbackGasPrice;
   uint256 internal s_fallbackLinkPrice;
   uint256 internal s_expectedLinkBalance; // Used in case of erroneous LINK transfers to contract
-  mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to and fro
+  mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to
+    // and fro
   mapping(uint256 => bytes) internal s_upkeepTriggerConfig; // upkeep triggers
   mapping(uint256 => bytes) internal s_upkeepOffchainConfig; // general config set by users for each upkeep
-  mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an upkeep
-  mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an admin
+  mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an
+    // upkeep
+  mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an
+    // admin
 
   error ArrayHasNoEntries();
   error CannotCancel();
@@ -248,8 +254,8 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
     uint96 amountSpent;
     uint96 balance;
     uint32 lastPerformedBlockNumber;
-    // 2 bytes left in 2nd EVM word - written in transmit path
   }
+  // 2 bytes left in 2nd EVM word - written in transmit path
 
   /// @dev Config + State storage struct which is on hot transmit path
   struct HotVars {
@@ -283,7 +289,7 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
     uint32 maxPerformDataSize; // max length of performData bytes
     uint32 maxRevertDataSize; // max length of revertData bytes
     address upkeepPrivilegeManager; // address which can set privilege for upkeeps
-    // 3 EVM word full
+      // 3 EVM word full
   }
 
   /// @dev Report transmitted by OCR to transmit function
@@ -374,12 +380,7 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   event UpkeepOffchainConfigSet(uint256 indexed id, bytes offchainConfig);
   event UpkeepPaused(uint256 indexed id);
   event UpkeepPerformed(
-    uint256 indexed id,
-    bool indexed success,
-    uint96 totalPayment,
-    uint256 gasUsed,
-    uint256 gasOverhead,
-    bytes trigger
+    uint256 indexed id, bool indexed success, uint96 totalPayment, uint256 gasUsed, uint256 gasOverhead, bytes trigger
   );
   event UpkeepPrivilegeConfigSet(uint256 indexed id, bytes privilegeConfig);
   event UpkeepReceived(uint256 indexed id, uint256 startingBalance, address importedFrom);
@@ -432,8 +433,9 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   ) internal {
     if (s_hotVars.paused) revert RegistryPaused();
     if (checkData.length > s_storage.maxCheckDataSize) revert CheckDataExceedsLimit();
-    if (upkeep.performGas < PERFORM_GAS_MIN || upkeep.performGas > s_storage.maxPerformGas)
+    if (upkeep.performGas < PERFORM_GAS_MIN || upkeep.performGas > s_storage.maxPerformGas) {
       revert GasLimitOutsideRange();
+    }
     if (address(s_upkeep[id].forwarder) != address(0)) revert UpkeepAlreadyExists();
     s_upkeep[id] = upkeep;
     s_upkeepAdmin[id] = admin;
@@ -456,7 +458,9 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
    * @dev we add the "identifying" part in the middle so that it is mostly hidden from users who usually only
    * see the first 4 and last 4 hex values ex 0x1234...ABCD
    */
-  function _createID(Trigger triggerType) internal view returns (uint256) {
+  function _createID(
+    Trigger triggerType
+  ) internal view returns (uint256) {
     bytes1 empty;
     IChainModule chainModule = s_hotVars.chainModule;
     bytes memory idBytes = abi.encodePacked(
@@ -475,12 +479,14 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
    * for gas it takes the min of gas price in the transaction or the fast gas
    * price in order to reduce costs for the upkeep clients.
    */
-  function _getFeedData(HotVars memory hotVars) internal view returns (uint256 gasWei, uint256 linkNative) {
+  function _getFeedData(
+    HotVars memory hotVars
+  ) internal view returns (uint256 gasWei, uint256 linkNative) {
     uint32 stalenessSeconds = hotVars.stalenessSeconds;
     bool staleFallback = stalenessSeconds > 0;
     uint256 timestamp;
     int256 feedValue;
-    (, feedValue, , timestamp, ) = i_fastGasFeed.latestRoundData();
+    (, feedValue,, timestamp,) = i_fastGasFeed.latestRoundData();
     if (
       feedValue <= 0 || block.timestamp < timestamp || (staleFallback && stalenessSeconds < block.timestamp - timestamp)
     ) {
@@ -488,7 +494,7 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
     } else {
       gasWei = uint256(feedValue);
     }
-    (, feedValue, , timestamp, ) = i_linkNativeFeed.latestRoundData();
+    (, feedValue,, timestamp,) = i_linkNativeFeed.latestRoundData();
     if (
       feedValue <= 0 || block.timestamp < timestamp || (staleFallback && stalenessSeconds < block.timestamp - timestamp)
     ) {
@@ -523,10 +529,8 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
       gasWei = tx.gasprice;
     }
     uint256 gasPayment = ((gasWei * (gasLimit + gasOverhead) + l1CostWei) * 1e18) / linkNative;
-    uint256 premium = (((gasWei * gasLimit) + l1CostWei) * 1e9 * hotVars.paymentPremiumPPB) /
-      linkNative +
-      uint256(hotVars.flatFeeMicroLink) *
-      1e12;
+    uint256 premium = (((gasWei * gasLimit) + l1CostWei) * 1e9 * hotVars.paymentPremiumPPB) / linkNative
+      + uint256(hotVars.flatFeeMicroLink) * 1e12;
     // LINK_TOTAL_SUPPLY < UINT96_MAX
     if (gasPayment + premium > LINK_TOTAL_SUPPLY) revert PaymentGreaterThanAllLINK();
     return (uint96(gasPayment), uint96(premium));
@@ -551,14 +555,12 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
     } else {
       revert InvalidTriggerType();
     }
-    uint256 maxCalldataSize = s_storage.maxPerformDataSize +
-      TRANSMIT_CALLDATA_FIXED_BYTES_OVERHEAD +
-      (TRANSMIT_CALLDATA_PER_SIGNER_BYTES_OVERHEAD * (hotVars.f + 1));
+    uint256 maxCalldataSize = s_storage.maxPerformDataSize + TRANSMIT_CALLDATA_FIXED_BYTES_OVERHEAD
+      + (TRANSMIT_CALLDATA_PER_SIGNER_BYTES_OVERHEAD * (hotVars.f + 1));
     (uint256 chainModuleFixedOverhead, uint256 chainModulePerByteOverhead) = s_hotVars.chainModule.getGasOverhead();
-    maxGasOverhead +=
-      (REGISTRY_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1)) +
-      ((REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD + chainModulePerByteOverhead) * maxCalldataSize) +
-      chainModuleFixedOverhead;
+    maxGasOverhead += (REGISTRY_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1))
+      + ((REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD + chainModulePerByteOverhead) * maxCalldataSize)
+      + chainModuleFixedOverhead;
 
     uint256 maxL1Fee = hotVars.gasCeilingMultiplier * hotVars.chainModule.getMaxL1Fee(maxCalldataSize);
 
@@ -599,7 +601,9 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   /**
    * @dev gets the trigger type from an upkeepID (trigger type is encoded in the middle of the ID)
    */
-  function _getTriggerType(uint256 upkeepId) internal pure returns (Trigger) {
+  function _getTriggerType(
+    uint256 upkeepId
+  ) internal pure returns (Trigger) {
     bytes32 rawID = bytes32(upkeepId);
     bytes1 empty = bytes1(0);
     for (uint256 idx = 4; idx < 15; idx++) {
@@ -628,13 +632,14 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   /**
    * @dev _decodeReport decodes a serialized report into a Report struct
    */
-  function _decodeReport(bytes calldata rawReport) internal pure returns (Report memory) {
+  function _decodeReport(
+    bytes calldata rawReport
+  ) internal pure returns (Report memory) {
     Report memory report = abi.decode(rawReport, (Report));
     uint256 expectedLength = report.upkeepIds.length;
     if (
-      report.gasLimits.length != expectedLength ||
-      report.triggers.length != expectedLength ||
-      report.performDatas.length != expectedLength
+      report.gasLimits.length != expectedLength || report.triggers.length != expectedLength
+        || report.performDatas.length != expectedLength
     ) {
       revert InvalidReport();
     }
@@ -655,8 +660,9 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   ) internal returns (bool, bytes32) {
     bytes32 dedupID;
     if (transmitInfo.triggerType == Trigger.CONDITION) {
-      if (!_validateConditionalTrigger(upkeepId, blocknumber, rawTrigger, transmitInfo, hotVars))
+      if (!_validateConditionalTrigger(upkeepId, blocknumber, rawTrigger, transmitInfo, hotVars)) {
         return (false, dedupID);
+      }
     } else if (transmitInfo.triggerType == Trigger.LOG) {
       bool valid;
       (valid, dedupID) = _validateLogTrigger(upkeepId, blocknumber, rawTrigger, hotVars);
@@ -690,9 +696,10 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
       return false;
     }
     if (
-      (hotVars.reorgProtectionEnabled &&
-        (trigger.blockHash != bytes32("") && hotVars.chainModule.blockHash(trigger.blockNum) != trigger.blockHash)) ||
-      trigger.blockNum >= blocknumber
+      (
+        hotVars.reorgProtectionEnabled
+          && (trigger.blockHash != bytes32("") && hotVars.chainModule.blockHash(trigger.blockNum) != trigger.blockHash)
+      ) || trigger.blockNum >= blocknumber
     ) {
       // There are two cases of reorged report
       // 1. trigger block number is in future: this is an edge case during extreme deep reorgs of chain
@@ -715,9 +722,10 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
     LogTrigger memory trigger = abi.decode(rawTrigger, (LogTrigger));
     bytes32 dedupID = keccak256(abi.encodePacked(upkeepId, trigger.logBlockHash, trigger.txHash, trigger.logIndex));
     if (
-      (hotVars.reorgProtectionEnabled &&
-        (trigger.blockHash != bytes32("") && hotVars.chainModule.blockHash(trigger.blockNum) != trigger.blockHash)) ||
-      trigger.blockNum >= blocknumber
+      (
+        hotVars.reorgProtectionEnabled
+          && (trigger.blockHash != bytes32("") && hotVars.chainModule.blockHash(trigger.blockNum) != trigger.blockHash)
+      ) || trigger.blockNum >= blocknumber
     ) {
       // Reorg protection is same as conditional trigger upkeeps
       emit ReorgedUpkeepReport(upkeepId, rawTrigger);
@@ -834,7 +842,9 @@ abstract contract AutomationRegistryBase2_2 is ConfirmedOwner {
   /**
    * @dev ensures the upkeep is not cancelled and the caller is the upkeep admin
    */
-  function _requireAdminAndNotCancelled(uint256 upkeepId) internal view {
+  function _requireAdminAndNotCancelled(
+    uint256 upkeepId
+  ) internal view {
     if (msg.sender != s_upkeepAdmin[upkeepId]) revert OnlyCallableByAdmin();
     if (s_upkeep[upkeepId].maxValidBlocknumber != UINT32_MAX) revert UpkeepCancelled();
   }

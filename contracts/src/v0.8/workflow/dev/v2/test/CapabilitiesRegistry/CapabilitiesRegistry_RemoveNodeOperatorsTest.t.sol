@@ -80,4 +80,37 @@ contract CapabilitiesRegistry_RemoveNodeOperatorsTest is BaseTest {
     assertEq(nodeOperatorTwo.admin, address(0));
     assertEq(nodeOperatorTwo.name, "");
   }
+
+  function test_RemovesNodeOperator_UnblocksReAdding() public {
+    changePrank(ADMIN);
+
+    vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
+    emit CapabilitiesRegistry.NodeOperatorRemoved(TEST_NODE_OPERATOR_ONE_ID);
+    vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
+    emit CapabilitiesRegistry.NodeOperatorRemoved(TEST_NODE_OPERATOR_TWO_ID);
+    vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
+    emit CapabilitiesRegistry.NodeOperatorRemoved(TEST_NODE_OPERATOR_THREE_ID);
+    uint32[] memory nodeOperatorsToRemove = new uint32[](3);
+    nodeOperatorsToRemove[0] = TEST_NODE_OPERATOR_ONE_ID;
+    nodeOperatorsToRemove[1] = TEST_NODE_OPERATOR_TWO_ID;
+    nodeOperatorsToRemove[2] = TEST_NODE_OPERATOR_THREE_ID;
+    s_CapabilitiesRegistry.removeNodeOperators(nodeOperatorsToRemove);
+
+    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorOne =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ONE_ID);
+    assertEq(nodeOperatorOne.admin, address(0));
+    assertEq(nodeOperatorOne.name, "");
+
+    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorTwo =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_TWO_ID);
+    assertEq(nodeOperatorTwo.admin, address(0));
+    assertEq(nodeOperatorTwo.name, "");
+
+    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorThree =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_THREE_ID);
+    assertEq(nodeOperatorThree.admin, address(0));
+    assertEq(nodeOperatorThree.name, "");
+
+    s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
+  }
 }

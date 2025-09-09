@@ -18,7 +18,9 @@ contract UpkeepPerformCounterRestrictive {
     averageEligibilityCadence = _averageEligibilityCadence;
   }
 
-  function checkUpkeep(bytes calldata data) external view returns (bool, bytes memory) {
+  function checkUpkeep(
+    bytes calldata data
+  ) external view returns (bool, bytes memory) {
     uint256 startGas = gasleft();
     uint256 blockNum = block.number - 1;
     bool dummy;
@@ -30,7 +32,9 @@ contract UpkeepPerformCounterRestrictive {
     return (eligible(), abi.encode(dummy));
   }
 
-  function performUpkeep(bytes calldata) external {
+  function performUpkeep(
+    bytes calldata
+  ) external {
     uint256 startGas = gasleft();
     bool eligible = eligible();
     uint256 blockNum = block.number;
@@ -49,11 +53,15 @@ contract UpkeepPerformCounterRestrictive {
     }
   }
 
-  function setCheckGasToBurn(uint256 value) public {
+  function setCheckGasToBurn(
+    uint256 value
+  ) public {
     checkGasToBurn = value;
   }
 
-  function setPerformGasToBurn(uint256 value) public {
+  function setPerformGasToBurn(
+    uint256 value
+  ) public {
     performGasToBurn = value;
   }
 

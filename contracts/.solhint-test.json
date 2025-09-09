@@ -1,6 +1,6 @@
 {
   "extends": "solhint:recommended",
-  "plugins": ["prettier", "chainlink-solidity"],
+  "plugins": ["chainlink-solidity"],
   "rules": {
     "compiler-version": ["off", "^0.8.0"],
     "const-name-snakecase": "off",
@@ -25,12 +25,6 @@
       }
     ],
     "not-rely-on-time": "off",
-    "prettier/prettier": [
-      "off",
-      {
-        "endOfLine": "auto"
-      }
-    ],
     "no-empty-blocks": "off",
     "quotes": ["error", "double"],
     "reason-string": [

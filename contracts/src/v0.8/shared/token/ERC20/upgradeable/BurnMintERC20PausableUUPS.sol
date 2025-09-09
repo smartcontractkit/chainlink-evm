@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {PausableUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
+import {PausableUpgradeable} from
+  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
 import {BurnMintERC20UUPS} from "./BurnMintERC20UUPS.sol";
 
 contract BurnMintERC20PausableUUPS is BurnMintERC20UUPS, PausableUpgradeable {

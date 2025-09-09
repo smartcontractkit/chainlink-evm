@@ -3,7 +3,6 @@ package txmgr_test
 import (
 	"errors"
 	"fmt"
-	"math/big"
 	"math/rand"
 	"testing"
 
@@ -27,7 +26,7 @@ func TestNonceTracker_LoadSequenceMap(t *testing.T) {
 	t.Parallel()
 
 	ctx := tests.Context(t)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 	txStore := txstoremock.NewEvmTxStore(t)
 
 	client := clienttest.NewClient(t)
@@ -78,7 +77,7 @@ func TestNonceTracker_syncOnChain(t *testing.T) {
 	t.Parallel()
 
 	ctx := tests.Context(t)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 	txStore := txstoremock.NewEvmTxStore(t)
 
 	client := clienttest.NewClient(t)
@@ -134,7 +133,7 @@ func TestNonceTracker_SyncSequence(t *testing.T) {
 	t.Parallel()
 
 	ctx := tests.Context(t)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 	txStore := txstoremock.NewEvmTxStore(t)
 
 	client := clienttest.NewClient(t)
@@ -181,7 +180,7 @@ func TestNonceTracker_GetNextSequence(t *testing.T) {
 	t.Parallel()
 
 	ctx := tests.Context(t)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 	txStore := txstoremock.NewEvmTxStore(t)
 
 	client := clienttest.NewClient(t)
@@ -231,7 +230,7 @@ func TestNonceTracker_GenerateNextSequence(t *testing.T) {
 	t.Parallel()
 
 	ctx := tests.Context(t)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 	txStore := txstoremock.NewEvmTxStore(t)
 
 	client := clienttest.NewClient(t)
@@ -260,7 +259,7 @@ func Test_SetNonceAfterInit(t *testing.T) {
 	t.Parallel()
 
 	ctx := tests.Context(t)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 	db := testutils.NewSqlxDB(t)
 	txStore := txmgr.NewTxStore(db, logger.Test(t))
 

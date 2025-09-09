@@ -17,7 +17,8 @@ abstract contract OCR2Abstract is ITypeAndVersion {
   /// @param f maximum number of faulty/dishonest oracles the protocol can tolerate while still working correctly
   /// @param onchainConfig serialized configuration used by the contract (and possibly oracles)
   /// @param offchainConfigVersion version of the serialization format used for "offchainConfig" parameter
-  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the contract
+  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the
+  /// contract
   event ConfigSet(
     uint32 previousConfigBlockNumber,
     bytes32 configDigest,
@@ -36,7 +37,8 @@ abstract contract OCR2Abstract is ITypeAndVersion {
   /// @param f number of faulty oracles the system can tolerate
   /// @param onchainConfig serialized configuration used by the contract (and possibly oracles)
   /// @param offchainConfigVersion version number for offchainEncoding schema
-  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the contract
+  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the
+  /// contract
   function setConfig(
     address[] memory signers,
     address[] memory transmitters,
@@ -107,8 +109,10 @@ abstract contract OCR2Abstract is ITypeAndVersion {
   /// @notice transmit is called to post a new report to the contract
   /// @param reportContext [0]: ConfigDigest, [1]: 27 byte padding, 4-byte epoch and 1-byte round, [2]: ExtraHash
   /// @param report serialized report, which the signatures are signing.
-  /// @param rs ith element is the R components of the ith signature on report. Must have at most MAX_NUM_ORACLES entries
-  /// @param ss ith element is the S components of the ith signature on report. Must have at most MAX_NUM_ORACLES entries
+  /// @param rs ith element is the R components of the ith signature on report. Must have at most MAX_NUM_ORACLES
+  /// entries
+  /// @param ss ith element is the S components of the ith signature on report. Must have at most MAX_NUM_ORACLES
+  /// entries
   /// @param rawVs ith element is the the V component of the ith signature
   function transmit(
     // NOTE: If these parameters are changed, expectedMsgDataLength and/or

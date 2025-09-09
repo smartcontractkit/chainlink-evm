@@ -3,24 +3,31 @@ pragma solidity ^0.8.0;
 
 import {VRF} from "../VRF.sol";
 
-/** ***********************************************************************
-    @notice Testing harness for VRF.sol, exposing its internal methods. Not to
-    @notice be used for production.
-*/
+/**
+ *
+ *     @notice Testing harness for VRF.sol, exposing its internal methods. Not to
+ *     @notice be used for production.
+ */
 contract VRFTestHelper is VRF {
   function bigModExp_(uint256 base, uint256 exponent) public view returns (uint256) {
     return super._bigModExp(base, exponent);
   }
 
-  function squareRoot_(uint256 x) public view returns (uint256) {
+  function squareRoot_(
+    uint256 x
+  ) public view returns (uint256) {
     return super._squareRoot(x);
   }
 
-  function ySquared_(uint256 x) public pure returns (uint256) {
+  function ySquared_(
+    uint256 x
+  ) public pure returns (uint256) {
     return super._ySquared(x);
   }
 
-  function fieldHash_(bytes memory b) public pure returns (uint256) {
+  function fieldHash_(
+    bytes memory b
+  ) public pure returns (uint256) {
     return super._fieldHash(b);
   }
 
@@ -80,7 +87,9 @@ contract VRFTestHelper is VRF {
     return super._scalarFromCurvePoints(hash, pk, gamma, uWitness, v);
   }
 
-  function isOnCurve_(uint256[2] memory p) public pure returns (bool) {
+  function isOnCurve_(
+    uint256[2] memory p
+  ) public pure returns (bool) {
     return super._isOnCurve(p);
   }
 

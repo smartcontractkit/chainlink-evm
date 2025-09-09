@@ -1,13 +1,9 @@
 **/node_modules/**
 **/generated/**
-core/
 **/dist/**
 **/artifacts/**
 **/public/**
 **/build/**
-truffle-config.js
-truffle.js
-gethload.js
 
 pnpm-lock.yaml
 coverage
@@ -20,9 +16,7 @@ node_modules
 solc
 LinkToken.json
 typechain
-**/vendor
-src/v0.8/workflow/**
-src/v0.8/data-feeds/**
+src
 
 # Ignore TS definition and map files
 **/**.d.ts

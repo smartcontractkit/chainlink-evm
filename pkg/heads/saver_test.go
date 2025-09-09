@@ -12,11 +12,11 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
 	evmheads "github.com/smartcontractkit/chainlink-evm/pkg/heads"
+	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 type trackerConfig struct {
@@ -121,7 +121,7 @@ func TestHeadSaver_Load(t *testing.T) {
 	//           H2Uncle
 	//
 	newHead := func(num int, parent common.Hash) *evmtypes.Head {
-		h := evmtypes.NewHead(big.NewInt(int64(num)), utils.NewHash(), parent, ubig.NewI(0))
+		h := evmtypes.NewHead(big.NewInt(int64(num)), utils.NewHash(), parent, ubig.New(testutils.FixtureChainID))
 		return &h
 	}
 	h0 := newHead(0, utils.NewHash())

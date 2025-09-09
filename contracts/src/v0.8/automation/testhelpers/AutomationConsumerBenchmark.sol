@@ -13,7 +13,9 @@ contract AutomationConsumerBenchmark {
     deployedAt = block.number;
   }
 
-  function checkUpkeep(bytes calldata checkData) external view returns (bool, bytes memory) {
+  function checkUpkeep(
+    bytes calldata checkData
+  ) external view returns (bool, bytes memory) {
     (
       uint256 id,
       uint256 interval,
@@ -35,7 +37,9 @@ contract AutomationConsumerBenchmark {
     return (eligible(id, range, firstEligibleBuffer), checkData);
   }
 
-  function performUpkeep(bytes calldata performData) external {
+  function performUpkeep(
+    bytes calldata performData
+  ) external {
     (
       uint256 id,
       uint256 interval,
@@ -61,15 +65,16 @@ contract AutomationConsumerBenchmark {
     }
   }
 
-  function getCountPerforms(uint256 id) public view returns (uint256) {
+  function getCountPerforms(
+    uint256 id
+  ) public view returns (uint256) {
     return count[id];
   }
 
   function eligible(uint256 id, uint256 range, uint256 firstEligibleBuffer) internal view returns (bool) {
-    return
-      initialCall[id] == 0
-        ? block.number >= firstEligibleBuffer + deployedAt
-        : (block.number - initialCall[id] < range && block.number > nextEligible[id]);
+    return initialCall[id] == 0
+      ? block.number >= firstEligibleBuffer + deployedAt
+      : (block.number - initialCall[id] < range && block.number > nextEligible[id]);
   }
 
   function checkEligible(uint256 id, uint256 range, uint256 firstEligibleBuffer) public view returns (bool) {

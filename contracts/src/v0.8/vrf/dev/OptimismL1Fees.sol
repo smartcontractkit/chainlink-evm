@@ -2,7 +2,8 @@
 pragma solidity ^0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
-import {GasPriceOracle as OVM_GasPriceOracle} from "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
+import {GasPriceOracle as OVM_GasPriceOracle} from
+  "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
 
 /// @dev An abstract contract that provides Optimism specific L1 fee calculations.
 abstract contract OptimismL1Fees is ConfirmedOwner {
@@ -10,7 +11,8 @@ abstract contract OptimismL1Fees is ConfirmedOwner {
   /// @dev The padding size was estimated based on hypothetical max RLP-encoded transaction size
   uint256 internal constant L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE = 71;
   /// @dev Signature data size used in the GasPriceOracle predeploy
-  /// @dev reference: https://github.com/ethereum-optimism/optimism/blob/a96cbe7c8da144d79d4cec1303d8ae60a64e681e/packages/contracts-bedrock/contracts/L2/GasPriceOracle.sol#L145
+  /// @dev reference:
+  /// https://github.com/ethereum-optimism/optimism/blob/a96cbe7c8da144d79d4cec1303d8ae60a64e681e/packages/contracts-bedrock/contracts/L2/GasPriceOracle.sol#L145
   uint256 internal constant L1_TX_SIGNATURE_DATA_BYTES_SIZE = 68;
   /// @dev L1_FEE_DATA_PADDING includes 71 bytes for L1 data padding for Optimism
   bytes internal constant L1_FEE_DATA_PADDING =
@@ -27,7 +29,8 @@ abstract contract OptimismL1Fees is ConfirmedOwner {
   /// @dev fulfillment calldata payload (number of non-zero bytes estimated based on historical data)
   /// @dev This option is available for the Coordinator and the Wrapper contract
   uint8 internal constant L1_CALLDATA_GAS_COST_MODE = 1;
-  /// @dev Option 3: getL1FeeUpperBound() function from predeploy GasPriceOracle contract (available after Fjord upgrade)
+  /// @dev Option 3: getL1FeeUpperBound() function from predeploy GasPriceOracle contract (available after Fjord
+  /// upgrade)
   /// @dev This option is available for the Coordinator and the Wrapper contract
   uint8 internal constant L1_GAS_FEES_UPPER_BOUND_MODE = 2;
 
@@ -59,33 +62,43 @@ abstract contract OptimismL1Fees is ConfirmedOwner {
     emit L1FeeCalculationSet(mode, coefficient);
   }
 
-  function _getL1CostWeiForCalldata(bytes calldata data) internal view returns (uint256) {
+  function _getL1CostWeiForCalldata(
+    bytes calldata data
+  ) internal view returns (uint256) {
     if (s_l1FeeCalculationMode == L1_GAS_FEES_MODE) {
       return OVM_GASPRICEORACLE.getL1Fee(bytes.concat(data, L1_FEE_DATA_PADDING));
     }
     return _getL1CostWeiForCalldataSize(data.length);
   }
 
-  function _getL1CostWeiForCalldataSize(uint256 calldataSizeBytes) internal view returns (uint256) {
+  function _getL1CostWeiForCalldataSize(
+    uint256 calldataSizeBytes
+  ) internal view returns (uint256) {
     uint8 l1FeeCalculationMode = s_l1FeeCalculationMode;
     if (l1FeeCalculationMode == L1_CALLDATA_GAS_COST_MODE) {
       // estimate based on unsigned fully RLP-encoded transaction size so we have to account for paddding bytes as well
-      return
-        (s_l1FeeCoefficient * _calculateOptimismL1DataFee(calldataSizeBytes + L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE)) /
-        100;
+      return (
+        s_l1FeeCoefficient * _calculateOptimismL1DataFee(calldataSizeBytes + L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE)
+      ) / 100;
     } else if (l1FeeCalculationMode == L1_GAS_FEES_UPPER_BOUND_MODE) {
-      // getL1FeeUpperBound expects unsigned fully RLP-encoded transaction size so we have to account for paddding bytes as well
-      return
-        (s_l1FeeCoefficient *
-          OVM_GASPRICEORACLE.getL1FeeUpperBound(calldataSizeBytes + L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE)) / 100;
+      // getL1FeeUpperBound expects unsigned fully RLP-encoded transaction size so we have to account for paddding bytes
+      // as well
+      return (
+        s_l1FeeCoefficient
+          * OVM_GASPRICEORACLE.getL1FeeUpperBound(calldataSizeBytes + L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE)
+      ) / 100;
     }
     revert InvalidL1FeeCalculationMode(l1FeeCalculationMode);
   }
 
-  function _calculateOptimismL1DataFee(uint256 calldataSizeBytes) internal view returns (uint256) {
+  function _calculateOptimismL1DataFee(
+    uint256 calldataSizeBytes
+  ) internal view returns (uint256) {
     // reference: https://docs.optimism.io/stack/transactions/fees#ecotone
-    // also: https://github.com/ethereum-optimism/specs/blob/main/specs/protocol/exec-engine.md#ecotone-l1-cost-fee-changes-eip-4844-da
-    // we treat all bytes in the calldata payload as non-zero bytes (cost: 16 gas) because accurate estimation is too expensive
+    // also:
+    // https://github.com/ethereum-optimism/specs/blob/main/specs/protocol/exec-engine.md#ecotone-l1-cost-fee-changes-eip-4844-da
+    // we treat all bytes in the calldata payload as non-zero bytes (cost: 16 gas) because accurate estimation is too
+    // expensive
     // we also have to account for the signature data size
     uint256 l1GasUsed = (calldataSizeBytes + L1_TX_SIGNATURE_DATA_BYTES_SIZE) * 16;
     uint256 scaledBaseFee = OVM_GASPRICEORACLE.baseFeeScalar() * 16 * OVM_GASPRICEORACLE.l1BaseFee();

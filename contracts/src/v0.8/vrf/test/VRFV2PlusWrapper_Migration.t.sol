@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
+
+import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
+import {VRFV2PlusWrapper} from "../dev/VRFV2PlusWrapper.sol";
 import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
 import {VRFCoordinatorV2Plus_V2Example} from "../dev/testhelpers/VRFCoordinatorV2Plus_V2Example.sol";
 import {VRFV2PlusWrapperConsumerExample} from "../dev/testhelpers/VRFV2PlusWrapperConsumerExample.sol";
-import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
-import {VRFV2PlusWrapper} from "../dev/VRFV2PlusWrapper.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract VRFV2PlusWrapper_MigrationTest is BaseTest {
   address internal constant LINK_WHALE = 0xD883a6A1C22fC4AbFE938a5aDF9B2Cc31b1BF18B;
@@ -42,7 +43,7 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
 
     // Deploy link token and link/native feed.
     s_linkToken = new MockLinkToken();
-    s_linkNativeFeed = new MockV3Aggregator(18, 500000000000000000); // .5 ETH (good for testing)
+    s_linkNativeFeed = new MockV3Aggregator(18, 500_000_000_000_000_000); // .5 ETH (good for testing)
 
     // Deploy coordinator.
     s_testCoordinator = new ExposedVRFCoordinatorV2_5(address(0));
@@ -52,10 +53,7 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
 
     // Deploy wrapper.
     s_wrapper = new VRFV2PlusWrapper(
-      address(s_linkToken),
-      address(s_linkNativeFeed),
-      address(s_testCoordinator),
-      uint256(s_wrapperSubscriptionId)
+      address(s_linkToken), address(s_linkNativeFeed), address(s_testCoordinator), uint256(s_wrapperSubscriptionId)
     );
 
     // Add wrapper as a consumer to the wrapper's subscription.
@@ -91,7 +89,7 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
       2_500_000, // maxGasLimit
       1, // stalenessSeconds
       50_000, // gasAfterPaymentCalculation
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       500_000, // fulfillmentFlatFeeNativePPM
       100_000, // fulfillmentFlatFeeLinkDiscountPPM
       15, // nativePremiumPercentage
@@ -110,7 +108,7 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
       vrfKeyHash, // keyHash
       10, // max number of words,
       1, // stalenessSeconds
-      50000000000000000, // fallbackWeiPerUnitLink
+      50_000_000_000_000_000, // fallbackWeiPerUnitLink
       0, // fulfillmentFlatFeeNativePPM
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );
@@ -171,13 +169,8 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
     s_testCoordinator.fundSubscriptionWithNative{value: DEFAULT_NATIVE_FUNDING}(s_wrapperSubscriptionId);
 
     // subscription exists in V1 coordinator before migration
-    (
-      uint96 balance,
-      uint96 nativeBalance,
-      uint64 reqCount,
-      address owner,
-      address[] memory consumers
-    ) = s_testCoordinator.getSubscription(s_wrapperSubscriptionId);
+    (uint96 balance, uint96 nativeBalance, uint64 reqCount, address owner, address[] memory consumers) =
+      s_testCoordinator.getSubscription(s_wrapperSubscriptionId);
     assertEq(reqCount, 0);
     assertEq(balance, DEFAULT_LINK_FUNDING);
     assertEq(nativeBalance, DEFAULT_NATIVE_FUNDING);
@@ -243,7 +236,7 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
     assertEq(native, false);
     assertEq(s_linkToken.balanceOf(address(s_consumer)), DEFAULT_LINK_FUNDING - expectedPaid);
 
-    (, uint256 gasLimit, ) = s_wrapper.s_callbacks(requestId);
+    (, uint256 gasLimit,) = s_wrapper.s_callbacks(requestId);
     assertEq(gasLimit, callbackGasLimit);
 
     vm.stopPrank();
@@ -285,13 +278,8 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
     s_testCoordinator.fundSubscriptionWithNative{value: DEFAULT_NATIVE_FUNDING}(s_wrapperSubscriptionId);
 
     // subscription exists in V1 coordinator before migration
-    (
-      uint96 balance,
-      uint96 nativeBalance,
-      uint64 reqCount,
-      address owner,
-      address[] memory consumers
-    ) = s_testCoordinator.getSubscription(s_wrapperSubscriptionId);
+    (uint96 balance, uint96 nativeBalance, uint64 reqCount, address owner, address[] memory consumers) =
+      s_testCoordinator.getSubscription(s_wrapperSubscriptionId);
     assertEq(reqCount, 0);
     assertEq(balance, DEFAULT_LINK_FUNDING);
     assertEq(nativeBalance, DEFAULT_NATIVE_FUNDING);
@@ -358,7 +346,7 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
     assertEq(native, true);
     assertEq(address(s_consumer).balance, DEFAULT_NATIVE_FUNDING - expectedPaid);
 
-    (, uint256 gasLimit, ) = s_wrapper.s_callbacks(requestId);
+    (, uint256 gasLimit,) = s_wrapper.s_callbacks(requestId);
     assertEq(gasLimit, callbackGasLimit);
 
     vm.stopPrank();

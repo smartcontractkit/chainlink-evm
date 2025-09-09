@@ -107,7 +107,7 @@ func TestTxm_SendNativeToken_DoesNotSendToZero(t *testing.T) {
 	txm, err := makeTestEvmTxm(t, db, ethClient, estimator, evmConfig, evmConfig.GasEstimator(), evmConfig.Transactions(), dbConfig, dbConfig.Listener(), &keystest.FakeChainStore{})
 	require.NoError(t, err)
 
-	_, err = txm.SendNativeToken(tests.Context(t), big.NewInt(0), from, to, *value, 21000)
+	_, err = txm.SendNativeToken(t.Context(), testutils.FixtureChainID, from, to, *value, 21000)
 	require.Error(t, err)
 	require.EqualError(t, err, "cannot send native token to zero address")
 }
@@ -119,7 +119,7 @@ func TestTxm_CreateTransaction(t *testing.T) {
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	memKS := keystest.NewMemoryChainStore()
 	fromAddress := memKS.MustCreate(t)
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 
 	toAddress := testutils.NewAddress()
 	gasLimit := uint64(1000)
@@ -395,7 +395,7 @@ func BenchmarkCreateTransaction(b *testing.B) {
 	config, dbConfig, evmConfig := txmgr.MakeTestConfigs(b)
 
 	ethClient := clienttest.NewClient(b)
-	ethClient.On("ConfiguredChainID").Return(big.NewInt(0)).Maybe()
+	ethClient.On("ConfiguredChainID").Return(testutils.FixtureChainID).Maybe()
 
 	estimator, err := gas.NewEstimator(logger.Test(b), ethClient, config.ChainType(), ethClient.ConfiguredChainID(), evmConfig.GasEstimator(), nil)
 	require.NoError(b, err)
@@ -433,7 +433,7 @@ func TestTxm_CreateTransaction_OutOfEth(t *testing.T) {
 	memKS := keystest.NewMemoryChainStore()
 	fromAddress := memKS.MustCreate(t)
 	otherAddress := memKS.MustCreate(t)
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 
 	gasLimit := uint64(1000)
 	toAddress := testutils.NewAddress()
@@ -567,7 +567,7 @@ func TestTxm_Reset(t *testing.T) {
 	memKS := keystest.NewMemoryChainStore()
 	addr := memKS.MustCreate(t)
 	addr2 := memKS.MustCreate(t)
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	// 4 confirmed tx from addr1
@@ -632,7 +632,7 @@ func TestTxm_GetTransactionFee(t *testing.T) {
 	db := testutils.NewSqlxDB(t)
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	memKS := keystest.NewMemoryChainStore()
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 	feeLimit := uint64(10_000)
 
 	_, dbConfig, evmConfig := txmgr.MakeTestConfigs(t)
@@ -678,6 +678,7 @@ func TestTxm_GetTransactionFee(t *testing.T) {
 			EncodedPayload: []byte{1, 2, 3},
 			FeeLimit:       feeLimit,
 			State:          txmgrcommon.TxUnstarted,
+			ChainID:        testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -710,6 +711,7 @@ func TestTxm_GetTransactionFee(t *testing.T) {
 			State:              txmgrcommon.TxFinalized,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -737,7 +739,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 	db := testutils.NewSqlxDB(t)
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	memKS := keystest.NewMemoryChainStore()
-	ethKeyStore := keys.NewChainStore(memKS, big.NewInt(0))
+	ethKeyStore := keys.NewChainStore(memKS, testutils.FixtureChainID)
 	feeLimit := uint64(10_000)
 
 	_, dbConfig, evmConfig := txmgr.MakeTestConfigs(t)
@@ -784,6 +786,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			EncodedPayload: []byte{1, 2, 3},
 			FeeLimit:       feeLimit,
 			State:          txmgrcommon.TxUnstarted,
+			ChainID:        testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -803,6 +806,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			EncodedPayload: []byte{1, 2, 3},
 			FeeLimit:       feeLimit,
 			State:          txmgrcommon.TxInProgress,
+			ChainID:        testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -825,6 +829,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			State:              txmgrcommon.TxUnconfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -847,6 +852,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			State:              txmgrcommon.TxConfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -876,6 +882,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			State:              txmgrcommon.TxFinalized,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -905,6 +912,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			State:              txmgrcommon.TxConfirmedMissingReceipt,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -929,6 +937,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			Error:              null.NewString(evmclient.TerminallyStuckMsg, true),
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -951,6 +960,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			Error:              null.NewString(terminallyStuckClientError, true),
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		err = txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -971,6 +981,7 @@ func TestTxm_GetTransactionStatus(t *testing.T) {
 			FeeLimit:       feeLimit,
 			State:          txmgrcommon.TxFatalError,
 			Error:          null.NewString(errorMsg, true),
+			ChainID:        testutils.FixtureChainID,
 		}
 		err := txStore.InsertTx(ctx, tx)
 		require.NoError(t, err)
@@ -1065,7 +1076,7 @@ func mustInsertUnconfirmedEthTxWithBroadcastDynamicFeeAttempt(t *testing.T, txSt
 
 	addr := testutils.NewAddress()
 	dtx := types.DynamicFeeTx{
-		ChainID:   big.NewInt(0),
+		ChainID:   testutils.FixtureChainID,
 		Nonce:     uint64(nonce),
 		GasTipCap: big.NewInt(1),
 		GasFeeCap: big.NewInt(1),
@@ -1127,6 +1138,7 @@ func mustInsertConfirmedMissingReceiptEthTxWithLegacyAttempt(
 	require.NoError(t, txStore.InsertTx(ctx, &etx))
 	attempt := txmgrtest.NewLegacyEthTxAttempt(t, etx.ID)
 	attempt.BroadcastBeforeBlockNum = &broadcastBeforeBlockNum
+	attempt.Tx.ChainID = testutils.FixtureChainID
 	attempt.State = txmgrtypes.TxAttemptBroadcast
 	require.NoError(t, txStore.InsertTxAttempt(ctx, &attempt))
 	etx.TxAttempts = append(etx.TxAttempts, attempt)
@@ -1145,6 +1157,7 @@ func mustInsertInProgressEthTxWithAttempt(t testing.TB, txStore txmgr.TestEvmTxS
 	rlp := new(bytes.Buffer)
 	require.NoError(t, tx.EncodeRLP(rlp))
 	attempt.SignedRawTx = rlp.Bytes()
+	attempt.Tx.ChainID = testutils.FixtureChainID
 	attempt.State = txmgrtypes.TxAttemptInProgress
 	require.NoError(t, txStore.InsertTxAttempt(ctx, &attempt))
 	var err error

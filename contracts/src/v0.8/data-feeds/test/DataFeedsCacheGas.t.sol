@@ -39,21 +39,21 @@ contract DataFeedsCacheGasTest is DataFeedsSetupGas {
   function setUp() public virtual override {
     DataFeedsSetupGas.setUp();
 
-    s_singleProxyList[0] = address(10002);
+    s_singleProxyList[0] = address(10_002);
 
-    s_proxyList[0] = address(10002);
+    s_proxyList[0] = address(10_002);
     s_proxyList[1] = address(s_dataFeedsLegacyAggregatorProxy);
     s_proxyList[2] = address(s_dataFeedsAggregatorProxy);
-    s_proxyList[3] = address(10005);
-    s_proxyList[4] = address(10006);
+    s_proxyList[3] = address(10_005);
+    s_proxyList[4] = address(10_006);
 
-    s_newSingleProxyList[0] = address(10007);
+    s_newSingleProxyList[0] = address(10_007);
 
-    s_newProxyList[0] = address(10002);
-    s_newProxyList[1] = address(10003);
-    s_newProxyList[2] = address(10004);
-    s_newProxyList[3] = address(10005);
-    s_newProxyList[4] = address(10006);
+    s_newProxyList[0] = address(10_002);
+    s_newProxyList[1] = address(10_003);
+    s_newProxyList[2] = address(10_004);
+    s_newProxyList[3] = address(10_005);
+    s_newProxyList[4] = address(10_006);
 
     vm.startPrank(OWNER);
     s_dataFeedsCache.updateDataIdMappingsForProxies(s_proxyList, s_batchValueIds);
@@ -179,13 +179,13 @@ contract DataFeedsCacheGasTest is DataFeedsSetupGas {
 
   function test_getAnswer_proxy_gas() public {
     vm.startSnapshotGas("test_getAnswer_proxy_gas");
-    s_dataFeedsLegacyAggregatorProxy.getAnswer(18446744073709551617);
+    s_dataFeedsLegacyAggregatorProxy.getAnswer(18_446_744_073_709_551_617);
     vm.stopSnapshotGas("test_getAnswer_proxy_gas");
   }
 
   function test_getTimestamp_proxy_gas() public {
     vm.startSnapshotGas("test_getTimestamp_proxy_gas");
-    s_dataFeedsLegacyAggregatorProxy.getTimestamp(18446744073709551617);
+    s_dataFeedsLegacyAggregatorProxy.getTimestamp(18_446_744_073_709_551_617);
     vm.stopSnapshotGas("test_getTimestamp_proxy_gas");
   }
 
@@ -205,7 +205,7 @@ contract DataFeedsCacheGasTest is DataFeedsSetupGas {
 
   function test_getRoundData_proxy_gas() public {
     vm.startSnapshotGas("test_getRoundData_proxy_gas");
-    s_dataFeedsLegacyAggregatorProxy.getRoundData(uint80(18446744073709551617));
+    s_dataFeedsLegacyAggregatorProxy.getRoundData(uint80(18_446_744_073_709_551_617));
     vm.stopSnapshotGas("test_getRoundData_proxy_gas");
   }
 

@@ -12,10 +12,13 @@ interface ITermsOfServiceAllowList {
   /// @notice Check if the address is blocked for usage
   /// @param sender The transaction sender's address
   /// @return True or false
-  function isBlockedSender(address sender) external returns (bool);
+  function isBlockedSender(
+    address sender
+  ) external returns (bool);
 
   /// @notice Get a list of all allowed senders
-  /// @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+  /// @dev WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is
+  /// designed
   /// to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
   /// this function has an unbounded cost, and using it as part of a state-changing function may render the function
   /// uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
@@ -32,9 +35,13 @@ interface ITermsOfServiceAllowList {
 
   /// @notice Removes a sender's access if already authorized, and disallows re-accepting the Terms of Service
   /// @param sender - Address of the sender to block
-  function blockSender(address sender) external;
+  function blockSender(
+    address sender
+  ) external;
 
   /// @notice Re-allows a previously blocked sender to accept the Terms of Service
   /// @param sender - Address of the sender to unblock
-  function unblockSender(address sender) external;
+  function unblockSender(
+    address sender
+  ) external;
 }

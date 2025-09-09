@@ -25,7 +25,9 @@ contract KeeperConsumerPerformance {
     performGasToBurn = _performGasToBurn;
   }
 
-  function checkUpkeep(bytes calldata data) external view returns (bool, bytes memory) {
+  function checkUpkeep(
+    bytes calldata data
+  ) external view returns (bool, bytes memory) {
     uint256 startGas = gasleft();
     bool dummy;
     // burn gas
@@ -35,7 +37,9 @@ contract KeeperConsumerPerformance {
     return (eligible(), abi.encode(dummy));
   }
 
-  function performUpkeep(bytes calldata data) external {
+  function performUpkeep(
+    bytes calldata data
+  ) external {
     uint256 startGas = gasleft();
     bool eligible = eligible();
     uint256 blockNum = block.number;
@@ -52,11 +56,15 @@ contract KeeperConsumerPerformance {
     }
   }
 
-  function setCheckGasToBurn(uint256 value) public {
+  function setCheckGasToBurn(
+    uint256 value
+  ) public {
     checkGasToBurn = value;
   }
 
-  function setPerformGasToBurn(uint256 value) public {
+  function setPerformGasToBurn(
+    uint256 value
+  ) public {
     performGasToBurn = value;
   }
 

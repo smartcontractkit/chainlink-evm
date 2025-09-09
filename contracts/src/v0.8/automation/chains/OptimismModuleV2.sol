@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {GasPriceOracle as OVM_GasPriceOracle} from "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
-import {ChainModuleBase} from "./ChainModuleBase.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {GasPriceOracle as OVM_GasPriceOracle} from
+  "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
+import {ChainModuleBase} from "./ChainModuleBase.sol";
 
 /**
  * @notice OptimismModuleV2 provides a cost-efficient way to get L1 fee on OP stack.
@@ -12,6 +13,7 @@ import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
  */
 contract OptimismModuleV2 is ChainModuleBase, ConfirmedOwner {
   error InvalidL1FeeCoefficient(uint8 coefficient);
+
   event L1FeeCoefficientSet(uint8 coefficient);
 
   /// @dev OVM_GASPRICEORACLE_ADDR is the address of the OVM_GasPriceOracle precompile on Optimism.
@@ -28,11 +30,15 @@ contract OptimismModuleV2 is ChainModuleBase, ConfirmedOwner {
 
   constructor() ConfirmedOwner(msg.sender) {}
 
-  function getCurrentL1Fee(uint256 dataSize) external view override returns (uint256) {
+  function getCurrentL1Fee(
+    uint256 dataSize
+  ) external view override returns (uint256) {
     return (s_l1FeeCoefficient * _getL1Fee(dataSize)) / 100;
   }
 
-  function getMaxL1Fee(uint256 dataSize) external view override returns (uint256) {
+  function getMaxL1Fee(
+    uint256 dataSize
+  ) external view override returns (uint256) {
     return _getL1Fee(dataSize);
   }
 
@@ -42,7 +48,9 @@ contract OptimismModuleV2 is ChainModuleBase, ConfirmedOwner {
    * @param dataSize the size of calldata
    * @return l1Fee the L1 fee
    */
-  function _getL1Fee(uint256 dataSize) internal view returns (uint256) {
+  function _getL1Fee(
+    uint256 dataSize
+  ) internal view returns (uint256) {
     return OVM_GASPRICEORACLE.getL1FeeUpperBound(dataSize);
   }
 
@@ -59,7 +67,9 @@ contract OptimismModuleV2 is ChainModuleBase, ConfirmedOwner {
    * @dev this function can only be invoked by contract owner
    * @param coefficient the new coefficient
    */
-  function setL1FeeCalculation(uint8 coefficient) external onlyOwner {
+  function setL1FeeCalculation(
+    uint8 coefficient
+  ) external onlyOwner {
     if (coefficient > 100) {
       revert InvalidL1FeeCoefficient(coefficient);
     }

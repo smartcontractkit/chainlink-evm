@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Common} from "../../libraries/Common.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IVerifier is IERC165 {
   /**
@@ -89,14 +89,18 @@ interface IVerifier is IERC165 {
    * @param feedId Feed ID to activated
    * @dev This function can be called by the contract admin to activate a feed
    */
-  function activateFeed(bytes32 feedId) external;
+  function activateFeed(
+    bytes32 feedId
+  ) external;
 
   /**
    * @notice Deactivates the given feed
    * @param feedId Feed ID to deactivated
    * @dev This function can be called by the contract admin to deactivate a feed
    */
-  function deactivateFeed(bytes32 feedId) external;
+  function deactivateFeed(
+    bytes32 feedId
+  ) external;
 
   /**
    * @notice returns the latest config digest and epoch for a feed

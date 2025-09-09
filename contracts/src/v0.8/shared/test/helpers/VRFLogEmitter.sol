@@ -25,14 +25,7 @@ contract VRFLogEmitter {
     address sender
   ) public {
     emit RandomWordsRequested(
-      keyHash,
-      requestId,
-      preSeed,
-      subId,
-      minimumRequestConfirmations,
-      callbackGasLimit,
-      numWords,
-      sender
+      keyHash, requestId, preSeed, subId, minimumRequestConfirmations, callbackGasLimit, numWords, sender
     );
   }
 

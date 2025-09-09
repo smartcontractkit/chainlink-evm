@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IFunctionsRouter} from "../v1_0_0/interfaces/IFunctionsRouter.sol";
 import {IFunctionsClient} from "../v1_0_0/interfaces/IFunctionsClient.sol";
+import {IFunctionsRouter} from "../v1_0_0/interfaces/IFunctionsRouter.sol";
 
 import {FunctionsRequest} from "../v1_0_0/libraries/FunctionsRequest.sol";
 
@@ -18,7 +18,9 @@ abstract contract FunctionsClient is IFunctionsClient {
 
   error OnlyRouterCanFulfill();
 
-  constructor(address router) {
+  constructor(
+    address router
+  ) {
     i_functionsRouter = IFunctionsRouter(router);
   }
 
@@ -34,11 +36,7 @@ abstract contract FunctionsClient is IFunctionsClient {
     bytes32 donId
   ) internal returns (bytes32) {
     bytes32 requestId = i_functionsRouter.sendRequest(
-      subscriptionId,
-      data,
-      FunctionsRequest.REQUEST_DATA_VERSION,
-      callbackGasLimit,
-      donId
+      subscriptionId, data, FunctionsRequest.REQUEST_DATA_VERSION, callbackGasLimit, donId
     );
     emit RequestSent(requestId);
     return requestId;

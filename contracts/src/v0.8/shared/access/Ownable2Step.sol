@@ -40,13 +40,17 @@ contract Ownable2Step is IOwnable {
   /// @notice Allows an owner to begin transferring ownership to a new address. The new owner needs to call
   /// `acceptOwnership` to accept the transfer before any permissions are changed.
   /// @param to The address to which ownership will be transferred.
-  function transferOwnership(address to) public override onlyOwner {
+  function transferOwnership(
+    address to
+  ) public override onlyOwner {
     _transferOwnership(to);
   }
 
   /// @notice validate, transfer ownership, and emit relevant events
   /// @param to The address to which ownership will be transferred.
-  function _transferOwnership(address to) private {
+  function _transferOwnership(
+    address to
+  ) private {
     if (to == msg.sender) {
       revert CannotTransferToSelf();
     }

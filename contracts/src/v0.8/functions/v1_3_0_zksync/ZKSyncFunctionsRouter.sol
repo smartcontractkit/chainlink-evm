@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FunctionsRouter} from "../v1_0_0/FunctionsRouter.sol";
 import {CallWithExactGasZKSync} from "../../shared/call/CallWithExactGasZKSync.sol";
+import {FunctionsRouter} from "../v1_0_0/FunctionsRouter.sol";
 
 ///
 /// @title FunctionsRouterZkSync
@@ -29,11 +29,11 @@ contract ZKSyncFunctionsRouter is FunctionsRouter {
 
     (bool success, bytes memory returnData, uint256 pubdataGasSpent) = CallWithExactGasZKSync
       ._callWithExactGasSafeReturnData(
-        client,
-        callbackGasLimit,
-        abi.encodeWithSelector(this.getConfig().handleOracleFulfillmentSelector, requestId, response, err),
-        MAX_CALLBACK_RETURN_BYTES
-      );
+      client,
+      callbackGasLimit,
+      abi.encodeWithSelector(this.getConfig().handleOracleFulfillmentSelector, requestId, response, err),
+      MAX_CALLBACK_RETURN_BYTES
+    );
     return CallbackResult({success: success, gasUsed: g1 - gasleft() + pubdataGasSpent, returnData: returnData});
   }
 }

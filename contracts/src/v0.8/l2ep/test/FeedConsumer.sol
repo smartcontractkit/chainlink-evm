@@ -7,7 +7,9 @@ contract FeedConsumer {
   // solhint-disable-next-line
   AggregatorV2V3Interface public immutable AGGREGATOR;
 
-  constructor(address feedAddress) {
+  constructor(
+    address feedAddress
+  ) {
     AGGREGATOR = AggregatorV2V3Interface(feedAddress);
   }
 
@@ -23,11 +25,15 @@ contract FeedConsumer {
     return AGGREGATOR.latestRound();
   }
 
-  function getAnswer(uint256 roundId) external view returns (int256) {
+  function getAnswer(
+    uint256 roundId
+  ) external view returns (int256) {
     return AGGREGATOR.getAnswer(roundId);
   }
 
-  function getTimestamp(uint256 roundId) external view returns (uint256) {
+  function getTimestamp(
+    uint256 roundId
+  ) external view returns (uint256) {
     return AGGREGATOR.getTimestamp(roundId);
   }
 
@@ -45,11 +51,7 @@ contract FeedConsumer {
 
   function getRoundData(
     uint80 _roundId
-  )
-    external
-    view
-    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
-  {
+  ) external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
     return AGGREGATOR.getRoundData(_roundId);
   }
 

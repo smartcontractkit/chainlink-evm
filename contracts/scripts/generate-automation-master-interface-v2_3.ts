@@ -1,14 +1,15 @@
 /**
  * @description this script generates a master interface for interacting with the automation registry
- * @notice run this script with pnpm ts-node ./scripts/generate-automation-master-interface-v2_3.ts
+ * @notice run this script with pnpm tsx ./scripts/generate-automation-master-interface-v2_3.ts
  */
-import { AutomationRegistry2_3__factory as Registry } from '../typechain/factories/AutomationRegistry2_3__factory'
-import { AutomationRegistryLogicA2_3__factory as RegistryLogicA } from '../typechain/factories/AutomationRegistryLogicA2_3__factory'
-import { AutomationRegistryLogicB2_3__factory as RegistryLogicB } from '../typechain/factories/AutomationRegistryLogicB2_3__factory'
-import { AutomationRegistryLogicC2_3__factory as RegistryLogicC } from '../typechain/factories/AutomationRegistryLogicC2_3__factory'
-import { utils } from 'ethers'
+import Registry from '../artifacts/src/v0.8/automation/v2_3/AutomationRegistry2_3.sol/AutomationRegistry2_3.json'
+import RegistryLogicA from '../artifacts/src/v0.8/automation/v2_3/AutomationRegistryLogicA2_3.sol/AutomationRegistryLogicA2_3.json'
+import RegistryLogicB from '../artifacts/src/v0.8/automation/v2_3/AutomationRegistryLogicB2_3.sol/AutomationRegistryLogicB2_3.json'
+import RegistryLogicC from '../artifacts/src/v0.8/automation/v2_3/AutomationRegistryLogicC2_3.sol/AutomationRegistryLogicC2_3.json'
+
 import fs from 'fs'
 import { exec } from 'child_process'
+import { createHash } from 'crypto'
 
 const dest = 'src/v0.8/automation/interfaces/v2_3'
 const srcDest = `${dest}/IAutomationRegistryMaster2_3.sol`
@@ -25,7 +26,7 @@ const abis = [
 
 for (const abi of abis) {
   for (const entry of abi) {
-    const id = utils.id(JSON.stringify(entry))
+    const id = createHash('sha256').update(JSON.stringify(entry)).digest('hex')
     if (!abiSet.has(id)) {
       abiSet.add(id)
       if (
@@ -41,14 +42,14 @@ for (const abi of abis) {
   }
 }
 
-const checksum = utils.id(abis.join(''))
+const checksum = createHash('sha256').update(JSON.stringify(abis)).digest('hex')
 
 fs.writeFileSync(`${tmpDest}`, JSON.stringify(combinedABI))
 
 const cmd = `
 cat ${tmpDest} | pnpm abi-to-sol --solidity-version ^0.8.4 --license MIT > ${srcDest} IAutomationRegistryMaster2_3;
 echo "// abi-checksum: ${checksum}" | cat - ${srcDest} > ${tmpDest} && mv ${tmpDest} ${srcDest};
-pnpm prettier --write ${srcDest};
+export FOUNDRY_PROFILE=automation; forge fmt ${srcDest};
 `
 
 exec(cmd)

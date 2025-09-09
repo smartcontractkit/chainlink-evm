@@ -15,7 +15,9 @@ contract BatchBlockhashStore {
   // solhint-disable-next-line chainlink-solidity/prefix-immutable-variables-with-i
   BlockhashStore public immutable BHS;
 
-  constructor(address blockhashStoreAddr) {
+  constructor(
+    address blockhashStoreAddr
+  ) {
     BHS = BlockhashStore(blockhashStoreAddr);
   }
 
@@ -25,7 +27,9 @@ contract BatchBlockhashStore {
    * @param blockNumbers the block numbers to store the blockhashes of. Must be available via the
    *   blockhash() instruction, otherwise this function call will revert.
    */
-  function store(uint256[] memory blockNumbers) public {
+  function store(
+    uint256[] memory blockNumbers
+  ) public {
     for (uint256 i = 0; i < blockNumbers.length; i++) {
       // skip the block if it's not storeable, the caller will have to check
       // after the transaction is mined to see if the blockhash was truly stored.
@@ -56,12 +60,14 @@ contract BatchBlockhashStore {
    *   param. If the blockhash is not found, 0x0 is returned instead of the real blockhash, indicating
    *   that it is not in the blockhash store.
    */
-  function getBlockhashes(uint256[] memory blockNumbers) external view returns (bytes32[] memory) {
+  function getBlockhashes(
+    uint256[] memory blockNumbers
+  ) external view returns (bytes32[] memory) {
     bytes32[] memory blockHashes = new bytes32[](blockNumbers.length);
     for (uint256 i = 0; i < blockNumbers.length; i++) {
       try BHS.getBlockhash(blockNumbers[i]) returns (bytes32 bh) {
         blockHashes[i] = bh;
-      } catch Error(string memory /* reason */) {
+      } catch Error(string memory) /* reason */ {
         blockHashes[i] = 0x0;
       }
     }
@@ -73,7 +79,9 @@ contract BatchBlockhashStore {
    *   using the blockhash() instruction.
    * @param blockNumber the block number to check if it's storeable with blockhash()
    */
-  function _storeableBlock(uint256 blockNumber) private view returns (bool) {
+  function _storeableBlock(
+    uint256 blockNumber
+  ) private view returns (bool) {
     // handle edge case on simulated chains which possibly have < 256 blocks total.
     return
       ChainSpecificUtil._getBlockNumber() <= 256 ? true : blockNumber >= (ChainSpecificUtil._getBlockNumber() - 256);
@@ -84,7 +92,11 @@ contract BatchBlockhashStore {
 interface BlockhashStore {
   function storeVerifyHeader(uint256 n, bytes memory header) external;
 
-  function store(uint256 n) external;
+  function store(
+    uint256 n
+  ) external;
 
-  function getBlockhash(uint256 n) external view returns (bytes32);
+  function getBlockhash(
+    uint256 n
+  ) external view returns (bytes32);
 }

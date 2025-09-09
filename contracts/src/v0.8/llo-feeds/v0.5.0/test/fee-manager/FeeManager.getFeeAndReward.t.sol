@@ -421,9 +421,7 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
 
     //get the fee required by the feeManager
     Common.Asset memory fee = getFee(
-      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, uint32(block.timestamp), 0, 0),
-      getNativeQuote(),
-      USER
+      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, uint32(block.timestamp), 0, 0), getNativeQuote(), USER
     );
 
     //fee should be zero
@@ -439,9 +437,7 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
 
     //get the fee required by the feeManager
     Common.Asset memory fee = getFee(
-      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, uint32(block.timestamp), 0, 0),
-      getNativeQuote(),
-      USER
+      getV3ReportWithCustomExpiryAndFee(DEFAULT_FEED_1_V3, uint32(block.timestamp), 0, 0), getNativeQuote(), USER
     );
 
     //fee should be zero
@@ -558,10 +554,7 @@ contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
     //get the fee required by the feeManager
     getFee(
       getV3ReportWithCustomExpiryAndFee(
-        DEFAULT_FEED_1_V3,
-        block.timestamp - 1,
-        DEFAULT_REPORT_LINK_FEE,
-        DEFAULT_REPORT_NATIVE_FEE
+        DEFAULT_FEED_1_V3, block.timestamp - 1, DEFAULT_REPORT_LINK_FEE, DEFAULT_REPORT_NATIVE_FEE
       ),
       getNativeQuote(),
       USER

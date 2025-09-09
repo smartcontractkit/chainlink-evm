@@ -2,8 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {CallWithExactGasZKSync} from "../../call/CallWithExactGasZKSync.sol";
-import {CallWithExactGasZKSyncHelper} from "./CallWithExactGasZKSyncHelper.sol";
+
 import {BaseTest} from "../BaseTest.t.sol";
+import {CallWithExactGasZKSyncHelper} from "./CallWithExactGasZKSyncHelper.sol";
 
 import {MockSystemContext} from "../mocks/MockSystemContext.sol";
 import {TestTarget} from "../testhelpers/TestTarget.sol";
@@ -36,11 +37,7 @@ contract CallWithExactGasZKSyncSetup is BaseTest {
   ) internal returns (bool success, bytes memory retData) {
     // Encode the call to the helper function:
     bytes memory payload = abi.encodeWithSelector(
-      CallWithExactGasZKSyncHelper.callWithExactGasSafeReturnData.selector,
-      _to,
-      _maxTotalGas,
-      _data,
-      _maxReturnBytes
+      CallWithExactGasZKSyncHelper.callWithExactGasSafeReturnData.selector, _to, _maxTotalGas, _data, _maxReturnBytes
     );
 
     // Constrain the subcall to `allowedGas`
@@ -62,7 +59,7 @@ contract CallWithExactGasZKSync__callWithExactGasSafeReturnData is CallWithExact
   function test__callWithExactGasSafeReturnData_RevertWhen_NoContract() public {
     (bool successCall, bytes memory retData) = _limitedGasCallWithExactGas(
       2_000_000,
-      address(12345), // no code
+      address(12_345), // no code
       1_000_000,
       abi.encodeWithSelector(TestTarget.returnData.selector),
       100
@@ -111,7 +108,7 @@ contract CallWithExactGasZKSync__callWithExactGasSafeReturnData is CallWithExact
     // With the overhead, the check should fail, triggering NotEnoughGasForPubdata.
     vm.expectRevert(NotEnoughGasForPubdata.selector);
 
-    (bool successCall, ) = _limitedGasCallWithExactGas(
+    (bool successCall,) = _limitedGasCallWithExactGas(
       400_000, // subcall gas
       address(s_target),
       200_000, // _maxTotalGas exactly 200k
@@ -124,11 +121,7 @@ contract CallWithExactGasZKSync__callWithExactGasSafeReturnData is CallWithExact
   /// @notice Succeeds under normal conditions, returning data.
   function test__callWithExactGasSafeReturnData_Success() public {
     (bool successCall, bytes memory retData) = _limitedGasCallWithExactGas(
-      5_000_000,
-      address(s_target),
-      4_000_000,
-      abi.encodeWithSelector(TestTarget.returnData.selector),
-      10000
+      5_000_000, address(s_target), 4_000_000, abi.encodeWithSelector(TestTarget.returnData.selector), 10_000
     );
     assertTrue(successCall, "Subcall itself must not revert");
     (bool success, bytes memory returnedData, uint256 pubdata) = _decodeResult(retData);
@@ -150,7 +143,7 @@ contract CallWithExactGasZKSync__callWithExactGasSafeReturnData is CallWithExact
     );
 
     assertTrue(successCall, "Subcall must not revert");
-    (bool success, bytes memory returnedData, ) = _decodeResult(retData);
+    (bool success, bytes memory returnedData,) = _decodeResult(retData);
     assertTrue(success, "Target call must succeed");
     assertEq(returnedData.length, 50, "Should have truncated the large data to 50 bytes");
   }
@@ -160,12 +153,8 @@ contract CallWithExactGasZKSync__callWithExactGasSafeReturnData is CallWithExact
     // Expect the revert reason "CustomRevertReason"
     vm.expectRevert(bytes("CustomRevertReason"));
 
-    (bool successCall, ) = _limitedGasCallWithExactGas(
-      1_000_000,
-      address(s_target),
-      1_000_000,
-      abi.encodeWithSelector(TestTarget.revertWithReason.selector),
-      100
+    (bool successCall,) = _limitedGasCallWithExactGas(
+      1_000_000, address(s_target), 1_000_000, abi.encodeWithSelector(TestTarget.revertWithReason.selector), 100
     );
     assertFalse(successCall, "Subcall itself must revert");
   }
@@ -174,11 +163,7 @@ contract CallWithExactGasZKSync__callWithExactGasSafeReturnData is CallWithExact
   function test__callWithExactGasSafeReturnData_RevertWhen_TargetRevertsNoReason() public {
     vm.expectRevert(); // just expect some revert, no reason
     _limitedGasCallWithExactGas(
-      1_000_000,
-      address(s_target),
-      1_000_000,
-      abi.encodeWithSelector(TestTarget.revertNoReason.selector),
-      100
+      1_000_000, address(s_target), 1_000_000, abi.encodeWithSelector(TestTarget.revertNoReason.selector), 100
     );
   }
 }

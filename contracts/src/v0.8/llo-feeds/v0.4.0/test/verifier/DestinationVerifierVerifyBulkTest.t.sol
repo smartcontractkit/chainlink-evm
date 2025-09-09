@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
-import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
-import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
+import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
+import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 
 contract VerifierVerifyBulkTest is BaseTest {
   bytes32[3] internal s_reportContext;
@@ -34,11 +34,8 @@ contract VerifierVerifyBulkTest is BaseTest {
       abi.encodeWithSelector(AccessControllerInterface.hasAccess.selector, USER),
       abi.encode(false)
     );
-    bytes memory signedReport = _generateV3EncodedBlob(
-      s_testReportThree,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV3EncodedBlob(s_testReportThree, s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     bytes[] memory signedReports = new bytes[](2);
     signedReports[0] = signedReport;

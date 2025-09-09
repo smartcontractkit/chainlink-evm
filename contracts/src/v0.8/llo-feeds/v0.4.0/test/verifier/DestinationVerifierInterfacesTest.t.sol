@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
-import {VerifierWithFeeManager} from "./BaseDestinationVerifierTest.t.sol";
+import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
+
+import {Common} from "../../../libraries/Common.sol";
 import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
 import {DestinationVerifierProxy} from "../../../v0.4.0/DestinationVerifierProxy.sol";
-import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {IDestinationFeeManager} from "../../../v0.4.0/interfaces/IDestinationFeeManager.sol";
 import {IDestinationRewardManager} from "../../../v0.4.0/interfaces/IDestinationRewardManager.sol";
 import {IDestinationVerifierProxy} from "../../../v0.4.0/interfaces/IDestinationVerifierProxy.sol";
-import {Common} from "../../../libraries/Common.sol";
+import {VerifierWithFeeManager} from "./BaseDestinationVerifierTest.t.sol";
+
 import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 import {IERC20} from "@openzeppelin/contracts@4.8.3/interfaces/IERC20.sol";
+import {Test} from "forge-std/Test.sol";
 
 /*
 This test checks the interfaces of destination verifier matches the expectations.
@@ -28,7 +30,8 @@ interface IVerifierProxy {
    * correctly by routing to the correct verifier, and bills the user if applicable.
    * @param payload The encoded data to be verified, including the signed
    * report.
-   * @param parameterPayload Fee metadata for billing. For the current implementation this is just the abi-encoded fee token ERC-20 address.
+   * @param parameterPayload Fee metadata for billing. For the current implementation this is just the abi-encoded fee
+   * token ERC-20 address.
    * @return verifierResponse The encoded report from the verifier.
    */
   function verify(
@@ -42,7 +45,8 @@ interface IVerifierProxy {
 interface IFeeManager {
   /**
    * @notice Calculates the fee and reward associated with verifying a report, including discounts for subscribers.
-   * This function assesses the fee and reward for report verification, applying a discount for recognized subscriber addresses.
+   * This function assesses the fee and reward for report verification, applying a discount for recognized subscriber
+   * addresses.
    * @param subscriber The address attempting to verify the report. A discount is applied if this address
    * is recognized as a subscriber.
    * @param unverifiedReport The report data awaiting verification. The content of this report is used to
@@ -116,7 +120,7 @@ contract VerifierInterfacesTest is VerifierWithFeeManager {
     IDestinationRewardManager rewardManager = IDestinationRewardManager(address(feeManager.i_rewardManager()));
 
     address feeTokenAddress = feeManager.i_linkAddress();
-    (Common.Asset memory fee, , ) = feeManager.getFeeAndReward(address(this), reportData, feeTokenAddress);
+    (Common.Asset memory fee,,) = feeManager.getFeeAndReward(address(this), reportData, feeTokenAddress);
 
     // Approve rewardManager to spend this contract's balance in fees
     _approveLink(address(rewardManager), fee.amount, USER);

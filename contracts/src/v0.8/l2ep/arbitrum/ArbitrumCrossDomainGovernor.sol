@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 // solhint-disable-next-line no-unused-import
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+import {IDelegateForwarder} from "../interfaces/IDelegateForwarder.sol";
 // solhint-disable-next-line no-unused-import
 import {IForwarder} from "../interfaces/IForwarder.sol";
-import {IDelegateForwarder} from "../interfaces/IDelegateForwarder.sol";
 
 import {ArbitrumCrossDomainForwarder} from "./ArbitrumCrossDomainForwarder.sol";
 
@@ -13,7 +13,8 @@ import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
 
 /**
  * @title ArbitrumCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Arbitrum
- * @notice L2 Contract which receives messages from a specific L1 address and transparently forwards them to the destination.
+ * @notice L2 Contract which receives messages from a specific L1 address and transparently forwards them to the
+ * destination.
  * @dev Any other L2 contract which uses this contract's address as a privileged position,
  *   can be considered to be simultaneously owned by the `l1Owner` and L2 `owner`
  */
@@ -23,7 +24,9 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @param l1OwnerAddr the L1 owner address that will be allowed to call the forward fn
    * @dev Empty constructor required due to inheriting from abstract contract CrossDomainForwarder
    */
-  constructor(address l1OwnerAddr) ArbitrumCrossDomainForwarder(l1OwnerAddr) {}
+  constructor(
+    address l1OwnerAddr
+  ) ArbitrumCrossDomainForwarder(l1OwnerAddr) {}
 
   /**
    * @notice versions:

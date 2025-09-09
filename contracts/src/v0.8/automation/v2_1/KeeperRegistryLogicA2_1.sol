@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.16;
 
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
+import {AutomationForwarder} from "../AutomationForwarder.sol";
+import {Chainable} from "../Chainable.sol";
+import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
+
+import {MigratableKeeperRegistryInterfaceV2} from "../interfaces/MigratableKeeperRegistryInterfaceV2.sol";
+import {UpkeepTranscoderInterfaceV2} from "../interfaces/UpkeepTranscoderInterfaceV2.sol";
 import {KeeperRegistryBase2_1} from "./KeeperRegistryBase2_1.sol";
 import {KeeperRegistryLogicB2_1} from "./KeeperRegistryLogicB2_1.sol";
-import {Chainable} from "../Chainable.sol";
-import {AutomationForwarder} from "../AutomationForwarder.sol";
-import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
-import {UpkeepTranscoderInterfaceV2} from "../interfaces/UpkeepTranscoderInterfaceV2.sol";
-import {MigratableKeeperRegistryInterfaceV2} from "../interfaces/MigratableKeeperRegistryInterfaceV2.sol";
+import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 /**
  * @notice Logic contract, works in tandem with KeeperRegistry as a proxy
@@ -65,19 +66,14 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
     Upkeep memory upkeep = s_upkeep[id];
 
     if (hotVars.paused) return (false, bytes(""), UpkeepFailureReason.REGISTRY_PAUSED, 0, upkeep.performGas, 0, 0);
-    if (upkeep.maxValidBlocknumber != UINT32_MAX)
+    if (upkeep.maxValidBlocknumber != UINT32_MAX) {
       return (false, bytes(""), UpkeepFailureReason.UPKEEP_CANCELLED, 0, upkeep.performGas, 0, 0);
+    }
     if (upkeep.paused) return (false, bytes(""), UpkeepFailureReason.UPKEEP_PAUSED, 0, upkeep.performGas, 0, 0);
 
     (fastGasWei, linkNative) = _getFeedData(hotVars);
     uint96 maxLinkPayment = _getMaxLinkPayment(
-      hotVars,
-      triggerType,
-      upkeep.performGas,
-      s_storage.maxPerformDataSize,
-      fastGasWei,
-      linkNative,
-      false
+      hotVars, triggerType, upkeep.performGas, s_storage.maxPerformDataSize, fastGasWei, linkNative, false
     );
     if (upkeep.balance < maxLinkPayment) {
       return (false, bytes(""), UpkeepFailureReason.INSUFFICIENT_BALANCE, 0, upkeep.performGas, 0, 0);
@@ -114,18 +110,12 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
     }
 
     (upkeepNeeded, performData) = abi.decode(result, (bool, bytes));
-    if (!upkeepNeeded)
-      return (
-        false,
-        bytes(""),
-        UpkeepFailureReason.UPKEEP_NOT_NEEDED,
-        gasUsed,
-        upkeep.performGas,
-        fastGasWei,
-        linkNative
-      );
+    if (!upkeepNeeded) {
+      return
+        (false, bytes(""), UpkeepFailureReason.UPKEEP_NOT_NEEDED, gasUsed, upkeep.performGas, fastGasWei, linkNative);
+    }
 
-    if (performData.length > s_storage.maxPerformDataSize)
+    if (performData.length > s_storage.maxPerformDataSize) {
       return (
         false,
         bytes(""),
@@ -135,6 +125,7 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
         fastGasWei,
         linkNative
       );
+    }
 
     return (upkeepNeeded, performData, upkeepFailureReason, gasUsed, upkeep.performGas, fastGasWei, linkNative);
   }
@@ -161,7 +152,8 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
   }
 
   /**
-   * @dev checkCallback is used specifically for automation data streams lookups (see StreamsLookupCompatibleInterface.sol)
+   * @dev checkCallback is used specifically for automation data streams lookups (see
+   * StreamsLookupCompatibleInterface.sol)
    * @param id the upkeepID to execute a callback for
    * @param values the values returned from the data streams lookup
    * @param extraData the user-provided extra context data
@@ -233,9 +225,8 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
     if (msg.sender != owner() && !s_registrars.contains(msg.sender)) revert OnlyCallableByOwnerOrRegistrar();
     if (!target.isContract()) revert NotAContract();
     id = _createID(triggerType);
-    IAutomationForwarder forwarder = IAutomationForwarder(
-      address(new AutomationForwarder(target, address(this), i_automationForwarderLogic))
-    );
+    IAutomationForwarder forwarder =
+      IAutomationForwarder(address(new AutomationForwarder(target, address(this), i_automationForwarderLogic)));
     _createUpkeep(
       id,
       Upkeep({
@@ -280,7 +271,9 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
    * @dev if a user cancels an upkeep, their funds are locked for CANCELLATION_DELAY blocks to
    * allow any pending performUpkeep txs time to get confirmed
    */
-  function cancelUpkeep(uint256 id) external {
+  function cancelUpkeep(
+    uint256 id
+  ) external {
     Upkeep memory upkeep = s_upkeep[id];
     bool canceled = upkeep.maxValidBlocknumber != UINT32_MAX;
     bool isOwner = msg.sender == owner();
@@ -335,8 +328,8 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
    */
   function migrateUpkeeps(uint256[] calldata ids, address destination) external {
     if (
-      s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING &&
-      s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
+      s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING
+        && s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
     ) revert MigrationNotPermitted();
     if (s_storage.transcoder == ZERO_ADDRESS) revert TranscoderNotSet();
     if (ids.length == 0) revert ArrayHasNoEntries();
@@ -369,20 +362,11 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
       emit UpkeepMigrated(id, upkeep.balance, destination);
     }
     s_expectedLinkBalance = s_expectedLinkBalance - totalBalanceRemaining;
-    bytes memory encodedUpkeeps = abi.encode(
-      ids,
-      upkeeps,
-      new address[](ids.length),
-      admins,
-      checkDatas,
-      triggerConfigs,
-      offchainConfigs
-    );
+    bytes memory encodedUpkeeps =
+      abi.encode(ids, upkeeps, new address[](ids.length), admins, checkDatas, triggerConfigs, offchainConfigs);
     MigratableKeeperRegistryInterfaceV2(destination).receiveUpkeeps(
       UpkeepTranscoderInterfaceV2(s_storage.transcoder).transcodeUpkeeps(
-        UPKEEP_VERSION_BASE,
-        MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(),
-        encodedUpkeeps
+        UPKEEP_VERSION_BASE, MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(), encodedUpkeeps
       )
     );
     i_link.transfer(destination, totalBalanceRemaining);
@@ -393,10 +377,12 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
    * @param encodedUpkeeps the raw upkeep data to import
    * @dev this function is never called directly, it is only called by another registry's migrate function
    */
-  function receiveUpkeeps(bytes calldata encodedUpkeeps) external {
+  function receiveUpkeeps(
+    bytes calldata encodedUpkeeps
+  ) external {
     if (
-      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.INCOMING &&
-      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.BIDIRECTIONAL
+      s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.INCOMING
+        && s_peerRegistryMigrationPermission[msg.sender] != MigrationPermission.BIDIRECTIONAL
     ) revert MigrationNotPermitted();
     (
       uint256[] memory ids,
@@ -414,12 +400,7 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
         );
       }
       _createUpkeep(
-        ids[idx],
-        upkeeps[idx],
-        upkeepAdmins[idx],
-        checkDatas[idx],
-        triggerConfigs[idx],
-        offchainConfigs[idx]
+        ids[idx], upkeeps[idx], upkeepAdmins[idx], checkDatas[idx], triggerConfigs[idx], offchainConfigs[idx]
       );
       emit UpkeepReceived(ids[idx], upkeeps[idx].balance, msg.sender);
     }

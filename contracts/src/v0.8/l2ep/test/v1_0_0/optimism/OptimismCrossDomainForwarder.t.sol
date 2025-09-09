@@ -2,8 +2,9 @@
 pragma solidity 0.8.24;
 
 import {OptimismCrossDomainForwarder} from "../../../optimism/OptimismCrossDomainForwarder.sol";
-import {MockOVMCrossDomainMessenger} from "../../mocks/optimism/MockOVMCrossDomainMessenger.sol";
+
 import {Greeter} from "../../Greeter.sol";
+import {MockOVMCrossDomainMessenger} from "../../mocks/optimism/MockOVMCrossDomainMessenger.sol";
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract OptimismCrossDomainForwarderTest is L2EPTest {
@@ -21,10 +22,7 @@ contract OptimismCrossDomainForwarderTest is L2EPTest {
     // Deploys contracts
     vm.startPrank(s_l1OwnerAddr);
     s_mockOptimismCrossDomainMessenger = new MockOVMCrossDomainMessenger(s_l1OwnerAddr);
-    s_optimismCrossDomainForwarder = new OptimismCrossDomainForwarder(
-      s_mockOptimismCrossDomainMessenger,
-      s_l1OwnerAddr
-    );
+    s_optimismCrossDomainForwarder = new OptimismCrossDomainForwarder(s_mockOptimismCrossDomainMessenger, s_l1OwnerAddr);
     s_greeter = new Greeter(address(s_optimismCrossDomainForwarder));
     vm.stopPrank();
   }

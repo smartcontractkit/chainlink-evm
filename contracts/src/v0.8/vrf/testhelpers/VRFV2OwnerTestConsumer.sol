@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
-import {VRFConsumerBaseV2} from "../VRFConsumerBaseV2.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
-import {ChainSpecificUtil} from "../ChainSpecificUtil_v0_8_6.sol";
+
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {ChainSpecificUtil} from "../ChainSpecificUtil_v0_8_6.sol";
+import {VRFConsumerBaseV2} from "../VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
 
 contract VRFV2OwnerTestConsumer is VRFConsumerBaseV2, ConfirmedOwner {
   VRFCoordinatorV2Interface public COORDINATOR;
@@ -24,8 +25,8 @@ contract VRFV2OwnerTestConsumer is VRFConsumerBaseV2, ConfirmedOwner {
   struct RequestStatus {
     bool fulfilled;
     uint256[] randomWords;
-    uint requestTimestamp;
-    uint fulfilmentTimestamp;
+    uint256 requestTimestamp;
+    uint256 fulfilmentTimestamp;
     uint256 requestBlockNumber;
     uint256 fulfilmentBlockNumber;
   }
@@ -74,13 +75,8 @@ contract VRFV2OwnerTestConsumer is VRFConsumerBaseV2, ConfirmedOwner {
     emit SubscriptionCreatedFundedAndConsumerAdded(subId, address(this), _subTopUpAmount);
 
     for (uint16 i = 0; i < _requestCount; i++) {
-      uint256 requestId = COORDINATOR.requestRandomWords(
-        _keyHash,
-        subId,
-        _requestConfirmations,
-        _callbackGasLimit,
-        _numWords
-      );
+      uint256 requestId =
+        COORDINATOR.requestRandomWords(_keyHash, subId, _requestConfirmations, _callbackGasLimit, _numWords);
       s_lastRequestId = requestId;
       uint256 requestBlockNumber = ChainSpecificUtil._getBlockNumber();
       s_requests[requestId] = RequestStatus({
@@ -115,8 +111,8 @@ contract VRFV2OwnerTestConsumer is VRFConsumerBaseV2, ConfirmedOwner {
     returns (
       bool fulfilled,
       uint256[] memory randomWords,
-      uint requestTimestamp,
-      uint fulfilmentTimestamp,
+      uint256 requestTimestamp,
+      uint256 fulfilmentTimestamp,
       uint256 requestBlockNumber,
       uint256 fulfilmentBlockNumber
     )
@@ -132,7 +128,9 @@ contract VRFV2OwnerTestConsumer is VRFConsumerBaseV2, ConfirmedOwner {
     );
   }
 
-  function topUpSubscription(uint256 amount) public onlyOwner {
+  function topUpSubscription(
+    uint256 amount
+  ) public onlyOwner {
     LINKTOKEN.transferAndCall(address(COORDINATOR), amount, abi.encode(subId));
   }
 }

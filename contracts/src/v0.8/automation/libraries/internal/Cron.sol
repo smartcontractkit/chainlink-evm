@@ -33,8 +33,8 @@
 
 pragma solidity ^0.8.6;
 
-import "../../../vendor/Strings.sol";
 import "../../../vendor/DateTime.sol";
+import "../../../vendor/Strings.sol";
 
 // The fields of a cron spec, by name
 string constant MINUTE = "minute";
@@ -96,7 +96,9 @@ library Cron {
    * @return the next tick
    * @dev this is the internal version of the library. There is also an external version.
    */
-  function nextTick(Spec memory spec) internal view returns (uint256) {
+  function nextTick(
+    Spec memory spec
+  ) internal view returns (uint256) {
     uint16 year = DateTime.getYear(block.timestamp);
     uint8 month = DateTime.getMonth(block.timestamp);
     uint8 day = DateTime.getDay(block.timestamp);
@@ -152,7 +154,9 @@ library Cron {
    * @param spec the spec to evaluate
    * @return the next tick
    */
-  function lastTick(Spec memory spec) internal view returns (uint256) {
+  function lastTick(
+    Spec memory spec
+  ) internal view returns (uint256) {
     uint16 year = DateTime.getYear(block.timestamp);
     uint8 month = DateTime.getMonth(block.timestamp);
     uint8 day = DateTime.getDay(block.timestamp);
@@ -221,11 +225,8 @@ library Cron {
    */
   function matches(Spec memory spec, uint256 timestamp) internal view returns (bool) {
     DateTime._DateTime memory dt = DateTime.parseTimestamp(timestamp);
-    return
-      matches(spec.month, dt.month) &&
-      matches(spec.day, dt.day) &&
-      matches(spec.hour, dt.hour) &&
-      matches(spec.minute, dt.minute);
+    return matches(spec.month, dt.month) && matches(spec.day, dt.day) && matches(spec.hour, dt.hour)
+      && matches(spec.minute, dt.minute);
   }
 
   /**
@@ -234,7 +235,9 @@ library Cron {
    * @param cronString the cron string
    * @return the spec struct
    */
-  function toSpec(string memory cronString) internal pure returns (Spec memory) {
+  function toSpec(
+    string memory cronString
+  ) internal pure returns (Spec memory) {
     strings.slice memory space = strings.toSlice(" ");
     strings.slice memory cronSlice = strings.toSlice(cronString);
     if (cronSlice.count(space) != 4) {
@@ -248,24 +251,20 @@ library Cron {
     // The cronSlice now contains the last section of the cron job,
     // which corresponds to the day of week
     if (
-      minuteSlice.len() == 0 ||
-      hourSlice.len() == 0 ||
-      daySlice.len() == 0 ||
-      monthSlice.len() == 0 ||
-      cronSlice.len() == 0
+      minuteSlice.len() == 0 || hourSlice.len() == 0 || daySlice.len() == 0 || monthSlice.len() == 0
+        || cronSlice.len() == 0
     ) {
       revert InvalidSpec("some fields missing");
     }
-    return
-      validate(
-        Spec({
-          minute: sliceToField(minuteSlice),
-          hour: sliceToField(hourSlice),
-          day: sliceToField(daySlice),
-          month: sliceToField(monthSlice),
-          dayOfWeek: sliceToField(cronSlice)
-        })
-      );
+    return validate(
+      Spec({
+        minute: sliceToField(minuteSlice),
+        hour: sliceToField(hourSlice),
+        day: sliceToField(daySlice),
+        month: sliceToField(monthSlice),
+        dayOfWeek: sliceToField(cronSlice)
+      })
+    );
   }
 
   /**
@@ -274,7 +273,9 @@ library Cron {
    * @param cronString the cron string
    * @return the abi-encoded spec
    */
-  function toEncodedSpec(string memory cronString) internal pure returns (bytes memory) {
+  function toEncodedSpec(
+    string memory cronString
+  ) internal pure returns (bytes memory) {
     return abi.encode(toSpec(cronString));
   }
 
@@ -284,21 +285,22 @@ library Cron {
    * @param spec the cron spec
    * @return the corresponding cron string
    */
-  function toCronString(Spec memory spec) internal pure returns (string memory) {
-    return
-      string(
-        bytes.concat(
-          fieldToBstring(spec.minute),
-          " ",
-          fieldToBstring(spec.hour),
-          " ",
-          fieldToBstring(spec.day),
-          " ",
-          fieldToBstring(spec.month),
-          " ",
-          fieldToBstring(spec.dayOfWeek)
-        )
-      );
+  function toCronString(
+    Spec memory spec
+  ) internal pure returns (string memory) {
+    return string(
+      bytes.concat(
+        fieldToBstring(spec.minute),
+        " ",
+        fieldToBstring(spec.hour),
+        " ",
+        fieldToBstring(spec.day),
+        " ",
+        fieldToBstring(spec.month),
+        " ",
+        fieldToBstring(spec.dayOfWeek)
+      )
+    );
   }
 
   /**
@@ -335,7 +337,9 @@ library Cron {
    * @param spec the spec to validate
    * @return the original spec
    */
-  function validate(Spec memory spec) private pure returns (Spec memory) {
+  function validate(
+    Spec memory spec
+  ) private pure returns (Spec memory) {
     validateField(spec.dayOfWeek, DAY_OF_WEEK, 0, 6);
     validateField(spec.month, MONTH, 1, 12);
     uint8 maxDay = maxDayForMonthField(spec.month);
@@ -357,32 +361,28 @@ library Cron {
       return;
     } else if (field.fieldType == FieldType.EXACT) {
       if (field.singleValue < min || field.singleValue > max) {
-        string memory reason = string(
-          bytes.concat("value must be >=,", uintToBString(min), " and <=", uintToBString(max))
-        );
+        string memory reason =
+          string(bytes.concat("value must be >=,", uintToBString(min), " and <=", uintToBString(max)));
         revert InvalidField(fieldName, reason);
       }
     } else if (field.fieldType == FieldType.INTERVAL) {
       if (field.interval < 1 || field.interval > max) {
-        string memory reason = string(
-          bytes.concat("inverval must be */(", uintToBString(1), "-", uintToBString(max), ")")
-        );
+        string memory reason =
+          string(bytes.concat("inverval must be */(", uintToBString(1), "-", uintToBString(max), ")"));
         revert InvalidField(fieldName, reason);
       }
     } else if (field.fieldType == FieldType.RANGE) {
       if (field.rangeEnd > max || field.rangeEnd <= field.rangeStart) {
-        string memory reason = string(
-          bytes.concat("inverval must be within ", uintToBString(min), "-", uintToBString(max))
-        );
+        string memory reason =
+          string(bytes.concat("inverval must be within ", uintToBString(min), "-", uintToBString(max)));
         revert InvalidField(fieldName, reason);
       }
     } else if (field.fieldType == FieldType.LIST) {
       if (field.listLength < 2) {
         revert InvalidField(fieldName, "lists must have at least 2 items");
       }
-      string memory reason = string(
-        bytes.concat("items in list must be within ", uintToBString(min), "-", uintToBString(max))
-      );
+      string memory reason =
+        string(bytes.concat("items in list must be within ", uintToBString(min), "-", uintToBString(max)));
       uint8 listItem;
       for (uint256 idx = 0; idx < field.listLength; idx++) {
         listItem = field.list[idx];
@@ -400,7 +400,9 @@ library Cron {
    * @param month the month field
    * @return the max day
    */
-  function maxDayForMonthField(Field memory month) private pure returns (uint8) {
+  function maxDayForMonthField(
+    Field memory month
+  ) private pure returns (uint8) {
     // DEV: ranges are always safe because any two consecutive months will always
     // contain a month with 31 days
     if (month.fieldType == FieldType.WILD || month.fieldType == FieldType.RANGE) {
@@ -437,7 +439,9 @@ library Cron {
    * @param fieldSlice the slice of a string representing the field of a cron job
    * @return the field
    */
-  function sliceToField(strings.slice memory fieldSlice) private pure returns (Field memory) {
+  function sliceToField(
+    strings.slice memory fieldSlice
+  ) private pure returns (Field memory) {
     strings.slice memory star = strings.toSlice("*");
     strings.slice memory dash = strings.toSlice("-");
     strings.slice memory slash = strings.toSlice("/");
@@ -478,7 +482,9 @@ library Cron {
    * @param field the field to stringify
    * @return bytes representing the string, ex: bytes("*")
    */
-  function fieldToBstring(Field memory field) private pure returns (bytes memory) {
+  function fieldToBstring(
+    Field memory field
+  ) private pure returns (bytes memory) {
     if (field.fieldType == FieldType.WILD) {
       return "*";
     } else if (field.fieldType == FieldType.EXACT) {
@@ -502,7 +508,9 @@ library Cron {
    * @param n the number to stringify
    * @return bytes representing the string, ex: bytes("1")
    */
-  function uintToBString(uint256 n) private pure returns (bytes memory) {
+  function uintToBString(
+    uint256 n
+  ) private pure returns (bytes memory) {
     if (n == 0) {
       return "0";
     }
@@ -529,7 +537,9 @@ library Cron {
    * @param slice the string slice to convert to a uint8
    * @return the number that the string represents ex: "20" --> 20
    */
-  function sliceToUint8(strings.slice memory slice) private pure returns (uint8) {
+  function sliceToUint8(
+    strings.slice memory slice
+  ) private pure returns (uint8) {
     bytes memory b = bytes(slice.toString());
     uint8 i;
     uint8 result = 0;

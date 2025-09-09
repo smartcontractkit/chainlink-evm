@@ -2,14 +2,17 @@
 pragma solidity ^0.8.24;
 
 import {IBurnMintERC20Upgradeable} from "../../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
-import {PausableUpgradeable} from "../../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
+import {PausableUpgradeable} from
+  "../../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 
 import {ERC20UpgradableBaseTest, IERC20UpgradeableBase} from "./ERC20UpgradableBaseTest.t.sol";
 
 contract ERC20UpgradableBaseTest_unfreeze is ERC20UpgradableBaseTest {
-  function should_Unfreeze(address implementation) public {
+  function should_Unfreeze(
+    address implementation
+  ) public {
     changePrank(DEFAULT_FREEZER);
     IERC20UpgradeableBase(implementation).freeze(OWNER);
 
@@ -28,7 +31,9 @@ contract ERC20UpgradableBaseTest_unfreeze is ERC20UpgradableBaseTest {
     IERC20(implementation).approve(STRANGER, AMOUNT);
   }
 
-  function should_Unfreeze_EvenWhenImplementationIsPaused(address implementation) public {
+  function should_Unfreeze_EvenWhenImplementationIsPaused(
+    address implementation
+  ) public {
     changePrank(DEFAULT_FREEZER);
     IERC20UpgradeableBase(implementation).freeze(OWNER);
     assertTrue(IERC20UpgradeableBase(implementation).isFrozen(OWNER));
@@ -42,10 +47,7 @@ contract ERC20UpgradableBaseTest_unfreeze is ERC20UpgradableBaseTest {
     assertFalse(IERC20UpgradeableBase(implementation).isFrozen(OWNER));
   }
 
-  function should_Unfreeze_RevertWhen_CallerDoesNotHaveFreezerRole(
-    address implementation,
-    bytes32 FREEZER_ROLE
-  ) public {
+  function should_Unfreeze_RevertWhen_CallerDoesNotHaveFreezerRole(address implementation, bytes32 FREEZER_ROLE) public {
     changePrank(DEFAULT_FREEZER);
     IERC20UpgradeableBase(implementation).freeze(OWNER);
 

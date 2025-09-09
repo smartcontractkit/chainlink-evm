@@ -9,19 +9,29 @@ contract MockKeeperRegistry2_1 is IAutomationRegistryConsumer {
 
   constructor() {}
 
-  function getBalance(uint256 id) external view override returns (uint96) {
+  function getBalance(
+    uint256 id
+  ) external view override returns (uint96) {
     return balance;
   }
 
-  function getMinBalance(uint256 id) external view override returns (uint96) {
+  function getMinBalance(
+    uint256 id
+  ) external view override returns (uint96) {
     return minBalance;
   }
 
-  function cancelUpkeep(uint256 id) external override {}
+  function cancelUpkeep(
+    uint256 id
+  ) external override {}
 
-  function pauseUpkeep(uint256 id) external override {}
+  function pauseUpkeep(
+    uint256 id
+  ) external override {}
 
-  function unpauseUpkeep(uint256 id) external override {}
+  function unpauseUpkeep(
+    uint256 id
+  ) external override {}
 
   function updateCheckData(uint256 id, bytes calldata newCheckData) external {}
 

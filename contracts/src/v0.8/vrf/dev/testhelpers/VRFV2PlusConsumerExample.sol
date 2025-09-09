@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {LinkTokenInterface} from "../../../shared/interfaces/LinkTokenInterface.sol";
-import {IVRFCoordinatorV2Plus} from "../interfaces/IVRFCoordinatorV2Plus.sol";
-import {VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
 import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
+import {LinkTokenInterface} from "../../../shared/interfaces/LinkTokenInterface.sol";
+import {VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
+import {IVRFCoordinatorV2Plus} from "../interfaces/IVRFCoordinatorV2Plus.sol";
+
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 
 /// @notice This contract is used for testing only and should not be used for production.
@@ -20,6 +21,7 @@ contract VRFV2PlusConsumerExample is ConfirmedOwner, VRFConsumerBaseV2Plus {
     uint256 requestId;
     uint256[] randomWords;
   }
+
   mapping(uint256 /* request id */ => Response /* response */) public s_requests;
 
   constructor(address vrfCoordinator, address link) VRFConsumerBaseV2Plus(vrfCoordinator) {
@@ -47,13 +49,17 @@ contract VRFV2PlusConsumerExample is ConfirmedOwner, VRFConsumerBaseV2Plus {
     s_vrfCoordinatorApiV1.fundSubscriptionWithNative{value: msg.value}(s_subId);
   }
 
-  function createSubscriptionAndFund(uint96 amount) external {
+  function createSubscriptionAndFund(
+    uint96 amount
+  ) external {
     _subscribe();
     // Approve the link transfer.
     s_linkToken.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_subId));
   }
 
-  function topUpSubscription(uint96 amount) external {
+  function topUpSubscription(
+    uint96 amount
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(s_subId != 0, "sub not set");
     s_linkToken.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_subId));
@@ -89,17 +95,15 @@ contract VRFV2PlusConsumerExample is ConfirmedOwner, VRFConsumerBaseV2Plus {
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: nativePayment}))
     });
     uint256 requestId = s_vrfCoordinator.requestRandomWords(req);
-    Response memory resp = Response({
-      requestId: requestId,
-      randomWords: new uint256[](0),
-      fulfilled: false,
-      requester: msg.sender
-    });
+    Response memory resp =
+      Response({requestId: requestId, randomWords: new uint256[](0), fulfilled: false, requester: msg.sender});
     s_requests[requestId] = resp;
     s_recentRequestId = requestId;
   }
 
-  function updateSubscription(address[] memory consumers) external {
+  function updateSubscription(
+    address[] memory consumers
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(s_subId != 0, "subID not set");
     for (uint256 i = 0; i < consumers.length; i++) {
@@ -107,7 +111,9 @@ contract VRFV2PlusConsumerExample is ConfirmedOwner, VRFConsumerBaseV2Plus {
     }
   }
 
-  function setSubId(uint256 subId) external {
+  function setSubId(
+    uint256 subId
+  ) external {
     s_subId = subId;
   }
 }

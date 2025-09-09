@@ -13,7 +13,7 @@ contract WorkflowRegistry_setCapabilitiesRegistry is WorkflowRegistrySetup {
     vm.prank(s_stranger);
     address capReg = makeAddr("cap-registry-address");
     vm.expectRevert(abi.encodeWithSelector(Ownable2Step.OnlyCallableByOwner.selector, s_stranger));
-    s_registry.setCapabilitiesRegistry(capReg, 123456);
+    s_registry.setCapabilitiesRegistry(capReg, 123_456);
   }
 
   // whenTheCallerISTheContractOwner
@@ -21,7 +21,7 @@ contract WorkflowRegistry_setCapabilitiesRegistry is WorkflowRegistrySetup {
     // It should write to s_capabilitiesRegistry with the pair and emit CapabilitiesRegistryUpdated
     vm.prank(s_owner);
     address capReg = makeAddr("cap-registry-address");
-    uint64 chainSel = 123456;
+    uint64 chainSel = 123_456;
 
     vm.expectEmit(true, true, true, false);
     emit WorkflowRegistry.CapabilitiesRegistryUpdated(address(0), capReg, uint64(0), chainSel);
@@ -39,13 +39,13 @@ contract WorkflowRegistry_setCapabilitiesRegistry is WorkflowRegistrySetup {
     vm.startPrank(s_owner);
     // set the capabilities registry
     address capReg = makeAddr("cap-registry-address");
-    uint64 chainSel = 123456;
+    uint64 chainSel = 123_456;
 
     s_registry.setCapabilitiesRegistry(capReg, chainSel);
 
     // set it with different values
     address newCapReg = makeAddr("cap-registry-address-2");
-    uint64 newChainSel = 678910;
+    uint64 newChainSel = 678_910;
 
     s_registry.setCapabilitiesRegistry(newCapReg, newChainSel);
 
@@ -62,7 +62,7 @@ contract WorkflowRegistry_setCapabilitiesRegistry is WorkflowRegistrySetup {
     vm.startPrank(s_owner);
     // set the capabilities registry
     address capReg = makeAddr("cap-registry-address");
-    uint64 chainSel = 123456;
+    uint64 chainSel = 123_456;
     s_registry.setCapabilitiesRegistry(capReg, chainSel);
 
     // set the same registry again

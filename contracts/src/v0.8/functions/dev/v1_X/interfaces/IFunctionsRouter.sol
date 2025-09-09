@@ -12,7 +12,9 @@ interface IFunctionsRouter {
 
   /// @notice Set the identifier of the route to retrieve the address of the access control contract
   /// The access control contract controls which accounts can manage subscriptions
-  function setAllowListId(bytes32 allowListId) external;
+  function setAllowListId(
+    bytes32 allowListId
+  ) external;
 
   /// @notice Get the flat fee (in Juels of LINK) that will be paid to the Router owner for operation of the network
   /// @return adminFee
@@ -79,12 +81,16 @@ interface IFunctionsRouter {
   /// @notice Get the current contract given an ID
   /// @param id A bytes32 identifier for the route
   /// @return contract The current contract address
-  function getContractById(bytes32 id) external view returns (address);
+  function getContractById(
+    bytes32 id
+  ) external view returns (address);
 
   /// @notice Get the proposed next contract given an ID
   /// @param id A bytes32 identifier for the route
   /// @return contract The current or proposed contract address
-  function getProposedContractById(bytes32 id) external view returns (address);
+  function getProposedContractById(
+    bytes32 id
+  ) external view returns (address);
 
   /// @notice Return the latest proprosal set
   /// @return ids The identifiers of the contracts to update

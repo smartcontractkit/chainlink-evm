@@ -15,7 +15,9 @@ abstract contract Routable is ITypeAndVersion {
   error OnlyCallableByRouterOwner();
 
   /// @dev Initializes the contract.
-  constructor(address router) {
+  constructor(
+    address router
+  ) {
     if (router == address(0)) {
       revert RouterMustBeSet();
     }

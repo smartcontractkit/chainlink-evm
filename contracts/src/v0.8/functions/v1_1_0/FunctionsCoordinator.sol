@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IFunctionsCoordinator} from "../v1_0_0/interfaces/IFunctionsCoordinator.sol";
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+import {IFunctionsCoordinator} from "../v1_0_0/interfaces/IFunctionsCoordinator.sol";
 
+import {FunctionsResponse} from "../v1_0_0/libraries/FunctionsResponse.sol";
 import {FunctionsBilling} from "./FunctionsBilling.sol";
 import {OCR2Base} from "./ocr/OCR2Base.sol";
-import {FunctionsResponse} from "../v1_0_0/libraries/FunctionsResponse.sol";
 
 /// @title Functions Coordinator contract
 /// @notice Contract that nodes of a Decentralized Oracle Network (DON) interact with
@@ -54,7 +54,9 @@ contract FunctionsCoordinator is OCR2Base, IFunctionsCoordinator, FunctionsBilli
   }
 
   /// @inheritdoc IFunctionsCoordinator
-  function setThresholdPublicKey(bytes calldata thresholdPublicKey) external override onlyOwner {
+  function setThresholdPublicKey(
+    bytes calldata thresholdPublicKey
+  ) external override onlyOwner {
     if (thresholdPublicKey.length == 0) {
       revert EmptyPublicKey();
     }
@@ -70,7 +72,9 @@ contract FunctionsCoordinator is OCR2Base, IFunctionsCoordinator, FunctionsBilli
   }
 
   /// @inheritdoc IFunctionsCoordinator
-  function setDONPublicKey(bytes calldata donPublicKey) external override onlyOwner {
+  function setDONPublicKey(
+    bytes calldata donPublicKey
+  ) external override onlyOwner {
     if (donPublicKey.length == 0) {
       revert EmptyPublicKey();
     }
@@ -78,7 +82,9 @@ contract FunctionsCoordinator is OCR2Base, IFunctionsCoordinator, FunctionsBilli
   }
 
   /// @dev check if node is in current transmitter list
-  function _isTransmitter(address node) internal view returns (bool) {
+  function _isTransmitter(
+    address node
+  ) internal view returns (bool) {
     address[] memory nodes = s_transmitters;
     // Bounded by "maxNumOracles" on OCR2Abstract.sol
     for (uint256 i = 0; i < nodes.length; ++i) {
@@ -113,7 +119,7 @@ contract FunctionsCoordinator is OCR2Base, IFunctionsCoordinator, FunctionsBilli
   }
 
   /// @dev DON fees are pooled together. If the OCR configuration is going to change, these need to be distributed.
-  function _beforeSetConfig(uint8 /* _f */, bytes memory /* _onchainConfig */) internal override {
+  function _beforeSetConfig(uint8, /* _f */ bytes memory /* _onchainConfig */ ) internal override {
     if (_getTransmitters().length > 0) {
       _disperseFeePool();
     }
@@ -126,10 +132,10 @@ contract FunctionsCoordinator is OCR2Base, IFunctionsCoordinator, FunctionsBilli
 
   /// @dev Report hook called within OCR2Base.sol
   function _report(
-    uint256 /*initialGas*/,
-    address /*transmitter*/,
-    uint8 /*signerCount*/,
-    address[MAX_NUM_ORACLES] memory /*signers*/,
+    uint256, /*initialGas*/
+    address, /*transmitter*/
+    uint8, /*signerCount*/
+    address[MAX_NUM_ORACLES] memory, /*signers*/
     bytes calldata report
   ) internal override {
     (
@@ -142,11 +148,8 @@ contract FunctionsCoordinator is OCR2Base, IFunctionsCoordinator, FunctionsBilli
     uint256 numberOfFulfillments = uint8(requestIds.length);
 
     if (
-      numberOfFulfillments == 0 ||
-      numberOfFulfillments != results.length ||
-      numberOfFulfillments != errors.length ||
-      numberOfFulfillments != onchainMetadata.length ||
-      numberOfFulfillments != offchainMetadata.length
+      numberOfFulfillments == 0 || numberOfFulfillments != results.length || numberOfFulfillments != errors.length
+        || numberOfFulfillments != onchainMetadata.length || numberOfFulfillments != offchainMetadata.length
     ) {
       revert ReportInvalid("Fields must be equal length");
     }
@@ -168,8 +171,8 @@ contract FunctionsCoordinator is OCR2Base, IFunctionsCoordinator, FunctionsBilli
       // In these two fulfillment results the user has been charged
       // Otherwise, the DON will re-try
       if (
-        result == FunctionsResponse.FulfillResult.FULFILLED ||
-        result == FunctionsResponse.FulfillResult.USER_CALLBACK_ERROR
+        result == FunctionsResponse.FulfillResult.FULFILLED
+          || result == FunctionsResponse.FulfillResult.USER_CALLBACK_ERROR
       ) {
         emit OracleResponse(requestIds[i], msg.sender);
       }

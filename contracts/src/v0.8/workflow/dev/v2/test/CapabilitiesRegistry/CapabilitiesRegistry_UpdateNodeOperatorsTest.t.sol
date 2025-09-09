@@ -46,7 +46,7 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     nodeOperators[0] =
       CapabilitiesRegistry.NodeOperatorParams({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
-    uint32 invalidNodeOperatorId = 10000;
+    uint32 invalidNodeOperatorId = 10_000;
     uint32[] memory nodeOperatorIds = new uint32[](2);
     nodeOperatorIds[0] = invalidNodeOperatorId;
     vm.expectRevert(
@@ -61,7 +61,7 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     nodeOperators[0] =
       CapabilitiesRegistry.NodeOperatorParams({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
-    uint32 invalidNodeOperatorId = 10000;
+    uint32 invalidNodeOperatorId = 10_000;
     uint32[] memory nodeOperatorIds = new uint32[](1);
     nodeOperatorIds[0] = invalidNodeOperatorId;
     vm.expectRevert(
@@ -82,6 +82,32 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     nodeOperatorIds[0] = TEST_NODE_OPERATOR_ID;
 
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.NodeOperatorAlreadyExists.selector, 2));
+    s_CapabilitiesRegistry.updateNodeOperators(nodeOperatorIds, nodeOperators);
+  }
+
+  function test_UpdatesNodeOperator_UnblocksReAddingOldNodeOperator() public {
+    changePrank(ADMIN);
+    // First update the node operator
+    CapabilitiesRegistry.NodeOperatorParams[] memory nodeOperators = new CapabilitiesRegistry.NodeOperatorParams[](1);
+    nodeOperators[0] =
+      CapabilitiesRegistry.NodeOperatorParams({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
+
+    uint32[] memory nodeOperatorIds = new uint32[](1);
+    nodeOperatorIds[0] = TEST_NODE_OPERATOR_ID;
+
+    vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
+    emit CapabilitiesRegistry.NodeOperatorUpdated(
+      TEST_NODE_OPERATOR_ID, NEW_NODE_OPERATOR_ADMIN, NEW_NODE_OPERATOR_NAME
+    );
+    s_CapabilitiesRegistry.updateNodeOperators(nodeOperatorIds, nodeOperators);
+
+    // Then re-add the old node operator
+    nodeOperators[0] =
+      CapabilitiesRegistry.NodeOperatorParams({admin: NODE_OPERATOR_ONE_ADMIN, name: NODE_OPERATOR_ONE_NAME});
+    vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
+    emit CapabilitiesRegistry.NodeOperatorUpdated(
+      TEST_NODE_OPERATOR_ID, NODE_OPERATOR_ONE_ADMIN, NODE_OPERATOR_ONE_NAME
+    );
     s_CapabilitiesRegistry.updateNodeOperators(nodeOperatorIds, nodeOperators);
   }
 

@@ -9,7 +9,7 @@ contract BaseTest is Test {
   address internal constant STRANGER = 0x02e7d5DD1F4dDbC9f512FfA01d30aa190Ae3edBb;
 
   // Fri May 26 2023 13:49:53 GMT+0000
-  uint256 internal constant BLOCK_TIME = 1685108993;
+  uint256 internal constant BLOCK_TIME = 1_685_108_993;
 
   function setUp() public virtual {
     // BaseTest.setUp is often called multiple times from tests' setUp due to inheritance.

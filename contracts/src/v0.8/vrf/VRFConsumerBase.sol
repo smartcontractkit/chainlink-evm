@@ -5,7 +5,8 @@ import {LinkTokenInterface} from "../shared/interfaces/LinkTokenInterface.sol";
 
 import {VRFRequestIDBase} from "./VRFRequestIDBase.sol";
 
-/** ****************************************************************************
+/**
+ *
  * @notice Interface for contracts using VRF randomness
  * *****************************************************************************
  * @dev PURPOSE

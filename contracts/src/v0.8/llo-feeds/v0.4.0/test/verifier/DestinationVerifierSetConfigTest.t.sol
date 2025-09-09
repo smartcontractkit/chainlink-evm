@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
-import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
-import {DestinationRewardManager} from "../../../v0.4.0/DestinationRewardManager.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {DestinationRewardManager} from "../../../v0.4.0/DestinationRewardManager.sol";
+import {DestinationVerifier} from "../../../v0.4.0/DestinationVerifier.sol";
+import {BaseTest} from "./BaseDestinationVerifierTest.t.sol";
 
 contract DestinationVerifierSetConfigTest is BaseTest {
   function setUp() public virtual override {
@@ -88,7 +88,8 @@ contract DestinationVerifierSetConfigTest is BaseTest {
 
     vm.warp(block.timestamp + 1);
 
-    // testing adding a different set of Signers with same FAULT_TOLERENCE does not result in DonConfigAlreadyExists revert
+    // testing adding a different set of Signers with same FAULT_TOLERENCE does not result in DonConfigAlreadyExists
+    // revert
     address[] memory signerAddrsMinusOne = new address[](signerAddrs.length - 1);
     for (uint256 i = 0; i < signerAddrs.length - 1; i++) {
       signerAddrsMinusOne[i] = signerAddrs[i];
@@ -125,10 +126,7 @@ contract DestinationVerifierSetConfigTest is BaseTest {
     address[] memory signerAddrs = _getSignerAddresses(signers);
     uint32 activationTime = 10;
     s_verifier.setConfigWithActivationTime(
-      signerAddrs,
-      FAULT_TOLERANCE,
-      new Common.AddressAndWeight[](0),
-      activationTime
+      signerAddrs, FAULT_TOLERANCE, new Common.AddressAndWeight[](0), activationTime
     );
   }
 
@@ -139,10 +137,7 @@ contract DestinationVerifierSetConfigTest is BaseTest {
     uint32 activationTime = uint32(block.timestamp) + 100;
     vm.expectRevert(abi.encodeWithSelector(DestinationVerifier.BadActivationTime.selector));
     s_verifier.setConfigWithActivationTime(
-      signerAddrs,
-      FAULT_TOLERANCE,
-      new Common.AddressAndWeight[](0),
-      activationTime
+      signerAddrs, FAULT_TOLERANCE, new Common.AddressAndWeight[](0), activationTime
     );
   }
 
@@ -156,10 +151,7 @@ contract DestinationVerifierSetConfigTest is BaseTest {
     // setting a config with ealier timestamp retuls in failure
     vm.expectRevert(abi.encodeWithSelector(DestinationVerifier.BadActivationTime.selector));
     s_verifier.setConfigWithActivationTime(
-      signerAddrs,
-      FAULT_TOLERANCE - 1,
-      new Common.AddressAndWeight[](0),
-      oldActivationTime
+      signerAddrs, FAULT_TOLERANCE - 1, new Common.AddressAndWeight[](0), oldActivationTime
     );
   }
 
