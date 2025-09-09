@@ -10,7 +10,6 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"reflect"
 	"strings"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -460,23 +460,4 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
 	return a.c.SendTransaction(ctx, signedTx)
-}
-
-func verifyRaw(raw any) (reflect.Value, error) {
-	rv := reflect.ValueOf(raw)
-	if !rv.IsValid() {
-		return rv, errors.New("raw is invalid")
-	}
-
-	if rv.Kind() == reflect.Pointer || rv.Kind() == reflect.Interface {
-		if rv.IsNil() {
-			return rv, errors.New("raw is nil")
-		}
-		rv = rv.Elem()
-	}
-
-	if rv.Kind() != reflect.Struct {
-		return rv, fmt.Errorf("raw is not a struct, got %s", rv.Kind())
-	}
-	return rv, nil
 }
