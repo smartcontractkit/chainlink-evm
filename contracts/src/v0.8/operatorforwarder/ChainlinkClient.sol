@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Chainlink} from "./Chainlink.sol";
-import {ENSInterface} from "./interfaces/ENSInterface.sol";
 import {LinkTokenInterface} from "../shared/interfaces/LinkTokenInterface.sol";
+
+import {ENSResolver as ENSResolver_Chainlink} from "../vendor/ENSResolver.sol";
+import {Chainlink} from "./Chainlink.sol";
 import {ChainlinkRequestInterface} from "./interfaces/ChainlinkRequestInterface.sol";
+import {ENSInterface} from "./interfaces/ENSInterface.sol";
 import {OperatorInterface} from "./interfaces/OperatorInterface.sol";
 import {PointerInterface} from "./interfaces/PointerInterface.sol";
-import {ENSResolver as ENSResolver_Chainlink} from "../vendor/ENSResolver.sol";
 
 /**
  * @title The ChainlinkClient contract
@@ -209,7 +210,9 @@ abstract contract ChainlinkClient {
    * @notice Sets the stored oracle address
    * @param oracleAddress The address of the oracle contract
    */
-  function _setChainlinkOracle(address oracleAddress) internal {
+  function _setChainlinkOracle(
+    address oracleAddress
+  ) internal {
     s_oracle = OperatorInterface(oracleAddress);
   }
 
@@ -217,7 +220,9 @@ abstract contract ChainlinkClient {
    * @notice Sets the LINK token address
    * @param linkAddress The address of the LINK token contract
    */
-  function _setChainlinkToken(address linkAddress) internal {
+  function _setChainlinkToken(
+    address linkAddress
+  ) internal {
     s_link = LinkTokenInterface(linkAddress);
   }
 
@@ -251,10 +256,7 @@ abstract contract ChainlinkClient {
    * @param oracleAddress The address of the oracle contract that will fulfill the request
    * @param requestId The request ID used for the response
    */
-  function _addChainlinkExternalRequest(
-    address oracleAddress,
-    bytes32 requestId
-  ) internal notPendingRequest(requestId) {
+  function _addChainlinkExternalRequest(address oracleAddress, bytes32 requestId) internal notPendingRequest(requestId) {
     s_pendingRequests[requestId] = oracleAddress;
   }
 
@@ -300,7 +302,9 @@ abstract contract ChainlinkClient {
    * Emits ChainlinkFulfilled event.
    * @param requestId The request ID for fulfillment
    */
-  modifier recordChainlinkFulfillment(bytes32 requestId) {
+  modifier recordChainlinkFulfillment(
+    bytes32 requestId
+  ) {
     require(msg.sender == s_pendingRequests[requestId], "Source must be the oracle of the request");
     delete s_pendingRequests[requestId];
     emit ChainlinkFulfilled(requestId);
@@ -311,7 +315,9 @@ abstract contract ChainlinkClient {
    * @dev Reverts if the request is already pending
    * @param requestId The request ID for fulfillment
    */
-  modifier notPendingRequest(bytes32 requestId) {
+  modifier notPendingRequest(
+    bytes32 requestId
+  ) {
     require(s_pendingRequests[requestId] == address(0), "Request is already pending");
     _;
   }

@@ -87,7 +87,7 @@ EnforceRepeatableRead = true
 DeathDeclarationDelay = '1m'
 NewHeadsPollInterval = '0s'
 VerifyChainID = true
-ExternalRequestMaxResponseSize = 0
+ExternalRequestMaxResponseSize = 15000 # 15KB
 
 [OCR]
 ContractConfirmations = 4

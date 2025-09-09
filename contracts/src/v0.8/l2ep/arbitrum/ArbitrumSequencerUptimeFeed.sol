@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {AddressAliasHelper} from "../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
+import {SimpleReadAccessController} from "../../shared/access/SimpleReadAccessController.sol";
 import {AggregatorInterface} from "../../shared/interfaces/AggregatorInterface.sol";
-import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
 import {AggregatorV2V3Interface} from "../../shared/interfaces/AggregatorV2V3Interface.sol";
+import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+import {AddressAliasHelper} from "../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
 import {IFlags} from "../interfaces/IFlags.sol";
 import {ISequencerUptimeFeed} from "../interfaces/ISequencerUptimeFeed.sol";
-import {SimpleReadAccessController} from "../../shared/access/SimpleReadAccessController.sol";
 
 /**
  * @title ArbitrumSequencerUptimeFeed - L2 sequencer uptime status aggregator
@@ -84,12 +84,16 @@ contract ArbitrumSequencerUptimeFeed is
    * @dev Mainly used for AggregatorV2V3Interface functions
    * @param roundId Round ID to check
    */
-  function _isValidRound(uint256 roundId) private view returns (bool) {
+  function _isValidRound(
+    uint256 roundId
+  ) private view returns (bool) {
     return roundId > 0 && roundId <= type(uint80).max && s_feedState.latestRoundId >= roundId;
   }
 
   /// @notice Check that this contract is initialised, otherwise throw
-  function _requireInitialized(uint80 latestRoundId) private pure {
+  function _requireInitialized(
+    uint80 latestRoundId
+  ) private pure {
     if (latestRoundId == 0) {
       revert Uninitialized();
     }
@@ -136,12 +140,16 @@ contract ArbitrumSequencerUptimeFeed is
    * @dev Can be disabled by setting the L1 sender as `address(0)`. Accessible only by owner.
    * @param to new L1 sender that will be allowed to call `updateStatus` on this contract
    */
-  function transferL1Sender(address to) external virtual onlyOwner {
+  function transferL1Sender(
+    address to
+  ) external virtual onlyOwner {
     _setL1Sender(to);
   }
 
   /// @notice internal method that stores the L1 sender
-  function _setL1Sender(address to) private {
+  function _setL1Sender(
+    address to
+  ) private {
     address from = s_l1Sender;
     if (from != to) {
       s_l1Sender = to;
@@ -163,14 +171,18 @@ contract ArbitrumSequencerUptimeFeed is
    *
    * @param status The status flag to convert to an aggregator-compatible answer
    */
-  function _getStatusAnswer(bool status) private pure returns (int256) {
+  function _getStatusAnswer(
+    bool status
+  ) private pure returns (int256) {
     return status ? int256(1) : int256(0);
   }
 
   /**
    * @notice Raise or lower the flag on the stored Flags contract.
    */
-  function _forwardStatusToFlags(bool status) private {
+  function _forwardStatusToFlags(
+    bool status
+  ) private {
     if (status) {
       FLAGS.raiseFlag(FLAG_L2_SEQ_OFFLINE);
     } else {
@@ -245,7 +257,9 @@ contract ArbitrumSequencerUptimeFeed is
   }
 
   /// @inheritdoc AggregatorInterface
-  function getAnswer(uint256 roundId) external view override checkAccess returns (int256) {
+  function getAnswer(
+    uint256 roundId
+  ) external view override checkAccess returns (int256) {
     _requireInitialized(s_feedState.latestRoundId);
     if (_isValidRound(roundId)) {
       return _getStatusAnswer(s_rounds[uint80(roundId)].status);
@@ -255,7 +269,9 @@ contract ArbitrumSequencerUptimeFeed is
   }
 
   /// @inheritdoc AggregatorInterface
-  function getTimestamp(uint256 roundId) external view override checkAccess returns (uint256) {
+  function getTimestamp(
+    uint256 roundId
+  ) external view override checkAccess returns (uint256) {
     _requireInitialized(s_feedState.latestRoundId);
     if (_isValidRound(roundId)) {
       return s_rounds[uint80(roundId)].timestamp;

@@ -16,11 +16,15 @@ contract MockAggregatorV2V3 is AggregatorV2V3Interface {
     return 0;
   }
 
-  function getAnswer(uint256) external pure returns (int256) {
+  function getAnswer(
+    uint256
+  ) external pure returns (int256) {
     return 0;
   }
 
-  function getTimestamp(uint256 roundId) external pure returns (uint256) {
+  function getTimestamp(
+    uint256 roundId
+  ) external pure returns (uint256) {
     return roundId;
   }
 
@@ -38,11 +42,7 @@ contract MockAggregatorV2V3 is AggregatorV2V3Interface {
 
   function getRoundData(
     uint80
-  )
-    external
-    pure
-    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
-  {
+  ) external pure returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) {
     return (0, 0, 0, 0, 0);
   }
 
@@ -51,6 +51,6 @@ contract MockAggregatorV2V3 is AggregatorV2V3Interface {
     pure
     returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
   {
-    return (73786976294838220258, 96800000000, 163826896, 1638268960, 73786976294838220258);
+    return (73_786_976_294_838_220_258, 96_800_000_000, 163_826_896, 1_638_268_960, 73_786_976_294_838_220_258);
   }
 }

@@ -66,6 +66,7 @@ func BenchmarkFinalizer(b *testing.B) {
 			State:              txmgrcommon.TxConfirmed,
 			BroadcastAt:        &broadcast,
 			InitialBroadcastAt: &broadcast,
+			ChainID:            testutils.FixtureChainID,
 		}
 		attemptHash := insertTxAndAttemptWithIdempotencyKey(b, txStore, tx, idempotencyKey)
 		// Insert receipt for finalized block num

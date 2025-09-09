@@ -25,6 +25,7 @@ contract OCR3Capability is OwnerIsCreator, OCR2Abstract {
     uint8 f; // TODO: could be optimized by squeezing into one slot
     uint8 n;
   }
+
   ConfigInfo internal s_configInfo;
 
   // Reverts transaction if config args are invalid
@@ -146,10 +147,10 @@ contract OCR3Capability is OwnerIsCreator, OCR2Abstract {
   function transmit(
     // NOTE: If these parameters are changed, expectedMsgDataLength and/or
     // TRANSMIT_MSGDATA_CONSTANT_LENGTH_COMPONENT need to be changed accordingly
-    bytes32[3] calldata /* reportContext */,
-    bytes calldata /* report */,
-    bytes32[] calldata /* rs */,
-    bytes32[] calldata /* ss */,
+    bytes32[3] calldata, /* reportContext */
+    bytes calldata, /* report */
+    bytes32[] calldata, /* rs */
+    bytes32[] calldata, /* ss */
     bytes32 /* rawVs */ // signatures
   ) external pure override {
     revert ReportingUnsupported();

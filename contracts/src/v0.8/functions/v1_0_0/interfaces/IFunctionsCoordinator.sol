@@ -14,7 +14,9 @@ interface IFunctionsCoordinator {
   /// @notice Sets the DON's threshold encryption public key used to encrypt secrets
   /// @dev Used to rotate the key
   /// @param thresholdPublicKey The new public key
-  function setThresholdPublicKey(bytes calldata thresholdPublicKey) external;
+  function setThresholdPublicKey(
+    bytes calldata thresholdPublicKey
+  ) external;
 
   /// @notice Returns the DON's secp256k1 public key that is used to encrypt secrets
   /// @dev All nodes on the DON have the corresponding private key
@@ -25,7 +27,9 @@ interface IFunctionsCoordinator {
   /// @notice Sets DON's secp256k1 public key used to encrypt secrets
   /// @dev Used to rotate the key
   /// @param donPublicKey The new public key
-  function setDONPublicKey(bytes calldata donPublicKey) external;
+  function setDONPublicKey(
+    bytes calldata donPublicKey
+  ) external;
 
   /// @notice Receives a request to be emitted to the DON for processing
   /// @param request The request metadata

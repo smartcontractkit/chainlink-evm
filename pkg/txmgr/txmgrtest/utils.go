@@ -35,6 +35,7 @@ func NewEthTx(fromAddress common.Address) txmgr.Tx {
 		Value:          big.Int(assets.NewEthValue(142)),
 		FeeLimit:       uint64(1000000000),
 		State:          txmgrcommon.TxUnstarted,
+		ChainID:        evmtestutils.FixtureChainID,
 	}
 }
 

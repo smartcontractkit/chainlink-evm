@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {AutomationCompatible} from "../AutomationCompatible.sol";
-import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {AutomationCompatible} from "../AutomationCompatible.sol";
+
 import {IAutomationRegistryMaster2_3} from "../interfaces/v2_3/IAutomationRegistryMaster2_3.sol";
 
 contract UpkeepAutoFunder is AutomationCompatible, ConfirmedOwner {
@@ -24,19 +25,27 @@ contract UpkeepAutoFunder is AutomationCompatible, ConfirmedOwner {
     s_autoFundLink = 0;
   }
 
-  function setShouldCancel(bool value) external onlyOwner {
+  function setShouldCancel(
+    bool value
+  ) external onlyOwner {
     s_shouldCancel = value;
   }
 
-  function setIsEligible(bool value) external onlyOwner {
+  function setIsEligible(
+    bool value
+  ) external onlyOwner {
     s_isEligible = value;
   }
 
-  function setAutoFundLink(uint96 value) external onlyOwner {
+  function setAutoFundLink(
+    uint96 value
+  ) external onlyOwner {
     s_autoFundLink = value;
   }
 
-  function setUpkeepId(uint256 value) external onlyOwner {
+  function setUpkeepId(
+    uint256 value
+  ) external onlyOwner {
     s_upkeepId = value;
   }
 
@@ -46,7 +55,9 @@ contract UpkeepAutoFunder is AutomationCompatible, ConfirmedOwner {
     return (s_isEligible, data);
   }
 
-  function performUpkeep(bytes calldata data) external override {
+  function performUpkeep(
+    bytes calldata data
+  ) external override {
     require(s_isEligible, "Upkeep should be eligible");
     s_isEligible = false; // Allow upkeep only once until it is set again
 

@@ -2,11 +2,11 @@
 // A mock for testing code that relies on VRFCoordinatorV2_5.
 pragma solidity ^0.8.19;
 
+import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
+import {VRFConsumerBaseV2Plus} from "../dev/VRFConsumerBaseV2Plus.sol";
 // solhint-disable-next-line no-unused-import
 import {IVRFCoordinatorV2Plus, IVRFSubscriptionV2Plus} from "../dev/interfaces/IVRFCoordinatorV2Plus.sol";
 import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
-import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
-import {VRFConsumerBaseV2Plus} from "../dev/VRFConsumerBaseV2Plus.sol";
 
 contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
   uint96 public immutable i_base_fee;
@@ -50,6 +50,7 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
     uint32 numWords;
     bytes extraArgs;
   }
+
   mapping(uint256 => Request) internal s_requests; /* requestId */ /* request */
 
   constructor(uint96 _baseFee, uint96 _gasPrice, int256 _weiPerUnitLink) SubscriptionAPI() {
@@ -130,7 +131,7 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
     bytes memory callReq = abi.encodeWithSelector(v.rawFulfillRandomWords.selector, _requestId, _words);
     s_config.reentrancyLock = true;
     // solhint-disable-next-line avoid-low-level-calls, no-unused-vars
-    (bool success, ) = _consumer.call{gas: req.callbackGasLimit}(callReq);
+    (bool success,) = _consumer.call{gas: req.callbackGasLimit}(callReq);
     s_config.reentrancyLock = false;
 
     bool nativePayment = uint8(req.extraArgs[req.extraArgs.length - 1]) == 1;
@@ -185,7 +186,9 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
   /// @dev Convert the extra args bytes into a struct
   /// @param extraArgs The extra args bytes
   /// @return The extra args struct
-  function _fromBytes(bytes calldata extraArgs) internal pure returns (VRFV2PlusClient.ExtraArgsV1 memory) {
+  function _fromBytes(
+    bytes calldata extraArgs
+  ) internal pure returns (VRFV2PlusClient.ExtraArgsV1 memory) {
     if (extraArgs.length == 0) {
       return VRFV2PlusClient.ExtraArgsV1({nativePayment: false});
     }
@@ -256,14 +259,16 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
   function cancelSubscription(uint256 _subId, address _to) external override onlySubOwner(_subId) nonReentrant {
     (uint96 balance, uint96 nativeBalance) = _deleteSubscription(_subId);
 
-    (bool success, ) = _to.call{value: uint256(nativeBalance)}("");
+    (bool success,) = _to.call{value: uint256(nativeBalance)}("");
     if (!success) {
       revert FailedToSendNative();
     }
     emit SubscriptionCanceled(_subId, _to, balance, nativeBalance);
   }
 
-  function pendingRequestExists(uint256 /*subId*/) public pure override returns (bool) {
+  function pendingRequestExists(
+    uint256 /*subId*/
+  ) public pure override returns (bool) {
     revert NotImplemented();
   }
 }

@@ -1,23 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {IKeeperRegistryMaster, IAutomationV21PlusCommon} from "../interfaces/v2_1/IKeeperRegistryMaster.sol";
 import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
+import {IAutomationV21PlusCommon, IKeeperRegistryMaster} from "../interfaces/v2_1/IKeeperRegistryMaster.sol";
 import "../v2_1/AutomationRegistrar2_1.sol";
 import {LogTriggerConfig} from "../v2_1/AutomationUtils2_1.sol";
+import "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 abstract contract VerifiableLoadBase is ConfirmedOwner {
   error IndexOutOfRange();
+
   event LogEmitted(uint256 indexed upkeepId, uint256 indexed blockNum, address indexed addr);
   event LogEmittedAgain(uint256 indexed upkeepId, uint256 indexed blockNum, address indexed addr);
   event UpkeepTopUp(uint256 upkeepId, uint96 amount, uint256 blockNum);
 
   using EnumerableSet for EnumerableSet.UintSet;
+
   ArbSys internal constant ARB_SYS = ArbSys(0x0000000000000000000000000000000000000064);
-  //bytes32 public constant emittedSig = 0x97009585a4d2440f981ab6f6eec514343e1e6b2aa9b991a26998e6806f41bf08; //keccak256(LogEmitted(uint256,uint256,address))
+  //bytes32 public constant emittedSig = 0x97009585a4d2440f981ab6f6eec514343e1e6b2aa9b991a26998e6806f41bf08;
+  // //keccak256(LogEmitted(uint256,uint256,address))
   bytes32 public immutable emittedSig = LogEmitted.selector;
-  // bytes32 public constant emittedAgainSig = 0xc76416badc8398ce17c93eab7b4f60f263241694cf503e4df24f233a8cc1c50d; //keccak256(LogEmittedAgain(uint256,uint256,address))
+  // bytes32 public constant emittedAgainSig = 0xc76416badc8398ce17c93eab7b4f60f263241694cf503e4df24f233a8cc1c50d;
+  // //keccak256(LogEmittedAgain(uint256,uint256,address))
   bytes32 public immutable emittedAgainSig = LogEmittedAgain.selector;
 
   mapping(uint256 => uint256) public lastTopUpBlocks;
@@ -30,7 +34,8 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   mapping(uint256 => uint256) public performDataSizes;
   mapping(uint256 => uint256) public gasLimits;
   mapping(bytes32 => bool) public dummyMap; // used to force storage lookup
-  mapping(uint256 => uint256[]) public delays; // how to query for delays for a certain past period: calendar day and/or past 24 hours
+  mapping(uint256 => uint256[]) public delays; // how to query for delays for a certain past period: calendar day and/or
+    // past 24 hours
 
   mapping(uint256 => mapping(uint16 => uint256[])) public bucketedDelays;
   mapping(uint256 => uint16) public buckets;
@@ -41,7 +46,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   // check if an upkeep is eligible for adding funds at this interval
   uint256 public upkeepTopUpCheckInterval = 5;
   // an upkeep will get this amount of LINK for every top up
-  uint96 public addLinkAmount = 200000000000000000; // 0.2 LINK
+  uint96 public addLinkAmount = 200_000_000_000_000_000; // 0.2 LINK
   // if an upkeep's balance is less than this threshold * min balance, this upkeep is eligible for adding funds
   uint8 public minBalanceThresholdMultiplier = 20;
   // if this contract is using arbitrum block number
@@ -65,7 +70,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    */
   constructor(AutomationRegistrar2_1 _registrar, bool _useArb) ConfirmedOwner(msg.sender) {
     registrar = _registrar;
-    (address registryAddress, ) = registrar.getConfig();
+    (address registryAddress,) = registrar.getConfig();
     registry = IKeeperRegistryMaster(payable(address(registryAddress)));
     linkToken = registrar.LINK();
     useArbitrumBlockNum = _useArb;
@@ -78,7 +83,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     timeParamKey = _timeParamKey;
   }
 
-  function setFeeds(string[] memory _feeds) external {
+  function setFeeds(
+    string[] memory _feeds
+  ) external {
     feedsHex = _feeds;
   }
 
@@ -102,9 +109,11 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @notice sets registrar, registry, and link token address.
    * @param newRegistrar the new registrar address
    */
-  function setConfig(AutomationRegistrar2_1 newRegistrar) external {
+  function setConfig(
+    AutomationRegistrar2_1 newRegistrar
+  ) external {
     registrar = newRegistrar;
-    (address registryAddress, ) = registrar.getConfig();
+    (address registryAddress,) = registrar.getConfig();
     registry = IKeeperRegistryMaster(payable(address(registryAddress)));
     linkToken = registrar.LINK();
   }
@@ -149,7 +158,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @param params a registration params struct
    * @return an upkeep ID
    */
-  function _registerUpkeep(AutomationRegistrar2_1.RegistrationParams memory params) private returns (uint256) {
+  function _registerUpkeep(
+    AutomationRegistrar2_1.RegistrationParams memory params
+  ) private returns (uint256) {
     uint256 upkeepId = registrar.registerUpkeep(params);
     s_upkeepIDs.add(upkeepId);
     gasLimits[upkeepId] = params.gasLimit;
@@ -217,14 +228,8 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
         if (log != 0) {
           sig = emittedAgainSig;
         }
-        bytes memory triggerCfg = this.getLogTriggerConfig(
-          address(this),
-          selector,
-          sig,
-          bytes32(abi.encode(upkeepId)),
-          bytes32(0),
-          bytes32(0)
-        );
+        bytes memory triggerCfg =
+          this.getLogTriggerConfig(address(this), selector, sig, bytes32(abi.encode(upkeepId)), bytes32(0), bytes32(0));
         registry.setUpkeepTriggerConfig(upkeepId, triggerCfg);
       }
     }
@@ -301,25 +306,33 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function getMinBalanceForUpkeep(uint256 upkeepId) external view returns (uint96) {
+  function getMinBalanceForUpkeep(
+    uint256 upkeepId
+  ) external view returns (uint96) {
     return registry.getMinBalanceForUpkeep(upkeepId);
   }
 
-  function getForwarder(uint256 upkeepID) external view returns (address) {
+  function getForwarder(
+    uint256 upkeepID
+  ) external view returns (address) {
     return registry.getForwarder(upkeepID);
   }
 
-  function getBalance(uint256 id) external view returns (uint96 balance) {
+  function getBalance(
+    uint256 id
+  ) external view returns (uint96 balance) {
     return registry.getBalance(id);
   }
 
-  function getTriggerType(uint256 upkeepId) external view returns (uint8) {
+  function getTriggerType(
+    uint256 upkeepId
+  ) external view returns (uint8) {
     return registry.getTriggerType(upkeepId);
   }
 
   function burnPerformGas(uint256 upkeepId, uint256 startGas, uint256 blockNum) public {
     uint256 performGasToBurn = performGasToBurns[upkeepId];
-    while (startGas - gasleft() + 10000 < performGasToBurn) {
+    while (startGas - gasleft() + 10_000 < performGasToBurn) {
       dummyMap[blockhash(blockNum)] = false;
     }
   }
@@ -335,7 +348,8 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   }
 
   /**
-   * @notice updates pipeline data for an upkeep. In order for the upkeep to be performed, the pipeline data must be the abi encoded upkeep ID.
+   * @notice updates pipeline data for an upkeep. In order for the upkeep to be performed, the pipeline data must be the
+   * abi encoded upkeep ID.
    * @param upkeepId the upkeep ID
    * @param pipelineData the new pipeline data for the upkeep
    */
@@ -343,11 +357,15 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     registry.setUpkeepCheckData(upkeepId, pipelineData);
   }
 
-  function withdrawLinks(uint256 upkeepId) external {
+  function withdrawLinks(
+    uint256 upkeepId
+  ) external {
     registry.withdrawFunds(upkeepId, address(this));
   }
 
-  function batchWithdrawLinks(uint256[] calldata upkeepIds) external {
+  function batchWithdrawLinks(
+    uint256[] calldata upkeepIds
+  ) external {
     uint256 len = upkeepIds.length;
     for (uint32 i = 0; i < len; i++) {
       this.withdrawLinks(upkeepIds[i]);
@@ -358,7 +376,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @notice batch canceling upkeeps.
    * @param upkeepIds an array of upkeep IDs
    */
-  function batchCancelUpkeeps(uint256[] calldata upkeepIds) external {
+  function batchCancelUpkeeps(
+    uint256[] calldata upkeepIds
+  ) external {
     uint256 len = upkeepIds.length;
     for (uint8 i = 0; i < len; i++) {
       registry.cancelUpkeep(upkeepIds[i]);
@@ -366,7 +386,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function eligible(uint256 upkeepId) public view returns (bool) {
+  function eligible(
+    uint256 upkeepId
+  ) public view returns (bool) {
     if (firstPerformBlocks[upkeepId] == 0) {
       return true;
     }
@@ -435,7 +457,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @notice batch updating pipeline data for all upkeeps.
    * @param upkeepIds an array of upkeep IDs
    */
-  function batchUpdatePipelineData(uint256[] calldata upkeepIds) external {
+  function batchUpdatePipelineData(
+    uint256[] calldata upkeepIds
+  ) external {
     uint256 len = upkeepIds.length;
     for (uint256 i = 0; i < len; i++) {
       uint256 upkeepId = upkeepIds[i];
@@ -446,7 +470,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   /**
    * @notice finds all log trigger upkeeps and emits logs to serve as the initial trigger for upkeeps
    */
-  function batchSendLogs(uint8 log) external {
+  function batchSendLogs(
+    uint8 log
+  ) external {
     uint256[] memory upkeepIds = this.getActiveUpkeepIDsDeployedByThisContract(0, 0);
     uint256 len = upkeepIds.length;
     uint256 blockNum = getBlockNumber();
@@ -463,15 +489,21 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function getUpkeepInfo(uint256 upkeepId) public view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory) {
+  function getUpkeepInfo(
+    uint256 upkeepId
+  ) public view returns (IAutomationV21PlusCommon.UpkeepInfoLegacy memory) {
     return registry.getUpkeep(upkeepId);
   }
 
-  function getUpkeepTriggerConfig(uint256 upkeepId) public view returns (bytes memory) {
+  function getUpkeepTriggerConfig(
+    uint256 upkeepId
+  ) public view returns (bytes memory) {
     return registry.getUpkeepTriggerConfig(upkeepId);
   }
 
-  function getUpkeepPrivilegeConfig(uint256 upkeepId) public view returns (bytes memory) {
+  function getUpkeepPrivilegeConfig(
+    uint256 upkeepId
+  ) public view returns (bytes memory) {
     return registry.getUpkeepPrivilegeConfig(upkeepId);
   }
 
@@ -488,11 +520,15 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function getDelaysLength(uint256 upkeepId) public view returns (uint256) {
+  function getDelaysLength(
+    uint256 upkeepId
+  ) public view returns (uint256) {
     return delays[upkeepId].length;
   }
 
-  function getBucketedDelaysLength(uint256 upkeepId) public view returns (uint256) {
+  function getBucketedDelaysLength(
+    uint256 upkeepId
+  ) public view returns (uint256) {
     uint16 currentBucket = buckets[upkeepId];
     uint256 len = 0;
     for (uint16 i = 0; i <= currentBucket; i++) {
@@ -501,7 +537,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     return len;
   }
 
-  function getDelays(uint256 upkeepId) public view returns (uint256[] memory) {
+  function getDelays(
+    uint256 upkeepId
+  ) public view returns (uint256[] memory) {
     return delays[upkeepId];
   }
 
@@ -527,7 +565,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
     uint256 sum = 0;
 
-    for (i = 0; i < n; i++) sum = sum + delays[len - i - 1];
+    for (i = 0; i < n; i++) {
+      sum = sum + delays[len - i - 1];
+    }
     return (sum, n);
   }
 
@@ -543,7 +583,9 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
     uint256[] memory subArr = new uint256[](n);
 
-    for (i = 0; i < n; i++) subArr[i] = (delays[len - i - 1]);
+    for (i = 0; i < n; i++) {
+      subArr[i] = (delays[len - i - 1]);
+    }
     quickSort(subArr, int256(0), int256(subArr.length - 1));
 
     if (p == 100) {

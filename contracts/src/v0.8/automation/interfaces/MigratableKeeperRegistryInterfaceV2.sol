@@ -15,7 +15,9 @@ interface MigratableKeeperRegistryInterfaceV2 {
    * @notice Called by other registries when migrating upkeeps. Only callable by other registries.
    * @param encodedUpkeeps abi encoding of upkeeps to import - decoded by the transcoder
    */
-  function receiveUpkeeps(bytes calldata encodedUpkeeps) external;
+  function receiveUpkeeps(
+    bytes calldata encodedUpkeeps
+  ) external;
 
   /**
    * @notice Specifies the version of upkeep data that this registry requires in order to import

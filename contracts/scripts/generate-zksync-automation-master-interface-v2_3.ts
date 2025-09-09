@@ -1,14 +1,15 @@
 /**
  * @description this script generates a master interface for interacting with the automation registry
- * @notice run this script with pnpm ts-node ./scripts/generate-zksync-automation-master-interface-v2_3.ts
+ * @notice run this script with pnpm tsx ./scripts/generate-zksync-automation-master-interface-v2_3.ts
  */
-import { ZKSyncAutomationRegistry2_3__factory as Registry } from '../typechain/factories/ZKSyncAutomationRegistry2_3__factory'
-import { ZKSyncAutomationRegistryLogicA2_3__factory as RegistryLogicA } from '../typechain/factories/ZKSyncAutomationRegistryLogicA2_3__factory'
-import { ZKSyncAutomationRegistryLogicB2_3__factory as RegistryLogicB } from '../typechain/factories/ZKSyncAutomationRegistryLogicB2_3__factory'
-import { ZKSyncAutomationRegistryLogicC2_3__factory as RegistryLogicC } from '../typechain/factories/ZKSyncAutomationRegistryLogicC2_3__factory'
-import { utils } from 'ethers'
+import Registry from '../artifacts/src/v0.8/automation/v2_3_zksync/ZKSyncAutomationRegistry2_3.sol/ZKSyncAutomationRegistry2_3.json'
+import RegistryLogicA from '../artifacts/src/v0.8/automation/v2_3_zksync/ZKSyncAutomationRegistryLogicA2_3.sol/ZKSyncAutomationRegistryLogicA2_3.json'
+import RegistryLogicB from '../artifacts/src/v0.8/automation/v2_3_zksync/ZKSyncAutomationRegistryLogicB2_3.sol/ZKSyncAutomationRegistryLogicB2_3.json'
+import RegistryLogicC from '../artifacts/src/v0.8/automation/v2_3_zksync/ZKSyncAutomationRegistryLogicC2_3.sol/ZKSyncAutomationRegistryLogicC2_3.json'
+
 import fs from 'fs'
 import { exec } from 'child_process'
+import { createHash } from 'crypto'
 
 const dest = 'src/v0.8/automation/interfaces/zksync'
 const srcDest = `${dest}/IZKSyncAutomationRegistryMaster2_3.sol`
@@ -25,7 +26,7 @@ const abis = [
 
 for (const abi of abis) {
   for (const entry of abi) {
-    const id = utils.id(JSON.stringify(entry))
+    const id = createHash('sha256').update(JSON.stringify(entry)).digest('hex')
     if (!abiSet.has(id)) {
       abiSet.add(id)
       if (
@@ -41,14 +42,14 @@ for (const abi of abis) {
   }
 }
 
-const checksum = utils.id(abis.join(''))
+const checksum = createHash('sha256').update(JSON.stringify(abis)).digest('hex')
 
 fs.writeFileSync(`${tmpDest}`, JSON.stringify(combinedABI))
 
 const cmd = `
 cat ${tmpDest} | pnpm abi-to-sol --solidity-version ^0.8.19 --license MIT > ${srcDest} IZKSyncAutomationRegistryMaster2_3;
 echo "// solhint-disable \n// abi-checksum: ${checksum}" | cat - ${srcDest} > ${tmpDest} && mv ${tmpDest} ${srcDest};
-pnpm prettier --write ${srcDest};
+export FOUNDRY_PROFILE=automation; forge fmt ${srcDest};
 `
 
 exec(cmd)

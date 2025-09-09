@@ -3,14 +3,16 @@
 pragma solidity ^0.8.6;
 
 import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
-import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
-import {VRFConsumerBaseV2} from "./VRFConsumerBaseV2.sol";
-import {LinkTokenInterface} from "../shared/interfaces/LinkTokenInterface.sol";
+
 import {AggregatorV3Interface} from "../shared/interfaces/AggregatorV3Interface.sol";
+import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
+import {LinkTokenInterface} from "../shared/interfaces/LinkTokenInterface.sol";
+
+import {ChainSpecificUtil} from "./ChainSpecificUtil_v0_8_6.sol";
+import {VRFConsumerBaseV2} from "./VRFConsumerBaseV2.sol";
+import {VRFV2WrapperConsumerBase} from "./VRFV2WrapperConsumerBase.sol";
 import {VRFCoordinatorV2Interface} from "./interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFV2WrapperInterface} from "./interfaces/VRFV2WrapperInterface.sol";
-import {VRFV2WrapperConsumerBase} from "./VRFV2WrapperConsumerBase.sol";
-import {ChainSpecificUtil} from "./ChainSpecificUtil_v0_8_6.sol";
 
 /**
  * @notice A wrapper for VRFCoordinatorV2 that provides an interface better suited to one-off
@@ -37,7 +39,7 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
 
   // 5k is plenty for an EXTCODESIZE call (2600) + warm CALL (100)
   // and some arithmetic operations.
-  uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5_000;
+  uint256 private constant GAS_FOR_CALL_EXACT_CHECK = 5000;
 
   // lastRequestId is the request ID of the most recent VRF V2 request made by this wrapper. This
   // should only be relied on within the same transaction the request was made.
@@ -95,6 +97,7 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
     int256 requestWeiPerUnitLink;
     uint256 juelsPaid;
   }
+
   mapping(uint256 => Callback) /* requestID */ /* callback */ public s_callbacks;
 
   constructor(
@@ -116,7 +119,9 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
    * @notice setFulfillmentTxSize sets the size of the fulfillment transaction in bytes.
    * @param size is the size of the fulfillment transaction in bytes.
    */
-  function setFulfillmentTxSize(uint32 size) external onlyOwner {
+  function setFulfillmentTxSize(
+    uint32 size
+  ) external onlyOwner {
     s_fulfillmentTxSizeBytes = size;
   }
 
@@ -151,9 +156,9 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
     s_configured = true;
 
     // Get other configuration from coordinator
-    (, , s_stalenessSeconds, ) = COORDINATOR.getConfig();
+    (,, s_stalenessSeconds,) = COORDINATOR.getConfig();
     s_fallbackWeiPerUnitLink = COORDINATOR.getFallbackWeiPerUnitLink();
-    (s_fulfillmentFlatFeeLinkPPM, , , , , , , , ) = COORDINATOR.getFeeConfig();
+    (s_fulfillmentFlatFeeLinkPPM,,,,,,,,) = COORDINATOR.getFeeConfig();
   }
 
   /**
@@ -250,10 +255,12 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
     // costWei is the base fee denominated in wei (native)
     // costWei takes into account the L1 posting costs of the VRF fulfillment
     // transaction, if we are on an L2.
-    uint256 costWei = (_requestGasPrice *
-      (_gas + s_wrapperGasOverhead + s_coordinatorGasOverhead) +
-      ChainSpecificUtil._getL1CalldataGasCost(s_fulfillmentTxSizeBytes));
-    // (1e18 juels/link) * ((wei/gas * (gas)) + l1wei) / (wei/link) == 1e18 juels * wei/link / (wei/link) == 1e18 juels * wei/link * link/wei == juels
+    uint256 costWei = (
+      _requestGasPrice * (_gas + s_wrapperGasOverhead + s_coordinatorGasOverhead)
+        + ChainSpecificUtil._getL1CalldataGasCost(s_fulfillmentTxSizeBytes)
+    );
+    // (1e18 juels/link) * ((wei/gas * (gas)) + l1wei) / (wei/link) == 1e18 juels * wei/link / (wei/link) == 1e18 juels
+    // * wei/link * link/wei == juels
     // baseFee is the base fee denominated in juels (link)
     uint256 baseFee = (1e18 * costWei) / uint256(_weiPerUnitLink);
     // feeWithPremium is the fee after the percentage premium is applied
@@ -281,10 +288,8 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
     // solhint-disable-next-line gas-custom-errors
     require(msg.sender == address(LINK), "only callable from LINK");
 
-    (uint32 callbackGasLimit, uint16 requestConfirmations, uint32 numWords) = abi.decode(
-      _data,
-      (uint32, uint16, uint32)
-    );
+    (uint32 callbackGasLimit, uint16 requestConfirmations, uint32 numWords) =
+      abi.decode(_data, (uint32, uint16, uint32));
     uint32 eip150Overhead = _getEIP150Overhead(callbackGasLimit);
     int256 weiPerUnitLink = _getFeedData();
     uint256 price = _calculateRequestPrice(callbackGasLimit, tx.gasprice, weiPerUnitLink);
@@ -356,7 +361,7 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
     bool staleFallback = s_stalenessSeconds > 0;
     uint256 timestamp;
     int256 weiPerUnitLink;
-    (, weiPerUnitLink, , timestamp, ) = LINK_ETH_FEED.latestRoundData();
+    (, weiPerUnitLink,, timestamp,) = LINK_ETH_FEED.latestRoundData();
     // solhint-disable-next-line not-rely-on-time
     if (staleFallback && s_stalenessSeconds < block.timestamp - timestamp) {
       weiPerUnitLink = s_fallbackWeiPerUnitLink;
@@ -369,7 +374,9 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
   /**
    * @dev Calculates extra amount of gas required for running an assembly call() post-EIP150.
    */
-  function _getEIP150Overhead(uint32 gas) private pure returns (uint32) {
+  function _getEIP150Overhead(
+    uint32 gas
+  ) private pure returns (uint32) {
     return gas / 63 + 1;
   }
 
@@ -386,19 +393,13 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
       // as we do not want to provide them with less, however that check itself costs
       // gas.  GAS_FOR_CALL_EXACT_CHECK ensures we have at least enough gas to be able
       // to revert if gasAmount >  63//64*gas available.
-      if lt(g, GAS_FOR_CALL_EXACT_CHECK) {
-        revert(0, 0)
-      }
+      if lt(g, GAS_FOR_CALL_EXACT_CHECK) { revert(0, 0) }
       g := sub(g, GAS_FOR_CALL_EXACT_CHECK)
       // if g - g//64 <= gasAmount, revert
       // (we subtract g//64 because of EIP-150)
-      if iszero(gt(sub(g, div(g, 64)), gasAmount)) {
-        revert(0, 0)
-      }
+      if iszero(gt(sub(g, div(g, 64)), gasAmount)) { revert(0, 0) }
       // solidity calls check that a contract actually exists at the destination, so we do the same
-      if iszero(extcodesize(target)) {
-        revert(0, 0)
-      }
+      if iszero(extcodesize(target)) { revert(0, 0) }
       // call and return whether we succeeded. ignore return data
       // call(gas,addr,value,argsOffset,argsLength,retOffset,retLength)
       success := call(gasAmount, target, 0, add(data, 0x20), mload(data), 0, 0)

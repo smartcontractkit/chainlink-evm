@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 import {Common} from "../../../libraries/Common.sol";
+import {BaseDestinationRewardManagerTest} from "./BaseDestinationRewardManager.t.sol";
 
 /**
  * @title DestinationRewardManagerClaimTest
@@ -113,7 +113,8 @@ contract DestinationRewardManagerClaimTest is BaseDestinationRewardManagerTest {
   }
 
   function test_claimUnevenAmountRoundsDown() public {
-    //adding 1 to the pool should leave 1 wei worth of dust, which the contract doesn't handle due to it being economically infeasible
+    //adding 1 to the pool should leave 1 wei worth of dust, which the contract doesn't handle due to it being
+    // economically infeasible
     addFundsToPool(PRIMARY_POOL_ID, getAsset(1), FEE_MANAGER);
 
     //expected recipient amount is 1/4 of the pool deposit
@@ -310,7 +311,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
     //expected recipient amount is 1/4 of the pool deposit
     uint256 expectedRecipientAmount = POOL_DEPOSIT_AMOUNT / 4;
 
-    //check the recipients balance matches the ratio the recipient should have received. The first recipient is shared across both pools so should receive 1/4 of each pool
+    //check the recipients balance matches the ratio the recipient should have received. The first recipient is shared
+    // across both pools so should receive 1/4 of each pool
     assertEq(getAssetBalance(getPrimaryRecipients()[0].addr), expectedRecipientAmount * 2);
     assertEq(getAssetBalance(getPrimaryRecipients()[1].addr), expectedRecipientAmount);
     assertEq(getAssetBalance(getSecondaryRecipients()[1].addr), expectedRecipientAmount);
@@ -408,7 +410,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
   }
 
   function test_claimUnevenAmountRoundsDown() public {
-    //adding an uneven amount of dust to each pool, this should round down to the nearest whole number with 4 remaining in the contract
+    //adding an uneven amount of dust to each pool, this should round down to the nearest whole number with 4 remaining
+    // in the contract
     addFundsToPool(PRIMARY_POOL_ID, getAsset(3), FEE_MANAGER);
     addFundsToPool(SECONDARY_POOL_ID, getAsset(1), FEE_MANAGER);
 
@@ -462,7 +465,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
     //check the recipients balance matches the ratio the recipient should have received
     assertEq(getAssetBalance(recipient.addr), expectedRecipientAmount);
 
-    //check the rewardManager has the remaining quantity, which is 3/4 of the initial deposit plus the deposit from the second pool
+    //check the rewardManager has the remaining quantity, which is 3/4 of the initial deposit plus the deposit from the
+    // second pool
     assertEq(getAssetBalance(address(rewardManager)), POOL_DEPOSIT_AMOUNT * 2 - expectedRecipientAmount);
 
     //add funds to the pool to be split among the recipients
@@ -521,7 +525,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
       assertEq(getAssetBalance(recipient.addr), expectedRecipientAmount * 2);
     }
 
-    //the reward manager balance should again be the balance of the secondary pool as the primary pool has been emptied twice
+    //the reward manager balance should again be the balance of the secondary pool as the primary pool has been emptied
+    // twice
     assertEq(getAssetBalance(address(rewardManager)), POOL_DEPOSIT_AMOUNT);
   }
 
@@ -550,11 +555,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
 
   function test_getRewardsAvailableToRecipientInBothPools() public {
     //get index 0 as this recipient is in both default pools
-    bytes32[] memory poolIds = rewardManager.getAvailableRewardPoolIds(
-      getPrimaryRecipients()[0].addr,
-      0,
-      type(uint256).max
-    );
+    bytes32[] memory poolIds =
+      rewardManager.getAvailableRewardPoolIds(getPrimaryRecipients()[0].addr, 0, type(uint256).max);
 
     //check the recipient is in both pools
     assertEq(poolIds[0], PRIMARY_POOL_ID);
@@ -563,11 +565,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
 
   function test_getRewardsAvailableToRecipientInSinglePool() public {
     //get index 0 as this recipient is in both default pools
-    bytes32[] memory poolIds = rewardManager.getAvailableRewardPoolIds(
-      getPrimaryRecipients()[1].addr,
-      0,
-      type(uint256).max
-    );
+    bytes32[] memory poolIds =
+      rewardManager.getAvailableRewardPoolIds(getPrimaryRecipients()[1].addr, 0, type(uint256).max);
 
     //check the recipient is in both pools
     assertEq(poolIds[0], PRIMARY_POOL_ID);
@@ -585,11 +584,8 @@ contract DestinationRewardManagerRecipientClaimMultiplePoolsTest is BaseDestinat
 
   function test_getRewardsAvailableToRecipientInBothPoolsWhereAlreadyClaimed() public {
     //get index 0 as this recipient is in both default pools
-    bytes32[] memory poolIds = rewardManager.getAvailableRewardPoolIds(
-      getPrimaryRecipients()[0].addr,
-      0,
-      type(uint256).max
-    );
+    bytes32[] memory poolIds =
+      rewardManager.getAvailableRewardPoolIds(getPrimaryRecipients()[0].addr, 0, type(uint256).max);
 
     //check the recipient is in both pools
     assertEq(poolIds[0], PRIMARY_POOL_ID);
@@ -717,7 +713,8 @@ contract DestinationRewardManagerRecipientClaimUnevenWeightTest is BaseDestinati
       assertEq(getAssetBalance(recipient.addr), expectedRecipientAmount);
     }
 
-    //smaller deposits will consequently have less precision and will not be able to be split as evenly, the remaining 1 will be lost due to 333...|... being paid out instead of 333...4|
+    //smaller deposits will consequently have less precision and will not be able to be split as evenly, the remaining 1
+    // will be lost due to 333...|... being paid out instead of 333...4|
     assertEq(getAssetBalance(address(rewardManager)), 1);
   }
 

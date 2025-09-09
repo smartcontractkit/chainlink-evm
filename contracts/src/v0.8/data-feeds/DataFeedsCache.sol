@@ -28,7 +28,8 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
   }
 
   struct FeedConfig {
-    uint8[] bundleDecimals; // Only appliciable to Bundle reports - Decimal reports have decimals encoded into the DataId.
+    uint8[] bundleDecimals; // Only appliciable to Bundle reports - Decimal reports have decimals encoded into the
+      // DataId.
     string description; // Description of the feed (e.g. "LINK / USD")
     WorkflowMetadata[] workflowMetadata; // Metadata for the feed
   }
@@ -58,7 +59,8 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
   /// The message sender determines which feed is being requested, as each proxy has a single associated feed
   mapping(address aggProxy => bytes16 dataId) private s_aggregatorProxyToDataId;
 
-  /// The latest decimal reports for each decimal feed. This will always equal s_decimalReports[s_dataIdToRoundId[dataId]][dataId]
+  /// The latest decimal reports for each decimal feed. This will always equal
+  /// s_decimalReports[s_dataIdToRoundId[dataId]][dataId]
   mapping(bytes16 dataId => StoredDecimalReport) private s_latestDecimalReports;
 
   /// Decimal reports for each feed, per round

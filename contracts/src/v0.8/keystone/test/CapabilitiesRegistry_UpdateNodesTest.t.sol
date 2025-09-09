@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
 import {INodeInfoProvider} from "../interfaces/INodeInfoProvider.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
   function setUp() public override {
@@ -216,8 +216,8 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
 
   function test_RevertWhen_RemovingCapabilityRequiredByWorkflowDON() public {
     // SETUP: addDON
-    CapabilitiesRegistry.CapabilityConfiguration[]
-      memory capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](1);
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG
@@ -247,9 +247,7 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        CapabilitiesRegistry.CapabilityRequiredByDON.selector,
-        s_basicHashedCapabilityId,
-        workflowDonId
+        CapabilitiesRegistry.CapabilityRequiredByDON.selector, s_basicHashedCapabilityId, workflowDonId
       )
     );
     s_CapabilitiesRegistry.updateNodes(nodes);
@@ -257,8 +255,8 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
 
   function test_RevertWhen_RemovingCapabilityRequiredByCapabilityDON() public {
     // SETUP: addDON
-    CapabilitiesRegistry.CapabilityConfiguration[]
-      memory capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](1);
+    CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
+      new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
       capabilityId: s_basicHashedCapabilityId,
       config: BASIC_CAPABILITY_CONFIG
@@ -288,9 +286,7 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        CapabilitiesRegistry.CapabilityRequiredByDON.selector,
-        s_basicHashedCapabilityId,
-        capabilitiesDonId
+        CapabilitiesRegistry.CapabilityRequiredByDON.selector, s_basicHashedCapabilityId, capabilitiesDonId
       )
     );
     s_CapabilitiesRegistry.updateNodes(nodes);

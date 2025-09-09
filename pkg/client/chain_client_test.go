@@ -504,7 +504,8 @@ type sendTxService struct {
 	sentCount atomic.Int32
 }
 
-func (x *sendTxService) ChainID(ctx context.Context) (*hexutil.Big, error) {
+//nolint:revive // ChainId must match JSON-RPC method name eth_chainId, not ChainID
+func (x *sendTxService) ChainId(ctx context.Context) (*hexutil.Big, error) {
 	return (*hexutil.Big)(x.chainID), nil
 }
 
@@ -846,7 +847,7 @@ func TestEthClient_ErroringClient(t *testing.T) {
 	require.Equal(t, multinode.ErrNodeError, err)
 
 	id := erroringClient.ConfiguredChainID()
-	require.Equal(t, id, big.NewInt(0))
+	require.Equal(t, id, big.NewInt(evmtypes.NullClientChainID))
 
 	_, err = erroringClient.CodeAt(ctx, common.Address{}, nil)
 	require.Equal(t, multinode.ErrNodeError, err)

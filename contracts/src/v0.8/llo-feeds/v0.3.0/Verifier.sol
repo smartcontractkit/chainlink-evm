@@ -2,11 +2,13 @@
 pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+
+import {Common} from "../libraries/Common.sol";
 import {IVerifier} from "./interfaces/IVerifier.sol";
 import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
-import {Common} from "../libraries/Common.sol";
 
 // OCR2 standard
 uint256 constant MAX_NUM_ORACLES = 31;
@@ -67,7 +69,8 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// It is used to keep a historical record of verified reports.
   event ReportVerified(bytes32 indexed feedId, address requester);
 
-  /// @notice This event is emitted whenever a new configuration is set for a feed.  It triggers a new run of the offchain reporting protocol.
+  /// @notice This event is emitted whenever a new configuration is set for a feed.  It triggers a new run of the
+  /// offchain reporting protocol.
   event ConfigSet(
     bytes32 indexed feedId,
     uint32 previousConfigBlockNumber,
@@ -176,7 +179,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   mapping(bytes32 => VerifierState) internal s_feedVerifierStates;
 
   /// @param verifierProxyAddr The address of the VerifierProxy contract
-  constructor(address verifierProxyAddr) ConfirmedOwner(msg.sender) {
+  constructor(
+    address verifierProxyAddr
+  ) ConfirmedOwner(msg.sender) {
     if (verifierProxyAddr == address(0)) revert ZeroAddress();
     i_verifierProxyAddr = verifierProxyAddr;
   }
@@ -189,7 +194,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(bytes4 interfaceId) external pure override returns (bool isVerifier) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) external pure override returns (bool isVerifier) {
     return interfaceId == this.verify.selector;
   }
 
@@ -204,13 +211,8 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     address sender
   ) external override returns (bytes memory verifierResponse) {
     if (msg.sender != i_verifierProxyAddr) revert AccessForbidden();
-    (
-      bytes32[3] memory reportContext,
-      bytes memory reportData,
-      bytes32[] memory rs,
-      bytes32[] memory ss,
-      bytes32 rawVs
-    ) = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
+    (bytes32[3] memory reportContext, bytes memory reportData, bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs)
+    = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
 
     // The feed ID is the first 32 bytes of the report data.
     bytes32 feedId = bytes32(reportData);
@@ -277,8 +279,10 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// signers and that enough signers have signed the reports.
   /// @param hashedReport The keccak256 hash of the raw report's bytes
   /// @param reportContext The context the report was signed in
-  /// @param rs ith element is the R components of the ith signature on report. Must have at most MAX_NUM_ORACLES entries
-  /// @param ss ith element is the S components of the ith signature on report. Must have at most MAX_NUM_ORACLES entries
+  /// @param rs ith element is the R components of the ith signature on report. Must have at most MAX_NUM_ORACLES
+  /// entries
+  /// @param ss ith element is the S components of the ith signature on report. Must have at most MAX_NUM_ORACLES
+  /// entries
   /// @param rawVs ith element is the the V component of the ith signature
   /// @param s_config The config digest the report was signed for
   function _verifySignatures(
@@ -373,7 +377,8 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// @param f number of faulty oracles the system can tolerate
   /// @param onchainConfig serialized configuration used by the contract (and possibly oracles)
   /// @param offchainConfigVersion version number for offchainEncoding schema
-  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the contract
+  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the
+  /// contract
   /// @param recipientAddressesAndWeights the addresses and weights of all the recipients to receive rewards
   function _setConfig(
     bytes32 feedId,
@@ -417,19 +422,15 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
       // Here the contract checks to see if a signer's address has already
       // been set to ensure that the group of signer addresses that will
       // sign reports with the config digest are unique.
-      bool isSignerAlreadySet = feedVerifierState.s_verificationDataConfigs[configDigest].oracles[signerAddr].role !=
-        Role.Unset;
+      bool isSignerAlreadySet =
+        feedVerifierState.s_verificationDataConfigs[configDigest].oracles[signerAddr].role != Role.Unset;
       if (isSignerAlreadySet) revert NonUniqueSignatures();
-      feedVerifierState.s_verificationDataConfigs[configDigest].oracles[signerAddr] = Signer({
-        role: Role.Signer,
-        index: i
-      });
+      feedVerifierState.s_verificationDataConfigs[configDigest].oracles[signerAddr] =
+        Signer({role: Role.Signer, index: i});
     }
 
     IVerifierProxy(i_verifierProxyAddr).setVerifier(
-      feedVerifierState.latestConfigDigest,
-      configDigest,
-      recipientAddressesAndWeights
+      feedVerifierState.latestConfigDigest, configDigest, recipientAddressesAndWeights
     );
 
     emit ConfigSet(
@@ -456,11 +457,13 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   /// @param sourceAddress Address of source config Verifier
   /// @param configCount ordinal number of this config setting among all config settings over the life of this contract
   /// @param signers ith element is address ith oracle uses to sign a report
-  /// @param offchainTransmitters ith element is address ith oracle used to transmit reports (in this case used for flexible additional field, such as CSA pub keys)
+  /// @param offchainTransmitters ith element is address ith oracle used to transmit reports (in this case used for
+  /// flexible additional field, such as CSA pub keys)
   /// @param f maximum number of faulty/dishonest oracles the protocol can tolerate while still working correctly
   /// @param onchainConfig serialized configuration used by the contract (and possibly oracles)
   /// @param offchainConfigVersion version of the serialization format used for "offchainConfig" parameter
-  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the contract
+  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the
+  /// contract
   /// @dev This function is a modified version of the method from OCR2Abstract
   function _configDigestFromConfigData(
     bytes32 feedId,
@@ -520,7 +523,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifier
-  function activateFeed(bytes32 feedId) external onlyOwner {
+  function activateFeed(
+    bytes32 feedId
+  ) external onlyOwner {
     VerifierState storage feedVerifierState = s_feedVerifierStates[feedId];
 
     if (feedVerifierState.configCount == 0) revert InvalidFeed(feedId);
@@ -529,7 +534,9 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifier
-  function deactivateFeed(bytes32 feedId) external onlyOwner {
+  function deactivateFeed(
+    bytes32 feedId
+  ) external onlyOwner {
     VerifierState storage feedVerifierState = s_feedVerifierStates[feedId];
 
     if (feedVerifierState.configCount == 0) revert InvalidFeed(feedId);
@@ -550,10 +557,7 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     bytes32 feedId
   ) external view override returns (uint32 configCount, uint32 blockNumber, bytes32 configDigest) {
     VerifierState storage feedVerifierState = s_feedVerifierStates[feedId];
-    return (
-      feedVerifierState.configCount,
-      feedVerifierState.latestConfigBlockNumber,
-      feedVerifierState.latestConfigDigest
-    );
+    return
+      (feedVerifierState.configCount, feedVerifierState.latestConfigBlockNumber, feedVerifierState.latestConfigDigest);
   }
 }

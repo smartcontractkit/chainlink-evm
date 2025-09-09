@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Test} from "forge-std/Test.sol";
 import {ERC20Mock} from "../../../../shared/mocks/ERC20Mock.sol";
-import {RewardManager} from "../../RewardManager.sol";
+
 import {Common} from "../../../libraries/Common.sol";
+import {RewardManager} from "../../RewardManager.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
+import {Test} from "forge-std/Test.sol";
 
 /**
  * @title BaseRewardManagerTest
  * @author Michael Fletcher
  * @notice Base class for all reward manager tests
- * @dev This contract is intended to be inherited from and not used directly. It contains functionality to setup a primary and secondary pool
+ * @dev This contract is intended to be inherited from and not used directly. It contains functionality to setup a
+ * primary and secondary pool
  */
 contract BaseRewardManagerTest is Test {
   //contracts
@@ -113,7 +115,8 @@ contract BaseRewardManagerTest is Test {
     rewardManager.setRewardRecipients(SECONDARY_POOL_ID, getSecondaryRecipients());
   }
 
-  //override this to test variations of different recipients. changing this function will require existing tests to be updated as constants are hardcoded to be explicit
+  //override this to test variations of different recipients. changing this function will require existing tests to be
+  // updated as constants are hardcoded to be explicit
   function getPrimaryRecipients() public virtual returns (Common.AddressAndWeight[] memory) {
     //array of recipients
     Common.AddressAndWeight[] memory recipients = new Common.AddressAndWeight[](4);
@@ -192,11 +195,15 @@ contract BaseRewardManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function getAsset(uint256 quantity) public view returns (Common.Asset memory) {
+  function getAsset(
+    uint256 quantity
+  ) public view returns (Common.Asset memory) {
     return Common.Asset(address(asset), quantity);
   }
 
-  function getAssetBalance(address addr) public view returns (uint256) {
+  function getAssetBalance(
+    address addr
+  ) public view returns (uint256) {
     return asset.balanceOf(addr);
   }
 

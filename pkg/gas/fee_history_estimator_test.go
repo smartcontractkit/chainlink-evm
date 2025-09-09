@@ -16,6 +16,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/mocks"
+	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
 )
 
@@ -23,7 +24,7 @@ func TestFeeHistoryEstimatorLifecycle(t *testing.T) {
 	t.Parallel()
 	var gasLimit uint64 = 21000
 	maxPrice := assets.NewWeiI(100)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 
 	t.Run("fails if you fetch gas price before the estimator starts", func(t *testing.T) {
 		cfg := gas.FeeHistoryEstimatorConfig{
@@ -78,7 +79,7 @@ func TestFeeHistoryEstimatorGetLegacyGas(t *testing.T) {
 
 	var gasLimit uint64 = 21000
 	maxPrice := assets.NewWeiI(100)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 
 	t.Run("fetches a new gas price when first called", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
@@ -125,7 +126,7 @@ func TestFeeHistoryEstimatorBumpLegacyGas(t *testing.T) {
 
 	var gasLimit uint64 = 21000
 	maxPrice := assets.NewWeiI(100)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 
 	t.Run("bumps a previous attempt by BumpPercent", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
@@ -216,7 +217,7 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 	t.Parallel()
 
 	maxPrice := assets.NewWeiI(100)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 
 	t.Run("fetches a new dynamic fee when first called", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
@@ -287,7 +288,7 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 	t.Parallel()
 
 	globalMaxPrice := assets.NewWeiI(100)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 
 	t.Run("bumps a previous attempt by BumpPercent", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)

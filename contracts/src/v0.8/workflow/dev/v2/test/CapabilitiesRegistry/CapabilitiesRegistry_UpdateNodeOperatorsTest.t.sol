@@ -45,7 +45,7 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
     nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
-    uint32 invalidNodeOperatorId = 10000;
+    uint32 invalidNodeOperatorId = 10_000;
     uint32[] memory nodeOperatorIds = new uint32[](2);
     nodeOperatorIds[0] = invalidNodeOperatorId;
     vm.expectRevert(
@@ -59,7 +59,7 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
     nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
-    uint32 invalidNodeOperatorId = 10000;
+    uint32 invalidNodeOperatorId = 10_000;
     uint32[] memory nodeOperatorIds = new uint32[](1);
     nodeOperatorIds[0] = invalidNodeOperatorId;
     vm.expectRevert(

@@ -56,7 +56,9 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
    * @return A true value indicates that a flag was raised and a
    * false value indicates that no flag was raised.
    */
-  function getFlag(address subject) external view override checkAccess returns (bool) {
+  function getFlag(
+    address subject
+  ) external view override checkAccess returns (bool) {
     return s_flags[subject];
   }
 
@@ -66,7 +68,9 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
    * @return An array of bools where a true value for any flag indicates that
    * a flag was raised and a false value indicates that no flag was raised.
    */
-  function getFlags(address[] calldata subjects) external view override checkAccess returns (bool[] memory) {
+  function getFlags(
+    address[] calldata subjects
+  ) external view override checkAccess returns (bool[] memory) {
     bool[] memory responses = new bool[](subjects.length);
     for (uint256 i = 0; i < subjects.length; i++) {
       responses[i] = s_flags[subjects[i]];
@@ -80,7 +84,9 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
    * who always has access.
    * @param subject The contract address whose flag is being raised
    */
-  function raiseFlag(address subject) external override {
+  function raiseFlag(
+    address subject
+  ) external override {
     require(_allowedToRaiseFlags(), "Not allowed to raise flags");
 
     _tryToRaiseFlag(subject);
@@ -92,7 +98,9 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
    * who always has access.
    * @param subjects List of the contract addresses whose flag is being raised
    */
-  function raiseFlags(address[] calldata subjects) external override {
+  function raiseFlags(
+    address[] calldata subjects
+  ) external override {
     require(_allowedToRaiseFlags(), "Not allowed to raise flags");
 
     for (uint256 i = 0; i < subjects.length; i++) {
@@ -106,7 +114,9 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
    * who always has access.
    * @param subject The contract address whose flag is being lowered
    */
-  function lowerFlag(address subject) external override {
+  function lowerFlag(
+    address subject
+  ) external override {
     require(_allowedToLowerFlags(), "Not allowed to lower flags");
 
     _tryToLowerFlag(subject);
@@ -118,7 +128,9 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
    * who always has access.
    * @param subjects List of the contract addresses whose flag is being lowered
    */
-  function lowerFlags(address[] calldata subjects) external override {
+  function lowerFlags(
+    address[] calldata subjects
+  ) external override {
     require(_allowedToLowerFlags(), "Not allowed to lower flags");
 
     for (uint256 i = 0; i < subjects.length; i++) {
@@ -132,7 +144,9 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
    * @notice allows owner to change the access controller for raising flags.
    * @param racAddress new address for the raising access controller.
    */
-  function setRaisingAccessController(address racAddress) public override onlyOwner {
+  function setRaisingAccessController(
+    address racAddress
+  ) public override onlyOwner {
     address previous = address(raisingAccessController);
 
     if (previous != racAddress) {
@@ -142,7 +156,9 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
     }
   }
 
-  function setLoweringAccessController(address lacAddress) public override onlyOwner {
+  function setLoweringAccessController(
+    address lacAddress
+  ) public override onlyOwner {
     address previous = address(loweringAccessController);
 
     if (previous != lacAddress) {
@@ -161,14 +177,18 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
     return msg.sender == owner() || loweringAccessController.hasAccess(msg.sender, msg.data);
   }
 
-  function _tryToRaiseFlag(address subject) private {
+  function _tryToRaiseFlag(
+    address subject
+  ) private {
     if (!s_flags[subject]) {
       s_flags[subject] = true;
       emit FlagRaised(subject);
     }
   }
 
-  function _tryToLowerFlag(address subject) private {
+  function _tryToLowerFlag(
+    address subject
+  ) private {
     if (s_flags[subject]) {
       s_flags[subject] = false;
       emit FlagLowered(subject);

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
   uint32 private constant TEST_NODE_OPERATOR_ID = 1;
@@ -43,12 +43,9 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
   function test_RevertWhen_NodeOperatorIdAndParamLengthsMismatch() public {
     changePrank(ADMIN);
     CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({
-      admin: NEW_NODE_OPERATOR_ADMIN,
-      name: NEW_NODE_OPERATOR_NAME
-    });
+    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
-    uint32 invalidNodeOperatorId = 10000;
+    uint32 invalidNodeOperatorId = 10_000;
     uint32[] memory nodeOperatorIds = new uint32[](2);
     nodeOperatorIds[0] = invalidNodeOperatorId;
     vm.expectRevert(
@@ -60,12 +57,9 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
   function test_RevertWhen_NodeOperatorDoesNotExist() public {
     changePrank(ADMIN);
     CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({
-      admin: NEW_NODE_OPERATOR_ADMIN,
-      name: NEW_NODE_OPERATOR_NAME
-    });
+    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
-    uint32 invalidNodeOperatorId = 10000;
+    uint32 invalidNodeOperatorId = 10_000;
     uint32[] memory nodeOperatorIds = new uint32[](1);
     nodeOperatorIds[0] = invalidNodeOperatorId;
     vm.expectRevert(
@@ -78,25 +72,19 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     changePrank(ADMIN);
 
     CapabilitiesRegistry.NodeOperator[] memory nodeOperators = new CapabilitiesRegistry.NodeOperator[](1);
-    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({
-      admin: NEW_NODE_OPERATOR_ADMIN,
-      name: NEW_NODE_OPERATOR_NAME
-    });
+    nodeOperators[0] = CapabilitiesRegistry.NodeOperator({admin: NEW_NODE_OPERATOR_ADMIN, name: NEW_NODE_OPERATOR_NAME});
 
     uint32[] memory nodeOperatorIds = new uint32[](1);
     nodeOperatorIds[0] = TEST_NODE_OPERATOR_ID;
 
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));
     emit CapabilitiesRegistry.NodeOperatorUpdated(
-      TEST_NODE_OPERATOR_ID,
-      NEW_NODE_OPERATOR_ADMIN,
-      NEW_NODE_OPERATOR_NAME
+      TEST_NODE_OPERATOR_ID, NEW_NODE_OPERATOR_ADMIN, NEW_NODE_OPERATOR_NAME
     );
     s_CapabilitiesRegistry.updateNodeOperators(nodeOperatorIds, nodeOperators);
 
-    CapabilitiesRegistry.NodeOperator memory nodeOperator = s_CapabilitiesRegistry.getNodeOperator(
-      TEST_NODE_OPERATOR_ID
-    );
+    CapabilitiesRegistry.NodeOperator memory nodeOperator =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ID);
     assertEq(nodeOperator.admin, NEW_NODE_OPERATOR_ADMIN);
     assertEq(nodeOperator.name, NEW_NODE_OPERATOR_NAME);
   }

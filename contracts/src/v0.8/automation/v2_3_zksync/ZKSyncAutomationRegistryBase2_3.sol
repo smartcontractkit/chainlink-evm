@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.19;
 
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
-import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
-import {StreamsLookupCompatibleInterface} from "../interfaces/StreamsLookupCompatibleInterface.sol";
-import {ILogAutomation, Log} from "../interfaces/ILogAutomation.sol";
-import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {KeeperCompatibleInterface} from "../interfaces/KeeperCompatibleInterface.sol";
+import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
+
 import {IChainModule} from "../interfaces/IChainModule.sol";
+import {ILogAutomation, Log} from "../interfaces/ILogAutomation.sol";
+import {KeeperCompatibleInterface} from "../interfaces/KeeperCompatibleInterface.sol";
+import {StreamsLookupCompatibleInterface} from "../interfaces/StreamsLookupCompatibleInterface.sol";
+
+import {IWrappedNative} from "../interfaces/v2_3/IWrappedNative.sol";
 import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
-import {IWrappedNative} from "../interfaces/v2_3/IWrappedNative.sol";
+import {Address} from "@openzeppelin/contracts@4.9.6/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 /**
  * @notice Base Keeper Registry contract, contains shared logic between
@@ -32,7 +34,7 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   bytes4 internal constant PERFORM_SELECTOR = KeeperCompatibleInterface.performUpkeep.selector;
   bytes4 internal constant CHECK_CALLBACK_SELECTOR = StreamsLookupCompatibleInterface.checkCallback.selector;
   bytes4 internal constant CHECK_LOG_SELECTOR = ILogAutomation.checkLog.selector;
-  uint256 internal constant PERFORM_GAS_MIN = 2_300;
+  uint256 internal constant PERFORM_GAS_MIN = 2300;
   uint256 internal constant CANCELLATION_DELAY = 50;
   uint32 internal constant UINT32_MAX = type(uint32).max;
   // The first byte of the mask can be 0, because we only ever have 31 oracles
@@ -44,11 +46,13 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   // the variables result in accurate estimation
   uint256 internal constant REGISTRY_CONDITIONAL_OVERHEAD = 98_200; // Fixed gas overhead for conditional upkeeps
   uint256 internal constant REGISTRY_LOG_OVERHEAD = 122_500; // Fixed gas overhead for log upkeeps
-  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5_600; // Value scales with f
+  uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 5600; // Value scales with f
 
   // Next block of constants are used in actual payment calculation. We calculate the exact gas used within the
-  // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed constants
-  // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates various cases and verifies that
+  // tx itself, but since payment processing itself takes gas, and it needs the overhead as input, we use fixed
+  // constants
+  // to account for gas used in payment processing. These values are calibrated using hardhat tests which simulates
+  // various cases and verifies that
   // the variables result in accurate estimation
   uint256 internal constant ACCOUNTING_FIXED_GAS_OVERHEAD = 51_000; // Fixed overhead per tx
   uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 20_000; // Overhead per upkeep performed in batch
@@ -88,15 +92,21 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   uint256 internal s_fallbackGasPrice;
   uint256 internal s_fallbackLinkPrice;
   uint256 internal s_fallbackNativePrice;
-  mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to and fro
+  mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to
+    // and fro
   mapping(uint256 => bytes) internal s_upkeepTriggerConfig; // upkeep triggers
   mapping(uint256 => bytes) internal s_upkeepOffchainConfig; // general config set by users for each upkeep
-  mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an upkeep
-  mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an admin
+  mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an
+    // upkeep
+  mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an
+    // admin
   // billing
-  mapping(IERC20 billingToken => uint256 reserveAmount) internal s_reserveAmounts; // unspent user deposits + unwithdrawn NOP payments
-  mapping(IERC20 billingToken => BillingConfig billingConfig) internal s_billingConfigs; // billing configurations for different tokens
-  mapping(uint256 upkeepID => BillingOverrides billingOverrides) internal s_billingOverrides; // billing overrides for specific upkeeps
+  mapping(IERC20 billingToken => uint256 reserveAmount) internal s_reserveAmounts; // unspent user deposits +
+    // unwithdrawn NOP payments
+  mapping(IERC20 billingToken => BillingConfig billingConfig) internal s_billingConfigs; // billing configurations for
+    // different tokens
+  mapping(uint256 upkeepID => BillingOverrides billingOverrides) internal s_billingOverrides; // billing overrides for
+    // specific upkeeps
   IERC20[] internal s_billingTokens; // list of billing tokens
   PayoutMode internal s_payoutMode;
 
@@ -253,8 +263,8 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     uint32 lastPerformedBlockNumber;
     // 0 bytes left in 2nd EVM word - written in transmit path
     IERC20 billingToken;
-    // 12 bytes left in 3rd EVM word - read in transmit path
   }
+  // 12 bytes left in 3rd EVM word - read in transmit path
 
   /// @dev Config + State storage struct which is on hot transmit path
   struct HotVars {
@@ -277,14 +287,15 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     uint32 nonce; // Nonce for each upkeep created
     // 1 EVM word full
     address upkeepPrivilegeManager; // address which can set privilege for upkeeps
-    uint32 configCount; // incremented each time a new config is posted, The count is incorporated into the config digest to prevent replay attacks.
+    uint32 configCount; // incremented each time a new config is posted, The count is incorporated into the config
+      // digest to prevent replay attacks.
     uint32 latestConfigBlockNumber; // makes it easier for offchain systems to extract config from logs
     uint32 maxCheckDataSize; // max length of checkData bytes
     // 2 EVM word full
     address financeAdmin; // address which can withdraw funds from the contract
     uint32 maxPerformDataSize; // max length of performData bytes
     uint32 maxRevertDataSize; // max length of revertData bytes
-    // 4 bytes left in 3rd EVM word
+      // 4 bytes left in 3rd EVM word
   }
 
   /// @dev Report transmitted by OCR to transmit function
@@ -376,8 +387,8 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     uint256 fallbackPrice;
     // 2nd word only read if stale
     uint96 minSpend;
-    // 3rd word only read during cancellation
   }
+  // 3rd word only read during cancellation
 
   /**
    * @notice override-able billing params of a billing token
@@ -425,7 +436,8 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   /**
    * @notice struct containing receipt information about a payment or cost estimation
    * @member gasChargeInBillingToken the amount to charge a user for gas spent using the billing token's native decimals
-   * @member premiumInBillingToken the premium charged to the user, shared between all nodes, using the billing token's native decimals
+   * @member premiumInBillingToken the premium charged to the user, shared between all nodes, using the billing token's
+   * native decimals
    * @member gasReimbursementInJuels the amount to reimburse a node for gas spent
    * @member premiumInJuels the premium paid to NOPs, shared between all nodes
    */
@@ -442,8 +454,8 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     // third word ends
     uint96 nativeUSD;
     uint96 billingUSD;
-    // fourth word ends
   }
+  // fourth word ends
 
   event AdminPrivilegeConfigSet(address indexed admin, bytes privilegeConfig);
   event BillingConfigOverridden(uint256 indexed id, BillingOverrides overrides);
@@ -473,12 +485,7 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   event UpkeepOffchainConfigSet(uint256 indexed id, bytes offchainConfig);
   event UpkeepPaused(uint256 indexed id);
   event UpkeepPerformed(
-    uint256 indexed id,
-    bool indexed success,
-    uint96 totalPayment,
-    uint256 gasUsed,
-    uint256 gasOverhead,
-    bytes trigger
+    uint256 indexed id, bool indexed success, uint96 totalPayment, uint256 gasUsed, uint256 gasOverhead, bytes trigger
   );
   event UpkeepCharged(uint256 indexed id, PaymentReceipt receipt);
   event UpkeepPrivilegeConfigSet(uint256 indexed id, bytes privilegeConfig);
@@ -543,8 +550,9 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   ) internal {
     if (s_hotVars.paused) revert RegistryPaused();
     if (checkData.length > s_storage.maxCheckDataSize) revert CheckDataExceedsLimit();
-    if (upkeep.performGas < PERFORM_GAS_MIN || upkeep.performGas > s_storage.maxPerformGas)
+    if (upkeep.performGas < PERFORM_GAS_MIN || upkeep.performGas > s_storage.maxPerformGas) {
       revert GasLimitOutsideRange();
+    }
     if (address(s_upkeep[id].forwarder) != address(0)) revert UpkeepAlreadyExists();
     if (address(s_billingConfigs[upkeep.billingToken].priceFeed) == address(0)) revert InvalidToken();
     s_upkeep[id] = upkeep;
@@ -568,7 +576,9 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
    * @dev we add the "identifying" part in the middle so that it is mostly hidden from users who usually only
    * see the first 4 and last 4 hex values ex 0x1234...ABCD
    */
-  function _createID(Trigger triggerType) internal view returns (uint256) {
+  function _createID(
+    Trigger triggerType
+  ) internal view returns (uint256) {
     bytes1 empty;
     IChainModule chainModule = s_hotVars.chainModule;
     bytes memory idBytes = abi.encodePacked(
@@ -594,7 +604,7 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     bool staleFallback = stalenessSeconds > 0;
     uint256 timestamp;
     int256 feedValue;
-    (, feedValue, , timestamp, ) = i_fastGasFeed.latestRoundData();
+    (, feedValue,, timestamp,) = i_fastGasFeed.latestRoundData();
     if (
       feedValue <= 0 || block.timestamp < timestamp || (staleFallback && stalenessSeconds < block.timestamp - timestamp)
     ) {
@@ -602,7 +612,7 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     } else {
       gasWei = uint256(feedValue);
     }
-    (, feedValue, , timestamp, ) = i_linkUSDFeed.latestRoundData();
+    (, feedValue,, timestamp,) = i_linkUSDFeed.latestRoundData();
     if (
       feedValue <= 0 || block.timestamp < timestamp || (staleFallback && stalenessSeconds < block.timestamp - timestamp)
     ) {
@@ -618,12 +628,13 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
    * in the future, all price data should be included in the report instead of
    * getting read during execution
    */
-  function _getNativeUSD(HotVars memory hotVars) internal view returns (uint256) {
-    (, int256 feedValue, , uint256 timestamp, ) = i_nativeUSDFeed.latestRoundData();
+  function _getNativeUSD(
+    HotVars memory hotVars
+  ) internal view returns (uint256) {
+    (, int256 feedValue,, uint256 timestamp,) = i_nativeUSDFeed.latestRoundData();
     if (
-      feedValue <= 0 ||
-      block.timestamp < timestamp ||
-      (hotVars.stalenessSeconds > 0 && hotVars.stalenessSeconds < block.timestamp - timestamp)
+      feedValue <= 0 || block.timestamp < timestamp
+        || (hotVars.stalenessSeconds > 0 && hotVars.stalenessSeconds < block.timestamp - timestamp)
     ) {
       return s_fallbackNativePrice;
     } else {
@@ -642,11 +653,10 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     paymentParams.flatFeeMilliCents = config.flatFeeMilliCents;
     paymentParams.gasFeePPB = config.gasFeePPB;
     paymentParams.decimals = config.decimals;
-    (, int256 feedValue, , uint256 timestamp, ) = config.priceFeed.latestRoundData();
+    (, int256 feedValue,, uint256 timestamp,) = config.priceFeed.latestRoundData();
     if (
-      feedValue <= 0 ||
-      block.timestamp < timestamp ||
-      (hotVars.stalenessSeconds > 0 && hotVars.stalenessSeconds < block.timestamp - timestamp)
+      feedValue <= 0 || block.timestamp < timestamp
+        || (hotVars.stalenessSeconds > 0 && hotVars.stalenessSeconds < block.timestamp - timestamp)
     ) {
       paymentParams.priceUSD = config.fallbackPrice;
     } else {
@@ -662,7 +672,8 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
    * @dev use of PaymentParams struct is necessary to avoid stack too deep errors
    * @dev calculates LINK paid for gas spent plus a configure premium percentage
    * @dev 1 USD = 1e18 attoUSD
-   * @dev 1 USD = 1e26 hexaicosaUSD (had to borrow this prefix from geometry because there is no metric prefix for 1e-26)
+   * @dev 1 USD = 1e26 hexaicosaUSD (had to borrow this prefix from geometry because there is no metric prefix for
+   * 1e-26)
    * @dev 1 millicent = 1e-5 USD = 1e13 attoUSD
    */
   function _calculatePaymentAmount(
@@ -681,28 +692,35 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     uint256 denominatorScalingFactor = decimals < 18 ? 10 ** (18 - decimals) : 1;
 
     // gas calculation
-    uint256 gasPaymentHexaicosaUSD = (gasWei *
-      (paymentParams.gasLimit + paymentParams.gasOverhead) +
-      paymentParams.l1CostWei) * paymentParams.nativeUSD; // gasPaymentHexaicosaUSD has an extra 8 zeros because of decimals on nativeUSD feed
-    // gasChargeInBillingToken is scaled by the billing token's decimals. Round up to ensure a minimum billing token is charged for gas
+    uint256 gasPaymentHexaicosaUSD = (
+      gasWei * (paymentParams.gasLimit + paymentParams.gasOverhead) + paymentParams.l1CostWei
+    ) * paymentParams.nativeUSD; // gasPaymentHexaicosaUSD has an extra 8 zeros because of decimals on nativeUSD feed
+    // gasChargeInBillingToken is scaled by the billing token's decimals. Round up to ensure a minimum billing token is
+    // charged for gas
     receipt.gasChargeInBillingToken = SafeCast.toUint96(
-      ((gasPaymentHexaicosaUSD * numeratorScalingFactor) +
-        (paymentParams.billingTokenParams.priceUSD * denominatorScalingFactor - 1)) /
-        (paymentParams.billingTokenParams.priceUSD * denominatorScalingFactor)
+      (
+        (gasPaymentHexaicosaUSD * numeratorScalingFactor)
+          + (paymentParams.billingTokenParams.priceUSD * denominatorScalingFactor - 1)
+      ) / (paymentParams.billingTokenParams.priceUSD * denominatorScalingFactor)
     );
     // 18 decimals: 26 decimals / 8 decimals
     receipt.gasReimbursementInJuels = SafeCast.toUint96(gasPaymentHexaicosaUSD / paymentParams.linkUSD);
 
     // premium calculation
-    uint256 flatFeeHexaicosaUSD = uint256(paymentParams.billingTokenParams.flatFeeMilliCents) * 1e21; // 1e13 for milliCents to attoUSD and 1e8 for attoUSD to hexaicosaUSD
-    uint256 premiumHexaicosaUSD = ((((gasWei * paymentParams.gasLimit) + paymentParams.l1CostWei) *
-      paymentParams.billingTokenParams.gasFeePPB *
-      paymentParams.nativeUSD) / 1e9) + flatFeeHexaicosaUSD;
+    uint256 flatFeeHexaicosaUSD = uint256(paymentParams.billingTokenParams.flatFeeMilliCents) * 1e21; // 1e13 for
+      // milliCents to attoUSD and 1e8 for attoUSD to hexaicosaUSD
+    uint256 premiumHexaicosaUSD = (
+      (
+        ((gasWei * paymentParams.gasLimit) + paymentParams.l1CostWei) * paymentParams.billingTokenParams.gasFeePPB
+          * paymentParams.nativeUSD
+      ) / 1e9
+    ) + flatFeeHexaicosaUSD;
     // premium is scaled by the billing token's decimals. Round up to ensure at least minimum charge
     receipt.premiumInBillingToken = SafeCast.toUint96(
-      ((premiumHexaicosaUSD * numeratorScalingFactor) +
-        (paymentParams.billingTokenParams.priceUSD * denominatorScalingFactor - 1)) /
-        (paymentParams.billingTokenParams.priceUSD * denominatorScalingFactor)
+      (
+        (premiumHexaicosaUSD * numeratorScalingFactor)
+          + (paymentParams.billingTokenParams.priceUSD * denominatorScalingFactor - 1)
+      ) / (paymentParams.billingTokenParams.priceUSD * denominatorScalingFactor)
     );
     receipt.premiumInJuels = SafeCast.toUint96(premiumHexaicosaUSD / paymentParams.linkUSD);
 
@@ -738,7 +756,7 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
       } else {
         revert InvalidTriggerType();
       }
-      (uint256 chainModuleFixedOverhead, ) = s_hotVars.chainModule.getGasOverhead();
+      (uint256 chainModuleFixedOverhead,) = s_hotVars.chainModule.getGasOverhead();
       maxGasOverhead += (REGISTRY_PER_SIGNER_GAS_OVERHEAD * (hotVars.f + 1)) + chainModuleFixedOverhead;
     }
 
@@ -792,7 +810,9 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   /**
    * @dev gets the trigger type from an upkeepID (trigger type is encoded in the middle of the ID)
    */
-  function _getTriggerType(uint256 upkeepId) internal pure returns (Trigger) {
+  function _getTriggerType(
+    uint256 upkeepId
+  ) internal pure returns (Trigger) {
     bytes32 rawID = bytes32(upkeepId);
     bytes1 empty = bytes1(0);
     for (uint256 idx = 4; idx < 15; idx++) {
@@ -821,13 +841,14 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   /**
    * @dev _decodeReport decodes a serialized report into a Report struct
    */
-  function _decodeReport(bytes calldata rawReport) internal pure returns (Report memory) {
+  function _decodeReport(
+    bytes calldata rawReport
+  ) internal pure returns (Report memory) {
     Report memory report = abi.decode(rawReport, (Report));
     uint256 expectedLength = report.upkeepIds.length;
     if (
-      report.gasLimits.length != expectedLength ||
-      report.triggers.length != expectedLength ||
-      report.performDatas.length != expectedLength
+      report.gasLimits.length != expectedLength || report.triggers.length != expectedLength
+        || report.performDatas.length != expectedLength
     ) {
       revert InvalidReport();
     }
@@ -848,8 +869,9 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   ) internal returns (bool, bytes32) {
     bytes32 dedupID;
     if (transmitInfo.triggerType == Trigger.CONDITION) {
-      if (!_validateConditionalTrigger(upkeepId, blocknumber, rawTrigger, transmitInfo, hotVars))
+      if (!_validateConditionalTrigger(upkeepId, blocknumber, rawTrigger, transmitInfo, hotVars)) {
         return (false, dedupID);
+      }
     } else if (transmitInfo.triggerType == Trigger.LOG) {
       bool valid;
       (valid, dedupID) = _validateLogTrigger(upkeepId, blocknumber, rawTrigger, hotVars);
@@ -883,9 +905,10 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
       return false;
     }
     if (
-      (hotVars.reorgProtectionEnabled &&
-        (trigger.blockHash != bytes32("") && hotVars.chainModule.blockHash(trigger.blockNum) != trigger.blockHash)) ||
-      trigger.blockNum >= blocknumber
+      (
+        hotVars.reorgProtectionEnabled
+          && (trigger.blockHash != bytes32("") && hotVars.chainModule.blockHash(trigger.blockNum) != trigger.blockHash)
+      ) || trigger.blockNum >= blocknumber
     ) {
       // There are two cases of reorged report
       // 1. trigger block number is in future: this is an edge case during extreme deep reorgs of chain
@@ -908,9 +931,10 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     LogTrigger memory trigger = abi.decode(rawTrigger, (LogTrigger));
     bytes32 dedupID = keccak256(abi.encodePacked(upkeepId, trigger.logBlockHash, trigger.txHash, trigger.logIndex));
     if (
-      (hotVars.reorgProtectionEnabled &&
-        (trigger.blockHash != bytes32("") && hotVars.chainModule.blockHash(trigger.blockNum) != trigger.blockHash)) ||
-      trigger.blockNum >= blocknumber
+      (
+        hotVars.reorgProtectionEnabled
+          && (trigger.blockHash != bytes32("") && hotVars.chainModule.blockHash(trigger.blockNum) != trigger.blockHash)
+      ) || trigger.blockNum >= blocknumber
     ) {
       // Reorg protection is same as conditional trigger upkeeps
       emit ReorgedUpkeepReport(upkeepId, rawTrigger);
@@ -1013,11 +1037,12 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
     // this shouldn't happen, but in rare edge cases, we charge the full balance in case the user
     // can't cover the amount owed
     if (balance < receipt.gasChargeInBillingToken) {
-      // if the user can't cover the gas fee, then direct all of the payment to the transmitter and distribute no premium to the DON
+      // if the user can't cover the gas fee, then direct all of the payment to the transmitter and distribute no
+      // premium to the DON
       payment = balance;
       receipt.gasReimbursementInJuels = SafeCast.toUint96(
-        (balance * paymentParams.billingTokenParams.priceUSD * scalingFactor1) /
-          (paymentParams.linkUSD * scalingFactor2)
+        (balance * paymentParams.billingTokenParams.priceUSD * scalingFactor1)
+          / (paymentParams.linkUSD * scalingFactor2)
       );
       receipt.premiumInJuels = 0;
       receipt.premiumInBillingToken = 0;
@@ -1026,14 +1051,17 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
       // if the user can cover the gas fee, but not the premium, then reduce the premium
       payment = balance;
       receipt.premiumInJuels = SafeCast.toUint96(
-        ((balance * paymentParams.billingTokenParams.priceUSD * scalingFactor1) /
-          (paymentParams.linkUSD * scalingFactor2)) - receipt.gasReimbursementInJuels
+        (
+          (balance * paymentParams.billingTokenParams.priceUSD * scalingFactor1)
+            / (paymentParams.linkUSD * scalingFactor2)
+        ) - receipt.gasReimbursementInJuels
       );
       // round up
       receipt.premiumInBillingToken = SafeCast.toUint96(
-        ((receipt.premiumInJuels * paymentParams.linkUSD * scalingFactor2) +
-          (paymentParams.billingTokenParams.priceUSD * scalingFactor1 - 1)) /
-          (paymentParams.billingTokenParams.priceUSD * scalingFactor1)
+        (
+          (receipt.premiumInJuels * paymentParams.linkUSD * scalingFactor2)
+            + (paymentParams.billingTokenParams.priceUSD * scalingFactor1 - 1)
+        ) / (paymentParams.billingTokenParams.priceUSD * scalingFactor1)
       );
     }
 
@@ -1048,7 +1076,9 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
   /**
    * @dev ensures the upkeep is not cancelled and the caller is the upkeep admin
    */
-  function _requireAdminAndNotCancelled(uint256 upkeepId) internal view {
+  function _requireAdminAndNotCancelled(
+    uint256 upkeepId
+  ) internal view {
     if (msg.sender != s_upkeepAdmin[upkeepId]) revert OnlyCallableByAdmin();
     if (s_upkeep[upkeepId].maxValidBlocknumber != UINT32_MAX) revert UpkeepCancelled();
   }
@@ -1189,7 +1219,7 @@ abstract contract ZKSyncAutomationRegistryBase2_3 is ConfirmedOwner {
 
   /**
    * @notice returns the size of the LINK liquidity pool
-   # @dev LINK max supply < 2^96, so casting to int256 is safe
+   *  # @dev LINK max supply < 2^96, so casting to int256 is safe
    */
   function _linkAvailableForPayment() internal view returns (int256) {
     return int256(i_link.balanceOf(address(this))) - int256(s_reserveAmounts[IERC20(address(i_link))]);

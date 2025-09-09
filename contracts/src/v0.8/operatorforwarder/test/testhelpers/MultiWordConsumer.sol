@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
-import {ChainlinkClient, ChainlinkRequestInterface, LinkTokenInterface} from "../../ChainlinkClient.sol";
 import {Chainlink} from "../../Chainlink.sol";
+import {ChainlinkClient, ChainlinkRequestInterface, LinkTokenInterface} from "../../ChainlinkClient.sol";
 
 contract MultiWordConsumer is ChainlinkClient {
   using Chainlink for Chainlink.Request;
@@ -17,18 +17,13 @@ contract MultiWordConsumer is ChainlinkClient {
   uint256 private s_eurInt;
   uint256 private s_jpyInt;
 
-  event RequestFulfilled(
-    bytes32 indexed requestId, // User-defined ID
-    bytes indexed price
-  );
+  event RequestFulfilled( // User-defined ID
+  bytes32 indexed requestId, bytes indexed price);
 
   event RequestMultipleFulfilled(bytes32 indexed requestId, bytes32 indexed usd, bytes32 indexed eur, bytes32 jpy);
 
   event RequestMultipleFulfilledWithCustomURLs(
-    bytes32 indexed requestId,
-    uint256 indexed usd,
-    uint256 indexed eur,
-    uint256 jpy
+    bytes32 indexed requestId, uint256 indexed usd, uint256 indexed eur, uint256 jpy
   );
 
   constructor(address _link, address _oracle, bytes32 _specId) {
@@ -37,7 +32,9 @@ contract MultiWordConsumer is ChainlinkClient {
     s_specId = _specId;
   }
 
-  function setSpecID(bytes32 _specId) public {
+  function setSpecID(
+    bytes32 _specId
+  ) public {
     s_specId = _specId;
   }
 
@@ -60,10 +57,8 @@ contract MultiWordConsumer is ChainlinkClient {
     string memory _pathJPY,
     uint256 _payment
   ) public {
-    Chainlink.Request memory req = _buildOperatorRequest(
-      s_specId,
-      this.fulfillMultipleParametersWithCustomURLs.selector
-    );
+    Chainlink.Request memory req =
+      _buildOperatorRequest(s_specId, this.fulfillMultipleParametersWithCustomURLs.selector);
     req._add("urlUSD", _urlUSD);
     req._add("pathUSD", _pathUSD);
     req._add("urlEUR", _urlEUR);

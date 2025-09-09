@@ -60,5 +60,7 @@ interface ILogAutomation {
    * calling `abi.decode`. This data should not be trusted, and should be
    * validated against the contract's current state.
    */
-  function performUpkeep(bytes calldata performData) external;
+  function performUpkeep(
+    bytes calldata performData
+  ) external;
 }

@@ -18,7 +18,9 @@ contract DestinationFeeManagerProxy {
     s_feeManager.processFeeBulk{value: msg.value}(poolIds, payloads, parameterPayload, msg.sender);
   }
 
-  function setDestinationFeeManager(address feeManager) public {
+  function setDestinationFeeManager(
+    address feeManager
+  ) public {
     s_feeManager = IDestinationVerifierFeeManager(feeManager);
   }
 }

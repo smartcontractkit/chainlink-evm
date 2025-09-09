@@ -14,7 +14,9 @@ contract FeeManagerProxy {
     s_feeManager.processFeeBulk{value: msg.value}(payloads, parameterPayload, msg.sender);
   }
 
-  function setFeeManager(IFeeManager feeManager) public {
+  function setFeeManager(
+    IFeeManager feeManager
+  ) public {
     s_feeManager = feeManager;
   }
 }

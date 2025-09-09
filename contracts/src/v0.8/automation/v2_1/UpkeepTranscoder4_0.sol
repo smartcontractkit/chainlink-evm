@@ -2,10 +2,11 @@
 
 pragma solidity 0.8.16;
 
-import {UpkeepTranscoderInterfaceV2} from "../interfaces/UpkeepTranscoderInterfaceV2.sol";
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {KeeperRegistryBase2_1 as R21} from "./KeeperRegistryBase2_1.sol";
+
 import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
+import {UpkeepTranscoderInterfaceV2} from "../interfaces/UpkeepTranscoderInterfaceV2.sol";
+import {KeeperRegistryBase2_1 as R21} from "./KeeperRegistryBase2_1.sol";
 
 enum RegistryVersion {
   V12,
@@ -83,10 +84,8 @@ contract UpkeepTranscoder4_0 is UpkeepTranscoderInterfaceV2, ITypeAndVersion {
   ) external view override returns (bytes memory) {
     // v1.2 => v2.1
     if (fromVersion == uint8(RegistryVersion.V12)) {
-      (uint256[] memory ids, UpkeepV12[] memory upkeepsV12, bytes[] memory checkDatas) = abi.decode(
-        encodedUpkeeps,
-        (uint256[], UpkeepV12[], bytes[])
-      );
+      (uint256[] memory ids, UpkeepV12[] memory upkeepsV12, bytes[] memory checkDatas) =
+        abi.decode(encodedUpkeeps, (uint256[], UpkeepV12[], bytes[]));
       if (ids.length != upkeepsV12.length || ids.length != checkDatas.length) {
         revert InvalidTranscoding();
       }
@@ -112,10 +111,8 @@ contract UpkeepTranscoder4_0 is UpkeepTranscoderInterfaceV2, ITypeAndVersion {
     }
     // v1.3 => v2.1
     if (fromVersion == uint8(RegistryVersion.V13)) {
-      (uint256[] memory ids, UpkeepV13[] memory upkeepsV13, bytes[] memory checkDatas) = abi.decode(
-        encodedUpkeeps,
-        (uint256[], UpkeepV13[], bytes[])
-      );
+      (uint256[] memory ids, UpkeepV13[] memory upkeepsV13, bytes[] memory checkDatas) =
+        abi.decode(encodedUpkeeps, (uint256[], UpkeepV13[], bytes[]));
       if (ids.length != upkeepsV13.length || ids.length != checkDatas.length) {
         revert InvalidTranscoding();
       }
@@ -141,8 +138,8 @@ contract UpkeepTranscoder4_0 is UpkeepTranscoderInterfaceV2, ITypeAndVersion {
     }
     // v2.0 => v2.1
     if (fromVersion == uint8(RegistryVersion.V20)) {
-      (uint256[] memory ids, UpkeepV20[] memory upkeepsV20, bytes[] memory checkDatas, address[] memory admins) = abi
-        .decode(encodedUpkeeps, (uint256[], UpkeepV20[], bytes[], address[]));
+      (uint256[] memory ids, UpkeepV20[] memory upkeepsV20, bytes[] memory checkDatas, address[] memory admins) =
+        abi.decode(encodedUpkeeps, (uint256[], UpkeepV20[], bytes[], address[]));
       if (ids.length != upkeepsV20.length || ids.length != checkDatas.length) {
         revert InvalidTranscoding();
       }

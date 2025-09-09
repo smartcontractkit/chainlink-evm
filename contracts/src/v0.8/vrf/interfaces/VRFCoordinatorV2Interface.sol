@@ -79,7 +79,9 @@ interface VRFCoordinatorV2Interface {
    * @dev will revert if original owner of subId has
    * not requested that msg.sender become the new owner.
    */
-  function acceptSubscriptionOwnerTransfer(uint64 subId) external;
+  function acceptSubscriptionOwnerTransfer(
+    uint64 subId
+  ) external;
 
   /**
    * @notice Add a consumer to a VRF subscription.
@@ -109,5 +111,7 @@ interface VRFCoordinatorV2Interface {
    * @return true if there exists at least one unfulfilled request for the subscription, false
    * otherwise.
    */
-  function pendingRequestExists(uint64 subId) external view returns (bool);
+  function pendingRequestExists(
+    uint64 subId
+  ) external view returns (bool);
 }

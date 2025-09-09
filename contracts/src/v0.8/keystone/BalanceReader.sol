@@ -8,7 +8,9 @@ import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
 contract BalanceReader is ITypeAndVersion {
   string public constant override typeAndVersion = "BalanceReader 1.0.0";
 
-  function getNativeBalances(address[] memory addresses) public view returns (uint256[] memory) {
+  function getNativeBalances(
+    address[] memory addresses
+  ) public view returns (uint256[] memory) {
     uint256[] memory balances = new uint256[](addresses.length);
     for (uint256 i = 0; i < addresses.length; ++i) {
       balances[i] = addresses[i].balance;
