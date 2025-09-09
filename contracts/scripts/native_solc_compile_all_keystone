@@ -36,3 +36,4 @@ compileContract KeystoneForwarder
 compileContract OCR3Capability
 compileContract KeystoneFeedsConsumer
 compileContract BalanceReader
+compileContract DKG
