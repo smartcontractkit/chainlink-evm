@@ -52,7 +52,7 @@ contract CapabilitiesRegistry_RemoveNodeOperatorsTest is BaseTest {
       config: bytes("")
     });
 
-    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.NodeOperatorPartOfNode.selector));
+    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.NodeOperatorHasNodes.selector));
     uint32[] memory nodeOperatorsToRemove = new uint32[](2);
     nodeOperatorsToRemove[1] = 1;
     s_CapabilitiesRegistry.removeNodeOperators(nodeOperatorsToRemove);
@@ -70,12 +70,12 @@ contract CapabilitiesRegistry_RemoveNodeOperatorsTest is BaseTest {
     nodeOperatorsToRemove[1] = TEST_NODE_OPERATOR_TWO_ID;
     s_CapabilitiesRegistry.removeNodeOperators(nodeOperatorsToRemove);
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorOne =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorOne =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ONE_ID);
     assertEq(nodeOperatorOne.admin, address(0));
     assertEq(nodeOperatorOne.name, "");
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorTwo =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorTwo =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_TWO_ID);
     assertEq(nodeOperatorTwo.admin, address(0));
     assertEq(nodeOperatorTwo.name, "");
@@ -96,17 +96,17 @@ contract CapabilitiesRegistry_RemoveNodeOperatorsTest is BaseTest {
     nodeOperatorsToRemove[2] = TEST_NODE_OPERATOR_THREE_ID;
     s_CapabilitiesRegistry.removeNodeOperators(nodeOperatorsToRemove);
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorOne =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorOne =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ONE_ID);
     assertEq(nodeOperatorOne.admin, address(0));
     assertEq(nodeOperatorOne.name, "");
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorTwo =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorTwo =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_TWO_ID);
     assertEq(nodeOperatorTwo.admin, address(0));
     assertEq(nodeOperatorTwo.name, "");
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorThree =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorThree =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_THREE_ID);
     assertEq(nodeOperatorThree.admin, address(0));
     assertEq(nodeOperatorThree.name, "");

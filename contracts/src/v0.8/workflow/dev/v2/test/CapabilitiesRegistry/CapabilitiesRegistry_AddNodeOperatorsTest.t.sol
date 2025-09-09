@@ -33,12 +33,12 @@ contract CapabilitiesRegistry_AddNodeOperatorsTest is BaseTest {
     );
     s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorOne =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorOne =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ONE_ID);
     assertEq(nodeOperatorOne.admin, NODE_OPERATOR_ONE_ADMIN);
     assertEq(nodeOperatorOne.name, NODE_OPERATOR_ONE_NAME);
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorTwo =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorTwo =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_TWO_ID);
     assertEq(nodeOperatorTwo.admin, NODE_OPERATOR_TWO_ADMIN);
     assertEq(nodeOperatorTwo.name, NODE_OPERATOR_TWO_NAME);
@@ -60,12 +60,12 @@ contract CapabilitiesRegistry_AddNodeOperatorsTest is BaseTest {
     );
     s_CapabilitiesRegistry.addNodeOperators(_getNodeOperators());
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorOne =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorOne =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ONE_ID);
     assertEq(nodeOperatorOne.admin, NODE_OPERATOR_ONE_ADMIN);
     assertEq(nodeOperatorOne.name, NODE_OPERATOR_ONE_NAME);
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperatorTwo =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorTwo =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_TWO_ID);
     assertEq(nodeOperatorTwo.admin, NODE_OPERATOR_TWO_ADMIN);
     assertEq(nodeOperatorTwo.name, NODE_OPERATOR_TWO_NAME);

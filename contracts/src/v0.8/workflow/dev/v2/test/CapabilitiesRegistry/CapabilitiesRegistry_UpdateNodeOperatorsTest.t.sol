@@ -127,7 +127,7 @@ contract CapabilitiesRegistry_UpdateNodeOperatorTest is BaseTest {
     );
     s_CapabilitiesRegistry.updateNodeOperators(nodeOperatorIds, nodeOperators);
 
-    CapabilitiesRegistry.NodeOperatorParams memory nodeOperator =
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperator =
       s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ID);
     assertEq(nodeOperator.admin, NEW_NODE_OPERATOR_ADMIN);
     assertEq(nodeOperator.name, NEW_NODE_OPERATOR_NAME);

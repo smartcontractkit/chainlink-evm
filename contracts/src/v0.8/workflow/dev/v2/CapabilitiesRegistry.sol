@@ -31,7 +31,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     /// @dev The contract does not validate the length or characters of the node operator name because
     /// a trusted admin will supply these names. We reduce gas costs by omitting these checks on-chain.
     string name;
-    /// @notice The P2P IDs of the nodes that this Node Operator supports
+    /// @notice The P2P IDs of the nodes that this Node Operator owns
     EnumerableSet.Bytes32Set nodeP2PIDs;
   }
 
@@ -42,6 +42,17 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     /// @dev The contract does not validate the length or characters of the node operator name because
     /// a trusted admin will supply these names. We reduce gas costs by omitting these checks on-chain.
     string name;
+  }
+
+  struct NodeOperatorInfo {
+    /// @notice The address of the admin that can manage a node operator
+    address admin;
+    /// @notice Human readable name of a Node Operator managing the node
+    /// @dev The contract does not validate the length or characters of the node operator name because
+    /// a trusted admin will supply these names. We reduce gas costs by omitting these checks on-chain.
+    string name;
+    /// @notice The P2P IDs of the nodes that this Node Operator owns
+    bytes32[] nodeP2PIDs;
   }
 
   struct NodeParams {
@@ -306,6 +317,12 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// signer address to zero or if the signer address has already
   /// been used by another node
   error InvalidNodeSigner();
+
+  /// @notice This error is thrown when non-owner tries to reassign a node to a
+  /// different node operator
+  /// @param nodeOperatorId The ID of the node operator that is trying to
+  /// reassign the node
+  error NodeOperatorCannotReassignNode(uint32 nodeOperatorId);
 
   /// @notice This error is thrown when trying to add a capability that already
   /// exists.
@@ -718,6 +735,18 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       if (storedNode.signer == bytes32("")) revert NodeDoesNotExist(node.p2pId);
       if (!isOwner && msg.sender != nodeOperator.admin) revert AccessForbidden(msg.sender);
 
+      if (node.nodeOperatorId != storedNode.nodeOperatorId) {
+        // Non-owner cannot reassign the node to avoid the edge case where
+        // a node operator maliciously reassigns the node to another node
+        // operator. Contract owner can reassign the node to any node
+        // operator to give us flexibility to handle edge cases or mistakes.
+        if (!isOwner) revert NodeOperatorCannotReassignNode(node.nodeOperatorId);
+
+        s_nodeOperators[storedNode.nodeOperatorId].nodeP2PIDs.remove(storedNode.p2pId);
+        s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.add(storedNode.p2pId);
+        storedNode.nodeOperatorId = node.nodeOperatorId;
+      }
+
       if (node.signer == bytes32("")) revert InvalidNodeSigner();
 
       bytes32 previousSigner = storedNode.signer;
@@ -775,7 +804,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         }
       }
 
-      storedNode.nodeOperatorId = node.nodeOperatorId;
       storedNode.p2pId = node.p2pId;
       storedNode.encryptionPublicKey = node.encryptionPublicKey;
       storedNode.csaKey = node.csaKey;
@@ -1013,21 +1041,28 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @return NodeOperator The node operator data
   function getNodeOperator(
     uint32 nodeOperatorId
-  ) external view returns (NodeOperatorParams memory) {
-    return
-      NodeOperatorParams({admin: s_nodeOperators[nodeOperatorId].admin, name: s_nodeOperators[nodeOperatorId].name});
+  ) external view returns (NodeOperatorInfo memory) {
+    return NodeOperatorInfo({
+      admin: s_nodeOperators[nodeOperatorId].admin,
+      name: s_nodeOperators[nodeOperatorId].name,
+      nodeP2PIDs: s_nodeOperators[nodeOperatorId].nodeP2PIDs.values()
+    });
   }
 
   /// @notice Gets all node operators
   /// @return NodeOperator[] All node operators
-  function getNodeOperators() external view returns (NodeOperatorParams[] memory) {
+  function getNodeOperators() external view returns (NodeOperatorInfo[] memory) {
     uint32 nodeOperatorId = s_nextNodeOperatorId;
     /// Minus one to account for s_nextNodeOperatorId starting at index 1
-    NodeOperatorParams[] memory nodeOperators = new NodeOperatorParams[](s_nextNodeOperatorId - 1);
+    NodeOperatorInfo[] memory nodeOperators = new NodeOperatorInfo[](s_nextNodeOperatorId - 1);
     uint256 idx;
     for (uint32 i = 1; i < nodeOperatorId; ++i) {
       if (s_nodeOperators[i].admin != address(0)) {
-        nodeOperators[idx] = NodeOperatorParams({admin: s_nodeOperators[i].admin, name: s_nodeOperators[i].name});
+        nodeOperators[idx] = NodeOperatorInfo({
+          admin: s_nodeOperators[i].admin,
+          name: s_nodeOperators[i].name,
+          nodeP2PIDs: s_nodeOperators[i].nodeP2PIDs.values()
+        });
         ++idx;
       }
     }
