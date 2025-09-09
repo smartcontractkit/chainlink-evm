@@ -1289,6 +1289,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       }
     }
 
+    s_dons[donParams.id].id = donParams.id;
+    s_dons[donParams.id].acceptsWorkflows = donParams.acceptsWorkflows;
+    s_dons[donParams.id].configCount = donParams.configCount;
+
+    donConfig.config = donParams.config;
+    donConfig.name = donParams.name;
+    donConfig.isPublic = donParams.isPublic;
+    donConfig.f = donParams.f;
+
     for (uint256 i; i < nodes.length; ++i) {
       if (!donConfig.nodes.add(nodes[i])) revert DuplicateDONNode(donParams.id, nodes[i]);
 
@@ -1328,14 +1337,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
 
       donConfig.capabilityIds.push(hashedCapabilityId);
       donConfig.capabilityConfigs[configuration.capabilityId] = configuration.config;
-      donConfig.config = donParams.config;
-      donConfig.name = donParams.name;
-      donConfig.isPublic = donParams.isPublic;
-      donConfig.f = donParams.f;
-
-      s_dons[donParams.id].id = donParams.id;
-      s_dons[donParams.id].acceptsWorkflows = donParams.acceptsWorkflows;
-      s_dons[donParams.id].configCount = donParams.configCount;
 
       _setCapabilityConfig(donParams.id, donParams.configCount, configuration.capabilityId, nodes, configuration.config);
     }
