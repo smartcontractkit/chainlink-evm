@@ -1,6 +1,6 @@
 # @chainlink/contracts
 
-## 1.4.1
+## 1.5.0
 
 ### Contracts In This Release
 
