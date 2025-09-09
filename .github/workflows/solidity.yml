@@ -117,7 +117,7 @@ jobs:
 
   wrapper-result-validation:
     if: ${{ always() }}
-    needs: [ changes, native-compile ]
+    needs: [changes, native-compile]
     runs-on: ubuntu-latest
     steps:
       - name: Check if Go solidity wrappers are updated
@@ -130,8 +130,8 @@ jobs:
     defaults:
       run:
         working-directory: contracts
-    needs: [changes]
-    if: needs.changes.outputs.changes == 'true'
+    needs: [changes, tag-check]
+    if: needs.changes.outputs.changes == 'true' || needs.tag-check.outputs.is-pre-release-core == 'true' || needs.tag-check.outputs.is-release-core == 'true'
     name: Solidity Lint
     runs-on: ubuntu-latest
     steps:
@@ -147,7 +147,6 @@ jobs:
         run: pnpm solhint
       - name: Run solhint on tests
         run: pnpm solhint-test
-
 
   publish-beta:
     name: Publish Beta NPM
