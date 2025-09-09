@@ -1,4 +1,4 @@
-package clientwrappers
+package dualbroadcast
 
 import (
 	"bytes"
@@ -17,28 +17,31 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-type DualBroadcastClient struct {
+var _ txm.Client = &FlashbotsClient{}
+
+type FlashbotsClient struct {
 	c         client.Client
 	keystore  keys.MessageSigner
 	customURL *url.URL
 }
 
-func NewDualBroadcastClient(c client.Client, keystore keys.MessageSigner, customURL *url.URL) *DualBroadcastClient {
-	return &DualBroadcastClient{
+func NewFlashbotsClient(c client.Client, keystore keys.MessageSigner, customURL *url.URL) *FlashbotsClient {
+	return &FlashbotsClient{
 		c:         c,
 		keystore:  keystore,
 		customURL: customURL,
 	}
 }
 
-func (d *DualBroadcastClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
+func (d *FlashbotsClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
 	return d.c.NonceAt(ctx, address, blockNumber)
 }
 
-func (d *DualBroadcastClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
+func (d *FlashbotsClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.String()))
 	response, err := d.signAndPostMessage(ctx, address, body, "")
 	if err != nil {
@@ -52,7 +55,7 @@ func (d *DualBroadcastClient) PendingNonceAt(ctx context.Context, address common
 	return nonce, nil
 }
 
-func (d *DualBroadcastClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return err
@@ -75,7 +78,7 @@ func (d *DualBroadcastClient) SendTransaction(ctx context.Context, tx *types.Tra
 	return d.c.SendTransaction(ctx, attempt.SignedTransaction)
 }
 
-func (d *DualBroadcastClient) signAndPostMessage(ctx context.Context, address common.Address, body []byte, urlParams string) (result string, err error) {
+func (d *FlashbotsClient) signAndPostMessage(ctx context.Context, address common.Address, body []byte, urlParams string) (result string, err error) {
 	bodyReader := bytes.NewReader(body)
 	postReq, err := http.NewRequestWithContext(ctx, http.MethodPost, d.customURL.String()+"?"+urlParams, bodyReader)
 	if err != nil {
