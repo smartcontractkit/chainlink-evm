@@ -6,15 +6,28 @@
 set -e
 
 # Version of abigen to install. Must be run within chainlink project
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+# geth version of the gethwrappers sub package
+GETH_WRAPPERS_VERSION=$(go -C "$ROOT_DIR/gethwrappers" list -json -m github.com/ethereum/go-ethereum | jq -r .Version)
+# geth version of the main root package
 GETH_VERSION=$(go list -json -m github.com/ethereum/go-ethereum | jq -r .Version)
+
+if [ "$GETH_WRAPPERS_VERSION" != "$GETH_VERSION" ]; then
+    echo "Error: go-ethereum geth version ($GETH_WRAPPERS_VERSION) does not match root package go-ethereum version ($GETH_VERSION)"
+    exit 0
+fi
+
 GETH_REPO_URL="https://github.com/ethereum/go-ethereum"
 
-function realpath { echo $(cd $(dirname $1); pwd)/$(basename $1); }
+function realpath { echo $(
+    cd $(dirname $1)
+    pwd
+)/$(basename $1); }
 THIS_DIR="$(realpath "$(dirname $0)")"
 
 NATIVE_ABIGEN_VERSION=v"$(
-    "$THIS_DIR/abigen" --version 2> /dev/null | \
-    grep -E -o '([0-9]+\.[0-9]+\.[0-9]+)'
+    "$THIS_DIR/abigen" --version 2>/dev/null |
+        grep -E -o '([0-9]+\.[0-9]+\.[0-9]+)'
 )" || true
 
 if [ "$NATIVE_ABIGEN_VERSION" == "$GETH_VERSION" ]; then
@@ -36,8 +49,7 @@ pushd "$TMPDIR"
 git clone --depth=1 --single-branch --branch "$GETH_VERSION" "$GETH_REPO_URL"
 cd go-ethereum/cmd/abigen
 go build -ldflags="-s -w" # necessary on MacOS for code signing (see  https://github.com/confluentinc/confluent-kafka-go/issues/1092#issuecomment-2373681430)
-rm -f "$THIS_DIR/abigen" # necessary on MacOS for code signing
+rm -f "$THIS_DIR/abigen"  # necessary on MacOS for code signing
 cp ./abigen "$THIS_DIR"
 
 popd
-
