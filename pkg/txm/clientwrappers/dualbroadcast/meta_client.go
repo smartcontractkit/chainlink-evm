@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	timeout = time.Second * 300
+	timeout = time.Second * 5
 	metaABI = `[
   {
     "type": "function",
@@ -245,7 +245,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		ChainID:      &cid,
 		ToAddress:    tx.ToAddress,
 		Payload:      tx.Data,
-		ER:           false,
+		ER:           true,
 		FromAddress:  tx.FromAddress,
 		MaxFeePerGas: &fee,
 	}
@@ -298,6 +298,9 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	if response.Error.ErrorMessage != "" {
+		if strings.Contains(response.Error.ErrorMessage, "no solver operations received") {
+			return nil, nil
+		}
 		return nil, errors.New(response.Error.ErrorMessage)
 	}
 
@@ -401,11 +404,16 @@ func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacallda
 	}
 
 	// SOP
+	atLeastOne := false
 	for _, sop := range result.SOPs {
 		if sop.To != to || sop.Control != dApp {
 			// Exit early
 			return nil, fmt.Errorf("incorrect SOP: sop.To: %v, sop.Control: %v, to: %v, dApp: %v", sop.To, sop.Control, to, dApp)
 		}
+		atLeastOne = true
+	}
+	if !atLeastOne {
+		return nil, nil
 	}
 
 	// UOP
