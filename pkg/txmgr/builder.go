@@ -6,8 +6,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
@@ -23,6 +21,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/storage"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
@@ -84,7 +83,7 @@ func NewTxm(
 
 // NewEvmTxm creates a new concrete EvmTxm
 func NewEvmTxm(
-	chainId *big.Int,
+	chainID *big.Int,
 	cfg txmgrtypes.TransactionManagerChainConfig,
 	txCfg txmgrtypes.TransactionManagerTransactionsConfig,
 	keyStore KeyStore,
@@ -100,7 +99,7 @@ func NewEvmTxm(
 	finalizer Finalizer,
 	txmv2wrapper TxManager,
 ) *Txm {
-	return txmgr.NewTxm(chainId, cfg, txCfg, keyStore, lggr, checkerFactory, fwdMgr, txAttemptBuilder, txStore, broadcaster, confirmer, resender, tracker, finalizer, client.NewTxError, txmv2wrapper)
+	return txmgr.NewTxm(chainID, cfg, txCfg, keyStore, lggr, checkerFactory, fwdMgr, txAttemptBuilder, txStore, broadcaster, confirmer, resender, tracker, finalizer, client.NewTxError, txmv2wrapper)
 }
 
 func NewTxmV2(
@@ -126,10 +125,14 @@ func NewTxmV2(
 
 	var stuckTxDetector txm.StuckTxDetector
 	if txConfig.AutoPurge().Enabled() {
+		var detectionURL string
+		if txConfig.AutoPurge().DetectionApiUrl() != nil {
+			detectionURL = txConfig.AutoPurge().DetectionApiUrl().String()
+		}
 		stuckTxDetectorConfig := txm.StuckTxDetectorConfig{
 			BlockTime:             *txmV2Config.BlockTime(),
 			StuckTxBlockThreshold: *txConfig.AutoPurge().Threshold(),
-			DetectionURL:          txConfig.AutoPurge().DetectionApiUrl().String(),
+			DetectionURL:          detectionURL,
 		}
 		stuckTxDetector = txm.NewStuckTxDetector(lggr, chainConfig.ChainType(), stuckTxDetectorConfig)
 	}
@@ -144,8 +147,8 @@ func NewTxmV2(
 		EmptyTxLimitDefault: fCfg.LimitDefault(),
 	}
 	var c txm.Client
-	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() {
-		c = clientwrappers.NewDualBroadcastClient(client, keyStore, txmV2Config.CustomURL())
+	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
+		c = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID)
 	} else {
 		c = clientwrappers.NewChainClient(client)
 	}
@@ -195,7 +198,7 @@ func NewEvmTracker(
 	chainID *big.Int,
 	lggr logger.Logger,
 ) *Tracker {
-	return txmgr.NewTracker[*big.Int, common.Address, common.Hash, common.Hash, *types.Receipt](txStore, keyStore, chainID, lggr)
+	return txmgr.NewTracker(txStore, keyStore, chainID, lggr)
 }
 
 // NewEvmBroadcaster returns a new concrete EvmBroadcaster
