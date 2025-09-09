@@ -360,8 +360,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   error NodeOperatorAlreadyExists(uint32 existingNodeOperatorId);
 
   /// @notice This error is thrown when trying to remove a node operator that
-  /// is still in use on a Node
-  error NodeOperatorPartOfNode();
+  /// still owns nodes
+  error NodeOperatorHasNodes();
 
   /// @notice This error is thrown when trying to remove a node that is still
   /// part of a capabilities DON
@@ -568,7 +568,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   ) external onlyOwner {
     for (uint32 i; i < nodeOperatorIds.length; ++i) {
       uint32 nodeOperatorId = nodeOperatorIds[i];
-      if (s_nodeOperators[nodeOperatorId].nodeP2PIDs.length() != 0) revert NodeOperatorPartOfNode();
+      if (s_nodeOperators[nodeOperatorId].nodeP2PIDs.length() != 0) revert NodeOperatorHasNodes();
       NodeOperator storage nodeOperator = s_nodeOperators[nodeOperatorId];
       bytes32 nodeOperatorDataHash =
         _nodeOperatorHash(NodeOperatorParams({admin: nodeOperator.admin, name: nodeOperator.name}));
@@ -630,7 +630,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       NodeOperator storage nodeOperator = s_nodeOperators[node.nodeOperatorId];
       if (nodeOperator.admin == address(0)) revert NodeOperatorDoesNotExist(node.nodeOperatorId);
       if (!isOwner && msg.sender != nodeOperator.admin) revert AccessForbidden(msg.sender);
-      s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.add(node.p2pId);
+      nodeOperator.nodeP2PIDs.add(node.p2pId);
 
       Node storage storedNode = s_nodes[node.p2pId];
       if (storedNode.signer != bytes32("")) revert NodeAlreadyExists(node.p2pId);
@@ -691,12 +691,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       }
       if (node.workflowDONId != 0) revert NodePartOfWorkflowDON(node.workflowDONId, p2pId);
 
-      if (!isOwner && msg.sender != s_nodeOperators[node.nodeOperatorId].admin) {
+      NodeOperator storage nodeOperator = s_nodeOperators[node.nodeOperatorId];
+      if (!isOwner && msg.sender != nodeOperator.admin) {
         revert AccessForbidden(msg.sender);
       }
       s_nodeSigners.remove(node.signer);
       s_nodeP2PIds.remove(node.p2pId);
-      s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.remove(node.p2pId);
+      nodeOperator.nodeP2PIDs.remove(node.p2pId);
       delete s_nodes[p2pId];
       emit NodeRemoved(p2pId);
     }
