@@ -13,7 +13,7 @@ GETH_WRAPPERS_VERSION=$(go -C "$ROOT_DIR/gethwrappers" list -json -m github.com/
 GETH_VERSION=$(go list -json -m github.com/ethereum/go-ethereum | jq -r .Version)
 
 if [ "$GETH_WRAPPERS_VERSION" != "$GETH_VERSION" ]; then
-    echo "Error: go-ethereum geth version ($GETH_WRAPPERS_VERSION) does not match root package go-ethereum version ($GETH_VERSION)"
+    echo "Error: go-ethereum version ($GETH_WRAPPERS_VERSION) does not match root package go-ethereum version ($GETH_VERSION)"
     exit 0
 fi
 
