@@ -1,4 +1,4 @@
-WorkflowRegistry.setDONRegistry
+WorkflowRegistry.setCapabilitiesRegistry
 ├── When the caller is NOT the contract owner
 │   └── It should revert with caller is not the owner
 └── When the caller IS the contract owner

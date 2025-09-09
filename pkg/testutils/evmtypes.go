@@ -19,10 +19,10 @@ import (
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
-// FixtureChainID matches the chain always added by fixtures.sql
-// It is set to 0 since no real chain ever has this ID and allows a virtual
-// "test" chain ID to be used without clashes
-var FixtureChainID = big.NewInt(0)
+// FixtureChainID is set to a chainID that is unlikely to be used in production.
+// It can no longer be zero due to a breaking change in go-ethereum:
+// https://github.com/ethereum/go-ethereum/blob/master/core/types/transaction_signing.go#L193
+var FixtureChainID = big.NewInt(evmtypes.NullClientChainID)
 
 // SimulatedChainID is the chain ID for the go-ethereum simulated backend
 var SimulatedChainID = big.NewInt(1337)

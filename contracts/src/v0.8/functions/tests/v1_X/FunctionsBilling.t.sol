@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FunctionsCoordinator} from "../../dev/v1_X/FunctionsCoordinator.sol";
 import {FunctionsBilling} from "../../dev/v1_X/FunctionsBilling.sol";
-import {FunctionsRequest} from "../../dev/v1_X/libraries/FunctionsRequest.sol";
-import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
+import {FunctionsCoordinator} from "../../dev/v1_X/FunctionsCoordinator.sol";
+
 import {FunctionsSubscriptions} from "../../dev/v1_X/FunctionsSubscriptions.sol";
 import {Routable} from "../../dev/v1_X/Routable.sol";
+import {FunctionsRequest} from "../../dev/v1_X/libraries/FunctionsRequest.sol";
+import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
 
-import {FunctionsRouterSetup, FunctionsSubscriptionSetup, FunctionsClientRequestSetup, FunctionsFulfillmentSetup, FunctionsMultipleFulfillmentsSetup} from "./Setup.t.sol";
+import {
+  FunctionsClientRequestSetup,
+  FunctionsFulfillmentSetup,
+  FunctionsMultipleFulfillmentsSetup,
+  FunctionsRouterSetup,
+  FunctionsSubscriptionSetup
+} from "./Setup.t.sol";
 
 import {FunctionsBillingConfig} from "../../dev/v1_X/interfaces/IFunctionsBilling.sol";
 
@@ -76,7 +83,8 @@ contract FunctionsBilling_UpdateConfig is FunctionsRouterSetup {
   event ConfigUpdated(FunctionsBillingConfig config);
 
   function test_UpdateConfig_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -123,9 +131,8 @@ contract FunctionsBilling_GetOperationFee is FunctionsRouterSetup {
     vm.startPrank(STRANGER_ADDRESS);
 
     uint72 operationFee = s_functionsCoordinator.getOperationFeeJuels();
-    uint72 expectedOperationFee = uint72(
-      ((s_operationFee * 10 ** (18 + LINK_USD_DECIMALS)) / uint256(LINK_USD_RATE)) / 100
-    );
+    uint72 expectedOperationFee =
+      uint72(((s_operationFee * 10 ** (18 + LINK_USD_DECIMALS)) / uint256(LINK_USD_RATE)) / 100);
     assertEq(operationFee, expectedOperationFee);
   }
 }
@@ -171,14 +178,11 @@ contract FunctionsBilling_EstimateCost is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
-    uint32 callbackGasLimit = 5_500;
+    uint32 callbackGasLimit = 5500;
     uint256 gasPriceWei = REASONABLE_GAS_PRICE_CEILING + 1;
 
     vm.expectRevert(FunctionsBilling.InvalidCalldata.selector);
@@ -191,26 +195,17 @@ contract FunctionsBilling_EstimateCost is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
-    uint32 callbackGasLimit = 5_500;
+    uint32 callbackGasLimit = 5500;
     uint256 gasPriceWei = 1;
 
-    uint96 costEstimate = s_functionsCoordinator.estimateCost(
-      s_subscriptionId,
-      requestData,
-      callbackGasLimit,
-      gasPriceWei
-    );
-    uint96 expectedCostEstimate = 51110500000000000 +
-      s_adminFee +
-      s_functionsCoordinator.getDONFeeJuels(requestData) +
-      s_functionsCoordinator.getOperationFeeJuels();
+    uint96 costEstimate =
+      s_functionsCoordinator.estimateCost(s_subscriptionId, requestData, callbackGasLimit, gasPriceWei);
+    uint96 expectedCostEstimate = 51_110_500_000_000_000 + s_adminFee
+      + s_functionsCoordinator.getDONFeeJuels(requestData) + s_functionsCoordinator.getOperationFeeJuels();
     assertEq(costEstimate, expectedCostEstimate);
   }
 
@@ -219,33 +214,24 @@ contract FunctionsBilling_EstimateCost is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
-    uint32 callbackGasLimit = 5_500;
-    uint256 gasPriceWei = 5000000000; // 5 gwei
+    uint32 callbackGasLimit = 5500;
+    uint256 gasPriceWei = 5_000_000_000; // 5 gwei
 
-    uint96 costEstimate = s_functionsCoordinator.estimateCost(
-      s_subscriptionId,
-      requestData,
-      callbackGasLimit,
-      gasPriceWei
-    );
-    uint96 expectedCostEstimate = 255552500000000000 +
-      s_adminFee +
-      s_functionsCoordinator.getDONFeeJuels(requestData) +
-      s_functionsCoordinator.getOperationFeeJuels();
+    uint96 costEstimate =
+      s_functionsCoordinator.estimateCost(s_subscriptionId, requestData, callbackGasLimit, gasPriceWei);
+    uint96 expectedCostEstimate = 255_552_500_000_000_000 + s_adminFee
+      + s_functionsCoordinator.getDONFeeJuels(requestData) + s_functionsCoordinator.getOperationFeeJuels();
     assertEq(costEstimate, expectedCostEstimate);
   }
 }
 
 /// @notice #_calculateCostEstimate
 contract FunctionsBilling__CalculateCostEstimate {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #_startBilling
@@ -316,7 +302,8 @@ contract FunctionsBilling__FulfillAndBill is FunctionsClientRequestSetup {
     uint96 callbackCostGas = 5072; // Taken manually
     uint96 callbackCostJuels = juelsPerGas * callbackCostGas;
 
-    // topic0 (function signature, always checked), check topic1 (true), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), check topic1 (true), NOT topic2 (false), NOT topic3 (false), and
+    // data (true).
     bool checkTopic1 = true;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -333,12 +320,7 @@ contract FunctionsBilling__FulfillAndBill is FunctionsClientRequestSetup {
     );
 
     FunctionsResponse.FulfillResult resultCode = s_functionsCoordinator.fulfillAndBill_HARNESS(
-      s_requests[1].requestId,
-      new bytes(0),
-      new bytes(0),
-      abi.encode(s_requests[1].commitment),
-      new bytes(0),
-      1
+      s_requests[1].requestId, new bytes(0), new bytes(0), abi.encode(s_requests[1].commitment), new bytes(0), 1
     );
 
     assertEq(uint256(resultCode), uint256(FunctionsResponse.FulfillResult.FULFILLED));
@@ -363,7 +345,8 @@ contract FunctionsBilling_DeleteCommitment is FunctionsClientRequestSetup {
     vm.stopPrank();
     vm.startPrank(address(s_functionsRouter));
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -440,8 +423,8 @@ contract FunctionsBilling_OracleWithdraw is FunctionsMultipleFulfillmentsSetup {
     uint96 totalOperationFees = s_functionsCoordinator.getOperationFeeJuels() * s_requestsFulfilled;
     uint96 totalDonFees = s_functionsCoordinator.getDONFeeJuels(new bytes(0)) * s_requestsFulfilled;
     uint96 donFeeShare = totalDonFees / uint8(s_transmitters.length);
-    uint96 expectedBalancePerFulfillment = ((s_fulfillmentCoordinatorBalance - totalOperationFees - totalDonFees) /
-      s_requestsFulfilled);
+    uint96 expectedBalancePerFulfillment =
+      ((s_fulfillmentCoordinatorBalance - totalOperationFees - totalDonFees) / s_requestsFulfilled);
 
     uint256[4] memory transmitterBalancesAfter = _getTransmitterBalances();
     // Transmitter 1 has transmitted twice
@@ -494,8 +477,8 @@ contract FunctionsBilling_OracleWithdrawAll is FunctionsMultipleFulfillmentsSetu
     uint96 totalOperationFees = s_functionsCoordinator.getOperationFeeJuels() * s_requestsFulfilled;
     uint96 totalDonFees = s_functionsCoordinator.getDONFeeJuels(new bytes(0)) * s_requestsFulfilled;
     uint96 donFeeShare = totalDonFees / uint8(s_transmitters.length);
-    uint96 expectedBalancePerFulfillment = ((s_fulfillmentCoordinatorBalance - totalOperationFees - totalDonFees) /
-      s_requestsFulfilled);
+    uint96 expectedBalancePerFulfillment =
+      ((s_fulfillmentCoordinatorBalance - totalOperationFees - totalDonFees) / s_requestsFulfilled);
 
     uint256[4] memory transmitterBalancesAfter = _getTransmitterBalances();
     // Transmitter 1 has transmitted twice

@@ -53,7 +53,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // whenThereAreInvalidMetadataInputs
   function test_upsertWorkflow_WhenWorkflowNameLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with WorkflowNameTooLong
-    uint8 cap = s_registry.getMaxNameLen();
+    uint8 cap = s_registry.getConfig().maxNameLen;
     vm.prank(s_user);
     vm.expectRevert(
       abi.encodeWithSelector(WorkflowRegistry.WorkflowNameTooLong.selector, bytes(s_invalidLongString).length, cap)
@@ -94,7 +94,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // whenThereAreInvalidMetadataInputs
   function test_upsertWorkflow_WhenTagLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with WorkflowTagTooLong
-    uint8 cap = s_registry.getMaxTagLen();
+    uint8 cap = s_registry.getConfig().maxTagLen;
     vm.prank(s_user);
     vm.expectRevert(
       abi.encodeWithSelector(WorkflowRegistry.WorkflowTagTooLong.selector, bytes(s_invalidLongString).length, cap)
@@ -145,7 +145,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // whenThereAreInvalidMetadataInputs
   function test_upsertWorkflow_WhenBinaryUrlLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with URLTooLong
-    uint8 cap = s_registry.getMaxUrlLen();
+    uint8 cap = s_registry.getConfig().maxUrlLen;
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cap));
     s_registry.upsertWorkflow(
@@ -184,7 +184,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // whenThereAreInvalidMetadataInputs
   function test_upsertWorkflow_WhenConfigUrlLengthGreaterThanAllowed() external whenMsgSenderIsALinkedOwner {
     // it should revert with URLTooLong
-    uint8 cap = s_registry.getMaxUrlLen();
+    uint8 cap = s_registry.getConfig().maxUrlLen;
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cap));
     s_registry.upsertWorkflow(
@@ -208,7 +208,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
     for (uint256 i = 0; i < tooBigAttrs.length; i++) {
       tooBigAttrs[i] = bytes1(uint8(i % 256));
     }
-    uint16 cap = s_registry.getMaxAttrLen();
+    uint16 cap = s_registry.getConfig().maxAttrLen;
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.AttributesTooLong.selector, bytes(tooBigAttrs).length, cap));
     s_registry.upsertWorkflow(
@@ -517,7 +517,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
     whenAnExistingRecordExistsAtRid
   {
     // it should revert with URLTooLong
-    uint8 cap = s_registry.getMaxUrlLen();
+    uint8 cap = s_registry.getConfig().maxUrlLen;
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.URLTooLong.selector, bytes(s_invalidURL).length, cap));
     s_registry.upsertWorkflow(
@@ -557,7 +557,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       tooBigAttrs[i] = bytes1(uint8(i % 256));
     }
 
-    uint16 cap = s_registry.getMaxAttrLen();
+    uint16 cap = s_registry.getConfig().maxAttrLen;
     vm.prank(s_user);
     vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.AttributesTooLong.selector, bytes(tooBigAttrs).length, cap));
     s_registry.upsertWorkflow(

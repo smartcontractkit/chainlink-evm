@@ -11,18 +11,24 @@ contract ChainModuleBase is IChainModule {
     return block.number;
   }
 
-  function blockHash(uint256 n) external view virtual returns (bytes32) {
+  function blockHash(
+    uint256 n
+  ) external view virtual returns (bytes32) {
     if (n >= block.number || block.number - n > 256) {
       return "";
     }
     return blockhash(n);
   }
 
-  function getCurrentL1Fee(uint256) external view virtual returns (uint256 l1Fee) {
+  function getCurrentL1Fee(
+    uint256
+  ) external view virtual returns (uint256 l1Fee) {
     return 0;
   }
 
-  function getMaxL1Fee(uint256) external view virtual returns (uint256 maxL1Fee) {
+  function getMaxL1Fee(
+    uint256
+  ) external view virtual returns (uint256 maxL1Fee) {
     return 0;
   }
 

@@ -17,7 +17,7 @@ When making (small) changes in existing files,
 it is not required to adhere to this guide if it conflicts with other practices in that existing file.
 Consistency is preferred.
 
-We use `forge fmt` for all new projects, but some older ones still rely on `prettier`.
+We use `forge fmt` for all projects.
 
 
 # <a name="guidelines"></a>Guidelines

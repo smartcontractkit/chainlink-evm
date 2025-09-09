@@ -3,8 +3,9 @@ pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
+
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 // OCR2 standard
 uint256 constant MAX_NUM_ORACLES = 31;
@@ -16,8 +17,8 @@ uint256 constant MIN_SUPPORTED_ONCHAIN_CONFIG_VERSION = 1;
  * @title Configurator
  * @author samsondav
  * @notice This contract is intended to be deployed on the source chain and acts as a OCR3 configurator for LLO/Mercury
- **/
-
+ *
+ */
 contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165 {
   /// @notice This error is thrown whenever trying to set a config
   /// with a fault tolerance of 0
@@ -44,15 +45,18 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   /// @param version The version of the onchainConfig
   error UnsupportedOnchainConfigVersion(uint256 version);
 
-  /// @notice This event is emitted when a production config is set with a non-zero predecessor config digest in the on-chain config.
+  /// @notice This event is emitted when a production config is set with a non-zero predecessor config digest in the
+  /// on-chain config.
   /// @param predecessorConfigDigest The predecessor config digest
   error NonZeroPredecessorConfigDigest(bytes32 predecessorConfigDigest);
 
-  /// @notice This event is emitted when a staging config is set with a predecessor config digest that does not match the current production config digest.
+  /// @notice This event is emitted when a staging config is set with a predecessor config digest that does not match
+  /// the current production config digest.
   /// @param predecessorConfigDigest The predecessor config digest
   error InvalidPredecessorConfigDigest(bytes32 predecessorConfigDigest);
 
-  /// @notice This event is emitted during promoteStagingConfig if the isGreenProduction flag does not match the contract state
+  /// @notice This event is emitted during promoteStagingConfig if the isGreenProduction flag does not match the
+  /// contract state
   /// @param configId The configId
   /// @param isGreenProductionContractState The current (correct) isGreenProduction state according to the contract
   error IsGreenProductionMustMatchContractState(bytes32 configId, bool isGreenProductionContractState);
@@ -66,7 +70,8 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   /// @param isGreenProduction The isGreenProduction flag
   error ConfigUnsetStaging(bytes32 configId, bool isGreenProduction);
 
-  /// @notice This event is emitted during promoteStagingConfig if the configId has never been set as a production config
+  /// @notice This event is emitted during promoteStagingConfig if the configId has never been set as a production
+  /// config
   /// @param configId The configId that has never been set as a production config
   /// @param isGreenProduction The isGreenProduction flag
   error ConfigUnsetProduction(bytes32 configId, bool isGreenProduction);
@@ -161,9 +166,9 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
 
     ConfigurationState memory configurationState = s_configurationStates[configId];
     if (
-      predecessorConfigDigest == bytes32(0) ||
-      predecessorConfigDigest !=
-      s_configurationStates[configId].configDigest[configurationState.isGreenProduction ? 1 : 0]
+      predecessorConfigDigest == bytes32(0)
+        || predecessorConfigDigest
+          != s_configurationStates[configId].configDigest[configurationState.isGreenProduction ? 1 : 0]
     ) revert InvalidPredecessorConfigDigest(predecessorConfigDigest);
 
     _setConfig(
@@ -197,11 +202,13 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   // cause "gaps" to be created, but that seems unavoidable in such a scenario.
   function promoteStagingConfig(bytes32 configId, bool isGreenProduction) external onlyOwner {
     ConfigurationState storage configurationState = s_configurationStates[configId];
-    if (isGreenProduction != configurationState.isGreenProduction)
+    if (isGreenProduction != configurationState.isGreenProduction) {
       revert IsGreenProductionMustMatchContractState(configId, !isGreenProduction);
+    }
     if (configurationState.configCount == 0) revert ConfigUnset(configId);
-    if (configurationState.configDigest[isGreenProduction ? 0 : 1] == bytes32(0))
+    if (configurationState.configDigest[isGreenProduction ? 0 : 1] == bytes32(0)) {
       revert ConfigUnsetStaging(configId, isGreenProduction);
+    }
     bytes32 retiredConfigDigest = configurationState.configDigest[isGreenProduction ? 1 : 0];
     if (retiredConfigDigest == bytes32(0)) revert ConfigUnsetProduction(configId, isGreenProduction);
 
@@ -218,7 +225,8 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   /// @param f number of faulty oracles the system can tolerate
   /// @param onchainConfig serialized configuration used by the contract (and possibly oracles)
   /// @param offchainConfigVersion version number for offchainEncoding schema
-  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the contract
+  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the
+  /// contract
   function _setConfig(
     bytes32 configId,
     uint256 sourceChainId,
@@ -289,11 +297,13 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   /// @param sourceAddress Address of configurator contract
   /// @param configCount ordinal number of this config setting among all config settings over the life of this contract
   /// @param signers ith element is address ith oracle uses to sign a report
-  /// @param offchainTransmitters ith element is address ith oracle used to transmit reports (in this case used for flexible additional field, such as CSA pub keys)
+  /// @param offchainTransmitters ith element is address ith oracle used to transmit reports (in this case used for
+  /// flexible additional field, such as CSA pub keys)
   /// @param f maximum number of faulty/dishonest oracles the protocol can tolerate while still working correctly
   /// @param onchainConfig serialized configuration used by the contract (and possibly oracles)
   /// @param offchainConfigVersion version of the serialization format used for "offchainConfig" parameter
-  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the contract
+  /// @param offchainConfig serialized configuration used by the oracles exclusively and only passed through the
+  /// contract
   /// @dev This function is a modified version of the method from OCR2Abstract
   function _configDigestFromConfigData(
     bytes32 configId,
@@ -330,7 +340,9 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   }
 
   /// @inheritdoc IERC165
-  function supportsInterface(bytes4 interfaceId) external pure override returns (bool isVerifier) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) external pure override returns (bool isVerifier) {
     return interfaceId == type(IConfigurator).interfaceId;
   }
 

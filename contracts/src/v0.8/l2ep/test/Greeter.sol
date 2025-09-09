@@ -6,9 +6,13 @@ import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
 contract Greeter is ConfirmedOwner {
   string public greeting;
 
-  constructor(address owner) ConfirmedOwner(owner) {}
+  constructor(
+    address owner
+  ) ConfirmedOwner(owner) {}
 
-  function setGreeting(string calldata _greeting) external onlyOwner {
+  function setGreeting(
+    string calldata _greeting
+  ) external onlyOwner {
     require(bytes(_greeting).length > 0, "Invalid greeting length");
     greeting = _greeting;
   }

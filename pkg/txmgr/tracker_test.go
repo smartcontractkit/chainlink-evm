@@ -23,7 +23,7 @@ import (
 func newTestEvmTrackerSetup(t *testing.T) (*txmgr.Tracker, txmgr.TestEvmTxStore) {
 	db := testutils.NewSqlxDB(t)
 	txStore := txmgrtest.NewTestTxStore(t, db)
-	chainID := big.NewInt(0)
+	chainID := testutils.FixtureChainID
 	memKS := keystest.NewMemoryChainStore()
 	addr1 := memKS.MustCreate(t)
 	addr2 := memKS.MustCreate(t)

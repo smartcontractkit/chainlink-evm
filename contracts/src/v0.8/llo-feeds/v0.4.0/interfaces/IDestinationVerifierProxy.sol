@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.0;
 
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
@@ -34,7 +34,9 @@ interface IDestinationVerifierProxy is IERC165 {
    * @notice Sets the active verifier for this proxy
    * @param verifierAddress The address of the verifier contract
    */
-  function setVerifier(address verifierAddress) external;
+  function setVerifier(
+    address verifierAddress
+  ) external;
 
   /**
    * @notice Used to honor the source verifierProxy feeManager interface

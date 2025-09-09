@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseConfiguratorTest.t.sol";
 import {Configurator} from "../../Configurator.sol";
+import {BaseTest} from "./BaseConfiguratorTest.t.sol";
 
 contract ConfiguratorSetStagingConfigTest is BaseTest {
   function setUp() public virtual override {
@@ -15,13 +15,7 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
 
     vm.startPrank(USER);
     s_configurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      s_offchaintransmitters,
-      FAULT_TOLERANCE,
-      bytes(""),
-      OFFCHAIN_CONFIG_VERSION,
-      bytes("")
+      CONFIG_ID_1, signers, s_offchaintransmitters, FAULT_TOLERANCE, bytes(""), OFFCHAIN_CONFIG_VERSION, bytes("")
     );
   }
 
@@ -29,13 +23,7 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
     bytes[] memory signers = new bytes[](MAX_ORACLES + 1);
     vm.expectRevert(abi.encodeWithSelector(Configurator.ExcessSigners.selector, signers.length, MAX_ORACLES));
     s_configurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      s_offchaintransmitters,
-      FAULT_TOLERANCE,
-      bytes(""),
-      OFFCHAIN_CONFIG_VERSION,
-      bytes("")
+      CONFIG_ID_1, signers, s_offchaintransmitters, FAULT_TOLERANCE, bytes(""), OFFCHAIN_CONFIG_VERSION, bytes("")
     );
   }
 
@@ -43,13 +31,7 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(Configurator.FaultToleranceMustBePositive.selector));
     bytes[] memory signers = _getSigners(MAX_ORACLES);
     s_configurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      s_offchaintransmitters,
-      0,
-      bytes(""),
-      OFFCHAIN_CONFIG_VERSION,
-      bytes("")
+      CONFIG_ID_1, signers, s_offchaintransmitters, 0, bytes(""), OFFCHAIN_CONFIG_VERSION, bytes("")
     );
   }
 
@@ -60,13 +42,7 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
       abi.encodeWithSelector(Configurator.InsufficientSigners.selector, signers.length, FAULT_TOLERANCE * 3 + 1)
     );
     s_configurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      s_offchaintransmitters,
-      FAULT_TOLERANCE,
-      bytes(""),
-      OFFCHAIN_CONFIG_VERSION,
-      bytes("")
+      CONFIG_ID_1, signers, s_offchaintransmitters, FAULT_TOLERANCE, bytes(""), OFFCHAIN_CONFIG_VERSION, bytes("")
     );
   }
 
@@ -79,26 +55,14 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
 
     vm.expectRevert(abi.encodeWithSelector(Configurator.InvalidOnchainLength.selector, onchainConfig.length));
     s_configurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      offchainTransmitters,
-      f,
-      onchainConfig,
-      OFFCHAIN_CONFIG_VERSION,
-      offchainConfig
+      CONFIG_ID_1, signers, offchainTransmitters, f, onchainConfig, OFFCHAIN_CONFIG_VERSION, offchainConfig
     );
 
     onchainConfig = abi.encode(uint256(0), keccak256("previousConfigDigest"));
 
     vm.expectRevert(abi.encodeWithSelector(Configurator.UnsupportedOnchainConfigVersion.selector, uint256(0)));
     s_configurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      offchainTransmitters,
-      f,
-      onchainConfig,
-      OFFCHAIN_CONFIG_VERSION,
-      offchainConfig
+      CONFIG_ID_1, signers, offchainTransmitters, f, onchainConfig, OFFCHAIN_CONFIG_VERSION, offchainConfig
     );
 
     onchainConfig = abi.encode(uint256(1), keccak256("previousConfigDigest"));
@@ -107,26 +71,14 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
       abi.encodeWithSelector(Configurator.InvalidPredecessorConfigDigest.selector, keccak256("previousConfigDigest"))
     );
     s_configurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      offchainTransmitters,
-      f,
-      onchainConfig,
-      OFFCHAIN_CONFIG_VERSION,
-      offchainConfig
+      CONFIG_ID_1, signers, offchainTransmitters, f, onchainConfig, OFFCHAIN_CONFIG_VERSION, offchainConfig
     );
 
     onchainConfig = abi.encode(uint256(1), uint256(0));
 
     vm.expectRevert(abi.encodeWithSelector(Configurator.InvalidPredecessorConfigDigest.selector, uint256(0)));
     s_configurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      offchainTransmitters,
-      f,
-      onchainConfig,
-      OFFCHAIN_CONFIG_VERSION,
-      offchainConfig
+      CONFIG_ID_1, signers, offchainTransmitters, f, onchainConfig, OFFCHAIN_CONFIG_VERSION, offchainConfig
     );
   }
 
@@ -140,8 +92,7 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
 
     bytes32 productionConfigDigest = keccak256("productionConfigDigest");
     s_exposedConfigurator.exposedSetConfigurationState(
-      CONFIG_ID_1,
-      Configurator.ConfigurationState(1, uint32(block.number), false, [productionConfigDigest, bytes32(0)])
+      CONFIG_ID_1, Configurator.ConfigurationState(1, uint32(block.number), false, [productionConfigDigest, bytes32(0)])
     );
     bytes memory onchainConfig = abi.encodePacked(uint256(1), productionConfigDigest);
     bytes memory offchainConfig = abi.encodePacked(keccak256("offchainConfig"));
@@ -179,18 +130,11 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
     );
 
     s_exposedConfigurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      offchainTransmitters,
-      f,
-      onchainConfig,
-      OFFCHAIN_CONFIG_VERSION,
-      offchainConfig
+      CONFIG_ID_1, signers, offchainTransmitters, f, onchainConfig, OFFCHAIN_CONFIG_VERSION, offchainConfig
     );
 
-    Configurator.ConfigurationState memory configurationState = s_exposedConfigurator.exposedReadConfigurationStates(
-      CONFIG_ID_1
-    );
+    Configurator.ConfigurationState memory configurationState =
+      s_exposedConfigurator.exposedReadConfigurationStates(CONFIG_ID_1);
     assertEq(configurationState.configDigest[0], productionConfigDigest);
     assertEq(configurationState.configDigest[1], cd1);
     assertEq(configurationState.configCount, 2);
@@ -231,13 +175,7 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
     );
 
     s_exposedConfigurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      offchainTransmitters,
-      f,
-      onchainConfig,
-      OFFCHAIN_CONFIG_VERSION,
-      offchainConfig
+      CONFIG_ID_1, signers, offchainTransmitters, f, onchainConfig, OFFCHAIN_CONFIG_VERSION, offchainConfig
     );
 
     configurationState = s_exposedConfigurator.exposedReadConfigurationStates(CONFIG_ID_1);
@@ -249,7 +187,8 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
 
     // when isGreenProduction=true
     s_exposedConfigurator.exposedSetIsGreenProduction(CONFIG_ID_1, true);
-    onchainConfig = abi.encodePacked(uint256(1), cd2); // predecessorConfigDigest the production digest is now the green digest
+    onchainConfig = abi.encodePacked(uint256(1), cd2); // predecessorConfigDigest the production digest is now the green
+      // digest
 
     // go to new block
     vm.roll(15);
@@ -284,17 +223,12 @@ contract ConfiguratorSetStagingConfigTest is BaseTest {
     );
 
     s_exposedConfigurator.setStagingConfig(
-      CONFIG_ID_1,
-      signers,
-      offchainTransmitters,
-      f,
-      onchainConfig,
-      OFFCHAIN_CONFIG_VERSION,
-      offchainConfig
+      CONFIG_ID_1, signers, offchainTransmitters, f, onchainConfig, OFFCHAIN_CONFIG_VERSION, offchainConfig
     );
 
     configurationState = s_exposedConfigurator.exposedReadConfigurationStates(CONFIG_ID_1);
-    assertEq(configurationState.configDigest[0], cd3); // new config is on blue now because blue is staging due to isGreenProduction=true
+    assertEq(configurationState.configDigest[0], cd3); // new config is on blue now because blue is staging due to
+      // isGreenProduction=true
     assertEq(configurationState.configDigest[1], cd2); // the previous config left unchanged
     assertEq(configurationState.configCount, 4);
     assertEq(configurationState.isGreenProduction, true);

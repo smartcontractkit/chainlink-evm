@@ -23,9 +23,15 @@ interface ENSInterface {
 
   function setTTL(bytes32 node, uint64 ttl) external;
 
-  function owner(bytes32 node) external view returns (address);
+  function owner(
+    bytes32 node
+  ) external view returns (address);
 
-  function resolver(bytes32 node) external view returns (address);
+  function resolver(
+    bytes32 node
+  ) external view returns (address);
 
-  function ttl(bytes32 node) external view returns (uint64);
+  function ttl(
+    bytes32 node
+  ) external view returns (uint64);
 }

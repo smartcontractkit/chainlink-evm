@@ -5,7 +5,7 @@ import {TermsOfServiceAllowList} from "../../dev/v1_X/accessControl/TermsOfServi
 import {TermsOfServiceAllowListConfig} from "../../dev/v1_X/accessControl/interfaces/ITermsOfServiceAllowList.sol";
 import {FunctionsClientTestHelper} from "./testhelpers/FunctionsClientTestHelper.sol";
 
-import {FunctionsRoutesSetup, FunctionsOwnerAcceptTermsOfServiceSetup} from "./Setup.t.sol";
+import {FunctionsOwnerAcceptTermsOfServiceSetup, FunctionsRoutesSetup} from "./Setup.t.sol";
 import "forge-std/Vm.sol";
 
 /// @notice #constructor
@@ -45,12 +45,11 @@ contract FunctionsTermsOfServiceAllowList_UpdateConfig is FunctionsRoutesSetup {
   event ConfigUpdated(TermsOfServiceAllowListConfig config);
 
   function test_UpdateConfig_Success() public {
-    TermsOfServiceAllowListConfig memory configToSet = TermsOfServiceAllowListConfig({
-      enabled: false,
-      signerPublicKey: TOS_SIGNER
-    });
+    TermsOfServiceAllowListConfig memory configToSet =
+      TermsOfServiceAllowListConfig({enabled: false, signerPublicKey: TOS_SIGNER});
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -187,7 +186,8 @@ contract FunctionsTermsOfServiceAllowList_AcceptTermsOfService is FunctionsRoute
     bytes32 prefixedMessage = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", message));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(TOS_SIGNER_PRIVATE_KEY, prefixedMessage);
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -219,7 +219,8 @@ contract FunctionsTermsOfServiceAllowList_AcceptTermsOfService is FunctionsRoute
     bytes32 prefixedMessage = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", message));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(TOS_SIGNER_PRIVATE_KEY, prefixedMessage);
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -323,9 +324,7 @@ contract FunctionsTermsOfServiceAllowList_HasAccess is FunctionsRoutesSetup {
 
   function test_HasAccess_TrueWhenDisabled() public {
     // Disable allow list, which opens all access
-    s_termsOfServiceAllowList.updateConfig(
-      TermsOfServiceAllowListConfig({enabled: false, signerPublicKey: TOS_SIGNER})
-    );
+    s_termsOfServiceAllowList.updateConfig(TermsOfServiceAllowListConfig({enabled: false, signerPublicKey: TOS_SIGNER}));
 
     // Send as stranger
     vm.stopPrank();
@@ -374,7 +373,8 @@ contract FunctionsTermsOfServiceAllowList_BlockSender is FunctionsRoutesSetup {
   function test_BlockSender_Success() public {
     assertFalse(s_termsOfServiceAllowList.isBlockedSender(STRANGER_ADDRESS));
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -415,7 +415,8 @@ contract FunctionsTermsOfServiceAllowList_UnblockSender is FunctionsRoutesSetup 
   event UnblockedAccess(address user);
 
   function test_UnblockSender_Success() public {
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;
@@ -541,9 +542,7 @@ contract FunctionsTermsOfServiceAllowList_MigratePreviouslyAllowedSenders is Fun
     s_termsOfServiceAllowList.blockSender(currentlyBlockedSender);
 
     vm.mockCall(
-      MOCK_PREVIOUS_TOS_ADDRESS,
-      abi.encodeWithSelector(TermsOfServiceAllowList.hasAccess.selector),
-      abi.encode(true)
+      MOCK_PREVIOUS_TOS_ADDRESS, abi.encodeWithSelector(TermsOfServiceAllowList.hasAccess.selector), abi.encode(true)
     );
     s_termsOfServiceAllowList.migratePreviouslyAllowedSenders(mockPreviousAllowlist);
 

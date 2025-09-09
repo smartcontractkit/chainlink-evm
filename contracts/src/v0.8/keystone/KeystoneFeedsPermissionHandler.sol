@@ -4,7 +4,8 @@ pragma solidity ^0.8.19;
 import {Ownable2StepMsgSender} from "../shared/access/Ownable2StepMsgSender.sol";
 
 /// @title Keystone Feeds Permission Handler
-/// @notice This contract is designed to manage and validate permissions for accessing specific reports within a decentralized system.
+/// @notice This contract is designed to manage and validate permissions for accessing specific reports within a
+/// decentralized system.
 /// @dev The contract uses mappings to keep track of report permissions associated with a unique report ID.
 abstract contract KeystoneFeedsPermissionHandler is Ownable2StepMsgSender {
   /// @notice Holds the details for permissions of a report
@@ -29,7 +30,9 @@ abstract contract KeystoneFeedsPermissionHandler is Ownable2StepMsgSender {
   /// @notice Sets permissions for multiple reports
   /// @param permissions An array of Permission structs for which to set permissions
   /// @dev Emits a ReportPermissionSet event for each permission set
-  function setReportPermissions(Permission[] memory permissions) external onlyOwner {
+  function setReportPermissions(
+    Permission[] memory permissions
+  ) external onlyOwner {
     for (uint256 i; i < permissions.length; ++i) {
       _setReportPermission(permissions[i]);
     }
@@ -38,13 +41,11 @@ abstract contract KeystoneFeedsPermissionHandler is Ownable2StepMsgSender {
   /// @dev Internal function to set a single report permission
   /// @param permission The Permission struct containing details about the permission to set
   /// @dev Emits a ReportPermissionSet event
-  function _setReportPermission(Permission memory permission) internal {
-    bytes32 reportId = _createReportId(
-      permission.forwarder,
-      permission.workflowOwner,
-      permission.workflowName,
-      permission.reportName
-    );
+  function _setReportPermission(
+    Permission memory permission
+  ) internal {
+    bytes32 reportId =
+      _createReportId(permission.forwarder, permission.workflowOwner, permission.workflowName, permission.reportName);
     s_allowedReports[reportId] = permission.isAllowed;
     emit ReportPermissionSet(reportId, permission);
   }

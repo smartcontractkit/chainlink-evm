@@ -2,13 +2,15 @@
 pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
-import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
-import {IVerifier} from "./interfaces/IVerifier.sol";
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+
 import {AccessControllerInterface} from "../../shared/interfaces/AccessControllerInterface.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
-import {IVerifierFeeManager} from "./interfaces/IVerifierFeeManager.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+
 import {Common} from "../libraries/Common.sol";
+import {IVerifier} from "./interfaces/IVerifier.sol";
+import {IVerifierFeeManager} from "./interfaces/IVerifierFeeManager.sol";
+import {IVerifierProxy} from "./interfaces/IVerifierProxy.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 /**
  * The verifier proxy contract is the gateway for all report verification requests
@@ -88,7 +90,9 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
   /// @notice The contract to control fees for report verification
   IVerifierFeeManager public s_feeManager;
 
-  constructor(AccessControllerInterface accessController) ConfirmedOwner(msg.sender) {
+  constructor(
+    AccessControllerInterface accessController
+  ) ConfirmedOwner(msg.sender) {
     s_accessController = accessController;
   }
 
@@ -103,13 +107,17 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
     _;
   }
 
-  modifier onlyValidVerifier(address verifierAddress) {
+  modifier onlyValidVerifier(
+    address verifierAddress
+  ) {
     if (verifierAddress == address(0)) revert ZeroAddress();
     if (!IERC165(verifierAddress).supportsInterface(IVerifier.verify.selector)) revert VerifierInvalid();
     _;
   }
 
-  modifier onlyUnsetConfigDigest(bytes32 configDigest) {
+  modifier onlyUnsetConfigDigest(
+    bytes32 configDigest
+  ) {
     address configDigestVerifier = s_verifiersByConfig[configDigest];
     if (configDigestVerifier != address(0)) revert ConfigDigestAlreadySet(configDigest, configDigestVerifier);
     _;
@@ -156,7 +164,9 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
     return verifiedReports;
   }
 
-  function _verify(bytes calldata payload) internal returns (bytes memory verifiedReport) {
+  function _verify(
+    bytes calldata payload
+  ) internal returns (bytes memory verifiedReport) {
     // First 32 bytes of the signed report is the config digest
     bytes32 configDigest = bytes32(payload);
     address verifierAddress = s_verifiersByConfig[configDigest];
@@ -166,7 +176,9 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifierProxy
-  function initializeVerifier(address verifierAddress) external override onlyOwner onlyValidVerifier(verifierAddress) {
+  function initializeVerifier(
+    address verifierAddress
+  ) external override onlyOwner onlyValidVerifier(verifierAddress) {
     if (s_initializedVerifiers[verifierAddress]) revert VerifierAlreadyInitialized(verifierAddress);
 
     s_initializedVerifiers[verifierAddress] = true;
@@ -194,7 +206,9 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifierProxy
-  function unsetVerifier(bytes32 configDigest) external override onlyOwner {
+  function unsetVerifier(
+    bytes32 configDigest
+  ) external override onlyOwner {
     address verifierAddress = s_verifiersByConfig[configDigest];
     if (verifierAddress == address(0)) revert VerifierNotFound(configDigest);
     delete s_verifiersByConfig[configDigest];
@@ -202,24 +216,30 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifierProxy
-  function getVerifier(bytes32 configDigest) external view override returns (address) {
+  function getVerifier(
+    bytes32 configDigest
+  ) external view override returns (address) {
     return s_verifiersByConfig[configDigest];
   }
 
   /// @inheritdoc IVerifierProxy
-  function setAccessController(AccessControllerInterface accessController) external onlyOwner {
+  function setAccessController(
+    AccessControllerInterface accessController
+  ) external onlyOwner {
     address oldAccessController = address(s_accessController);
     s_accessController = accessController;
     emit AccessControllerSet(oldAccessController, address(accessController));
   }
 
   /// @inheritdoc IVerifierProxy
-  function setFeeManager(IVerifierFeeManager feeManager) external onlyOwner {
+  function setFeeManager(
+    IVerifierFeeManager feeManager
+  ) external onlyOwner {
     if (address(feeManager) == address(0)) revert ZeroAddress();
 
     if (
-      !IERC165(feeManager).supportsInterface(IVerifierFeeManager.processFee.selector) ||
-      !IERC165(feeManager).supportsInterface(IVerifierFeeManager.processFeeBulk.selector)
+      !IERC165(feeManager).supportsInterface(IVerifierFeeManager.processFee.selector)
+        || !IERC165(feeManager).supportsInterface(IVerifierFeeManager.processFeeBulk.selector)
     ) revert FeeManagerInvalid();
 
     address oldFeeManager = address(s_feeManager);

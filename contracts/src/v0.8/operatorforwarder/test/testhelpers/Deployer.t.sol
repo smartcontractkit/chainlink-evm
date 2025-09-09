@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MockReceiver} from "./MockReceiver.sol";
+import {LinkToken} from "../../../shared/token/ERC677/LinkToken.sol";
 import {AuthorizedForwarder} from "../../AuthorizedForwarder.sol";
 import {Operator} from "../../Operator.sol";
 import {OperatorFactory} from "../../OperatorFactory.sol";
-import {LinkToken} from "../../../shared/token/ERC677/LinkToken.sol";
+import {MockReceiver} from "./MockReceiver.sol";
 
 abstract contract Deployer is Test {
   OperatorFactory internal s_factory;

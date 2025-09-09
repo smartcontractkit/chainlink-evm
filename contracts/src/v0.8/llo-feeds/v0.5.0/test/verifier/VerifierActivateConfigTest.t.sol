@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTestWithConfiguredVerifierAndFeeManager, BaseTestWithMultipleConfiguredDigests} from "./BaseVerifierTest.t.sol";
 import {Verifier} from "../../Verifier.sol";
+import {
+  BaseTestWithConfiguredVerifierAndFeeManager, BaseTestWithMultipleConfiguredDigests
+} from "./BaseVerifierTest.t.sol";
 
 contract VerifierActivateConfigTestV05 is BaseTestWithConfiguredVerifierAndFeeManager {
   function test_revertsIfNotOwner() public {
@@ -53,11 +55,8 @@ contract VerifierActivateConfigWithDeactivatedConfigTestV05 is BaseTestWithMulti
     s_verifier.activateConfig(s_configDigestTwo);
     changePrank(address(s_verifierProxy));
 
-    bytes memory signedReport = _generateV1EncodedBlob(
-      s_testReportOne,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE_TWO + 1)
-    );
+    bytes memory signedReport =
+      _generateV1EncodedBlob(s_testReportOne, s_reportContext, _getSigners(FAULT_TOLERANCE_TWO + 1));
     s_verifier.verify(signedReport, msg.sender);
   }
 }

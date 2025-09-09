@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.0;
 
-import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Common} from "../../libraries/Common.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IVerifier is IERC165 {
   /**
@@ -51,19 +51,25 @@ interface IVerifier is IERC165 {
    * @param configDigest The config digest to activate
    * @dev This function can be called by the contract admin to activate a configuration.
    */
-  function activateConfig(bytes32 configDigest) external;
+  function activateConfig(
+    bytes32 configDigest
+  ) external;
 
   /**
    * @notice Deactivates the configuration for a config digest
    * @param configDigest The config digest to deactivate
    * @dev This function can be called by the contract admin to deactivate an incorrect configuration.
    */
-  function deactivateConfig(bytes32 configDigest) external;
+  function deactivateConfig(
+    bytes32 configDigest
+  ) external;
 
   /**
    * @notice information about current offchain reporting protocol configuration
    * @param configDigest Config Digest to fetch data for
    * @return blockNumber block at which this config was set
    */
-  function latestConfigDetails(bytes32 configDigest) external view returns (uint32 blockNumber);
+  function latestConfigDetails(
+    bytes32 configDigest
+  ) external view returns (uint32 blockNumber);
 }

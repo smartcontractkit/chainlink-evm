@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "./VerifiableLoadBase.sol";
 import "../interfaces/ILogAutomation.sol";
 import "../interfaces/StreamsLookupCompatibleInterface.sol";
+import "./VerifiableLoadBase.sol";
 
 contract VerifiableLoadLogTriggerUpkeep is VerifiableLoadBase, StreamsLookupCompatibleInterface, ILogAutomation {
   bool public useMercury;
@@ -23,7 +23,9 @@ contract VerifiableLoadLogTriggerUpkeep is VerifiableLoadBase, StreamsLookupComp
     logNum = 0;
   }
 
-  function setLog(uint8 _log) external {
+  function setLog(
+    uint8 _log
+  ) external {
     logNum = _log;
   }
 
@@ -50,7 +52,7 @@ contract VerifiableLoadLogTriggerUpkeep is VerifiableLoadBase, StreamsLookupComp
       address addr = abi.decode(t3, (address));
 
       uint256 checkGasToBurn = checkGasToBurns[upkeepId];
-      while (startGas - gasleft() + 15000 < checkGasToBurn) {
+      while (startGas - gasleft() + 15_000 < checkGasToBurn) {
         dummyMap[blockhash(blockNum)] = false;
       }
 
@@ -74,7 +76,9 @@ contract VerifiableLoadLogTriggerUpkeep is VerifiableLoadBase, StreamsLookupComp
     revert("unexpected event sig");
   }
 
-  function performUpkeep(bytes calldata performData) external {
+  function performUpkeep(
+    bytes calldata performData
+  ) external {
     uint256 startGas = gasleft();
     (bytes[] memory values, bytes memory extraData) = abi.decode(performData, (bytes[], bytes));
     (uint256 upkeepId, uint256 logBlockNumber, address addr) = abi.decode(extraData, (uint256, uint256, address));

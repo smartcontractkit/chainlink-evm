@@ -14,9 +14,7 @@ contract FunctionsV1EventsMock {
 
   event ConfigUpdated(Config param1);
   event ContractProposed(
-    bytes32 proposedContractSetId,
-    address proposedContractSetFromAddress,
-    address proposedContractSetToAddress
+    bytes32 proposedContractSetId, address proposedContractSetFromAddress, address proposedContractSetToAddress
   );
   event ContractUpdated(bytes32 id, address from, address to);
   event FundsRecovered(address to, uint256 amount);
@@ -56,7 +54,9 @@ contract FunctionsV1EventsMock {
   event SubscriptionOwnerTransferred(uint64 indexed subscriptionId, address from, address to);
   event Unpaused(address account);
 
-  function emitConfigUpdated(Config memory param1) public {
+  function emitConfigUpdated(
+    Config memory param1
+  ) public {
     emit ConfigUpdated(param1);
   }
 
@@ -84,7 +84,9 @@ contract FunctionsV1EventsMock {
     emit OwnershipTransferred(from, to);
   }
 
-  function emitPaused(address account) public {
+  function emitPaused(
+    address account
+  ) public {
     emit Paused(account);
   }
 
@@ -108,14 +110,7 @@ contract FunctionsV1EventsMock {
     bytes memory callbackReturnData
   ) public {
     emit RequestProcessed(
-      requestId,
-      subscriptionId,
-      totalCostJuels,
-      transmitter,
-      resultCode,
-      response,
-      err,
-      callbackReturnData
+      requestId, subscriptionId, totalCostJuels, transmitter, resultCode, response, err, callbackReturnData
     );
   }
 
@@ -145,7 +140,9 @@ contract FunctionsV1EventsMock {
     );
   }
 
-  function emitRequestTimedOut(bytes32 requestId) public {
+  function emitRequestTimedOut(
+    bytes32 requestId
+  ) public {
     emit RequestTimedOut(requestId);
   }
 
@@ -177,7 +174,9 @@ contract FunctionsV1EventsMock {
     emit SubscriptionOwnerTransferred(subscriptionId, from, to);
   }
 
-  function emitUnpaused(address account) public {
+  function emitUnpaused(
+    address account
+  ) public {
     emit Unpaused(account);
   }
 }

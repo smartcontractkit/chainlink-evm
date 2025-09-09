@@ -1,11 +1,11 @@
-WorkflowRegistry.setMetadataConfig
+WorkflowRegistry.setConfig
 ├── when the caller is NOT the contract owner
 │   └── it should revert with Ownable2Step: caller is not the owner
 └── when the caller IS the contract owner
     ├── when config fields are non-zero 
-    │   └── it should emit MetadataConfigUpdated and store the new config values
+    │   └── it should emit ConfigUpdated and store the new config values
     ├── when some config fields are zero
-    │   └── it should emit MetadataConfigUpdated and store the new config values
+    │   └── it should emit ConfigUpdated and store the new config values
     └── when all config fields are zero
-        └── it should emit MetadataConfigUpdated and restore default immutable values
+        └── it should emit ConfigUpdated and restore default immutable values
 

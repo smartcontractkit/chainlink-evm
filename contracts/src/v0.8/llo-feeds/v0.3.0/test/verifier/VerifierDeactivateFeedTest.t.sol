@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTestWithConfiguredVerifierAndFeeManager, BaseTestWithMultipleConfiguredDigests} from "./BaseVerifierTest.t.sol";
 import {Verifier} from "../../../v0.3.0/Verifier.sol";
+import {
+  BaseTestWithConfiguredVerifierAndFeeManager, BaseTestWithMultipleConfiguredDigests
+} from "./BaseVerifierTest.t.sol";
 
 contract VerifierActivateFeedTest is BaseTestWithConfiguredVerifierAndFeeManager {
   function test_revertsIfNotOwnerActivateFeed() public {
@@ -58,11 +60,8 @@ contract VerifierDeactivateFeedWithVerifyTest is BaseTestWithMultipleConfiguredD
     s_verifier.activateFeed(FEED_ID);
     changePrank(address(s_verifierProxy));
 
-    bytes memory signedReport = _generateV1EncodedBlob(
-      s_testReportOne,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV1EncodedBlob(s_testReportOne, s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
     s_verifier.verify(signedReport, msg.sender);
   }
 
@@ -71,22 +70,16 @@ contract VerifierDeactivateFeedWithVerifyTest is BaseTestWithMultipleConfiguredD
     changePrank(address(s_verifierProxy));
 
     s_reportContext[0] = s_configDigestTwo;
-    bytes memory signedReport = _generateV1EncodedBlob(
-      s_testReportOne,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE_TWO + 1)
-    );
+    bytes memory signedReport =
+      _generateV1EncodedBlob(s_testReportOne, s_reportContext, _getSigners(FAULT_TOLERANCE_TWO + 1));
     s_verifier.verify(signedReport, msg.sender);
   }
 
   function test_currentReportFailsVerification() public {
     changePrank(address(s_verifierProxy));
 
-    bytes memory signedReport = _generateV1EncodedBlob(
-      s_testReportOne,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE + 1)
-    );
+    bytes memory signedReport =
+      _generateV1EncodedBlob(s_testReportOne, s_reportContext, _getSigners(FAULT_TOLERANCE + 1));
 
     vm.expectRevert(abi.encodeWithSelector(Verifier.InactiveFeed.selector, FEED_ID));
     s_verifier.verify(signedReport, msg.sender);
@@ -96,11 +89,8 @@ contract VerifierDeactivateFeedWithVerifyTest is BaseTestWithMultipleConfiguredD
     changePrank(address(s_verifierProxy));
 
     s_reportContext[0] = s_configDigestTwo;
-    bytes memory signedReport = _generateV1EncodedBlob(
-      s_testReportOne,
-      s_reportContext,
-      _getSigners(FAULT_TOLERANCE_TWO + 1)
-    );
+    bytes memory signedReport =
+      _generateV1EncodedBlob(s_testReportOne, s_reportContext, _getSigners(FAULT_TOLERANCE_TWO + 1));
 
     vm.expectRevert(abi.encodeWithSelector(Verifier.InactiveFeed.selector, FEED_ID));
     s_verifier.verify(signedReport, msg.sender);

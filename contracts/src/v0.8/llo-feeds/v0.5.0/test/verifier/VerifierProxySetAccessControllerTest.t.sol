@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseVerifierTest.t.sol";
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
+import {BaseTest} from "./BaseVerifierTest.t.sol";
 
 contract VerifierProxySetAccessControllerTest is BaseTest {
   event AccessControllerSet(address oldAccessController, address newAccessController);

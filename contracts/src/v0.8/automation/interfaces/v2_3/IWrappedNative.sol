@@ -6,5 +6,7 @@ import {IERC20Metadata as IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC2
 interface IWrappedNative is IERC20 {
   function deposit() external payable;
 
-  function withdraw(uint256 wad) external;
+  function withdraw(
+    uint256 wad
+  ) external;
 }

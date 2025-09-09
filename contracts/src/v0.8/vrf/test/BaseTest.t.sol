@@ -15,10 +15,12 @@ contract BaseTest is Test {
     vm.startPrank(OWNER);
   }
 
-  function getRandomAddresses(uint256 length) internal returns (address[] memory) {
+  function getRandomAddresses(
+    uint256 length
+  ) internal returns (address[] memory) {
     address[] memory addresses = new address[](length);
     for (uint256 i = 0; i < length; ++i) {
-      addresses[i] = address(uint160(uint(keccak256(abi.encodePacked(i)))));
+      addresses[i] = address(uint160(uint256(keccak256(abi.encodePacked(i)))));
     }
     return addresses;
   }

@@ -1,6 +1,6 @@
 {
 	"extends": "solhint:recommended",
-	"plugins": ["prettier", "chainlink-solidity"],
+	"plugins": [ "chainlink-solidity"],
 	"rules": {
 		"compiler-version": ["off", "^0.8.0"],
 		"const-name-snakecase": "off",
@@ -11,6 +11,7 @@
 		"no-inline-assembly": "off",
 		"contract-name-capwords": "off",
 		"no-unused-import": "error",
+        "import-path-check": "off",
 		"gas-struct-packing": "warn",
 		"interface-starts-with-i": "warn",
 		"func-visibility": [
@@ -20,12 +21,6 @@
 			}
 		],
 		"not-rely-on-time": "off",
-		"prettier/prettier": [
-			"off",
-			{
-				"endOfLine": "auto"
-			}
-		],
 		"no-empty-blocks": "off",
 		"quotes": ["error", "double"],
 		"reason-string": [

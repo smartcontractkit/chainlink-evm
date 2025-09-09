@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {BaseTest} from "./BaseConfiguratorTest.t.sol";
 import {Configurator} from "../../Configurator.sol";
 import {IConfigurator} from "../../interfaces/IConfigurator.sol";
+import {BaseTest} from "./BaseConfiguratorTest.t.sol";
 
 contract ConfiguratorTest is BaseTest {
   function setUp() public virtual override {

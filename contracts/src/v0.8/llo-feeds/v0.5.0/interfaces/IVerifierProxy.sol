@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.0;
 
-import {Common} from "../../libraries/Common.sol";
 import {AccessControllerInterface} from "../../../shared/interfaces/AccessControllerInterface.sol";
+import {Common} from "../../libraries/Common.sol";
 import {IVerifierFeeManager} from "./IVerifierFeeManager.sol";
 
 interface IVerifierProxy {
@@ -36,7 +36,9 @@ interface IVerifierProxy {
    * @notice Sets the verifier address initially, allowing `setVerifier` to be set by this Verifier in the future
    * @param verifierAddress The address of the verifier contract to initialize
    */
-  function initializeVerifier(address verifierAddress) external;
+  function initializeVerifier(
+    address verifierAddress
+  ) external;
 
   /**
    * @notice Sets a new verifier for a config digest
@@ -55,7 +57,9 @@ interface IVerifierProxy {
    * @notice Removes a verifier for a given config digest
    * @param configDigest The config digest of the verifier to remove
    */
-  function unsetVerifier(bytes32 configDigest) external;
+  function unsetVerifier(
+    bytes32 configDigest
+  ) external;
 
   /**
    * @notice Retrieves the verifier address that verifies reports
@@ -64,17 +68,23 @@ interface IVerifierProxy {
    * @return verifierAddress The address of the verifier contract that verifies
    * reports for a given config digest.
    */
-  function getVerifier(bytes32 configDigest) external view returns (address verifierAddress);
+  function getVerifier(
+    bytes32 configDigest
+  ) external view returns (address verifierAddress);
 
   /**
    * @notice Called by the admin to set an access controller contract
    * @param accessController The new access controller to set
    */
-  function setAccessController(AccessControllerInterface accessController) external;
+  function setAccessController(
+    AccessControllerInterface accessController
+  ) external;
 
   /**
    * @notice Updates the fee manager
    * @param feeManager The new fee manager
    */
-  function setFeeManager(IVerifierFeeManager feeManager) external;
+  function setFeeManager(
+    IVerifierFeeManager feeManager
+  ) external;
 }

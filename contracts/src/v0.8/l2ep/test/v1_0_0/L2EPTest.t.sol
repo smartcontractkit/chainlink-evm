@@ -49,19 +49,20 @@ contract L2EPTest is Test {
   /// @return an encoded transaction structured as specified in the MultiSend#multiSend comments
   function encodeMultiSendTx(address greeterAddr, bytes memory data) public pure returns (bytes memory) {
     bytes memory txData = abi.encodeWithSelector(Greeter.setGreeting.selector, data);
-    return
-      abi.encodePacked(
-        uint8(0), // operation
-        greeterAddr, // to
-        uint256(0), // value
-        uint256(txData.length), // data length
-        txData // data as bytes
-      );
+    return abi.encodePacked(
+      uint8(0), // operation
+      greeterAddr, // to
+      uint256(0), // value
+      uint256(txData.length), // data length
+      txData // data as bytes
+    );
   }
 
   /// @param l1Address - Address on L1
   /// @return an Arbitrum L2 address
-  function toArbitrumL2AliasAddress(address l1Address) public pure returns (address) {
+  function toArbitrumL2AliasAddress(
+    address l1Address
+  ) public pure returns (address) {
     return address(uint160(l1Address) + uint160(0x1111000000000000000000000000000000001111));
   }
 }

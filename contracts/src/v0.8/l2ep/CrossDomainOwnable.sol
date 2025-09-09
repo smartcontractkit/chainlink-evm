@@ -12,7 +12,9 @@ contract CrossDomainOwnable is ICrossDomainOwnable, ConfirmedOwner {
   address internal s_l1Owner;
   address internal s_l1PendingOwner;
 
-  constructor(address newl1Owner) ConfirmedOwner(msg.sender) {
+  constructor(
+    address newl1Owner
+  ) ConfirmedOwner(msg.sender) {
     _setL1Owner(newl1Owner);
   }
 
@@ -20,7 +22,9 @@ contract CrossDomainOwnable is ICrossDomainOwnable, ConfirmedOwner {
    * @notice transfer ownership of this account to a new L1 owner
    * @param to new L1 owner that will be allowed to call the forward fn
    */
-  function transferL1Ownership(address to) public virtual override onlyL1Owner {
+  function transferL1Ownership(
+    address to
+  ) public virtual override onlyL1Owner {
     _transferL1Ownership(to);
   }
 
@@ -41,7 +45,9 @@ contract CrossDomainOwnable is ICrossDomainOwnable, ConfirmedOwner {
   /**
    * @notice validate, transfer ownership, and emit relevant events
    */
-  function _transferL1Ownership(address to) internal {
+  function _transferL1Ownership(
+    address to
+  ) internal {
     // solhint-disable-next-line gas-custom-errors
     require(to != msg.sender, "Cannot transfer to self");
 
@@ -53,7 +59,9 @@ contract CrossDomainOwnable is ICrossDomainOwnable, ConfirmedOwner {
   /**
    * @notice set ownership, emit relevant events. Used in acceptOwnership()
    */
-  function _setL1Owner(address to) internal {
+  function _setL1Owner(
+    address to
+  ) internal {
     address oldOwner = s_l1Owner;
     s_l1Owner = to;
     s_l1PendingOwner = address(0);

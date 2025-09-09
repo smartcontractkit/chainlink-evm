@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import {Deployer} from "./testhelpers/Deployer.t.sol";
 import {AuthorizedForwarder} from "../AuthorizedForwarder.sol";
+import {Deployer} from "./testhelpers/Deployer.t.sol";
 
 contract ForwarderTest is Deployer {
   AuthorizedForwarder internal s_forwarder;
@@ -70,7 +70,9 @@ contract ForwarderTest is Deployer {
     require(returnedSenders[0] == senders[0]);
   }
 
-  function testFuzz_Forward_Success(uint256 _value) public {
+  function testFuzz_Forward_Success(
+    uint256 _value
+  ) public {
     _addSenders();
 
     vm.expectRevert("Not authorized sender");

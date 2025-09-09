@@ -21,7 +21,7 @@ abstract contract LinkTokenReceiver {
       mstore(add(data, 68), amount) // ensure correct amount is passed0.8.19
     }
     // solhint-disable-next-line avoid-low-level-calls
-    (bool success, ) = address(this).delegatecall(data); // calls oracleRequest
+    (bool success,) = address(this).delegatecall(data); // calls oracleRequest
     require(success, "Unable to create request");
   }
 
@@ -38,7 +38,9 @@ abstract contract LinkTokenReceiver {
 
   // @dev Reverts if the given data does not begin with the `oracleRequest` function selector
   // @param data The data payload of the request
-  modifier permittedFunctionsForLINK(bytes memory data) {
+  modifier permittedFunctionsForLINK(
+    bytes memory data
+  ) {
     bytes4 funcSelector;
     assembly {
       // solhint-disable-next-line avoid-low-level-calls

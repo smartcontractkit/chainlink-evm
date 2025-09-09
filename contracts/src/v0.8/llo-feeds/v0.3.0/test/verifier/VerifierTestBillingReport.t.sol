@@ -23,9 +23,7 @@ contract VerifierTestWithConfiguredVerifierAndFeeManager is BaseTestWithConfigur
 contract VerifierTestBillingReport is VerifierTestWithConfiguredVerifierAndFeeManager {
   function test_verifyWithLink() public {
     bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     _approveLink(address(rewardManager), DEFAULT_REPORT_LINK_FEE, USER);
@@ -37,9 +35,7 @@ contract VerifierTestBillingReport is VerifierTestWithConfiguredVerifierAndFeeMa
 
   function test_verifyWithNative() public {
     bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     _approveNative(address(feeManager), DEFAULT_REPORT_NATIVE_FEE, USER);
@@ -52,9 +48,7 @@ contract VerifierTestBillingReport is VerifierTestWithConfiguredVerifierAndFeeMa
 
   function test_verifyWithNativeUnwrapped() public {
     bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     _verify(signedReport, address(native), DEFAULT_REPORT_NATIVE_FEE, USER);
@@ -65,9 +59,7 @@ contract VerifierTestBillingReport is VerifierTestWithConfiguredVerifierAndFeeMa
 
   function test_verifyWithNativeUnwrappedReturnsChange() public {
     bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     _verify(signedReport, address(native), DEFAULT_REPORT_NATIVE_FEE * 2, USER);
@@ -82,9 +74,7 @@ contract VerifierBulkVerifyBillingReport is VerifierTestWithConfiguredVerifierAn
 
   function test_verifyWithBulkLink() public {
     bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedReports = new bytes[](NUMBERS_OF_REPORTS);
@@ -102,9 +92,7 @@ contract VerifierBulkVerifyBillingReport is VerifierTestWithConfiguredVerifierAn
 
   function test_verifyWithBulkNative() public {
     bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedReports = new bytes[](NUMBERS_OF_REPORTS);
@@ -121,9 +109,7 @@ contract VerifierBulkVerifyBillingReport is VerifierTestWithConfiguredVerifierAn
 
   function test_verifyWithBulkNativeUnwrapped() public {
     bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedReports = new bytes[](NUMBERS_OF_REPORTS);
@@ -139,9 +125,7 @@ contract VerifierBulkVerifyBillingReport is VerifierTestWithConfiguredVerifierAn
 
   function test_verifyWithBulkNativeUnwrappedReturnsChange() public {
     bytes memory signedReport = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedReports = new bytes[](NUMBERS_OF_REPORTS);
@@ -157,15 +141,11 @@ contract VerifierBulkVerifyBillingReport is VerifierTestWithConfiguredVerifierAn
 
   function test_verifyMultiVersions() public {
     bytes memory signedReportV1 = _generateV1EncodedBlob(
-      _generateV1Report(),
-      _generateReportContext(v1ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV1Report(), _generateReportContext(v1ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes memory signedReportV3 = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedReports = new bytes[](3);
@@ -185,15 +165,11 @@ contract VerifierBulkVerifyBillingReport is VerifierTestWithConfiguredVerifierAn
 
   function test_verifyMultiVersionsReturnsVerifiedReports() public {
     bytes memory signedReportV1 = _generateV1EncodedBlob(
-      _generateV1Report(),
-      _generateReportContext(v1ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV1Report(), _generateReportContext(v1ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes memory signedReportV3 = _generateV3EncodedBlob(
-      _generateV3Report(),
-      _generateReportContext(v3ConfigDigest),
-      _getSigners(FAULT_TOLERANCE + 1)
+      _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
     );
 
     bytes[] memory signedReports = new bytes[](3);

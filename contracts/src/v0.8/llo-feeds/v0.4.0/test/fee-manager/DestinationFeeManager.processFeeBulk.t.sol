@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "./BaseDestinationFeeManager.t.sol";
 import {IDestinationRewardManager} from "../../interfaces/IDestinationRewardManager.sol";
+import "./BaseDestinationFeeManager.t.sol";
 
 /**
  * @title BaseFeeManagerTest
@@ -37,7 +37,8 @@ contract DestinationFeeManagerProcessFeeTest is BaseDestinationFeeManagerTest {
     assertEq(getLinkBalance(address(feeManager)), 0);
     assertEq(getLinkBalance(USER), DEFAULT_LINK_MINT_QUANTITY - DEFAULT_REPORT_LINK_FEE * NUMBER_OF_REPORTS);
 
-    //the subscriber (user) should receive funds back and not the proxy, although when live the proxy will forward the funds sent and not cover it seen here
+    //the subscriber (user) should receive funds back and not the proxy, although when live the proxy will forward the
+    // funds sent and not cover it seen here
     assertEq(USER.balance, DEFAULT_NATIVE_MINT_QUANTITY);
     assertEq(PROXY.balance, DEFAULT_NATIVE_MINT_QUANTITY);
   }
@@ -96,11 +97,7 @@ contract DestinationFeeManagerProcessFeeTest is BaseDestinationFeeManagerTest {
     mintLink(address(feeManager), 1);
 
     bytes memory payloadV1 = abi.encode(
-      [DEFAULT_CONFIG_DIGEST, 0, 0],
-      getV1Report(DEFAULT_FEED_1_V1),
-      new bytes32[](1),
-      new bytes32[](1),
-      bytes32("")
+      [DEFAULT_CONFIG_DIGEST, 0, 0], getV1Report(DEFAULT_FEED_1_V1), new bytes32[](1), new bytes32[](1), bytes32("")
     );
 
     bytes memory linkPayloadV2 = getPayload(getV2Report(DEFAULT_FEED_1_V2));
@@ -134,11 +131,7 @@ contract DestinationFeeManagerProcessFeeTest is BaseDestinationFeeManagerTest {
     mintLink(address(feeManager), DEFAULT_REPORT_LINK_FEE * 4 + 1);
 
     bytes memory payloadV1 = abi.encode(
-      [DEFAULT_CONFIG_DIGEST, 0, 0],
-      getV1Report(DEFAULT_FEED_1_V1),
-      new bytes32[](1),
-      new bytes32[](1),
-      bytes32("")
+      [DEFAULT_CONFIG_DIGEST, 0, 0], getV1Report(DEFAULT_FEED_1_V1), new bytes32[](1), new bytes32[](1), bytes32("")
     );
 
     bytes memory nativePayloadV2 = getPayload(getV2Report(DEFAULT_FEED_1_V2));
@@ -168,11 +161,7 @@ contract DestinationFeeManagerProcessFeeTest is BaseDestinationFeeManagerTest {
 
   function test_processMultipleV1Reports() public {
     bytes memory payload = abi.encode(
-      [DEFAULT_CONFIG_DIGEST, 0, 0],
-      getV1Report(DEFAULT_FEED_1_V1),
-      new bytes32[](1),
-      new bytes32[](1),
-      bytes32("")
+      [DEFAULT_CONFIG_DIGEST, 0, 0], getV1Report(DEFAULT_FEED_1_V1), new bytes32[](1), new bytes32[](1), bytes32("")
     );
 
     bytes[] memory payloads = new bytes[](NUMBER_OF_REPORTS);

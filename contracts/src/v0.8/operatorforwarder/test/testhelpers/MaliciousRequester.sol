@@ -1,8 +1,8 @@
 pragma solidity ^0.8.0;
 
-import {MaliciousChainlink} from "./MaliciousChainlink.sol";
-import {MaliciousChainlinked, Chainlink} from "./MaliciousChainlinked.sol";
 import {ChainlinkRequestInterface} from "../../interfaces/ChainlinkRequestInterface.sol";
+import {MaliciousChainlink} from "./MaliciousChainlink.sol";
+import {Chainlink, MaliciousChainlinked} from "./MaliciousChainlinked.sol";
 
 contract MaliciousRequester is MaliciousChainlinked {
   uint256 private constant ORACLE_PAYMENT = 1 ether;
@@ -14,11 +14,8 @@ contract MaliciousRequester is MaliciousChainlinked {
   }
 
   function maliciousWithdraw() public {
-    MaliciousChainlink.WithdrawRequest memory req = newWithdrawRequest(
-      "specId",
-      address(this),
-      this.doesNothing.selector
-    );
+    MaliciousChainlink.WithdrawRequest memory req =
+      newWithdrawRequest("specId", address(this), this.doesNothing.selector);
     chainlinkWithdrawRequest(req, ORACLE_PAYMENT);
   }
 
@@ -28,12 +25,16 @@ contract MaliciousRequester is MaliciousChainlinked {
     return chainlinkRequest(req, ORACLE_PAYMENT);
   }
 
-  function maliciousPrice(bytes32 _id) public returns (bytes32 requestId) {
+  function maliciousPrice(
+    bytes32 _id
+  ) public returns (bytes32 requestId) {
     Chainlink.Request memory req = newRequest(_id, address(this), this.doesNothing.selector);
     return chainlinkPriceRequest(req, ORACLE_PAYMENT);
   }
 
-  function maliciousTargetConsumer(address _target) public returns (bytes32 requestId) {
+  function maliciousTargetConsumer(
+    address _target
+  ) public returns (bytes32 requestId) {
     Chainlink.Request memory req = newRequest("specId", _target, bytes4(keccak256("fulfill(bytes32,bytes32)")));
     return chainlinkTargetRequest(_target, req, ORACLE_PAYMENT);
   }
@@ -41,10 +42,7 @@ contract MaliciousRequester is MaliciousChainlinked {
   function maliciousRequestCancel(bytes32 _id, bytes memory _callbackFunc) public {
     ChainlinkRequestInterface oracle = ChainlinkRequestInterface(oracleAddress());
     oracle.cancelOracleRequest(
-      request(_id, address(this), _callbackFunc),
-      ORACLE_PAYMENT,
-      this.maliciousRequestCancel.selector,
-      s_expiration
+      request(_id, address(this), _callbackFunc), ORACLE_PAYMENT, this.maliciousRequestCancel.selector, s_expiration
     );
   }
 

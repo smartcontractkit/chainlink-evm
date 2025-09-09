@@ -28,7 +28,7 @@ contract OCR2Base_Transmitters {}
 
 /// @notice #_report
 contract OCR2Base__Report {
-  // TODO: make contract internal function helper
+// TODO: make contract internal function helper
 }
 
 /// @notice #requireExpectedMsgDataLength

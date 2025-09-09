@@ -4,9 +4,12 @@ pragma solidity ^0.8.24;
 import {IGetCCIPAdmin} from "../../../../shared/interfaces/IGetCCIPAdmin.sol";
 import {IBurnMintERC20Upgradeable} from "../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
 
-import {AccessControlDefaultAdminRulesUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
-import {Initializable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/Initializable.sol";
-import {ERC20BurnableUpgradeable} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import {AccessControlDefaultAdminRulesUpgradeable} from
+  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import {Initializable} from
+  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/Initializable.sol";
+import {ERC20BurnableUpgradeable} from
+  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 import {IERC165} from "@openzeppelin/contracts@5.0.2/utils/introspection/IERC165.sol";
@@ -33,7 +36,8 @@ contract BurnMintERC20Transparent is
 
   /// @custom:storage-location erc7201:chainlink.storage.BurnMintERC20Transparent
   struct BurnMintERC20TransparentStorage {
-    /// @dev the CCIPAdmin can be used to register with the CCIP token admin registry, but has no other special powers, and can only be transferred by the owner.
+    /// @dev the CCIPAdmin can be used to register with the CCIP token admin registry, but has no other special powers,
+    /// and can only be transferred by the owner.
     address ccipAdmin;
     /// @dev The number of decimals for the token
     uint8 decimals;
@@ -41,7 +45,8 @@ contract BurnMintERC20Transparent is
     uint256 maxSupply;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.BurnMintERC20Transparent")) - 1)) & ~bytes32(uint256(0xff));
+  // keccak256(abi.encode(uint256(keccak256("chainlink.storage.BurnMintERC20Transparent")) - 1)) &
+  // ~bytes32(uint256(0xff));
   bytes32 private constant BURN_MINT_ERC20_TRANSPARENT_STORAGE_LOCATION =
     0xc5ce4c6194754ec56151469c4af5ff17dd2a95dab96bf61ba95b3ff079048900;
 
@@ -99,12 +104,9 @@ contract BurnMintERC20Transparent is
   function supportsInterface(
     bytes4 interfaceId
   ) public pure virtual override(AccessControlDefaultAdminRulesUpgradeable, IERC165) returns (bool) {
-    return
-      interfaceId == type(IERC20).interfaceId ||
-      interfaceId == type(IBurnMintERC20Upgradeable).interfaceId ||
-      interfaceId == type(IERC165).interfaceId ||
-      interfaceId == type(IAccessControl).interfaceId ||
-      interfaceId == type(IGetCCIPAdmin).interfaceId;
+    return interfaceId == type(IERC20).interfaceId || interfaceId == type(IBurnMintERC20Upgradeable).interfaceId
+      || interfaceId == type(IERC165).interfaceId || interfaceId == type(IAccessControl).interfaceId
+      || interfaceId == type(IGetCCIPAdmin).interfaceId;
   }
 
   // ================================================================
@@ -190,7 +192,9 @@ contract BurnMintERC20Transparent is
   /// @notice grants both mint and burn roles to `burnAndMinter`.
   /// @dev calls public functions so this function does not require
   /// access controls. This is handled in the inner functions.
-  function grantMintAndBurnRoles(address burnAndMinter) external {
+  function grantMintAndBurnRoles(
+    address burnAndMinter
+  ) external {
     grantRole(MINTER_ROLE, burnAndMinter);
     grantRole(BURNER_ROLE, burnAndMinter);
   }
@@ -205,7 +209,9 @@ contract BurnMintERC20Transparent is
   /// @dev only the owner can call this function, NOT the current ccipAdmin, and 1-step ownership transfer is used.
   /// @param newAdmin The address to transfer the CCIPAdmin role to. Setting to address(0) is a valid way to revoke
   /// the role
-  function setCCIPAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
+  function setCCIPAdmin(
+    address newAdmin
+  ) external onlyRole(DEFAULT_ADMIN_ROLE) {
     BurnMintERC20TransparentStorage storage $ = _getBurnMintERC20TransparentStorage();
     address currentAdmin = $.ccipAdmin;
 

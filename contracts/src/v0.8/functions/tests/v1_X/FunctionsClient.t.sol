@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {BaseTest} from "./BaseTest.t.sol";
 import {FunctionsClient} from "../../dev/v1_X/FunctionsClient.sol";
 import {FunctionsRouter} from "../../dev/v1_X/FunctionsRouter.sol";
 import {FunctionsSubscriptions} from "../../dev/v1_X/FunctionsSubscriptions.sol";
 import {FunctionsRequest} from "../../dev/v1_X/libraries/FunctionsRequest.sol";
 import {FunctionsResponse} from "../../dev/v1_X/libraries/FunctionsResponse.sol";
+import {BaseTest} from "./BaseTest.t.sol";
 
-import {FunctionsClientSetup, FunctionsSubscriptionSetup, FunctionsClientRequestSetup} from "./Setup.t.sol";
+import {FunctionsClientRequestSetup, FunctionsClientSetup, FunctionsSubscriptionSetup} from "./Setup.t.sol";
 
 /// @notice #constructor
 contract FunctionsClient_Constructor is FunctionsClientSetup {
@@ -24,10 +24,7 @@ contract FunctionsClient__SendRequest is FunctionsSubscriptionSetup {
     string memory sourceCode = "return 'hello world';";
     FunctionsRequest.Request memory request;
     FunctionsRequest._initializeRequest(
-      request,
-      FunctionsRequest.Location.Inline,
-      FunctionsRequest.CodeLanguage.JavaScript,
-      sourceCode
+      request, FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode
     );
     bytes memory requestData = FunctionsRequest._encodeCBOR(request);
 
@@ -63,7 +60,8 @@ contract FunctionsClient_HandleOracleFulfillment is FunctionsClientRequestSetup 
     vm.stopPrank();
     vm.startPrank(address(s_functionsRouter));
 
-    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data (true).
+    // topic0 (function signature, always checked), NOT topic1 (false), NOT topic2 (false), NOT topic3 (false), and data
+    // (true).
     bool checkTopic1 = false;
     bool checkTopic2 = false;
     bool checkTopic3 = false;

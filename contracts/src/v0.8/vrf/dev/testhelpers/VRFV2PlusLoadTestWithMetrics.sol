@@ -34,7 +34,9 @@ contract VRFV2PlusLoadTestWithMetrics is VRFConsumerBaseV2Plus {
 
   mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
 
-  constructor(address _vrfCoordinator) VRFConsumerBaseV2Plus(_vrfCoordinator) {}
+  constructor(
+    address _vrfCoordinator
+  ) VRFConsumerBaseV2Plus(_vrfCoordinator) {}
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
   function fulfillRandomWords(uint256 _requestId, uint256[] calldata _randomWords) internal override {
@@ -43,27 +45,20 @@ contract VRFV2PlusLoadTestWithMetrics is VRFConsumerBaseV2Plus {
     s_requests[_requestId].fulfilmentTimestamp = block.timestamp;
     s_requests[_requestId].fulfilmentBlockNumber = ChainSpecificUtil._getBlockNumber();
 
-    uint256 responseTimeInBlocks = s_requests[_requestId].fulfilmentBlockNumber -
-      s_requests[_requestId].requestBlockNumber;
-    uint256 responseTimeInSeconds = s_requests[_requestId].fulfilmentTimestamp -
-      s_requests[_requestId].requestTimestamp;
+    uint256 responseTimeInBlocks =
+      s_requests[_requestId].fulfilmentBlockNumber - s_requests[_requestId].requestBlockNumber;
+    uint256 responseTimeInSeconds = s_requests[_requestId].fulfilmentTimestamp - s_requests[_requestId].requestTimestamp;
 
-    (
-      s_slowestResponseTimeInBlocks,
-      s_fastestResponseTimeInBlocks,
-      s_averageResponseTimeInBlocksMillions
-    ) = _calculateMetrics(
+    (s_slowestResponseTimeInBlocks, s_fastestResponseTimeInBlocks, s_averageResponseTimeInBlocksMillions) =
+    _calculateMetrics(
       responseTimeInBlocks,
       s_fastestResponseTimeInBlocks,
       s_slowestResponseTimeInBlocks,
       s_averageResponseTimeInBlocksMillions,
       s_responseCount
     );
-    (
-      s_slowestResponseTimeInSeconds,
-      s_fastestResponseTimeInSeconds,
-      s_averageResponseTimeInSecondsMillions
-    ) = _calculateMetrics(
+    (s_slowestResponseTimeInSeconds, s_fastestResponseTimeInSeconds, s_averageResponseTimeInSecondsMillions) =
+    _calculateMetrics(
       responseTimeInSeconds,
       s_fastestResponseTimeInSeconds,
       s_slowestResponseTimeInSeconds,

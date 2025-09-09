@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {FunctionsClient} from "../FunctionsClient.sol";
 import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
+import {FunctionsClient} from "../FunctionsClient.sol";
 import {FunctionsRequest} from "../libraries/FunctionsRequest.sol";
 
 /// @title Chainlink Functions example Client contract implementation
@@ -19,7 +19,9 @@ contract FunctionsClientExample is FunctionsClient, ConfirmedOwner {
 
   error UnexpectedRequestID(bytes32 requestId);
 
-  constructor(address router) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
+  constructor(
+    address router
+  ) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
 
   /// @notice Send a simple request
   /// @param source JavaScript source code
@@ -56,7 +58,9 @@ contract FunctionsClientExample is FunctionsClient, ConfirmedOwner {
     s_lastErrorLength = uint32(err.length);
   }
 
-  function bytesToBytes32(bytes memory b) private pure returns (bytes32 out) {
+  function bytesToBytes32(
+    bytes memory b
+  ) private pure returns (bytes32 out) {
     uint256 maxLen = 32;
     if (b.length < 32) {
       maxLen = b.length;

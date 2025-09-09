@@ -1,9 +1,10 @@
 pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+
+import {ChainSpecificUtil} from "../../shared/util/ChainSpecificUtil.sol";
 import {AutomationCompatibleInterface} from "../interfaces/AutomationCompatibleInterface.sol";
 import {StreamsLookupCompatibleInterface} from "../interfaces/StreamsLookupCompatibleInterface.sol";
-import {ChainSpecificUtil} from "../../shared/util/ChainSpecificUtil.sol";
 
 /*--------------------------------------------------------------------------------------------------------------------+
 | Mercury + Automation                                                                                                |
@@ -70,7 +71,8 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   uint32 private constant MIN_GAS_FOR_PERFORM = 200_000;
 
   string private constant FEED_PARAM_KEY = "feedIdHex"; // for Mercury v0.2 - format by which feeds are identified
-  string private constant TIME_PARAM_KEY = "blockNumber"; // for Mercury v0.2 - format by which feeds are filtered to be sufficiently recent
+  string private constant TIME_PARAM_KEY = "blockNumber"; // for Mercury v0.2 - format by which feeds are filtered to be
+    // sufficiently recent
   IVerifierProxy public s_verifier; // for Mercury v0.2 - verifies off-chain reports
 
   int192 private constant SCALE = 1_000_000; // a scalar used for measuring deviation with precision
@@ -92,7 +94,9 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   }
 
   // Returns a user-defined batch of feed data, based on the on-chain state.
-  function getLatestFeedData(string[] memory feedIds) external view returns (Feed[] memory) {
+  function getLatestFeedData(
+    string[] memory feedIds
+  ) external view returns (Feed[] memory) {
     Feed[] memory feeds = new Feed[](feedIds.length);
     for (uint256 i = 0; i < feedIds.length; i++) {
       feeds[i] = s_feedMapping[feedIds[i]];
@@ -102,13 +106,17 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   }
 
   // Invoke a feed lookup through the checkUpkeep function. Expected to run on a cron schedule.
-  function checkUpkeep(bytes calldata /* data */) external view override returns (bool, bytes memory) {
+  function checkUpkeep(
+    bytes calldata /* data */
+  ) external view override returns (bool, bytes memory) {
     string[] memory feeds = s_feeds;
     return revertForFeedLookup(feeds);
   }
 
   // Extracted from `checkUpkeep` for batching purposes.
-  function revertForFeedLookup(string[] memory feeds) public view returns (bool, bytes memory) {
+  function revertForFeedLookup(
+    string[] memory feeds
+  ) public view returns (bool, bytes memory) {
     uint256 blockNumber = ChainSpecificUtil._getBlockNumber();
     revert StreamsLookup(FEED_PARAM_KEY, feeds, TIME_PARAM_KEY, blockNumber, "");
   }
@@ -126,8 +134,8 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
       string memory feedId = _bytes32ToHexString(abi.encodePacked(report.feedId));
       Feed memory feed = s_feedMapping[feedId];
       if (
-        (report.observationsTimestamp - feed.observationsTimestamp > feed.stalenessSeconds) ||
-        deviationExceedsThreshold(feed.price, report.price, feed.deviationPercentagePPM)
+        (report.observationsTimestamp - feed.observationsTimestamp > feed.stalenessSeconds)
+          || deviationExceedsThreshold(feed.price, report.price, feed.deviationPercentagePPM)
       ) {
         filteredValues[count] = values[i];
         count++;
@@ -145,7 +153,7 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   }
 
   function checkErrorHandler(
-    uint256 /* errCode */,
+    uint256, /* errCode */
     bytes memory /* extraData */
   ) external view override returns (bool upkeepNeeded, bytes memory performData) {
     // dummy function with default values
@@ -153,8 +161,10 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   }
 
   // Use deviated off-chain values to update on-chain state.
-  function performUpkeep(bytes calldata performData) external override {
-    (bytes[] memory values /* bytes memory lookupData */, ) = abi.decode(performData, (bytes[], bytes));
+  function performUpkeep(
+    bytes calldata performData
+  ) external override {
+    (bytes[] memory values, /* bytes memory lookupData */ ) = abi.decode(performData, (bytes[], bytes));
     for (uint256 i = 0; i < values.length; i++) {
       // Verify and decode the Mercury report.
       Report memory report = abi.decode(s_verifier.verify(values[i]), (Report));
@@ -187,7 +197,9 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   }
 
   // Decodes a mercury respone into an on-chain object. Thanks @mikestone!!
-  function _getReport(bytes memory signedReport) internal pure returns (Report memory) {
+  function _getReport(
+    bytes memory signedReport
+  ) internal pure returns (Report memory) {
     /*
      * bytes32[3] memory reportContext,
      * bytes memory reportData,
@@ -195,7 +207,7 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
      * bytes32[] memory ss,
      * bytes32 rawVs
      **/
-    (, bytes memory reportData, , , ) = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
+    (, bytes memory reportData,,,) = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
 
     Report memory report = abi.decode(reportData, (Report));
     return report;
@@ -222,7 +234,9 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   // Helper function to reconcile a difference in formatting:
   // - Automation passes feedId into their off-chain lookup function as a string.
   // - Mercury stores feedId in their reports as a bytes32.
-  function _bytes32ToHexString(bytes memory buffer) internal pure returns (string memory) {
+  function _bytes32ToHexString(
+    bytes memory buffer
+  ) internal pure returns (string memory) {
     bytes memory converted = new bytes(buffer.length * 2);
     bytes memory _base = "0123456789abcdef";
     for (uint256 i = 0; i < buffer.length; i++) {
@@ -285,7 +299,9 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
     s_feedMapping[feedId].feedId = feedId;
   }
 
-  function setVerifier(address verifier) external onlyOwner {
+  function setVerifier(
+    address verifier
+  ) external onlyOwner {
     s_verifier = IVerifierProxy(verifier);
   }
 
@@ -316,5 +332,7 @@ interface IVerifierProxy {
    * report and any metadata for billing.
    * @return verifiedReport The encoded report from the verifier.
    */
-  function verify(bytes calldata payload) external payable returns (bytes memory verifiedReport);
+  function verify(
+    bytes calldata payload
+  ) external payable returns (bytes memory verifiedReport);
 }

@@ -24,7 +24,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   }
 
   struct WorkflowMetadata {
-    bytes32 workflowID; //     Unique identifier from hash of owner address, WASM binary content, config content and secrets URL.
+    bytes32 workflowID; //     Unique identifier from hash of owner address, WASM binary content, config content and
+      // secrets URL.
     address owner; // ─────────╮ Workflow owner.
     uint32 donID; //           │ Unique identifier for the Workflow DON.
     WorkflowStatus status; // ─╯ Current status of the workflow (active, paused).
@@ -46,7 +47,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev Keep track of all workflowIDs to ensure uniqueness.
   mapping(bytes32 workflowID => bool inUse) private s_workflowIDs;
 
-  /// @dev List of all authorized EOAs/contracts allowed to access this contract's state functions. All view functions are open access.
+  /// @dev List of all authorized EOAs/contracts allowed to access this contract's state functions. All view functions
+  /// are open access.
   EnumerableSet.AddressSet private s_authorizedAddresses;
   /// @dev List of all authorized DON IDs.
   EnumerableSet.UintSet private s_allowedDONs;
@@ -260,10 +262,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///
   /// Requirements:
   /// - `binaryURL` must always be provided, as it is required.
-  /// - If only one field is being updated, the other fields must be provided with their current values to keep them unchanged, otherwise
+  /// - If only one field is being updated, the other fields must be provided with their current values to keep them
+  /// unchanged, otherwise
   ///   they will be treated as empty strings.
   /// - The DON ID must be in the allowed list to perform updates.
-  /// - The caller must be an authorized address. This means that even if the caller is the owner of the workflow, if they were later
+  /// - The caller must be an authorized address. This means that even if the caller is the owner of the workflow, if
+  /// they were later
   ///   removed from the authorized addresses list, they will not be able to perform updates.
   ///
   /// Emits:
@@ -391,7 +395,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     // Retrieve workflow metadata from storage
     WorkflowMetadata storage workflow = _getWorkflowFromStorage(msg.sender, workflowKey);
 
-    // Only checking access for the caller instead of using _validatePermissions so that even if the DON was removed from the
+    // Only checking access for the caller instead of using _validatePermissions so that even if the DON was removed
+    // from the
     // allowed list, the workflow can still be deleted.
     if (!s_authorizedAddresses.contains(msg.sender)) {
       revert AddressNotAuthorized(msg.sender);
@@ -411,7 +416,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       s_secretsHashToWorkflows[secretsHash].remove(workflowKey);
     }
 
-    // Emit an event indicating the workflow has been deleted. We need to do this before deleting the workflow from storage.
+    // Emit an event indicating the workflow has been deleted. We need to do this before deleting the workflow from
+    // storage.
     emit WorkflowDeletedV1(workflow.workflowID, msg.sender, workflow.donID, workflow.workflowName);
 
     // Delete the workflow metadata from storage
