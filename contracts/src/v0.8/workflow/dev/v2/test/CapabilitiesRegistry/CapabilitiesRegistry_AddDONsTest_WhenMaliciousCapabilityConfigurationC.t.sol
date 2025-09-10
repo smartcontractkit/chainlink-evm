@@ -18,7 +18,7 @@ contract CapabilitiesRegistry_AddDONsTest_WhenMaliciousCapabilityConfigurationCo
     bytes memory config = maliciousConfigurationContract.getCapabilityConfiguration(DON_ID);
     assertEq(config, bytes(""));
 
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = _getNodeOperators();
+    CapabilitiesRegistry.NodeOperatorParams[] memory nodeOperators = _getNodeOperators();
     nodeOperators[0].admin = maliciousConfigContractAddr;
     nodeOperators[1].admin = maliciousConfigContractAddr;
     nodeOperators[2].admin = maliciousConfigContractAddr;

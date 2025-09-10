@@ -12,7 +12,7 @@ contract CapabilitiesRegistry_GetNodeOperatorsTest is BaseTest {
   }
 
   function test_CorrectlyFetchesNodeOperators() public view {
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = s_CapabilitiesRegistry.getNodeOperators();
+    CapabilitiesRegistry.NodeOperatorInfo[] memory nodeOperators = s_CapabilitiesRegistry.getNodeOperators();
     assertEq(nodeOperators.length, 3);
 
     assertEq(nodeOperators[0].admin, NODE_OPERATOR_ONE_ADMIN);
@@ -31,7 +31,7 @@ contract CapabilitiesRegistry_GetNodeOperatorsTest is BaseTest {
     nodeOperatorsToRemove[0] = 2;
     s_CapabilitiesRegistry.removeNodeOperators(nodeOperatorsToRemove);
 
-    CapabilitiesRegistry.NodeOperator[] memory nodeOperators = s_CapabilitiesRegistry.getNodeOperators();
+    CapabilitiesRegistry.NodeOperatorInfo[] memory nodeOperators = s_CapabilitiesRegistry.getNodeOperators();
     assertEq(nodeOperators.length, 2);
 
     assertEq(nodeOperators[0].admin, NODE_OPERATOR_ONE_ADMIN);

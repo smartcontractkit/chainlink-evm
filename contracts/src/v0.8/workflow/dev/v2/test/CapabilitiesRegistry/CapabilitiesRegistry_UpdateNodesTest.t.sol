@@ -353,6 +353,56 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
     s_CapabilitiesRegistry.updateNodes(nodes);
   }
 
+  function test_RevertWhen_NodeOperatorTriesToReassignNode() public {
+    vm.stopPrank();
+    vm.startPrank(NODE_OPERATOR_ONE_ADMIN);
+    CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](1);
+    string[] memory capabilityIds = new string[](1);
+    capabilityIds[0] = s_basicCapabilityId;
+
+    nodes[0] = CapabilitiesRegistry.NodeParams({
+      nodeOperatorId: TEST_NODE_OPERATOR_TWO_ID,
+      p2pId: P2P_ID,
+      signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
+      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
+      csaKey: TEST_CSA_KEY,
+      capabilityIds: capabilityIds
+    });
+
+    vm.expectRevert(
+      abi.encodeWithSelector(CapabilitiesRegistry.NodeOperatorCannotReassignNode.selector, TEST_NODE_OPERATOR_TWO_ID)
+    );
+    s_CapabilitiesRegistry.updateNodes(nodes);
+  }
+
+  function test_CanReassignNode() public {
+    vm.stopPrank();
+    vm.startPrank(ADMIN);
+    CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](1);
+    string[] memory capabilityIds = new string[](1);
+    capabilityIds[0] = s_basicCapabilityId;
+
+    nodes[0] = CapabilitiesRegistry.NodeParams({
+      nodeOperatorId: TEST_NODE_OPERATOR_TWO_ID,
+      p2pId: P2P_ID,
+      signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
+      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
+      csaKey: TEST_CSA_KEY,
+      capabilityIds: capabilityIds
+    });
+    s_CapabilitiesRegistry.updateNodes(nodes);
+
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorOne =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_ONE_ID);
+    assertEq(nodeOperatorOne.nodeP2PIDs.length, 0, "Node operator one should have no nodes");
+
+    CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorTwo =
+      s_CapabilitiesRegistry.getNodeOperator(TEST_NODE_OPERATOR_TWO_ID);
+    assertEq(nodeOperatorTwo.nodeP2PIDs.length, 2, "Node operator two should have two nodes");
+    assertEq(nodeOperatorTwo.nodeP2PIDs[0], P2P_ID_TWO, "Node operator two should have the first node with P2P ID two");
+    assertEq(nodeOperatorTwo.nodeP2PIDs[1], P2P_ID, "Node operator two should have the second node with P2P ID one");
+  }
+
   function test_CanUpdateParamsIfNodeSignerAddressNoLongerUsed() public {
     vm.stopPrank();
     vm.startPrank(NODE_OPERATOR_ONE_ADMIN);
