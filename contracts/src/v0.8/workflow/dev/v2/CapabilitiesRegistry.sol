@@ -377,8 +377,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   error NodeOperatorAlreadyExists(uint32 existingNodeOperatorId);
 
   /// @notice This error is thrown when trying to remove a node operator that
-  /// still owns nodes
-  error NodeOperatorHasNodes();
+  /// still has nodes
+  /// @param nodeOperatorId The ID of the node operator that still has nodes
+  error NodeOperatorHasNodes(uint32 nodeOperatorId);
 
   /// @notice This error is thrown when trying to remove a node that is still
   /// part of a capabilities DON
@@ -585,7 +586,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   ) external onlyOwner {
     for (uint32 i; i < nodeOperatorIds.length; ++i) {
       uint32 nodeOperatorId = nodeOperatorIds[i];
-      if (s_nodeOperators[nodeOperatorId].nodeP2PIDs.length() != 0) revert NodeOperatorHasNodes();
+      if (s_nodeOperators[nodeOperatorId].nodeP2PIDs.length() != 0) revert NodeOperatorHasNodes(nodeOperatorId);
       NodeOperator storage nodeOperator = s_nodeOperators[nodeOperatorId];
       bytes32 nodeOperatorDataHash =
         _nodeOperatorHash(NodeOperatorParams({admin: nodeOperator.admin, name: nodeOperator.name}));
@@ -807,12 +808,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       storedNode.p2pId = node.p2pId;
       storedNode.encryptionPublicKey = node.encryptionPublicKey;
       storedNode.csaKey = node.csaKey;
-
-      if (storedNode.nodeOperatorId != node.nodeOperatorId) {
-        s_nodeOperators[storedNode.nodeOperatorId].nodeP2PIDs.remove(storedNode.p2pId);
-        s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.add(storedNode.p2pId);
-      }
-
       emit NodeUpdated(node.p2pId, node.nodeOperatorId, node.signer);
     }
   }

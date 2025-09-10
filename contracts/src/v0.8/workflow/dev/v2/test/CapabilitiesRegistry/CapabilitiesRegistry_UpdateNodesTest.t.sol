@@ -375,7 +375,6 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
     s_CapabilitiesRegistry.updateNodes(nodes);
   }
 
-  // TODO: When a node is reassigned to a different node operator, it should be removed from the previous node operator
   function test_CanReassignNode() public {
     vm.stopPrank();
     vm.startPrank(ADMIN);
@@ -391,7 +390,6 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
       csaKey: TEST_CSA_KEY,
       capabilityIds: capabilityIds
     });
-
     s_CapabilitiesRegistry.updateNodes(nodes);
 
     CapabilitiesRegistry.NodeOperatorInfo memory nodeOperatorOne =
