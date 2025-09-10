@@ -292,6 +292,8 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		return nil, err
 	}
 
+	a.lggr.Infof("Response from Atlas RPC: %s", string(data))
+
 	var response RequestResponse
 	err = json.Unmarshal(data, &response)
 	if err != nil {
