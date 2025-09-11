@@ -223,7 +223,8 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     assertEq(removedNode.capabilityIds.length, 0, "Capabilities in the removed node should be cleared.");
     assertEq(removedNode.configCount, 2, "Config cound should be incremented.");
 
-    // Check that capabilities are correctly removed
+    // 2nd part of the test to check that node capability configs are correctly cleared and don't show up
+    // when the node is re-added.
 
     // Remove one of the capabilities so only one capability is readded
     s_twoCapabilitiesArray.pop();
@@ -235,7 +236,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
       signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
       csaKey: TEST_CSA_KEY,
-      // Add a node without capabilities. Previously this node had capabilities.
+      // Add a node with a single capability. Previously this node had two capabilities.
       capabilityIds: s_twoCapabilitiesArray
     });
 
