@@ -716,7 +716,13 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       s_nodeSigners.remove(node.signer);
       s_nodeP2PIds.remove(node.p2pId);
       nodeOperator.nodeP2PIDs.remove(node.p2pId);
+
+      uint32 oldConfigCount = node.configCount;
       delete s_nodes[p2pId];
+      // Move the config count to the next value. This protects us from edge cases where the node is removed and
+      // re-added. If we didn't do this, we would need to clear the supportedHashedCapabilityIds array for each config
+      // count.
+      s_nodes[p2pId].configCount = oldConfigCount + 1;
       emit NodeRemoved(p2pId);
     }
   }
