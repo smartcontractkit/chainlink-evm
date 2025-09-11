@@ -1372,8 +1372,15 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       // needed as the previous config will be overwritten by storing the latest config
       // at configCount
       for (uint256 i; i < prevDONConfig.nodes.length(); ++i) {
-        s_nodes[prevDONConfig.nodes.at(i)].capabilitiesDONIds.remove(donParams.id);
-        delete s_nodes[prevDONConfig.nodes.at(i)].workflowDONId;
+        // If the DON accepts workflows, we need to remove the workflow DON ID from all the previously configured nodes.
+        // This is necessary to free them up in case the DON has different node composition. The DON cannot change
+        // whether it accepts workflows after the first configuration and the nodes can only belong to one workflow DON,
+        // so it is safe to assume that all the previously configured nodes have this DON's ID as their workflow DON ID.
+        if (donParams.acceptsWorkflows) {
+          delete s_nodes[prevDONConfig.nodes.at(i)].workflowDONId;
+        } else {
+          s_nodes[prevDONConfig.nodes.at(i)].capabilitiesDONIds.remove(donParams.id);
+        }
       }
     }
 
