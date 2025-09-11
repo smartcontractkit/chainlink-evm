@@ -266,20 +266,14 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     assertEq(donInfo.nodeP2PIds[1], P2P_ID_THREE);
   }
 
-  // Create a workflow DON. Add node 1 to it.
-  // Create a capability DON. Add node 1 to it.
-  // Update a capability DON and check if node 1 still has the right workflow ID assigned.
   function test_UpdatesDONAndPreservesWorkflowID() public {
-    // Capabilities DON was created during base setup.
-    // Updating capabilities DON should preserve the workflow ID on the nodes.
-    bool expectedDONIsPublic = true;
-
+    // This update is identical to the base setup.
     s_CapabilitiesRegistry.updateDON(
       DON_ID_TWO,
       CapabilitiesRegistry.UpdateDONParams({
         nodes: s_nodeIds,
         capabilityConfigurations: s_capabilityConfigs,
-        isPublic: expectedDONIsPublic, // This is changed to true. The rest of the values are unchanged.
+        isPublic: false,
         f: F_VALUE,
         name: TEST_DON_NAME_TWO,
         config: TEST_DON_CONFIG
