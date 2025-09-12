@@ -265,4 +265,22 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     assertEq(donInfo.nodeP2PIds[0], P2P_ID);
     assertEq(donInfo.nodeP2PIds[1], P2P_ID_THREE);
   }
+
+  function test_UpdatesDONAndPreservesWorkflowID() public {
+    // This update is identical to the base setup.
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID_TWO,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: s_nodeIds,
+        capabilityConfigurations: s_capabilityConfigs,
+        isPublic: false,
+        f: F_VALUE,
+        name: TEST_DON_NAME_TWO,
+        config: TEST_DON_CONFIG
+      })
+    );
+
+    CapabilitiesRegistry.NodeInfo memory nodeInfo = s_CapabilitiesRegistry.getNode(P2P_ID);
+    assertEq(nodeInfo.workflowDONId, DON_ID, "Node should still have the right workflow ID assigned.");
+  }
 }
