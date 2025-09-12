@@ -1361,7 +1361,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         revert DONNameAlreadyTaken(donParams.name);
       }
 
-      delete s_donNameToId[donConfig.name];
+      delete s_donNameToId[prevDONConfig.name];
       s_donNameToId[donParams.name] = donParams.id;
     }
 
