@@ -2,4 +2,7 @@ WorkflowRegistry.allowlistRequest
 ├── when the user is not linked
 │   └── it should revert with OwnershipLinkDoesNotExist
 └── when the user is linked
-    └── it should allowlist the request digest
+    ├── when the user already has a request
+    │   └── it should allowlist the request digest by replacing the existing one
+    └── when the user has no existing request
+        └── it should allowlist the request digest with a new one
