@@ -486,7 +486,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
 
   string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0-dev";
 
-  /// @notice Mapping of DON names to boolean indicating if the name is taken
+  /// @notice Mapping of DON names to DON IDs
   mapping(string donName => uint32 donId) private s_donNameToId;
 
   /// @notice Mapping of capabilities
@@ -811,7 +811,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         }
       }
 
-      storedNode.p2pId = node.p2pId;
       storedNode.encryptionPublicKey = node.encryptionPublicKey;
       storedNode.csaKey = node.csaKey;
       emit NodeUpdated(node.p2pId, node.nodeOperatorId, node.signer);
