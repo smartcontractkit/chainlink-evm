@@ -34,6 +34,8 @@ contract Constants {
   uint32 internal constant DON_ID_TWO = 2;
 
   bytes32 internal constant INVALID_P2P_ID = bytes32("fake-p2p");
+  uint32 internal constant INVALID_NODE_OPERATOR_ID = 10_000;
+
   bytes32 internal constant NEW_NODE_SIGNER = hex"f53415859707d90ed4dc534ad730f187a17b0c368e1beec2e9b995587c4b0a07";
 
   bytes internal constant BASIC_CAPABILITY_CONFIG = bytes("basic-capability-config");

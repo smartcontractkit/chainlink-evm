@@ -283,4 +283,30 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     CapabilitiesRegistry.NodeInfo memory nodeInfo = s_CapabilitiesRegistry.getNode(P2P_ID);
     assertEq(nodeInfo.workflowDONId, DON_ID, "Node should still have the right workflow ID assigned.");
   }
+
+  function test_UpdatesDONAndRemovesDONNameMapping() public {
+    CapabilitiesRegistry.DONInfo memory don = s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME_TWO);
+    assertEq(don.id, DON_ID_TWO, "DON ID mismatch");
+
+    string memory newDONName = "New DON Name";
+
+    // Update the DON name
+    s_CapabilitiesRegistry.updateDON(
+      DON_ID_TWO,
+      CapabilitiesRegistry.UpdateDONParams({
+        nodes: s_nodeIds,
+        capabilityConfigurations: s_capabilityConfigs,
+        isPublic: false,
+        f: F_VALUE,
+        name: newDONName,
+        config: TEST_DON_CONFIG
+      })
+    );
+
+    don = s_CapabilitiesRegistry.getDONByName(newDONName);
+    assertEq(don.id, DON_ID_TWO, "DON ID mismatch");
+
+    vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.DONWithNameDoesNotExist.selector, TEST_DON_NAME_TWO));
+    s_CapabilitiesRegistry.getDONByName(TEST_DON_NAME_TWO);
+  }
 }
