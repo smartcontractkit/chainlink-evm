@@ -43,10 +43,8 @@ contract CapabilitiesRegistry_AddNodesTest is BaseTest {
     string[] memory capabilityIds = new string[](1);
     capabilityIds[0] = s_basicCapabilityId;
 
-    uint32 invalidNodeOperatorId = 10_000;
-
     nodes[0] = CapabilitiesRegistry.NodeParams({
-      nodeOperatorId: invalidNodeOperatorId, // Invalid NOP
+      nodeOperatorId: INVALID_NODE_OPERATOR_ID, // Invalid NOP
       p2pId: P2P_ID,
       signer: NODE_OPERATOR_ONE_SIGNER_ADDRESS,
       encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
@@ -55,7 +53,7 @@ contract CapabilitiesRegistry_AddNodesTest is BaseTest {
     });
 
     vm.expectRevert(
-      abi.encodeWithSelector(CapabilitiesRegistry.NodeOperatorDoesNotExist.selector, invalidNodeOperatorId)
+      abi.encodeWithSelector(CapabilitiesRegistry.NodeOperatorDoesNotExist.selector, INVALID_NODE_OPERATOR_ID)
     );
     s_CapabilitiesRegistry.addNodes(nodes);
   }

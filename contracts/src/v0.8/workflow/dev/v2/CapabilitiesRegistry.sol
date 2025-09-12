@@ -748,6 +748,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         // operator. Contract owner can reassign the node to any node
         // operator to give us flexibility to handle edge cases or mistakes.
         if (!isOwner) revert NodeOperatorCannotReassignNode(node.nodeOperatorId);
+        // Validate that the new node operator exists
+        NodeOperator storage newNodeOperator = s_nodeOperators[node.nodeOperatorId];
+        if (newNodeOperator.admin == address(0)) revert NodeOperatorDoesNotExist(node.nodeOperatorId);
 
         s_nodeOperators[storedNode.nodeOperatorId].nodeP2PIDs.remove(storedNode.p2pId);
         s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.add(storedNode.p2pId);
