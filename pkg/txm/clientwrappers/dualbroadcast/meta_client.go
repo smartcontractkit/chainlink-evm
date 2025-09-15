@@ -169,7 +169,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 			}
 			return nil
 		}
-		a.lggr.Info("No bids for transactionID(%d): ", tx.ID)
+		a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
 		return nil
 	}
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
@@ -347,11 +347,9 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		return nil, nil
 	}
 
-	r, err := json.MarshalIndent(response.Result, "", "  ")
-	if err != nil {
-		return nil, err
+	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
+		a.lggr.Info("Response: ", string(r))
 	}
-	a.lggr.Info("Response: ", string(r))
 
 	return VerifyResponse(response.Result.MetacalldataResponse, dualBroadcastParams, tx.Data, tx.FromAddress, fwdrDestAddress)
 }
