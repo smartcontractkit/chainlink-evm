@@ -116,13 +116,6 @@ func TestDocs(t *testing.T) {
 		require.Equal(t, chaintype.ChainType(""), docDefaults.ChainType.ChainType())
 		docDefaults.ChainType = nil
 
-		// clean up KeySpecific as a special case
-		require.Len(t, docDefaults.KeySpecific, 1)
-		ks := KeySpecific{Key: new(types.EIP55Address),
-			GasEstimator: KeySpecificGasEstimator{PriceMax: new(assets.Wei)}}
-		require.Equal(t, ks, docDefaults.KeySpecific[0])
-		docDefaults.KeySpecific = nil
-
 		// EVM.GasEstimator.BumpTxDepth doesn't have a constant default - it is derived from another field
 		require.Zero(t, *docDefaults.GasEstimator.BumpTxDepth)
 		docDefaults.GasEstimator.BumpTxDepth = nil
