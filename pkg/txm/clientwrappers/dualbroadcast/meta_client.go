@@ -159,7 +159,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	}
 
 	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil {
-		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, *meta.FwdrDestAddress)
+		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
 		if err != nil {
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
 		}
