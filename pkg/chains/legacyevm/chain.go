@@ -373,6 +373,10 @@ func (c *chain) Close() error {
 	return c.StopOnce("Chain", func() (merr error) {
 		c.logger.Debug("Chain: stopping")
 
+		if c.logPoller != logpoller.LogPollerDisabled {
+			merr = multierr.Append(merr, c.logPoller.Close())
+		}
+
 		if c.balanceMonitor != nil {
 			c.logger.Debug("Chain: stopping balance monitor")
 			merr = c.balanceMonitor.Close()
