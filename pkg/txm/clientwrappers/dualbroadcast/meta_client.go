@@ -194,9 +194,9 @@ type RequestResponse struct {
 }
 
 type ResponseResult struct {
-	UO  *UORaw `json:"userOperation"`
-	SOS []*SO  `json:"solverOperations"`
-	DO  *DO    `json:"dAppOperation"`
+	UO  *UORaw `json:"userOperation,omitempty"`
+	SOS []*SO  `json:"solverOperations,omitempty"`
+	DO  *DO    `json:"dAppOperation,omitempty"`
 	MetacalldataResponse
 }
 
