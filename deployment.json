@@ -1,0 +1,10 @@
+{
+  "address": "0x15fC6ae953E024d975e77382eEeC56A9101f9F88",
+  "deployer": "0xE5835085dC0E95c8BED29841b43b0430e863d95F",
+  "transactionHash": "0x96895bfcc8f7b584a2c3605899fb79f933150d4cf10ec5260f2a07333784a1b2",
+  "timestamp": "2025-07-15T22:22:28.260Z",
+  "network": {
+    "chainId": 11155111,
+    "rpcUrl": "https://sepolia.infura.io/v3/dbe1bfd45172477084dfe080e0754c1e"
+  }
+}
