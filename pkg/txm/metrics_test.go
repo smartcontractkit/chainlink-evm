@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	beholderTests "github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder/beholdertest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -20,7 +20,7 @@ func TestEmitTxMessage(t *testing.T) {
 	t.Run("overrides 0x0 as ToAddress if tx is purgeable", func(t *testing.T) {
 		// GIVEN
 		ctx := t.Context()
-		beholderTester := beholderTests.Beholder(t)
+		beholderTester := beholdertest.NewObserver(t)
 
 		toAddress := testutils.NewAddress()
 		fromAddress := testutils.NewAddress()
@@ -69,7 +69,7 @@ func TestEmitTxMessage(t *testing.T) {
 	t.Run("sends original ToAddress if tx is not purgeable", func(t *testing.T) {
 		// GIVEN
 		ctx := t.Context()
-		beholderTester := beholderTests.Beholder(t)
+		beholderTester := beholdertest.NewObserver(t)
 
 		toAddress := testutils.NewAddress()
 		fromAddress := testutils.NewAddress()
