@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -114,4 +115,20 @@ func TestEmitTxMessage(t *testing.T) {
 		assert.Equal(t, expectedChain.String(), actualMessage.ChainId)
 		assert.Equal(t, "", actualMessage.FeedAddress)
 	})
+}
+
+func TestReachedMaxAttempts(t *testing.T) {
+	ctx := t.Context()
+
+	expectedChain := testutils.FixtureChainID
+	txmMetrics, err := NewTxmMetrics(expectedChain)
+	require.NoError(t, err)
+
+	txmMetrics.ReachedMaxAttempts(ctx, true)
+	value := testutil.ToFloat64(promReachedMaxAttempts.WithLabelValues(testutils.FixtureChainID.String()))
+	require.InEpsilon(t, float64(1), value, 0.00001)
+
+	txmMetrics.ReachedMaxAttempts(ctx, false)
+	value = testutil.ToFloat64(promReachedMaxAttempts.WithLabelValues(testutils.FixtureChainID.String()))
+	require.InDelta(t, float64(0), value, 0.00001)
 }

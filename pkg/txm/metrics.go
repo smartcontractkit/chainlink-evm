@@ -34,7 +34,7 @@ var (
 	}, []string{"chainID"})
 	promReachedMaxAttempts = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "txm_reached_max_attempts",
-		Help: "A gauge that is treated as boolean; 1 if the condition is true, 0 otherwise. Controls whether the TXM hasn't reached max attempts threshold or not.",
+		Help: "A gauge that is treated as boolean; 1 if the condition is true, 0 otherwise. Controls whether the TXM has reached max attempts threshold or not.",
 	}, []string{"chainID"})
 	promTimeUntilTxConfirmed = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "txm_time_until_tx_confirmed",
@@ -75,7 +75,7 @@ func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
 
 	reachedMaxAttempts, err := beholder.GetMeter().Int64Gauge("txm_reached_max_attempts")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register time until tx confirmed: %w", err)
+		return nil, fmt.Errorf("failed to register max attempts indicator: %w", err)
 	}
 
 	return &txmMetrics{
