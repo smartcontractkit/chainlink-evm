@@ -28,7 +28,7 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
   function test_activateWorkflow_WhenTheWorkflowExistsButOwnerDoesNotEqualCaller() external whenCallerIsLinked {
     // It reverts with CallerIsNotWorkflowOwner
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10, true);
 
     address user2 = makeAddr("user2");
     _linkOwner(s_user);
@@ -43,7 +43,7 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
     // It returns immediately (no state change, no event)
     // set DON limit first
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10, true);
     _linkOwner(s_user);
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_user);
     vm.prank(s_user);
@@ -74,10 +74,10 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
     // It reverts with MaxWorkflowsPerUserDONExceeded
     bytes32 wfId2 = keccak256("workflow-id2");
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 1, true);
+    s_registry.setDONLimit(s_donFamily, 100, 1, true);
     _linkOwner(s_user);
 
-    // add 2 worflows 1 active and 1 paused in a don with a limit of 1
+    // add 2 worflows 1 active and 1 paused in a don with a default user limit of 1
     vm.startPrank(s_user);
     s_registry.upsertWorkflow(
       s_workflowName,
@@ -107,6 +107,55 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
     );
     s_registry.activateWorkflow(s_workflowId, s_donFamily);
     vm.stopPrank();
+
+    // user override to allow 2 workflows this time
+    vm.prank(s_owner);
+    s_registry.setUserDONOverride(s_user, s_donFamily, 2, true);
+
+    // now the activation of the 2nd workflow should succeed
+    vm.startPrank(s_user);
+    vm.expectEmit(true, true, true, false);
+    emit WorkflowRegistry.WorkflowActivated(s_workflowId, s_user, s_donFamily, "workflow-2");
+    s_registry.activateWorkflow(s_workflowId, s_donFamily);
+
+    // if we try to upsert another workflow in an active state, it should fail
+    bytes32 wfId3 = keccak256("workflow-id3");
+    vm.expectRevert(
+      abi.encodeWithSelector(WorkflowRegistry.MaxWorkflowsPerUserDONExceeded.selector, s_user, s_donFamily)
+    );
+    s_registry.upsertWorkflow(
+      "workflow-3",
+      s_tag,
+      wfId3,
+      WorkflowRegistry.WorkflowStatus.ACTIVE,
+      s_donFamily,
+      s_binaryUrl,
+      s_configUrl,
+      s_attributes,
+      false
+    );
+
+    // but we can upsert the same workflow in paused state
+    s_registry.upsertWorkflow(
+      "workflow-3",
+      s_tag,
+      wfId3,
+      WorkflowRegistry.WorkflowStatus.PAUSED,
+      s_donFamily,
+      s_binaryUrl,
+      s_configUrl,
+      s_attributes,
+      false
+    );
+
+    // but activating it should fail since the user override is now maxed out
+    vm.expectRevert(
+      abi.encodeWithSelector(WorkflowRegistry.MaxWorkflowsPerUserDONExceeded.selector, s_user, s_donFamily)
+    );
+    s_registry.activateWorkflow(wfId3, s_donFamily);
+    vm.stopPrank();
+
+    vm.stopPrank();
   }
 
   function test_activateWorkflow_WhenNoDONLimitIsSetGloballyForTheDonFamily()
@@ -130,10 +179,10 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
     // It activates the workflow and emits WorkflowActivated
     bytes32 wfId2 = keccak256("workflow-id2");
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 2, true);
+    s_registry.setDONLimit(s_donFamily, 100, 2, true);
     _linkOwner(s_user);
 
-    // add 2 worflows 1 active and 1 paused in a don with a limit of 1
+    // add 2 worflows 1 active and 1 paused in a don with a default user limit of 2
     vm.startPrank(s_user);
     s_registry.upsertWorkflow(
       s_workflowName,

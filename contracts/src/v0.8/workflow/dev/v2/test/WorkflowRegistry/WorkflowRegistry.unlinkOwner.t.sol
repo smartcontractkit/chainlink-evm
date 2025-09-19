@@ -11,7 +11,7 @@ contract WorkflowRegistry_unlinkOwner is WorkflowRegistrySetup {
   function setUp() public override {
     super.setUp();
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 1000, true); // 1000 workflows on the test DON
+    s_registry.setDONLimit(s_donFamily, 1000, 10, true); // 1000 workflows on the test DON
   }
 
   modifier whenTheCallerIsTheOwner() {

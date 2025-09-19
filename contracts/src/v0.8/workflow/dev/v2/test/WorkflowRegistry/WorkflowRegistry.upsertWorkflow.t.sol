@@ -424,7 +424,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
     // it should revert with MaxWorkflowsPerUserDONExceeded
     // set the don limit to 1
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 1, true);
+    s_registry.setDONLimit(s_donFamily, 10, 1, true);
 
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_user);
 

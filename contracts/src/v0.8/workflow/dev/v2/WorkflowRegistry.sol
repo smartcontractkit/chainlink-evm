@@ -112,7 +112,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   event AllowedSignersUpdated(address[] signers, bool allowed);
   event OwnershipLinkUpdated(address indexed owner, bytes32 indexed proof, bool indexed added);
-  event DONLimitSet(string donFamily, uint32 limit);
+  event DONLimitSet(string donFamily, uint32 donLimit, uint32 userDefaultLimit);
   event UserDONLimitSet(address indexed user, string donFamily, uint32 limit);
   event UserDONLimitUnset(address indexed user, string donFamily);
   event WorkflowRegistered(
@@ -157,6 +157,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error DonLimitNotSet(string donFamily);
   error MaxWorkflowsPerUserDONExceeded(address owner, string donFamily);
   error UserDONOverrideExceedsDONLimit();
+  error UserDONDefaultLimitExceedsDONLimit();
+  error UserDONDefaultLimitIsZero();
   error URLTooLong(uint256 provided, uint8 maxAllowed);
   error WorkflowDoesNotExist();
   error WorkflowIDAlreadyExists(bytes32 workflowId);
@@ -242,6 +244,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string family;
     /// @dev Global cap for active workflows on this DON
     ConfigValue limitValue;
+    /// @dev Default cap for per-user limit on this DON (respected unless per-user override is made)
+    uint32 defaultUserLimit;
     /// @dev Optional per-user overrides for this DON
     mapping(address => ConfigValue) userOverride;
   }
@@ -252,7 +256,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   struct DonConfigView {
     bytes32 donHash; // keccak256(family).
     string family; // Human-readable DON label.
-    uint32 limit; // Global ACTIVE-workflow cap
+    uint32 donLimit; // Global ACTIVE-workflow cap
+    uint32 defaultUserLimit; // Default per-user ACTIVE-workflow cap
     bool limitEnabled;
   }
 
@@ -331,23 +336,43 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // |                         DON Config                           |
   // ================================================================
   /// @notice Sets or clears a DON-wide limit for the maximum number of
-  ///         ACTIVE workflows.
+  ///         ACTIVE workflows, as well as the default per-user limit for that DON.
   /// @dev    Only callable by the contract owner.
   ///         When `enabled` is true, a limit is added for the DON family.
   ///         When `enabled` is false, the existing limit is removed.
   ///         When both adding and removing, an event record is created for the event, and the event itself
   ///         is emited in the internal helper.
   /// @notice Sets or clears the DON-wide limit for active workflows.
-  /// @param donFamily Human-readable string DON family
-  /// @param limit     New cap (ignored if `enabled==false`)
-  /// @param enabled   Flag indicating whether to store (`true`) or delete (`false`)
-  function setDONLimit(string calldata donFamily, uint32 limit, bool enabled) external onlyOwner {
+  /// @param donFamily        Human-readable string DON family
+  /// @param donLimit         New cap (ignored if `enabled==false`)
+  /// @param userDefaultLimit Default user limit on this DON (ignored if `enabled==false`)
+  /// @param enabled          Flag indicating whether to store (`true`) or delete (`false`)
+  function setDONLimit(
+    string calldata donFamily,
+    uint32 donLimit,
+    uint32 userDefaultLimit,
+    bool enabled
+  ) external onlyOwner {
     bytes32 donHash = _hash(donFamily);
-    uint32 newCapacity = enabled ? limit : 0;
+    uint32 newDONCapacity = enabled ? donLimit : 0;
+    uint32 newDefaultUserCapacity = enabled ? userDefaultLimit : 0;
     DonConfig storage cfg = s_donConfigs[donHash];
 
-    if (cfg.limitValue.enabled == enabled && cfg.limitValue.value == newCapacity) {
+    if (
+      cfg.limitValue.enabled == enabled && cfg.limitValue.value == newDONCapacity
+        && cfg.defaultUserLimit == newDefaultUserCapacity
+    ) {
       return;
+    }
+
+    if (newDefaultUserCapacity > newDONCapacity) {
+      // The default user limit must not exceed the global DON limit
+      revert UserDONDefaultLimitExceedsDONLimit();
+    }
+
+    if (newDONCapacity != 0 && newDefaultUserCapacity == 0) {
+      // If the global DON limit is set, it doesn't make sense to have a zero default user limit
+      revert UserDONDefaultLimitIsZero();
     }
 
     // write the human-readable string only once
@@ -356,17 +381,18 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       s_donConfigKeys.add(donHash); // Tracks every DON hash ever configured (iterable, even if later disabled).
     }
     cfg.limitValue.enabled = enabled;
-    cfg.limitValue.value = newCapacity;
+    cfg.limitValue.value = newDONCapacity;
+    cfg.defaultUserLimit = newDefaultUserCapacity;
 
     s_events.push(
       EventRecord({
         eventType: EventType.DONCapacitySet,
         timestamp: uint32(block.timestamp),
-        payload: abi.encode(donHash, newCapacity)
+        payload: abi.encode(donHash, newDONCapacity, newDefaultUserCapacity)
       })
     );
 
-    emit DONLimitSet(donFamily, newCapacity);
+    emit DONLimitSet(donFamily, newDONCapacity, newDefaultUserCapacity);
   }
 
   /// @notice Sets or removes a per-user, per-DON limit for ACTIVE workflows.
@@ -431,15 +457,17 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param donFamily The identifier of the DON whose workflow cap is being queried.
   /// @return maxWorkflows The maximum number of workflows allowed for the specified DON, or zero if the DON
   ///                      is not allowlisted or no limit has been explicitly set.
+  /// @return defaultUserLimit The default per-user limit for the specified DON, or zero if no limit has been set.
   function getMaxWorkflowsPerDON(
     string calldata donFamily
-  ) public view returns (uint32 maxWorkflows) {
-    return s_donConfigs[_hash(donFamily)].limitValue.value;
+  ) public view returns (uint32 maxWorkflows, uint32 defaultUserLimit) {
+    DonConfig storage cfg = s_donConfigs[_hash(donFamily)];
+    return (cfg.limitValue.value, cfg.defaultUserLimit);
   }
 
   /// @notice Returns the active-workflow cap that applies to a given DON and user.
   /// @dev    If a DON-specific user override is present and enabled, that override value
-  ///         is returned; otherwise, the DON’s default limit is used.
+  ///         is returned; otherwise, the DON’s default user limit is used.
   /// @param  user     Address of the user whose override limit is being queried.
   /// @param  donFamily String identifier of the DON.
   /// @return maxActive Maximum number of ACTIVE workflows allowed for the user on that DON.
@@ -452,8 +480,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       return ov.value;
     }
 
-    // Otherwise fall back to the global DON cap
-    return cfg.limitValue.value;
+    // Otherwise fall back to the DON default user limit
+    return cfg.defaultUserLimit;
   }
 
   /// @notice    Lists every DON configuration ever created.
@@ -472,7 +500,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       list[i] = DonConfigView({
         donHash: donHash,
         family: cfg.family,
-        limit: cfg.limitValue.value,
+        donLimit: cfg.limitValue.value,
+        defaultUserLimit: cfg.defaultUserLimit,
         limitEnabled: cfg.limitValue.enabled
       });
     }
@@ -1522,8 +1551,13 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     // Global limit must be explicitly enabled (zero or missing = disallowed)
     if (!cfg.limitValue.enabled) revert DonLimitNotSet(donFamily);
 
-    // Determine the effective cap: start with the global cap, but if this user has an override, use that instead
-    uint32 cap = cfg.userOverride[owner].enabled ? cfg.userOverride[owner].value : cfg.limitValue.value;
+    // Determine the effective cap:
+    // - if this user has no override, use the default user limit set for this DON
+    // - if this user has an override, use that unless it is bigger than the global cap set for this DON
+    uint32 cap = cfg.defaultUserLimit;
+    if (cfg.userOverride[owner].enabled) {
+      cap = cfg.userOverride[owner].value < cfg.limitValue.value ? cfg.userOverride[owner].value : cfg.limitValue.value;
+    }
 
     // <= to include the pending addition(s)
     if (s_userDONCount[owner][donHash] + pending > cap) {

@@ -19,7 +19,7 @@ contract WorkflowRegistry_adminPauseAllByDON is WorkflowRegistrySetup {
     // it pauses all of the workflows
     bytes32 wfId2 = keccak256("workflow-id2");
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10, true);
     _linkOwner(s_user);
 
     // add some workflows

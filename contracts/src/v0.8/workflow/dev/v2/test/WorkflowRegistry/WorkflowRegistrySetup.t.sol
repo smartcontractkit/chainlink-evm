@@ -60,7 +60,7 @@ contract WorkflowRegistrySetup is Test {
 
   function _setDONLimit() internal {
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10, true);
   }
 
   // Helper to link an owner
