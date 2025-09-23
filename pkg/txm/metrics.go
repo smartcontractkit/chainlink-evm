@@ -32,6 +32,10 @@ var (
 		Name: "txm_num_nonce_gaps",
 		Help: "Total number of nonce gaps created that the transaction manager had to fill.",
 	}, []string{"chainID"})
+	promReachedMaxAttempts = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "txm_reached_max_attempts",
+		Help: "A gauge that is treated as boolean; 1 if the condition is true, 0 otherwise. Controls whether the TXM has reached max attempts threshold or not.",
+	}, []string{"chainID"})
 	promTimeUntilTxConfirmed = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "txm_time_until_tx_confirmed",
 		Help: "The amount of time elapsed from a transaction being broadcast to being included in a block.",
@@ -44,6 +48,7 @@ type txmMetrics struct {
 	numBroadcastedTxs    metric.Int64Counter
 	numConfirmedTxs      metric.Int64Counter
 	numNonceGaps         metric.Int64Counter
+	reachedMaxAttempts   metric.Int64Gauge
 	timeUntilTxConfirmed metric.Float64Histogram
 }
 
@@ -68,12 +73,18 @@ func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
 		return nil, fmt.Errorf("failed to register time until tx confirmed: %w", err)
 	}
 
+	reachedMaxAttempts, err := beholder.GetMeter().Int64Gauge("txm_reached_max_attempts")
+	if err != nil {
+		return nil, fmt.Errorf("failed to register max attempts indicator: %w", err)
+	}
+
 	return &txmMetrics{
 		chainID:              chainID,
 		Labeler:              metrics.NewLabeler().With("chainID", chainID.String()),
 		numBroadcastedTxs:    numBroadcastedTxs,
 		numConfirmedTxs:      numConfirmedTxs,
 		numNonceGaps:         numNonceGaps,
+		reachedMaxAttempts:   reachedMaxAttempts,
 		timeUntilTxConfirmed: timeUntilTxConfirmed,
 	}, nil
 }
@@ -91,6 +102,15 @@ func (m *txmMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTran
 func (m *txmMetrics) IncrementNumNonceGaps(ctx context.Context) {
 	promNumNonceGaps.WithLabelValues(m.chainID.String()).Add(float64(1))
 	m.numNonceGaps.Add(ctx, 1)
+}
+
+func (m *txmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
+	var value float64
+	if reached {
+		value = 1
+	}
+	promReachedMaxAttempts.WithLabelValues(m.chainID.String()).Set(value)
+	m.reachedMaxAttempts.Record(ctx, int64(value))
 }
 
 func (m *txmMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
