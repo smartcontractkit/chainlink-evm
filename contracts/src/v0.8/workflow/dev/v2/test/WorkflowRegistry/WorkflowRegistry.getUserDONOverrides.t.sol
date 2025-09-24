@@ -16,9 +16,9 @@ contract WorkflowRegistry_getUserDONOverrides is WorkflowRegistrySetup {
 
     // set the don configs
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, 10, true);
-    s_registry.setDONLimit("fast-pool", 200, 20, true);
-    s_registry.setDONLimit("slow-pool", 150, 30, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
+    s_registry.setDONLimit("fast-pool", 200, 20);
+    s_registry.setDONLimit("slow-pool", 150, 30);
     s_registry.setUserDONOverride(s_user, s_donFamily, 20, true);
     s_registry.setUserDONOverride(s_user, "fast-pool", 40, true);
     s_registry.setUserDONOverride(s_user, "slow-pool", 60, true);

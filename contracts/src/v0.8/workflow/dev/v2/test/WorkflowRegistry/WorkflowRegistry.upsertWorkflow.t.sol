@@ -422,16 +422,38 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
   // whenTheNewWorkflowStatusIsActive
   function test_upsertWorkflow_WhenOwnerWouldExceedTheirEffectiveCap() external whenMsgSenderIsALinkedOwner {
     // it should revert with MaxWorkflowsPerUserDONExceeded
-    // set the don limit to 1
+    // set the DON limit to 1 and default user limit to 1, but DON limit has to be respected first
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, 1, true);
+    s_registry.setDONLimit(s_donFamily, 1, 1);
 
+    // first upsert will work
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_user);
 
     WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
     assertEq(wrs.length, 1, "There should be 1 workflow for the s_user");
 
-    // upsert another workflow in the same donFamily
+    // try upsert another workflow in the same donFamily, it will revert saying that the global DON limit has been
+    // exceeded (regardless of the user limit)
+    vm.prank(s_user);
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.MaxWorkflowsPerDONExceeded.selector, s_donFamily));
+    s_registry.upsertWorkflow(
+      "second-workflow",
+      s_tag,
+      keccak256("workflow2"),
+      WorkflowRegistry.WorkflowStatus.ACTIVE,
+      s_donFamily,
+      s_binaryUrl,
+      s_configUrl,
+      s_attributes,
+      true
+    );
+
+    // set the DON limit to 2 and leave the default user limit to 1
+    vm.prank(s_owner);
+    s_registry.setDONLimit(s_donFamily, 2, 1);
+
+    // try upsert another workflow in the same donFamily, it will revert saying that the user default limit for this DON
+    // has been exceeded
     vm.prank(s_user);
     vm.expectRevert(
       abi.encodeWithSelector(WorkflowRegistry.MaxWorkflowsPerUserDONExceeded.selector, s_user, s_donFamily)
@@ -440,6 +462,103 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       "second-workflow",
       s_tag,
       keccak256("workflow2"),
+      WorkflowRegistry.WorkflowStatus.ACTIVE,
+      s_donFamily,
+      s_binaryUrl,
+      s_configUrl,
+      s_attributes,
+      true
+    );
+
+    // now apply the user limit override and allow the user to create 2 workflows in this DON family
+    // the global limit must still be respected (currently set at 2)
+    vm.prank(s_owner);
+    s_registry.setUserDONOverride(s_user, s_donFamily, 2, true);
+
+    // second upsert finally succeeds
+    vm.prank(s_user);
+    s_registry.upsertWorkflow(
+      "second-workflow",
+      s_tag,
+      keccak256("workflow2"),
+      WorkflowRegistry.WorkflowStatus.ACTIVE,
+      s_donFamily,
+      s_binaryUrl,
+      s_configUrl,
+      s_attributes,
+      true
+    );
+
+    // but now the third upsert will fail as the global DON limit is reached (user override must be ignored)
+    vm.prank(s_user);
+    vm.expectRevert(abi.encodeWithSelector(WorkflowRegistry.MaxWorkflowsPerDONExceeded.selector, s_donFamily));
+    s_registry.upsertWorkflow(
+      "third-workflow",
+      s_tag,
+      keccak256("workflow3"),
+      WorkflowRegistry.WorkflowStatus.ACTIVE,
+      s_donFamily,
+      s_binaryUrl,
+      s_configUrl,
+      s_attributes,
+      true
+    );
+
+    // set the DON limit to 5 and leave the default user limit to 1
+    vm.prank(s_owner);
+    s_registry.setDONLimit(s_donFamily, 5, 1);
+
+    // try upsert another workflow in the same donFamily, it will revert saying that the user limit for this DON has
+    // been exceeded (limit is 2 because override is respected)
+    vm.prank(s_user);
+    vm.expectRevert(
+      abi.encodeWithSelector(WorkflowRegistry.MaxWorkflowsPerUserDONExceeded.selector, s_user, s_donFamily)
+    );
+    s_registry.upsertWorkflow(
+      "third-workflow",
+      s_tag,
+      keccak256("workflow3"),
+      WorkflowRegistry.WorkflowStatus.ACTIVE,
+      s_donFamily,
+      s_binaryUrl,
+      s_configUrl,
+      s_attributes,
+      true
+    );
+
+    // now apply the user limit override and allow the user to create 4 workflows in this DON family
+    // the global limit must still be respected (currently set at 5)
+    vm.prank(s_owner);
+    s_registry.setUserDONOverride(s_user, s_donFamily, 4, true);
+
+    // third upsert finally succeeds
+    vm.prank(s_user);
+    s_registry.upsertWorkflow(
+      "third-workflow",
+      s_tag,
+      keccak256("workflow3"),
+      WorkflowRegistry.WorkflowStatus.ACTIVE,
+      s_donFamily,
+      s_binaryUrl,
+      s_configUrl,
+      s_attributes,
+      true
+    );
+
+    // now remove the user override
+    vm.prank(s_owner);
+    s_registry.setUserDONOverride(s_user, s_donFamily, 4, false);
+
+    // even though the user override was previously set at 4, now it has to fallback to the default user limit,
+    // currently set at 1 workflow, which means the next upsert will fail
+    vm.prank(s_user);
+    vm.expectRevert(
+      abi.encodeWithSelector(WorkflowRegistry.MaxWorkflowsPerUserDONExceeded.selector, s_user, s_donFamily)
+    );
+    s_registry.upsertWorkflow(
+      "fourth-workflow",
+      s_tag,
+      keccak256("workflow4"),
       WorkflowRegistry.WorkflowStatus.ACTIVE,
       s_donFamily,
       s_binaryUrl,

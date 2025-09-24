@@ -79,9 +79,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   mapping(address owner => EnumerableSet.Bytes32Set workflowRids) private s_allOwnerRids;
   mapping(bytes32 workflowKey => EnumerableSet.Bytes32Set activeRids) private s_activeRidsByWorkflowKey; // workflowKey
     // → active Rids
-  /// @dev Fast counters for limits enforcement
-  mapping(address owner => mapping(bytes32 donHash => uint32 workflowCount)) private s_userDONCount; // owner ->
+  /// @dev Counters for limits enforcement per user per DON family (tracking active workflows only)
+  mapping(address owner => mapping(bytes32 donHash => uint32 workflowCount)) private s_userDONActiveWorkflowsCount; // owner
+    // ->
     // (donHash -> #workflows)
+  /// @dev Counters for limits enforcement per DON family (tracking active workflows only)
+  mapping(bytes32 donHash => uint32 workflowCount) private s_donActiveWorkflowsCount; // donHash -> #workflows
   /// @dev The don family (as a hash) that the workflow is assigned to. Only active workflows are assigned don families.
   /// When a workflow is paused it is removed from the don family.
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
@@ -155,10 +158,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   error CallerIsNotWorkflowOwner(address caller);
   error DonLimitNotSet(string donFamily);
+  error MaxWorkflowsPerDONExceeded(string donFamily);
   error MaxWorkflowsPerUserDONExceeded(address owner, string donFamily);
   error UserDONOverrideExceedsDONLimit();
   error UserDONDefaultLimitExceedsDONLimit();
-  error UserDONDefaultLimitIsZero();
   error URLTooLong(uint256 provided, uint8 maxAllowed);
   error WorkflowDoesNotExist();
   error WorkflowIDAlreadyExists(bytes32 workflowId);
@@ -243,7 +246,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     /// @dev Human-readable DON label (e.g. “fast-pool”)
     string family;
     /// @dev Global cap for active workflows on this DON
-    ConfigValue limitValue;
+    uint32 limit;
     /// @dev Default cap for per-user limit on this DON (respected unless per-user override is made)
     uint32 defaultUserLimit;
     /// @dev Optional per-user overrides for this DON
@@ -258,7 +261,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string family; // Human-readable DON label.
     uint32 donLimit; // Global ACTIVE-workflow cap
     uint32 defaultUserLimit; // Default per-user ACTIVE-workflow cap
-    bool limitEnabled;
   }
 
   /// @dev Return-able view of a per-user override for a specific DON family.
@@ -335,44 +337,29 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   // ================================================================
   // |                         DON Config                           |
   // ================================================================
-  /// @notice Sets or clears a DON-wide limit for the maximum number of
-  ///         ACTIVE workflows, as well as the default per-user limit for that DON.
+  /// @notice Sets a DON-wide limit for the maximum number of ACTIVE workflows,
+  ///         as well as the default per-user limit for that DON family.
   /// @dev    Only callable by the contract owner.
-  ///         When `enabled` is true, a limit is added for the DON family.
-  ///         When `enabled` is false, the existing limit is removed.
+  ///         When donLimit is equal to zero, it is considered that the limit is disabled.
+  ///         When userDefaultLimit is equal to zero, it means that by default users cannot have any active workflows
+  ///         on that DON family, unless they have a per-user override set.
   ///         When both adding and removing, an event record is created for the event, and the event itself
   ///         is emited in the internal helper.
-  /// @notice Sets or clears the DON-wide limit for active workflows.
   /// @param donFamily        Human-readable string DON family
-  /// @param donLimit         New cap (ignored if `enabled==false`)
-  /// @param userDefaultLimit Default user limit on this DON (ignored if `enabled==false`)
-  /// @param enabled          Flag indicating whether to store (`true`) or delete (`false`)
-  function setDONLimit(
-    string calldata donFamily,
-    uint32 donLimit,
-    uint32 userDefaultLimit,
-    bool enabled
-  ) external onlyOwner {
+  /// @param donLimit         New upper bound limit for active workflows on this DON family (set to zero to disable)
+  /// @param userDefaultLimit Default user (owner address) limit for active workflows on this DON family
+  function setDONLimit(string calldata donFamily, uint32 donLimit, uint32 userDefaultLimit) external onlyOwner {
     bytes32 donHash = _hash(donFamily);
-    uint32 newDONCapacity = enabled ? donLimit : 0;
-    uint32 newDefaultUserCapacity = enabled ? userDefaultLimit : 0;
     DonConfig storage cfg = s_donConfigs[donHash];
 
-    if (
-      cfg.limitValue.enabled == enabled && cfg.limitValue.value == newDONCapacity
-        && cfg.defaultUserLimit == newDefaultUserCapacity
-    ) {
+    // no change, exit immediately
+    if (cfg.limit == donLimit && cfg.defaultUserLimit == userDefaultLimit) {
       return;
     }
 
-    if (newDefaultUserCapacity > newDONCapacity) {
-      // The default user limit must not exceed the global DON limit
+    if (userDefaultLimit > donLimit) {
+      // The default user limit must never exceed the global DON limit
       revert UserDONDefaultLimitExceedsDONLimit();
-    }
-
-    if (newDONCapacity != 0 && newDefaultUserCapacity == 0) {
-      // If the global DON limit is set, it doesn't make sense to have a zero default user limit
-      revert UserDONDefaultLimitIsZero();
     }
 
     // write the human-readable string only once
@@ -380,19 +367,18 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       cfg.family = donFamily;
       s_donConfigKeys.add(donHash); // Tracks every DON hash ever configured (iterable, even if later disabled).
     }
-    cfg.limitValue.enabled = enabled;
-    cfg.limitValue.value = newDONCapacity;
-    cfg.defaultUserLimit = newDefaultUserCapacity;
+    cfg.limit = donLimit;
+    cfg.defaultUserLimit = userDefaultLimit;
 
     s_events.push(
       EventRecord({
         eventType: EventType.DONCapacitySet,
         timestamp: uint32(block.timestamp),
-        payload: abi.encode(donHash, newDONCapacity, newDefaultUserCapacity)
+        payload: abi.encode(donHash, donLimit)
       })
     );
 
-    emit DONLimitSet(donFamily, newDONCapacity, newDefaultUserCapacity);
+    emit DONLimitSet(donFamily, donLimit, userDefaultLimit);
   }
 
   /// @notice Sets or removes a per-user, per-DON limit for ACTIVE workflows.
@@ -407,37 +393,42 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @notice Sets or clears a per‐user override for the maximum active workflows on a given DON
   /// @param user       The address for which to set or clear the override
   /// @param donFamily  The human‐readable DON family string (must have been configured via `setDONLimit`)
-  /// @param limit      New per‐user cap when `enabled == true`
+  /// @param userLimit  New per‐user upper bound limit when `enabled == true`
   /// @param enabled    `true` to enable/update the override; `false` to remove it
-  function setUserDONOverride(address user, string calldata donFamily, uint32 limit, bool enabled) external onlyOwner {
+  function setUserDONOverride(
+    address user,
+    string calldata donFamily,
+    uint32 userLimit,
+    bool enabled
+  ) external onlyOwner {
     bytes32 donHash = _hash(donFamily);
     DonConfig storage cfg = s_donConfigs[donHash];
 
-    // Ensure the DON itself has a global cap configured
-    if (!cfg.limitValue.enabled) {
+    // Ensure the DON itself has a global cap configured, otherwise it means that it is disabled
+    if (cfg.limit == 0) {
       revert DonLimitNotSet(donFamily);
     }
 
     ConfigValue storage ov = cfg.userOverride[user];
 
     if (enabled) {
-      // Must not exceed the global DON cap
-      if (limit > cfg.limitValue.value) {
+      // User override must not exceed the global DON limit
+      if (userLimit > cfg.limit) {
         revert UserDONOverrideExceedsDONLimit();
       }
 
       if (!ov.enabled) {
-        // → was OFF, now turning ON with new cap
+        // → was OFF, now turning ON with new the new limit override
         ov.enabled = true;
-        ov.value = limit;
+        ov.value = userLimit;
         s_donOverrideUsers[donHash].add(user);
-        emit UserDONLimitSet(user, donFamily, limit);
-      } else if (ov.value != limit) {
-        // → was ON with a different cap, so update it
-        ov.value = limit;
-        emit UserDONLimitSet(user, donFamily, limit);
+        emit UserDONLimitSet(user, donFamily, userLimit);
+      } else if (ov.value != userLimit) {
+        // → was ON with a different limit, so update it with a new override
+        ov.value = userLimit;
+        emit UserDONLimitSet(user, donFamily, userLimit);
       } else {
-        // → already ON at exactly this cap, nothing to do
+        // → already ON at exactly this limit, nothing to do
         return;
       }
     } else {
@@ -462,7 +453,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     string calldata donFamily
   ) public view returns (uint32 maxWorkflows, uint32 defaultUserLimit) {
     DonConfig storage cfg = s_donConfigs[_hash(donFamily)];
-    return (cfg.limitValue.value, cfg.defaultUserLimit);
+    return (cfg.limit, cfg.defaultUserLimit);
   }
 
   /// @notice Returns the active-workflow cap that applies to a given DON and user.
@@ -500,9 +491,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       list[i] = DonConfigView({
         donHash: donHash,
         family: cfg.family,
-        donLimit: cfg.limitValue.value,
-        defaultUserLimit: cfg.defaultUserLimit,
-        limitEnabled: cfg.limitValue.enabled
+        donLimit: cfg.limit,
+        defaultUserLimit: cfg.defaultUserLimit
       });
     }
     return list;
@@ -829,7 +819,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///   - Every **active** workflow adds to:
   ///         • `s_activeDONWorkflowRids[don]` (all active workflows for a don)
   ///         • `s_activeOwnerWorkflowRids[owner]; (all active workflows for an owner)
-  ///         • `s_userDONCount[owner][don]` (all active workflows for an owner in a don)
+  ///         • `s_userDONActiveWorkflowsCount[owner][don]` (all active workflows for an owner in a don)
+  ///         • `s_donActiveWorkflowsCount[don]` (all active workflows for a don)
   ///         • `s_activeRidsByWorkflowKey[key]` (all active workflows by (name, owner))
   ///         • `s_donByWorkflowId[rid]` (the don family that this active workflow is assigned to)
   ///   - Similarly, every deactivation removes from the above indices.
@@ -1147,7 +1138,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   }
 
   /// @dev Removes a workflow’s RID from **all “active” indices** and
-  ///      decrements the per-user per-DON counter.
+  ///      decrements the per-user and per-DON counters.
   ///
   ///      Caller **must** ensure the workflow is currently
   ///      `WorkflowStatus.ACTIVE`; this helper performs no status
@@ -1160,19 +1151,21 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function _removeActiveIndices(bytes32 rid, address owner, bytes32 donHash, bytes32 workflowKey) private {
     s_activeOwnerWorkflowRids[owner].remove(rid);
     s_activeDONWorkflowRids[donHash].remove(rid);
-    s_userDONCount[owner][donHash] -= 1;
+    s_userDONActiveWorkflowsCount[owner][donHash] -= 1;
+    s_donActiveWorkflowsCount[donHash] -= 1;
     s_activeRidsByWorkflowKey[workflowKey].remove(rid);
     delete s_donByWorkflowRid[rid];
   }
 
-  /// @dev Adds a workflow RID into all “active” indices and increments the per-user, per-DON counter.
+  /// @dev Adds a workflow RID into all “active” indices and increments the per-user and per-DON counters.
   ///      This helper performs no validation on its own.
   /// @param rid          The registry-internal reference ID of the workflow to mark active.
   /// @param owner        The address of the workflow owner.
   /// @param donHash      The keccak256 hash of the DON family under which this workflow is registered.
   /// @param workflowKey  The keccak256(owner, workflowName) key used for name-based active indexing.
   function _addActiveIndices(bytes32 rid, address owner, bytes32 donHash, bytes32 workflowKey) private {
-    s_userDONCount[owner][donHash] += 1;
+    s_userDONActiveWorkflowsCount[owner][donHash] += 1;
+    s_donActiveWorkflowsCount[donHash] += 1;
     s_activeDONWorkflowRids[donHash].add(rid);
     s_activeOwnerWorkflowRids[owner].add(rid);
     s_activeRidsByWorkflowKey[workflowKey].add(rid);
@@ -1548,19 +1541,24 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   function _enforceLimits(address owner, bytes32 donHash, string memory donFamily, uint32 pending) internal view {
     DonConfig storage cfg = s_donConfigs[donHash];
-    // Global limit must be explicitly enabled (zero or missing = disallowed)
-    if (!cfg.limitValue.enabled) revert DonLimitNotSet(donFamily);
+    // global limit must be explicitly enabled (zero means it is disabled)
+    if (cfg.limit == 0) revert DonLimitNotSet(donFamily);
 
-    // Determine the effective cap:
-    // - if this user has no override, use the default user limit set for this DON
-    // - if this user has an override, use that unless it is bigger than the global cap set for this DON
-    uint32 cap = cfg.defaultUserLimit;
-    if (cfg.userOverride[owner].enabled) {
-      cap = cfg.userOverride[owner].value < cfg.limitValue.value ? cfg.userOverride[owner].value : cfg.limitValue.value;
+    // if adding more workflows would exceed the global limit for this DON, then reject it immediately
+    if (s_donActiveWorkflowsCount[donHash] + pending > cfg.limit) {
+      revert MaxWorkflowsPerDONExceeded(donFamily);
     }
 
-    // <= to include the pending addition(s)
-    if (s_userDONCount[owner][donHash] + pending > cap) {
+    // determine which limit to apply:
+    // - if this user has no override, use the default user limit set for this DON
+    // - if this user has an override, use the override instead
+    uint32 userLimit = cfg.defaultUserLimit;
+    if (cfg.userOverride[owner].enabled) {
+      userLimit = cfg.userOverride[owner].value;
+    }
+
+    // if adding more workflows would exceed the per-user limit for this DON, then reject it
+    if (s_userDONActiveWorkflowsCount[owner][donHash] + pending > userLimit) {
       revert MaxWorkflowsPerUserDONExceeded(owner, donFamily);
     }
   }

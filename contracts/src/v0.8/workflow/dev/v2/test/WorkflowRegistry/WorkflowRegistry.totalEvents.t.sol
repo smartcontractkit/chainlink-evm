@@ -8,7 +8,7 @@ contract WorkflowRegistry_totalEvents is WorkflowRegistrySetup {
     // it should return the total capacity events count
     _linkOwner(s_owner);
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, 10, true); // should add one event
+    s_registry.setDONLimit(s_donFamily, 100, 10); // should add one event
     s_registry.setUserDONOverride(s_user, s_donFamily, 2, true); // should not add an event
     vm.stopPrank();
     vm.prank(s_stranger);

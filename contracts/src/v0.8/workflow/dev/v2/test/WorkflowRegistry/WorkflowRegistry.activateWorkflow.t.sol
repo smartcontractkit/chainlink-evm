@@ -28,7 +28,7 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
   function test_activateWorkflow_WhenTheWorkflowExistsButOwnerDoesNotEqualCaller() external whenCallerIsLinked {
     // It reverts with CallerIsNotWorkflowOwner
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
 
     address user2 = makeAddr("user2");
     _linkOwner(s_user);
@@ -43,7 +43,7 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
     // It returns immediately (no state change, no event)
     // set DON limit first
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
     _linkOwner(s_user);
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_user);
     vm.prank(s_user);
@@ -74,7 +74,7 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
     // It reverts with MaxWorkflowsPerUserDONExceeded
     bytes32 wfId2 = keccak256("workflow-id2");
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, 1, true);
+    s_registry.setDONLimit(s_donFamily, 100, 1);
     _linkOwner(s_user);
 
     // add 2 worflows 1 active and 1 paused in a don with a default user limit of 1
@@ -153,7 +153,6 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
       abi.encodeWithSelector(WorkflowRegistry.MaxWorkflowsPerUserDONExceeded.selector, s_user, s_donFamily)
     );
     s_registry.activateWorkflow(wfId3, s_donFamily);
-    vm.stopPrank();
 
     vm.stopPrank();
   }
@@ -179,7 +178,7 @@ contract WorkflowRegistry_activateWorkflow is WorkflowRegistrySetup {
     // It activates the workflow and emits WorkflowActivated
     bytes32 wfId2 = keccak256("workflow-id2");
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, 2, true);
+    s_registry.setDONLimit(s_donFamily, 100, 2);
     _linkOwner(s_user);
 
     // add 2 worflows 1 active and 1 paused in a don with a default user limit of 2

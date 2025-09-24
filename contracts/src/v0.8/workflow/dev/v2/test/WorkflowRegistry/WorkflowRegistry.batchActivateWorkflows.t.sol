@@ -97,7 +97,7 @@ contract WorkflowRegistry_batchActivateWorkflows is WorkflowRegistrySetup {
     workflowIds[1] = wfId2;
 
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, 1, true);
+    s_registry.setDONLimit(s_donFamily, 100, 1);
 
     // add some workflows
     vm.startPrank(s_user);
