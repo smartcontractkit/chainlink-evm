@@ -42,9 +42,11 @@ interface INodeInfoProvider {
     bytes32 p2pId
   ) external view returns (NodeInfo memory nodeInfo);
 
-  /// @notice Retrieves all node information.
-  /// @return NodeInfo[] Array of all nodes in the registry.
-  function getNodes() external view returns (NodeInfo[] memory);
+  /// @notice Retrieves a paginated list of node information.
+  /// @param start Zero-based index at which the page begins.
+  /// @param limit Maximum number of nodes to return.
+  /// @return NodeInfo[] Array of nodes for the requested page.
+  function getNodes(uint256 start, uint256 limit) external view returns (NodeInfo[] memory);
 
   /// @notice Retrieves nodes by their P2P IDs.
   /// @param p2pIds Array of P2P IDs to query for.

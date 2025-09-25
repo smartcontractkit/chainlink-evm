@@ -1015,16 +1015,22 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     );
   }
 
-  /// @notice Returns all capabilities. This operation will copy capabilities
-  /// to memory, which can be quite expensive. This is designed to mostly be
-  /// used by view accessors that are queried without any gas fees.
-  /// @return CapabilityInfo[] List of capabilities
-  function getCapabilities() external view returns (CapabilityInfo[] memory) {
-    bytes32[] memory capabilityIds = s_hashedCapabilityIds.values();
-    CapabilityInfo[] memory capabilitiesInfo = new CapabilityInfo[](capabilityIds.length);
+  /// @notice Returns a paginated list of capabilities
+  /// @dev This operation will copy capabilities to memory, which can be quite expensive.
+  /// This is designed to mostly be used by view accessors that are queried without any gas fees.
+  /// Does not revert on out-of-range pagination; it simply returns the largest sub-range that fits.
+  /// @param start Zero-based index at which the page begins
+  /// @param limit Maximum number of capabilities to return
+  /// @return CapabilityInfo[] List of capabilities for the requested page
+  function getCapabilities(uint256 start, uint256 limit) external view returns (CapabilityInfo[] memory) {
+    uint256 total = s_hashedCapabilityIds.length();
+    uint256 count = _getPageCount(total, start, limit);
 
-    for (uint256 i; i < capabilityIds.length; ++i) {
-      capabilitiesInfo[i] = getCapability(s_hashedCapabilityIdToCapabilityId[capabilityIds[i]]);
+    CapabilityInfo[] memory capabilitiesInfo = new CapabilityInfo[](count);
+
+    for (uint256 i = 0; i < count; ++i) {
+      string memory capabilityId = s_hashedCapabilityIdToCapabilityId[s_hashedCapabilityIds.at(start + i)];
+      capabilitiesInfo[i] = getCapability(capabilityId);
     }
     return capabilitiesInfo;
   }
@@ -1109,14 +1115,22 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     );
   }
 
-  /// @notice Gets all nodes
-  /// @return NodeInfo[] All nodes in the capability registry
-  function getNodes() external view returns (NodeInfo[] memory) {
-    bytes32[] memory p2pIds = s_nodeP2PIds.values();
-    NodeInfo[] memory nodesInfo = new NodeInfo[](p2pIds.length);
+  /// @notice Returns a paginated list of nodes
+  /// @dev This operation will copy nodes to memory, which can be quite expensive.
+  /// This is designed to mostly be used by view accessors that are queried without any gas fees.
+  /// Does not revert on out-of-range pagination; it simply returns the largest sub-range that fits.
+  /// @param start Zero-based index at which the page begins
+  /// @param limit Maximum number of nodes to return
+  /// @return NodeInfo[] List of nodes for the requested page
+  function getNodes(uint256 start, uint256 limit) external view returns (NodeInfo[] memory) {
+    uint256 total = s_nodeP2PIds.length();
+    uint256 count = _getPageCount(total, start, limit);
 
-    for (uint256 i; i < p2pIds.length; ++i) {
-      nodesInfo[i] = getNode(p2pIds[i]);
+    NodeInfo[] memory nodesInfo = new NodeInfo[](count);
+
+    for (uint256 i = 0; i < count; ++i) {
+      bytes32 p2pId = s_nodeP2PIds.at(start + i);
+      nodesInfo[i] = getNode(p2pId);
     }
     return nodesInfo;
   }
@@ -1516,5 +1530,20 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     NodeOperatorParams memory nodeOperator
   ) internal pure returns (bytes32) {
     return keccak256(abi.encode(nodeOperator.admin, nodeOperator.name));
+  }
+
+  /// @dev Calculates how many items fit into a page slice.
+  ///      - If `start >= total`, returns `0` to indicate an empty slice.
+  ///      - Otherwise, clamps the page end to `total` when `start + limit` exceeds it.
+  /// @param total The total number of items available.
+  /// @param start The zero-based index at which the page begins.
+  /// @param limit The maximum number of items to include in the page.
+  /// @return count The number of items from `start` before hitting `total` (zero if `start >= total`).
+  function _getPageCount(uint256 total, uint256 start, uint256 limit) internal pure returns (uint256 count) {
+    if (start >= total) {
+      return 0;
+    }
+    uint256 end = start + limit > total ? total : start + limit;
+    return end - start;
   }
 }
