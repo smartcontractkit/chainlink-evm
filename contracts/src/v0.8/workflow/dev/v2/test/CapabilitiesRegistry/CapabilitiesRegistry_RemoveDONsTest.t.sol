@@ -121,4 +121,31 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
     assertEq(nodeInfoAfter.capabilitiesDONIds.length, 0);
     assertEq(nodeTwoInfoAfter.capabilitiesDONIds.length, 0);
   }
+
+  function test_RemoveDON_RemovesFromAllFamilies_MultipleFamilies() public {
+    // Add DON to two families
+    string[] memory addToFamilies = new string[](2);
+    addToFamilies[0] = TEST_DON_FAMILY_ONE;
+    addToFamilies[1] = TEST_DON_FAMILY_TWO;
+    string[] memory removeFromFamilies = new string[](0);
+    s_CapabilitiesRegistry.setDONFamilies(DON_ID, addToFamilies, removeFromFamilies);
+
+    uint256[] memory familyOneDONsBefore = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    uint256[] memory familyTwoDONsBefore = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_TWO);
+    assertEq(familyOneDONsBefore.length, 1, "Family one should have 1 DON");
+    assertEq(familyOneDONsBefore[0], DON_ID, "DON_ID should be in family one");
+    assertEq(familyTwoDONsBefore.length, 1, "Family two should have 1 DON");
+    assertEq(familyTwoDONsBefore[0], DON_ID, "DON_ID should be in family two");
+
+    // Remove the DON entirely
+    uint32[] memory donIDs = new uint32[](1);
+    donIDs[0] = DON_ID;
+    s_CapabilitiesRegistry.removeDONs(donIDs);
+
+    // Both families should be cleaned up and contain no DONs
+    uint256[] memory familyOneDONsAfter = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    uint256[] memory familyTwoDONsAfter = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_TWO);
+    assertEq(familyOneDONsAfter.length, 0, "Family one should be empty after DON removal");
+    assertEq(familyTwoDONsAfter.length, 0, "Family two should be empty after DON removal");
+  }
 }

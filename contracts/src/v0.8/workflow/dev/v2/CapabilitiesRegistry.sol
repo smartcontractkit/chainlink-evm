@@ -1276,8 +1276,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     // DON config count starts at index 1
     if (don.configCount == 0) revert DONDoesNotExist(donId);
 
-    for (uint256 i; i < s_donIdToDonFamilyHashes[donId].length(); ++i) {
-      _removeDONFromFamily(donId, s_donIdToDonFamilyHashes[donId].at(i));
+    // Iterate over the families in reverse order to avoid index shifting
+    while (s_donIdToDonFamilyHashes[donId].length() > 0) {
+      bytes32 lastFamilyHash = s_donIdToDonFamilyHashes[donId].at(s_donIdToDonFamilyHashes[donId].length() - 1);
+      _removeDONFromFamily(donId, lastFamilyHash);
     }
 
     // Free up the DON name for reuse
