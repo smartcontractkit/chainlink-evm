@@ -987,10 +987,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     for (uint256 i; i < removeFromFamilies.length; ++i) {
       bytes32 removeFromFamilyHash = _hash(removeFromFamilies[i]);
 
-      // If the DON is not in the family, do nothing.
-      // There is no point in erroring out as this is a no-op and the erroring
-      // would not provide any value to the user.
-      if (!s_donIdToDonFamilyHashes[donId].contains(removeFromFamilyHash)) return;
+      // If the DON is not in the family, skip attempting to remove it. There is no point in erroring out as this is a
+      // no-op and the erroring would not provide any value to the user. We continue to the next family to remove all
+      // the families provided in the removeFromFamilies array.
+      if (!s_donIdToDonFamilyHashes[donId].contains(removeFromFamilyHash)) continue;
 
       _removeDONFromFamily(donId, removeFromFamilyHash);
     }
@@ -1276,8 +1276,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     // DON config count starts at index 1
     if (don.configCount == 0) revert DONDoesNotExist(donId);
 
-    for (uint256 i; i < s_donIdToDonFamilyHashes[donId].length(); ++i) {
-      _removeDONFromFamily(donId, s_donIdToDonFamilyHashes[donId].at(i));
+    // Iterate over the families in reverse order to avoid index shifting
+    while (s_donIdToDonFamilyHashes[donId].length() > 0) {
+      bytes32 lastFamilyHash = s_donIdToDonFamilyHashes[donId].at(s_donIdToDonFamilyHashes[donId].length() - 1);
+      _removeDONFromFamily(donId, lastFamilyHash);
     }
 
     // Free up the DON name for reuse
