@@ -19,7 +19,7 @@ contract WorkflowRegistry_adminPauseWorkflow is WorkflowRegistrySetup {
   function test_adminPauseWorkflow_WhenWorkflowStatusIsPAUSED() external {
     // setup: configure a DON limit and register a workflow as PAUSED
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
     (bytes32 ownerProof, bytes memory sig) = _getLinkProofSignature(s_owner);
     s_registry.linkOwner(s_validityTimestamp, ownerProof, sig);
 
@@ -51,7 +51,7 @@ contract WorkflowRegistry_adminPauseWorkflow is WorkflowRegistrySetup {
   function test_adminPauseWorkflow_WhenWorkflowStatusIsACTIVE() external {
     // setup: configure a DON limit and register a workflow as ACTIVE
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
     (bytes32 ownerProof, bytes memory sig) = _getLinkProofSignature(s_owner);
     s_registry.linkOwner(s_validityTimestamp, ownerProof, sig);
 

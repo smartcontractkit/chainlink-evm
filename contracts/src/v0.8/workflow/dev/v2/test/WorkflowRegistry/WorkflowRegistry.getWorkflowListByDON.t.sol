@@ -25,8 +25,8 @@ contract WorkflowRegistry_getWorkflowListByDON is WorkflowRegistrySetup {
   modifier whenTheDONFamilyHasWorkflowsRegistered() {
     // Set up DON limits for both families
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily1, 10, true);
-    s_registry.setDONLimit(s_donFamily2, 5, true);
+    s_registry.setDONLimit(s_donFamily1, 100, 10);
+    s_registry.setDONLimit(s_donFamily2, 50, 5);
     vm.stopPrank();
 
     // Link owners and create workflows for DON Family 1
@@ -176,7 +176,7 @@ contract WorkflowRegistry_getWorkflowListByDON is WorkflowRegistrySetup {
   function test_getWorkflowListByDON_ShouldIncludeBothActiveAndPausedWorkflows() external {
     // Set up DON limit
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily1, 10, true);
+    s_registry.setDONLimit(s_donFamily1, 100, 10);
 
     // Link owner and create workflows
     _linkOwner(s_owner1);

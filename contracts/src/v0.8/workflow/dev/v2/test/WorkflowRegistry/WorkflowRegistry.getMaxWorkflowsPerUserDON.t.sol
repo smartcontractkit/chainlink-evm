@@ -15,17 +15,20 @@ contract WorkflowRegistry_getMaxWorkflowsPerUserDON is WorkflowRegistrySetup {
     // It should return L
 
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
-    assertEq(s_registry.getMaxWorkflowsPerUserDON(s_user, s_donFamily), 100);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
+    assertEq(s_registry.getMaxWorkflowsPerUserDON(s_user, s_donFamily), 10);
   }
 
   function test_getMaxWorkflowsPerUserDON_WhenAUserOverrideExistsAndIsEnabled() external {
     // It should return the value
 
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
+    // default user limit should be returned
+    assertEq(s_registry.getMaxWorkflowsPerUserDON(s_user, s_donFamily), 10);
     s_registry.setUserDONOverride(s_user, s_donFamily, 5, true);
-    vm.stopPrank();
+    // now user override should be returned
     assertEq(s_registry.getMaxWorkflowsPerUserDON(s_user, s_donFamily), 5);
+    vm.stopPrank();
   }
 }

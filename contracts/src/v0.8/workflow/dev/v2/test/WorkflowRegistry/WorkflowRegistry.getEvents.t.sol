@@ -13,9 +13,9 @@ contract WorkflowRegistry_getEvents is WorkflowRegistrySetup {
 
   modifier whenThereIsMoreThan1Event() {
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
-    s_registry.setDONLimit(s_donFamily, 200, true);
-    s_registry.setDONLimit(s_donFamily, 150, true); // should push three events to event records
+    s_registry.setDONLimit(s_donFamily, 100, 10);
+    s_registry.setDONLimit(s_donFamily, 200, 20);
+    s_registry.setDONLimit(s_donFamily, 150, 15); // should push three events to event records
     vm.stopPrank();
     _;
   }
