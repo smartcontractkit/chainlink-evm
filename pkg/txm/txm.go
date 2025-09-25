@@ -416,11 +416,13 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 		}
 
 		if tx.AttemptCount >= maxAllowedAttempts {
+			t.metrics.ReachedMaxAttempts(ctx, true)
 			return true, fmt.Errorf("reached max allowed attempts for txID: %d. TXM won't broadcast any more attempts."+
 				"If this error persists, it means the transaction won't be confirmed and the TXM needs to be restarted."+
 				"Look for any error messages from previous broadcasted attempts that may indicate why this happened, i.e. wallet is out of funds. Tx: %v", tx.ID,
 				tx.PrintWithAttempts())
 		}
+		t.metrics.ReachedMaxAttempts(ctx, false)
 
 		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) {
 			// TODO: add optional graceful bumping strategy

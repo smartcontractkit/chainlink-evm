@@ -256,6 +256,26 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
     s_CapabilitiesRegistry.updateNodes(nodes);
   }
 
+  function test_RevertWhen_UpdatingNodeWithInvalidNodeOperator() public {
+    vm.stopPrank();
+    vm.startPrank(ADMIN);
+    CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](1);
+
+    nodes[0] = CapabilitiesRegistry.NodeParams({
+      nodeOperatorId: INVALID_NODE_OPERATOR_ID,
+      p2pId: P2P_ID_TWO,
+      signer: NODE_OPERATOR_TWO_SIGNER_ADDRESS,
+      encryptionPublicKey: TEST_ENCRYPTION_PUBLIC_KEY,
+      csaKey: TEST_CSA_KEY,
+      capabilityIds: s_twoCapabilitiesArray
+    });
+
+    vm.expectRevert(
+      abi.encodeWithSelector(CapabilitiesRegistry.NodeOperatorDoesNotExist.selector, INVALID_NODE_OPERATOR_ID)
+    );
+    s_CapabilitiesRegistry.updateNodes(nodes);
+  }
+
   function test_RevertWhen_RemovingCapabilityRequiredByWorkflowDON() public {
     // SETUP: addDON
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =

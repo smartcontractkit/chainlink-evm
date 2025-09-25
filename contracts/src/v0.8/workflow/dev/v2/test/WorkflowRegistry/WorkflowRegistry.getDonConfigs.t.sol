@@ -16,17 +16,20 @@ contract WorkflowRegistry_getDonConfigs is WorkflowRegistrySetup {
 
     // set the don configs
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
-    s_registry.setDONLimit("fast-pool", 200, true);
-    s_registry.setDONLimit("slow-pool", 150, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
+    s_registry.setDONLimit("fast-pool", 200, 20);
+    s_registry.setDONLimit("slow-pool", 150, 15);
     vm.stopPrank();
     WorkflowRegistry.DonConfigView[] memory list = s_registry.getDonConfigs(0, 100);
     assertEq(list.length, 3);
     assertEq(list[0].family, s_donFamily);
-    assertEq(list[0].limit, 100);
+    assertEq(list[0].donLimit, 100);
+    assertEq(list[0].defaultUserLimit, 10);
     assertEq(list[1].family, "fast-pool");
-    assertEq(list[1].limit, 200);
+    assertEq(list[1].donLimit, 200);
+    assertEq(list[1].defaultUserLimit, 20);
     assertEq(list[2].family, "slow-pool");
-    assertEq(list[2].limit, 150);
+    assertEq(list[2].donLimit, 150);
+    assertEq(list[2].defaultUserLimit, 15);
   }
 }

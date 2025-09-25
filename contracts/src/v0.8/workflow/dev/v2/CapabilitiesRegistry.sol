@@ -486,7 +486,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
 
   string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0-dev";
 
-  /// @notice Mapping of DON names to boolean indicating if the name is taken
+  /// @notice Mapping of DON names to DON IDs
   mapping(string donName => uint32 donId) private s_donNameToId;
 
   /// @notice Mapping of capabilities
@@ -748,6 +748,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         // operator. Contract owner can reassign the node to any node
         // operator to give us flexibility to handle edge cases or mistakes.
         if (!isOwner) revert NodeOperatorCannotReassignNode(node.nodeOperatorId);
+        // Validate that the new node operator exists
+        NodeOperator storage newNodeOperator = s_nodeOperators[node.nodeOperatorId];
+        if (newNodeOperator.admin == address(0)) revert NodeOperatorDoesNotExist(node.nodeOperatorId);
 
         s_nodeOperators[storedNode.nodeOperatorId].nodeP2PIDs.remove(storedNode.p2pId);
         s_nodeOperators[node.nodeOperatorId].nodeP2PIDs.add(storedNode.p2pId);
@@ -811,7 +814,6 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         }
       }
 
-      storedNode.p2pId = node.p2pId;
       storedNode.encryptionPublicKey = node.encryptionPublicKey;
       storedNode.csaKey = node.csaKey;
       emit NodeUpdated(node.p2pId, node.nodeOperatorId, node.signer);

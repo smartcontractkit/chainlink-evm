@@ -35,7 +35,7 @@ contract WorkflowRegistry_adminBatchPauseWorkflows is WorkflowRegistrySetup {
     workflowIds[1] = wfId2;
 
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
     _linkOwner(s_user);
 
     // add some workflows for a different user

@@ -78,3 +78,4 @@ go.sum @smartcontractkit/core @smartcontractkit/foundations @smartcontractkit/co
 
 pkg/txm @dimriou @smartcontractkit/bix-framework @smartcontractkit/core
 pkg/bindings @smartcontractkit/bix-framework
+pkg/config/toml/defaults @smartcontractkit/bix-framework

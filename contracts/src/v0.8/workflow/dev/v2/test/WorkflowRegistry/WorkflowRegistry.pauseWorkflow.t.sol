@@ -29,7 +29,7 @@ contract WorkflowRegistry_pauseWorkflow is WorkflowRegistrySetup {
     // It reverts with CallerIsNotWorkflowOwner
     // set DON limit first
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
 
     address user2 = makeAddr("user2");
     _linkOwner(s_user);
@@ -44,7 +44,7 @@ contract WorkflowRegistry_pauseWorkflow is WorkflowRegistrySetup {
     // It returns immediately (no state change, no event)
     // set DON limit first
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
     _linkOwner(s_user);
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.PAUSED, false, s_user);
     vm.prank(s_user);
@@ -67,7 +67,7 @@ contract WorkflowRegistry_pauseWorkflow is WorkflowRegistrySetup {
     // It calls pauses the workflow and emits WorkflowPaused
     // set DON limit first
     vm.prank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 10, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
     _linkOwner(s_user);
     _upsertTestWorklow(WorkflowRegistry.WorkflowStatus.ACTIVE, false, s_user);
     vm.prank(s_user);

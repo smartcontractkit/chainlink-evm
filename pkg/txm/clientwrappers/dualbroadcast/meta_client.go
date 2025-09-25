@@ -136,7 +136,7 @@ type MetaClient struct {
 
 func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) *MetaClient {
 	return &MetaClient{
-		lggr:      logger.Sugared(logger.Named(lggr, "MetaClient")),
+		lggr:      logger.Sugared(logger.Named(lggr, "Txm.Txm.MetaClient")),
 		c:         c,
 		ks:        ks,
 		customURL: customURL,
@@ -159,7 +159,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	}
 
 	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil {
-		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, *meta.FwdrDestAddress)
+		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
 		if err != nil {
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
 		}
@@ -169,9 +169,10 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 			}
 			return nil
 		}
-		a.lggr.Info("No bids for transactionID(%d): ", tx.ID)
+		a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
 		return nil
 	}
+	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)
 }
 
@@ -193,6 +194,9 @@ type RequestResponse struct {
 }
 
 type ResponseResult struct {
+	UO  *UORaw `json:"userOperation,omitempty"`
+	SOS []*SO  `json:"solverOperations,omitempty"`
+	DO  *DO    `json:"dAppOperation,omitempty"`
 	MetacalldataResponse
 }
 
@@ -211,15 +215,49 @@ type UO struct {
 	Data         []byte
 }
 
+type UORaw struct {
+	From         common.Address `json:"from"`
+	To           common.Address `json:"to"`
+	Value        *hexutil.Big   `json:"value"`
+	Gas          *hexutil.Big   `json:"gas"`
+	MaxFeePerGas *hexutil.Big   `json:"maxFeePerGas"`
+	Nonce        *hexutil.Big   `json:"nonce"`
+	Deadline     *hexutil.Big   `json:"deadline"`
+	Dapp         common.Address `json:"dapp"`
+	Control      common.Address `json:"control"`
+	CallConfig   *hexutil.Big   `json:"callConfig"`
+	DappGasLimit *hexutil.Big   `json:"dappGasLimit,omitempty"`
+	SessionKey   common.Address `json:"sessionKey"`
+	Data         hexutil.Bytes  `json:"data"`
+	Signature    hexutil.Bytes  `json:"signature"`
+}
+
 type SO struct {
-	To      common.Address
-	Control common.Address
+	From         common.Address `json:"from"`
+	To           common.Address `json:"to"`
+	Value        *hexutil.Big   `json:"value"`
+	Gas          *hexutil.Big   `json:"gas"`
+	MaxFeePerGas *hexutil.Big   `json:"maxFeePerGas"`
+	Deadline     *hexutil.Big   `json:"deadline"`
+	Solver       common.Address `json:"solver"`
+	Control      common.Address `json:"control"`
+	UserOpHash   common.Hash    `json:"userOpHash"`
+	BidToken     common.Address `json:"bidToken"`
+	BidAmount    *hexutil.Big   `json:"bidAmount"`
+	Data         hexutil.Bytes  `json:"data"`
+	Signature    hexutil.Bytes  `json:"signature"`
 }
 
 type DO struct {
-	To      common.Address
-	Control common.Address
-	Bundler common.Address
+	From          common.Address `json:"from"`
+	To            common.Address `json:"to"`
+	Nonce         *hexutil.Big   `json:"nonce"`
+	Deadline      *hexutil.Big   `json:"deadline"`
+	Control       common.Address `json:"control"`
+	Bundler       common.Address `json:"bundler"`
+	UserOpHash    common.Hash    `json:"userOpHash"`
+	CallChainHash common.Hash    `json:"callChainHash"`
+	Signature     hexutil.Bytes  `json:"signature"`
 }
 
 type Metacalldata struct {
@@ -307,6 +345,10 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	if response.Result == nil {
 		return nil, nil
+	}
+
+	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
+		a.lggr.Info("Response: ", string(r))
 	}
 
 	return VerifyResponse(response.Result.MetacalldataResponse, dualBroadcastParams, tx.Data, tx.FromAddress, fwdrDestAddress)

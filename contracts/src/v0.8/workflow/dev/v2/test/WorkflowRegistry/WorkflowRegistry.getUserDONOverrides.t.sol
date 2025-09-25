@@ -16,27 +16,27 @@ contract WorkflowRegistry_getUserDONOverrides is WorkflowRegistrySetup {
 
     // set the don configs
     vm.startPrank(s_owner);
-    s_registry.setDONLimit(s_donFamily, 100, true);
-    s_registry.setDONLimit("fast-pool", 200, true);
-    s_registry.setDONLimit("slow-pool", 150, true);
-    s_registry.setUserDONOverride(s_user, s_donFamily, 10, true);
-    s_registry.setUserDONOverride(s_user, "fast-pool", 20, true);
-    s_registry.setUserDONOverride(s_user, "slow-pool", 30, true);
+    s_registry.setDONLimit(s_donFamily, 100, 10);
+    s_registry.setDONLimit("fast-pool", 200, 20);
+    s_registry.setDONLimit("slow-pool", 150, 30);
+    s_registry.setUserDONOverride(s_user, s_donFamily, 20, true);
+    s_registry.setUserDONOverride(s_user, "fast-pool", 40, true);
+    s_registry.setUserDONOverride(s_user, "slow-pool", 60, true);
     vm.stopPrank();
 
     WorkflowRegistry.UserOverrideView[] memory list = s_registry.getUserDONOverrides(s_donFamily, 0, 100);
     assertEq(list.length, 1);
     assertEq(list[0].user, s_user);
-    assertEq(list[0].limit, 10);
+    assertEq(list[0].limit, 20);
 
     list = s_registry.getUserDONOverrides("fast-pool", 0, 100);
     assertEq(list.length, 1);
     assertEq(list[0].user, s_user);
-    assertEq(list[0].limit, 20);
+    assertEq(list[0].limit, 40);
 
     list = s_registry.getUserDONOverrides("slow-pool", 0, 100);
     assertEq(list.length, 1);
     assertEq(list[0].user, s_user);
-    assertEq(list[0].limit, 30);
+    assertEq(list[0].limit, 60);
   }
 }
