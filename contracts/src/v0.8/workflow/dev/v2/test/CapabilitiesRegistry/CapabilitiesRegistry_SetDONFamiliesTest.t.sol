@@ -191,4 +191,21 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
     assertEq(familyDONs.length, 1);
     assertEq(familyDONs[0], DON_ID_TWO);
   }
+
+  function test_SetDONFamilies_SkipMissingThenRemoveExisting() public {
+    // DON_ID starts in TEST_DON_FAMILY_ONE per setUp; it is not in TEST_DON_FAMILY_TWO
+    string[] memory addToFamilies = new string[](0);
+    string[] memory removeFromFamilies = new string[](2);
+    removeFromFamilies[0] = TEST_DON_FAMILY_TWO; // missing membership -> should be no-op
+    removeFromFamilies[1] = TEST_DON_FAMILY_ONE; // existing membership -> should be removed
+
+    vm.expectEmit(true, true, false, true);
+    emit CapabilitiesRegistry.DONRemovedFromFamily(DON_ID, TEST_DON_FAMILY_ONE);
+
+    s_CapabilitiesRegistry.setDONFamilies(DON_ID, addToFamilies, removeFromFamilies);
+
+    // Ensure it properly removed the DON from the family
+    CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
+    assertEq(donInfo.donFamilies.length, 0, "Expected DON_ID to be removed from existing family");
+  }
 }

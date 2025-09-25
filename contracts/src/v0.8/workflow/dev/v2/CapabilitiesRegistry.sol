@@ -987,10 +987,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     for (uint256 i; i < removeFromFamilies.length; ++i) {
       bytes32 removeFromFamilyHash = _hash(removeFromFamilies[i]);
 
-      // If the DON is not in the family, do nothing.
-      // There is no point in erroring out as this is a no-op and the erroring
-      // would not provide any value to the user.
-      if (!s_donIdToDonFamilyHashes[donId].contains(removeFromFamilyHash)) return;
+      // If the DON is not in the family, skip attempting to remove it. There is no point in erroring out as this is a
+      // no-op and the erroring would not provide any value to the user. We continue to the next family to remove all
+      // the families provided in the removeFromFamilies array.
+      if (!s_donIdToDonFamilyHashes[donId].contains(removeFromFamilyHash)) continue;
 
       _removeDONFromFamily(donId, removeFromFamilyHash);
     }
