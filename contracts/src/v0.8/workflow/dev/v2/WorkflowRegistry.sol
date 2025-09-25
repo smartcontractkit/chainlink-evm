@@ -417,26 +417,11 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
         revert UserDONOverrideExceedsDONLimit();
       }
 
-      if (!ov.enabled) {
-        // → was OFF, now turning ON with new the new limit override
-        ov.enabled = true;
-        ov.value = userLimit;
-        s_donOverrideUsers[donHash].add(user);
-        emit UserDONLimitSet(user, donFamily, userLimit);
-      } else if (ov.value != userLimit) {
-        // → was ON with a different limit, so update it with a new override
-        ov.value = userLimit;
-        emit UserDONLimitSet(user, donFamily, userLimit);
-      } else {
-        // → already ON at exactly this limit, nothing to do
-        return;
-      }
+      ov.enabled = true;
+      ov.value = userLimit;
+      s_donOverrideUsers[donHash].add(user);
+      emit UserDONLimitSet(user, donFamily, userLimit);
     } else {
-      if (!ov.enabled) {
-        // → already OFF, nothing to do
-        return;
-      }
-      // → was ON, now turning OFF (and clearing the value)
       delete cfg.userOverride[user];
       s_donOverrideUsers[donHash].remove(user);
       emit UserDONLimitUnset(user, donFamily);

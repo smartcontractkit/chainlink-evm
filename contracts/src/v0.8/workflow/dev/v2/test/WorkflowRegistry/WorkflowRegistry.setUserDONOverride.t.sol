@@ -5,7 +5,6 @@ import {Ownable2Step} from "../../../../../shared/access/Ownable2Step.sol";
 
 import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
-import {Vm} from "forge-std/Test.sol";
 
 contract WorkflowRegistry_setUserDONOverride is WorkflowRegistrySetup {
   function test_setUserDONOverride_WhenTheCallerIsNOTTheContractOwner() external {
@@ -77,23 +76,8 @@ contract WorkflowRegistry_setUserDONOverride is WorkflowRegistrySetup {
     // set a DON limit and default user limit first, otherwise the global limit is 0
     s_registry.setDONLimit(s_donFamily, 100, 10);
     // set a limit first
+    emit WorkflowRegistry.UserDONLimitSet(s_user, s_donFamily, 5);
     s_registry.setUserDONOverride(s_user, s_donFamily, 5, true);
-    assertEq(s_registry.getMaxWorkflowsPerUserDON(s_user, s_donFamily), 5);
-
-    // set the same limit again
-    // start recording all logs
-    vm.recordLogs();
-
-    s_registry.setUserDONOverride(s_user, s_donFamily, 5, true);
-
-    Vm.Log[] memory entries = vm.getRecordedLogs();
-    bytes32 sig = keccak256("UserDONLimitSet(address,string,uint32)");
-    for (uint256 i = 0; i < entries.length; i++) {
-      if (entries[i].topics[0] == sig) {
-        emit log("UserDONLimitSet was emitted when it should not have been");
-        fail();
-      }
-    }
 
     assertEq(s_registry.getMaxWorkflowsPerUserDON(s_user, s_donFamily), 5);
 
@@ -143,19 +127,8 @@ contract WorkflowRegistry_setUserDONOverride is WorkflowRegistrySetup {
     // set a DON limit and default user limit first, otherwise the global limit is 0
     s_registry.setDONLimit(s_donFamily, 100, 10);
     // remove the limit for a user that doesn't have a limit
-    // start recording all logs
-    vm.recordLogs();
-
+    emit WorkflowRegistry.UserDONLimitUnset(s_user, s_donFamily);
     s_registry.setUserDONOverride(s_user, s_donFamily, 5, false);
-
-    Vm.Log[] memory entries = vm.getRecordedLogs();
-    bytes32 sig = keccak256("UserDONLimitUnset(address,string)");
-    for (uint256 i = 0; i < entries.length; i++) {
-      if (entries[i].topics[0] == sig) {
-        emit log("UserDONLimitSet was emitted when it should not have been");
-        fail();
-      }
-    }
 
     assertEq(s_registry.getMaxWorkflowsPerUserDON(s_user, s_donFamily), 10); // default user limit
 
