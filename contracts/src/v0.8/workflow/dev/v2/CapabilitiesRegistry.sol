@@ -1234,13 +1234,29 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     return (mutableDONConfig, globalCapabilityConfig);
   }
 
-  /// @notice Gets all DON IDs that belong to a specific family
+  /// @notice Gets a paginated list of DON IDs that belong to a specific family
+  /// @dev This operation will copy DON IDs to memory, which can be quite expensive.
+  /// This is designed to mostly be used by view accessors that are queried without any gas fees.
+  /// Does not revert on out-of-range pagination; it simply returns the largest sub-range that fits.
   /// @param donFamily The family name to query for
-  /// @return uint[] Array of DON IDs that belong to the specified family
+  /// @param start Zero-based index at which the page begins
+  /// @param limit Maximum number of DON IDs to return
+  /// @return uint256[] Array of DON IDs that belong to the specified family for the requested page
   function getDONsInFamily(
-    string calldata donFamily
+    string calldata donFamily,
+    uint256 start,
+    uint256 limit
   ) external view returns (uint256[] memory) {
-    return s_donFamilyMembers[_hash(donFamily)].values();
+    EnumerableSet.UintSet storage donFamilyMembers = s_donFamilyMembers[_hash(donFamily)];
+    uint256 total = donFamilyMembers.length();
+    uint256 count = _getPageCount(total, start, limit);
+
+    uint256[] memory donIds = new uint256[](count);
+
+    for (uint256 i = 0; i < count; ++i) {
+      donIds[i] = donFamilyMembers.at(start + i);
+    }
+    return donIds;
   }
 
   /// @notice Checks if a DON name is already taken
@@ -1252,14 +1268,23 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     return s_donNameToId[donName] != 0;
   }
 
-  /// @notice Returns the list of existing DON families including the default
+  /// @notice Returns a paginated list of existing DON families including the default
   /// family that is an empty string unless there are no DONs in that family.
-  /// @return string[] The list of existing DON families
-  function getDONFamilies() external view returns (string[] memory) {
-    bytes32[] memory donFamilyHashes = s_activeDONFamilyNames.values();
-    string[] memory donFamilies = new string[](donFamilyHashes.length);
-    for (uint256 i; i < donFamilyHashes.length; ++i) {
-      donFamilies[i] = s_donFamilyHashToDonFamily[donFamilyHashes[i]];
+  /// @dev This operation will copy DON families to memory, which can be quite expensive.
+  /// This is designed to mostly be used by view accessors that are queried without any gas fees.
+  /// Does not revert on out-of-range pagination; it simply returns the largest sub-range that fits.
+  /// @param start Zero-based index at which the page begins
+  /// @param limit Maximum number of DON families to return
+  /// @return string[] List of DON families for the requested page
+  function getDONFamilies(uint256 start, uint256 limit) external view returns (string[] memory) {
+    uint256 total = s_activeDONFamilyNames.length();
+    uint256 count = _getPageCount(total, start, limit);
+
+    string[] memory donFamilies = new string[](count);
+
+    for (uint256 i = 0; i < count; ++i) {
+      bytes32 donFamilyHash = s_activeDONFamilyNames.at(start + i);
+      donFamilies[i] = s_donFamilyHashToDonFamily[donFamilyHash];
     }
     return donFamilies;
   }
