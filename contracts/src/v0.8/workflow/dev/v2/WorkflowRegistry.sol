@@ -86,12 +86,14 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// When a workflow is paused it is removed from the don family.
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
-  /// @dev Fast lookup for allowlisted requests. Key is keccak256(abi.encode(owner, requestDigest)), value is
-  /// (array_index + 1).
-  /// We store index+1 so that 0 can represent "not found" (since array indices start at 0).
-  mapping(bytes32 => uint256) private s_requestIndexMap;
+  /// @dev Fast lookup for allowlisted requests. Key is hash of owner + request digest, value is
+  /// index in the s_allowlistedRequestsData array pushed by one. Pushing index by one avoids collisions between an
+  /// entry at the zero index and entry that doesn't exist.
+  /// This is used for tracking allowlisted requests for the owner address, required to enable anyone to verify
+  /// off-chain requests.
+  mapping(bytes32 => uint256) private s_allowlistedRequestsIndexMap;
   /// @dev Array storing all allowlisted request data for enumeration and pagination.
-  OwnerAllowlistedRequest[] private s_requestData;
+  OwnerAllowlistedRequest[] private s_allowlistedRequestsData;
   /// @dev Map each owner address to their arbitrary config. Can be used to control billing parameters or any other data
   /// per owner
   mapping(address owner => bytes config) private s_ownerConfig;
@@ -1304,20 +1306,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     bytes32 key = keccak256(abi.encode(msg.sender, requestDigest));
 
-    // Check if this request already exists (0 means not found)
-    uint256 storedIndex = s_requestIndexMap[key];
+    // non-zero index means that the request digest already exists
+    uint256 storedIndex = s_allowlistedRequestsIndexMap[key];
 
     if (storedIndex != 0) {
-      // Update existing entry in place (convert back to 0-based index)
-      s_requestData[storedIndex - 1].expiryTimestamp = expiryTimestamp;
+      // index is pushed by one when stored, so we need to subtract one to get the correct index
+      // then update existing request digest with a new expiry timestamp
+      s_allowlistedRequestsData[storedIndex - 1].expiryTimestamp = expiryTimestamp;
     } else {
-      // Create new entry
-      uint256 newIndex = s_requestData.length;
-      s_requestData.push(
+      // push index by one to avoid collisions between an entry at the zero index and entry
+      // that doesn't exist in the mapping
+      s_allowlistedRequestsIndexMap[key] = s_allowlistedRequestsData.length + 1;
+      s_allowlistedRequestsData.push(
         OwnerAllowlistedRequest({owner: msg.sender, requestDigest: requestDigest, expiryTimestamp: expiryTimestamp})
       );
-      // Store index+1 so that 0 can represent "not found"
-      s_requestIndexMap[key] = newIndex + 1;
     }
     emit RequestAllowlisted(msg.sender, requestDigest, expiryTimestamp);
   }
@@ -1330,10 +1332,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @return bool            True if the request is allowlisted and not expired, false otherwise.
   function isRequestAllowlisted(address owner, bytes32 requestDigest) external view returns (bool) {
     bytes32 key = keccak256(abi.encode(owner, requestDigest));
-    uint256 storedIndex = s_requestIndexMap[key];
-    if (storedIndex == 0) return false; // Not found
-
-    OwnerAllowlistedRequest storage request = s_requestData[storedIndex - 1];
+    uint256 storedIndex = s_allowlistedRequestsIndexMap[key];
+    if (storedIndex == 0) return false; // zero index indicates that request is not found
+    // index is pushed by one when stored, so we need to subtract one to get the correct index
+    OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[storedIndex - 1];
     return request.expiryTimestamp > block.timestamp;
   }
 
@@ -1350,38 +1352,38 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     uint256 start,
     uint256 limit
   ) external view returns (OwnerAllowlistedRequest[] memory allowlistedRequests) {
-    uint256 total = s_requestData.length;
+    uint256 total = s_allowlistedRequestsData.length;
     uint256 pageCount = _getPageCount(total, start, limit);
 
     if (pageCount == 0) return new OwnerAllowlistedRequest[](0);
 
-    // First pass: count valid (non-expired) entries in the page range
-    uint256 validCount = 0;
-    for (uint256 i = 0; i < pageCount; ++i) {
-      OwnerAllowlistedRequest storage request = s_requestData[start + i];
-      if (request.expiryTimestamp > block.timestamp) {
-        ++validCount;
-      }
-    }
-
-    // Allocate exact size needed
-    allowlistedRequests = new OwnerAllowlistedRequest[](validCount);
-
-    // Second pass: populate the array with valid entries
+    allowlistedRequests = new OwnerAllowlistedRequest[](pageCount);
     uint256 addedCount = 0;
     for (uint256 i = 0; i < pageCount; ++i) {
-      OwnerAllowlistedRequest storage request = s_requestData[start + i];
+      OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[start + i];
       if (request.expiryTimestamp > block.timestamp) {
         allowlistedRequests[addedCount] = request;
         ++addedCount;
       }
     }
 
+    if (addedCount < pageCount) {
+      OwnerAllowlistedRequest[] memory shrinkedList = new OwnerAllowlistedRequest[](addedCount);
+      for (uint256 i = 0; i < addedCount; ++i) {
+        shrinkedList[i] = allowlistedRequests[i];
+      }
+      allowlistedRequests = shrinkedList;
+    }
+
     return allowlistedRequests;
   }
 
+  /// @notice Returns the total number of allowlisted requests across all owners.
+  /// @dev    Use this in tandem with `getAllowlistedRequests(start, limit)` to
+  ///         page through the allowlisted requests.
+  /// @return The total count of allowlisted requests stored.
   function totalAllowlistedRequests() external view returns (uint256) {
-    return s_requestData.length;
+    return s_allowlistedRequestsData.length;
   }
 
   // ================================================================
