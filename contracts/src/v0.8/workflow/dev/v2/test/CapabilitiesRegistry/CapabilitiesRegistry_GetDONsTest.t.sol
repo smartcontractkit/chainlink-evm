@@ -21,7 +21,7 @@ contract CapabilitiesRegistry_GetDONsTest is BaseTest {
   }
 
   function test_CorrectlyFetchesDONs() public view {
-    CapabilitiesRegistry.DONInfo[] memory dons = s_CapabilitiesRegistry.getDONs();
+    CapabilitiesRegistry.DONInfo[] memory dons = s_CapabilitiesRegistry.getDONs(0, 100);
     assertEq(dons.length, 2);
     assertEq(dons[0].id, DON_ID);
     assertEq(dons[0].configCount, 1);
@@ -43,7 +43,7 @@ contract CapabilitiesRegistry_GetDONsTest is BaseTest {
     removedDONIDs[0] = DON_ID;
     s_CapabilitiesRegistry.removeDONs(removedDONIDs);
 
-    CapabilitiesRegistry.DONInfo[] memory dons = s_CapabilitiesRegistry.getDONs();
+    CapabilitiesRegistry.DONInfo[] memory dons = s_CapabilitiesRegistry.getDONs(0, 100);
     assertEq(dons.length, 1);
     assertEq(dons[0].id, DON_ID_TWO);
     assertEq(dons[0].configCount, 1);
