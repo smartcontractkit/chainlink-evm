@@ -6,8 +6,8 @@ import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 
-import {ERC165Checker} from "@openzeppelin/contracts@4.8.3/utils/introspection/ERC165Checker.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableSet.sol";
+import {ERC165Checker} from "@openzeppelin/contracts@5.1.0/utils/introspection/ERC165Checker.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@5.1.0/utils/structs/EnumerableSet.sol";
 
 /// @notice CapabilitiesRegistry is used to manage Nodes (including their links to Node Operators), Capabilities,
 /// and DONs (Decentralized Oracle Networks) which are sets of nodes that support those Capabilities.
@@ -516,11 +516,17 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @notice Mapping of node operator data hash to node operator ID. Used to maintain unique node operators.
   mapping(bytes32 nodeOperatorDataHash => uint32 nodeOperatorId) private s_nodeOperatorDataHashToId;
 
+  /// @notice Set of active node operator IDs.
+  EnumerableSet.UintSet private s_activeNodeOperatorIds;
+
   /// @notice Mapping of nodes
   mapping(bytes32 p2pId => Node node) private s_nodes;
 
   /// @notice Mapping of DON IDs to DONs
   mapping(uint32 donId => DON don) private s_dons;
+
+  /// @notice Set of active DON IDs.
+  EnumerableSet.UintSet private s_activeDONIds;
 
   /// @notice Mapping of DON ID to DON families. A single DON can belong to
   /// multiple families. Empty string is the default family.
@@ -565,16 +571,18 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     for (uint256 i; i < nodeOperators.length; ++i) {
       NodeOperatorParams memory nodeOperator = nodeOperators[i];
       if (nodeOperator.admin == address(0)) revert InvalidNodeOperatorAdmin();
-      uint32 nodeOperatorId = s_nextNodeOperatorId;
-      NodeOperator storage storedNodeOperator = s_nodeOperators[nodeOperatorId];
-      storedNodeOperator.admin = nodeOperator.admin;
-      storedNodeOperator.name = nodeOperator.name;
       bytes32 nodeOperatorDataHash = _nodeOperatorHash(nodeOperator);
       if (s_nodeOperatorDataHashToId[nodeOperatorDataHash] != 0) {
         revert NodeOperatorAlreadyExists(s_nodeOperatorDataHashToId[nodeOperatorDataHash]);
       }
+      uint32 nodeOperatorId = s_nextNodeOperatorId;
+      NodeOperator storage storedNodeOperator = s_nodeOperators[nodeOperatorId];
+      storedNodeOperator.admin = nodeOperator.admin;
+      storedNodeOperator.name = nodeOperator.name;
+
       s_nodeOperatorDataHashToId[nodeOperatorDataHash] = nodeOperatorId;
       ++s_nextNodeOperatorId;
+      s_activeNodeOperatorIds.add(nodeOperatorId);
       emit NodeOperatorAdded(nodeOperatorId, nodeOperator.admin, nodeOperator.name);
     }
   }
@@ -592,6 +600,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         _nodeOperatorHash(NodeOperatorParams({admin: nodeOperator.admin, name: nodeOperator.name}));
       s_nodeOperatorDataHashToId[nodeOperatorDataHash] = 0;
       delete s_nodeOperators[nodeOperatorId];
+      s_activeNodeOperatorIds.remove(nodeOperatorId);
       emit NodeOperatorRemoved(nodeOperatorId);
     }
   }
@@ -890,6 +899,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
           config: newDON.config
         })
       );
+      s_activeDONIds.add(nextDONId);
 
       for (uint256 j; j < newDON.donFamilies.length; ++j) {
         _addDONToFamily(nextDONId, newDON.donFamilies[j]);
@@ -1058,28 +1068,27 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     });
   }
 
-  /// @notice Gets all node operators
-  /// @return NodeOperator[] All node operators
-  function getNodeOperators() external view returns (NodeOperatorInfo[] memory) {
-    uint32 nodeOperatorId = s_nextNodeOperatorId;
-    /// Minus one to account for s_nextNodeOperatorId starting at index 1
-    NodeOperatorInfo[] memory nodeOperators = new NodeOperatorInfo[](s_nextNodeOperatorId - 1);
-    uint256 idx;
-    for (uint32 i = 1; i < nodeOperatorId; ++i) {
-      if (s_nodeOperators[i].admin != address(0)) {
-        nodeOperators[idx] = NodeOperatorInfo({
-          admin: s_nodeOperators[i].admin,
-          name: s_nodeOperators[i].name,
-          nodeP2PIDs: s_nodeOperators[i].nodeP2PIDs.values()
-        });
-        ++idx;
-      }
+  /// @notice Gets a paginated list of node operators. This operation will copy node operators to memory, which can be
+  /// quite expensive. This is designed to mostly be used by view accessors that are queried without any gas fees. Does
+  /// not revert on out-of-range pagination; it simply returns the largest sub-range that fits.
+  /// @param start Zero-based index at which the page begins
+  /// @param limit Maximum number of node operators to return
+  /// @return NodeOperatorInfo[] List of node operators for the requested page
+  function getNodeOperators(uint256 start, uint256 limit) external view returns (NodeOperatorInfo[] memory) {
+    uint256 total = s_activeNodeOperatorIds.length();
+    uint256 count = _getPageCount(total, start, limit);
+
+    NodeOperatorInfo[] memory nodeOperators = new NodeOperatorInfo[](count);
+    for (uint256 i = 0; i < count; ++i) {
+      // It is safe to cast uint32 here as node operator ID is an internal value of type uint32 that we control.
+      uint32 nodeOperatorId = uint32(s_activeNodeOperatorIds.at(start + i));
+      nodeOperators[i] = NodeOperatorInfo({
+        admin: s_nodeOperators[nodeOperatorId].admin,
+        name: s_nodeOperators[nodeOperatorId].name,
+        nodeP2PIDs: s_nodeOperators[nodeOperatorId].nodeP2PIDs.values()
+      });
     }
-    if (idx != s_nextNodeOperatorId - 1) {
-      assembly {
-        mstore(nodeOperators, idx)
-      }
-    }
+
     return nodeOperators;
   }
 
@@ -1188,25 +1197,24 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     return _getDON(donId, configCount);
   }
 
-  /// @notice Returns the list of configured DONs
-  /// @return DONInfo[] The list of configured DONs
-  function getDONs() external view returns (DONInfo[] memory) {
-    /// Minus one to account for s_nextDONId starting at index 1
-    uint32 donId = s_nextDONId;
-    DONInfo[] memory dons = new DONInfo[](donId - 1);
-    uint256 idx;
-    ///
-    for (uint32 i = 1; i < donId; ++i) {
-      if (s_dons[i].id != 0) {
-        uint32 configCount = s_dons[i].configCount;
-        dons[idx] = _getDON(i, configCount);
-        ++idx;
-      }
-    }
-    if (idx != donId - 1) {
-      assembly {
-        mstore(dons, idx)
-      }
+  /// @notice Returns a paginated list of configured DONs
+  /// @dev This operation will copy DONs to memory, which can be quite expensive.
+  /// This is designed to mostly be used by view accessors that are queried without any gas fees.
+  /// Does not revert on out-of-range pagination; it simply returns the largest sub-range that fits.
+  /// @param start Zero-based index at which the page begins
+  /// @param limit Maximum number of DONs to return
+  /// @return DONInfo[] List of DONs for the requested page
+  function getDONs(uint256 start, uint256 limit) external view returns (DONInfo[] memory) {
+    uint256 total = s_activeDONIds.length();
+    uint256 count = _getPageCount(total, start, limit);
+
+    DONInfo[] memory dons = new DONInfo[](count);
+
+    for (uint256 i = 0; i < count; ++i) {
+      // It is safe to cast uint32 here as DON ID is an internal value of type uint32 that we control.
+      uint32 donId = uint32(s_activeDONIds.at(start + i));
+      uint32 configCount = s_dons[donId].configCount;
+      dons[i] = _getDON(donId, configCount);
     }
     return dons;
   }
@@ -1325,6 +1333,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     delete s_donNameToId[don.config[configCount].name];
 
     delete s_dons[donId];
+    s_activeDONIds.remove(donId);
     emit ConfigSet(donId, 0);
   }
 
