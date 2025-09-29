@@ -1,0 +1,8 @@
+WorkflowRegistry.getAllowedSigners
+├── when no allowed signers are configured
+│   └── it should return an empty array
+└── when some allowed signers are configured
+    ├── when start is 0 and limit is greater than the number of signers
+    │   └── it should return all of the signers
+    └── when a page is requested
+        └── it should return a limited number of signers

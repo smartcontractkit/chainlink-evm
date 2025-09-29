@@ -19,7 +19,7 @@ contract CapabilitiesRegistry_GetNodesTest is BaseTest {
   }
 
   function test_CorrectlyFetchesNodes() public view {
-    CapabilitiesRegistry.NodeInfo[] memory nodes = s_CapabilitiesRegistry.getNodes();
+    CapabilitiesRegistry.NodeInfo[] memory nodes = s_CapabilitiesRegistry.getNodes(0, 100);
     assertEq(nodes.length, 2);
 
     assertEq(nodes[0].nodeOperatorId, TEST_NODE_OPERATOR_ONE_ID);
@@ -63,7 +63,7 @@ contract CapabilitiesRegistry_GetNodesTest is BaseTest {
     nodesToRemove[0] = P2P_ID_TWO;
     s_CapabilitiesRegistry.removeNodes(nodesToRemove);
 
-    CapabilitiesRegistry.NodeInfo[] memory nodes = s_CapabilitiesRegistry.getNodes();
+    CapabilitiesRegistry.NodeInfo[] memory nodes = s_CapabilitiesRegistry.getNodes(0, 100);
     assertEq(nodes.length, 1);
 
     assertEq(nodes[0].nodeOperatorId, TEST_NODE_OPERATOR_ONE_ID);

@@ -57,7 +57,7 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
     s_CapabilitiesRegistry.setDONFamilies(DON_ID, addToFamilies, removeFromFamilies);
     s_CapabilitiesRegistry.setDONFamilies(DON_ID_TWO, addToFamilies, removeFromFamilies);
 
-    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE, 0, 100);
     assertEq(familyDONs.length, 2);
 
     // DONs could be in any order, so check both are present
@@ -78,7 +78,7 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
     removeFromFamilies[0] = TEST_DON_FAMILY_ONE;
     s_CapabilitiesRegistry.setDONFamilies(DON_ID, addToFamilies, removeFromFamilies);
 
-    uint256[] memory family1DONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    uint256[] memory family1DONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE, 0, 100);
     assertEq(family1DONs.length, 1, "Expected 1 DON in TEST_DON_FAMILY_ONE");
     assertEq(family1DONs[0], DON_ID_TWO, "Expected DON_ID_TWO to be in TEST_DON_FAMILY_ONE");
 
@@ -87,11 +87,11 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
     removeFromFamilies[0] = TEST_DON_FAMILY_ONE;
     s_CapabilitiesRegistry.setDONFamilies(DON_ID, addToFamilies, removeFromFamilies);
 
-    uint256[] memory family2DONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_TWO);
+    uint256[] memory family2DONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_TWO, 0, 100);
     assertEq(family2DONs.length, 1, "Expected 1 DON in TEST_DON_FAMILY_TWO");
     assertEq(family2DONs[0], DON_ID, "Expected DON_ID to be in TEST_DON_FAMILY_TWO");
 
-    family1DONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    family1DONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE, 0, 100);
     assertEq(family1DONs.length, 1, "Expected 1 DON in TEST_DON_FAMILY_ONE");
     assertEq(family1DONs[0], DON_ID_TWO, "Expected DON_ID_TWO to be in TEST_DON_FAMILY_ONE");
 
@@ -111,7 +111,7 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
     CapabilitiesRegistry.DONInfo memory donInfo = s_CapabilitiesRegistry.getDON(DON_ID);
     assertEq(donInfo.donFamilies.length, 0, "Expected DON_ID to not be in any family");
 
-    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE, 0, 100);
     assertEq(familyDONs.length, 1, "Expected 1 DON in TEST_DON_FAMILY_ONE");
     assertEq(familyDONs[0], DON_ID_TWO, "Expected DON_ID_TWO to be in TEST_DON_FAMILY_ONE");
   }
@@ -133,14 +133,14 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
     assertEq(entries.length, 0, "Expected no event logs");
 
     // Verify DON is still in the family
-    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE, 0, 100);
     assertEq(familyDONs.length, 2, "Expected 2 DONs in family");
     assertEq(familyDONs[0], DON_ID, "Expected DON_ID to be in family");
     assertEq(familyDONs[1], DON_ID_TWO, "Expected DON_ID_TWO to be in family");
   }
 
   function test_GetDONsInFamily_EmptyFamily() public view {
-    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily("non-existent-family");
+    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily("non-existent-family", 0, 100);
     assertEq(familyDONs.length, 0);
   }
 
@@ -180,14 +180,14 @@ contract CapabilitiesRegistry_SetDONFamilyTest is BaseTest {
     s_CapabilitiesRegistry.setDONFamilies(DON_ID, addToFamilies, removeFromFamilies);
     s_CapabilitiesRegistry.setDONFamilies(DON_ID_TWO, addToFamilies, removeFromFamilies);
 
-    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    uint256[] memory familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE, 0, 100);
     assertEq(familyDONs.length, 2);
 
     uint32[] memory donsToRemove = new uint32[](1);
     donsToRemove[0] = DON_ID;
     s_CapabilitiesRegistry.removeDONs(donsToRemove);
 
-    familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    familyDONs = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE, 0, 100);
     assertEq(familyDONs.length, 1);
     assertEq(familyDONs[0], DON_ID_TWO);
   }
