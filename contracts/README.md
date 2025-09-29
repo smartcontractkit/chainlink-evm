@@ -1,7 +1,7 @@
 # Chainlink Smart Contracts
 
 > [⚠️ __IMPORTANT__]
-> Since `v1.5.0` of the Chainlink contracts package, some dependencies are no longer vendored and require the setup of remappings.
+> Since `v1.5.0` of the Chainlink contracts package, some dependencies are no longer vendored and require the use of remappings.
 > See the setup instructions for use in Solidity projects.
 >
 > Since `v1.4.0` of the Chainlink contracts, the contracts have been moved to their own repository:
@@ -64,12 +64,13 @@ $ pnpm add @chainlink/contracts
 $ npm install @chainlink/contracts --save
 ```
 
-#### If you don't want to use NPM...
-If you wish to utilize `forge install`, you will need to install this package as a git submodule in your project,  using its github url. This would put this package inside your Foundry Project's `./lib` folder.  Please see the [Foundry starter kit](https://github.com/smartcontractkit/foundry-starter-kit).  Note also the use of remappings.txt in the [Foundry starter kit](https://github.com/smartcontractkit/foundry-starter-kit).
+#### If you don't want to use `npm`...
 
-Here is the [official guide book](https://getfoundry.sh/guides/project-setup/dependencies) on how to use Forge Install with Remappings.
+If you wish to utilize `forge install`, you will need to install this package as a Git submodule in your project,  using its GitHub URL. This would put this package inside your Foundry project's `./lib` folder.  Please see the [Foundry starter kit](https://github.com/smartcontractkit/foundry-starter-kit).  Note also the use of `remappings.txt` in the [Foundry starter kit](https://github.com/smartcontractkit/foundry-starter-kit).
 
-### Step 2: Tell Forge to Look inside `node_modules`
+Here is the [official guidebook](https://getfoundry.sh/guides/project-setup/dependencies) on how to use `forge install` with remappings.
+
+### Step 2: Tell Forge to look in `node_modules`
 
 As we are using `npm` as our package manager, we must define the  `node_modules` folder as the external library directory. This ensures Foundry looks there for dependencies installed via `npm`/`pnpm`.
 
@@ -79,9 +80,9 @@ In your project's `foundry.toml`, update the libs array to include the `node_mod
 libs = ["lib", "node_modules"]
 ```
 
-### Step 3: Setup remappings
+### Step 3: Set up remappings
 
-Setup your project's remappings. See the [Foundry documentation](https://getfoundry.sh/guides/project-setup/dependencies#remapping-dependencies) for more information.
+Set up your project's remappings. See the [Foundry documentation](https://getfoundry.sh/guides/project-setup/dependencies#remapping-dependencies) for more information.
 
 [Foundry](https://getfoundry.sh/guides/project-setup/project-layout#project-layout) consumes a `remappings.txt` file from the project root. Create or update your project's `remappings.txt` with the following, to ensure that it loads the correct version of the dependencies you just installed into your `node_modules`:
 
@@ -131,15 +132,17 @@ $ pnpm add @chainlink/contracts
 $ npm install @chainlink/contracts --save
 ```
 
-### Step 2: Setup remappings
+### Step 2: Set up remappings
 
-Hardhat 2 does not read `remappings.txt` natively as seen in Foundry/Hardhat 3. To remap import paths, you may use a preprocessor that handles this at compile time. To see remapping examples in Hardhat 2, review the [Hardhat 2 starter kit](https://github.com/smartcontractkit/hardhat-starter-kit/).
+Hardhat 2 does not handle remappings natively as seen in Foundry/Hardhat 3. To remap import paths, you may use a preprocessor that handles this at compile time. Refer to the remapping section of the [Hardhat 2 starter kit](https://github.com/smartcontractkit/hardhat-starter-kit/?tab=readme-ov-file#remapping) for more information.
 
 ### Step 3: Usage
 
 ```solidity
 import {IVerifier} from '@chainlink/contracts/src/v0.8/llo-feeds/v0.5.0/interfaces/IVerifier.sol';
 ```
+
+See the [Hardhat 2 starter kit](https://github.com/smartcontractkit/hardhat-starter-kit/) for working examples.
 
 </details>
 
@@ -158,7 +161,7 @@ $ pnpm add @chainlink/contracts
 $ npm install @chainlink/contracts --save
 ```
 
-Hardhat 3 supports `remappings.txt` files in your project, as well as in git submodules and npm dependencies. Each `remappings.txt` file applies to the directory where it's located and all its subdirectories, similar to how `.gitignore` works. 
+Hardhat 3 supports `remappings.txt` files in your project, as well as in Git submodules and npm dependencies. Each `remappings.txt` file applies to the directory where it's located and all its subdirectories, similar to how `.gitignore` works. 
 
 Similar to Foundry, Hardhat 3 will utilize the `remappings.txt` file located within the root directory of this Chainlink contracts package.
 
@@ -168,7 +171,7 @@ Similar to Foundry, Hardhat 3 will utilize the `remappings.txt` file located wit
 import {IVerifier} from '@chainlink/contracts/src/v0.8/llo-feeds/v0.5.0/interfaces/IVerifier.sol';
 ```
 
-See the [Hardhat 3 starter kit](https://github.com/smartcontractkit/hardhat-starter-kit/) for working examples.
+See the [Hardhat 3 starter kit](https://github.com/smartcontractkit/hardhat-starter-kit/tree/hardhat-3) for working examples.
 
 </details>
 
