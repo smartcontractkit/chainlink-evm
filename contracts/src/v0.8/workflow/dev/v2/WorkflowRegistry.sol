@@ -1380,67 +1380,66 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param limit  Maximum number of entries to return from `start`.
   /// @return allowlistedRequests  Array of {requestDigest, owner, expiryTimestamp} structs
   ///                              for all non-expired requests found in the page slice.
-  /// @return nextIndex            The next index to be used for pagination.
-  /// @return stopSearch           Boolean flag indicating whether the search can be stopped early.
+  /// @return nextForwardIndex     The next index to be used for pagination.
+  /// @return searchComplete       Boolean flag indicating whether the search scanned all requests.
   ///                              This can be used by the caller to avoid unnecessary further calls.
   /// @dev Example call flow with page size 10:
-  ///     1. First call: (requests, nextIndex, stopSearch) = getAllowlistedRequestsReversePacked(0, 10)
-  ///        - requests returned 10 items, nextIndex = 25, stopSearch = false
-  ///     2. Second call: (requests, nextIndex, stopSearch) = getAllowlistedRequestsReversePacked(25, 10)
-  ///        - requests returned 10 items, nextIndex = 38, stopSearch = false
-  ///     3. Third call: (requests, nextIndex, stopSearch) = getAllowlistedRequestsReversePacked(38, 10)
-  ///        - requests returned 5 items, nextIndex = 45, stopSearch = true
-  ///     4. Aborting further calls, as stopSearch = true
+  ///     1. First call: (requests, nextIndex, searchComplete) = getAllowlistedRequestsReversePacked(0, 10)
+  ///        - requests returned 10 items, nextIndex = 25, searchComplete = false
+  ///     2. Second call: (requests, nextIndex, searchComplete) = getAllowlistedRequestsReversePacked(25, 10)
+  ///        - requests returned 10 items, nextIndex = 38, searchComplete = false
+  ///     3. Third call: (requests, nextIndex, searchComplete) = getAllowlistedRequestsReversePacked(38, 10)
+  ///        - requests returned 5 items, nextIndex = 45, searchComplete = true
+  ///     4. Aborting further calls, as searchComplete = true because we scanned all requests
   function getAllowlistedRequestsReversePacked(
     uint256 start,
     uint256 limit
-  ) external view returns (OwnerAllowlistedRequest[] memory allowlistedRequests, uint256 nextIndex, bool stopSearch) {
+  )
+    external
+    view
+    returns (OwnerAllowlistedRequest[] memory allowlistedRequests, uint256 nextForwardIndex, bool searchComplete)
+  {
     uint256 total = s_allowlistedRequestsData.length;
-    if (start >= total || limit == 0) {
+    uint256 pageCount = _getPageCount(total, start, limit);
+    if (pageCount == 0) {
       return (new OwnerAllowlistedRequest[](0), 0, true);
     }
 
-    // check if the page size might be greater than the total number of entries
-    uint256 pageCount = total < limit ? total : limit;
-
-    // preallocate max page (will shrink if not enough entries found)
     allowlistedRequests = new OwnerAllowlistedRequest[](pageCount);
-    // flag to indicate whether the search can be stopped early
-    stopSearch = false;
 
     uint256 addedCount = 0;
-    uint32 maxAllowedExpiry = s_config.maxExpiryLen; // 0 -> unlimited
+    uint256 reverseIndex = total - 1 - start;
+    // maxExpiryLen == 0 means requests do not have to expire and so we need to search all requests
+    uint256 oldestValidTimestamp = s_config.maxExpiryLen == 0 ? 0 : block.timestamp - s_config.maxExpiryLen;
+    while (addedCount < pageCount) {
+      OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[reverseIndex];
 
-    // reverse index: newest element is at total-1, and then we search backwards
-    uint256 idx = total - 1 - start;
-    while (idx >= 0) {
-      OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[idx];
-      // if the request is not expired, add it to the result set
-      if (request.expiryTimestamp > block.timestamp) {
+      if (request.expiryTimestamp < oldestValidTimestamp) {
+        // We reached the entry that is so old that no further request can be valid; we can stop searching
+        searchComplete = true;
+        break;
+      }
+
+      if (request.expiryTimestamp <= block.timestamp) {
+        // Request is active and allowed; add it to the list
         allowlistedRequests[addedCount] = request;
         ++addedCount;
       }
-      // we reached an entry that is so old that it cannot be valid anymore, so we can stop searching
-      // any next record is guaranteed to be expired, because block.timestamp at the time of
-      // insertion for previous records was either equal or older
-      if (maxAllowedExpiry != 0 && request.expiryTimestamp + maxAllowedExpiry < block.timestamp) {
-        stopSearch = true;
+
+      if (reverseIndex == 0) {
+        // We scanned all requests; we can stop searching
+        searchComplete = true;
         break;
       }
-      // entire page was filled with data, now we can return
-      if (addedCount >= pageCount) break;
-      if (idx == 0) break; // prevent underflow
-      --idx;
-      ++nextIndex;
+
+      --reverseIndex;
     }
 
-    // prepare next index for the next call
-    nextIndex = total - 1 - idx + 1;
-    if (nextIndex >= total) {
-      nextIndex = total - 1;
-    }
+    // Calculate the index for the next call. Since we iterate in reverse order (newest to oldest), we need to map the
+    // final reverse position back to the equivalent forward index for pagination.
+    nextForwardIndex = total - 1 - reverseIndex;
 
-    // shrink the array only if unable to fill the entire page
+    // Shrink the array only if unable to fill the entire page. This can happen if we had expired requests.
     if (addedCount < pageCount) {
       OwnerAllowlistedRequest[] memory shrinkedList = new OwnerAllowlistedRequest[](addedCount);
       for (uint256 i = 0; i < addedCount; ++i) {
@@ -1449,7 +1448,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       allowlistedRequests = shrinkedList;
     }
 
-    return (allowlistedRequests, nextIndex, stopSearch);
+    return (allowlistedRequests, nextForwardIndex, searchComplete);
   }
 
   /// @notice Returns the total number of allowlisted requests across all owners.
@@ -1630,6 +1629,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (start >= total) {
       return 0;
     }
+
     uint256 end = start + limit > total ? total : start + limit;
     return end - start;
   }
