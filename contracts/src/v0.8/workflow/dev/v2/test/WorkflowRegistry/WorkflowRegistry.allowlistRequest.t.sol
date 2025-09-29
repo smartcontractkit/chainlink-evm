@@ -5,6 +5,10 @@ import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
 contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
+  // NOTE: lock and control current timestamp this way due to issues when via-ir is enabled:
+  // https://github.com/foundry-rs/foundry/issues/1373
+  uint256 public currentTimestamp = block.timestamp;
+
   function test_allowlistRequest_WhenTheUserIsNotLinked() external {
     // it should revert with OwnershipLinkDoesNotExist
     bytes32 requestDigest = keccak256("request-digest");
@@ -47,7 +51,7 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
 
   // When the user is linked
   function test_allowlistRequest_WhenTheUserAlreadyHasARequest() external {
-    // It should update the existing request in-place without growing the array
+    // It should fail because the previous request is still valid
     bytes32 requestDigest = keccak256("duplicate-test-request");
     uint32 initialExpiry = uint32(block.timestamp + 1 hours);
     uint32 updatedExpiry = uint32(block.timestamp + 2 hours);
@@ -72,22 +76,12 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
     assertEq(requests[0].owner, s_user, "Owner should match");
     assertEq(requests[0].requestDigest, requestDigest, "Request digest should match");
 
-    // Update the same request with new expiry (this should update in-place, not add new entry)
-    vm.expectEmit(true, true, true, false);
-    emit WorkflowRegistry.RequestAllowlisted(s_user, requestDigest, updatedExpiry);
+    // Try to update the same request with new expiry (this should fail because previous is still valid)
+    vm.expectRevert(
+      abi.encodeWithSelector(WorkflowRegistry.PreviousAllowlistedRequestStillValid.selector, s_user, requestDigest)
+    );
     vm.prank(s_user);
     s_registry.allowlistRequest(requestDigest, updatedExpiry);
-
-    // Verify the request is still allowlisted but with updated expiry
-    assertTrue(s_registry.isRequestAllowlisted(s_user, requestDigest), "Request should still be allowlisted");
-    assertEq(s_registry.totalAllowlistedRequests(), 1, "Should still have exactly 1 request in storage (no duplicates)");
-
-    // Get the updated request details
-    requests = s_registry.getAllowlistedRequests(0, 10);
-    assertEq(requests.length, 1, "Should still return exactly 1 request");
-    assertEq(requests[0].expiryTimestamp, updatedExpiry, "Expiry should be updated");
-    assertEq(requests[0].owner, s_user, "Owner should still match");
-    assertEq(requests[0].requestDigest, requestDigest, "Request digest should still match");
 
     // Add multiple different requests to verify they are stored separately
     bytes32 requestDigest2 = keccak256("different-request-1");
@@ -101,30 +95,53 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
     s_registry.allowlistRequest(requestDigest3, expiry3);
 
     // Verify all 3 unique requests are stored
+    uint256 nextIndex;
+    bool stopSearch;
     assertEq(s_registry.totalAllowlistedRequests(), 3, "Should have exactly 3 unique requests");
-    requests = s_registry.getAllowlistedRequests(0, 10);
+
+    // Verify contents of all requests match expectations, requests are returned in the reverse order they were added
+    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(0, 10);
     assertEq(requests.length, 3, "Should return exactly 3 requests");
 
-    // Update the second request and verify no duplicates
+    assertEq(requests[0].expiryTimestamp, expiry3, "Third request expiry should match");
+    assertEq(requests[0].owner, s_user, "Owner should match");
+    assertEq(requests[0].requestDigest, requestDigest3, "Third request digest should match");
+
+    assertEq(requests[1].expiryTimestamp, expiry2, "Initial second request expiry should match");
+    assertEq(requests[1].owner, s_user, "Owner should match");
+    assertEq(requests[1].requestDigest, requestDigest2, "Second request digest should match");
+
+    assertEq(requests[2].expiryTimestamp, initialExpiry, "Initial first request expiry should match");
+    assertEq(requests[2].owner, s_user, "Owner should match");
+    assertEq(requests[2].requestDigest, requestDigest, "First request digest should match");
+
+    // Try to update the second request and verify that this will fail
     uint32 newExpiry2 = uint32(block.timestamp + 5 hours);
+    vm.expectRevert(
+      abi.encodeWithSelector(WorkflowRegistry.PreviousAllowlistedRequestStillValid.selector, s_user, requestDigest2)
+    );
     vm.prank(s_user);
     s_registry.allowlistRequest(requestDigest2, newExpiry2);
 
-    // Should still have exactly 3 unique requests
-    assertEq(s_registry.totalAllowlistedRequests(), 3, "Should still have exactly 3 unique requests");
-    requests = s_registry.getAllowlistedRequests(0, 10);
-    assertEq(requests.length, 3, "Should still return exactly 3 requests");
+    // Fast forward the block time beyond the initial expiry of the second request, this will allowlist a new one
+    vm.warp(currentTimestamp + 3 hours); // Advances the block timestamp by 3 hours only for the next call
+    emit WorkflowRegistry.RequestAllowlisted(s_user, requestDigest2, newExpiry2);
+    vm.prank(s_user);
+    s_registry.allowlistRequest(requestDigest2, newExpiry2);
 
-    // Find and verify the updated request
-    bool foundUpdatedRequest = false;
-    for (uint256 i = 0; i < requests.length; i++) {
-      if (requests[i].requestDigest == requestDigest2) {
-        assertEq(requests[i].expiryTimestamp, newExpiry2, "Second request expiry should be updated");
-        foundUpdatedRequest = true;
-        break;
-      }
-    }
-    assertTrue(foundUpdatedRequest, "Should find the updated second request");
+    // Verify that we have 2 requests, because the first one is expired now
+    vm.warp(currentTimestamp + 3 hours); // Advances the block timestamp by 3 hours only for the next call
+    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(0, 10);
+    assertEq(requests.length, 2, "Should return exactly 2 requests");
+
+    // Verify contents of all requests match expectations, requests are returned in the reverse order they were added
+    assertEq(requests[0].expiryTimestamp, newExpiry2, "Update second request expiry should match");
+    assertEq(requests[0].owner, s_user, "Owner should match");
+    assertEq(requests[0].requestDigest, requestDigest2, "Second request digest should match");
+
+    assertEq(requests[1].expiryTimestamp, expiry3, "Third request expiry should match");
+    assertEq(requests[1].owner, s_user, "Owner should match");
+    assertEq(requests[1].requestDigest, requestDigest3, "Third request digest should match");
   }
 
   // When the user is linked

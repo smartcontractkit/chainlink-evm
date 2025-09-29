@@ -89,12 +89,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// When a workflow is paused it is removed from the don family.
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
-  /// @dev Fast lookup for allowlisted requests. Key is hash of owner + request digest, value is
-  /// index in the s_allowlistedRequestsData array pushed by one. Pushing index by one avoids collisions between an
-  /// entry at the zero index and entry that doesn't exist.
-  /// This is used for tracking allowlisted requests for the owner address, required to enable anyone to verify
-  /// off-chain requests.
-  mapping(bytes32 => uint256) private s_allowlistedRequestsIndexMap;
+  /// @dev Used for tracking allowlisted requests for the owner address + request digest, required to enable anyone to
+  /// verify off-chain requests. It is not allowed to overwrite an existing allowlist entry, it must first expire.
+  mapping(bytes32 ownerDigestHash => uint32 expiryTimestamp) private s_allowlistedRequests;
   /// @dev Array storing all allowlisted request data for enumeration and pagination.
   OwnerAllowlistedRequest[] private s_allowlistedRequestsData;
   /// @dev Map each owner address to their arbitrary config. Can be used to control billing parameters or any other data
@@ -178,6 +175,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
   error InvalidExpiryTimestamp(bytes32 requestDigest, uint32 expiryTimestamp, uint32 maxAllowed);
+  error PreviousAllowlistedRequestStillValid(address owner, bytes32 requestDigest);
 
   // ================================================================
   // |                         Enums                                |
@@ -1286,9 +1284,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         - The request is identified by a unique `requestDigest` (hash of the request payload).
   ///         - The `expiryTimestamp` defines until when the request is valid.
   ///         - Only owners that have linked their ownership proof can allowlist requests.
+  ///         - If a request with the same digest already exists and is still valid, a new one cannot be added.
   /// @param requestDigest     Unique identifier for the request (hash of the request payload).
   /// @param expiryTimestamp   Timestamp until which the request is valid (must be in the future).
-  /// @custom:revert OwnershipLinkDoesNotExist  If the caller is not a linked owner.
   /// @dev User flow:
   /// - User generates the digest of the request.
   /// - User calls allowlistRequest(requestDigest) on the Workflow Registry.
@@ -1296,31 +1294,27 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// - Vault DON checks if the digest is on-chain for verification purposes.
   function allowlistRequest(bytes32 requestDigest, uint32 expiryTimestamp) external {
     uint32 maxAllowedExpiry = s_config.maxExpiryLen; // 0 -> unlimited
+    // do not allow expiry timestamps that have already expired or are way above the maximum expiration allowed
     if (
       expiryTimestamp <= block.timestamp
         || (maxAllowedExpiry != 0 && expiryTimestamp - block.timestamp > maxAllowedExpiry)
     ) {
       revert InvalidExpiryTimestamp(requestDigest, expiryTimestamp, maxAllowedExpiry);
     }
+    // only linked owner may allowlist requests
     if (!s_linkedOwners.contains(msg.sender)) revert OwnershipLinkDoesNotExist(msg.sender);
 
-    bytes32 key = keccak256(abi.encode(msg.sender, requestDigest));
-
-    // non-zero index means that the request digest already exists
-    uint256 storedIndex = s_allowlistedRequestsIndexMap[key];
-
-    if (storedIndex != 0) {
-      // index is pushed by one when stored, so we need to subtract one to get the correct index
-      // then update existing request digest with a new expiry timestamp
-      s_allowlistedRequestsData[storedIndex - 1].expiryTimestamp = expiryTimestamp;
-    } else {
-      // push index by one to avoid collisions between an entry at the zero index and entry
-      // that doesn't exist in the mapping
-      s_allowlistedRequestsIndexMap[key] = s_allowlistedRequestsData.length + 1;
-      s_allowlistedRequestsData.push(
-        OwnerAllowlistedRequest({owner: msg.sender, requestDigest: requestDigest, expiryTimestamp: expiryTimestamp})
-      );
+    // if there is another request with the same digest for the same owner, and its expiration timestamp is still valid,
+    // do not allow adding a new one until the existing one expires
+    bytes32 ownerDigestHash = keccak256(abi.encode(msg.sender, requestDigest));
+    if (s_allowlistedRequests[ownerDigestHash] > block.timestamp) {
+      revert PreviousAllowlistedRequestStillValid(msg.sender, requestDigest);
     }
+
+    s_allowlistedRequests[ownerDigestHash] = expiryTimestamp;
+    s_allowlistedRequestsData.push(
+      OwnerAllowlistedRequest({owner: msg.sender, requestDigest: requestDigest, expiryTimestamp: expiryTimestamp})
+    );
     emit RequestAllowlisted(msg.sender, requestDigest, expiryTimestamp);
   }
 
@@ -1331,16 +1325,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param requestDigest    Unique identifier for the request (hash of the request payload).
   /// @return bool            True if the request is allowlisted and not expired, false otherwise.
   function isRequestAllowlisted(address owner, bytes32 requestDigest) external view returns (bool) {
-    bytes32 key = keccak256(abi.encode(owner, requestDigest));
-    uint256 storedIndex = s_allowlistedRequestsIndexMap[key];
-    if (storedIndex == 0) return false; // zero index indicates that request is not found
-    // index is pushed by one when stored, so we need to subtract one to get the correct index
-    OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[storedIndex - 1];
-    return request.expiryTimestamp > block.timestamp;
+    return s_allowlistedRequests[keccak256(abi.encode(owner, requestDigest))] > block.timestamp;
   }
 
   /// @notice     Returns a paginated list of allowlisted requests across all owners.
   /// @dev        - Reads a slice of the allowlisted requests starting at `start` and spanning up to `limit` elements.
+  ///             - Non-expired requests are concentrated around the tail of the allowlisted requests array.
   ///             - Expired entries (where `expiryTimestamp <= block.timestamp`) are filtered out.
   ///             - The returned array may therefore be shorter than `limit`.
   ///             - Does not revert on out-of-range pagination: if `start >= total`, returns an empty array.
@@ -1376,6 +1366,90 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     }
 
     return allowlistedRequests;
+  }
+
+  /// @notice     Returns a reverse paginated list of allowlisted requests across all owners.
+  /// @dev        - Reads a slice of the allowlisted requests starting at `start` and spanning up to `limit` elements.
+  ///             - The list is traversed in a reverse order, ordered from newest to oldest (based on insertion order).
+  ///             - Traversing in a reverse order ensures that for the first pages, most relevant results are returned.
+  ///             - Non-expired requests are concentrated around the tail of the allowlisted requests array.
+  ///             - Expired entries (where `expiryTimestamp <= block.timestamp`) are filtered out.
+  ///             - The returned array may therefore be shorter than `limit`.
+  ///             - If `limit` is zero or `start` is out of bounds, returns an empty array.
+  /// @param start  Zero-based index into the allowlist at which to begin.
+  /// @param limit  Maximum number of entries to return from `start`.
+  /// @return allowlistedRequests  Array of {requestDigest, owner, expiryTimestamp} structs
+  ///                              for all non-expired requests found in the page slice.
+  /// @return nextIndex            The next index to be used for pagination.
+  /// @return stopSearch           Boolean flag indicating whether the search can be stopped early.
+  ///                              This can be used by the caller to avoid unnecessary further calls.
+  /// @dev Example call flow with page size 10:
+  ///     1. First call: (requests, nextIndex, stopSearch) = getAllowlistedRequestsReversePacked(0, 10)
+  ///        - requests returned 10 items, nextIndex = 25, stopSearch = false
+  ///     2. Second call: (requests, nextIndex, stopSearch) = getAllowlistedRequestsReversePacked(25, 10)
+  ///        - requests returned 10 items, nextIndex = 38, stopSearch = false
+  ///     3. Third call: (requests, nextIndex, stopSearch) = getAllowlistedRequestsReversePacked(38, 10)
+  ///        - requests returned 5 items, nextIndex = 45, stopSearch = true
+  ///     4. Aborting further calls, as stopSearch = true
+  function getAllowlistedRequestsReversePacked(
+    uint256 start,
+    uint256 limit
+  ) external view returns (OwnerAllowlistedRequest[] memory allowlistedRequests, uint256 nextIndex, bool stopSearch) {
+    uint256 total = s_allowlistedRequestsData.length;
+    if (start >= total || limit == 0) {
+      return (new OwnerAllowlistedRequest[](0), 0, true);
+    }
+
+    // check if the page size might be greater than the total number of entries
+    uint256 pageCount = total < limit ? total : limit;
+
+    // preallocate max page (will shrink if not enough entries found)
+    allowlistedRequests = new OwnerAllowlistedRequest[](pageCount);
+    // flag to indicate whether the search can be stopped early
+    stopSearch = false;
+
+    uint256 addedCount = 0;
+    uint32 maxAllowedExpiry = s_config.maxExpiryLen; // 0 -> unlimited
+
+    // reverse index: newest element is at total-1, and then we search backwards
+    uint256 idx = total - 1 - start;
+    while (idx >= 0) {
+      OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[idx];
+      // if the request is not expired, add it to the result set
+      if (request.expiryTimestamp > block.timestamp) {
+        allowlistedRequests[addedCount] = request;
+        ++addedCount;
+      }
+      // we reached an entry that is so old that it cannot be valid anymore, so we can stop searching
+      // any next record is guaranteed to be expired, because block.timestamp at the time of
+      // insertion for previous records was either equal or older
+      if (maxAllowedExpiry != 0 && request.expiryTimestamp + maxAllowedExpiry < block.timestamp) {
+        stopSearch = true;
+        break;
+      }
+      // entire page was filled with data, now we can return
+      if (addedCount >= pageCount) break;
+      if (idx == 0) break; // prevent underflow
+      --idx;
+      ++nextIndex;
+    }
+
+    // prepare next index for the next call
+    nextIndex = total - 1 - idx + 1;
+    if (nextIndex >= total) {
+      nextIndex = total - 1;
+    }
+
+    // shrink the array only if unable to fill the entire page
+    if (addedCount < pageCount) {
+      OwnerAllowlistedRequest[] memory shrinkedList = new OwnerAllowlistedRequest[](addedCount);
+      for (uint256 i = 0; i < addedCount; ++i) {
+        shrinkedList[i] = allowlistedRequests[i];
+      }
+      allowlistedRequests = shrinkedList;
+    }
+
+    return (allowlistedRequests, nextIndex, stopSearch);
   }
 
   /// @notice Returns the total number of allowlisted requests across all owners.
