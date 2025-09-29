@@ -1247,17 +1247,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev    - Only the contract owner may call this (`onlyOwner`).
   ///         - Iterates from the end of the user’s active-workflow set and directly pauses each workflow.
   /// @param  owner The address whose active workflows should be paused.
-  function adminPauseAllByOwner(
-    address owner
-  ) external onlyOwner {
+  /// @param  limit Maximum number of workflows to pause in this call (to avoid out-of-gas).
+  ///               If set to 0, then limit is ignored.
+  function adminPauseAllByOwner(address owner, uint256 limit) external onlyOwner {
     EnumerableSet.Bytes32Set storage activeSet = s_activeOwnerWorkflowRids[owner];
 
-    // Loop until the set is empty, always pausing the last element. We also know that all workflows in the list are
-    // active.
-    while (activeSet.length() > 0) {
+    // Loop until the set is empty, always pausing the last element
+    // We also know that all workflows in the list are active
+    // Limit is necessary to avoid out-of-gas reverts in case of very large sets, but if set to zero, it will be ignored
+    uint256 count = 0;
+    while (activeSet.length() > 0 && (limit == 0 || count < limit)) {
       bytes32 rid = activeSet.at(activeSet.length() - 1);
       WorkflowMetadata storage rec = s_workflows[rid]; // no msg.sender check when fetched directly from mapping
       _applyPause(rid, rec);
+      ++count;
     }
   }
 
@@ -1265,16 +1268,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev    - Only the contract owner may call this (`onlyOwner`).
   ///         - Iterates from the end of the DON’s active-workflow set and directly pauses each workflow.
   /// @param  donFamily The string identifier of the DON whose active workflows should be paused.
-  function adminPauseAllByDON(
-    string calldata donFamily
-  ) external onlyOwner {
+  /// @param  limit     Maximum number of workflows to pause in this call (to avoid out-of-gas).
+  ///                   If set to 0, then limit is ignored.
+  function adminPauseAllByDON(string calldata donFamily, uint256 limit) external onlyOwner {
     EnumerableSet.Bytes32Set storage activeSet = s_activeDONWorkflowRids[_hash(donFamily)];
 
-    // Loop until the set is empty, always pausing the last workflow
-    while (activeSet.length() > 0) {
+    // Loop until the set is empty or a limit is reached, always pausing the last workflow
+    // We also know that all workflows in the list are active
+    // Limit is necessary to avoid out-of-gas reverts in case of very large sets, but if set to zero, it will be ignored
+    uint256 count = 0;
+    while (activeSet.length() > 0 && (limit == 0 || count < limit)) {
       bytes32 rid = activeSet.at(activeSet.length() - 1);
       WorkflowMetadata storage rec = s_workflows[rid]; // no msg.sender check when fetched directly from mapping
       _applyPause(rid, rec);
+      ++count;
     }
   }
 
