@@ -2,5 +2,7 @@ WorkflowRegistry.adminPauseAllByOwner
 ├── when caller is NOT the contract owner
 │   └── it reverts with Ownable2StepMsgSender caller is not the owner
 └── when caller is the contract owner
-    └── when there are active workflows
-        └── it pauses all of the workflows
+    ├── when there are active workflows
+    │   └── it pauses all of the workflows
+    └── when there are active workflows but limit is set
+        └── it pauses only up to the limit number of workflows
