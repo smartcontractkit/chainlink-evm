@@ -1445,7 +1445,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     // reverse index: newest element is at total-1, and then we search backwards
     uint256 idx = total - 1 - start;
-    while (idx >= 0) {
+    while (true) {
       OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[idx];
       // if the request is not expired, add it to the result set
       if (request.expiryTimestamp > block.timestamp) {
@@ -1463,13 +1463,14 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       if (addedCount >= pageCount) break;
       if (idx == 0) break; // prevent underflow
       --idx;
-      ++nextIndex;
     }
 
     // prepare next index for the next call
     nextIndex = total - 1 - idx + 1;
+    // we have traversed all the way to the beginning of the array, so we can stop searching
     if (nextIndex >= total) {
-      nextIndex = total - 1;
+      nextIndex = total;
+      stopSearch = true;
     }
 
     // shrink the array only if unable to fill the entire page
