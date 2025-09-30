@@ -37,6 +37,7 @@ contract WorkflowRegistry_getAllowedSigners is Test {
 
   function test_getAllowedSigners_WhenStartIs0AndLimitIsGreaterThanTheNumberOfSigners()
     external
+    view
     whenSomeAllowedSignersAreConfigured
   {
     // it should return all of the signers
@@ -49,7 +50,7 @@ contract WorkflowRegistry_getAllowedSigners is Test {
     assertEq(signers[4], address(0x5555), "Signer 5 should match");
   }
 
-  function test_getAllowedSigners_WhenAPageIsRequested() external whenSomeAllowedSignersAreConfigured {
+  function test_getAllowedSigners_WhenAPageIsRequested() external view whenSomeAllowedSignersAreConfigured {
     // it should return a limited number of signers
     address[] memory signers = s_registry.getAllowedSigners(0, 2);
     assertEq(signers.length, 2, "Should return 2 signers");

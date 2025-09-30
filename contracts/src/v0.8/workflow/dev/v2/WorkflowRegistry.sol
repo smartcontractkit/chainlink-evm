@@ -1408,47 +1408,44 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///             - Non-expired requests are concentrated around the tail of the allowlisted requests array.
   ///             - Expired entries (where `expiryTimestamp <= block.timestamp`) are filtered out.
   ///             - The returned array may therefore be shorter than `limit`.
-  ///             - If `limit` is zero or `start` is out of bounds, returns an empty array.
-  /// @param start  Zero-based index into the allowlist at which to begin.
-  /// @param limit  Maximum number of entries to return from `start`.
+  ///             - If indexes are out of bounds, returns an empty array.
+  /// @param endIndex      Zero-based index into the allowlist at which to begin the search (we are going in reverse).
+  /// @param startIndex    Zero-based index into the allowlist at which to end the search (we are going in reverse).
   /// @return allowlistedRequests  Array of {requestDigest, owner, expiryTimestamp} structs
   ///                              for all non-expired requests found in the page slice.
-  /// @return nextForwardIndex     The next index to be used for pagination (always going up).
   /// @return searchComplete       Boolean flag indicating whether the search scanned all requests.
   ///                              This can be used by the caller to avoid unnecessary further calls.
-  /// @dev Example call flow with page size 10:
-  ///     1. First call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(0, 10)
-  ///        - requests returned 10 items, nextIndex = 25, searchComplete = false
-  ///     2. Second call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(25, 10)
-  ///        - requests returned 10 items, nextIndex = 38, searchComplete = false
-  ///     3. Third call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(38, 10)
-  ///        - requests returned 5 items, nextIndex = 45, searchComplete = true
+  /// @dev Example call flow with page size 10 (page size is determined by `endIndex - startIndex + 1`):
+  ///     1. First call: total = totalAllowlistedRequests()
+  ///        - returns 45
+  ///     1. Second call: we start with endIndex = total - 1, startIndex = endIndex - pageSize + 1
+  ///        (requests, searchComplete) = getActiveAllowlistedRequestsReverse(44, 35)
+  ///        - requests returned 10 items, searchComplete = false
+  ///     2. Third call: last index we've read is 35, so endIndex=34, and startIndex = endIndex - pageSize + 1
+  ///        (requests, searchComplete) = getActiveAllowlistedRequestsReverse(34, 25)
+  ///        - requests returned 8 items because some of them have expired, searchComplete = false
+  ///     3. Fourth call: last index we've read is 25, so endIndex=24, and startIndex = endIndex - pageSize + 1
+  ///        (requests, searchComplete) = getActiveAllowlistedRequestsReverse(24, 15)
+  ///        - requests returned 5 items, searchComplete = true
   ///     4. Aborting further calls, as searchComplete = true because we scanned all requests
-  /// @dev WARNING: Always run consecutive calls while ensuring you are conducting the search on the same block (Geth
-  /// client must use the same block number between the calls). If consecutive calls are not made on the same block,
-  /// results may be skewed because new entries are constantly added to the list.
   function getActiveAllowlistedRequestsReverse(
-    uint256 start,
-    uint256 limit
-  )
-    external
-    view
-    returns (OwnerAllowlistedRequest[] memory allowlistedRequests, uint256 nextForwardIndex, bool searchComplete)
-  {
+    uint256 endIndex,
+    uint256 startIndex
+  ) external view returns (OwnerAllowlistedRequest[] memory allowlistedRequests, bool searchComplete) {
     uint256 total = s_allowlistedRequestsData.length;
-    uint256 pageCount = _getPageCount(total, start, limit);
-    if (pageCount == 0) {
-      return (new OwnerAllowlistedRequest[](0), 0, true);
+    if (total == 0 || endIndex > total - 1 || startIndex > endIndex) {
+      // out of bounds or empty range; return empty list
+      return (new OwnerAllowlistedRequest[](0), true);
     }
+
+    uint256 pageCount = endIndex - startIndex + 1;
     allowlistedRequests = new OwnerAllowlistedRequest[](pageCount);
 
     // maxExpiryLen == 0 means requests do not have to expire and so we need to search all requests
     uint256 oldestValidTimestamp = s_config.maxExpiryLen == 0 ? 0 : block.timestamp - s_config.maxExpiryLen;
-    uint256 reverseIndex = total - start;
     uint256 addedCount = 0;
-    while (addedCount < pageCount) {
-      --reverseIndex;
-      OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[reverseIndex];
+    for (uint256 idx = endIndex; idx >= startIndex; --idx) {
+      OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[idx];
 
       if (request.expiryTimestamp < oldestValidTimestamp) {
         // We reached the entry that is so old that no further request can be valid; we can stop searching
@@ -1463,17 +1460,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
         ++addedCount;
       }
 
-      if (reverseIndex == 0) {
+      if (idx == 0) {
         // We scanned all requests; we can stop searching
         searchComplete = true;
         break;
       }
     }
-
-    // Calculate the index for the next call. Since we iterate in reverse order (newest to oldest), we need to map the
-    // final reverse position back to the equivalent forward index for pagination.
-    // Example: if we have 6 requests, and we returned all (reverseIndex = 0), then nextForwardIndex would be 6
-    nextForwardIndex = total - reverseIndex;
 
     // Shrink the array if unable to fill the entire page. This can happen if we have expired requests.
     if (addedCount < pageCount) {
@@ -1484,7 +1476,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       allowlistedRequests = shrinkedList;
     }
 
-    return (allowlistedRequests, nextForwardIndex, searchComplete);
+    return (allowlistedRequests, searchComplete);
   }
 
   /// @notice Returns the total number of allowlisted requests across all owners.
