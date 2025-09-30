@@ -1404,13 +1404,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (pageCount == 0) {
       return (new OwnerAllowlistedRequest[](0), 0, true);
     }
-
     allowlistedRequests = new OwnerAllowlistedRequest[](pageCount);
 
-    uint256 addedCount = 0;
-    uint256 reverseIndex = total - 1 - start;
     // maxExpiryLen == 0 means requests do not have to expire and so we need to search all requests
     uint256 oldestValidTimestamp = s_config.maxExpiryLen == 0 ? 0 : block.timestamp - s_config.maxExpiryLen;
+    uint256 reverseIndex = total - 1 - start;
+    uint256 addedCount = 0;
     while (addedCount < pageCount) {
       OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[reverseIndex];
 
@@ -1420,8 +1419,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
         break;
       }
 
-      if (request.expiryTimestamp <= block.timestamp) {
-        // Request is active and allowed; add it to the list
+      // If the request expiry matches (==) block.timestamp, we intentionally treat the request as expired.
+      if (request.expiryTimestamp > block.timestamp) {
+        // Request is active and allowed; add it to the list.
         allowlistedRequests[addedCount] = request;
         ++addedCount;
       }

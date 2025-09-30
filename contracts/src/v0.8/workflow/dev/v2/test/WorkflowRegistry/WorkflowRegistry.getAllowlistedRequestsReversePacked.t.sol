@@ -85,7 +85,9 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(4, 2);
     assertEq(requests.length, 2, "Page 3 - 2 requests should be returned");
     assertEq(nextIndex, 5, "Page 3 - Next index should be 5");
-    assertEq(stopSearch, false, "Page 3 - Stop search should be false");
+    assertEq(
+      stopSearch, true, "Page 3 - Stop search should be true because we scanned all requests and returned the last 2"
+    );
     assertEq(
       keccak256("request-digest-2-owner-1"), requests[0].requestDigest, "Page 3 - Second request digest should match"
     );
@@ -106,7 +108,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(4, 4);
     assertEq(requests.length, 2, "2 requests should be returned");
     assertEq(nextIndex, 5, "Next index should be 5");
-    assertEq(stopSearch, false, "Stop search should be false");
+    assertEq(stopSearch, true, "Stop search should be true because we scanned all requests and returned the last two");
     assertEq(keccak256("request-digest-2-owner-1"), requests[0].requestDigest, "Second request digest should match");
     assertEq(keccak256("request-digest-1-owner-1"), requests[1].requestDigest, "First request digest should match");
 
@@ -175,7 +177,8 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     (WorkflowRegistry.OwnerAllowlistedRequest[] memory requests, uint256 nextIndex, bool stopSearch) =
       s_registry.getAllowlistedRequestsReversePacked(0, 100);
     assertEq(requests.length, 6, "6 requests should be returned");
-    assertEq(nextIndex, 7, "Next index should be 7");
+    // We retrieved all 6 active requests. Because we start at index 0, the 7th active request will be at index 6
+    assertEq(nextIndex, 6, "Next index should be 6");
     assertEq(stopSearch, true, "Stop search should be true");
 
     // this will time out all request with expiry less than currentTimestamp + 1 minutes
@@ -196,7 +199,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
 
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(6, 2);
     assertEq(requests.length, 0, "0 requests should be returned");
-    assertEq(nextIndex, 7, "Next index should be 7");
+    assertEq(nextIndex, 6, "Next index should be 6");
     assertEq(stopSearch, true, "Stop search should be true");
   }
 
