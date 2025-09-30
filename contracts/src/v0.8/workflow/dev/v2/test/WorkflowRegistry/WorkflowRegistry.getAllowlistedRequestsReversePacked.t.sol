@@ -38,8 +38,8 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
       s_registry.getAllowlistedRequestsReversePacked(0, 100);
     assertEq(total, 6, "Total number of allowlisted requests should be 6");
     assertEq(requests.length, 6, "All 6 requests should be returned");
+    assertEq(stopSearch, true, "Stop search should be true because we scanned all requests");
     assertEq(nextIndex, 6, "Next index should be 6");
-    assertEq(stopSearch, true, "Stop search should be true");
     assertEq(
       keccak256("request-digest-3-owner-3"), requests[0].requestDigest, "All - Sixth request digest should match"
     );
@@ -85,7 +85,9 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(4, 2);
     assertEq(requests.length, 2, "Page 3 - 2 requests should be returned");
     assertEq(nextIndex, 6, "Page 3 - Next index should be 6");
-    assertEq(stopSearch, true, "Page 3 - Stop search should be true");
+    assertEq(
+      stopSearch, true, "Page 3 - Stop search should be true because we scanned all requests and returned the last 2"
+    );
     assertEq(
       keccak256("request-digest-2-owner-1"), requests[0].requestDigest, "Page 3 - Second request digest should match"
     );
@@ -106,7 +108,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(4, 4);
     assertEq(requests.length, 2, "2 requests should be returned");
     assertEq(nextIndex, 6, "Next index should be 6");
-    assertEq(stopSearch, true, "Stop search should be true");
+    assertEq(stopSearch, true, "Stop search should be true because we scanned all requests and returned the last two");
     assertEq(keccak256("request-digest-2-owner-1"), requests[0].requestDigest, "Second request digest should match");
     assertEq(keccak256("request-digest-1-owner-1"), requests[1].requestDigest, "First request digest should match");
 
@@ -134,7 +136,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     assertEq(total, 6, "Total number of allowlisted requests should be 6");
     assertEq(requests.length, 3, "3 requests should be returned");
     assertEq(nextIndex, 6, "Next index should be 6");
-    assertEq(stopSearch, true, "Stop search should be true");
+    assertEq(stopSearch, true, "Stop search should be true because we scanned all requests");
     assertEq(keccak256("request-digest-3-owner-3"), requests[0].requestDigest, "Sixth request digest should match");
     assertEq(keccak256("request-digest-2-owner-3"), requests[1].requestDigest, "Fifth request digest should match");
     assertEq(keccak256("request-digest-1-owner-2"), requests[2].requestDigest, "Third request digest should match");
@@ -175,7 +177,8 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     (WorkflowRegistry.OwnerAllowlistedRequest[] memory requests, uint256 nextIndex, bool stopSearch) =
       s_registry.getAllowlistedRequestsReversePacked(0, 100);
     assertEq(requests.length, 6, "6 requests should be returned");
-    assertEq(nextIndex, 7, "Next index should be 7");
+    // We retrieved all 6 active requests. Because we start at index 0, the 7th active request will be at index 6
+    assertEq(nextIndex, 7, "Next index should be 7, this item is considered too old");
     assertEq(stopSearch, true, "Stop search should be true");
 
     // this will time out all request with expiry less than currentTimestamp + 1 minutes
@@ -196,7 +199,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
 
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(6, 2);
     assertEq(requests.length, 0, "0 requests should be returned");
-    assertEq(nextIndex, 7, "Next index should be 7");
+    assertEq(nextIndex, 7, "Next index should be 7, this item is considered too old");
     assertEq(stopSearch, true, "Stop search should be true");
   }
 
