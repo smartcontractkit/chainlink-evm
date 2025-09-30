@@ -1411,25 +1411,54 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///             - If `limit` is zero or `start` is out of bounds, returns an empty array.
   /// @param start  Zero-based index into the allowlist at which to begin.
   /// @param limit  Maximum number of entries to return from `start`.
+  /// @param lastTotalCount The total count of requests retrieved via totalAllowlistedRequests() function. This number
+  ///                       must be retrieved before the first batch of consecutive calls to this function, and then
+  ///                       passed unchanged to all subsequent calls. Then, in the next batch of consecutive calls,
+  ///                       the previous total count value can be used to limit the number of requests that were
+  ///                       already seen, and focus on the new requests.
   /// @return allowlistedRequests  Array of {requestDigest, owner, expiryTimestamp} structs
   ///                              for all non-expired requests found in the page slice.
   /// @return nextForwardIndex     The next index to be used for pagination (always going up).
   /// @return searchComplete       Boolean flag indicating whether the search scanned all requests.
   ///                              This can be used by the caller to avoid unnecessary further calls.
-  /// @dev Example call flow with page size 10:
-  ///     1. First call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(0, 10)
+  /// @dev Example call flow with page size 10 and lastTotalCount = 0 (this means it will not filter out any requests):
+  ///     1. First call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(0, 10, 0)
   ///        - requests returned 10 items, nextIndex = 25, searchComplete = false
-  ///     2. Second call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(25, 10)
+  ///     2. Second call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(25, 10, 0)
   ///        - requests returned 10 items, nextIndex = 38, searchComplete = false
-  ///     3. Third call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(38, 10)
+  ///     3. Third call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(38, 10, 0)
   ///        - requests returned 5 items, nextIndex = 45, searchComplete = true
   ///     4. Aborting further calls, as searchComplete = true because we scanned all requests
   /// @dev WARNING: Always run consecutive calls while ensuring you are conducting the search on the same block (Geth
   /// client must use the same block number between the calls). If consecutive calls are not made on the same block,
   /// results may be skewed because new entries are constantly added to the list.
+  /// @dev Example call flow with page size 10 when using the lastTotalCount parameter:
+  ///     1. Get last block number (recommended with finality depth accounted for) and anchor to it for subsequent calls
+  ///     1. Get total count: (lastTotalCount) = totalAllowlistedRequests()
+  ///        - returns 45
+  ///     2. First call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(0, 10, 45)
+  ///        - requests returned 10 items, nextIndex = 25, searchComplete = false
+  ///     3. Second call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(25, 10, 45)
+  ///        - requests returned 10 items, nextIndex = 38, searchComplete = false
+  ///     4. Third call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(38, 10, 45)
+  ///        - requests returned 5 items, nextIndex = 45, searchComplete = true
+  ///     5. Aborting further calls, as searchComplete = true because we scanned all requests
+  ///     6. After some time, new requests are added to the list
+  ///     7. Fetch the last block number again and anchor to it for subsequent calls
+  ///     8. Get total count again: (lastTotalCount) = totalAllowlistedRequests()
+  ///        - returns 60, which means there is 15 new requests added since the last batch of consecutive calls
+  ///     8. First call of the new batch must use the lastTotalCount=45 from the previous batch:
+  ///        (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(0, 10, 45)
+  ///        - requests returned 10 items, nextIndex = 12, searchComplete = false
+  ///     9. Second call of the new batch (applying the same lastTotalCount=45 for all subsequent calls):
+  ///        (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(12, 10, 45)
+  ///        - requests returned 3 items, nextIndex = 15, searchComplete = true
+  ///    10. Aborting further calls, as searchComplete = true because we scanned all new requests (and skipped all seen
+  ///        requests because we have set the lastTotalCount parameter)
   function getActiveAllowlistedRequestsReverse(
     uint256 start,
-    uint256 limit
+    uint256 limit,
+    uint256 lastTotalCount
   )
     external
     view
@@ -1444,10 +1473,20 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     // maxExpiryLen == 0 means requests do not have to expire and so we need to search all requests
     uint256 oldestValidTimestamp = s_config.maxExpiryLen == 0 ? 0 : block.timestamp - s_config.maxExpiryLen;
+    // use reverseIndex to traverse the list in reverse order, starting from the end
     uint256 reverseIndex = total - start;
+    // determine the last seen index based on the last total count provided
+    uint256 lastSeenReverseIndex = (lastTotalCount == 0 || lastTotalCount > total) ? 0 : lastTotalCount - 1;
     uint256 addedCount = 0;
     while (addedCount < pageCount) {
       --reverseIndex;
+
+      if (lastSeenReverseIndex != 0 && reverseIndex <= lastSeenReverseIndex) {
+        // We reached the last seen index from the previous call; we can stop searching
+        searchComplete = true;
+        break;
+      }
+
       OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[reverseIndex];
 
       if (request.expiryTimestamp < oldestValidTimestamp) {
