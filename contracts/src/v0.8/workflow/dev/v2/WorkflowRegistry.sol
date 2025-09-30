@@ -1424,6 +1424,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///     3. Third call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(38, 10)
   ///        - requests returned 5 items, nextIndex = 45, searchComplete = true
   ///     4. Aborting further calls, as searchComplete = true because we scanned all requests
+  /// @dev WARNING: Always run consecutive calls while ensuring you are conducting the search on the same block (Geth
+  /// client must use the same block number between the calls). If consecutive calls are not made on the same block,
+  /// results may be skewed because new entries are constantly added to the list.
   function getActiveAllowlistedRequestsReverse(
     uint256 start,
     uint256 limit
