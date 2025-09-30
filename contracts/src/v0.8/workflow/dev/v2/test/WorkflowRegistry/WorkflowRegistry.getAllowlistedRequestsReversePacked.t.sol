@@ -38,8 +38,8 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
       s_registry.getAllowlistedRequestsReversePacked(0, 100);
     assertEq(total, 6, "Total number of allowlisted requests should be 6");
     assertEq(requests.length, 6, "All 6 requests should be returned");
-    assertEq(nextIndex, 6, "Next index should be 6");
     assertEq(stopSearch, true, "Stop search should be true because we scanned all requests");
+    assertEq(nextIndex, 6, "Next index should be 6");
     assertEq(
       keccak256("request-digest-3-owner-3"), requests[0].requestDigest, "All - Sixth request digest should match"
     );
@@ -84,7 +84,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
 
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(4, 2);
     assertEq(requests.length, 2, "Page 3 - 2 requests should be returned");
-    assertEq(nextIndex, 6, "Page 3 - Next index should be 5");
+    assertEq(nextIndex, 6, "Page 3 - Next index should be 6");
     assertEq(
       stopSearch, true, "Page 3 - Stop search should be true because we scanned all requests and returned the last 2"
     );
@@ -192,7 +192,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
 
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(3, 2);
     assertEq(requests.length, 2, "2 requests should be returned");
-    assertEq(nextIndex, 6, "Next index should be 6");
+    assertEq(nextIndex, 7, "Next index should be 7");
     assertEq(stopSearch, false, "Stop search should be false");
     assertEq(keccak256("request-digest-2-owner-2"), requests[0].requestDigest, "9th request digest should match");
     assertEq(keccak256("request-digest-3-owner-1"), requests[1].requestDigest, "7th request digest should match");

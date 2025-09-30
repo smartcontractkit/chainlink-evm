@@ -1440,9 +1440,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
     // maxExpiryLen == 0 means requests do not have to expire and so we need to search all requests
     uint256 oldestValidTimestamp = s_config.maxExpiryLen == 0 ? 0 : block.timestamp - s_config.maxExpiryLen;
-    uint256 reverseIndex = total - 1 - start;
+    uint256 reverseIndex = total - start;
     uint256 addedCount = 0;
     while (addedCount < pageCount) {
+      --reverseIndex;
       OwnerAllowlistedRequest storage request = s_allowlistedRequestsData[reverseIndex];
 
       if (request.expiryTimestamp < oldestValidTimestamp) {
@@ -1463,13 +1464,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
         searchComplete = true;
         break;
       }
-
-      --reverseIndex;
     }
 
     // Calculate the index for the next call. Since we iterate in reverse order (newest to oldest), we need to map the
     // final reverse position back to the equivalent forward index for pagination.
-    nextForwardIndex = total - 1 - reverseIndex;
+    // Example: if we have 6 requests, and we returned all (reverseIndex = 0), then nextForwardIndex would be 6
+    nextForwardIndex = total - reverseIndex;
 
     // Shrink the array only if unable to fill the entire page. This can happen if we had expired requests.
     if (addedCount < pageCount) {
@@ -1661,7 +1661,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     if (start >= total) {
       return 0;
     }
-
     uint256 end = start + limit > total ? total : start + limit;
     return end - start;
   }
