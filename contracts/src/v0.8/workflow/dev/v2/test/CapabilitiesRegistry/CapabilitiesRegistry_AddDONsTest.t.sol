@@ -299,7 +299,7 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
     uint32 donID = s_CapabilitiesRegistry.getNextDONId();
     assertEq(donID, DON_ID + 1);
 
-    CapabilitiesRegistry.DONInfo[] memory dons = s_CapabilitiesRegistry.getDONs();
+    CapabilitiesRegistry.DONInfo[] memory dons = s_CapabilitiesRegistry.getDONs(0, 100);
     assertEq(dons.length, 1);
     assertEq(dons[0].id, 1);
     assertEq(dons[0].name, TEST_DON_NAME_ONE);

@@ -18,7 +18,7 @@ contract CapabilitiesRegistry_GetCapabilitiesTest is BaseTest {
     deprecatedCapabilities[0] = s_basicCapabilityId;
     s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
 
-    CapabilitiesRegistry.CapabilityInfo[] memory capabilities = s_CapabilitiesRegistry.getCapabilities();
+    CapabilitiesRegistry.CapabilityInfo[] memory capabilities = s_CapabilitiesRegistry.getCapabilities(0, 100);
 
     assertEq(capabilities.length, 2);
 
@@ -32,5 +32,25 @@ contract CapabilitiesRegistry_GetCapabilitiesTest is BaseTest {
     assertEq(capabilities[1].configurationContract, address(s_capabilityConfigurationContract));
     assertEq(capabilities[1].capabilityId, s_capabilityWithConfigurationContractId);
     assertEq(capabilities[1].isDeprecated, false);
+  }
+
+  function test_ReturnsPaginatedCapabilities() public {
+    string[] memory deprecatedCapabilities = new string[](1);
+    deprecatedCapabilities[0] = s_basicCapabilityId;
+    s_CapabilitiesRegistry.deprecateCapabilities(deprecatedCapabilities);
+
+    // Test first page
+    CapabilitiesRegistry.CapabilityInfo[] memory capabilities = s_CapabilitiesRegistry.getCapabilities(0, 1);
+    assertEq(capabilities.length, 1);
+    assertEq(capabilities[0].capabilityId, s_basicCapabilityId);
+
+    // Test second page
+    capabilities = s_CapabilitiesRegistry.getCapabilities(1, 1);
+    assertEq(capabilities.length, 1);
+    assertEq(capabilities[0].capabilityId, s_capabilityWithConfigurationContractId);
+
+    // Test out of bounds
+    capabilities = s_CapabilitiesRegistry.getCapabilities(10, 1);
+    assertEq(capabilities.length, 0);
   }
 }

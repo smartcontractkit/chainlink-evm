@@ -20,11 +20,11 @@ contract CapabilitiesRegistry_GetDONByNameTest is BaseTest {
   function test_CorrectlyFetchesDONFamilies() public {
     s_CapabilitiesRegistry.addDONs(s_paramsForTwoDONs);
 
-    string[] memory families = s_CapabilitiesRegistry.getDONFamilies();
+    string[] memory families = s_CapabilitiesRegistry.getDONFamilies(0, 100);
     assertEq(families.length, 1, "Families length mismatch");
     assertEq(families[0], TEST_DON_FAMILY_ONE, "Expected only default family");
 
-    uint256[] memory donIds = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE);
+    uint256[] memory donIds = s_CapabilitiesRegistry.getDONsInFamily(TEST_DON_FAMILY_ONE, 0, 100);
     assertEq(donIds.length, 2, "Expected 2 DONs in default family");
     assertEq(donIds[0], DON_ID, "First DON doesn't belong to the DON family as expected");
     assertEq(donIds[1], DON_ID_TWO, "Second DON doesn't belong to the DON family as expected");
