@@ -175,7 +175,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
   error InvalidExpiryTimestamp(bytes32 requestDigest, uint32 expiryTimestamp, uint32 maxAllowed);
-  error PreviousAllowlistedRequestStillValid(address owner, bytes32 requestDigest);
+  error PreviousAllowlistedRequestStillValid(address owner, bytes32 requestDigest, uint32 expiryTimestamp);
 
   // ================================================================
   // |                         Enums                                |
@@ -1339,8 +1339,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     // if there is another request with the same digest for the same owner, and its expiration timestamp is still valid,
     // do not allow adding a new one until the existing one expires
     bytes32 ownerDigestHash = keccak256(abi.encode(msg.sender, requestDigest));
-    if (s_allowlistedRequests[ownerDigestHash] > block.timestamp) {
-      revert PreviousAllowlistedRequestStillValid(msg.sender, requestDigest);
+    uint32 existingTimestamp = s_allowlistedRequests[ownerDigestHash];
+    if (existingTimestamp > block.timestamp) {
+      revert PreviousAllowlistedRequestStillValid(msg.sender, requestDigest, existingTimestamp);
     }
 
     s_allowlistedRequests[ownerDigestHash] = expiryTimestamp;
@@ -1412,7 +1413,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param limit  Maximum number of entries to return from `start`.
   /// @return allowlistedRequests  Array of {requestDigest, owner, expiryTimestamp} structs
   ///                              for all non-expired requests found in the page slice.
-  /// @return nextForwardIndex     The next index to be used for pagination.
+  /// @return nextForwardIndex     The next index to be used for pagination (always going up).
   /// @return searchComplete       Boolean flag indicating whether the search scanned all requests.
   ///                              This can be used by the caller to avoid unnecessary further calls.
   /// @dev Example call flow with page size 10:
@@ -1471,7 +1472,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     // Example: if we have 6 requests, and we returned all (reverseIndex = 0), then nextForwardIndex would be 6
     nextForwardIndex = total - reverseIndex;
 
-    // Shrink the array only if unable to fill the entire page. This can happen if we had expired requests.
+    // Shrink the array if unable to fill the entire page. This can happen if we have expired requests.
     if (addedCount < pageCount) {
       OwnerAllowlistedRequest[] memory shrinkedList = new OwnerAllowlistedRequest[](addedCount);
       for (uint256 i = 0; i < addedCount; ++i) {

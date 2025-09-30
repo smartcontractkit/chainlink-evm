@@ -78,7 +78,9 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
 
     // Try to update the same request with new expiry (this should fail because previous is still valid)
     vm.expectRevert(
-      abi.encodeWithSelector(WorkflowRegistry.PreviousAllowlistedRequestStillValid.selector, s_user, requestDigest)
+      abi.encodeWithSelector(
+        WorkflowRegistry.PreviousAllowlistedRequestStillValid.selector, s_user, requestDigest, initialExpiry
+      )
     );
     vm.prank(s_user);
     s_registry.allowlistRequest(requestDigest, updatedExpiry);
@@ -118,7 +120,9 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
     // Try to update the second request and verify that this will fail
     uint32 newExpiry2 = uint32(block.timestamp + 5 hours);
     vm.expectRevert(
-      abi.encodeWithSelector(WorkflowRegistry.PreviousAllowlistedRequestStillValid.selector, s_user, requestDigest2)
+      abi.encodeWithSelector(
+        WorkflowRegistry.PreviousAllowlistedRequestStillValid.selector, s_user, requestDigest2, expiry2
+      )
     );
     vm.prank(s_user);
     s_registry.allowlistRequest(requestDigest2, newExpiry2);
