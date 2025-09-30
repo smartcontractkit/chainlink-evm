@@ -135,7 +135,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
       s_registry.getAllowlistedRequestsReversePacked(0, 100);
     assertEq(total, 6, "Total number of allowlisted requests should be 6");
     assertEq(requests.length, 3, "3 requests should be returned");
-    assertEq(nextIndex, 6, "Next index should be 5");
+    assertEq(nextIndex, 6, "Next index should be 6");
     assertEq(stopSearch, true, "Stop search should be true because we scanned all requests");
     assertEq(keccak256("request-digest-3-owner-3"), requests[0].requestDigest, "Sixth request digest should match");
     assertEq(keccak256("request-digest-2-owner-3"), requests[1].requestDigest, "Fifth request digest should match");
@@ -178,7 +178,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
       s_registry.getAllowlistedRequestsReversePacked(0, 100);
     assertEq(requests.length, 6, "6 requests should be returned");
     // We retrieved all 6 active requests. Because we start at index 0, the 7th active request will be at index 6
-    assertEq(nextIndex, 6, "Next index should be 6");
+    assertEq(nextIndex, 7, "Next index should be 7, this item is considered too old");
     assertEq(stopSearch, true, "Stop search should be true");
 
     // this will time out all request with expiry less than currentTimestamp + 1 minutes
@@ -192,14 +192,14 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
 
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(3, 2);
     assertEq(requests.length, 2, "2 requests should be returned");
-    assertEq(nextIndex, 7, "Next index should be 7");
+    assertEq(nextIndex, 6, "Next index should be 6");
     assertEq(stopSearch, false, "Stop search should be false");
     assertEq(keccak256("request-digest-2-owner-2"), requests[0].requestDigest, "9th request digest should match");
     assertEq(keccak256("request-digest-3-owner-1"), requests[1].requestDigest, "7th request digest should match");
 
     (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(6, 2);
     assertEq(requests.length, 0, "0 requests should be returned");
-    assertEq(nextIndex, 6, "Next index should be 6");
+    assertEq(nextIndex, 7, "Next index should be 7, this item is considered too old");
     assertEq(stopSearch, true, "Stop search should be true");
   }
 
