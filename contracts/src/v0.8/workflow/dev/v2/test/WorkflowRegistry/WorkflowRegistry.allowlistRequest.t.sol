@@ -97,12 +97,11 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
     s_registry.allowlistRequest(requestDigest3, expiry3);
 
     // Verify all 3 unique requests are stored
-    uint256 nextIndex;
     bool stopSearch;
     assertEq(s_registry.totalAllowlistedRequests(), 3, "Should have exactly 3 unique requests");
 
     // Verify contents of all requests match expectations, requests are returned in the reverse order they were added
-    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(0, 10);
+    (requests, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(2, 0);
     assertEq(requests.length, 3, "Should return exactly 3 requests");
 
     assertEq(requests[0].expiryTimestamp, expiry3, "Third request expiry should match");
@@ -133,9 +132,11 @@ contract WorkflowRegistry_allowlistRequest is WorkflowRegistrySetup {
     vm.prank(s_user);
     s_registry.allowlistRequest(requestDigest2, newExpiry2);
 
+    uint256 totalRequests = s_registry.totalAllowlistedRequests();
+
     // Verify that we have 2 requests, because the first one is expired now
     vm.warp(currentTimestamp + 3 hours); // Advances the block timestamp by 3 hours only for the next call
-    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(0, 10);
+    (requests, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(totalRequests - 1, 0);
     assertEq(requests.length, 2, "Should return exactly 2 requests");
 
     // Verify contents of all requests match expectations, requests are returned in the reverse order they were added
