@@ -1416,14 +1416,14 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @return searchComplete       Boolean flag indicating whether the search scanned all requests.
   ///                              This can be used by the caller to avoid unnecessary further calls.
   /// @dev Example call flow with page size 10:
-  ///     1. First call: (requests, nextIndex, searchComplete) = getAllowlistedRequestsReversePacked(0, 10)
+  ///     1. First call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(0, 10)
   ///        - requests returned 10 items, nextIndex = 25, searchComplete = false
-  ///     2. Second call: (requests, nextIndex, searchComplete) = getAllowlistedRequestsReversePacked(25, 10)
+  ///     2. Second call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(25, 10)
   ///        - requests returned 10 items, nextIndex = 38, searchComplete = false
-  ///     3. Third call: (requests, nextIndex, searchComplete) = getAllowlistedRequestsReversePacked(38, 10)
+  ///     3. Third call: (requests, nextIndex, searchComplete) = getActiveAllowlistedRequestsReverse(38, 10)
   ///        - requests returned 5 items, nextIndex = 45, searchComplete = true
   ///     4. Aborting further calls, as searchComplete = true because we scanned all requests
-  function getAllowlistedRequestsReversePacked(
+  function getActiveAllowlistedRequestsReverse(
     uint256 start,
     uint256 limit
   )

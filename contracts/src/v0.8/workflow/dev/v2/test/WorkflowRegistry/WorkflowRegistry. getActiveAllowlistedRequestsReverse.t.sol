@@ -5,16 +5,16 @@ import {WorkflowRegistry} from "../../WorkflowRegistry.sol";
 
 import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
-contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistrySetup {
+contract WorkflowRegistry_getActiveAllowlistedRequestsReverse is WorkflowRegistrySetup {
   // NOTE: lock and control current timestamp this way due to issues when via-ir is enabled:
   // https://github.com/foundry-rs/foundry/issues/1373
   uint256 public currentTimestamp = block.timestamp;
 
-  function test_getAllowlistedRequestsReversePacked_WhenNoRequestsAreAllowlisted() external view {
+  function test_getActiveAllowlistedRequestsReverse_WhenNoRequestsAreAllowlisted() external view {
     // it should return an empty array
     uint256 total = s_registry.totalAllowlistedRequests();
     (WorkflowRegistry.OwnerAllowlistedRequest[] memory requests, uint256 nextIndex, bool stopSearch) =
-      s_registry.getAllowlistedRequestsReversePacked(0, 100);
+      s_registry.getActiveAllowlistedRequestsReverse(0, 100);
     assertEq(total, 0, "Total number of allowlisted requests should be 0");
     assertEq(requests.length, 0, "Zero requests should be returned");
     assertEq(nextIndex, 0, "Next index should be 0");
@@ -25,7 +25,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     _;
   }
 
-  function test_getAllowlistedRequestsReversePacked_WhenNoneOfTheRequestsHaveExpired()
+  function test_getActiveAllowlistedRequestsReverse_WhenNoneOfTheRequestsHaveExpired()
     external
     whenSomeRequestsAreAllowlisted
   {
@@ -35,7 +35,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
 
     uint256 total = s_registry.totalAllowlistedRequests();
     (WorkflowRegistry.OwnerAllowlistedRequest[] memory requests, uint256 nextIndex, bool stopSearch) =
-      s_registry.getAllowlistedRequestsReversePacked(0, 100);
+      s_registry.getActiveAllowlistedRequestsReverse(0, 100);
     assertEq(total, 6, "Total number of allowlisted requests should be 6");
     assertEq(requests.length, 6, "All 6 requests should be returned");
     assertEq(stopSearch, true, "Stop search should be true because we scanned all requests");
@@ -60,7 +60,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     );
 
     // try out pagination - page size 2
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(0, 2);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(0, 2);
     assertEq(requests.length, 2, "Page 1 - 2 requests should be returned");
     assertEq(nextIndex, 2, "Page 1 - Next index should be 2");
     assertEq(stopSearch, false, "Page 1 - Stop search should be false");
@@ -71,7 +71,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
       keccak256("request-digest-2-owner-3"), requests[1].requestDigest, "Page 1 - Fifth request digest should match"
     );
 
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(2, 2);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(2, 2);
     assertEq(requests.length, 2, "Page 2 - 2 requests should be returned");
     assertEq(nextIndex, 4, "Page 2 - Next index should be 4");
     assertEq(stopSearch, false, "Page 2 - Stop search should be false");
@@ -82,7 +82,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
       keccak256("request-digest-1-owner-2"), requests[1].requestDigest, "Page 2 - Third request digest should match"
     );
 
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(4, 2);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(4, 2);
     assertEq(requests.length, 2, "Page 3 - 2 requests should be returned");
     assertEq(nextIndex, 6, "Page 3 - Next index should be 6");
     assertEq(
@@ -96,7 +96,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     );
 
     // try out pagination - page size 4
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(0, 4);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(0, 4);
     assertEq(requests.length, 4, "4 requests should be returned");
     assertEq(nextIndex, 4, "Next index should be 4");
     assertEq(stopSearch, false, "Stop search should be false");
@@ -105,7 +105,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     assertEq(keccak256("request-digest-1-owner-3"), requests[2].requestDigest, "Fourth request digest should match");
     assertEq(keccak256("request-digest-1-owner-2"), requests[3].requestDigest, "Third request digest should match");
 
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(4, 4);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(4, 4);
     assertEq(requests.length, 2, "2 requests should be returned");
     assertEq(nextIndex, 6, "Next index should be 6");
     assertEq(stopSearch, true, "Stop search should be true because we scanned all requests and returned the last two");
@@ -113,13 +113,13 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     assertEq(keccak256("request-digest-1-owner-1"), requests[1].requestDigest, "First request digest should match");
 
     // try out pagination - out of bounds
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(8, 4);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(8, 4);
     assertEq(requests.length, 0, "No requests should be returned");
     assertEq(nextIndex, 0, "Next index should be 0");
     assertEq(stopSearch, true, "Stop search should be true");
   }
 
-  function test_getAllowlistedRequestsReversePacked_WhenSomeOfTheRequestsHaveExpired()
+  function test_getActiveAllowlistedRequestsReverse_WhenSomeOfTheRequestsHaveExpired()
     external
     whenSomeRequestsAreAllowlisted
   {
@@ -132,7 +132,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     // this will time out request-digest-1-owner-1, request-digest-2-owner-1 and request-digest-1-owner-3
     vm.warp(currentTimestamp + 1 hours);
     (WorkflowRegistry.OwnerAllowlistedRequest[] memory requests, uint256 nextIndex, bool stopSearch) =
-      s_registry.getAllowlistedRequestsReversePacked(0, 100);
+      s_registry.getActiveAllowlistedRequestsReverse(0, 100);
     assertEq(total, 6, "Total number of allowlisted requests should be 6");
     assertEq(requests.length, 3, "3 requests should be returned");
     assertEq(nextIndex, 6, "Next index should be 6");
@@ -145,7 +145,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     total = s_registry.totalAllowlistedRequests();
     // this will time out all requests aside from request-digest-3-owner-3
     vm.warp(currentTimestamp + 2 hours);
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(0, 100);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(0, 100);
     assertEq(total, 6, "Total number of allowlisted requests should be 6");
     assertEq(requests.length, 1, "1 request should be returned");
     assertEq(keccak256("request-digest-3-owner-3"), requests[0].requestDigest, "Sixth request digest should match");
@@ -154,12 +154,12 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     total = s_registry.totalAllowlistedRequests();
     // this will time out all requests
     vm.warp(currentTimestamp + 3 hours);
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(0, 100);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(0, 100);
     assertEq(total, 6, "Total number of allowlisted requests should be 6");
     assertEq(requests.length, 0, "No requests should be returned");
   }
 
-  function test_getAllowlistedRequestsReversePacked_WhenStopCriteriaWasReached()
+  function test_getActiveAllowlistedRequestsReverse_WhenStopCriteriaWasReached()
     external
     whenSomeRequestsAreAllowlisted
   {
@@ -175,7 +175,7 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
     uint256 total = s_registry.totalAllowlistedRequests();
     assertEq(total, 12, "Total number of allowlisted requests should be 12");
     (WorkflowRegistry.OwnerAllowlistedRequest[] memory requests, uint256 nextIndex, bool stopSearch) =
-      s_registry.getAllowlistedRequestsReversePacked(0, 100);
+      s_registry.getActiveAllowlistedRequestsReverse(0, 100);
     assertEq(requests.length, 6, "6 requests should be returned");
     // We retrieved all 6 active requests. Because we start at index 0, the 7th active request will be at index 6
     assertEq(nextIndex, 7, "Next index should be 7, this item is considered too old");
@@ -183,21 +183,21 @@ contract WorkflowRegistry_getAllowlistedRequestsReversePacked is WorkflowRegistr
 
     // this will time out all request with expiry less than currentTimestamp + 1 minutes
     vm.warp(currentTimestamp + 1 minutes);
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(0, 2);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(0, 2);
     assertEq(requests.length, 2, "2 requests should be returned");
     assertEq(nextIndex, 3, "Next index should be 3");
     assertEq(stopSearch, false, "Stop search should be false");
     assertEq(keccak256("request-digest-6-owner-3"), requests[0].requestDigest, "12th request digest should match");
     assertEq(keccak256("request-digest-4-owner-3"), requests[1].requestDigest, "10th request digest should match");
 
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(3, 2);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(3, 2);
     assertEq(requests.length, 2, "2 requests should be returned");
     assertEq(nextIndex, 6, "Next index should be 6");
     assertEq(stopSearch, false, "Stop search should be false");
     assertEq(keccak256("request-digest-2-owner-2"), requests[0].requestDigest, "9th request digest should match");
     assertEq(keccak256("request-digest-3-owner-1"), requests[1].requestDigest, "7th request digest should match");
 
-    (requests, nextIndex, stopSearch) = s_registry.getAllowlistedRequestsReversePacked(6, 2);
+    (requests, nextIndex, stopSearch) = s_registry.getActiveAllowlistedRequestsReverse(6, 2);
     assertEq(requests.length, 0, "0 requests should be returned");
     assertEq(nextIndex, 7, "Next index should be 7, this item is considered too old");
     assertEq(stopSearch, true, "Stop search should be true");

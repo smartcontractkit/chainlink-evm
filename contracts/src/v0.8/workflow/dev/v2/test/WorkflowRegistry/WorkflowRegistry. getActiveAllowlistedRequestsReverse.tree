@@ -1,4 +1,4 @@
-WorkflowRegistry.getAllowlistedRequestsReversePacked
+WorkflowRegistry.getActiveAllowlistedRequestsReverse
 ├── when no requests are allowlisted
 │   └── it should return an empty array
 └── when some requests are allowlisted
