@@ -30,4 +30,4 @@ compileContract () {
 
 compileContract workflow-v1 v1/WorkflowRegistry
 compileContract workflow-v2 dev/v2/WorkflowRegistry
-compileContract workflow-v2 dev/v2/CapabilitiesRegistry
+compileContract workflow-v2 v2/CapabilitiesRegistry
