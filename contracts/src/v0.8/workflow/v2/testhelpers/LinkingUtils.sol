@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 library LinkingUtils {
-  string public constant TYPE_AND_VERSION = "WorkflowRegistry 2.0.0-dev";
+  string public constant TYPE_AND_VERSION = "WorkflowRegistry 2.0.0";
   uint8 public constant REQUEST_TYPE_LINK = 0;
   uint8 public constant REQUEST_TYPE_UNLINK = 1;
 

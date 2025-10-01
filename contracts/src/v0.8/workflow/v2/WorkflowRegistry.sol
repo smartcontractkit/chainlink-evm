@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL 1.1
 pragma solidity 0.8.26;
 
-import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 
-import {Ownable2StepMsgSender} from "../../../shared/access/Ownable2StepMsgSender.sol";
+import {Ownable2StepMsgSender} from "../../shared/access/Ownable2StepMsgSender.sol";
 
 import {ECDSA} from "@openzeppelin/contracts@5.1.0/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts@5.1.0/utils/cryptography/MessageHashUtils.sol";
@@ -16,7 +16,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   using EnumerableSet for EnumerableSet.AddressSet;
   using EnumerableMap for EnumerableMap.AddressToBytes32Map;
 
-  string public constant override typeAndVersion = "WorkflowRegistry 2.0.0-dev";
+  string public constant override typeAndVersion = "WorkflowRegistry 2.0.0";
   /// @dev Default values for contract configuration.
   uint8 private constant DEFAULT_MAX_NAME_LEN = 64;
   uint8 private constant DEFAULT_MAX_TAG_LEN = 32;
