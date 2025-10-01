@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {Ownable2StepMsgSender} from "../../../shared/access/Ownable2StepMsgSender.sol";
-import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
+import {Ownable2StepMsgSender} from "../../shared/access/Ownable2StepMsgSender.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 
