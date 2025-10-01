@@ -29,7 +29,7 @@ contract MessageEmitter is ITypeAndVersion {
   function getMessage(address emitter, uint256 timestamp) public view returns (string memory) {
     bytes32 key = _hashKey(emitter, timestamp);
     // solhint-disable-next-line gas-custom-errors
-    require(bytes(s_messages[key]).length == 0, "Message does not exist for the given sender and timestamp");
+    require(bytes(s_messages[key]).length > 0, "Message does not exist for the given sender and timestamp");
     return s_messages[key];
   }
 
