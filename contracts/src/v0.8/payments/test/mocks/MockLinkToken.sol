@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import {IERC677Receiver} from "../../../shared/interfaces/IERC677Receiver.sol";
 
 contract MockLinkToken {
+  error InsufficientBalance(uint256 available, uint256 required);
+
   uint256 private constant TOTAL_SUPPLY = 1_000_000_000 * 1e18;
 
   constructor() {
@@ -24,7 +26,9 @@ contract MockLinkToken {
 
   // a very simple transferFrom function with no allowance check and events
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(balances[_from] >= _value, "Insufficient balance");
+    if (balances[_from] < _value) {
+      revert InsufficientBalance(balances[_from], _value);
+    }
 
     balances[_from] -= _value;
     balances[_to] += _value;
@@ -49,13 +53,13 @@ contract MockLinkToken {
 
   function transferAndCall(address _to, uint256 _value, bytes calldata _data) public returns (bool success) {
     transfer(_to, _value);
-    if (isContract(_to)) {
-      contractFallback(_to, _value, _data);
+    if (_isContract(_to)) {
+      _contractFallback(_to, _value, _data);
     }
     return true;
   }
 
-  function isContract(
+  function _isContract(
     address _addr
   ) private view returns (bool hasCode) {
     uint256 length;
@@ -65,7 +69,7 @@ contract MockLinkToken {
     return length > 0;
   }
 
-  function contractFallback(address _to, uint256 _value, bytes calldata _data) private {
+  function _contractFallback(address _to, uint256 _value, bytes calldata _data) private {
     IERC677Receiver receiver = IERC677Receiver(_to);
     receiver.onTokenTransfer(msg.sender, _value, _data);
   }
