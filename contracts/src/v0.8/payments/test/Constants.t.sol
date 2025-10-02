@@ -22,10 +22,10 @@ abstract contract Constants {
   bytes internal constant ASSET_2_SWAP_PATH = bytes("ASSET_2_SWAP_PATH");
   bytes internal constant EMPTY_SWAP_PATH = bytes("");
   uint32 internal constant SWAP_INTERVAL = 1 hours;
-  uint64 internal constant DESTINATION_CHAIN_SELECTOR = 4949039107694359620;
+  uint64 internal constant DESTINATION_CHAIN_SELECTOR = 4_949_039_107_694_359_620;
   uint32 internal constant DESTINATION_CHAIN_GAS_LIMIT = 500_000;
   uint16 internal constant MAX_SLIPPAGE = 200;
-  uint128 internal constant MIN_SWAP_SIZE = 1_000e8;
+  uint128 internal constant MIN_SWAP_SIZE = 1000e8;
   uint128 internal constant MAX_SWAP_SIZE = 100_000e8;
   uint64 internal constant MAX_GAS_PRICE = 100 gwei;
   uint16 internal constant MAX_PRICE_DEVIATION = 200;
@@ -36,7 +36,7 @@ abstract contract Constants {
   uint96 internal constant MAX_DEADLINE_DELAY = 1 hours;
   uint96 internal constant FEE_RESERVE_INITIAL_LINK_BALANCE = 10 ether;
   uint256 internal constant MAX_PERFORM_DATA_SIZE = 2000;
-  uint96 internal constant CHAIN_SELECTOR = 5009297550715157269;
+  uint96 internal constant CHAIN_SELECTOR = 5_009_297_550_715_157_269;
 
   bytes32 public constant TEST_ROLE = keccak256("TEST_ROLE");
 }
