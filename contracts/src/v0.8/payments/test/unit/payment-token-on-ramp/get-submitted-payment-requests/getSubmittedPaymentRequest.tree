@@ -1,0 +1,8 @@
+getSubmittedPaymentRequests.t.sol
+├─ when start is greater or equal to limit
+│  └─ it should revert
+└─ when start is lower than to limit
+   ├─ when start + limit is greater than total number of submitted payment submitted payment requests
+   │  └─ it should return the list of submitted payment requests from start up to the last submitted request
+   └─ when start + limit is lower or equal to the total amount of submitted number of submitted payment requests
+      └─ it should return list of submitted payment requests from start up to start + limit
