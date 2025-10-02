@@ -11,7 +11,7 @@ EmergencyWithdrawer_EmergencyWithdrawIntegrationTest:test_emergencyWithdraw_Mult
 EmergencyWithdrawer_EmergencyWithdrawIntegrationTest:test_emergencyWithdraw_SingleAsset() (gas: 223172)
 EmergencyWithdrawer_EmergencyWithdrawNativeIntegrationTest:test_baseTest() (gas: 164)
 EmergencyWithdrawer_EmergencyWithdrawNativeIntegrationTest:test_baseUnitTest() (gas: 184)
-EmergencyWithdrawer_EmergencyWithdrawNativeIntegrationTest:test_emergencyWithdrawNative() (gas: 33221)
+EmergencyWithdrawer_EmergencyWithdrawNativeIntegrationTest:test_emergencyWithdrawNative() (gas: 33199)
 GrantRoleUnitTests:test_baseTest() (gas: 188)
 GrantRoleUnitTests:test_baseUnitTest() (gas: 186)
 GrantRoleUnitTests:test_grantRole_ShouldEnumerateRoleAfterGranting() (gas: 122501)
