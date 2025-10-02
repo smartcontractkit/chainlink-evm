@@ -37,7 +37,7 @@ jobs:
             { "name": "shared", "setup": { "run-coverage": true, "extra-coverage-params": "--no-match-path='*CallWithExactGas*' --ir-minimum", "min-coverage": 29, "run-gas-snapshot": true }},
             { "name": "vrf", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false }},
             { "name": "workflow", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum --no-match-coverage='(.*v1/test.*)|(.*v2/test.*)'", "min-coverage": 93.0, "run-gas-snapshot": true }},
-            { "name": "data-feeds", "setup": { "run-coverage": true, "min-coverage": 98.5, "run-gas-snapshot": true, "extra-coverage-params": "--no-match-coverage='WIP*'" }}
+            { "name": "data-feeds", "setup": { "run-coverage": true, "min-coverage": 98.5, "run-gas-snapshot": true, "extra-coverage-params": "--no-match-coverage='WIP*'" }},
             { "name": "payments", "setup": { "run-coverage": true, "min-coverage": 100, "run-gas-snapshot": true, "extra-coverage-params": "" }}
           ]
           EOF
