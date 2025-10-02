@@ -1,0 +1,12 @@
+emergencyWithdrawNative.t.sol
+├─ given the contract is not paused
+│  └─ it should revert
+└─ given the contract is paused
+   ├─ when the caller does not have the DEFAULT_ADMIN_ROLE
+   │  └─ it should revert
+   └─ when he caller does have the DEFAULT_ADMIN_ROLE
+      ├─ when the amount is zero
+      │  └─ it should revert
+      └─ when the amount is not zero
+         ├─ it should transfer the native token to the admin
+         └─ it should emit a NativeTokenWithdrawn event

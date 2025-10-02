@@ -4,10 +4,8 @@ pragma solidity 0.8.26;
 import {PaymentTokenOnRamp} from "../../../../PaymentTokenOnRamp.sol";
 import {Common} from "../../../../libraries/Common.sol";
 import {Errors} from "../../../../libraries/Errors.sol";
-import {MockLinkToken} from "../../../mocks/MockLinkToken.sol";
 import {BaseIntegrationTest} from "../../BaseIntegrationTest.t.sol";
 
-import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
 import {Pausable} from "@openzeppelin/contracts@5.0.2/utils/Pausable.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts@5.0.2/utils/cryptography/MessageHashUtils.sol";
 

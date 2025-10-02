@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {AggregatorV3Interface} from "../../../shared/interfaces/AggregatorV3Interface.sol";
-
-import {PausableWithAccessControl} from "../../PausableWithAccessControl.sol";
 import {PaymentTokenOnRamp} from "../../PaymentTokenOnRamp.sol";
 import {Roles} from "../../libraries/Roles.sol";
 import {BaseTest} from "../BaseTest.t.sol";
-
-import {IERC20Metadata} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20Metadata.sol";
 
 abstract contract BaseUnitTest is BaseTest {
   address internal immutable i_token1 = makeAddr("token1");
