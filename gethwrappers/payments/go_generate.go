@@ -4,4 +4,4 @@ package gethwrappers
 
 // Payments
 
-//go:generate go run ../generation/wrap.go payments PaymentTokenOnRamp payment_token_on_ramp
+//go:generate go run ../generation/wrap.go payments PaymentTokenOnRamp payment_token_on_ramp_v1_0_0

@@ -1,2 +1,3 @@
 GETH_VERSION: 1.16.2
 payment_token_on_ramp: ../../contracts/solc/payments/PaymentTokenOnRamp/PaymentTokenOnRamp.sol/PaymentTokenOnRamp.abi.json ../../contracts/solc/payments/PaymentTokenOnRamp/PaymentTokenOnRamp.sol/PaymentTokenOnRamp.bin 47737374ad1e84d8a6865cea4082608db42dc2a5f3c9e3b333a82a0b877c155b
+payment_token_on_ramp_v1_0_0: ../../contracts/solc/payments/PaymentTokenOnRamp/PaymentTokenOnRamp.sol/PaymentTokenOnRamp.abi.json ../../contracts/solc/payments/PaymentTokenOnRamp/PaymentTokenOnRamp.sol/PaymentTokenOnRamp.bin 47737374ad1e84d8a6865cea4082608db42dc2a5f3c9e3b333a82a0b877c155b

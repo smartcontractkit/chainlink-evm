@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package payment_token_on_ramp
+package payment_token_on_ramp_v1_0_0
 
 import (
 	"errors"
