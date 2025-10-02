@@ -12,7 +12,7 @@
 # Contracts catch all, for files not matched by the more specific patterns below
 /contracts/ @smartcontractkit/core-solidity
 
-/pkg/ @smartcontractkit/core
+/pkg/ @smartcontractkit/foundations
 
 # First we match on project names to catch files like the compilation scripts and other files
 # not placed in the project directories. This could give some false positives, so afterwards
