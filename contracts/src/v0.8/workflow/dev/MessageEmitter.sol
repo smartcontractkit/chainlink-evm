@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 
 /// @notice MessageEmitter is used to emit custom messages from a contract.
 /// @dev Sender may only emit a message once per block timestamp.
 contract MessageEmitter is ITypeAndVersion {
-  string public constant override typeAndVersion = "ContractEmitter 1.0.0";
+  string public constant override typeAndVersion = "MessageEmitter 1.0.0-dev";
 
   event MessageEmitted(address indexed emitter, uint256 indexed timestamp, string message);
 

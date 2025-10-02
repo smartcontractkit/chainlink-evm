@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
-import {IReceiver} from "./interfaces/IReceiver.sol";
-import {IRouter} from "./interfaces/IRouter.sol";
+import {IReceiver} from "../../keystone/interfaces/IReceiver.sol";
+import {IRouter} from "../../keystone/interfaces/IRouter.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 
-import {OwnerIsCreator} from "../shared/access/OwnerIsCreator.sol";
+import {OwnerIsCreator} from "../../shared/access/OwnerIsCreator.sol";
 
 /// @notice Simplified mock version of KeystoneForwarder for testing purposes.
 /// The report function is permissionless and skips all validations.
@@ -33,7 +33,7 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
     address indexed receiver, bytes32 indexed workflowExecutionId, bytes2 indexed reportId, bool result
   );
 
-  string public constant override typeAndVersion = "MockKeystoneForwarder 1.0.0";
+  string public constant override typeAndVersion = "MockKeystoneForwarder 1.0.0-dev";
 
   constructor() OwnerIsCreator() {
     s_forwarders[address(this)] = true;

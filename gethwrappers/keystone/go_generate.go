@@ -9,5 +9,3 @@ package gethwrappers
 //go:generate go run ../generation/wrap.go keystone KeystoneFeedsConsumer feeds_consumer
 //go:generate go run ../generation/wrap.go keystone KeystoneForwarder forwarder
 //go:generate go run ../generation/wrap.go keystone OCR3Capability ocr3_capability
-//go:generate go run ../generation/wrap.go keystone MessageEmitter message_emitter
-//go:generate go run ../generation/wrap.go keystone MockKeystoneForwarder mock_forwarder

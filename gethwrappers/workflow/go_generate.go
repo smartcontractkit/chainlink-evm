@@ -9,3 +9,5 @@ package gethwrappers
 //go:generate go run ../generation/wrap.go workflow/dev/v2 WorkflowRegistry workflow_registry_wrapper_v2_dev
 /// [FROZEN] go:generate go run ../generation/wrap.go workflow/dev/v2 CapabilitiesRegistry capabilities_registry_wrapper_v2
 //go:generate go run ../generation/wrap.go workflow/dev/v2 CapabilitiesRegistry capabilities_registry_wrapper_v2_dev
+//go:generate go run ../generation/wrap.go workflow/dev MessageEmitter message_emitter
+//go:generate go run ../generation/wrap.go workflow/dev MockKeystoneForwarder mock_forwarder
