@@ -54,6 +54,14 @@ contract EmergencyWithdrawer_EmergencyWithdrawNativeIntegrationTest is BaseInteg
     EmergencyWithdrawer(s_contractUnderTest).emergencyWithdrawNative(payable(i_owner), 1 ether);
   }
 
+  function test_emergencyWithdrawNative_RevertWhen_ToEqAddressZero()
+    public
+    performForAllContracts(CommonContracts.EMERGENCY_WITHDRAWER)
+  {
+    vm.expectRevert(Errors.InvalidZeroAddress.selector);
+    EmergencyWithdrawer(s_contractUnderTest).emergencyWithdrawNative(payable(address(0)), 1 ether);
+  }
+
   function test_emergencyWithdrawNative_RevertWhen_AmountIsZero()
     public
     performForAllContracts(CommonContracts.EMERGENCY_WITHDRAWER)
