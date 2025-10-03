@@ -132,16 +132,23 @@ type MetaClient struct {
 	ks        MetaClientKeystore
 	customURL *url.URL
 	chainID   *big.Int
+	metrics   *MetaMetrics
 }
 
-func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) *MetaClient {
+func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) (*MetaClient, error) {
+	metrics, err := NewMetaMetrics(chainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
+	}
+
 	return &MetaClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.Txm.MetaClient")),
 		c:         c,
 		ks:        ks,
 		customURL: customURL,
 		chainID:   chainID,
-	}
+		metrics:   metrics,
+	}, nil
 }
 
 func (a *MetaClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
@@ -271,6 +278,9 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	ctx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 
+	// Start timing for latency measurement
+	startTime := time.Now()
+
 	m := []byte{97, 116, 108, 97, 115, 95, 111, 101, 118, 65, 117, 99, 116, 105, 111, 110}
 
 	cid := hexutil.Uint64(a.chainID.Uint64())
@@ -317,9 +327,18 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		// Record latency even on error
+		a.metrics.RecordLatency(ctx, time.Since(startTime))
 		return nil, fmt.Errorf("failed to send POST request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	// Record status code and latency
+	a.metrics.RecordStatusCode(ctx, resp.StatusCode)
+	a.metrics.RecordLatency(ctx, time.Since(startTime))
+
+	// Record event processed
+	a.metrics.RecordEventProcessed(ctx)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
@@ -338,13 +357,39 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	if response.Error.ErrorMessage != "" {
 		if strings.Contains(response.Error.ErrorMessage, "no solver operations received") {
+			// Record that we received 0 bids
+			a.metrics.RecordBidsReceived(ctx, 0)
+			// Emit event for no bids
+			a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), response.Error.ErrorMessage, nil)
 			return nil, nil
 		}
+		// Emit event for other errors
+		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), response.Error.ErrorMessage, nil)
 		return nil, errors.New(response.Error.ErrorMessage)
 	}
 
 	if response.Result == nil {
+		// Record that we received 0 bids
+		a.metrics.RecordBidsReceived(ctx, 0)
+		// Emit event for nil result
+		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), "nil result", nil)
 		return nil, nil
+	}
+
+	// Analyze and record bid metrics
+	if response.Result.SOS != nil {
+		bidCount := len(response.Result.SOS)
+		a.metrics.RecordBidsReceived(ctx, bidCount)
+		
+		// Analyze and record bid metrics in one call
+		a.metrics.RecordBidAnalysis(ctx, response.Result.SOS)
+		
+		// Emit comprehensive event for successful auction with bids
+		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), "", response.Result.SOS)
+	} else {
+		a.metrics.RecordBidsReceived(ctx, 0)
+		// Emit event for successful request but no bids
+		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), "", nil)
 	}
 
 	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
