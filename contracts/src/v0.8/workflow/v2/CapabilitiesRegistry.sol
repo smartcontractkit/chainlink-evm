@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {Ownable2StepMsgSender} from "../../../shared/access/Ownable2StepMsgSender.sol";
-import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
+import {Ownable2StepMsgSender} from "../../shared/access/Ownable2StepMsgSender.sol";
+import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 
@@ -484,7 +484,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   // |                 Internal variables                            |
   // ================================================================
 
-  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0-dev";
+  string public constant override typeAndVersion = "CapabilitiesRegistry 2.0.0";
 
   /// @notice Mapping of DON names to DON IDs
   mapping(string donName => uint32 donId) private s_donNameToId;
