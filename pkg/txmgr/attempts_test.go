@@ -15,6 +15,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
 	gasmocks "github.com/smartcontractkit/chainlink-evm/pkg/gas/mocks"
@@ -166,7 +167,7 @@ func TestTxm_NewDynamicFeeTx(t *testing.T) {
 		for _, tt := range cases {
 			test := tt
 			t.Run(test.name, func(t *testing.T) {
-				cfg := testutils.NewTestChainScopedConfig(t, test.setCfg)
+				cfg := configtest.NewChainScopedConfig(t, test.setCfg)
 				cks := txmgr.NewEvmTxAttemptBuilder(*big.NewInt(1), cfg.EVM().GasEstimator(), kst, nil)
 				dynamicFee := gas.DynamicFee{GasTipCap: test.tipcap, GasFeeCap: test.feecap}
 				_, _, err := cks.NewCustomTxAttempt(t.Context(), txmgr.Tx{Sequence: &n, FromAddress: addr}, gas.EvmFee{
