@@ -1,0 +1,24 @@
+submitPaymentRequests.t.sol
+├─ given the contract is paused
+│  └─ it should revert
+└─ given the contract is not paused
+   ├─ when the payment request list is empty
+   │  └─ it should revert
+   └─ when the payment request list is not empty
+      ├─ when the funding address is the zero address
+      │  └─ it should revert
+      └─ when the funding address is not the zero address
+         ├─ when the payment request is expired
+         │  └─ it should revert
+         └─ when the payment request is not expired
+            ├─ when the token amounts list is empty
+            │  └─ it should revert
+            └─ when the token amounts list is not empty
+               ├─ when the payment request signature is not valid
+               │  └─ it should revert
+               └─ when the payment request signature is valid
+                  ├─ when the amount of tokens to transfer is zero
+                  │  └─ it should revert
+                  └─ when the amount of tokens to transfer is greater than zero
+                     ├─ it should set add the payment request ID to the list of submitted payment requests
+                     └─ it should emit a PaymentRequestSubmitted event

@@ -1,0 +1,15 @@
+constructor.t.sol
+├─ when the chain selector is set to zero
+│  └─ it should revert
+└─ when the chain selector is not set to zero
+   ├─ when the payment request signer set is the zero address
+   │  └─ it should revert
+   └─ when the payment request signer set is not the zero address
+      ├─ when the fee aggregator is set to the zero address
+      │  └─ it should revert
+      └─ when the fee aggregator is not set to the zero address
+         ├─ it should grant the PAYMENT_VALIDATOR_ROLE to the payment request signers
+         ├─ it should set the fee aggregator
+         ├─ it should emit a ChainSelector set event
+         ├─ it should emit a FeeAggregatorSet event
+         └─ it should return the contract type and version 

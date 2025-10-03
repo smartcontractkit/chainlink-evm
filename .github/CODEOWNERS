@@ -12,6 +12,8 @@
 # Contracts catch all, for files not matched by the more specific patterns below
 /contracts/ @smartcontractkit/core-solidity
 
+/pkg/ @smartcontractkit/foundations
+
 # First we match on project names to catch files like the compilation scripts and other files
 # not placed in the project directories. This could give some false positives, so afterwards
 # we match on the project directories to ensure the entire directory is always owned by the
@@ -27,6 +29,7 @@
 /contracts/**/*vrf* @smartcontractkit/dev-services
 /contracts/**/*keystone* @smartcontractkit/keystone
 /contracts/**/*workflow* @smartcontractkit/dev-services
+/contracts/**/*payments* @smartcontractkit/payments
 
 /contracts/src/v0.8/automation @smartcontractkit/dev-services
 /contracts/src/v0.8/functions @smartcontractkit/dev-services
@@ -39,6 +42,7 @@
 /contracts/src/v0.8/vrf @smartcontractkit/dev-services
 /contracts/src/v0.8/keystone @smartcontractkit/keystone
 /contracts/src/v0.8/workflow @smartcontractkit/dev-services
+/contracts/src/v0.8/payments @smartcontractkit/payments
 
 /gethwrappers/functions @smartcontractkit/dev-services
 /gethwrappers/keystone @smartcontractkit/keystone
@@ -47,6 +51,7 @@
 /gethwrappers/data-feeds @smartcontractkit/data-feeds-engineers
 /gethwrappers/shared @smartcontractkit/core-solidity
 /gethwrappers/workflow @smartcontractkit/dev-services
+/gethwrappers/payments @smartcontractkit/payments
 
 # The following don't exist yet but should. They are already included here to allow the teams to
 # set these folders up and own them immediately.

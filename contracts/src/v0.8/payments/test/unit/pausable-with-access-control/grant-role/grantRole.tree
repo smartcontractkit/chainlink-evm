@@ -1,0 +1,5 @@
+grantRole.t.sol
+├── when the role is not the DEFAULT_ADMIN_ROLE
+│   └── it should add the account to the role's member list
+└── when the role is the DEFAULT_ADMIN_ROLE
+    └── it should revert

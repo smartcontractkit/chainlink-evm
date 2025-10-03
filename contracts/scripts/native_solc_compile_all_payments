@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo " ┌──────────────────────────────────────────────┐"
+echo " │    Compiling Payments contracts...           │"
+echo " └──────────────────────────────────────────────┘"
+
+PROJECT="payments"
+
+CONTRACTS_DIR="$(
+    cd "$(dirname "$0")" >/dev/null 2>&1
+    cd ../ && pwd -P
+)"
+export FOUNDRY_PROFILE="$PROJECT"
+
+compileContract() {
+    local profile="$1"
+    local src_rel="$2"
+    local contract=$(basename "$src_rel")
+    echo "Compiling" "$contract"
+
+    env FOUNDRY_PROFILE="$profile" forge build \
+        "$CONTRACTS_DIR/src/v0.8/$PROJECT/$src_rel.sol" \
+        --root "$CONTRACTS_DIR" \
+        --extra-output-files bin abi \
+        -o "$CONTRACTS_DIR/solc/$PROJECT/$src_rel"
+
+    # Copy the generated abi files to a single folder
+    mkdir -p "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"/"$src_rel"
+    cp "$CONTRACTS_DIR"/solc/$PROJECT/"$src_rel"/"$contract".sol/"$contract".abi.json "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"/"$src_rel".abi.json
+}
+
+compileContract payment-token-on-ramp PaymentTokenOnRamp

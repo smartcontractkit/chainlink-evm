@@ -1,0 +1,6 @@
+emergencyUnpause.t.sol
+└── when caller does not have the PAUSER_ROLE
+    ├── it should revert
+    └── when caller does have the PAUSER_ROLE
+        ├── it should unpause the contract
+        └── it should emit an Unpaused event 
