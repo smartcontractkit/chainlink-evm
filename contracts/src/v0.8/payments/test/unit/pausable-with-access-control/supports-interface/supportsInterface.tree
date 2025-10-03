@@ -1,0 +1,5 @@
+supportsInterface.t.sol
+├── it should support the IAccessControlEnumerable interface
+├── it should support the IAccessControlDefaultAdminRules interface
+├── it should support IAccessControl interface
+└── it should support the IERC165 interface

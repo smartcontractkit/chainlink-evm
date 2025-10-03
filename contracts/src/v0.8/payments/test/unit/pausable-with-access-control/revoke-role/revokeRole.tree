@@ -1,0 +1,5 @@
+revokeRole.t.sol
+├── when the role is not the DEFAULT_ADMIN_ROLE
+│   └── it should remove the account from the role's member list
+└── when the role is the DEFAULT_ADMIN_ROLE
+    └── it should revert
