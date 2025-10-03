@@ -123,4 +123,11 @@ test = 'src/v0.8/shared/test'
 solc_version = '0.8.26'
 evm_version = 'paris'
 
+[profile.payments]
+optimizer_runs = 1_000_000
+src = 'src/v0.8/payments'
+test = 'src/v0.8/payments/test'
+solc_version = '0.8.26'
+evm_version = 'paris'
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

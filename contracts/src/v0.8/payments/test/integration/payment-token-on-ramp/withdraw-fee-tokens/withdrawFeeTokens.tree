@@ -1,0 +1,9 @@
+withdrawFeeTokens.t.sol
+├─ given the contract is paused
+│  └─ it should revert
+└─ given the contract is not paused
+   ├─ when the fee tokens list is empty
+   │  └─ it should revert
+   └─ when the fee tokens list is not empty
+      ├─ it should transfer fee tokens to the fee aggregator
+      └─ it should emit a FeeTokenWithdrawn event

@@ -15,6 +15,7 @@ import (
 	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr/txmgrtest"
@@ -34,7 +35,7 @@ func Test_EthResender_resendUnconfirmed(t *testing.T) {
 
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 	ethClient.On("IsL2").Return(false).Maybe()
-	ccfg := testutils.NewTestChainScopedConfig(t, nil)
+	ccfg := configtest.NewChainScopedConfig(t, nil)
 
 	memKS := keystest.NewMemoryChainStore()
 	fromAddress := memKS.MustCreate(t)
@@ -112,7 +113,7 @@ func Test_EthResender_alertUnconfirmed(t *testing.T) {
 	ethClient.On("IsL2").Return(false).Maybe()
 	// Set this to the smallest non-zero value possible for the attempt to be eligible for resend
 	delay := commonconfig.MustNewDuration(1 * time.Nanosecond)
-	ccfg := testutils.NewTestChainScopedConfig(t, func(c *toml.EVMConfig) {
+	ccfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 		c.Chain = toml.Defaults(ubig.New(testutils.FixtureChainID), &toml.Chain{
 			Transactions: toml.Transactions{ResendAfterThreshold: delay},
 		})
@@ -142,7 +143,7 @@ func Test_EthResender_Start(t *testing.T) {
 	t.Parallel()
 
 	db := testutils.NewSqlxDB(t)
-	ccfg := testutils.NewTestChainScopedConfig(t, func(c *toml.EVMConfig) {
+	ccfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 		// This can be anything as long as it isn't zero
 		c.Transactions.ResendAfterThreshold = commonconfig.MustNewDuration(42 * time.Hour)
 		// Set batch size low to test batching
