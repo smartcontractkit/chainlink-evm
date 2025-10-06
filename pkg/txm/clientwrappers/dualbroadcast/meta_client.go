@@ -168,10 +168,12 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil {
 		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
 		if err != nil {
+			a.metrics.RecordSendRequestError(ctx)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
 		}
 		if meta != nil {
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
+				a.metrics.RecordSendOperationError(ctx)
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
 			return nil
@@ -355,6 +357,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	if response.Error.ErrorMessage != "" {
 		if strings.Contains(response.Error.ErrorMessage, "no solver operations received") {
+			a.metrics.RecordBidsReceived(ctx, 0)
 			return nil, nil
 		}
 		return nil, errors.New(response.Error.ErrorMessage)
@@ -362,6 +365,11 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	if response.Result == nil {
 		return nil, nil
+	}
+
+	// Record bid count (number of solver operations received)
+	if response.Result.SOS != nil {
+		a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS))
 	}
 
 	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {

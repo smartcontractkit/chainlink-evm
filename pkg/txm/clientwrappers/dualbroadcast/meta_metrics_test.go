@@ -25,8 +25,11 @@ func TestMetaMetrics(t *testing.T) {
 
 		ctx := context.Background()
 
-		// Test that these don't panic - only status code and latency remain
+		// Test that these don't panic - all metrics methods
 		metrics.RecordStatusCode(ctx, 200)
 		metrics.RecordLatency(ctx, time.Millisecond*100)
+		metrics.RecordBidsReceived(ctx, 5)
+		metrics.RecordSendRequestError(ctx)
+		metrics.RecordSendOperationError(ctx)
 	})
 }
