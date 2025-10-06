@@ -326,19 +326,17 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
+	latency := time.Since(startTime)
+
+	// Record latency
+	a.metrics.RecordLatency(ctx, latency)
 	if err != nil {
-		// Record latency even on error
-		a.metrics.RecordLatency(ctx, time.Since(startTime))
 		return nil, fmt.Errorf("failed to send POST request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Record status code and latency
+	// Record status code
 	a.metrics.RecordStatusCode(ctx, resp.StatusCode)
-	a.metrics.RecordLatency(ctx, time.Since(startTime))
-
-	// Record event processed
-	a.metrics.RecordEventProcessed(ctx)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
@@ -356,41 +354,23 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	if response.Error.ErrorMessage != "" {
+		// Emit event for errors
+		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, latency, response.Error.ErrorMessage, nil)
+		
 		if strings.Contains(response.Error.ErrorMessage, "no solver operations received") {
-			// Record that we received 0 bids
-			a.metrics.RecordBidsReceived(ctx, 0)
-			// Emit event for no bids
-			a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), response.Error.ErrorMessage, nil)
 			return nil, nil
 		}
-		// Emit event for other errors
-		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), response.Error.ErrorMessage, nil)
 		return nil, errors.New(response.Error.ErrorMessage)
 	}
 
 	if response.Result == nil {
-		// Record that we received 0 bids
-		a.metrics.RecordBidsReceived(ctx, 0)
 		// Emit event for nil result
-		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), "nil result", nil)
+		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, latency, "nil result", nil)
 		return nil, nil
 	}
 
-	// Analyze and record bid metrics
-	if response.Result.SOS != nil {
-		bidCount := len(response.Result.SOS)
-		a.metrics.RecordBidsReceived(ctx, bidCount)
-		
-		// Analyze and record bid metrics in one call
-		a.metrics.RecordBidAnalysis(ctx, response.Result.SOS)
-		
-		// Emit comprehensive event for successful auction with bids
-		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), "", response.Result.SOS)
-	} else {
-		a.metrics.RecordBidsReceived(ctx, 0)
-		// Emit event for successful request but no bids
-		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, time.Since(startTime), "", nil)
-	}
+	// Analyze and emit event
+	a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, latency, "", response.Result.SOS)
 
 	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
 		a.lggr.Info("Response: ", string(r))

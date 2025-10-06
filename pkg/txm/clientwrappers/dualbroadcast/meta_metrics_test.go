@@ -24,65 +24,15 @@ func TestMetaMetrics(t *testing.T) {
 		assert.Equal(t, chainID, metrics.chainID)
 	})
 	
-	t.Run("RecordBidAnalysis", func(t *testing.T) {
+	t.Run("RecordBasicMetrics", func(t *testing.T) {
 		metrics, err := NewMetaMetrics(chainID)
 		require.NoError(t, err)
 		
 		ctx := context.Background()
 		
-		tests := []struct {
-			name      string
-			solverOps []*SO
-		}{
-			{
-				name:      "no bids",
-				solverOps: []*SO{},
-			},
-			{
-				name: "single bid",
-				solverOps: []*SO{
-					{
-						BidToken:  common.HexToAddress("0x1234"),
-						BidAmount: (*hexutil.Big)(big.NewInt(100)),
-						Solver:    common.HexToAddress("0xabcd"),
-					},
-				},
-			},
-			{
-				name: "multiple bids",
-				solverOps: []*SO{
-					{
-						BidToken:  common.HexToAddress("0x1234"),
-						BidAmount: (*hexutil.Big)(big.NewInt(200)),
-						Solver:    common.HexToAddress("0xabcd"),
-					},
-					{
-						BidToken:  common.HexToAddress("0x1234"),
-						BidAmount: (*hexutil.Big)(big.NewInt(150)),
-						Solver:    common.HexToAddress("0xefgh"),
-					},
-				},
-			},
-		}
-		
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				// Test that this doesn't panic
-				metrics.RecordBidAnalysis(ctx, tt.solverOps)
-			})
-		}
-	})
-	
-	t.Run("RecordOtherMetrics", func(t *testing.T) {
-		metrics, err := NewMetaMetrics(chainID)
-		require.NoError(t, err)
-		
-		ctx := context.Background()
-		
-		// Test that these don't panic
+		// Test that these don't panic - only status code and latency remain
 		metrics.RecordStatusCode(ctx, 200)
-		metrics.RecordBidsReceived(ctx, 5)
-		metrics.RecordEventProcessed(ctx)
+		metrics.RecordLatency(ctx, time.Millisecond*100)
 	})
 	
 	t.Run("EmitMetaRequestEvent", func(t *testing.T) {
