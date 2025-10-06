@@ -2,7 +2,6 @@ package dualbroadcast
 
 import (
 	"context"
-	"math/big"
 	"testing"
 	"time"
 
@@ -11,7 +10,7 @@ import (
 )
 
 func TestMetaMetrics(t *testing.T) {
-	chainID := big.NewInt(1)
+	chainID := "1"
 
 	t.Run("NewMetaMetrics", func(t *testing.T) {
 		metrics, err := NewMetaMetrics(chainID)
@@ -30,5 +29,4 @@ func TestMetaMetrics(t *testing.T) {
 		metrics.RecordStatusCode(ctx, 200)
 		metrics.RecordLatency(ctx, time.Millisecond*100)
 	})
-
 }

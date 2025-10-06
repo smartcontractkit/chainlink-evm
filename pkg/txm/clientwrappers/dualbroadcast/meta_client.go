@@ -136,7 +136,7 @@ type MetaClient struct {
 }
 
 func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) (*MetaClient, error) {
-	metrics, err := NewMetaMetrics(chainID)
+	metrics, err := NewMetaMetrics(chainID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
 	}
