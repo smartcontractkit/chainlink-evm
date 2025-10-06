@@ -354,9 +354,6 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	if response.Error.ErrorMessage != "" {
-		// Emit event for errors
-		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, latency, response.Error.ErrorMessage, nil)
-		
 		if strings.Contains(response.Error.ErrorMessage, "no solver operations received") {
 			return nil, nil
 		}
@@ -364,13 +361,8 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	if response.Result == nil {
-		// Emit event for nil result
-		a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, latency, "nil result", nil)
 		return nil, nil
 	}
-
-	// Analyze and emit event
-	a.metrics.EmitMetaRequestEvent(ctx, tx, attempt, body, resp.StatusCode, latency, "", response.Result.SOS)
 
 	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
 		a.lggr.Info("Response: ", string(r))

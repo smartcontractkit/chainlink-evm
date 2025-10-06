@@ -2,7 +2,6 @@ package dualbroadcast
 
 import (
 	"context"
-	"encoding/json"
 	"math/big"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-common/pkg/metrics"
-	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
 // MetaMetrics handles all Meta-related metrics via OTEL
@@ -49,81 +47,4 @@ func (m *MetaMetrics) RecordStatusCode(ctx context.Context, statusCode int) {
 // RecordLatency records the latency of Meta endpoint requests
 func (m *MetaMetrics) RecordLatency(ctx context.Context, duration time.Duration) {
 	m.latencyHistogram.Record(ctx, float64(duration.Milliseconds()))
-}
-
-// MetaRequestEvent represents a complete Meta endpoint request for analysis
-type MetaRequestEvent struct {
-	// Request Identification
-	ChainID     string `json:"chainId"`
-	TxID        uint64 `json:"txId"`
-	RequestTime int64  `json:"requestTime"` // Unix milliseconds
-
-	// Request Info
-	RequestPayload string `json:"requestPayload,omitempty"` // JSON string of request params
-
-	// Response Info
-	StatusCode   int    `json:"statusCode"`
-	LatencyMs    int64  `json:"latencyMs"`
-	ErrorMessage string `json:"errorMessage,omitempty"`
-
-	// Solvers Info to be analyzed
-	Solvers []SolverInfo `json:"solvers,omitempty"`
-}
-
-type SolverInfo struct {
-	Address   string `json:"address"`
-	BidAmount string `json:"bidAmount"`
-	BidToken  string `json:"bidToken"`
-}
-
-// EmitMetaRequestEvent sends a structured event to beholder for analysis
-func (m *MetaMetrics) EmitMetaRequestEvent(ctx context.Context,
-	tx *types.Transaction,
-	attempt *types.Attempt,
-	requestPayload []byte,
-	statusCode int,
-	latency time.Duration,
-	errorMsg string,
-	solverOps []*SO) error {
-
-	// Include ALL important solver data as returned by Meta endpoint
-	var solvers []SolverInfo
-	for _, so := range solverOps {
-		bidAmount := "0"
-		if so.BidAmount != nil {
-			bidAmount = so.BidAmount.String()
-		}
-		solvers = append(solvers, SolverInfo{
-			Address:   so.Solver.Hex(),
-			BidAmount: bidAmount,
-			BidToken:  so.BidToken.Hex(),
-		})
-	}
-
-	// Create event with raw data only
-	event := MetaRequestEvent{
-		ChainID:        m.chainID.String(),
-		TxID:           tx.ID,
-		RequestTime:    time.Now().UnixMilli(),
-		RequestPayload: string(requestPayload),
-		StatusCode:     statusCode,
-		LatencyMs:      latency.Milliseconds(),
-		ErrorMessage:   errorMsg,
-		Solvers:        solvers,
-	}
-
-	// Marshal to JSON for beholder
-	eventBytes, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-
-	// Emit to beholder with metadata
-	return beholder.GetEmitter().Emit(
-		ctx,
-		eventBytes,
-		"beholder_domain", "svr",
-		"beholder_entity", "svr.v1.RequestEvent",
-		"beholder_data_schema", "/beholder-request-event/versions/1",
-	)
 }
