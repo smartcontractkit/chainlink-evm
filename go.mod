@@ -7,6 +7,7 @@ toolchain go1.24.7
 require (
 	github.com/ethereum/go-ethereum v1.16.2
 	github.com/fxamacker/cbor/v2 v2.7.0
+	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jackc/pgconn v1.14.3
@@ -92,7 +93,6 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.26.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofrs/flock v0.12.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

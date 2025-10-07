@@ -64,7 +64,7 @@ func TestCodec(t *testing.T) {
 
 	t.Run("GetMaxEncodingSize delegates to GetMaxSize", func(t *testing.T) {
 		actual, err := c.GetMaxEncodingSize(testutils.Context(t), anyN, sizeItemType)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		expected, err := evmtypes.GetMaxSize(anyN, parseDefs(t)[sizeItemType])
 		require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestCodec(t *testing.T) {
 
 	t.Run("GetMaxDecodingSize delegates to GetMaxSize", func(t *testing.T) {
 		actual, err := c.GetMaxDecodingSize(testutils.Context(t), anyN, sizeItemType)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		expected, err := evmtypes.GetMaxSize(anyN, parseDefs(t)[sizeItemType])
 		require.NoError(t, err)

@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -81,7 +80,7 @@ func makeConfigDigestArgs() abi.Arguments {
 	abi, err := abi.JSON(strings.NewReader(exposed_configurator.ExposedConfiguratorABI))
 	if err != nil {
 		// assertion
-		panic(fmt.Sprintf("could not parse configurator ABI: %s", err.Error()))
+		panic("could not parse configurator ABI: " + err.Error())
 	}
 	return abi.Methods["exposedConfigDigestFromConfigData"].Inputs
 }

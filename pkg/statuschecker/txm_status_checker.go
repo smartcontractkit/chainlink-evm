@@ -2,6 +2,7 @@ package statuschecker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
@@ -46,7 +47,7 @@ func (tsc *TxmStatusChecker) CheckMessageStatus(ctx context.Context, msgID strin
 
 		// Break the loop if the cap is reached
 		if counter >= maxStatuses {
-			return allStatuses, counter - 1, fmt.Errorf("maximum number of statuses reached, possible infinite loop")
+			return allStatuses, counter - 1, errors.New("maximum number of statuses reached, possible infinite loop")
 		}
 	}
 
