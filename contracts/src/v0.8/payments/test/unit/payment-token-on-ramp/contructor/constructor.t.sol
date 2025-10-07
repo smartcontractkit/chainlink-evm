@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import {IFeeWithdrawer} from "../../../../interfaces/IFeeWithdrawer.sol";
+
 import {PaymentTokenOnRamp} from "../../../../PaymentTokenOnRamp.sol";
 import {Errors} from "../../../../libraries/Errors.sol";
 import {Roles} from "../../../../libraries/Roles.sol";
@@ -75,5 +77,9 @@ contract PaymentTokenOnRamp_constructor is BaseUnitTest {
     assertTrue(paymentTokenOnRamp.hasRole(Roles.PAYMENT_VALIDATOR_ROLE, s_authority));
     assertEq(paymentTokenOnRamp.getFeeAggregator(), i_feeAggregator);
     assertEq(paymentTokenOnRamp.typeAndVersion(), "PaymentTokenOnRamp 1.0.0-dev");
+  }
+
+  function test_supportsInterface() external view {
+    assertTrue(s_paymentTokenOnRamp.supportsInterface(type(IFeeWithdrawer).interfaceId));
   }
 }

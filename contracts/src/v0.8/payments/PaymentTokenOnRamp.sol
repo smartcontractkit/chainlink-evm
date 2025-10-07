@@ -109,7 +109,7 @@ contract PaymentTokenOnRamp is IERC165, ITypeAndVersion, IFeeWithdrawer, Emergen
   function supportsInterface(
     bytes4 interfaceId
   ) public view override(PausableWithAccessControl, IERC165) returns (bool) {
-    return PausableWithAccessControl.supportsInterface(interfaceId);
+    return (interfaceId == type(IFeeWithdrawer).interfaceId || PausableWithAccessControl.supportsInterface(interfaceId));
   }
 
   // ================================================================================================

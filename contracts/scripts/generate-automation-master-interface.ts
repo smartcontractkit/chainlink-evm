@@ -2,9 +2,9 @@
  * @description this script generates a master interface for interacting with the automation registry
  * @notice run this script with pnpm tsx ./scripts/generate-automation-master-interface.ts
  */
-import Registry from '../artifacts/src/v0.8/automation/v2_2/AutomationRegistry2_2.sol/AutomationRegistry2_2.json'
-import RegistryLogicA from '../artifacts/src/v0.8/automation/v2_2/AutomationRegistryLogicA2_2.sol/AutomationRegistryLogicA2_2.json'
-import RegistryLogicB from '../artifacts/src/v0.8/automation/v2_2/AutomationRegistryLogicB2_2.sol/AutomationRegistryLogicB2_2.json'
+import Registry from '../artifacts/src/v0.8/automation/v2_3/AutomationRegistry2_3.sol/AutomationRegistry2_3.json'
+import RegistryLogicA from '../artifacts/src/v0.8/automation/v2_3/AutomationRegistryLogicA2_3.sol/AutomationRegistryLogicA2_3.json'
+import RegistryLogicB from '../artifacts/src/v0.8/automation/v2_3/AutomationRegistryLogicB2_3.sol/AutomationRegistryLogicB2_3.json'
 
 import fs from 'fs'
 import { exec } from 'child_process'
