@@ -280,9 +280,6 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	ctx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 
-	// Start timing for latency measurement
-	startTime := time.Now()
-
 	m := []byte{97, 116, 108, 97, 115, 95, 111, 101, 118, 65, 117, 99, 116, 105, 111, 110}
 
 	cid := hexutil.Uint64(a.chainID.Uint64())
@@ -327,6 +324,8 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 	req.Header.Add("Content-Type", "application/json")
 
+	// Start timing for endpoint latency measurement
+	startTime := time.Now()
 	resp, err := http.DefaultClient.Do(req)
 	latency := time.Since(startTime)
 
