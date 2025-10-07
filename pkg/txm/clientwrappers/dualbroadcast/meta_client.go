@@ -132,16 +132,23 @@ type MetaClient struct {
 	ks        MetaClientKeystore
 	customURL *url.URL
 	chainID   *big.Int
+	metrics   *MetaMetrics
 }
 
-func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) *MetaClient {
+func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) (*MetaClient, error) {
+	metrics, err := NewMetaMetrics(chainID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
+	}
+
 	return &MetaClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.Txm.MetaClient")),
 		c:         c,
 		ks:        ks,
 		customURL: customURL,
 		chainID:   chainID,
-	}
+		metrics:   metrics,
+	}, nil
 }
 
 func (a *MetaClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
@@ -161,10 +168,12 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil {
 		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
 		if err != nil {
+			a.metrics.RecordSendRequestError(ctx)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
 		}
 		if meta != nil {
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
+				a.metrics.RecordSendOperationError(ctx)
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
 			return nil
@@ -315,11 +324,20 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 	req.Header.Add("Content-Type", "application/json")
 
+	// Start timing for endpoint latency measurement
+	startTime := time.Now()
 	resp, err := http.DefaultClient.Do(req)
+	latency := time.Since(startTime)
+
+	// Record latency
+	a.metrics.RecordLatency(ctx, latency)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send POST request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	// Record status code
+	a.metrics.RecordStatusCode(ctx, resp.StatusCode)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
@@ -338,6 +356,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	if response.Error.ErrorMessage != "" {
 		if strings.Contains(response.Error.ErrorMessage, "no solver operations received") {
+			a.metrics.RecordBidsReceived(ctx, 0)
 			return nil, nil
 		}
 		return nil, errors.New(response.Error.ErrorMessage)
@@ -346,6 +365,9 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	if response.Result == nil {
 		return nil, nil
 	}
+
+	// Record bid count (number of solver operations received)
+	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS))
 
 	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
 		a.lggr.Info("Response: ", string(r))
