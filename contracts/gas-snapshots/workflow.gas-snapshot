@@ -66,6 +66,8 @@ MockKeystoneForwarder_BasicTest:test_IsForwarder_SelfTrue_AddRemove() (gas: 3260
 MockKeystoneForwarder_BasicTest:test_Route_Direct_Failure() (gas: 46093)
 MockKeystoneForwarder_BasicTest:test_Route_Direct_Success() (gas: 48825)
 MockKeystoneForwarder_BasicTest:test_TypeAndVersion() (gas: 9633)
+ReserveManagerTest:testOnReportUpdatesStateAndEmitsEvent() (gas: 81269)
+ReserveManagerTest:testSupportsInterface() (gas: 11897)
 WorkflowRegistryManager_activateVersion:test_WhenTheVersionNumberIsNotActive_AndWhenThereAreNoActiveVersions() (gas: 526598)
 WorkflowRegistryManager_addVersion:test_WhenAutoActivateIsFalse() (gas: 264469)
 WorkflowRegistryManager_addVersion:test_WhenAutoActivateIsTrue() (gas: 269536)
