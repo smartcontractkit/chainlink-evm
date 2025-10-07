@@ -1,7 +1,6 @@
 package dualbroadcast
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ func TestMetaMetrics(t *testing.T) {
 		metrics, err := NewMetaMetrics(chainID)
 		require.NoError(t, err)
 
-		ctx := context.Background()
+		ctx := t.Context()
 
 		// Test that these don't panic - all metrics methods
 		metrics.RecordStatusCode(ctx, 200)
