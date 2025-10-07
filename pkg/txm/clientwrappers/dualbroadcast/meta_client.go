@@ -367,9 +367,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	// Record bid count (number of solver operations received)
-	if response.Result.SOS != nil {
-		a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS))
-	}
+	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS))
 
 	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
 		a.lggr.Info("Response: ", string(r))
