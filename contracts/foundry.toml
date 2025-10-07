@@ -59,7 +59,7 @@ solc_version = '0.8.16'
 optimizer_runs = 1_000_000
 src = 'src/v0.8/automation'
 
-[profile.automation-compile-22]
+[profile.automation-compile-23]
 solc_version = '0.8.19'
 optimizer_runs = 1_000_000
 src = 'src/v0.8/automation'

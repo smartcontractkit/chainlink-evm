@@ -10,10 +10,6 @@ package gethwrappers
 //go:generate go run ./generation/generate_automation/wrap.go KeeperRegistryLogicA2_1 KeeperRegistryLogicA keeper_registry_logic_a_wrapper_2_1
 //go:generate go run ./generation/generate_automation/wrap.go KeeperRegistryLogicB2_1 KeeperRegistryLogicB keeper_registry_logic_b_wrapper_2_1
 //go:generate go run ./generation/wrap.go automation IKeeperRegistryMaster i_keeper_registry_master_wrapper_2_1
-//go:generate go run ./generation/generate_automation/wrap.go AutomationRegistry2_2 AutomationRegistry automation_registry_wrapper_2_2
-//go:generate go run ./generation/generate_automation/wrap.go AutomationRegistryLogicA2_2 AutomationRegistryLogicA automation_registry_logic_a_wrapper_2_2
-//go:generate go run ./generation/generate_automation/wrap.go AutomationRegistryLogicB2_2 AutomationRegistryLogicB automation_registry_logic_b_wrapper_2_2
-//go:generate go run ./generation/wrap.go automation IAutomationRegistryMaster i_automation_registry_master_wrapper_2_2
 //go:generate go run ./generation/wrap.go automation AutomationCompatibleUtils automation_compatible_utils
 //go:generate go run ./generation/generate_automation/wrap.go AutomationRegistrar2_3 AutomationRegistrar automation_registrar_wrapper2_3
 //go:generate go run ./generation/generate_automation/wrap.go AutomationRegistry2_3 AutomationRegistry automation_registry_wrapper_2_3
