@@ -2,6 +2,7 @@ dir: "{{ .InterfaceDir }}/mocks"
 mockname: "{{ .InterfaceName }}"
 outpkg: mocks
 filename: "{{ .InterfaceName | snakecase }}.go"
+fail-on-missing: true
 packages:
   github.com/smartcontractkit/chainlink-framework/chains/heads:
     config:
@@ -25,7 +26,6 @@ packages:
       Workflow:
   github.com/smartcontractkit/chainlink-evm/pkg/gas:
     interfaces:
-      Config:
       EvmFeeEstimator:
       feeEstimatorClient:
         config:
@@ -43,10 +43,6 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/monitor:
     interfaces:
       BalanceMonitor:
-
-  github.com/smartcontractkit/chainlink-evm/pkg/writetarget:
-    interfaces:
-      ProductSpecificProcessor:
   github.com/smartcontractkit/chainlink-framework/multinode:
     config:
       dir: client/clienttest
@@ -63,6 +59,11 @@ packages:
       Client:
       TxStore:
       AttemptBuilder:
+  github.com/smartcontractkit/chainlink-framework/chains/txmgr:
+    config:
+      dir: txmgr/mocks
+    interfaces:
+      TxManager:
   github.com/smartcontractkit/chainlink-framework/chains/txmgr/types:
     config:
       dir: txmgr/mocks
@@ -85,4 +86,3 @@ packages:
       filename: "mock_{{ .InterfaceName | snakecase }}_test.go"
     interfaces:
       Emitter:
-
