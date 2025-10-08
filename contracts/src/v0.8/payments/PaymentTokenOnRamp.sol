@@ -67,7 +67,7 @@ contract PaymentTokenOnRamp is IERC165, ITypeAndVersion, IFeeWithdrawer, Emergen
   }
 
   /// @inheritdoc ITypeAndVersion
-  string public constant override typeAndVersion = "PaymentTokenOnRamp 1.0.0-dev";
+  string public constant override typeAndVersion = "PaymentTokenOnRamp 1.0.0";
 
   /// @dev The off-chain system only generates sigs with v=27; making this constant allows us to save gas by not
   /// transmitting v.
@@ -113,7 +113,7 @@ contract PaymentTokenOnRamp is IERC165, ITypeAndVersion, IFeeWithdrawer, Emergen
   }
 
   // ================================================================================================
-  // ||                                      Payment Requests                                      ||
+  // │                                       Payment Requests                                       │
   // ================================================================================================
 
   /// @notice Submits signed payment requests.
@@ -184,7 +184,7 @@ contract PaymentTokenOnRamp is IERC165, ITypeAndVersion, IFeeWithdrawer, Emergen
   }
 
   // ================================================================================================
-  // ||                                        Withdrawals                                         ||
+  // │                                         Withdrawals                                          │
   // ================================================================================================
 
   /// @inheritdoc IFeeWithdrawer
@@ -244,7 +244,7 @@ contract PaymentTokenOnRamp is IERC165, ITypeAndVersion, IFeeWithdrawer, Emergen
   }
 
   // ================================================================================================
-  // ||                                          Getters                                           ||
+  // │                                           Getters                                            │
   // ================================================================================================
 
   /// @notice Getter function to retrieve the configured fee aggregator.
