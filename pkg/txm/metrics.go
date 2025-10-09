@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/protobuf/proto"
 
@@ -89,19 +90,23 @@ func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
 	}, nil
 }
 
+func (m *txmMetrics) GetOtelAttributes() []attribute.KeyValue {
+	return beholder.OtelAttributes(m.Labels).AsStringAttributes()
+}
+
 func (m *txmMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
 	promNumBroadcastedTxs.WithLabelValues(m.chainID.String()).Add(float64(1))
-	m.numBroadcastedTxs.Add(ctx, 1)
+	m.numBroadcastedTxs.Add(ctx, 1, metric.WithAttributes(m.GetOtelAttributes()...))
 }
 
 func (m *txmMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int) {
 	promNumConfirmedTxs.WithLabelValues(m.chainID.String()).Add(float64(confirmedTransactions))
-	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions))
+	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions), metric.WithAttributes(m.GetOtelAttributes()...))
 }
 
 func (m *txmMetrics) IncrementNumNonceGaps(ctx context.Context) {
 	promNumNonceGaps.WithLabelValues(m.chainID.String()).Add(float64(1))
-	m.numNonceGaps.Add(ctx, 1)
+	m.numNonceGaps.Add(ctx, 1, metric.WithAttributes(m.GetOtelAttributes()...))
 }
 
 func (m *txmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
@@ -110,12 +115,12 @@ func (m *txmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
 		value = 1
 	}
 	promReachedMaxAttempts.WithLabelValues(m.chainID.String()).Set(value)
-	m.reachedMaxAttempts.Record(ctx, int64(value))
+	m.reachedMaxAttempts.Record(ctx, int64(value), metric.WithAttributes(m.GetOtelAttributes()...))
 }
 
 func (m *txmMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID.String()).Observe(duration)
-	m.timeUntilTxConfirmed.Record(ctx, duration)
+	m.timeUntilTxConfirmed.Record(ctx, duration, metric.WithAttributes(m.GetOtelAttributes()...))
 }
 
 func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
