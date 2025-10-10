@@ -32,5 +32,6 @@ compileContract workflow-v1 v1/WorkflowRegistry
 compileContract workflow-v2 v2/WorkflowRegistry
 compileContract workflow-v2 v2/CapabilitiesRegistry
 compileContract message-emitter dev/MessageEmitter
+compileContract message-emitter dev/LoggerTester
 compileContract mock-forwarder dev/MockKeystoneForwarder
 compileContract reserve-manager dev/ReserveManager

@@ -8,5 +8,6 @@ package gethwrappers
 //go:generate go run ../generation/wrap.go workflow/v2 WorkflowRegistry workflow_registry_wrapper_v2
 //go:generate go run ../generation/wrap.go workflow/v2 CapabilitiesRegistry capabilities_registry_wrapper_v2
 //go:generate go run ../generation/wrap.go workflow/dev MessageEmitter message_emitter
+//go:generate go run ../generation/wrap.go workflow/dev LoggerTester logger_tester
 //go:generate go run ../generation/wrap.go workflow/dev MockKeystoneForwarder mock_forwarder
 //go:generate go run ../generation/wrap.go workflow/dev ReserveManager reserve_manager
