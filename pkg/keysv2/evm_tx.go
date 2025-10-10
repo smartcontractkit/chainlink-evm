@@ -1,4 +1,4 @@
-package keystore
+package keysv2
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	gethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -66,6 +67,9 @@ func (k *TxKey) Address() common.Address {
 }
 
 func (k *TxKey) SignTx(ctx context.Context, req SignTxRequest) (SignTxResponse, error) {
+	if req.ChainID == nil {
+		return SignTxResponse{}, fmt.Errorf("chainID is nil")
+	}
 	signer := gethtypes.LatestSignerForChainID(req.ChainID)
 	h := signer.Hash(req.Tx)
 	signReq := keystore.SignRequest{
@@ -81,6 +85,28 @@ func (k *TxKey) SignTx(ctx context.Context, req SignTxRequest) (SignTxResponse, 
 		return SignTxResponse{}, err
 	}
 	return SignTxResponse{Tx: req.Tx}, nil
+}
+
+func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.TransactOpts, error) {
+	if chainID == nil {
+		return nil, fmt.Errorf("chainID is nil")
+	}
+	return &bind.TransactOpts{
+		From: k.addr,
+		Signer: func(address common.Address, tx *gethtypes.Transaction) (*gethtypes.Transaction, error) {
+			if k.Address() != address {
+				return nil, bind.ErrNotAuthorized
+			}
+			resp, err := k.SignTx(ctx, SignTxRequest{
+				ChainID: chainID,
+				Tx:      tx,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return resp.Tx, nil
+		},
+	}, nil
 }
 
 func CreateTxKey(ks keystore.Keystore, localName string) (*TxKey, error) {
