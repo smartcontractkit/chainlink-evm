@@ -77,4 +77,20 @@ func TestTimeBasedDetection(t *testing.T) {
 		assert.True(t, s.timeBasedDetection(tx1))
 		assert.False(t, s.timeBasedDetection(tx2))
 	})
+
+	t.Run("returns false if tx LastBroadcastAt is never set", func(t *testing.T) {
+		config := StuckTxDetectorConfig{
+			BlockTime:             10 * time.Second,
+			StuckTxBlockThreshold: 5,
+		}
+		fromAddress := testutils.NewAddress()
+		s := NewStuckTxDetector(logger.Test(t), "", config)
+
+		tx := &types.Transaction{
+			ID:              1,
+			LastBroadcastAt: nil,
+			FromAddress:     fromAddress,
+		}
+		assert.False(t, s.timeBasedDetection(tx))
+	})
 }

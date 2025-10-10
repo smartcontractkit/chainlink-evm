@@ -3,6 +3,7 @@ package txm
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -209,6 +210,49 @@ func TestBroadcastTransaction(t *testing.T) {
 		assert.Greater(t, *tx.Attempts[0].BroadcastAt, zeroTime)
 		assert.Greater(t, *tx.InitialBroadcastAt, zeroTime)
 	})
+
+	t.Run("picks a new tx and creates a new attempt then fails on initial broadcast", func(t *testing.T) {
+		lggr := logger.Test(t)
+		txStore := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
+		require.NoError(t, txStore.Add(address))
+		txm := NewTxm(lggr, testutils.FixtureChainID, client, ab, txStore, nil, config, keystore)
+		txm.setNonce(address, 8)
+		metrics, err := NewTxmMetrics(testutils.FixtureChainID)
+		require.NoError(t, err)
+		txm.metrics = metrics
+		IDK := "IDK"
+		txRequest := &types.TxRequest{
+			Data:              []byte{100, 200},
+			IdempotencyKey:    &IDK,
+			ChainID:           testutils.FixtureChainID,
+			FromAddress:       address,
+			ToAddress:         testutils.NewAddress(),
+			SpecifiedGasLimit: 22000,
+		}
+		tx, err := txm.CreateTransaction(t.Context(), txRequest)
+		require.NoError(t, err)
+		attempt := &types.Attempt{
+			TxID:     tx.ID,
+			Fee:      gas.EvmFee{GasPrice: assets.NewWeiI(1)},
+			GasLimit: 22000,
+		}
+		ab.On("NewAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
+		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("broadcast error")).Once()
+		// Pending nonce does not increase due to broadcast error
+		client.On("PendingNonceAt", mock.Anything, address).Return(uint64(8), nil).Once()
+
+		bo, err := txm.broadcastTransaction(ctx, address)
+		require.Error(t, err)
+		assert.False(t, bo)
+		assert.Equal(t, uint64(9), txm.getNonce(address))
+		tx, err = txStore.FindTxWithIdempotencyKey(t.Context(), IDK)
+		require.NoError(t, err)
+		assert.Len(t, tx.Attempts, 1)
+		// Since initial broadcast failed, these timestamps are never set
+		assert.Nil(t, tx.LastBroadcastAt)
+		assert.Nil(t, tx.Attempts[0].BroadcastAt)
+		assert.Nil(t, tx.InitialBroadcastAt)
+	})
 }
 
 func TestBackfillTransactions(t *testing.T) {
@@ -320,5 +364,60 @@ func TestBackfillTransactions(t *testing.T) {
 		_, err = txm.backfillTransactions(t.Context(), address)
 		require.NoError(t, err)
 		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+	})
+
+	t.Run("fails to detect transaction with initial broadcast error", func(t *testing.T) {
+		lggr, observedLogs := logger.TestObserved(t, zap.DebugLevel)
+		txStore := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
+		require.NoError(t, txStore.Add(address))
+		ab := newMockAttemptBuilder(t)
+		c := Config{EIP1559: false, BlockTime: 1 * time.Second, RetryBlockThreshold: 1, EmptyTxLimitDefault: 22000}
+		stuckTxDetectorConfig := StuckTxDetectorConfig{
+			BlockTime:             10 * time.Second,
+			StuckTxBlockThreshold: 2,
+		}
+		stuckTxDetector := NewStuckTxDetector(lggr, "", stuckTxDetectorConfig)
+		txm := NewTxm(lggr, testutils.FixtureChainID, client, ab, txStore, stuckTxDetector, c, keystore)
+		emptyMetrics, err := NewTxmMetrics(testutils.FixtureChainID)
+		require.NoError(t, err)
+		txm.metrics = emptyMetrics
+
+		IDK := "IDK"
+		txRequest := &types.TxRequest{
+			Data:              []byte{100, 200},
+			IdempotencyKey:    &IDK,
+			ChainID:           testutils.FixtureChainID,
+			FromAddress:       address,
+			ToAddress:         testutils.NewAddress(),
+			SpecifiedGasLimit: 22000,
+		}
+		tx, err := txm.CreateTransaction(t.Context(), txRequest)
+		require.NoError(t, err)
+		_, err = txStore.UpdateUnstartedTransactionWithNonce(t.Context(), address, 0)
+		require.NoError(t, err)
+
+		attempt := &types.Attempt{
+			TxID:     tx.ID,
+			Fee:      gas.EvmFee{GasPrice: assets.NewWeiI(1)},
+			GasLimit: 22000,
+		}
+
+		ab.On("NewAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil)
+		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(uint64(0), nil)
+		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("broadcast error"))
+		// Pending nonce does not increase due to broadcast error
+		client.On("PendingNonceAt", mock.Anything, address).Return(uint64(0), nil)
+
+		require.Eventually(t, func() bool {
+			_, err = txm.backfillTransactions(t.Context(), address)
+			require.Error(t, err)
+
+			for _, l := range observedLogs.All() {
+				if strings.Contains(l.Message, "Transaction is now considered stuck and will be purged.") {
+					return true
+				}
+			}
+			return false
+		}, time.Minute, time.Second, "transaction never purged")
 	})
 }
