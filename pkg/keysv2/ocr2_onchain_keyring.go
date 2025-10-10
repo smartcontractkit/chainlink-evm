@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/chainlink-common/keystore"
 	evmutil "github.com/smartcontractkit/libocr/offchainreporting2plus/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
@@ -56,7 +58,12 @@ func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, localNa
 	if len(resp.Keys) != 1 {
 		return nil, fmt.Errorf("expected 1 key, got %d", len(resp.Keys))
 	}
-	return &evmOnchainKeyring{ks: ks, OnchainKey: resp.Keys[0].KeyInfo}, nil
+	publicKey, err := gethcrypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	addr := gethcrypto.PubkeyToAddress(*publicKey)
+	return &evmOnchainKeyring{ks: ks, onchainKey: resp.Keys[0].KeyInfo, addr: addr}, nil
 }
 
 // ListOCR2OnchainKeyrings lists OCR2 onchain keyrings. If no local names provided, returns all OCR2 onchain keyrings.
@@ -78,7 +85,7 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNam
 	var keyrings []ocrtypes.OnchainKeyring
 	for _, key := range resp.Keys {
 		if IsOCR2OnchainKey(key.KeyInfo.Name) {
-			keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, OnchainKey: key.KeyInfo})
+			keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, onchainKey: key.KeyInfo})
 		}
 	}
 	return keyrings, nil
@@ -88,12 +95,12 @@ var _ ocrtypes.OnchainKeyring = &evmOnchainKeyring{}
 
 type evmOnchainKeyring struct {
 	ks         keystore.Keystore
-	OnchainKey keystore.KeyInfo
+	onchainKey keystore.KeyInfo
+	addr       common.Address
 }
 
 func (k *evmOnchainKeyring) PublicKey() ocrtypes.OnchainPublicKey {
-	// XXX: PublicKey returns the address of the public key not the public key itself
-	return nil
+	return k.addr.Bytes()
 }
 
 func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) []byte {
@@ -107,7 +114,7 @@ func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) [
 
 func (k *evmOnchainKeyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
 	signResp, err := k.ks.Sign(context.Background(), keystore.SignRequest{
-		KeyName: k.OnchainKey.Name,
+		KeyName: k.onchainKey.Name,
 		Data:    ReportToSigData(reportCtx, report),
 	})
 	return signResp.Signature, err
@@ -116,7 +123,7 @@ func (k *evmOnchainKeyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtyp
 func (k *evmOnchainKeyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
 	verifyResp, err := k.ks.Verify(context.Background(), keystore.VerifyRequest{
 		KeyType:   keystore.ECDSA_S256,
-		PublicKey: k.OnchainKey.PublicKey,
+		PublicKey: k.onchainKey.PublicKey,
 		Data:      ReportToSigData(reportCtx, report),
 		Signature: signature,
 	})
