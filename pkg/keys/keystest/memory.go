@@ -71,3 +71,13 @@ func (m *MemoryChainStore) Sign(ctx context.Context, account string, data []byte
 	}
 	return crypto.Sign(data, pk)
 }
+
+func (m *MemoryChainStore) AddKey(addr common.Address, privKey *ecdsa.PrivateKey) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, exists := m.privKeys[addr.String()]; exists {
+		return fmt.Errorf("key already exists in keystore: %s", addr.String())
+	}
+	m.privKeys[addr.String()] = privKey
+	return nil
+}
