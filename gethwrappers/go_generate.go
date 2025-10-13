@@ -18,3 +18,4 @@ package gethwrappers
 //go:generate go generate ./shared
 //go:generate go generate ./workflow
 //go:generate go generate ./data-feeds
+//go:generate go generate ./payments
