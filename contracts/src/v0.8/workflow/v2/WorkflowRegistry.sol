@@ -87,6 +87,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   mapping(bytes32 donHash => uint32 workflowCount) private s_donActiveWorkflowsCount; // donHash -> #workflows
   /// @dev The don family (as a hash) that the workflow is assigned to. Only active workflows are assigned don families.
   /// When a workflow is paused it is removed from the don family.
+  mapping(bytes32 rid => bytes32 donHash) private s_donByActiveWorkflowRid;
+  /// @dev The don family (as a hash) that the workflow was originally assigned to. This is used for all
+  /// workflows that are added in the active or paused state, because paused ones will not be tracked in the
+  /// s_donByActiveWorkflowRid mapping (this one only tracks active workflows).
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
   /// @dev Used for tracking allowlisted requests for the owner address + request digest, required to enable anyone to
@@ -962,6 +966,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       /* ───────────────────────── 4. UPDATE OTHER INDICES ───────────────── */
       s_workflowKeyToRids[wKey].add(rid);
       s_idToRid[workflowId] = rid;
+      s_donByWorkflowRid[rid] = donHash;
       s_allDONRids[donHash].add(rid);
       s_allOwnerRids[msg.sender].add(rid);
 
@@ -1110,7 +1115,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param  rec   Storage pointer to the workflow metadata struct.
   function _applyPause(bytes32 rid, WorkflowMetadata storage rec) private {
     rec.status = WorkflowStatus.PAUSED;
-    bytes32 donHash = s_donByWorkflowRid[rid];
+    bytes32 donHash = s_donByActiveWorkflowRid[rid];
     _removeActiveIndices(rid, rec.owner, donHash, _workflowKey(rec.owner, rec.workflowName));
 
     s_events.push(
@@ -1167,7 +1172,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     s_userDONActiveWorkflowsCount[owner][donHash] -= 1;
     s_donActiveWorkflowsCount[donHash] -= 1;
     s_activeRidsByWorkflowKey[workflowKey].remove(rid);
-    delete s_donByWorkflowRid[rid];
+    delete s_donByActiveWorkflowRid[rid];
   }
 
   /// @dev Adds a workflow RID into all “active” indices and increments the per-user and per-DON counters.
@@ -1182,7 +1187,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     s_activeDONWorkflowRids[donHash].add(rid);
     s_activeOwnerWorkflowRids[owner].add(rid);
     s_activeRidsByWorkflowKey[workflowKey].add(rid);
-    s_donByWorkflowRid[rid] = donHash;
+    s_donByActiveWorkflowRid[rid] = donHash;
   }
 
   /// @notice This helper **assumes** all higher-level checks have
@@ -1194,7 +1199,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function _applyDelete(bytes32 rid, WorkflowMetadata storage rec) private {
     bytes32 wKey = _workflowKey(rec.owner, rec.workflowName);
     bytes32 donHash = s_donByWorkflowRid[rid];
-    string memory donFamily = s_donConfigs[donHash].family;
     if (rec.status == WorkflowStatus.ACTIVE) {
       _removeActiveIndices(rid, rec.owner, donHash, wKey);
     }
@@ -1204,8 +1208,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     s_workflowKeyToRids[wKey].remove(rid);
     delete s_idToRid[rec.workflowId];
 
+    string memory donFamily = s_donConfigs[donHash].family;
     emit WorkflowDeleted(rec.workflowId, rec.owner, donFamily, rec.workflowName);
     delete s_workflows[rid];
+    delete s_donByWorkflowRid[rid];
   }
 
   /// @notice Change the DON family for a single workflow, updating all indices. This function only applies
@@ -1222,7 +1228,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     WorkflowMetadata storage rec = _getRecord(msg.sender, rid);
     if (rec.status != WorkflowStatus.ACTIVE) revert CannotUpdateDONFamilyForPausedWorkflows();
 
-    bytes32 oldDonHash = s_donByWorkflowRid[rid];
+    bytes32 oldDonHash = s_donByActiveWorkflowRid[rid];
     string memory oldDonFamily = s_donConfigs[oldDonHash].family;
     bytes32 newDonHash = _hash(newDonFamily);
     if (oldDonHash == newDonHash) return;
@@ -1703,8 +1709,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       configUrl: rec.configUrl,
       tag: rec.tag,
       attributes: rec.attributes,
-      // For ACTIVE workflows this will resolve to the correct DON label.
-      // For PAUSED/never‑assigned workflows the label is the empty string.;
       donFamily: s_donConfigs[s_donByWorkflowRid[rid]].family
     });
   }
