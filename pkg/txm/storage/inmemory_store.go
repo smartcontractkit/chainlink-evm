@@ -16,6 +16,9 @@ import (
 )
 
 const (
+	// MaxAllowedAttempts controls the maximum number of attempts stored per transactions. After this threshold is exceeded
+	// the oldest attempts will be pruned to make room for new attempts.
+	MaxAllowedAttempts = 10
 	// maxQueuedTransactions is the max limit of UnstartedTransactions and ConfirmedTransactions structures.
 	maxQueuedTransactions = 250
 	// pruneSubset controls the subset of confirmed transactions to prune when the structure reaches its max limit.
@@ -85,8 +88,13 @@ func (m *InMemoryStore) AppendAttemptToTransaction(txNonce uint64, attempt *type
 	}
 
 	attempt.CreatedAt = time.Now()
-	attempt.ID = uint64(len(tx.Attempts)) // Attempts are not collectively tracked by the in-memory store so attemptIDs are not unique between transactions and can be reused.
+	attempt.ID = uint64(tx.AttemptCount) // Attempts are not collectively tracked by the in-memory store so attemptIDs are not unique between transactions and can be reused.
 	tx.AttemptCount++
+	// Prune oldest attempt.
+	if len(tx.Attempts) >= MaxAllowedAttempts {
+		m.UnconfirmedTransactions[txNonce].Attempts[0] = nil // avoid memory leaks
+		m.UnconfirmedTransactions[txNonce].Attempts = m.UnconfirmedTransactions[txNonce].Attempts[1:]
+	}
 	m.UnconfirmedTransactions[txNonce].Attempts = append(m.UnconfirmedTransactions[txNonce].Attempts, attempt.DeepCopy())
 
 	return nil
@@ -155,8 +163,9 @@ func (m *InMemoryStore) CreateTransaction(txRequest *types.TxRequest) *types.Tra
 	if uLen >= maxQueuedTransactions {
 		m.lggr.Warnw(fmt.Sprintf("Unstarted transactions queue for address: %v reached max limit of: %d. Dropping oldest transactions", m.address, maxQueuedTransactions),
 			"txs", m.UnstartedTransactions[0:uLen-maxQueuedTransactions+1]) // need to make room for the new tx
-		for _, tx := range m.UnstartedTransactions[0 : uLen-maxQueuedTransactions+1] {
+		for i, tx := range m.UnstartedTransactions[0 : uLen-maxQueuedTransactions+1] {
 			delete(m.Transactions, tx.ID)
+			m.UnstartedTransactions[i] = nil // avoid memory leaks
 		}
 		m.UnstartedTransactions = m.UnstartedTransactions[uLen-maxQueuedTransactions+1:]
 	}

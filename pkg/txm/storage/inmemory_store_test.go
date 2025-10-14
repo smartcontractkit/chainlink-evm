@@ -104,6 +104,27 @@ func TestAppendAttemptToTransaction(t *testing.T) {
 		assert.Equal(t, uint16(1), tx.AttemptCount)
 		assert.False(t, tx.Attempts[0].CreatedAt.IsZero())
 	})
+
+	t.Run("appends attempt to transaction and prunes the oldest one if limit is reached", func(t *testing.T) {
+		m2 := NewInMemoryStore(logger.Test(t), fromAddress, testutils.FixtureChainID)
+
+		var nonce uint64 = 10
+		_, err := insertUnconfirmedTransaction(m2, nonce) // txID = 1, nonce = 10
+		require.NoError(t, err)
+
+		var attemptsTried uint16 = 12
+		for range attemptsTried {
+			newAttempt := &types.Attempt{
+				TxID: 1,
+			}
+			require.NoError(t, m2.AppendAttemptToTransaction(nonce, newAttempt))
+		}
+		tx, _ := m2.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
+		fmt.Println("TX:", tx)
+		assert.Len(t, tx.Attempts, MaxAllowedAttempts)
+		assert.Equal(t, attemptsTried, tx.AttemptCount)
+		assert.Equal(t, uint64(attemptsTried-MaxAllowedAttempts), tx.Attempts[0].ID)
+	})
 }
 
 func TestCountUnstartedTransactions(t *testing.T) {
