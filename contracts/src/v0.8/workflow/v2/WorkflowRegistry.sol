@@ -1650,6 +1650,36 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     return list;
   }
 
+  /// @notice Fetch a paginated slice of ACTIVE workflows that belong to a given DON.
+  /// @dev
+  ///  * Reads the RID set `s_activeDONWorkflowRids[donHash]` derived from the donFamily, which tracks every
+  ///    ACTIVE workflow ever registered to that DON.
+  ///  * Does **not** revert on out-of-range requests; instead it returns
+  ///    the largest sub-range that fits inside the set.
+  ///
+  /// @param donFamily  Human readable string of the DON family.
+  /// @param start     Zero-based index into the RID set.
+  /// @param limit     Bathc size for the workflows
+  /// @return list     Array of `WorkflowMetadataView` structs whose length is
+  ///                  `min(limit, total-start)`.
+  function getActiveWorkflowListByDON(
+    string calldata donFamily,
+    uint256 start,
+    uint256 limit
+  ) external view returns (WorkflowMetadataView[] memory list) {
+    bytes32 donHash = _hash(donFamily);
+    uint256 total = s_activeDONWorkflowRids[donHash].length();
+    uint256 count = _getPageCount(total, start, limit);
+
+    list = new WorkflowMetadataView[](count);
+    for (uint256 i = 0; i < count; ++i) {
+      bytes32 rid = s_activeDONWorkflowRids[donHash].at(start + i);
+      list[i] = _workflowMetadataView(rid);
+    }
+
+    return list;
+  }
+
   /// @notice Returns the number of ACTIVE workflows on a given DON.
   /// @param donFamily The human-readable DON label (must have been configured via `setDONLimit`).
   /// @return count The total number of active workflows on that DON.
