@@ -385,6 +385,21 @@ func TestUpdateUnstartedTransactionWithNonce(t *testing.T) {
 		assert.Equal(t, txmgr.TxUnconfirmed, tx.State)
 		assert.Empty(t, m.UnstartedTransactions)
 	})
+
+	t.Run("prunes unstarted transaction beyond the cutoff duration", func(t *testing.T) {
+		var nonce uint64
+		m := NewInMemoryStore(logger.Test(t), fromAddress, testutils.FixtureChainID)
+		insertUnstartedTransactionCreatedAt(m, time.Now().Add(-3*pruneUnstartedTxDuration))
+		insertUnstartedTransactionCreatedAt(m, time.Now().Add(-2*pruneUnstartedTxDuration))
+		insertUnstartedTransactionCreatedAt(m, time.Now().Add(-1*pruneUnstartedTxDuration))
+		insertUnstartedTransaction(m)
+
+		tx, err := m.UpdateUnstartedTransactionWithNonce(nonce)
+		require.NoError(t, err)
+		assert.Equal(t, nonce, *tx.Nonce)
+		assert.Equal(t, txmgr.TxUnconfirmed, tx.State)
+		assert.Empty(t, m.UnstartedTransactions)
+	})
 }
 
 func TestDeleteAttemptForUnconfirmedTx(t *testing.T) {
@@ -461,6 +476,10 @@ func TestPruneConfirmedTransactions(t *testing.T) {
 }
 
 func insertUnstartedTransaction(m *InMemoryStore) *types.Transaction {
+	return insertUnstartedTransactionCreatedAt(m, time.Now())
+}
+
+func insertUnstartedTransactionCreatedAt(m *InMemoryStore, createdAt time.Time) *types.Transaction {
 	m.Lock()
 	defer m.Unlock()
 
@@ -474,7 +493,7 @@ func insertUnstartedTransaction(m *InMemoryStore) *types.Transaction {
 		ToAddress:         testutils.NewAddress(),
 		Value:             big.NewInt(0),
 		SpecifiedGasLimit: 0,
-		CreatedAt:         time.Now(),
+		CreatedAt:         createdAt,
 		State:             txmgr.TxUnstarted,
 	}
 

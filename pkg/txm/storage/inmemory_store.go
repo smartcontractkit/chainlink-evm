@@ -21,6 +21,8 @@ const (
 	// pruneSubset controls the subset of confirmed transactions to prune when the structure reaches its max limit.
 	// i.e. if the value is 3 and the limit is 90, 30 transactions will be pruned.
 	pruneSubset = 3
+	// TODO: This was chosen arbitrarily, we should determine a better value based on expected usage.
+	pruneUnstartedTxDuration = 1 * time.Hour
 )
 
 type InMemoryStore struct {
@@ -269,6 +271,29 @@ func (m *InMemoryStore) UpdateTransactionBroadcast(txID uint64, txNonce uint64, 
 	return nil
 }
 
+// Shouldn't call lock because it's being called by a method that already has the lock
+func (m *InMemoryStore) pruneUnstartedTransactionsWithinDuration(threshold time.Duration) []uint64 {
+	var txIDsToPrune []uint64
+	idxTxToRetain := 0
+	for ; idxTxToRetain < len(m.UnstartedTransactions); idxTxToRetain++ {
+		tx := m.UnstartedTransactions[idxTxToRetain]
+		if time.Since(tx.CreatedAt) > threshold {
+			txIDsToPrune = append(txIDsToPrune, tx.ID)
+			delete(m.Transactions, tx.ID)
+			m.UnstartedTransactions[idxTxToRetain] = nil // prevent memory leak
+		} else {
+			break
+		}
+	}
+	if len(txIDsToPrune) > 0 {
+		m.UnstartedTransactions = m.UnstartedTransactions[idxTxToRetain:]
+	} else {
+		return nil
+	}
+	sort.Slice(txIDsToPrune, func(i, j int) bool { return txIDsToPrune[i] < txIDsToPrune[j] })
+	return txIDsToPrune
+}
+
 func (m *InMemoryStore) UpdateUnstartedTransactionWithNonce(nonce uint64) (*types.Transaction, error) {
 	m.Lock()
 	defer m.Unlock()
@@ -276,6 +301,11 @@ func (m *InMemoryStore) UpdateUnstartedTransactionWithNonce(nonce uint64) (*type
 	if len(m.UnstartedTransactions) == 0 {
 		m.lggr.Debugf("Unstarted transactions queue is empty for address: %v", m.address)
 		return nil, nil
+	}
+	prunedTxIDs := m.pruneUnstartedTransactionsWithinDuration(pruneUnstartedTxDuration)
+	if prunedTxIDs != nil {
+		m.lggr.Debugf("Unstarted transactions map for address: %v exceeds cutoff time of: %s. Pruned %d oldest unstarted transactions. TxIDs: %v",
+			m.address, pruneUnstartedTxDuration, len(prunedTxIDs), prunedTxIDs)
 	}
 
 	if tx, exists := m.UnconfirmedTransactions[nonce]; exists {
