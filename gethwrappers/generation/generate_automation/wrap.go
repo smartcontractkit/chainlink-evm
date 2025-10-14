@@ -17,9 +17,7 @@ func main() {
 	pkgName := os.Args[3]
 
 	abiPath := rootDir + project + "/" + inputClassName + "/" + inputClassName + ".sol/" + inputClassName + ".abi.json"
-	metadataPath := rootDir + project + "/" + inputClassName + "/" + inputClassName + ".sol/" + inputClassName + ".metadata.json"
 	binPath := rootDir + project + "/" + inputClassName + "/" + inputClassName + ".sol/" + inputClassName + ".bin"
-	buildInfoPath := rootDir + project + "/" + inputClassName + "/build/build.json"
 
-	genwrapper.GenWrapper(abiPath, binPath, buildInfoPath, metadataPath, outputClassName, pkgName, "")
+	genwrapper.GenWrapper(abiPath, binPath, "", "", outputClassName, pkgName, "")
 }

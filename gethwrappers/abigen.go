@@ -95,53 +95,55 @@ func Abigen(a AbigenArgs) {
 
 	ImproveAbigenOutput(a.Out, a.ABI)
 
-	// Add build info to exported package
-	info, err := os.ReadFile(a.BuildInfo)
-	if err != nil {
-		Exit("Error while reading build info file", err)
-	}
-	// Unmarshal into BuildInfo struct to filter out unnecessary fields
-	// and marshal back to JSON bytes afterwards
-	var build buildInfo
-	err = json.Unmarshal(info, &build)
-	if err != nil {
-		Exit("Error while unmarshalling build info JSON", err)
-	}
-	// Get version from metadata file, as it contains the commit hash required by etherscan
-	metadataBytes, err := os.ReadFile(a.Metadata)
-	if err != nil {
-		Exit("Error while reading metadata file", err)
-	}
-	var metadata metadata
-	err = json.Unmarshal(metadataBytes, &metadata)
-	if err != nil {
-		Exit("Error while unmarshalling metadata JSON", err)
-	}
+	if a.BuildInfo != "" && a.Metadata != "" && a.BuildInfoOut != "" {
+		// Add build info to exported package
+		info, err := os.ReadFile(a.BuildInfo)
+		if err != nil {
+			Exit(fmt.Sprintf("Error while reading build info file %s", err), err)
+		}
+		// Unmarshal into BuildInfo struct to filter out unnecessary fields
+		// and marshal back to JSON bytes afterwards
+		var build buildInfo
+		err = json.Unmarshal(info, &build)
+		if err != nil {
+			Exit("Error while unmarshalling build info JSON", err)
+		}
+		// Get version from metadata file, as it contains the commit hash required by etherscan
+		metadataBytes, err := os.ReadFile(a.Metadata)
+		if err != nil {
+			Exit("Error while reading metadata file", err)
+		}
+		var metadata metadata
+		err = json.Unmarshal(metadataBytes, &metadata)
+		if err != nil {
+			Exit("Error while unmarshalling metadata JSON", err)
+		}
 
-	if !strings.HasPrefix(metadata.Compiler.Version, "v") {
-		// Verification requires the version to be prefixed with "v"
-		metadata.Compiler.Version = "v" + metadata.Compiler.Version
-	}
-	build.Input.Version = metadata.Compiler.Version
+		if !strings.HasPrefix(metadata.Compiler.Version, "v") {
+			// Verification requires the version to be prefixed with "v"
+			metadata.Compiler.Version = "v" + metadata.Compiler.Version
+		}
+		build.Input.Version = metadata.Compiler.Version
 
-	refinedMeta, err := json.Marshal(build.Input)
-	if err != nil {
-		Exit("Error while marshalling build info JSON", err)
-	}
-	// Export the metadata as a variable in the generated Go file
-	var buf bytes.Buffer
-	if err := json.Compact(&buf, refinedMeta); err != nil {
-		Exit("Error while compacting build info JSON", err)
-	}
-	code := fmt.Sprintf(
-		"%s\npackage %s\n\nvar SolidityStandardInput = %s\n",
-		headerComment,
-		a.Pkg,
-		strconv.Quote(buf.String()),
-	)
-	err = os.WriteFile(a.BuildInfoOut, []byte(code), 0600)
-	if err != nil {
-		Exit("Error while writing build info file", err)
+		refinedMeta, err := json.Marshal(build.Input)
+		if err != nil {
+			Exit("Error while marshalling build info JSON", err)
+		}
+		// Export the metadata as a variable in the generated Go file
+		var buf bytes.Buffer
+		if err := json.Compact(&buf, refinedMeta); err != nil {
+			Exit("Error while compacting build info JSON", err)
+		}
+		code := fmt.Sprintf(
+			"%s\npackage %s\n\nvar SolidityStandardInput = %s\n",
+			headerComment,
+			a.Pkg,
+			strconv.Quote(buf.String()),
+		)
+		err = os.WriteFile(a.BuildInfoOut, []byte(code), 0600)
+		if err != nil {
+			Exit("Error while writing build info file", err)
+		}
 	}
 }
 
