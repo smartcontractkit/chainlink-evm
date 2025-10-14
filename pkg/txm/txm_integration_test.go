@@ -74,7 +74,7 @@ func Test_StuckTx(t *testing.T) {
 	newEstimator := func(logger.Logger) gas.EvmEstimator{return fixedPriceEstimator}
 	estimator := gas.NewEvmFeeEstimator(lggr, newEstimator, false, estimatorCfg, gethClient)
 	ab := NewAttemptBuilder(priceMax, estimator, chainStore)
-	config := Config{BlockTime: 1 * time.Minute, RetryBlockThreshold: 10}
+	config := Config{BlockTime: 10 * time.Second, RetryBlockThreshold: 2}
 
 	stuckTxDetectorConfig := StuckTxDetectorConfig{
 		BlockTime:             10 * time.Second,
@@ -133,7 +133,7 @@ func Test_StuckTx(t *testing.T) {
 			return true
 		}
 		return false
-	}, time.Minute, time.Second, "transactions are stuck")
+	}, 5*time.Minute, time.Second, "transactions are stuck")
 }
 
 type TestGasEstimatorConfig struct {
@@ -141,8 +141,8 @@ type TestGasEstimatorConfig struct {
 }
 
 func (g TestGasEstimatorConfig) EIP1559DynamicFees() bool           { return false }
-func (g TestGasEstimatorConfig) LimitDefault() uint64               { return 42 }
-func (g TestGasEstimatorConfig) BumpPercent() uint16                { return 42 }
+func (g TestGasEstimatorConfig) LimitDefault() uint64               { return 100_000 }
+func (g TestGasEstimatorConfig) BumpPercent() uint16                { return 10 }
 func (g TestGasEstimatorConfig) BumpThreshold() uint64              { return g.bumpThreshold }
 func (g TestGasEstimatorConfig) BumpMin() *assets.Wei               { return assets.NewWeiI(42) }
 func (g TestGasEstimatorConfig) FeeCapDefault() *assets.Wei         { return assets.NewWeiI(42) }
@@ -153,12 +153,12 @@ func (g TestGasEstimatorConfig) LimitMax() uint64                   { return 1_0
 func (g TestGasEstimatorConfig) LimitMultiplier() float32           { return 1 }
 func (g TestGasEstimatorConfig) BumpTxDepth() uint32                { return 42 }
 func (g TestGasEstimatorConfig) LimitTransfer() uint64              { return 42 }
-func (g TestGasEstimatorConfig) PriceMax() *assets.Wei              { return assets.NewWeiI(42) }
-func (g TestGasEstimatorConfig) PriceMin() *assets.Wei              { return assets.NewWeiI(42) }
+func (g TestGasEstimatorConfig) PriceMax() *assets.Wei              { return assets.NewWeiI(1_000_000) }
+func (g TestGasEstimatorConfig) PriceMin() *assets.Wei              { return assets.NewWeiI(1) }
 func (g TestGasEstimatorConfig) Mode() string                       { return "FixedPrice" }
 func (g TestGasEstimatorConfig) EstimateLimit() bool                { return false }
 func (g TestGasEstimatorConfig) SenderAddress() *types.EIP55Address { return nil }
 
 func (g TestGasEstimatorConfig) PriceMaxKey(addr common.Address) *assets.Wei {
-	return assets.NewWeiI(42)
+	return assets.NewWeiI(1_000_000)
 }
