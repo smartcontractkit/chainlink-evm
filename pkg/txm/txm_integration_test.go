@@ -10,6 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
@@ -22,7 +24,6 @@ import (
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_StuckTx(t *testing.T) {
@@ -33,9 +34,10 @@ func Test_StuckTx(t *testing.T) {
 	keyStore := keystest.NewMemoryChainStore()
 	privKey, err := crypto.HexToECDSA(priveKeyStr)
 	require.NoError(t, err)
-	keyStore.AddKey(address, privKey)
+	err = keyStore.AddKey(address, privKey)
+	require.NoError(t, err)
 	chainStore := keys.NewChainStore(keyStore, testutils.FixtureChainID)
-	
+
 	input := &blockchain.Input{
 		Type:    "geth",
 		Port:    "8211",
@@ -44,50 +46,49 @@ func Test_StuckTx(t *testing.T) {
 	output, err := blockchain.NewBlockchainNetwork(input)
 	require.NoError(t, err)
 	require.NotEmpty(t, output.Nodes)
-	httpUrl := output.Nodes[0].ExternalHTTPUrl
+	httpURL := output.Nodes[0].ExternalHTTPUrl
 	// Wait for endpoint to respond
 	require.Eventually(t, func() bool {
-		client, err := rpc.DialContext(t.Context(), httpUrl)
-			if err != nil {
-				return false
-			}
-
-			var blockNumber string
-			if err := client.CallContext(t.Context(), &blockNumber, "eth_blockNumber"); err != nil {
-				return false
-			}
-
-			client.Close()
-			// If we get here, the endpoint is responding
-			return true
+		client, dialErr := rpc.DialContext(t.Context(), httpURL)
+		if dialErr != nil {
+			return false
+		}
+		var blockNumber string
+		if callErr := client.CallContext(t.Context(), &blockNumber, "eth_blockNumber"); callErr != nil {
+			return false
+		}
+		client.Close()
+		// If we get here, the endpoint is responding
+		return true
 	}, 2*time.Minute, time.Second, "rpc endpoint never responded")
 
-	ethClient, err := ethclient.DialContext(t.Context(), httpUrl)
+	ethClient, err := ethclient.DialContext(t.Context(), httpURL)
+	require.NoError(t, err)
 	gethClient := clientwrappers.NewGethClient(ethClient)
 
 	txStore := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
 	require.NoError(t, txStore.Add(address))
 
-	priceMax := func(common.Address) *assets.Wei{return assets.NewWeiI(1_000_000)}
-	estimatorCfg := TestGasEstimatorConfig{bumpThreshold: 5}
+	priceMax := func(common.Address) *assets.Wei { return assets.NewWeiI(1_000_000) }
+	estimatorCfg := TestGasEstimatorConfig{bumpThreshold: 10}
 	fixedPriceEstimator := gas.NewFixedPriceEstimator(estimatorCfg, gethClient, nil, lggr, nil)
-	newEstimator := func(logger.Logger) gas.EvmEstimator{return fixedPriceEstimator}
+	newEstimator := func(logger.Logger) gas.EvmEstimator { return fixedPriceEstimator }
 	estimator := gas.NewEvmFeeEstimator(lggr, newEstimator, false, estimatorCfg, gethClient)
-	ab := NewAttemptBuilder(priceMax, estimator, chainStore)
-	config := Config{BlockTime: 10 * time.Second, RetryBlockThreshold: 2}
+	ab := NewAttemptBuilder(priceMax, estimator, chainStore, estimatorCfg.LimitDefault())
+	config := Config{BlockTime: 10 * time.Second, RetryBlockThreshold: 10}
 
 	stuckTxDetectorConfig := StuckTxDetectorConfig{
 		BlockTime:             10 * time.Second,
-		StuckTxBlockThreshold: 2,
+		StuckTxBlockThreshold: 5,
 	}
 	stuckTxDetector := NewStuckTxDetector(lggr, "", stuckTxDetectorConfig)
-
-	txm := NewTxm(lggr, testutils.FixtureChainID, gethClient, ab, txStore, stuckTxDetector, config, chainStore)
+	errorHandler := SvrErrorHandler{}
+	txm := NewTxm(lggr, testutils.FixtureChainID, gethClient, ab, txStore, stuckTxDetector, config, chainStore, errorHandler)
 	servicetest.Run(t, txm)
 	toAddress := testutils.NewAddress()
 
 	// Create a bad tx that will hold up the TXM
-	IDK := uuid.NewString()	
+	IDK := uuid.NewString()
 	txRequest := &txmtypes.TxRequest{
 		IdempotencyKey:    &IDK,
 		ChainID:           testutils.FixtureChainID,
@@ -128,8 +129,8 @@ func Test_StuckTx(t *testing.T) {
 	require.Eventually(t, func() bool {
 		txCount, err := gethClient.NonceAt(t.Context(), address, nil)
 		require.NoError(t, err)
-		// Only expect 1 transaction to succeed broadcast
-		if txCount > 0 {
+		// Expect txs for both nonces to get confirmed. Empty tx for 0 and the actual tx for 1.
+		if txCount >= 2 {
 			return true
 		}
 		return false
@@ -151,8 +152,8 @@ func (g TestGasEstimatorConfig) TipCapDefault() *assets.Wei         { return ass
 func (g TestGasEstimatorConfig) TipCapMin() *assets.Wei             { return assets.NewWeiI(42) }
 func (g TestGasEstimatorConfig) LimitMax() uint64                   { return 1_000_000_000 }
 func (g TestGasEstimatorConfig) LimitMultiplier() float32           { return 1 }
-func (g TestGasEstimatorConfig) BumpTxDepth() uint32                { return 42 }
-func (g TestGasEstimatorConfig) LimitTransfer() uint64              { return 42 }
+func (g TestGasEstimatorConfig) BumpTxDepth() uint32                { return 16 }
+func (g TestGasEstimatorConfig) LimitTransfer() uint64              { return 21_000 }
 func (g TestGasEstimatorConfig) PriceMax() *assets.Wei              { return assets.NewWeiI(1_000_000) }
 func (g TestGasEstimatorConfig) PriceMin() *assets.Wei              { return assets.NewWeiI(1) }
 func (g TestGasEstimatorConfig) Mode() string                       { return "FixedPrice" }

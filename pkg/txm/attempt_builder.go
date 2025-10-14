@@ -17,15 +17,17 @@ import (
 
 type attemptBuilder struct {
 	gas.EvmFeeEstimator
-	priceMaxKey func(common.Address) *assets.Wei
-	keystore    keys.TxSigner
+	priceMaxKey         func(common.Address) *assets.Wei
+	keystore            keys.TxSigner
+	emptyTxLimitDefault uint64
 }
 
-func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner) *attemptBuilder {
+func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, emptyTxLimitDefault uint64) *attemptBuilder {
 	return &attemptBuilder{
-		priceMaxKey:     priceMaxKey,
-		EvmFeeEstimator: estimator,
-		keystore:        keystore,
+		priceMaxKey:         priceMaxKey,
+		EvmFeeEstimator:     estimator,
+		keystore:            keystore,
+		emptyTxLimitDefault: emptyTxLimitDefault,
 	}
 }
 
@@ -80,11 +82,13 @@ func (a *attemptBuilder) newCustomAttempt(
 func (a *attemptBuilder) newLegacyAttempt(ctx context.Context, tx *types.Transaction, gasPrice *assets.Wei, estimatedGasLimit uint64) (*types.Attempt, error) {
 	var data []byte
 	var toAddress common.Address
+	gasLimit := a.emptyTxLimitDefault
 	value := big.NewInt(0)
 	if !tx.IsPurgeable {
 		data = tx.Data
 		toAddress = tx.ToAddress
 		value = tx.Value
+		gasLimit = estimatedGasLimit
 	}
 	if tx.Nonce == nil {
 		return nil, fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
@@ -93,7 +97,7 @@ func (a *attemptBuilder) newLegacyAttempt(ctx context.Context, tx *types.Transac
 		Nonce:    *tx.Nonce,
 		To:       &toAddress,
 		Value:    value,
-		Gas:      estimatedGasLimit,
+		Gas:      gasLimit,
 		GasPrice: gasPrice.ToInt(),
 		Data:     data,
 	}
@@ -107,7 +111,7 @@ func (a *attemptBuilder) newLegacyAttempt(ctx context.Context, tx *types.Transac
 		TxID:              tx.ID,
 		Fee:               gas.EvmFee{GasPrice: gasPrice},
 		Hash:              signedTx.Hash(),
-		GasLimit:          estimatedGasLimit,
+		GasLimit:          gasLimit,
 		Type:              evmtypes.LegacyTxType,
 		SignedTransaction: signedTx,
 	}
@@ -118,11 +122,13 @@ func (a *attemptBuilder) newLegacyAttempt(ctx context.Context, tx *types.Transac
 func (a *attemptBuilder) newDynamicFeeAttempt(ctx context.Context, tx *types.Transaction, dynamicFee gas.DynamicFee, estimatedGasLimit uint64) (*types.Attempt, error) {
 	var data []byte
 	var toAddress common.Address
+	gasLimit := a.emptyTxLimitDefault
 	value := big.NewInt(0)
 	if !tx.IsPurgeable {
 		data = tx.Data
 		toAddress = tx.ToAddress
 		value = tx.Value
+		gasLimit = estimatedGasLimit
 	}
 	if tx.Nonce == nil {
 		return nil, fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
@@ -131,7 +137,7 @@ func (a *attemptBuilder) newDynamicFeeAttempt(ctx context.Context, tx *types.Tra
 		Nonce:     *tx.Nonce,
 		To:        &toAddress,
 		Value:     value,
-		Gas:       estimatedGasLimit,
+		Gas:       gasLimit,
 		GasFeeCap: dynamicFee.GasFeeCap.ToInt(),
 		GasTipCap: dynamicFee.GasTipCap.ToInt(),
 		Data:      data,
@@ -146,7 +152,7 @@ func (a *attemptBuilder) newDynamicFeeAttempt(ctx context.Context, tx *types.Tra
 		TxID:              tx.ID,
 		Fee:               gas.EvmFee{DynamicFee: gas.DynamicFee{GasFeeCap: dynamicFee.GasFeeCap, GasTipCap: dynamicFee.GasTipCap}},
 		Hash:              signedTx.Hash(),
-		GasLimit:          estimatedGasLimit,
+		GasLimit:          gasLimit,
 		Type:              evmtypes.DynamicFeeTxType,
 		SignedTransaction: signedTx,
 	}

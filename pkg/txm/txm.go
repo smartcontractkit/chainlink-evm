@@ -54,7 +54,7 @@ type AttemptBuilder interface {
 }
 
 type ErrorHandler interface {
-	HandleError(*types.Transaction, error, AttemptBuilder, Client, TxStore, func(common.Address, uint64), bool) (err error)
+	HandleError(context.Context, *types.Transaction, error, AttemptBuilder, Client, TxStore, func(common.Address, uint64)) (err error)
 }
 
 type StuckTxDetector interface {
@@ -93,7 +93,7 @@ type Txm struct {
 	wg        sync.WaitGroup
 }
 
-func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister) *Txm {
+func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler) *Txm {
 	return &Txm{
 		lggr:            logger.Sugared(logger.Named(lggr, "Txm")),
 		keystore:        keystore,
@@ -103,6 +103,7 @@ func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder 
 		txStore:         txStore,
 		stuckTxDetector: stuckTxDetector,
 		config:          config,
+		errorHandler:    errorHandler,
 		nonceMap:        make(map[common.Address]uint64),
 		triggerCh:       make(map[common.Address]chan struct{}),
 	}
@@ -348,9 +349,10 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	tx.AttemptCount++
 	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "duration", time.Since(start), "txErr: ", txErr)
 	if txErr != nil && t.errorHandler != nil {
-		if err = t.errorHandler.HandleError(tx, txErr, t.attemptBuilder, t.client, t.txStore, t.setNonce, false); err != nil {
-			return
+		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.attemptBuilder, t.client, t.txStore, t.setNonce); err != nil {
+			return fmt.Errorf("failed to handle broadcast error %w: %w", txErr, err)
 		}
+		return fmt.Errorf("transaction failed to broadcast: %w", txErr)
 	} else if txErr != nil {
 		pendingNonce, pErr := t.client.PendingNonceAt(ctx, fromAddress)
 		if pErr != nil {
@@ -417,8 +419,8 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 
 		if tx.AttemptCount >= maxAllowedAttempts {
 			t.metrics.ReachedMaxAttempts(ctx, true)
-			return true, fmt.Errorf("reached max allowed attempts for txID: %d. TXM won't broadcast any more attempts."+
-				"If this error persists, it means the transaction won't be confirmed and the TXM needs to be restarted."+
+			return true, fmt.Errorf("reached max allowed attempts for txID: %d. TXM won't broadcast any more attempts. "+
+				"If this error persists, it means the transaction won't be confirmed and the TXM needs to be restarted. "+
 				"Look for any error messages from previous broadcasted attempts that may indicate why this happened, i.e. wallet is out of funds. Tx: %v", tx.ID,
 				tx.PrintWithAttempts())
 		}
