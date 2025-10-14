@@ -282,7 +282,7 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
     vm.stopPrank();
   }
 
-  function test_upsertWorkflow_WhenDonFamilyIsChangedOnUpdateWorkflow()
+  function test_upsertWorkflow_RevertWhenDonFamilyIsChangedOnUpdateWorkflow()
     external
     whenMsgSenderIsALinkedOwner
     whenDONLimtisAreSet
@@ -334,6 +334,61 @@ contract WorkflowRegistry_upsertWorkflow is WorkflowRegistrySetup {
       workflowId2,
       WorkflowRegistry.WorkflowStatus.ACTIVE,
       differentDonFamily,
+      binaryUrl1,
+      configUrl1,
+      attributes1,
+      true
+    );
+  }
+
+  function test_upsertWorkflow_RevertWhenStatusIsChangedOnUpdateWorkflow()
+    external
+    whenMsgSenderIsALinkedOwner
+    whenDONLimtisAreSet
+  {
+    // it should revert because this is not allowed
+
+    // deploy a workflow first
+    bytes32 workflowId1 = keccak256("workflow1");
+    string memory workflowName1 = "Price Oracle";
+    string memory tag1 = "oracle-main";
+    string memory binaryUrl1 = "https://example.com/binaries/price-oracle.wasm";
+    string memory configUrl1 = "https://example.com/configs/price-oracle.json";
+    bytes memory attributes1 = abi.encode("Price Oracle v1.0");
+
+    vm.prank(s_user);
+    s_registry.upsertWorkflow(
+      workflowName1,
+      tag1,
+      workflowId1,
+      WorkflowRegistry.WorkflowStatus.ACTIVE,
+      s_donFamily,
+      binaryUrl1,
+      configUrl1,
+      attributes1,
+      true
+    );
+    WorkflowRegistry.WorkflowMetadataView[] memory wrs = s_registry.getWorkflowListByOwner(s_user, 0, 100);
+    assertEq(wrs.length, 1, "There should be 1 workflow for the s_user");
+
+    bytes32 workflowId2 = keccak256("workflow2");
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        WorkflowRegistry.CannotChangeStatusOnUpdate.selector,
+        workflowId2,
+        s_user,
+        workflowName1,
+        tag1,
+        WorkflowRegistry.WorkflowStatus.PAUSED
+      )
+    );
+    vm.prank(s_user);
+    s_registry.upsertWorkflow(
+      workflowName1,
+      tag1,
+      workflowId2,
+      WorkflowRegistry.WorkflowStatus.PAUSED,
+      s_donFamily,
       binaryUrl1,
       configUrl1,
       attributes1,

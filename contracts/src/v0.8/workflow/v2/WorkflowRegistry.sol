@@ -173,6 +173,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error EmptyUpdateBatch();
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
+  error CannotChangeStatusOnUpdate(
+    bytes32 workflowId, address owner, string workflowName, string tag, WorkflowStatus attemptedStatus
+  );
   error CannotChangeDONFamilyOnUpdate(
     bytes32 workflowId, address owner, string workflowName, string tag, string attemptedDonFamily
   );
@@ -974,6 +977,9 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       // update workflow path
       // check the workflow belongs to the owner
       if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
+
+      // check if the user is trying to change the workflow status
+      if (rec.status != status) revert CannotChangeStatusOnUpdate(workflowId, msg.sender, workflowName, tag, status);
 
       // check if the user is trying to change the donFamily
       bytes32 donHash = s_donByWorkflowRid[rid];
