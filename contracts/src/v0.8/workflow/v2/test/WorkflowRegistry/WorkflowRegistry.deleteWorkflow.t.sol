@@ -124,13 +124,62 @@ contract WorkflowRegistrydeleteWorkflow is WorkflowRegistrySetup {
       false
     );
 
-    WorkflowRegistry.WorkflowMetadataView[] memory finalList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
-    assertEq(finalList.length, 1, "Should have exactly 1 new workflow");
-    assertEq(finalList[0].workflowId, wfId, "New workflow ID should match");
-    assertEq(finalList[0].workflowName, wfName, "New workflow name should match");
-    assertEq(finalList[0].owner, s_owner, "New workflow owner should match");
+    WorkflowRegistry.WorkflowMetadataView[] memory wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 1, "Should have exactly 1 new workflow");
+    assertEq(wfList[0].workflowId, wfId, "New workflow ID should match");
+    assertEq(wfList[0].workflowName, wfName, "New workflow name should match");
+    assertEq(wfList[0].owner, s_owner, "New workflow owner should match");
     // Verify no ghost entries (all returned workflows have valid metadata)
-    assertTrue(finalList[0].owner != address(0), "New workflow should have valid owner");
+    assertTrue(wfList[0].owner != address(0), "New workflow should have valid owner");
+
+    vm.prank(s_owner);
+    s_registry.pauseWorkflow(wfId);
+    wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 1, "Should have exactly 1 workflow");
+    assertTrue(uint8(wfList[0].status) == uint8(WorkflowRegistry.WorkflowStatus.PAUSED), "Status should be PAUSED");
+    assertEq(wfList[0].donFamily, donFamily, "DON family should match the updated value");
+    assertEq(wfList[0].workflowId, wfId, "Workflow ID should match the updated value");
+    assertEq(wfList[0].owner, s_owner, "Owner should match the updated value");
+    assertEq(wfList[0].workflowName, wfName, "Workflow name should match the updated value");
+
+    vm.prank(s_owner);
+    s_registry.activateWorkflow(wfId, donFamily);
+    wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 1, "Should have exactly 1 workflow");
+    assertTrue(uint8(wfList[0].status) == uint8(WorkflowRegistry.WorkflowStatus.ACTIVE), "Status should be ACTIVE");
+    assertEq(wfList[0].donFamily, donFamily, "DON family should match the updated value");
+    assertEq(wfList[0].workflowId, wfId, "Workflow ID should match the updated value");
+    assertEq(wfList[0].owner, s_owner, "Owner should match the updated value");
+    assertEq(wfList[0].workflowName, wfName, "Workflow name should match the updated value");
+
+    vm.prank(s_owner);
+    s_registry.pauseWorkflow(wfId);
+
+    vm.prank(s_owner);
+    string memory changeDonFamily = "different-test-don";
+    s_registry.setDONLimit(changeDonFamily, 10, 5);
+
+    vm.prank(s_owner);
+    s_registry.activateWorkflow(wfId, changeDonFamily);
+    wfList = s_registry.getWorkflowListByDON(changeDonFamily, 0, 10);
+    assertEq(wfList.length, 1, "Should have exactly 1 workflow");
+    assertTrue(uint8(wfList[0].status) == uint8(WorkflowRegistry.WorkflowStatus.ACTIVE), "Status should be ACTIVE");
+    assertEq(wfList[0].donFamily, changeDonFamily, "DON family should match the updated value");
+    assertEq(wfList[0].workflowId, wfId, "Workflow ID should match the updated value");
+    assertEq(wfList[0].owner, s_owner, "Owner should match the updated value");
+    assertEq(wfList[0].workflowName, wfName, "Workflow name should match the updated value");
+
+    wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 0, "Original DON family list should be empty");
+
+    vm.prank(s_owner);
+    s_registry.deleteWorkflow(wfId);
+
+    wfList = s_registry.getWorkflowListByDON(changeDonFamily, 0, 10);
+    assertEq(wfList.length, 0, "DON list should be empty after deletion");
+
+    wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 0, "Owner list should be empty after deletion");
   }
 
   // deleting ACTIVE workflow turned into PAUSED should not leave any stale entries
@@ -187,12 +236,48 @@ contract WorkflowRegistrydeleteWorkflow is WorkflowRegistrySetup {
       false
     );
 
-    WorkflowRegistry.WorkflowMetadataView[] memory finalList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
-    assertEq(finalList.length, 1, "Should have exactly 1 new workflow");
-    assertEq(finalList[0].workflowId, wfId, "New workflow ID should match");
-    assertEq(finalList[0].workflowName, wfName, "New workflow name should match");
-    assertEq(finalList[0].owner, s_owner, "New workflow owner should match");
+    WorkflowRegistry.WorkflowMetadataView[] memory wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 1, "Should have exactly 1 new workflow");
+    assertEq(wfList[0].workflowId, wfId, "New workflow ID should match");
+    assertEq(wfList[0].workflowName, wfName, "New workflow name should match");
+    assertEq(wfList[0].owner, s_owner, "New workflow owner should match");
     // Verify no ghost entries (all returned workflows have valid metadata)
-    assertTrue(finalList[0].owner != address(0), "New workflow should have valid owner");
+    assertTrue(wfList[0].owner != address(0), "New workflow should have valid owner");
+
+    vm.prank(s_owner);
+    s_registry.activateWorkflow(wfId, donFamily);
+    wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 1, "Should have exactly 1 workflow");
+    assertTrue(uint8(wfList[0].status) == uint8(WorkflowRegistry.WorkflowStatus.ACTIVE), "Status should be ACTIVE");
+    assertEq(wfList[0].donFamily, donFamily, "DON family should match the updated value");
+    assertEq(wfList[0].workflowId, wfId, "Workflow ID should match the updated value");
+    assertEq(wfList[0].owner, s_owner, "Owner should match the updated value");
+    assertEq(wfList[0].workflowName, wfName, "Workflow name should match the updated value");
+
+    vm.prank(s_owner);
+    string memory changeDonFamily = "different-test-don";
+    s_registry.setDONLimit(changeDonFamily, 10, 5);
+
+    vm.prank(s_owner);
+    s_registry.updateWorkflowDONFamily(wfId, changeDonFamily);
+    wfList = s_registry.getWorkflowListByDON(changeDonFamily, 0, 10);
+    assertEq(wfList.length, 1, "Should have exactly 1 workflow");
+    assertTrue(uint8(wfList[0].status) == uint8(WorkflowRegistry.WorkflowStatus.ACTIVE), "Status should be ACTIVE");
+    assertEq(wfList[0].donFamily, changeDonFamily, "DON family should match the updated value");
+    assertEq(wfList[0].workflowId, wfId, "Workflow ID should match the updated value");
+    assertEq(wfList[0].owner, s_owner, "Owner should match the updated value");
+    assertEq(wfList[0].workflowName, wfName, "Workflow name should match the updated value");
+
+    wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 0, "Original DON family list should be empty");
+
+    vm.prank(s_owner);
+    s_registry.deleteWorkflow(wfId);
+
+    wfList = s_registry.getWorkflowListByDON(changeDonFamily, 0, 10);
+    assertEq(wfList.length, 0, "DON list should be empty after deletion");
+
+    wfList = s_registry.getWorkflowListByDON(donFamily, 0, 10);
+    assertEq(wfList.length, 0, "Owner list should be empty after deletion");
   }
 }
