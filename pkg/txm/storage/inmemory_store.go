@@ -277,13 +277,12 @@ func (m *InMemoryStore) pruneUnstartedTransactionsWithinDuration(threshold time.
 	idxTxToRetain := 0
 	for ; idxTxToRetain < len(m.UnstartedTransactions); idxTxToRetain++ {
 		tx := m.UnstartedTransactions[idxTxToRetain]
-		if time.Since(tx.CreatedAt) > threshold {
-			txIDsToPrune = append(txIDsToPrune, tx.ID)
-			delete(m.Transactions, tx.ID)
-			m.UnstartedTransactions[idxTxToRetain] = nil // prevent memory leak
-		} else {
+		if time.Since(tx.CreatedAt) < threshold {
 			break
 		}
+		txIDsToPrune = append(txIDsToPrune, tx.ID)
+		delete(m.Transactions, tx.ID)
+		m.UnstartedTransactions[idxTxToRetain] = nil // prevent memory leak
 	}
 	if len(txIDsToPrune) > 0 {
 		m.UnstartedTransactions = m.UnstartedTransactions[idxTxToRetain:]
