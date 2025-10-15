@@ -284,11 +284,10 @@ func (m *InMemoryStore) pruneUnstartedTransactionsWithinDuration(threshold time.
 		delete(m.Transactions, tx.ID)
 		m.UnstartedTransactions[idxTxToRetain] = nil // prevent memory leak
 	}
-	if len(txIDsToPrune) > 0 {
-		m.UnstartedTransactions = m.UnstartedTransactions[idxTxToRetain:]
-	} else {
+	if len(txIDsToPrune) == 0 {
 		return nil
 	}
+	m.UnstartedTransactions = m.UnstartedTransactions[idxTxToRetain:]
 	sort.Slice(txIDsToPrune, func(i, j int) bool { return txIDsToPrune[i] < txIDsToPrune[j] })
 	return txIDsToPrune
 }
