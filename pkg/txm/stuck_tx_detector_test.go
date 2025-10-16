@@ -56,6 +56,24 @@ func TestTimeBasedDetection(t *testing.T) {
 		assert.True(t, s.timeBasedDetection(tx))
 	})
 
+	t.Run("returns true if LastBroadcastAt is nil but attempt count is above threshold", func(t *testing.T) {
+		config := StuckTxDetectorConfig{
+			BlockTime:             10 * time.Second,
+			StuckTxBlockThreshold: 5,
+		}
+		fromAddress := testutils.NewAddress()
+		s := NewStuckTxDetector(logger.Test(t), "", config)
+
+		// This can happen if the transaction was broadcasted multiple times before but got no success messages.
+		tx := &types.Transaction{
+			ID:              1,
+			LastBroadcastAt: nil,
+			FromAddress:     fromAddress,
+			AttemptCount:    maxAttemptsThreshold,
+		}
+		assert.True(t, s.timeBasedDetection(tx))
+	})
+
 	t.Run("marks first tx as stuck, updates purge time for address, and returns false for the second tx with the same broadcast time", func(t *testing.T) {
 		config := StuckTxDetectorConfig{
 			BlockTime:             1 * time.Second,
