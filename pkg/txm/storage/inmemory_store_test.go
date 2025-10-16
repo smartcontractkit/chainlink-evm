@@ -392,13 +392,14 @@ func TestUpdateUnstartedTransactionWithNonce(t *testing.T) {
 		insertUnstartedTransactionCreatedAt(m, time.Now().Add(-3*pruneUnstartedTxDuration))
 		insertUnstartedTransactionCreatedAt(m, time.Now().Add(-2*pruneUnstartedTxDuration))
 		insertUnstartedTransactionCreatedAt(m, time.Now().Add(-1*pruneUnstartedTxDuration))
+		insertUnstartedTransactionCreatedAt(m, time.Now().Add(pruneUnstartedTxDuration/-2))
 		insertUnstartedTransaction(m)
 
 		tx, err := m.UpdateUnstartedTransactionWithNonce(nonce)
 		require.NoError(t, err)
 		assert.Equal(t, nonce, *tx.Nonce)
 		assert.Equal(t, txmgr.TxUnconfirmed, tx.State)
-		assert.Empty(t, m.UnstartedTransactions)
+		assert.Len(t, m.UnstartedTransactions, 1) // only the most recent one remains
 	})
 }
 
