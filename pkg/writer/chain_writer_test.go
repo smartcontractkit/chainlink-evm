@@ -1,7 +1,7 @@
 package writer
 
 import (
-	"fmt"
+	"errors"
 	"math/big"
 	"testing"
 
@@ -134,7 +134,7 @@ func TestChainWriter(t *testing.T) {
 		})
 
 		t.Run("Fails when GetFee returns an error", func(t *testing.T) {
-			expectedErr := fmt.Errorf("GetFee error")
+			expectedErr := errors.New("GetFee error")
 			ge.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(gas.EvmFee{
 				GasPrice:   nil,
 				DynamicFee: gas.DynamicFee{},
@@ -150,7 +150,7 @@ func TestChainWriter(t *testing.T) {
 			}, uint64(0), nil).Once()
 			ge.On("L1Oracle", mock.Anything).Return(l1Oracle).Once()
 
-			expectedErr := fmt.Errorf("l1Oracle error")
+			expectedErr := errors.New("l1Oracle error")
 			l1Oracle.On("GasPrice", mock.Anything).Return(nil, expectedErr).Once()
 			_, err = cw.GetFeeComponents(ctx)
 			require.Equal(t, expectedErr, err)

@@ -2,6 +2,7 @@ package writer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -36,7 +37,7 @@ var _ ChainWriterService = (*chainWriter)(nil)
 
 func NewChainWriterService(logger logger.Logger, client evmclient.Client, txm evmtxmgr.TxManager, estimator gas.EvmFeeEstimator, config config.ChainWriterConfig, tronTxm *trontxm.TronTxm) (ChainWriterService, error) {
 	if config.MaxGasPrice == nil {
-		return nil, fmt.Errorf("max gas price is required")
+		return nil, errors.New("max gas price is required")
 	}
 
 	w := chainWriter{
@@ -222,7 +223,7 @@ func (w *chainWriter) GetTransactionStatus(ctx context.Context, transactionID st
 // (if the chain doesn't support dynamic TXs) the legacy GasPrice is used.
 func (w *chainWriter) GetFeeComponents(ctx context.Context) (*commontypes.ChainFeeComponents, error) {
 	if w.ge == nil {
-		return nil, fmt.Errorf("gas estimator not available")
+		return nil, errors.New("gas estimator not available")
 	}
 
 	fee, _, err := w.ge.GetFee(ctx, nil, 0, w.maxGasPrice, nil, nil)
@@ -301,7 +302,7 @@ func (w *chainWriter) getMaxCost(ctx context.Context, amount assets.Eth, calldat
 	fee, err := w.GetFeeComponents(ctx)
 	var gasPrice *big.Int
 	if err != nil {
-		w.logger.Warnf("%w: GetFeeComponents failed; use maxFeePrice instead", err)
+		w.logger.Warnf("%v: GetFeeComponents failed; use maxFeePrice instead", err)
 		gasPrice = fee.ExecutionFee
 	} else {
 		gasPrice = (*big.Int)(maxGasPrice)
@@ -309,7 +310,7 @@ func (w *chainWriter) getMaxCost(ctx context.Context, amount assets.Eth, calldat
 
 	estimateGas, err := w.client.EstimateGas(ctx, ethereum.CallMsg{To: toAddress, Data: calldata})
 	if err != nil {
-		w.logger.Warnf("%w: EstimateGas failed; use gasLimit instead", err)
+		w.logger.Warnf("%v: EstimateGas failed; use gasLimit instead", err)
 		estimateGas = gasLimit
 	}
 
