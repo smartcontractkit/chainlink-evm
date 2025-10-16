@@ -21,7 +21,7 @@ const (
 	// pruneSubset controls the subset of confirmed transactions to prune when the structure reaches its max limit.
 	// i.e. if the value is 3 and the limit is 90, 30 transactions will be pruned.
 	pruneSubset              = 3
-	pruneUnstartedTxDuration = 1 * time.Hour
+	pruneUnstartedTxDuration = 2 * time.Hour
 )
 
 type InMemoryStore struct {
