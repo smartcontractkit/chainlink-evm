@@ -16,10 +16,6 @@ import (
 	"github.com/smartcontractkit/chainlink-framework/chains/txmgr/types"
 )
 
-type roundRobinKeystore interface {
-	GetRoundRobinAddress(ctx context.Context, chainID *big.Int, addresses ...common.Address) (address common.Address, err error)
-}
-
 type txManager interface {
 	CreateTransaction(ctx context.Context, txRequest txmgr.TxRequest) (tx txmgr.Tx, err error)
 	GetTransactionStatus(ctx context.Context, transactionID string) (state commontypes.TransactionStatus, err error)
@@ -108,14 +104,14 @@ func (t *transmitter) CreateEthTransaction(ctx context.Context, toAddress common
 
 	// Define idempotency key for CCIP Execution Plugin
 	if len(txMeta.MessageIDs) == 1 && t.statuschecker != nil {
-		messageId := txMeta.MessageIDs[0]
-		_, count, err1 := t.statuschecker.CheckMessageStatus(ctx, messageId)
+		messageID := txMeta.MessageIDs[0]
+		_, count, err1 := t.statuschecker.CheckMessageStatus(ctx, messageID)
 
 		if err1 != nil {
 			return errors.Wrap(err, "skipped OCR transmission, error getting message status")
 		}
 		idempotencyKey = func() *string {
-			s := fmt.Sprintf("%s-%d", messageId, count+1)
+			s := fmt.Sprintf("%s-%d", messageID, count+1)
 			return &s
 		}()
 	}

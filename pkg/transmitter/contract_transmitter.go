@@ -178,7 +178,6 @@ func (oc *contractTransmitter) Transmit(ctx context.Context, reportCtx ocrtypes.
 	}
 
 	return errors.Wrap(oc.transmitter.CreateEthTransaction(ctx, oc.contractAddress, payload, txMeta), "failed to send Eth transaction")
-
 }
 
 type contractReader interface {
