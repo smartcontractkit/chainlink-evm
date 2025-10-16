@@ -48,7 +48,7 @@ func (cwh *ClientWithContractHistory) Init(_ context.Context, chainReaderConfig 
 				continue
 			}
 
-			readDef.InjectEVMSpecificCodecModifiers()
+			codec.InjectEVMSpecificCodecModifiers(readDef)
 
 			inputMod, err := readDef.InputModifications.ToModifier(codec.DecoderHooks...)
 			if err != nil {

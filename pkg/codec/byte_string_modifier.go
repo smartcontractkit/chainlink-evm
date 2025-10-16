@@ -6,7 +6,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	commoncodec "github.com/smartcontractkit/chainlink-common/pkg/codec"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 )
 
 // EVMAddressModifier implements the AddressModifier interface for Ethereum addresses.
@@ -39,4 +41,21 @@ func (e EVMAddressModifier) DecodeAddress(str string) ([]byte, error) {
 // Length returns the expected length of an Ethereum address in bytes (20 bytes).
 func (e EVMAddressModifier) Length() int {
 	return common.AddressLength
+}
+
+// InjectEVMSpecificCodecModifiers injects an AddressModifier into Input/OutputModifications of a ChainReaderDefinition.
+func InjectEVMSpecificCodecModifiers(d *config.ChainReaderDefinition) {
+	for i, modConfig := range d.InputModifications {
+		if addrModifierConfig, ok := modConfig.(*commoncodec.AddressBytesToStringModifierConfig); ok {
+			addrModifierConfig.Modifier = EVMAddressModifier{}
+			d.InputModifications[i] = addrModifierConfig
+		}
+	}
+
+	for i, modConfig := range d.OutputModifications {
+		if addrModifierConfig, ok := modConfig.(*commoncodec.AddressBytesToStringModifierConfig); ok {
+			addrModifierConfig.Modifier = EVMAddressModifier{}
+			d.OutputModifications[i] = addrModifierConfig
+		}
+	}
 }

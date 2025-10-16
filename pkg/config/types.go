@@ -19,7 +19,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/evm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
-	"github.com/smartcontractkit/chainlink-evm/pkg/codec"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
@@ -127,23 +126,6 @@ func (d *ChainReaderDefinition) MarshalText() ([]byte, error) {
 
 func (d *ChainReaderDefinition) UnmarshalText(b []byte) error {
 	return json.Unmarshal(b, (*chainReaderDefinitionFields)(d))
-}
-
-// InjectEVMSpecificCodecModifiers injects an AddressModifier into Input/OutputModifications of a ChainReaderDefinition.
-func (d *ChainReaderDefinition) InjectEVMSpecificCodecModifiers() {
-	for i, modConfig := range d.InputModifications {
-		if addrModifierConfig, ok := modConfig.(*commoncodec.AddressBytesToStringModifierConfig); ok {
-			addrModifierConfig.Modifier = codec.EVMAddressModifier{}
-			d.InputModifications[i] = addrModifierConfig
-		}
-	}
-
-	for i, modConfig := range d.OutputModifications {
-		if addrModifierConfig, ok := modConfig.(*commoncodec.AddressBytesToStringModifierConfig); ok {
-			addrModifierConfig.Modifier = codec.EVMAddressModifier{}
-			d.OutputModifications[i] = addrModifierConfig
-		}
-	}
 }
 
 type ReadType int
