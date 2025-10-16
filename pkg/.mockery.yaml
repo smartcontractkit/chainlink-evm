@@ -86,3 +86,6 @@ packages:
       filename: "mock_{{ .InterfaceName | snakecase }}_test.go"
     interfaces:
       Emitter:
+  github.com/smartcontractkit/chainlink-evm/pkg/logpoller:
+    interfaces:
+      LogPoller:
