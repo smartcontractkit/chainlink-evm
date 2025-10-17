@@ -81,19 +81,21 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
         uint96 upkeepBalance = registry.getBalance(upkeepID);
         uint96 minBalance = registry.getMinBalance(upkeepID);
         uint96 topUpThreshold = (minBalance * config.minPercentage) / 100;
-        uint96 topUpAmount = ((minBalance * config.targetPercentage) / 100) - upkeepBalance;
-        if (topUpAmount > config.maxTopUpAmount) {
-          topUpAmount = config.maxTopUpAmount;
-        }
-        if (upkeepBalance <= topUpThreshold && availableFunds >= topUpAmount) {
-          needsFunding[count] = upkeepID;
-          topUpAmounts[count] = topUpAmount;
-          registryAddresses[count] = address(registry);
-          count++;
-          availableFunds -= topUpAmount;
-        }
-        if (count == config.maxBatchSize) {
-          break;
+        if (upkeepBalance <= topUpThreshold) {
+          uint96 topUpAmount = ((minBalance * config.targetPercentage) / 100) - upkeepBalance;
+          if (topUpAmount > config.maxTopUpAmount) {
+            topUpAmount = config.maxTopUpAmount;
+          }
+          if (availableFunds >= topUpAmount) {
+            needsFunding[count] = upkeepID;
+            topUpAmounts[count] = topUpAmount;
+            registryAddresses[count] = address(registry);
+            count++;
+            availableFunds -= topUpAmount;
+          }
+          if (count == config.maxBatchSize) {
+            break;
+          }
         }
       }
       if (count == config.maxBatchSize) {
