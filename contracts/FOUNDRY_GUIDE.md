@@ -53,6 +53,8 @@ To enable geth wrapper generation, you will also have to create the following fi
     - Remove the contents of the `generated-wrapper-dependency-versions-do-not-edit.txt` file.
     - Remove the contents of the `mocks` folder.
 - If you need mocks, define them in `.mockery.yaml`.
+- `gethwrappers/go_generate.go`
+  - Add a `go:generate` directive for your project's geth wrappers i.e. `//go:generate go generate ./newproject`.
 
 ```bash
 #!/usr/bin/env bash
