@@ -31,7 +31,7 @@ func NewBlockTranslator(chainType chaintype.ChainType, client evmclient.Client, 
 type l1BlockTranslator struct{}
 
 func (*l1BlockTranslator) NumberToQueryRange(_ context.Context, changedInL1Block uint64) (fromBlock *big.Int, toBlock *big.Int) {
-	return big.NewInt(int64(changedInL1Block)), big.NewInt(int64(changedInL1Block))
+	return big.NewInt(int64(changedInL1Block)), big.NewInt(int64(changedInL1Block)) //nolint:gosec // disable G115
 }
 
 func (*l1BlockTranslator) OnNewLongestChain(context.Context, *evmtypes.Head) {}

@@ -43,7 +43,7 @@ func NewArbitrumBlockTranslator(ethClient evmclient.Client, lggr logger.Logger) 
 // NumberToQueryRange implements BlockTranslator interface
 func (a *ArbitrumBlockTranslator) NumberToQueryRange(ctx context.Context, changedInL1Block uint64) (fromBlock *big.Int, toBlock *big.Int) {
 	var err error
-	fromBlock, toBlock, err = a.BinarySearch(ctx, int64(changedInL1Block))
+	fromBlock, toBlock, err = a.BinarySearch(ctx, int64(changedInL1Block)) //nolint:gosec // disable G115
 	if err != nil {
 		a.lggr.Warnw("Failed to binary search L2->L1, falling back to slow scan over entire chain", "err", err)
 		return big.NewInt(0), nil
@@ -251,7 +251,7 @@ func search(i, j int64, f func(int64) (bool, error)) (int64, error) {
 	// Define f(-1) == false and f(n) == true.
 	// Invariant: f(i-1) == false, f(j) == true.
 	for i < j {
-		h := int64(uint64(i+j) >> 1) // avoid overflow when computing h
+		h := int64(uint64(i+j) >> 1) //nolint:gosec // disable G115 // avoid overflow when computing h
 		// i ≤ h < j
 		is, err := f(h)
 		if err != nil {
