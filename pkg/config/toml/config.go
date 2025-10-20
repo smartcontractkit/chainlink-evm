@@ -398,7 +398,7 @@ type Chain struct {
 	FinalityDepth                *uint32
 	SafeDepth                    *uint32
 	FinalityTagEnabled           *bool
-	SafeTagEnabled               *bool
+	SafeTagSupported             *bool
 	FlagsContractAddress         *types.EIP55Address
 	LinkContractAddress          *types.EIP55Address
 	LogBackfillBatchSize         *uint32

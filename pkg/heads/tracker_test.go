@@ -1353,7 +1353,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		FinalityTagEnabled   bool
 		FinalizedBlockOffset uint32
 		FinalityDepth        uint32
-		SafeTagEnabled       bool
+		SafeTagSupported     bool
 		SafeDepth            uint32
 	}
 
@@ -1363,7 +1363,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 			c.FinalizedBlockOffset = ptr(opts.FinalizedBlockOffset)
 			c.FinalityDepth = ptr(opts.FinalityDepth)
 			c.SafeDepth = ptr(opts.SafeDepth)
-			c.SafeTagEnabled = ptr(opts.SafeTagEnabled)
+			c.SafeTagSupported = ptr(opts.SafeTagSupported)
 		})
 
 		db := testutils.NewSqlxDB(t)
@@ -1379,7 +1379,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		return ht
 	}
 	t.Run("returns error if failed to get latest safe block (finality tag)", func(t *testing.T) {
-		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true, SafeTagEnabled: true})
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true, SafeTagSupported: true})
 		const expectedError = "failed to get latest finalized block"
 		htu.ethClient.On("LatestSafeBlock", mock.Anything).Return(nil, errors.New(expectedError)).Once()
 
@@ -1387,14 +1387,14 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		require.ErrorContains(t, err, expectedError)
 	})
 	t.Run("returns error if latest safe block is not valid (finality tag)", func(t *testing.T) {
-		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true, SafeTagEnabled: true})
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true, SafeTagSupported: true})
 		htu.ethClient.On("LatestSafeBlock", mock.Anything).Return(nil, nil).Once()
 
 		_, err := htu.headTracker.LatestSafeBlock(ctx)
 		require.ErrorContains(t, err, "failed to get valid latest finalized block")
 	})
 	t.Run("returns latest safe block", func(t *testing.T) {
-		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true, SafeTagEnabled: true})
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: true, SafeTagSupported: true})
 		htu.ethClient.On("LatestSafeBlock", mock.Anything).Return(h11, nil).Once()
 
 		actualS, err := htu.headTracker.LatestSafeBlock(ctx)
@@ -1402,7 +1402,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		assert.Equal(t, actualS, h11)
 	})
 	t.Run("returns latest safe block with finalityDepth set, and others default", func(t *testing.T) {
-		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: false, FinalityDepth: 2, Heads: []*evmtypes.Head{h13, h12, h11}, SafeTagEnabled: true})
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: false, FinalityDepth: 2, Heads: []*evmtypes.Head{h13, h12, h11}, SafeTagSupported: true})
 		htu.ethClient.On("HeadByNumber", mock.Anything, (*big.Int)(nil)).Return(h13, nil).Once()
 
 		actualS, err := htu.headTracker.LatestSafeBlock(ctx)
@@ -1410,7 +1410,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		assert.Equal(t, actualS.Number, h11.Number)
 	})
 	t.Run("returns latest safe block with finalityDepth set, and others default", func(t *testing.T) {
-		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: false, FinalityDepth: 2, SafeDepth: 1, Heads: []*evmtypes.Head{h13, h12, h11}, SafeTagEnabled: true})
+		htu := newHeadTrackerUniverse(t, opts{FinalityTagEnabled: false, FinalityDepth: 2, SafeDepth: 1, Heads: []*evmtypes.Head{h13, h12, h11}, SafeTagSupported: true})
 		htu.ethClient.On("HeadByNumber", mock.Anything, (*big.Int)(nil)).Return(h13, nil).Once()
 
 		actualS, err := htu.headTracker.LatestSafeBlock(ctx)
@@ -1418,17 +1418,17 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 		assert.Equal(t, actualS.Number, h12.Number)
 	})
 
-	t.Run("SafeTagEnabled tag is used correctly", func(t *testing.T) {
+	t.Run("SafeTagSupported tag is used correctly", func(t *testing.T) {
 		testCases := []struct {
 			name               string
 			finalityTagEnabled bool
-			safeTagEnabled     bool
+			SafeTagSupported   bool
 			mockClientCalls    func(ethClient *clienttest.Client)
 		}{
 			{
 				name:               "both finality and safe tags enabled - calls LatestSafeBlock",
 				finalityTagEnabled: true,
-				safeTagEnabled:     true,
+				SafeTagSupported:   true,
 				mockClientCalls: func(ethClient *clienttest.Client) {
 					ethClient.EXPECT().LatestSafeBlock(mock.Anything).Return(h11, nil).Once()
 				},
@@ -1436,7 +1436,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 			{
 				name:               "finality enabled, safe disabled - calls LatestFinalizedBlock",
 				finalityTagEnabled: true,
-				safeTagEnabled:     false,
+				SafeTagSupported:   false,
 				mockClientCalls: func(ethClient *clienttest.Client) {
 					ethClient.EXPECT().LatestFinalizedBlock(mock.Anything).Return(h13, nil).Once()
 					ethClient.EXPECT().HeadByNumber(mock.Anything, (*big.Int)(nil)).Return(h13, nil).Once()
@@ -1445,7 +1445,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 			{
 				name:               "finality disabled, safe enabled - calls HeadByNumber",
 				finalityTagEnabled: false,
-				safeTagEnabled:     true,
+				SafeTagSupported:   true,
 				mockClientCalls: func(ethClient *clienttest.Client) {
 					ethClient.EXPECT().HeadByNumber(mock.Anything, (*big.Int)(nil)).Return(h13, nil).Once()
 				},
@@ -1456,7 +1456,7 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				htu := newHeadTrackerUniverse(t, opts{
 					FinalityTagEnabled: tc.finalityTagEnabled,
-					SafeTagEnabled:     tc.safeTagEnabled,
+					SafeTagSupported:   tc.SafeTagSupported,
 					Heads:              []*evmtypes.Head{h13, h12, h11},
 				})
 

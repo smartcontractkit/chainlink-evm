@@ -53,7 +53,7 @@ type config struct {
 	finalityDepth                     uint32
 	blockEmissionIdleWarningThreshold time.Duration
 	finalityTagEnabled                bool
-	safeTagEnabled                    bool
+	safeTagSupported                  bool
 	finalizedBlockOffset              uint32
 }
 
@@ -71,8 +71,8 @@ func (c *config) FinalizedBlockOffset() uint32 {
 	return c.finalizedBlockOffset
 }
 
-func (c *config) SafeTagEnabled() bool {
-	return c.safeTagEnabled
+func (c *config) SafeTagSupported() bool {
+	return c.safeTagSupported
 }
 
 type saverOpts struct {
