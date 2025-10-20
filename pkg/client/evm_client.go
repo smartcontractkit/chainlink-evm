@@ -36,14 +36,14 @@ func NewEvmClient(cfg evmconfig.NodePool, chainCfg ChainConfig, clientErrors evm
 		if node.SendOnly != nil && *node.SendOnly {
 			rpc := NewRPCClient(cfg, lggr, nil, node.HTTPURL.URL(), *node.Name, i, chainID,
 				multinode.Secondary, largePayloadRPCTimeout, defaultRPCTimeout, chainType,
-				chainCfg.FinalityTagEnabled(), chainCfg.FinalityDepth(), chainCfg.SafeDepth(), cfg.ExternalRequestMaxResponseSize())
+				chainCfg.FinalityTagEnabled(), chainCfg.SafeTagEnabled(), chainCfg.FinalityDepth(), chainCfg.SafeDepth(), cfg.ExternalRequestMaxResponseSize())
 			sendonly := multinode.NewSendOnlyNode(lggr, multiNodeMetrics, (url.URL)(*node.HTTPURL),
 				*node.Name, chainID, rpc)
 			sendonlys = append(sendonlys, sendonly)
 		} else {
 			rpc := NewRPCClient(cfg, lggr, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i,
 				chainID, multinode.Primary, largePayloadRPCTimeout, defaultRPCTimeout, chainType,
-				chainCfg.FinalityTagEnabled(), chainCfg.FinalityDepth(), chainCfg.SafeDepth(), cfg.ExternalRequestMaxResponseSize())
+				chainCfg.FinalityTagEnabled(), chainCfg.SafeTagEnabled(), chainCfg.FinalityDepth(), chainCfg.SafeDepth(), cfg.ExternalRequestMaxResponseSize())
 
 			primaryNode := multinode.NewNode(cfg, chainCfg,
 				lggr, multiNodeMetrics, node.WSURL.URL(), node.HTTPURL.URL(), *node.Name, i, chainID, *node.Order,

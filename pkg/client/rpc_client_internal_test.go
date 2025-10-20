@@ -394,6 +394,7 @@ type RPCClientOpts struct {
 	RPCTimeout                     *time.Duration
 	ChainType                      chaintype.ChainType
 	FinalityTagsEnabled            bool
+	SafeTagsEnabled                bool
 	FinalityDepth                  uint32
 	SafeDepth                      uint32
 	ExternalRequestMaxResponseSize uint32
@@ -428,7 +429,7 @@ func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
 	}
 
 	return NewRPCClient(opts.Cfg, opts.Lggr, opts.WS, opts.HTTP, opts.Name, opts.ID, opts.ChainID, opts.Tier,
-		*opts.LargePayloadRPCTimeout, *opts.RPCTimeout, opts.ChainType, opts.FinalityTagsEnabled, opts.FinalityDepth,
+		*opts.LargePayloadRPCTimeout, *opts.RPCTimeout, opts.ChainType, opts.FinalityTagsEnabled, opts.SafeTagsEnabled, opts.FinalityDepth,
 		opts.SafeDepth, opts.ExternalRequestMaxResponseSize)
 }
 

@@ -1530,6 +1530,51 @@ func (_c *EVM_SafeDepth_Call) RunAndReturn(run func() uint32) *EVM_SafeDepth_Cal
 	return _c
 }
 
+// SafeTagEnabled provides a mock function with no fields
+func (_m *EVM) SafeTagEnabled() bool {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SafeTagEnabled")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// EVM_SafeTagEnabled_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SafeTagEnabled'
+type EVM_SafeTagEnabled_Call struct {
+	*mock.Call
+}
+
+// SafeTagEnabled is a helper method to define mock.On call
+func (_e *EVM_Expecter) SafeTagEnabled() *EVM_SafeTagEnabled_Call {
+	return &EVM_SafeTagEnabled_Call{Call: _e.mock.On("SafeTagEnabled")}
+}
+
+func (_c *EVM_SafeTagEnabled_Call) Run(run func()) *EVM_SafeTagEnabled_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *EVM_SafeTagEnabled_Call) Return(_a0 bool) *EVM_SafeTagEnabled_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *EVM_SafeTagEnabled_Call) RunAndReturn(run func() bool) *EVM_SafeTagEnabled_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TOMLString provides a mock function with no fields
 func (_m *EVM) TOMLString() (string, error) {
 	ret := _m.Called()
