@@ -39,6 +39,7 @@ type (
 
 		ethClient      evmclient.Client
 		chainIDStr     string
+		balanceMetrics metrics.GenericBalanceMetrics
 		ethKeyStore    keys.AddressLister
 		ethBalances    map[common.Address]*assets.Eth
 		ethBalancesMtx sync.RWMutex
@@ -51,12 +52,18 @@ type (
 var _ BalanceMonitor = (*balanceMonitor)(nil)
 
 // NewBalanceMonitor returns a new balanceMonitor
-func NewBalanceMonitor(ethClient evmclient.Client, ethKeyStore keys.AddressLister, lggr logger.Logger) *balanceMonitor {
+func NewBalanceMonitor(ethClient evmclient.Client, ethKeyStore keys.AddressLister, lggr logger.Logger) (*balanceMonitor, error) {
+	balanceMetrics, err := metrics.NewGenericBalanceMetrics(metrics.EVM, ethClient.ConfiguredChainID().String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create balance metrics: %w", err)
+	}
+
 	bm := &balanceMonitor{
-		ethClient:   ethClient,
-		chainIDStr:  ethClient.ConfiguredChainID().String(),
-		ethKeyStore: ethKeyStore,
-		ethBalances: make(map[common.Address]*assets.Eth),
+		ethClient:      ethClient,
+		chainIDStr:     ethClient.ConfiguredChainID().String(),
+		balanceMetrics: balanceMetrics,
+		ethKeyStore:    ethKeyStore,
+		ethBalances:    make(map[common.Address]*assets.Eth),
 	}
 	bm.Service, bm.eng = services.Config{
 		Name:  "BalanceMonitor",
@@ -64,7 +71,7 @@ func NewBalanceMonitor(ethClient evmclient.Client, ethKeyStore keys.AddressListe
 		Close: bm.close,
 	}.NewServiceEngine(lggr)
 	bm.sleeperTask = utils.NewSleeperTaskCtx(&worker{bm: bm})
-	return bm
+	return bm, nil
 }
 
 func (bm *balanceMonitor) start(ctx context.Context) error {
@@ -87,8 +94,8 @@ func (bm *balanceMonitor) OnNewLongestChain(_ context.Context, _ *evmtypes.Head)
 	}
 }
 
-func (bm *balanceMonitor) updateBalance(ethBal assets.Eth, address common.Address) {
-	bm.promUpdateEthBalance(&ethBal, address)
+func (bm *balanceMonitor) updateBalance(ctx context.Context, ethBal assets.Eth, address common.Address) {
+	bm.updateBalanceMetrics(ctx, &ethBal, address)
 
 	bm.ethBalancesMtx.Lock()
 	oldBal := bm.ethBalances[address]
@@ -126,7 +133,7 @@ var promETHBalance = promauto.NewGaugeVec(
 	[]string{"account", "evmChainID"},
 )
 
-func (bm *balanceMonitor) promUpdateEthBalance(balance *assets.Eth, from common.Address) {
+func (bm *balanceMonitor) updateBalanceMetrics(ctx context.Context, balance *assets.Eth, from common.Address) {
 	balanceFloat, err := ApproximateFloat64(balance)
 
 	if err != nil {
@@ -134,7 +141,7 @@ func (bm *balanceMonitor) promUpdateEthBalance(balance *assets.Eth, from common.
 		return
 	}
 
-	metrics.NodeBalance.WithLabelValues(from.Hex(), bm.chainIDStr, metrics.EVM).Set(balanceFloat)
+	bm.balanceMetrics.RecordNodeBalance(ctx, from.Hex(), balanceFloat)
 	// TODO: Remove deprecated metric
 	promETHBalance.WithLabelValues(from.Hex(), bm.chainIDStr).Set(balanceFloat)
 }
@@ -179,7 +186,7 @@ func (w *worker) checkAccountBalance(ctx context.Context, address common.Address
 		)
 	} else {
 		ethBal := assets.Eth(*bal)
-		w.bm.updateBalance(ethBal, address)
+		w.bm.updateBalance(ctx, ethBal, address)
 	}
 }
 
