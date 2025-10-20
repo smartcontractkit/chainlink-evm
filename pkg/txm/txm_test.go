@@ -321,4 +321,57 @@ func TestBackfillTransactions(t *testing.T) {
 		require.NoError(t, err)
 		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
 	})
+
+	t.Run("fetches the unconfirmed transaction for a given nonce, throws a warning for max limit and retries with a new attempt", func(t *testing.T) {
+		ctx := t.Context()
+		lggr, observedLogs := logger.TestObserved(t, zap.DebugLevel)
+		txStore := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
+		require.NoError(t, txStore.Add(address))
+		txm := NewTxm(lggr, testutils.FixtureChainID, client, ab, txStore, nil, config, keystore)
+		var nonce uint64 = 8
+		txm.setNonce(address, nonce)
+		metrics, err := NewTxmMetrics(testutils.FixtureChainID)
+		require.NoError(t, err)
+		txm.metrics = metrics
+		IDK := "IDK"
+		txRequest := &types.TxRequest{
+			Data:              []byte{100, 200},
+			IdempotencyKey:    &IDK,
+			ChainID:           testutils.FixtureChainID,
+			FromAddress:       address,
+			ToAddress:         testutils.NewAddress(),
+			SpecifiedGasLimit: 22000,
+		}
+		tx, err := txm.CreateTransaction(t.Context(), txRequest)
+		require.NoError(t, err)
+		_, err = txStore.UpdateUnstartedTransactionWithNonce(ctx, address, nonce)
+		require.NoError(t, err)
+
+		attempt := &types.Attempt{
+			TxID:     tx.ID,
+			Fee:      gas.EvmFee{GasPrice: assets.NewWeiI(1)},
+			GasLimit: 22000,
+		}
+		var attemptsTried uint16 = storage.MaxAllowedAttempts + 2
+		for range attemptsTried {
+			require.NoError(t, txStore.AppendAttemptToTransaction(ctx, nonce, address, attempt))
+		}
+		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(nonce, nil).Once()
+		ab.On("NewAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
+		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		_, err = txm.backfillTransactions(ctx, address)
+		require.NoError(t, err)
+
+		tx2, err := txStore.FindTxWithIdempotencyKey(t.Context(), IDK)
+		require.NoError(t, err)
+		assert.Len(t, tx2.Attempts, storage.MaxAllowedAttempts)
+		assert.Equal(t, attemptsTried+1, tx2.AttemptCount) // the initial attempts tried, plus the one during backfill
+		var zeroTime time.Time
+		assert.Greater(t, *tx2.LastBroadcastAt, zeroTime)
+		assert.Greater(t, *tx2.Attempts[0].BroadcastAt, zeroTime)
+		assert.Greater(t, *tx2.InitialBroadcastAt, zeroTime)
+		assert.Equal(t, uint64(attemptsTried-storage.MaxAllowedAttempts+1), tx2.Attempts[0].ID) // the initial attempts tried, plus the one during backfill
+		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Reached max attempts threshold for txID: %d", 0))
+	})
 }

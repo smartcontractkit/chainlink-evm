@@ -47,17 +47,31 @@ func (s *stuckTxDetector) DetectStuckTransaction(ctx context.Context, tx *types.
 	}
 }
 
-// timeBasedDetection marks a transaction if all the following conditions are met:
-// - LastBroadcastAt is not nil
-// - Time since last broadcast is above the threshold
-// - Time since last purge is above threshold
+// timeBasedDetection marks a transaction if:
+//   - LastBroadcastAt is nil
+//   - Total attempt count is equal or greater than the maxAttemptsThreshold
+//
+// or all the following conditions are met:
+//   - LastBroadcastAt is not nil
+//   - Time since last broadcast is above the threshold
+//   - Time since last purge is above threshold
 //
 // NOTE: Potentially we can use a subset of threhsold for last purge check, because the transaction would have already been broadcasted to the mempool
 // so it is more likely to be picked up compared to a transaction that hasn't been broadcasted before. This would avoid slowing down TXM for sebsequent transactions
 // in case the current one is stuck.
 func (s *stuckTxDetector) timeBasedDetection(tx *types.Transaction) bool {
 	threshold := (s.config.BlockTime * time.Duration(s.config.StuckTxBlockThreshold))
-	if tx.LastBroadcastAt != nil && min(time.Since(*tx.LastBroadcastAt), time.Since(s.lastPurgeMap[tx.FromAddress])) > threshold {
+	if tx.LastBroadcastAt == nil {
+		if tx.AttemptCount >= maxAttemptsThreshold {
+			s.lggr.Debugf("TxID: %v reached max attempts threshold: %d. Transaction is now considered stuck and will be purged.",
+				tx.ID, maxAttemptsThreshold)
+			s.lastPurgeMap[tx.FromAddress] = time.Now()
+			return true
+		}
+		return false
+	}
+
+	if min(time.Since(*tx.LastBroadcastAt), time.Since(s.lastPurgeMap[tx.FromAddress])) > threshold {
 		s.lggr.Debugf("TxID: %v last broadcast was: %v and last purge: %v which is more than the max configured duration: %v. Transaction is now considered stuck and will be purged.",
 			tx.ID, tx.LastBroadcastAt, s.lastPurgeMap[tx.FromAddress], threshold)
 		s.lastPurgeMap[tx.FromAddress] = time.Now()

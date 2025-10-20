@@ -21,7 +21,7 @@ const (
 	broadcastInterval           time.Duration = 30 * time.Second
 	maxInFlightTransactions     int           = 16
 	maxInFlightSubset           int           = 5
-	maxAllowedAttempts          uint16        = 10
+	maxAttemptsThreshold        uint16        = 10
 	pendingNonceDefaultTimeout  time.Duration = 30 * time.Second
 	pendingNonceRecheckInterval time.Duration = 1 * time.Second
 )
@@ -415,14 +415,15 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 			}
 		}
 
-		if tx.AttemptCount >= maxAllowedAttempts {
+		if tx.AttemptCount >= maxAttemptsThreshold {
 			t.metrics.ReachedMaxAttempts(ctx, true)
-			return true, fmt.Errorf("reached max allowed attempts for txID: %d. TXM won't broadcast any more attempts."+
-				"If this error persists, it means the transaction won't be confirmed and the TXM needs to be restarted."+
+			t.lggr.Warnf("Reached max attempts threshold for txID: %d. TXM will broadcast more attempts  but if this"+
+				" error persists, it means the transaction won't likely be confirmed and there is an issue with the transaction."+
 				"Look for any error messages from previous broadcasted attempts that may indicate why this happened, i.e. wallet is out of funds. Tx: %v", tx.ID,
 				tx.PrintWithAttempts())
+		} else {
+			t.metrics.ReachedMaxAttempts(ctx, false)
 		}
-		t.metrics.ReachedMaxAttempts(ctx, false)
 
 		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) {
 			// TODO: add optional graceful bumping strategy

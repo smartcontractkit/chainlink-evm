@@ -16,11 +16,15 @@ import (
 )
 
 const (
+	// MaxAllowedAttempts controls the maximum number of attempts stored per transactions. After this threshold is exceeded
+	// the oldest attempts will be pruned to make room for new attempts.
+	MaxAllowedAttempts = 10
 	// maxQueuedTransactions is the max limit of UnstartedTransactions and ConfirmedTransactions structures.
 	maxQueuedTransactions = 250
 	// pruneSubset controls the subset of confirmed transactions to prune when the structure reaches its max limit.
 	// i.e. if the value is 3 and the limit is 90, 30 transactions will be pruned.
-	pruneSubset = 3
+	pruneSubset              = 3
+	pruneUnstartedTxDuration = 2 * time.Hour
 )
 
 type InMemoryStore struct {
@@ -85,8 +89,13 @@ func (m *InMemoryStore) AppendAttemptToTransaction(txNonce uint64, attempt *type
 	}
 
 	attempt.CreatedAt = time.Now()
-	attempt.ID = uint64(len(tx.Attempts)) // Attempts are not collectively tracked by the in-memory store so attemptIDs are not unique between transactions and can be reused.
+	attempt.ID = uint64(tx.AttemptCount) // Attempts are not collectively tracked by the in-memory store so attemptIDs are not unique between transactions and can be reused.
 	tx.AttemptCount++
+	// Prune oldest attempt.
+	if len(tx.Attempts) >= MaxAllowedAttempts {
+		m.UnconfirmedTransactions[txNonce].Attempts[0] = nil // avoid memory leaks
+		m.UnconfirmedTransactions[txNonce].Attempts = m.UnconfirmedTransactions[txNonce].Attempts[1:]
+	}
 	m.UnconfirmedTransactions[txNonce].Attempts = append(m.UnconfirmedTransactions[txNonce].Attempts, attempt.DeepCopy())
 
 	return nil
@@ -155,8 +164,9 @@ func (m *InMemoryStore) CreateTransaction(txRequest *types.TxRequest) *types.Tra
 	if uLen >= maxQueuedTransactions {
 		m.lggr.Warnw(fmt.Sprintf("Unstarted transactions queue for address: %v reached max limit of: %d. Dropping oldest transactions", m.address, maxQueuedTransactions),
 			"txs", m.UnstartedTransactions[0:uLen-maxQueuedTransactions+1]) // need to make room for the new tx
-		for _, tx := range m.UnstartedTransactions[0 : uLen-maxQueuedTransactions+1] {
+		for i, tx := range m.UnstartedTransactions[0 : uLen-maxQueuedTransactions+1] {
 			delete(m.Transactions, tx.ID)
+			m.UnstartedTransactions[i] = nil // avoid memory leaks
 		}
 		m.UnstartedTransactions = m.UnstartedTransactions[uLen-maxQueuedTransactions+1:]
 	}
@@ -269,15 +279,34 @@ func (m *InMemoryStore) UpdateTransactionBroadcast(txID uint64, txNonce uint64, 
 	return nil
 }
 
+// Shouldn't call lock because it's being called by a method that already has the lock
+func (m *InMemoryStore) pruneUnstartedTransactionsWithinDuration(threshold time.Duration) (txIDsToPrune []uint64) {
+	for i, tx := range m.UnstartedTransactions {
+		if time.Since(tx.CreatedAt) < threshold {
+			m.UnstartedTransactions = m.UnstartedTransactions[i:]
+			return txIDsToPrune
+		}
+		txIDsToPrune = append(txIDsToPrune, tx.ID)
+		delete(m.Transactions, tx.ID)
+		m.UnstartedTransactions[i] = nil // prevent memory leak
+	}
+	m.UnstartedTransactions = m.UnstartedTransactions[:0]
+	return
+}
+
 func (m *InMemoryStore) UpdateUnstartedTransactionWithNonce(nonce uint64) (*types.Transaction, error) {
 	m.Lock()
 	defer m.Unlock()
 
+	prunedTxIDs := m.pruneUnstartedTransactionsWithinDuration(pruneUnstartedTxDuration)
+	if len(prunedTxIDs) != 0 {
+		m.lggr.Debugf("Unstarted transactions map for address: %v exceeds cutoff time of: %s. Pruned %d oldest unstarted transactions. TxIDs: %v",
+			m.address, pruneUnstartedTxDuration, len(prunedTxIDs), prunedTxIDs)
+	}
 	if len(m.UnstartedTransactions) == 0 {
 		m.lggr.Debugf("Unstarted transactions queue is empty for address: %v", m.address)
 		return nil, nil
 	}
-
 	if tx, exists := m.UnconfirmedTransactions[nonce]; exists {
 		return nil, fmt.Errorf("an unconfirmed tx with the same nonce already exists: %v", tx)
 	}
