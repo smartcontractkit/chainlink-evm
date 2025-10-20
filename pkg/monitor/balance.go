@@ -94,8 +94,8 @@ func (bm *balanceMonitor) OnNewLongestChain(_ context.Context, _ *evmtypes.Head)
 	}
 }
 
-func (bm *balanceMonitor) updateBalance(ethBal assets.Eth, address common.Address) {
-	bm.promUpdateEthBalance(&ethBal, address)
+func (bm *balanceMonitor) updateBalance(ctx context.Context, ethBal assets.Eth, address common.Address) {
+	bm.updateBalanceMetrics(ctx, &ethBal, address)
 
 	bm.ethBalancesMtx.Lock()
 	oldBal := bm.ethBalances[address]
@@ -133,7 +133,7 @@ var promETHBalance = promauto.NewGaugeVec(
 	[]string{"account", "evmChainID"},
 )
 
-func (bm *balanceMonitor) promUpdateEthBalance(balance *assets.Eth, from common.Address) {
+func (bm *balanceMonitor) updateBalanceMetrics(ctx context.Context, balance *assets.Eth, from common.Address) {
 	balanceFloat, err := ApproximateFloat64(balance)
 
 	if err != nil {
@@ -141,7 +141,7 @@ func (bm *balanceMonitor) promUpdateEthBalance(balance *assets.Eth, from common.
 		return
 	}
 
-	bm.balanceMetrics.RecordNodeBalance(context.Background(), from.Hex(), balanceFloat)
+	bm.balanceMetrics.RecordNodeBalance(ctx, from.Hex(), balanceFloat)
 	// TODO: Remove deprecated metric
 	promETHBalance.WithLabelValues(from.Hex(), bm.chainIDStr).Set(balanceFloat)
 }
@@ -186,7 +186,7 @@ func (w *worker) checkAccountBalance(ctx context.Context, address common.Address
 		)
 	} else {
 		ethBal := assets.Eth(*bal)
-		w.bm.updateBalance(ethBal, address)
+		w.bm.updateBalance(ctx, ethBal, address)
 	}
 }
 
