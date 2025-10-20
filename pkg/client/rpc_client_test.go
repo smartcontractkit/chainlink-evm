@@ -878,63 +878,6 @@ func TestAstarCustomFinality(t *testing.T) {
 	}
 }
 
-func TestRPCClient_LatestSafeBlock(t *testing.T) {
-	t.Parallel()
-	ctx := t.Context()
-	chainID := big.NewInt(123456)
-
-	testCases := []struct {
-		name               string
-		finalityTagEnabled bool
-		safeTagEnabled     bool
-		expectedMethod     string
-	}{
-		{
-			name:               "finality tag enabled, safe enabled - calls safe",
-			finalityTagEnabled: true,
-			safeTagEnabled:     true,
-			expectedMethod:     "safe",
-		},
-		{
-			name:               "finality tag enabled, safe disabled - calls finalized",
-			finalityTagEnabled: true,
-			safeTagEnabled:     false,
-			expectedMethod:     "finalized",
-		},
-		{
-			name:               "finality tag disabled - calls finalized",
-			finalityTagEnabled: false,
-			safeTagEnabled:     true,
-			expectedMethod:     "finalized",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			var calledMethod string
-			server := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
-				if method == "eth_getBlockByNumber" && params.IsArray() {
-					calledMethod = params.Array()[0].String()
-					resp.Result = `{"number":"0x64","hash":"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef","parentHash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"0x12345"}`
-				}
-				return
-			})
-
-			rpc := client.NewTestRPCClient(t, client.RPCClientOpts{
-				WS:                  server.WSURL(),
-				FinalityTagsEnabled: tc.finalityTagEnabled,
-				SafeTagsEnabled:     tc.safeTagEnabled,
-			})
-			require.NoError(t, rpc.Dial(ctx))
-			defer rpc.Close()
-
-			_, err := rpc.LatestSafeBlock(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, tc.expectedMethod, calledMethod)
-		})
-	}
-}
-
 // TestRPCClient_EnsureConfidenceCallsIdentical ensures that request structure for old calls and calls with confidence are identical
 func TestRPCClient_EnsureConfidenceCallsIdentical(t *testing.T) {
 	t.Parallel()

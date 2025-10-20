@@ -103,7 +103,6 @@ type RPCClient struct {
 	chainType                      chaintype.ChainType
 	clientErrors                   config.ClientErrors
 	finalityTagEnabled             bool
-	safeTagEnabled                 bool
 	finalityDepth                  uint32
 	safeDepth                      uint32
 	externalRequestMaxResponseSize uint32
@@ -131,7 +130,6 @@ func NewRPCClient(
 	rpcTimeout time.Duration,
 	chainType chaintype.ChainType,
 	supportsFinalityTags bool,
-	supportsSafeTags bool,
 	finalityDepth uint32,
 	safeDepth uint32,
 	externalRequestMaxResponseSize uint32,
@@ -142,7 +140,6 @@ func NewRPCClient(
 		chainType:                      chainType,
 		clientErrors:                   cfg.Errors(),
 		finalityTagEnabled:             supportsFinalityTags,
-		safeTagEnabled:                 supportsSafeTags,
 		finalityDepth:                  finalityDepth,
 		safeDepth:                      safeDepth,
 		externalRequestMaxResponseSize: externalRequestMaxResponseSize,
@@ -573,17 +570,9 @@ func (r *RPCClient) HeaderByHash(ctx context.Context, hash common.Hash) (header 
 func (r *RPCClient) LatestSafeBlock(ctx context.Context) (head *evmtypes.Head, err error) {
 	ctx, cancel, _, _, _ := r.acquireQueryCtx(ctx, r.rpcTimeout)
 	defer cancel()
-
-	if r.finalityTagEnabled && r.safeTagEnabled {
-		err = r.ethGetBlockByNumber(ctx, rpc.SafeBlockNumber.String(), &head)
-		if err != nil {
-			return
-		}
-	} else {
-		head, err = r.latestFinalizedBlock(ctx)
-		if err != nil {
-			return
-		}
+	err = r.ethGetBlockByNumber(ctx, rpc.SafeBlockNumber.String(), &head)
+	if err != nil {
+		return
 	}
 
 	if head == nil {

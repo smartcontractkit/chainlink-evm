@@ -176,10 +176,8 @@ func NewChainClientWithTestNode(
 		ID:                     id,
 		ChainID:                chainID,
 		Tier:                   multinode.Primary,
-		RPCTimeout:             ptr(QueryTimeout),
-		LargePayloadRPCTimeout: ptr(QueryTimeout),
-		FinalityTagsEnabled:    true,
-		SafeTagsEnabled:        true,
+		RPCTimeout:             ptr(client.QueryTimeout),
+		LargePayloadRPCTimeout: ptr(client.QueryTimeout),
 	})
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
