@@ -81,7 +81,7 @@ contract UpkeepBalanceMonitor is ConfirmedOwner, Pausable {
         uint96 upkeepBalance = registry.getBalance(upkeepID);
         uint96 minBalance = registry.getMinBalance(upkeepID);
         uint96 topUpThreshold = (minBalance * config.minPercentage) / 100;
-        if (upkeepBalance <= topUpThreshold) {
+        if (upkeepBalance < topUpThreshold) {
           uint96 topUpAmount = ((minBalance * config.targetPercentage) / 100) - upkeepBalance;
           if (topUpAmount > config.maxTopUpAmount) {
             topUpAmount = config.maxTopUpAmount;
