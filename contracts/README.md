@@ -69,7 +69,7 @@ Please refrain from using these in production applications.
 # Clone Chainlink repository
 $ git clone https://github.com/smartcontractkit/chainlink.git
 $ cd contracts/
-$ pnpm
+$ pnpm i
 ```
 
 Each Chainlink project has its own directory under `src/` which can be targeted using Foundry profiles.
