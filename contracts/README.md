@@ -67,9 +67,9 @@ Please refrain from using these in production applications.
 
 ```bash
 # Clone Chainlink repository
-$ git clone https://github.com/smartcontractkit/chainlink.git
+$ git clone https://github.com/smartcontractkit/chainlink-evm.git
 $ cd contracts/
-$ pnpm
+$ pnpm i
 ```
 
 Each Chainlink project has its own directory under `src/` which can be targeted using Foundry profiles.
