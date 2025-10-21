@@ -16,7 +16,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated/offchain_aggregator_wrapper"
+	"github.com/smartcontractkit/chainlink-evm/gethwrappers/offchainaggregator/generated/ocr/offchain_aggregator_wrapper"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/operatorforwarder/generated/authorized_forwarder"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/operatorforwarder/generated/authorized_receiver"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
