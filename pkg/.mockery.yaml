@@ -75,6 +75,8 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/log:
     interfaces:
       AbigenContract:
+      Broadcaster:
+      Broadcast:
   github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm:
     interfaces:
       Chain:
@@ -89,3 +91,6 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/logpoller:
     interfaces:
       LogPoller:
+  github.com/smartcontractkit/chainlink-evm/pkg/round:
+    interfaces:
+      RequestRoundDB:
