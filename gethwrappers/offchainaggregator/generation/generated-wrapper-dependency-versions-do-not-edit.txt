@@ -1,0 +1,2 @@
+GETH_VERSION: 1.16.2
+offchain_aggregator_wrapper: ./abi/ocr/OffchainAggregator.abi - 5c8d6562e94166d4790f1ee6e4321d359d9f7262e6c5452a712b1f1c896f45cf
