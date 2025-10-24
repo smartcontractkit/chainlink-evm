@@ -113,7 +113,10 @@ func (e *EVMConfig) FinalityTagEnabled() bool {
 }
 
 func (e *EVMConfig) SafeTagSupported() bool {
-	return *e.C.SafeTagSupported
+	if e == nil || e.C == nil || e.C.SafeTagSupported == nil {
+        return false
+    }
+    return *e.C.SafeTagSupported
 }
 
 func (e *EVMConfig) LogKeepBlocksDepth() uint32 {
