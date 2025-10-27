@@ -7,13 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	commonks "github.com/smartcontractkit/chainlink-common/keystore"
-	ksstorage "github.com/smartcontractkit/chainlink-common/keystore/storage"
 	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keysv2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTxKey(t *testing.T) {
-	storage := ksstorage.NewMemoryStorage()
+	storage := commonks.NewMemoryStorage()
 	ctx := t.Context()
 	ks, err := commonks.LoadKeystore(ctx, storage, commonks.EncryptionParams{
 		Password:     "test-password",

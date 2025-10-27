@@ -85,7 +85,13 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNam
 	var keyrings []ocrtypes.OnchainKeyring
 	for _, key := range resp.Keys {
 		if IsOCR2OnchainKey(key.KeyInfo.Name) {
-			keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, onchainKey: key.KeyInfo})
+			publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
+			if err != nil {
+				fmt.Println("UnmarshalPubkey error:", err)
+				continue // Skip invalid keys
+			}
+			addr := gethcrypto.PubkeyToAddress(*publicKey)
+			keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, onchainKey: key.KeyInfo, addr: addr})
 		}
 	}
 	return keyrings, nil
@@ -121,10 +127,16 @@ func (k *evmOnchainKeyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtyp
 }
 
 func (k *evmOnchainKeyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCtx ocrtypes.ReportContext, report ocrtypes.Report, signature []byte) bool {
+	sigData := ReportToSigData(reportCtx, report)
+	authorPubkey, err := crypto.SigToPub(sigData, signature)
+	if err != nil {
+		return false
+	}
+	pubKey := crypto.S256().Marshal(authorPubkey.X, authorPubkey.Y)
 	verifyResp, err := k.ks.Verify(context.Background(), keystore.VerifyRequest{
 		KeyType:   keystore.ECDSA_S256,
-		PublicKey: k.onchainKey.PublicKey,
-		Data:      ReportToSigData(reportCtx, report),
+		PublicKey: pubKey,
+		Data:      sigData,
 		Signature: signature,
 	})
 	if err != nil {
