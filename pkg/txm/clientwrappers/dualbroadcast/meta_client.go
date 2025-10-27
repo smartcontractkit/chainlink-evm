@@ -27,8 +27,9 @@ import (
 )
 
 const (
-	timeout = time.Second * 5
-	metaABI = `[
+	timeout     = time.Second * 5
+	NoBidsError = "no bids"
+	metaABI     = `[
   {
     "type": "function",
     "name": "metacall",
@@ -179,7 +180,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 			return nil
 		}
 		a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
-		return nil
+		return errors.New(NoBidsError)
 	}
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)

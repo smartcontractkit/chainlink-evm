@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"sort"
@@ -366,8 +365,15 @@ func (m *InMemoryStore) DeleteAttemptForUnconfirmedTx(transactionNonce uint64, a
 	return fmt.Errorf("attempt with hash: %v for txID: %v was not found", attempt.Hash, attempt.TxID)
 }
 
-func (m *InMemoryStore) MarkTxFatal(*types.Transaction) error {
-	return errors.New("not implemented")
+func (m *InMemoryStore) MarkTxFatal(txToMark *types.Transaction) error {
+	m.Lock()
+	defer m.Unlock()
+
+	// TODO: for now do the simple thing and drop the transaction.
+	delete(m.UnconfirmedTransactions, *txToMark.Nonce)
+	delete(m.Transactions, txToMark.ID)
+	txToMark.State = txmgr.TxFatalError // update the state in case the caller needs to log
+	return nil
 }
 
 // Orchestrator

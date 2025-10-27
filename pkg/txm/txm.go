@@ -54,7 +54,7 @@ type AttemptBuilder interface {
 }
 
 type ErrorHandler interface {
-	HandleError(*types.Transaction, error, AttemptBuilder, Client, TxStore, func(common.Address, uint64), bool) (err error)
+	HandleError(context.Context, *types.Transaction, error, TxStore, func(common.Address, uint64), bool) (err error)
 }
 
 type StuckTxDetector interface {
@@ -93,7 +93,17 @@ type Txm struct {
 	wg        sync.WaitGroup
 }
 
-func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister) *Txm {
+func NewTxm(
+	lggr logger.Logger,
+	chainID *big.Int,
+	client Client,
+	attemptBuilder AttemptBuilder,
+	txStore TxStore,
+	stuckTxDetector StuckTxDetector,
+	config Config,
+	keystore keys.AddressLister,
+	errorHandler ErrorHandler,
+) *Txm {
 	return &Txm{
 		lggr:            logger.Sugared(logger.Named(lggr, "Txm")),
 		keystore:        keystore,
@@ -103,6 +113,7 @@ func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder 
 		txStore:         txStore,
 		stuckTxDetector: stuckTxDetector,
 		config:          config,
+		errorHandler:    errorHandler,
 		nonceMap:        make(map[common.Address]uint64),
 		triggerCh:       make(map[common.Address]chan struct{}),
 	}
@@ -348,7 +359,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	tx.AttemptCount++
 	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "duration", time.Since(start), "txErr: ", txErr)
 	if txErr != nil && t.errorHandler != nil {
-		if err = t.errorHandler.HandleError(tx, txErr, t.attemptBuilder, t.client, t.txStore, t.setNonce, false); err != nil {
+		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.setNonce, false); err != nil {
 			return
 		}
 	} else if txErr != nil {
