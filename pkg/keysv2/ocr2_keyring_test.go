@@ -12,12 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	commonks "github.com/smartcontractkit/chainlink-common/keystore"
 	logger "github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keysv2"
 	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keysv2"
+	"github.com/smartcontractkit/freeport"
 	"github.com/smartcontractkit/libocr/commontypes"
 	ocr2agg "github.com/smartcontractkit/libocr/gethwrappers2/ocr2aggregator"
 	"github.com/smartcontractkit/libocr/networking"
@@ -39,23 +39,35 @@ var _ ocrtypes.Database = (*helper)(nil)
 var _ ragetypes.PeerKeyring = (*peerKeyring)(nil)
 var _ nettypes.DiscovererDatabase = (*memoryDiscovererDatabase)(nil)
 
-// peerKeyring wraps an Ed25519 private key for P2P networking
 type peerKeyring struct {
-	privKey ed25519.PrivateKey
+	ks      commonks.Keystore
+	keyName string
 }
 
 func (k *peerKeyring) Sign(msg []byte) ([]byte, error) {
-	return ed25519.Sign(k.privKey, msg), nil
+	resp, err := k.ks.Sign(context.Background(), commonks.SignRequest{
+		KeyName: k.keyName,
+		Data:    msg,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Signature, nil
 }
 
 func (k *peerKeyring) PublicKey() ragetypes.PeerPublicKey {
-	pubKey := k.privKey.Public().(ed25519.PublicKey)
+	resp, err := k.ks.GetKeys(context.Background(), commonks.GetKeysRequest{
+		KeyNames: []string{k.keyName},
+	})
+	if err != nil || len(resp.Keys) == 0 {
+		return ragetypes.PeerPublicKey{}
+	}
+
 	var peerPubKey ragetypes.PeerPublicKey
-	copy(peerPubKey[:], pubKey)
+	copy(peerPubKey[:], resp.Keys[0].KeyInfo.PublicKey)
 	return peerPubKey
 }
 
-// memoryDiscovererDatabase is a simple in-memory implementation of DiscovererDatabase
 type memoryDiscovererDatabase struct {
 	announcements map[string][]byte
 }
@@ -157,8 +169,6 @@ func (t *helper) FromAccount(ctx context.Context) (ocrtypes.Account, error) {
 }
 
 func (t *helper) LatestBlockHeight(ctx context.Context) (uint64, error) {
-	// Simulated backend doesn't handle concurrent calls well
-	// Use mutex but keep original context
 	t.backendMutex.Lock()
 	defer t.backendMutex.Unlock()
 
@@ -247,12 +257,10 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	ownerKey, err := evmks.CreateTxKey(ks, "test-tx-key")
 	require.NoError(t, err)
 
-	// Create keyrings and identities for 4 oracles
 	var oracles []confighelper.OracleIdentityExtra
 	var offchainKeyrings []ocrtypes.OffchainKeyring
 	var onchainKeyrings []ocrtypes.OnchainKeyring
 	var peerIDs []string
-	var p2pKeys []ed25519.PrivateKey
 	var oracleTxOpts []*bind.TransactOpts
 
 	for i := 0; i < 4; i++ {
@@ -261,31 +269,23 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		offchainKeyring, err := keysv2.CreateOCR2OffchainKeyring(ctx, ks, fmt.Sprintf("test-offchain-keyring-%d", i))
 		require.NoError(t, err)
 
-		// Create P2P key for networking (not stored in keystore)
-		_, p2pPrivKey, err := ed25519.GenerateKey(nil)
+		p2pKeyName := fmt.Sprintf("test-p2p-key-%d", i)
+		p2pKeysResp, err := ks.CreateKeys(ctx, commonks.CreateKeysRequest{
+			Keys: []commonks.CreateKeyRequest{
+				{KeyName: p2pKeyName, KeyType: commonks.Ed25519},
+			},
+		})
 		require.NoError(t, err)
-		p2pPubKey := p2pPrivKey.Public().(ed25519.PublicKey)
-		p2pKeys = append(p2pKeys, p2pPrivKey)
+		require.Len(t, p2pKeysResp.Keys, 1)
 
-		// Get peer ID from P2P public key
+		p2pPubKey := ed25519.PublicKey(p2pKeysResp.Keys[0].KeyInfo.PublicKey)
 		peerID, err := ragetypes.PeerIDFromPublicKey(p2pPubKey)
 		require.NoError(t, err)
 		peerIDs = append(peerIDs, peerID.String())
 
-		// Create transmit key in keystore
-		txKeyName := fmt.Sprintf("test-transmit-key-%d", i)
-		keys, err := ks.CreateKeys(ctx, commonks.CreateKeysRequest{
-			Keys: []commonks.CreateKeyRequest{
-				{KeyName: txKeyName, KeyType: commonks.ECDSA_S256},
-			},
-		})
+		txKey, err := evmks.CreateTxKey(ks, fmt.Sprintf("test-transmit-key-%d", i))
 		require.NoError(t, err)
-		require.Equal(t, 1, len(keys.Keys))
-
-		// Get transmit account
-		transmitKey, err := gethcrypto.UnmarshalPubkey(keys.Keys[0].KeyInfo.PublicKey)
-		require.NoError(t, err)
-		transmitAccount := gethcrypto.PubkeyToAddress(*transmitKey)
+		transmitAccount := txKey.Address()
 
 		oracles = append(oracles, confighelper.OracleIdentityExtra{
 			OracleIdentity: confighelper.OracleIdentity{
@@ -299,43 +299,24 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		offchainKeyrings = append(offchainKeyrings, offchainKeyring)
 		onchainKeyrings = append(onchainKeyrings, onchainKeyring)
 
-		// Build per-oracle transact opts that sign via keystore using the transmit key
-		chainID := big.NewInt(1337)
-		oracleTxOpts = append(oracleTxOpts, &bind.TransactOpts{
-			From: transmitAccount,
-			Signer: func(address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-				if address != transmitAccount {
-					return nil, bind.ErrNotAuthorized
-				}
-				signer := types.LatestSignerForChainID(chainID)
-				h := signer.Hash(tx)
-				resp, err := ks.Sign(context.Background(), commonks.SignRequest{
-					KeyName: txKeyName,
-					Data:    h[:],
-				})
-				if err != nil {
-					return nil, err
-				}
-				return tx.WithSignature(signer, resp.Signature)
-			},
-		})
+		txOpts, err := txKey.GetTransactOpts(ctx, big.NewInt(1337))
+		require.NoError(t, err)
+		oracleTxOpts = append(oracleTxOpts, txOpts)
 	}
 
-	// Create simulated backend with funded accounts
 	alloc := types.GenesisAlloc{
 		ownerKey.Address(): {
-			Balance: big.NewInt(0).Mul(big.NewInt(100), big.NewInt(1e18)), // 100 ETH
+			Balance: big.NewInt(0).Mul(big.NewInt(100), big.NewInt(1e18)),
 		},
 	}
 	for _, oracle := range oracles {
 		alloc[common.HexToAddress(string(oracle.OracleIdentity.TransmitAccount))] = types.Account{
-			Balance: big.NewInt(0).Mul(big.NewInt(100), big.NewInt(1e18)), // 100 ETH
+			Balance: big.NewInt(0).Mul(big.NewInt(100), big.NewInt(1e18)),
 		}
 	}
 	backend := simulated.NewBackend(alloc, simulated.WithBlockGasLimit(10e6))
 	defer backend.Close()
 
-	// Deploy OCR2Aggregator contract
 	opts, err := ownerKey.GetTransactOpts(ctx, big.NewInt(1337))
 	require.NoError(t, err)
 	aggAddress, tx, agg, err := ocr2agg.DeployOCR2Aggregator(
@@ -355,7 +336,6 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	require.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 	lggr.Infow("Deployed OCR2Aggregator", "address", aggAddress.Hex())
 
-	// Generate OCR config
 	signers, transmitters, f, _, offchainConfigVersion, offchainConfig, err := confighelper.ContractSetConfigArgsForEthereumIntegrationTest(
 		oracles, 1, 1000000)
 	require.NoError(t, err)
@@ -366,7 +346,6 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Set config on contract
 	tx, err = agg.SetConfig(opts, signers, transmitters, f, onchainConfig, offchainConfigVersion, offchainConfig)
 	require.NoError(t, err)
 	backend.Commit()
@@ -375,34 +354,29 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	require.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 	lggr.Info("Set config on OCR2Aggregator")
 
-	// Verify config was set correctly
 	configDetails, err := agg.LatestConfigDetails(&bind.CallOpts{Context: ctx})
 	require.NoError(t, err)
 	lggr.Infow("Config details after SetConfig",
 		"blockNumber", configDetails.BlockNumber,
 		"configDigest", fmt.Sprintf("%x", configDetails.ConfigDigest),
 		"configCount", configDetails.ConfigCount)
-	require.NotEqual(t, uint32(0), configDetails.ConfigCount, "Config count should be > 0")
+	require.NotEqual(t, uint32(0), configDetails.ConfigCount)
 
-	// Create P2P peers for each oracle using networking.NewPeer
-	basePort := 30000
 	var peers []ocrtypes.BinaryNetworkEndpointFactory
 	var bootstrapLocators []commontypes.BootstrapperLocator
 
-	// Oracle 0 will be the bootstrap node
+	peerPorts := freeport.GetN(t, 4)
+
 	bootstrapLocators = append(bootstrapLocators, commontypes.BootstrapperLocator{
 		PeerID: peerIDs[0],
-		Addrs:  []string{fmt.Sprintf("127.0.0.1:%d", basePort)},
+		Addrs:  []string{fmt.Sprintf("127.0.0.1:%d", peerPorts[0])},
 	})
 
-	// Create all P2P peers
 	for i := 0; i < 4; i++ {
-		port := basePort + i
-		listenAddr := fmt.Sprintf("127.0.0.1:%d", port)
+		listenAddr := fmt.Sprintf("127.0.0.1:%d", peerPorts[i])
 
-		// Create peer with networking package
 		peer, err := networking.NewPeer(networking.PeerConfig{
-			PeerKeyring:          &peerKeyring{privKey: p2pKeys[i]},
+			PeerKeyring:          &peerKeyring{ks: ks, keyName: fmt.Sprintf("test-p2p-key-%d", i)},
 			Logger:               logger.NewOCRWrapper(lggr, true, func(string) {}),
 			V2ListenAddresses:    []string{listenAddr},
 			V2DeltaReconcile:     1 * time.Second,
@@ -419,13 +393,10 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		lggr.Infow("Started P2P peer", "oracle", i, "peerID", peerIDs[i], "listenAddr", listenAddr)
 	}
 
-	// Give peers time to discover each other
 	time.Sleep(2 * time.Second)
 
-	// Create shared mutex for backend access
 	backendMutex := &sync.Mutex{}
 
-	// Start auto-mining blocks in the simulated backend
 	stopMining := make(chan struct{})
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
@@ -443,14 +414,13 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	}()
 	defer close(stopMining)
 
-	// Create helpers and oracles
 	for i := 0; i < 4; i++ {
 		h := &helper{
 			backend:      backend,
 			lggr:         lggr,
 			ocr2agg:      agg,
 			opts:         oracleTxOpts[i],
-			observeValue: big.NewInt(int64(i + 1)), // Oracle i observes value i+1 (1, 2, 3, 4)
+			observeValue: big.NewInt(int64(i + 1)),
 			backendMutex: backendMutex,
 		}
 
@@ -495,7 +465,6 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		lggr.Infow("Started oracle", "index", i, "peerID", peerIDs[i])
 	}
 
-	// Poll for transmission with timeout
 	lggr.Info("Waiting for OCR report transmission...")
 	timeout := time.After(60 * time.Second)
 	ticker := time.NewTicker(5 * time.Second)
@@ -509,7 +478,6 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		case <-timeout:
 			t.Fatal("Timed out waiting for OCR report transmission after 60 seconds")
 		case <-ticker.C:
-			// Check latest answer (blocks are auto-mined in background)
 			backendMutex.Lock()
 			result, err := agg.LatestAnswer(&bind.CallOpts{Context: ctx})
 			backendMutex.Unlock()
@@ -519,7 +487,6 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 				continue
 			}
 
-			// Check if we have a non-zero answer
 			if result.Cmp(big.NewInt(0)) > 0 {
 				latestAnswer = result
 				foundTransmission = true
@@ -530,15 +497,11 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		}
 	}
 
-	// Verify results
-	// With values 1, 2, 3, 4, the median should be 2 or 3
-	// (In OCR2 median plugin, for even number of values, it typically picks the lower middle value)
 	expectedMedian := big.NewInt(2)
-	expectedMedianAlt := big.NewInt(3) // Some median implementations use average or upper value
+	expectedMedianAlt := big.NewInt(3)
 
 	require.NotNil(t, latestAnswer, "Latest answer should not be nil")
 
-	// Check that answer is one of the expected medians
 	isExpectedMedian := latestAnswer.Cmp(expectedMedian) == 0 || latestAnswer.Cmp(expectedMedianAlt) == 0
 	require.True(t, isExpectedMedian,
 		"Expected median to be 2 or 3, got %s", latestAnswer.String())
@@ -547,12 +510,11 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		"latestAnswer", latestAnswer,
 		"expectedMedian", expectedMedian)
 
-	// Verify that the transaction succeeded (no revert)
 	backendMutex.Lock()
 	details, err := agg.LatestTransmissionDetails(&bind.CallOpts{Context: ctx})
 	backendMutex.Unlock()
 	require.NoError(t, err)
-	require.NotEqual(t, uint32(0), details.Epoch, "Should have transmitted at least once")
+	require.NotEqual(t, uint32(0), details.Epoch)
 
 	lggr.Infow("Transmission details",
 		"configDigest", fmt.Sprintf("%x", details.ConfigDigest),
