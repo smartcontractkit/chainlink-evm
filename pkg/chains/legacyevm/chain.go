@@ -282,7 +282,10 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 
 	var balanceMonitor monitor.BalanceMonitor
 	if opts.ChainConfigs.RPCEnabled() && cfg.EVM().BalanceMonitor().Enabled() {
-		balanceMonitor = monitor.NewBalanceMonitor(cl, opts.KeyStore, l)
+		balanceMonitor, err = monitor.NewBalanceMonitor(cl, opts.KeyStore, l)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create balance monitor for chain with ID %s: %w", chainID, err)
+		}
 		headBroadcaster.Subscribe(balanceMonitor)
 	}
 

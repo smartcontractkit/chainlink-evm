@@ -36,14 +36,9 @@ After that, we have to enable CI by editing the following files.
   - Add `newproject` to the `Define test matrix` section.
     - Set the min coverage >=98%.
     - Enable run-gas-snapshot.
-    - Enable run-forge-fmt.
   - Add `newproject` to the `Checkout the repo` step.
-- `.github/workflows/solidity-hardhat.yml`
-  - Add `newproject` to the ignored list to avoid hardhat CI running for `newproject` changes.
 - `contracts/GNUmakefile`
   - Add `newproject` to the ALL_FOUNDRY_PRODUCTS list in alphabetical order.
-- `contracts/.prettierignore`
-  - Add `src/v0.8/newproject/**` .
 
 To enable geth wrapper generation, you will also have to create the following files.
 
@@ -58,6 +53,8 @@ To enable geth wrapper generation, you will also have to create the following fi
     - Remove the contents of the `generated-wrapper-dependency-versions-do-not-edit.txt` file.
     - Remove the contents of the `mocks` folder.
 - If you need mocks, define them in `.mockery.yaml`.
+- `gethwrappers/go_generate.go`
+  - Add a `go:generate` directive for your project's geth wrappers i.e. `//go:generate go generate ./newproject`.
 
 ```bash
 #!/usr/bin/env bash
@@ -228,4 +225,3 @@ Check out the official [Foundry best practices section](https://book.getfoundry.
 - You can provide inline config for fuzz/invariant tests
 - You can find the function selectors for a given function or error using `cast sig <FUNC_SIG>`
   - Run `forge selectors list` to see the entire list of selectors split by the contract name.
-

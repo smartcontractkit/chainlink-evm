@@ -23,6 +23,7 @@ ChainType = 'arbitrum' # Example
 SafeDepth = 0 # Default
 FinalityDepth = 50 # Default
 FinalityTagEnabled = false # Default
+SafeTagSupported = true # Default
 FlagsContractAddress = '0xae4E781a6218A8031764928E88d457937A954fC3' # Example
 LinkContractAddress = '0x538aAaB4ea120b2bC2fe5D296852D948F07D849e' # Example
 LogBackfillBatchSize = 1000 # Default
@@ -134,6 +135,15 @@ FinalityTagEnabled = false # Default
 ```
 FinalityTagEnabled means that the chain supports the finalized block tag when querying for a block. If FinalityTagEnabled is set to true for a chain, then FinalityDepth field is ignored.
 Finality for a block is solely defined by the finality related tags provided by the chain's RPC API. This is a placeholder and hasn't been implemented yet.
+
+### SafeTagSupported
+```toml
+SafeTagSupported = true # Default
+```
+SafeTagSupported means that the chain supports the safe block tag when querying for a block.
+When FinalityTagEnabled is true and SafeTagSupported is false, LatestSafeBlock will return the finalized block instead of safe block.
+When SafeTagSupported is true, LatestSafeBlock will return the safe block from the chain.
+When FinalityTagEnabled is false, SafeTagSupported is ignored and LatestSafeBlock uses SafeDepth.
 
 ### FlagsContractAddress
 :warning: **_ADVANCED_**: _Do not change this setting unless you know what you are doing._
@@ -905,7 +915,7 @@ EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
 VerifyChainID = true # Default
-ExternalRequestMaxResponseSize = 15000 # Default
+ExternalRequestMaxResponseSize = 50000 # Default
 ```
 The node pool manages multiple RPC endpoints.
 
@@ -1015,7 +1025,7 @@ VerifyChainID enforces RPC Client ChainIDs to match configured ChainID
 
 ### ExternalRequestMaxResponseSize
 ```toml
-ExternalRequestMaxResponseSize = 15000 # Default
+ExternalRequestMaxResponseSize = 50000 # Default
 ```
 ExternalRequestMaxResponseSize sets the maximum allowed size (in bytes) for responses to external requests.
 Responses larger than this value will be rejected to prevent the node from being overloaded.

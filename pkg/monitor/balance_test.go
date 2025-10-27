@@ -39,7 +39,8 @@ func TestBalanceMonitor_Start(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr, k1Addr}
 		ethClient := newEthClientMock(t)
 
-		bm := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		require.NoError(t, err)
 
 		k0bal := big.NewInt(42)
 		k1bal := big.NewInt(43)
@@ -64,7 +65,8 @@ func TestBalanceMonitor_Start(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr}
 		ethClient := newEthClientMock(t)
 
-		bm := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		require.NoError(t, err)
 		k0bal := big.NewInt(42)
 
 		ethClient.On("BalanceAt", mock.Anything, k0Addr, nilBigInt).Once().Return(k0bal, nil)
@@ -81,7 +83,8 @@ func TestBalanceMonitor_Start(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr}
 		ethClient := newEthClientMock(t)
 
-		bm := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		require.NoError(t, err)
 		ctxCancelledAwaiter := testutils.NewAwaiter()
 
 		ethClient.On("BalanceAt", mock.Anything, k0Addr, nilBigInt).Once().Run(func(args mock.Arguments) {
@@ -108,7 +111,8 @@ func TestBalanceMonitor_Start(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr}
 		ethClient := newEthClientMock(t)
 
-		bm := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		require.NoError(t, err)
 
 		ethClient.On("BalanceAt", mock.Anything, k0Addr, nilBigInt).
 			Once().
@@ -131,7 +135,8 @@ func TestBalanceMonitor_OnNewLongestChain_UpdatesBalance(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr, k1Addr}
 		ethClient := newEthClientMock(t)
 
-		bm := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		require.NoError(t, err)
 		k0bal := big.NewInt(42)
 		// Deliberately larger than a 64 bit unsigned integer to test overflow
 		k1bal := big.NewInt(0)
@@ -177,7 +182,8 @@ func TestBalanceMonitor_FewerRPCCallsWhenBehind(t *testing.T) {
 	ethKeyStore := keystest.Addresses{testutils.NewAddress()}
 	ethClient := newEthClientMock(t)
 
-	bm := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+	bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+	require.NoError(t, err)
 	ethClient.On("BalanceAt", mock.Anything, mock.Anything, mock.Anything).
 		Once().
 		Return(big.NewInt(1), nil)

@@ -76,7 +76,7 @@ contract PaymentTokenOnRamp_constructor is BaseUnitTest {
 
     assertTrue(paymentTokenOnRamp.hasRole(Roles.PAYMENT_VALIDATOR_ROLE, s_authority));
     assertEq(paymentTokenOnRamp.getFeeAggregator(), i_feeAggregator);
-    assertEq(paymentTokenOnRamp.typeAndVersion(), "PaymentTokenOnRamp 1.0.0-dev");
+    assertEq(paymentTokenOnRamp.typeAndVersion(), "PaymentTokenOnRamp 1.0.0");
   }
 
   function test_supportsInterface() external view {

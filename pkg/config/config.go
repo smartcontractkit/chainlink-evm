@@ -35,6 +35,7 @@ type EVM interface {
 	FinalityDepth() uint32
 	SafeDepth() uint32
 	FinalityTagEnabled() bool
+	SafeTagSupported() bool
 	FlagsContractAddress() string
 	LinkContractAddress() string
 	LogBackfillBatchSize() uint32

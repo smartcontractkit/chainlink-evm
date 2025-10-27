@@ -85,8 +85,8 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     // (donHash -> #workflows)
   /// @dev Counters for limits enforcement per DON family (tracking active workflows only)
   mapping(bytes32 donHash => uint32 workflowCount) private s_donActiveWorkflowsCount; // donHash -> #workflows
-  /// @dev The don family (as a hash) that the workflow is assigned to. Only active workflows are assigned don families.
-  /// When a workflow is paused it is removed from the don family.
+  /// @dev The don family (as a hash) that the workflow is originally assigned to. This is used for all
+  /// workflows that are added in the active or paused state, and the entry is cleaned up when workflow is deleted.
   mapping(bytes32 rid => bytes32 donHash) private s_donByWorkflowRid;
 
   /// @dev Used for tracking allowlisted requests for the owner address + request digest, required to enable anyone to
@@ -156,7 +156,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error InvalidSignature(bytes signature, uint8 recoverErrorId, bytes32 recoverErrorArg);
   error InvalidOwnershipLink(address owner, uint256 validityTimestamp, bytes32 proof, bytes signature);
   error OwnershipProofAlreadyUsed(address caller, bytes32 proof);
-
   error CallerIsNotWorkflowOwner(address caller);
   error DonLimitNotSet(string donFamily);
   error MaxWorkflowsPerDONExceeded(string donFamily);
@@ -174,6 +173,12 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   error EmptyUpdateBatch();
   error BinaryURLRequired();
   error CannotUpdateDONFamilyForPausedWorkflows();
+  error CannotChangeStatusOnUpdate(
+    bytes32 workflowId, address owner, string workflowName, string tag, WorkflowStatus attemptedStatus
+  );
+  error CannotChangeDONFamilyOnUpdate(
+    bytes32 workflowId, address owner, string workflowName, string tag, string attemptedDonFamily
+  );
   error InvalidExpiryTimestamp(bytes32 requestDigest, uint32 expiryTimestamp, uint32 maxAllowed);
   error PreviousAllowlistedRequestStillValid(address owner, bytes32 requestDigest, uint32 expiryTimestamp);
 
@@ -962,6 +967,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       /* ───────────────────────── 4. UPDATE OTHER INDICES ───────────────── */
       s_workflowKeyToRids[wKey].add(rid);
       s_idToRid[workflowId] = rid;
+      s_donByWorkflowRid[rid] = donHash;
       s_allDONRids[donHash].add(rid);
       s_allOwnerRids[msg.sender].add(rid);
 
@@ -971,6 +977,15 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       // update workflow path
       // check the workflow belongs to the owner
       if (rec.owner != msg.sender) revert CallerIsNotWorkflowOwner(msg.sender);
+
+      // check if the user is trying to change the workflow status
+      if (rec.status != status) revert CannotChangeStatusOnUpdate(workflowId, msg.sender, workflowName, tag, status);
+
+      // check if the user is trying to change the donFamily
+      bytes32 donHash = s_donByWorkflowRid[rid];
+      if (donHash != _hash(donFamily)) {
+        revert CannotChangeDONFamilyOnUpdate(workflowId, msg.sender, workflowName, tag, donFamily);
+      }
 
       /* ─────── 2. PRIMARY-KEY REMAP ─────── */
       delete s_idToRid[rec.workflowId];
@@ -1088,6 +1103,14 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   ///         • DON/user caps have been enforced already.
   ///         • Caller can perform action.
   function _applyActivate(bytes32 rid, WorkflowMetadata storage rec, bytes32 donHash) private {
+    // important to update because the DON family can change upon activation
+    bytes32 previousDonHash = s_donByWorkflowRid[rid];
+    if (previousDonHash != donHash) {
+      s_allDONRids[previousDonHash].remove(rid);
+      s_allDONRids[donHash].add(rid);
+      s_donByWorkflowRid[rid] = donHash;
+    }
+
     _addActiveIndices(rid, rec.owner, donHash, _workflowKey(rec.owner, rec.workflowName));
     rec.status = WorkflowStatus.ACTIVE;
 
@@ -1167,7 +1190,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     s_userDONActiveWorkflowsCount[owner][donHash] -= 1;
     s_donActiveWorkflowsCount[donHash] -= 1;
     s_activeRidsByWorkflowKey[workflowKey].remove(rid);
-    delete s_donByWorkflowRid[rid];
   }
 
   /// @dev Adds a workflow RID into all “active” indices and increments the per-user and per-DON counters.
@@ -1182,7 +1204,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     s_activeDONWorkflowRids[donHash].add(rid);
     s_activeOwnerWorkflowRids[owner].add(rid);
     s_activeRidsByWorkflowKey[workflowKey].add(rid);
-    s_donByWorkflowRid[rid] = donHash;
   }
 
   /// @notice This helper **assumes** all higher-level checks have
@@ -1194,7 +1215,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   function _applyDelete(bytes32 rid, WorkflowMetadata storage rec) private {
     bytes32 wKey = _workflowKey(rec.owner, rec.workflowName);
     bytes32 donHash = s_donByWorkflowRid[rid];
-    string memory donFamily = s_donConfigs[donHash].family;
     if (rec.status == WorkflowStatus.ACTIVE) {
       _removeActiveIndices(rid, rec.owner, donHash, wKey);
     }
@@ -1204,8 +1224,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     s_workflowKeyToRids[wKey].remove(rid);
     delete s_idToRid[rec.workflowId];
 
+    string memory donFamily = s_donConfigs[donHash].family;
     emit WorkflowDeleted(rec.workflowId, rec.owner, donFamily, rec.workflowName);
     delete s_workflows[rid];
+    delete s_donByWorkflowRid[rid];
   }
 
   /// @notice Change the DON family for a single workflow, updating all indices. This function only applies
@@ -1628,6 +1650,36 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
     return list;
   }
 
+  /// @notice Fetch a paginated slice of ACTIVE workflows that belong to a given DON.
+  /// @dev
+  ///  * Reads the RID set `s_activeDONWorkflowRids[donHash]` derived from the donFamily, which tracks every
+  ///    ACTIVE workflow ever registered to that DON.
+  ///  * Does **not** revert on out-of-range requests; instead it returns
+  ///    the largest sub-range that fits inside the set.
+  ///
+  /// @param donFamily  Human readable string of the DON family.
+  /// @param start     Zero-based index into the RID set.
+  /// @param limit     Bathc size for the workflows
+  /// @return list     Array of `WorkflowMetadataView` structs whose length is
+  ///                  `min(limit, total-start)`.
+  function getActiveWorkflowListByDON(
+    string calldata donFamily,
+    uint256 start,
+    uint256 limit
+  ) external view returns (WorkflowMetadataView[] memory list) {
+    bytes32 donHash = _hash(donFamily);
+    uint256 total = s_activeDONWorkflowRids[donHash].length();
+    uint256 count = _getPageCount(total, start, limit);
+
+    list = new WorkflowMetadataView[](count);
+    for (uint256 i = 0; i < count; ++i) {
+      bytes32 rid = s_activeDONWorkflowRids[donHash].at(start + i);
+      list[i] = _workflowMetadataView(rid);
+    }
+
+    return list;
+  }
+
   /// @notice Returns the number of ACTIVE workflows on a given DON.
   /// @param donFamily The human-readable DON label (must have been configured via `setDONLimit`).
   /// @return count The total number of active workflows on that DON.
@@ -1703,8 +1755,6 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
       configUrl: rec.configUrl,
       tag: rec.tag,
       attributes: rec.attributes,
-      // For ACTIVE workflows this will resolve to the correct DON label.
-      // For PAUSED/never‑assigned workflows the label is the empty string.;
       donFamily: s_donConfigs[s_donByWorkflowRid[rid]].family
     });
   }

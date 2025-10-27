@@ -214,6 +214,9 @@ func (c *Chain) SetFrom(f *Chain) {
 	if v := f.FinalityTagEnabled; v != nil {
 		c.FinalityTagEnabled = v
 	}
+	if v := f.SafeTagSupported; v != nil {
+		c.SafeTagSupported = v
+	}
 	if v := f.FlagsContractAddress; v != nil {
 		c.FlagsContractAddress = v
 	}
