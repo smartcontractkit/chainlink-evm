@@ -1178,7 +1178,7 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 		"log", l,
 	)
 
-	return l, nil
+	return l, err
 }
 
 // FilterLogsWithOpts executes a filter query.
