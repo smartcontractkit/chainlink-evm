@@ -522,6 +522,7 @@ func TestRPCClientFilterLogs(t *testing.T) {
 				require.NoError(t, rpc.Dial(ctx))
 				logs, err := rpc.FilterLogs(ctx, ethereum.FilterQuery{})
 				require.NoError(t, err)
+				require.Equal(t, len(testCases), len(logs), "Unexpected amount of logs returned")
 				for i, testCase := range testCases {
 					require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
 				}
@@ -535,6 +536,7 @@ func TestRPCClientFilterLogs(t *testing.T) {
 			require.NoError(t, rpc.Dial(ctx))
 			logs, err := rpc.FilterLogs(ctx, ethereum.FilterQuery{})
 			require.NoError(t, err)
+			require.Equal(t, len(testCases), len(logs), "Unexpected amount of logs returned")
 			for i, testCase := range testCases {
 				require.Equal(t, testCase.Index, logs[i].Index, "Expected other chains log to be returned as is")
 				require.Equal(t, testCase.TxIndex, logs[i].TxIndex, "Expected other chains log to be returned as is")
