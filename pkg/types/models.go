@@ -669,3 +669,176 @@ func fromInternalTxnSlice(tis []blocks.TransactionInternal) []Transaction {
 	}
 	return out
 }
+
+// LogMarshalling is a compatibility wrapper for go-ethereum's types.Log JSON format.
+// It unmarshals blockTimestamp from either a JSON number (e.g. 30) or a hex string
+// (e.g. "0x1e"). MarshalJSON always emits hex strings for numeric fields.
+type LogMarshalling struct {
+	Address        common.Address
+	Topics         []common.Hash
+	Data           []byte
+	BlockNumber    uint64
+	TxHash         common.Hash
+	TxIndex        uint
+	BlockHash      common.Hash
+	BlockTimestamp uint64
+	Index          uint
+	Removed        bool
+}
+
+type Logs []LogMarshalling
+
+func (l Logs) AsGethLogs() []types.Log {
+	ret := make([]types.Log, len(l))
+	for i, log := range l {
+		ret[i] = log.AsGethLog()
+	}
+
+	return ret
+}
+
+func (lm LogMarshalling) AsGethLog() types.Log {
+	return types.Log{
+		Address:        lm.Address,
+		Topics:         lm.Topics,
+		Data:           lm.Data,
+		BlockNumber:    lm.BlockNumber,
+		TxHash:         lm.TxHash,
+		TxIndex:        lm.TxIndex,
+		BlockHash:      lm.BlockHash,
+		BlockTimestamp: lm.BlockTimestamp, // present in geth v1.16.2+
+		Index:          lm.Index,
+		Removed:        lm.Removed,
+	}
+}
+
+func (lm *LogMarshalling) MarshalJSON() ([]byte, error) {
+	type enc struct {
+		Address        common.Address `json:"address"`
+		Topics         []common.Hash  `json:"topics"`
+		Data           hexutil.Bytes  `json:"data"`
+		BlockNumber    hexutil.Uint64 `json:"blockNumber"`
+		TxHash         common.Hash    `json:"transactionHash"`
+		TxIndex        hexutil.Uint   `json:"transactionIndex"`
+		BlockHash      common.Hash    `json:"blockHash"`
+		BlockTimestamp hexutil.Uint64 `json:"blockTimestamp"`
+		Index          hexutil.Uint   `json:"logIndex"`
+		Removed        bool           `json:"removed"`
+	}
+
+	out := enc{
+		Address:        lm.Address,
+		Topics:         lm.Topics,
+		Data:           hexutil.Bytes(lm.Data),
+		BlockNumber:    hexutil.Uint64(lm.BlockNumber),
+		TxHash:         lm.TxHash,
+		TxIndex:        hexutil.Uint(lm.TxIndex),
+		BlockHash:      lm.BlockHash,
+		BlockTimestamp: hexutil.Uint64(lm.BlockTimestamp),
+		Index:          hexutil.Uint(lm.Index),
+		Removed:        lm.Removed,
+	}
+	return json.Marshal(&out)
+}
+
+func (lm *LogMarshalling) UnmarshalJSON(input []byte) error {
+	// We accept either numeric or hex string for blockTimestamp.
+	type dec struct {
+		Address        *common.Address `json:"address"`
+		Topics         []common.Hash   `json:"topics"`
+		Data           *hexutil.Bytes  `json:"data"`
+		BlockNumber    *hexutil.Uint64 `json:"blockNumber"`
+		TxHash         *common.Hash    `json:"transactionHash"`
+		TxIndex        *hexutil.Uint   `json:"transactionIndex"`
+		BlockHash      *common.Hash    `json:"blockHash"`
+		BlockTimestamp json.RawMessage `json:"blockTimestamp"`
+		Index          *hexutil.Uint   `json:"logIndex"`
+		Removed        *bool           `json:"removed"`
+	}
+
+	var d dec
+	if err := json.Unmarshal(input, &d); err != nil {
+		return err
+	}
+
+	// Required-ish fields (match geth behavior of erroring on missing required ones if you prefer).
+	if d.Address != nil {
+		lm.Address = *d.Address
+	}
+	if d.Data != nil {
+		lm.Data = *d.Data
+	}
+	if d.BlockNumber != nil {
+		lm.BlockNumber = uint64(*d.BlockNumber)
+	}
+	if d.TxHash != nil {
+		lm.TxHash = *d.TxHash
+	}
+	if d.TxIndex != nil {
+		lm.TxIndex = uint(*d.TxIndex)
+	}
+	if d.BlockHash != nil {
+		lm.BlockHash = *d.BlockHash
+	}
+	if len(d.BlockTimestamp) != 0 {
+		ts, err := parseUint64Permissive(d.BlockTimestamp)
+		if err != nil {
+			return fmt.Errorf("blockTimestamp: %w", err)
+		}
+		lm.BlockTimestamp = ts
+	}
+	if d.Index != nil {
+		lm.Index = uint(*d.Index)
+	}
+	if d.Removed != nil {
+		lm.Removed = *d.Removed
+	}
+	// Topics can be empty, that's fine.
+	lm.Topics = d.Topics
+
+	return nil
+}
+
+func parseUint64Permissive(raw json.RawMessage) (uint64, error) {
+	if len(raw) == 0 {
+		return 0, nil
+	}
+
+	// Try as string first
+	var s string
+	if err := json.Unmarshal(raw, &s); err == nil {
+		// Hex string like "0x1e"
+		if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
+			var hu hexutil.Uint64
+			if err := hu.UnmarshalText([]byte(s)); err != nil {
+				return 0, err
+			}
+			return uint64(hu), nil
+		}
+		// Decimal string like "30"
+		if ui, err := strconv.ParseUint(s, 10, 64); err == nil {
+			return ui, nil
+		}
+		// Fall through to try other forms.
+	}
+
+	// Try as hexutil.Uint64 directly (works if raw was a quoted hex string)
+	var hu hexutil.Uint64
+	if err := json.Unmarshal(raw, &hu); err == nil {
+		return uint64(hu), nil
+	}
+
+	// Try as plain unsigned number
+	var u64 uint64
+	if err := json.Unmarshal(raw, &u64); err == nil {
+		return u64, nil
+	}
+
+	// Try as signed number (non-negative)
+	var i64 int64
+	if err := json.Unmarshal(raw, &i64); err == nil && i64 >= 0 {
+		return uint64(i64), nil
+	}
+
+	return 0, fmt.Errorf("cannot parse uint64 from %s", string(raw))
+}

@@ -463,6 +463,96 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 	})
 }
 
+func TestRPCClientFilterLogsCompatibility(t *testing.T) {
+	t.Parallel()
+
+	topics := []common.Hash{common.BigToHash(big.NewInt(10))}
+
+	const (
+		expAddress        = "0xecf8f87f810ecf450940c9f60066b4a7a501d6a7"
+		expBlockHash      = "0x656c34545f90a730a19008c0e7a7cd4fb3895064b48d6d69761bd5abad681056"
+		expBlockNumberHex = "0x1ecfa4" // 2020004 decimal
+		expBlockTimestamp = uint64(15) // 0xf
+		expData           = "0x000000000000000000000000000000000000000000000001a055690d9db80000"
+		expLogIndexHex    = "0x2"
+		expTxHash         = "0x3b198bfd5d2907285af009e9ae84a0ecd63677110d89d7e030251acb87f6487e"
+		expTxIndexHex     = "0x3"
+
+		expTopic0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+		expTopic1 = "0x00000000000000000000000080b2c9d7cbbf30a1b0fc8983c647d754c6525615"
+	)
+
+	expBlockNumber := uint64(0x1ecfa4)
+	expLogIndex := uint(0x2)
+	expTxIndex := uint(0x3)
+
+	tt := []struct {
+		name   string
+		logStr string
+	}{
+		{
+			name:   "return log in eth 1.16.2 format",
+			logStr: `[{"address":"` + expAddress + `","blockHash":"` + expBlockHash + `","blockNumber":"` + expBlockNumberHex + `","blockTimestamp":"0xf","data":"` + expData + `","logIndex":"` + expLogIndexHex + `","topics":["` + expTopic0 + `","` + expTopic1 + `"],"transactionHash":"` + expTxHash + `","transactionIndex":"` + expTxIndexHex + `"}]`,
+		},
+		{
+			name:   "return log in eth 1.15.3 format",
+			logStr: `[{"address":"` + expAddress + `","blockHash":"` + expBlockHash + `","blockNumber":"` + expBlockNumberHex + `","blockTimestamp":15,"data":"` + expData + `","logIndex":"` + expLogIndexHex + `","topics":["` + expTopic0 + `","` + expTopic1 + `"],"transactionHash":"` + expTxHash + `","transactionIndex":"` + expTxIndexHex + `"}]`,
+		},
+	}
+
+	for _, tcase := range tt {
+		t.Run(tcase.name, func(t *testing.T) {
+			wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+				switch method {
+				case "eth_getLogs":
+					resp.Result = tcase.logStr
+				default:
+					require.Fail(t, "unexpected method: "+method)
+				}
+				return
+			}).WSURL()
+
+			rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true})
+			filter := ethereum.FilterQuery{
+				FromBlock: big.NewInt(0),
+				ToBlock:   big.NewInt(10),
+				Topics:    [][]common.Hash{topics},
+			}
+
+			// CALL
+			got, err := rpcClient.FilterLogs(t.Context(), filter)
+			require.NoError(t, err)
+
+			// ASSERT: one log
+			require.Len(t, got, 1)
+			l := got[0]
+
+			// Address / Hashes
+			require.Equal(t, common.HexToAddress(expAddress), l.Address)
+			require.Equal(t, common.HexToHash(expBlockHash), l.BlockHash)
+			require.Equal(t, common.HexToHash(expTxHash), l.TxHash)
+
+			// Numbers
+			require.Equal(t, expBlockNumber, l.BlockNumber)
+			require.Equal(t, expBlockTimestamp, l.BlockTimestamp)
+			require.Equal(t, expLogIndex, l.Index)
+			require.Equal(t, expTxIndex, l.TxIndex)
+
+			// Data
+			expDataBytes, err := hexutil.Decode(expData)
+			require.NoError(t, err)
+			require.Equal(t, expDataBytes, l.Data)
+
+			// Topics
+			require.Len(t, l.Topics, 2)
+			require.Equal(t, common.HexToHash(expTopic0), l.Topics[0])
+			require.Equal(t, common.HexToHash(expTopic1), l.Topics[1])
+
+			// Removed should default to false if not provided
+			require.False(t, l.Removed)
+		})
+	}
+}
 func TestRPCClientFilterLogs(t *testing.T) {
 	t.Parallel()
 
@@ -522,6 +612,7 @@ func TestRPCClientFilterLogs(t *testing.T) {
 				require.NoError(t, rpc.Dial(ctx))
 				logs, err := rpc.FilterLogs(ctx, ethereum.FilterQuery{})
 				require.NoError(t, err)
+				require.Equal(t, len(testCases), len(logs), "Unexpected amount of logs returned")
 				for i, testCase := range testCases {
 					require.Equal(t, testCase.ExpectedIndex, logs[i].Index, "Unexpected log index %d for test case %v", logs[i].Index, testCase)
 				}
@@ -535,6 +626,7 @@ func TestRPCClientFilterLogs(t *testing.T) {
 			require.NoError(t, rpc.Dial(ctx))
 			logs, err := rpc.FilterLogs(ctx, ethereum.FilterQuery{})
 			require.NoError(t, err)
+			require.Equal(t, len(testCases), len(logs), "Unexpected amount of logs returned")
 			for i, testCase := range testCases {
 				require.Equal(t, testCase.Index, logs[i].Index, "Expected other chains log to be returned as is")
 				require.Equal(t, testCase.TxIndex, logs[i].TxIndex, "Expected other chains log to be returned as is")

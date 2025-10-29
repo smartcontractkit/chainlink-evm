@@ -1160,8 +1160,15 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 
 	lggr.Debug("RPC call: evmclient.Client#FilterLogs")
 	start := time.Now()
-	l, err = client.geth.FilterLogs(ctx, q)
+	arg, err := toFilterArg(q)
+	if err != nil {
+		return nil, err
+	}
+
+	var result evmtypes.Logs
+	err = client.rpc.CallContext(ctx, &result, "eth_getLogs", arg)
 	err = r.wrapRPCClientError(err)
+	l = result.AsGethLogs()
 
 	if err == nil {
 		err = r.makeLogsValid(l)
@@ -1171,7 +1178,7 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 		"log", l,
 	)
 
-	return
+	return l, err
 }
 
 // FilterLogsWithOpts executes a filter query.
