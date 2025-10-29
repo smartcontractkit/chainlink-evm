@@ -1641,6 +1641,10 @@ func ensureIdenticalBlocksBatches(fetched1, fetched2 map[uint64]*evmtypes.Head) 
 }
 
 func validateBlockResponse(r rpc.BatchElem) (*evmtypes.Head, error) {
+	if r.Error != nil {
+		return nil, fmt.Errorf("one of requests in batch failed: %w", r.Error)
+	}
+
 	block, is := r.Result.(*evmtypes.Head)
 
 	if !is {
