@@ -143,7 +143,7 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 	}
 
 	return &MetaClient{
-		lggr:      logger.Sugared(logger.Named(lggr, "Txm.Txm.MetaClient")),
+		lggr:      logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
 		c:         c,
 		ks:        ks,
 		customURL: customURL,
