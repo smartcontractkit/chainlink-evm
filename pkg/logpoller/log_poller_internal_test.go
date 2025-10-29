@@ -302,7 +302,7 @@ func newHead(num int64) *evmtypes.Head {
 func mockBatchCallContextWithHead(t *testing.T, ec *clienttest.Client, newHead func(num int64) evmtypes.Head) {
 	ec.On("BatchCallContext", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		elems := args.Get(1).([]rpc.BatchElem)
-		for _, e := range elems {
+		for i, e := range elems {
 			var num int64
 			block := e.Args[0].(string)
 			switch block {
@@ -314,6 +314,10 @@ func mockBatchCallContextWithHead(t *testing.T, ec *clienttest.Client, newHead f
 				n, err := hexutil.DecodeUint64(block)
 				require.NoError(t, err)
 				num = int64(n)
+				if num == 0 {
+					elems[i].Error = errors.New("block 0 is not available")
+					continue
+				}
 			}
 			result := e.Result.(*evmtypes.Head)
 			*result = newHead(num)
@@ -719,6 +723,12 @@ func Test_FetchBlocks(t *testing.T) {
 			[]uint64{2, 5, 3, 4},
 			&Block{BlockNumber: 1, BlockHash: common.BigToHash(big.NewInt(1))},
 			nil,
+		},
+		{
+			"One block is not available",
+			[]uint64{0, 1, 2, 3},
+			nil,
+			errors.New("one of requests in batch failed: block 0 is not available"),
 		},
 	}
 
