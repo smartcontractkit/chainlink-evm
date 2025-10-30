@@ -55,7 +55,7 @@ func TestTxKey(t *testing.T) {
 
 	// Admin operation will invalidate the keys.
 	_, err = ks.DeleteKeys(ctx, commonks.DeleteKeysRequest{
-		KeyNames: []string{testKey.FullName(), testKey2.FullName()},
+		KeyNames: []string{testKey.KeyPath().String(), testKey2.KeyPath().String()},
 	})
 	require.NoError(t, err)
 

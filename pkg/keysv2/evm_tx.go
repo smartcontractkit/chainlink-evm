@@ -19,9 +19,27 @@ const (
 	TxKeystorePrefix = "tx"
 )
 
+type KeyPath []string
+
+func (k KeyPath) String() string {
+	return joinKeySegments(k...)
+}
+
+func (k KeyPath) Leaf() string {
+	return k[len(k)-1]
+}
+
+func NewKeyPath(segments ...string) KeyPath {
+	return segments
+}
+
+func NewKeyPathFromString(fullName string) KeyPath {
+	return strings.Split(fullName, "/")
+}
+
 // JoinKeySegments joins path-like key name segments using "/" and avoids double slashes.
 // Empty segments are skipped so JoinKeySegments("EVM", "TX", "my-key") => "EVM/TX/my-key".
-func JoinKeySegments(segments ...string) string {
+func joinKeySegments(segments ...string) string {
 	cleaned := make([]string, 0, len(segments))
 	for _, s := range segments {
 		s = strings.Trim(s, "/")
@@ -33,16 +51,10 @@ func JoinKeySegments(segments ...string) string {
 	return strings.Join(cleaned, "/")
 }
 
-func GetTxKeystoreName(localName string) string {
-	return JoinKeySegments(EVMPrefix, TxKeystorePrefix, localName)
-}
-
 type TxKey struct {
-	ks keystore.Keystore
-	// Fully qualified name in keystore. Use for administration.
-	fullName string
-	name     string
-	addr     common.Address
+	ks      keystore.Keystore
+	keyPath KeyPath
+	addr    common.Address
 }
 
 type SignTxRequest struct {
@@ -54,12 +66,8 @@ type SignTxResponse struct {
 	Tx *gethtypes.Transaction
 }
 
-func (k *TxKey) Name() string {
-	return k.name
-}
-
-func (k *TxKey) FullName() string {
-	return k.fullName
+func (k *TxKey) KeyPath() KeyPath {
+	return k.keyPath
 }
 
 func (k *TxKey) Address() common.Address {
@@ -73,7 +81,7 @@ func (k *TxKey) SignTx(ctx context.Context, req SignTxRequest) (SignTxResponse, 
 	signer := gethtypes.LatestSignerForChainID(req.ChainID)
 	h := signer.Hash(req.Tx)
 	signReq := keystore.SignRequest{
-		KeyName: k.FullName(),
+		KeyName: k.keyPath.String(),
 		Data:    h[:],
 	}
 	signResp, err := k.ks.Sign(ctx, signReq)
@@ -109,11 +117,12 @@ func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.Tr
 	}, nil
 }
 
-func CreateTxKey(ks keystore.Keystore, localName string) (*TxKey, error) {
+func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
+	path := NewKeyPath(EVMPrefix, TxKeystorePrefix, name)
 	createReq := keystore.CreateKeysRequest{
 		Keys: []keystore.CreateKeyRequest{
 			{
-				KeyName: GetTxKeystoreName(localName),
+				KeyName: path.String(),
 				KeyType: keystore.ECDSA_S256,
 			},
 		},
@@ -131,23 +140,23 @@ func CreateTxKey(ks keystore.Keystore, localName string) (*TxKey, error) {
 	}
 	addr := gethcrypto.PubkeyToAddress(*publicKey)
 	return &TxKey{
-		ks:       ks,
-		name:     localName,
-		fullName: GetTxKeystoreName(localName),
-		addr:     addr,
+		ks:      ks,
+		keyPath: path,
+		addr:    addr,
 	}, nil
 }
 
 func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*TxKey, error) {
 	var fullNames []string
 	for _, name := range names {
-		fullNames = append(fullNames, GetTxKeystoreName(name))
+		fullNames = append(fullNames, NewKeyPath(EVMPrefix, TxKeystorePrefix, name).String())
 	}
 	resp, err := ks.GetKeys(ctx, keystore.GetKeysRequest{KeyNames: fullNames})
 	if err != nil {
 		return nil, err
 	}
 
+	// Note we rely on deterministic order of keys in the response
 	var keys []*TxKey
 	for _, key := range resp.Keys {
 		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
@@ -156,10 +165,9 @@ func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*Tx
 		}
 		addr := gethcrypto.PubkeyToAddress(*publicKey)
 		keys = append(keys, &TxKey{
-			ks:       ks,
-			fullName: key.KeyInfo.Name,
-			name:     key.KeyInfo.Name,
-			addr:     addr,
+			ks:      ks,
+			keyPath: NewKeyPathFromString(key.KeyInfo.Name),
+			addr:    addr,
 		})
 	}
 	return keys, nil

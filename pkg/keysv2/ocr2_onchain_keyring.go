@@ -17,36 +17,12 @@ const (
 	OCR2OnchainPrefix = "ocr2_onchain"
 )
 
-func GetOCR2OnchainKeystoreName(localName string) string {
-	return JoinKeySegments(EVMPrefix, OCR2OnchainPrefix, localName)
-}
-
-func IsOCR2OnchainKey(name string) bool {
-	return strings.HasPrefix(name, JoinKeySegments(EVMPrefix, OCR2OnchainPrefix, ""))
-}
-
-type OCR2OnchainKeyringCreateRequest struct {
-	LocalName string
-}
-
-type OCR2OnchainKeyringCreateResponse struct {
-	Keyring ocrtypes.OnchainKeyring
-}
-
-type OCR2OnchainKeyringGetKeyringsRequest struct {
-	Names []string // Empty slice means get all OCR2 onchain keyrings
-}
-
-type OCR2OnchainKeyringGetKeyringsResponse struct {
-	Keyrings []ocrtypes.OnchainKeyring
-}
-
-// CreateOCR2OnchainKeyring creates an OCR2 onchain keyring using the base keystore and returns the handle.
-func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, localName string) (ocrtypes.OnchainKeyring, error) {
+func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, keyringName string) (ocrtypes.OnchainKeyring, error) {
+	onchainKeyPath := NewKeyPath(EVMPrefix, OCR2OnchainPrefix, keyringName)
 	createReq := keystore.CreateKeysRequest{
 		Keys: []keystore.CreateKeyRequest{
 			{
-				KeyName: GetOCR2OnchainKeystoreName(localName),
+				KeyName: onchainKeyPath.String(),
 				KeyType: keystore.ECDSA_S256,
 			},
 		},
@@ -66,13 +42,11 @@ func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, localNa
 	return &evmOnchainKeyring{ks: ks, onchainKey: resp.Keys[0].KeyInfo, addr: addr}, nil
 }
 
-// ListOCR2OnchainKeyrings lists OCR2 onchain keyrings. If no local names provided, returns all OCR2 onchain keyrings.
 func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNames ...string) ([]ocrtypes.OnchainKeyring, error) {
-	// Build names if explicitly provided
 	var names []string
 	if len(localNames) > 0 {
 		for _, ln := range localNames {
-			names = append(names, GetOCR2OnchainKeystoreName(ln))
+			names = append(names, NewKeyPath(EVMPrefix, OCR2OnchainPrefix, ln).String())
 		}
 	}
 
@@ -84,15 +58,16 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNam
 
 	var keyrings []ocrtypes.OnchainKeyring
 	for _, key := range resp.Keys {
-		if IsOCR2OnchainKey(key.KeyInfo.Name) {
-			publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
-			if err != nil {
-				fmt.Println("UnmarshalPubkey error:", err)
-				continue // Skip invalid keys
-			}
-			addr := gethcrypto.PubkeyToAddress(*publicKey)
-			keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, onchainKey: key.KeyInfo, addr: addr})
+		if !strings.HasPrefix(key.KeyInfo.Name, NewKeyPath(EVMPrefix, OCR2OnchainPrefix).String()) {
+			continue
 		}
+		keyPath := NewKeyPathFromString(key.KeyInfo.Name)
+		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		addr := gethcrypto.PubkeyToAddress(*publicKey)
+		keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, onchainKey: key.KeyInfo, addr: addr, keyPath: keyPath})
 	}
 	return keyrings, nil
 }
@@ -103,6 +78,11 @@ type evmOnchainKeyring struct {
 	ks         keystore.Keystore
 	onchainKey keystore.KeyInfo
 	addr       common.Address
+	keyPath    KeyPath
+}
+
+func (k *evmOnchainKeyring) KeyPath() KeyPath {
+	return k.keyPath
 }
 
 func (k *evmOnchainKeyring) PublicKey() ocrtypes.OnchainPublicKey {
@@ -140,7 +120,6 @@ func (k *evmOnchainKeyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCt
 		Signature: signature,
 	})
 	if err != nil {
-		// Log?
 		return false
 	}
 	return verifyResp.Valid

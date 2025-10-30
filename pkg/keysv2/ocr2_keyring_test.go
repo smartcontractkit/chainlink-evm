@@ -2,7 +2,6 @@ package keysv2_test
 
 import (
 	"context"
-	"crypto/ed25519"
 	"fmt"
 	"math/big"
 	"sync"
@@ -28,7 +27,6 @@ import (
 	libocr "github.com/smartcontractkit/libocr/offchainreporting2plus"
 	"github.com/smartcontractkit/libocr/offchainreporting2plus/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
-	ragetypes "github.com/smartcontractkit/libocr/ragep2p/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,37 +34,7 @@ var _ ocrtypes.ContractConfigTracker = (*helper)(nil)
 var _ ocrtypes.ContractTransmitter = (*helper)(nil)
 var _ median.DataSource = (*helper)(nil)
 var _ ocrtypes.Database = (*helper)(nil)
-var _ ragetypes.PeerKeyring = (*peerKeyring)(nil)
 var _ nettypes.DiscovererDatabase = (*memoryDiscovererDatabase)(nil)
-
-type peerKeyring struct {
-	ks      commonks.Keystore
-	keyName string
-}
-
-func (k *peerKeyring) Sign(msg []byte) ([]byte, error) {
-	resp, err := k.ks.Sign(context.Background(), commonks.SignRequest{
-		KeyName: k.keyName,
-		Data:    msg,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return resp.Signature, nil
-}
-
-func (k *peerKeyring) PublicKey() ragetypes.PeerPublicKey {
-	resp, err := k.ks.GetKeys(context.Background(), commonks.GetKeysRequest{
-		KeyNames: []string{k.keyName},
-	})
-	if err != nil || len(resp.Keys) == 0 {
-		return ragetypes.PeerPublicKey{}
-	}
-
-	var peerPubKey ragetypes.PeerPublicKey
-	copy(peerPubKey[:], resp.Keys[0].KeyInfo.PublicKey)
-	return peerPubKey
-}
 
 type memoryDiscovererDatabase struct {
 	announcements map[string][]byte
@@ -244,7 +212,7 @@ func (t *helper) WriteConfig(ctx context.Context, config ocrtypes.ContractConfig
 
 // TestOCR2Keyring_Integration tests the OCR2 keyrings integration
 // with libocr to ensure that the keyrings can actually be used
-// to sign and verify reports.
+// to sign and verify OCR reports.
 func TestOCR2Keyring_Integration(t *testing.T) {
 	lggr := logger.Test(t)
 	storage := commonks.NewMemoryStorage()
@@ -260,7 +228,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	var oracles []confighelper.OracleIdentityExtra
 	var offchainKeyrings []ocrtypes.OffchainKeyring
 	var onchainKeyrings []ocrtypes.OnchainKeyring
-	var peerIDs []string
+	var peerKeyrings []*keysv2.PeerKeyring
 	var oracleTxOpts []*bind.TransactOpts
 
 	for i := 0; i < 4; i++ {
@@ -270,18 +238,9 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		require.NoError(t, err)
 
 		p2pKeyName := fmt.Sprintf("test-p2p-key-%d", i)
-		p2pKeysResp, err := ks.CreateKeys(ctx, commonks.CreateKeysRequest{
-			Keys: []commonks.CreateKeyRequest{
-				{KeyName: p2pKeyName, KeyType: commonks.Ed25519},
-			},
-		})
+		peerKeyring, err := keysv2.CreatePeerKeyring(ctx, ks, p2pKeyName)
 		require.NoError(t, err)
-		require.Len(t, p2pKeysResp.Keys, 1)
-
-		p2pPubKey := ed25519.PublicKey(p2pKeysResp.Keys[0].KeyInfo.PublicKey)
-		peerID, err := ragetypes.PeerIDFromPublicKey(p2pPubKey)
-		require.NoError(t, err)
-		peerIDs = append(peerIDs, peerID.String())
+		peerKeyrings = append(peerKeyrings, peerKeyring)
 
 		txKey, err := evmks.CreateTxKey(ks, fmt.Sprintf("test-transmit-key-%d", i))
 		require.NoError(t, err)
@@ -291,7 +250,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 			OracleIdentity: confighelper.OracleIdentity{
 				OnchainPublicKey:  onchainKeyring.PublicKey(),
 				OffchainPublicKey: offchainKeyring.OffchainPublicKey(),
-				PeerID:            peerID.String(),
+				PeerID:            peerKeyring.MustPeerID(),
 				TransmitAccount:   ocrtypes.Account(transmitAccount.String()),
 			},
 			ConfigEncryptionPublicKey: offchainKeyring.ConfigEncryptionPublicKey(),
@@ -368,7 +327,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	peerPorts := freeport.GetN(t, 4)
 
 	bootstrapLocators = append(bootstrapLocators, commontypes.BootstrapperLocator{
-		PeerID: peerIDs[0],
+		PeerID: peerKeyrings[0].MustPeerID(),
 		Addrs:  []string{fmt.Sprintf("127.0.0.1:%d", peerPorts[0])},
 	})
 
@@ -376,7 +335,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		listenAddr := fmt.Sprintf("127.0.0.1:%d", peerPorts[i])
 
 		peer, err := networking.NewPeer(networking.PeerConfig{
-			PeerKeyring:          &peerKeyring{ks: ks, keyName: fmt.Sprintf("test-p2p-key-%d", i)},
+			PeerKeyring:          peerKeyrings[i],
 			Logger:               logger.NewOCRWrapper(lggr, true, func(string) {}),
 			V2ListenAddresses:    []string{listenAddr},
 			V2DeltaReconcile:     1 * time.Second,
@@ -390,7 +349,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		require.NoError(t, err)
 		defer func() { _ = peer.Close() }()
 		peers = append(peers, peer.OCR2BinaryNetworkEndpointFactory())
-		lggr.Infow("Started P2P peer", "oracle", i, "peerID", peerIDs[i], "listenAddr", listenAddr)
+		lggr.Infow("Started P2P peer", "oracle", i, "peerID", peerKeyrings[i].MustPeerID(), "listenAddr", listenAddr)
 	}
 
 	time.Sleep(2 * time.Second)
@@ -462,7 +421,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		err = oracle.Start()
 		require.NoError(t, err)
 		defer oracle.Close()
-		lggr.Infow("Started oracle", "index", i, "peerID", peerIDs[i])
+		lggr.Infow("Started oracle", "index", i, "peerID", peerKeyrings[i].MustPeerID())
 	}
 
 	lggr.Info("Waiting for OCR report transmission...")
