@@ -8,6 +8,8 @@ defaults:
   run:
     shell: bash
 
+permissions: {}
+
 jobs:
   readonly_changes:
     name: Detect readonly solidity file changes
@@ -154,6 +156,8 @@ jobs:
     needs: [tag-check, changes, lint, native-compile]
     if: needs.tag-check.outputs.is-pre-release-core == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
@@ -188,9 +192,8 @@ jobs:
           pnpm version "${version}" --no-git-tag-version --no-commit-hooks --no-git-checks
 
       - name: Publish to NPM (beta)
-        uses: smartcontractkit/.github/actions/ci-publish-npm@4b0ab756abcb1760cb82e1e87b94ff431905bffc # ci-publish-npm@0.4.0
+        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
         with:
-          npm-token: ${{ secrets.NPM_CHAINLINK_EVM }}
           create-github-release: false
           publish-command: "pnpm publish-beta --no-git-checks"
           package-json-directory: contracts
@@ -202,7 +205,7 @@ jobs:
     if: needs.tag-check.outputs.is-release-core == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      id-token: write  # Required for OIDC
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
@@ -240,9 +243,8 @@ jobs:
           fi
 
       - name: Publish to NPM (latest)
-        uses: smartcontractkit/.github/actions/ci-publish-npm@4b0ab756abcb1760cb82e1e87b94ff431905bffc # ci-publish-npm@0.4.0
+        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
         with:
-          npm-token: ${{ secrets.NPM_CHAINLINK_EVM }}
-          create-github-release: false
+          create-github-release: true
           publish-command: "pnpm publish-prod --no-git-checks"
           package-json-directory: contracts
