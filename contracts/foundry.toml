@@ -132,6 +132,7 @@ src = 'src/v0.8/shared'
 test = 'src/v0.8/shared/test'
 solc_version = '0.8.26'
 evm_version = 'paris'
+ignored_error_codes = [8417]
 
 [profile.payments]
 optimizer_runs = 1_000_000
