@@ -30,7 +30,7 @@ contract OptimismCrossDomainForwarderTest is L2EPTest {
 
 contract OptimismCrossDomainForwarder_Constructor is OptimismCrossDomainForwarderTest {
   /// @notice it should have been deployed with the correct initial state
-  function test_InitialState() public {
+  function test_InitialState() public view {
     // it should set the owner correctly
     assertEq(s_optimismCrossDomainForwarder.owner(), s_l1OwnerAddr);
 

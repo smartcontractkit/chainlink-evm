@@ -72,7 +72,7 @@ contract ChainSpecificUtilTest is BaseTest {
     }
   }
 
-  function testGetBlockhashOptimism() public {
+  function testGetBlockhashOptimism() public view {
     // Optimism L2 block hash is simply blockhash()
     bytes32 actualBlockhash = ChainSpecificUtil._getBlockhash(uint64(block.number - 1));
     assertEq(blockhash(block.number - 1), actualBlockhash);
@@ -90,7 +90,7 @@ contract ChainSpecificUtilTest is BaseTest {
     }
   }
 
-  function testGetBlockNumberOptimism() public {
+  function testGetBlockNumberOptimism() public view {
     // Optimism L2 block number is simply block.number
     uint256 actualBlockNumber = ChainSpecificUtil._getBlockNumber();
     assertEq(block.number, actualBlockNumber);

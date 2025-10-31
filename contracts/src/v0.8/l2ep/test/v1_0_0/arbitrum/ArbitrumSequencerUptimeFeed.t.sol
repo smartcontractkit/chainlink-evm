@@ -52,7 +52,7 @@ contract ArbitrumSequencerUptimeFeedTest is L2EPTest {
 
 contract ArbitrumSequencerUptimeFeed_Constants is ArbitrumSequencerUptimeFeedTest {
   /// @notice it should have the correct value for FLAG_L2_SEQ_OFFLINE'
-  function test_InitialState() public {
+  function test_InitialState() public view {
     assertEq(s_arbitrumSequencerUptimeFeed.FLAG_L2_SEQ_OFFLINE(), 0xa438451D6458044c3c8CD2f6f31c91ac882A6d91);
   }
 }
