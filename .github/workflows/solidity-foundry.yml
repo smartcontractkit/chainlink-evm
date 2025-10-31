@@ -30,13 +30,13 @@ jobs:
           [
             { "name": "automation", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false }},
             { "name": "functions", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": true }},
-            { "name": "keystone", "setup": { "run-coverage": true, "min-coverage": 72.8, "run-gas-snapshot": false }},
             { "name": "l2ep", "setup": { "run-coverage": true, "min-coverage": 65.0, "run-gas-snapshot": true }},
             { "name": "llo-feeds", "setup": { "run-coverage": true, "min-coverage": 49.3, "run-gas-snapshot": true }},
             { "name": "operatorforwarder", "setup": { "run-coverage": true, "min-coverage": 55.7, "run-gas-snapshot": true }},
             { "name": "shared", "setup": { "run-coverage": true, "extra-coverage-params": "--no-match-path='*CallWithExactGas*' --ir-minimum", "min-coverage": 29, "run-gas-snapshot": true }},
             { "name": "vrf", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false }},
-            { "name": "workflow", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum --no-match-coverage='(.*v1/test.*)|(.*v2/test.*)'", "min-coverage": 93.0, "run-gas-snapshot": true }},
+            { "name": "workflow", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum --no-match-coverage='(.*v1/test.*)|(.*v2/test.*)'", "min-coverage": 93.0, "run-gas-snapshot": true, "subfolder": "/cre" }},
+            { "name": "keystone", "setup": { "run-coverage": true, "min-coverage": 72.8, "run-gas-snapshot": false, "subfolder": "/cre" }},
             { "name": "data-feeds", "setup": { "run-coverage": true, "min-coverage": 98.5, "run-gas-snapshot": true, "extra-coverage-params": "--no-match-coverage='WIP*'" }},
             { "name": "payments", "setup": { "run-coverage": true, "min-coverage": 100, "run-gas-snapshot": true, "extra-coverage-params": "" }}
           ]
@@ -88,7 +88,7 @@ jobs:
             functions:
               - 'contracts/src/v0.8/functions/**/*.sol'
             keystone:
-              - 'contracts/src/v0.8/keystone/**/*.sol'
+              - 'contracts/cre/src/keystone/**/*.sol'
             l2ep:
               - 'contracts/src/v0.8/l2ep/**/*.sol'
             llo-feeds:
@@ -101,7 +101,7 @@ jobs:
               - 'contracts/src/v0.8/shared/**/*.sol'
               - 'contracts/src/v0.8/vendor/**/*.sol'
             workflow:
-              - 'contracts/src/v0.8/workflow/**/*.sol'
+              - 'contracts/cre/src/workflow/**/*.sol'
             data-feeds:
               - 'contracts/src/v0.8/data-feeds/**/*.sol'
 
@@ -178,7 +178,7 @@ jobs:
           || needs.changes.outputs.non_src_changes == 'true' }}
         shell: bash
         id: check-for-solc-version
-        working-directory: contracts
+        working-directory: contracts${{ matrix.product.setup.subfolder || '' }}
         env:
           FOUNDRY_PROFILE: ${{ matrix.product.name }}
         run: |
@@ -207,7 +207,7 @@ jobs:
           || contains(fromJson(needs.changes.outputs.all_changes), 'shared')
           || needs.changes.outputs.non_src_changes == 'true') }}
         shell: bash
-        working-directory: contracts/src/v0.8
+        working-directory: contracts${{ matrix.product.setup.subfolder || '' }}/src/
         run: |
           exact_versions=$(grep -rh "pragma solidity" ${{ matrix.product.name }} | sort | uniq | grep -v '\^' | awk '{print $3}' | tr -d ';')
           for version in $exact_versions; do
@@ -231,7 +231,7 @@ jobs:
           forge --version
           forge build
         id: build
-        working-directory: contracts
+        working-directory: contracts${{ matrix.product.setup.subfolder || '' }}
         env:
           FOUNDRY_PROFILE: ${{ matrix.product.name }}
 
@@ -243,7 +243,7 @@ jobs:
         run: |
           forge test -vvv
         id: test
-        working-directory: contracts
+        working-directory: contracts${{ matrix.product.setup.subfolder || '' }}
         env:
           FOUNDRY_PROFILE: ${{ matrix.product.name }}
 
@@ -256,7 +256,7 @@ jobs:
         run: |
           forge snapshot --nmt "test?(Fuzz|Fork|.*_RevertWhen)_.*" --check gas-snapshots/${{ matrix.product.name }}.gas-snapshot
         id: snapshot
-        working-directory: contracts
+        working-directory: contracts${{ matrix.product.setup.subfolder || '' }}
         env:
           FOUNDRY_PROFILE: ${{ matrix.product.name }}
 
@@ -275,7 +275,7 @@ jobs:
           || contains(fromJson(needs.changes.outputs.all_changes), 'shared')
           || needs.changes.outputs.non_src_changes == 'true')
           && matrix.product.setup.run-coverage }}
-        working-directory: contracts
+        working-directory: contracts${{ matrix.product.setup.subfolder || '' }}
         shell: bash
         run: |
           if [[ -n "${{ matrix.product.setup.extra-coverage-params }}" ]]; then
@@ -293,7 +293,7 @@ jobs:
           || needs.changes.outputs.non_src_changes == 'true')
           && matrix.product.setup.run-coverage }}
         run: |
-          ./contracts/scripts/lcov_prune ${{ matrix.product.name }} ./contracts/lcov.info ./contracts/lcov.info.pruned
+          ./contracts${{ matrix.product.setup.subfolder || '' }}/scripts/lcov_prune ${{ matrix.product.name }} ./contracts${{ matrix.product.setup.subfolder || '' }}/lcov.info ./contracts${{ matrix.product.setup.subfolder || '' }}/lcov.info.pruned
 
       - name: Report code coverage for ${{ matrix.product.name }}
         if:
@@ -304,10 +304,10 @@ jobs:
         uses: zgosalvez/github-actions-report-lcov@a546f89a65a0cdcd82a92ae8d65e74d450ff3fbc # v4.1.4
         with:
           update-comment: false
-          coverage-files: ./contracts/lcov.info.pruned
+          coverage-files: ./contracts${{ matrix.product.setup.subfolder || '' }}/lcov.info.pruned
           minimum-coverage: ${{ matrix.product.setup.min-coverage }}
           artifact-name: code-coverage-report-${{ matrix.product.name }}
-          working-directory: ./contracts
+          working-directory: ./contracts${{ matrix.product.setup.subfolder || '' }}
 
   # runs only if non-test contracts were modified; scoped only to modified or added contracts
   analyze:

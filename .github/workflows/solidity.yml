@@ -48,6 +48,12 @@ jobs:
       is-pre-release-core: ${{ steps.release-tag-check-core.outputs.is-pre-release }}
       release-version-core: ${{ steps.release-tag-check-core.outputs.release-version }}
       pre-release-version-core: ${{ steps.release-tag-check-core.outputs.pre-release-version }}
+      is-release-cre: ${{ steps.release-tag-check-cre.outputs.is-release }}
+      is-pre-release-cre: ${{ steps.release-tag-check-cre.outputs.is-pre-release }}
+      release-version-cre: ${{ steps.release-tag-check-cre.outputs.release-version }}
+      pre-release-version-cre: ${{ steps.release-tag-check-cre.outputs.pre-release-version }}
+      is-release: ${{ steps.release-tag-check-core.outputs.is-release == 'true' || steps.release-tag-check-cre.outputs.is-release == 'true'}}
+      is-pre-release: ${{ steps.release-tag-check-core.outputs.is-pre-release == 'true' || steps.release-tag-check-cre.outputs.is-pre-release == 'true' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,10 +67,19 @@ jobs:
           PRE_RELEASE_REGEX: '^contracts-v[0-9]+\.[0-9]+\.[0-9]+-(.+)$'
           # Get the version by stripping the "contracts-v" prefix.
           VERSION_PREFIX: "contracts-v"
+      - name: Check release tag (CRE)
+        id: release-tag-check-cre
+        uses: smartcontractkit/.github/actions/release-tag-check@c5c4a8186da4218cff6cac8184e47dd3dec69ba3 # release-tag-check@0.1.0
+        env:
+          # Match semver git tags with a "contracts-cre-" prefix.
+          RELEASE_REGEX: '^contracts-cre-v[0-9]+\.[0-9]+\.[0-9]+$'
+          PRE_RELEASE_REGEX: '^contracts-cre-v[0-9]+\.[0-9]+\.[0-9]+-(.+)$'
+          # Get the version by stripping the "contracts-v" prefix.
+          VERSION_PREFIX: "contracts-v-cre"
 
   native-compile:
     needs: [changes, tag-check]
-    if: needs.changes.outputs.changes == 'true' || needs.tag-check.outputs.is-release-core == 'true' || needs.tag-check.outputs.is-pre-release-core == 'true'
+    if: needs.changes.outputs.changes == 'true' || needs.tag-check.outputs.is-release == 'true' || needs.tag-check.outputs.is-pre-release == 'true'
     name: Native Compilation
     runs-on: ubuntu-latest
     steps:
@@ -106,12 +121,11 @@ jobs:
         run: make wrappers-all
 
       - name: Run zksync compile and generate wrappers
-        if: ${{ needs.tag-check.outputs.is-release-core == 'true' || needs.tag-check.outputs.is-pre-release-core == 'true' }}
+        if: ${{ needs.tag-check.outputs.is-release == 'true' || needs.tag-check.outputs.is-pre-release == 'true' }}
         working-directory: ./chainlink/contracts
         run: make wrappers-zksync
 
       - name: Check if Go solidity wrappers are updated
-        if: ${{ needs.changes.outputs.changes == 'true' }}
         working-directory: chainlink
         run: |
           git add --all
@@ -133,7 +147,7 @@ jobs:
       run:
         working-directory: contracts
     needs: [changes, tag-check]
-    if: needs.changes.outputs.changes == 'true' || needs.tag-check.outputs.is-pre-release-core == 'true' || needs.tag-check.outputs.is-release-core == 'true'
+    if: needs.changes.outputs.changes == 'true' || needs.tag-check.outputs.is-pre-release == 'true' || needs.tag-check.outputs.is-release == 'true'
     name: Solidity Lint
     runs-on: ubuntu-latest
     steps:
@@ -174,7 +188,8 @@ jobs:
         working-directory: contracts
         run: make wrappers-all
 
-      - name: Version package.json
+      - name: Version package.json - Core
+        if: needs.tag-check.outputs.is-pre-release-core == 'true'
         working-directory: contracts
         shell: bash
         env:
@@ -191,18 +206,46 @@ jobs:
           echo "Bumping version to ${version}"
           pnpm version "${version}" --no-git-tag-version --no-commit-hooks --no-git-checks
 
-      - name: Publish to NPM (beta)
+      - name: Publish to NPM (beta) - Core
+        if: needs.tag-check.outputs.is-pre-release-core == 'true'
         uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
         with:
           create-github-release: false
           publish-command: "pnpm publish-beta --no-git-checks"
           package-json-directory: contracts
 
+      - name: Version package.json - CRE
+        if: needs.tag-check.outputs.is-pre-release-cre == 'true'
+        working-directory: contracts/cre
+        shell: bash
+        env:
+          IS_PRE_RELEASE_CRE: ${{ needs.tag-check.outputs.is-pre-release-core }}
+          PRE_RELEASE_VERSION_CRE: ${{ needs.tag-check.outputs.pre-release-version-core }}
+        run: |
+          version=""
+          if [[ $IS_PRE_RELEASE_CRE == 'true' ]]; then
+            version="${PRE_RELEASE_VERSION_CRE}"
+          else
+            echo "::error::No pre-release version found."
+            exit 1
+          fi
+          echo "Bumping version to ${version}"
+          pnpm version "${version}" --no-git-tag-version --no-commit-hooks --no-git-checks
+
+
+      - name: Publish to NPM (beta) - CRE
+        if: needs.tag-check.outputs.is-pre-release-cre == 'true'
+        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
+        with:
+          create-github-release: false
+          publish-command: "pnpm publish-beta --no-git-checks"
+          package-json-directory: contracts/cre
+
   publish-prod:
     name: Publish Prod NPM
     environment: publish-contracts
     needs: [tag-check, changes, lint, native-compile]
-    if: needs.tag-check.outputs.is-release-core == 'true'
+    if: needs.tag-check.outputs.is-release == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
@@ -222,7 +265,8 @@ jobs:
         working-directory: contracts
         run: make wrappers-all
 
-      - name: Validate version
+      - name: Validate version - Core
+        if: needs.tag-check.outputs.is-release-core == 'true'
         working-directory: contracts
         shell: bash
         env:
@@ -243,8 +287,39 @@ jobs:
           fi
 
       - name: Publish to NPM (latest)
+        if: needs.tag-check.outputs.is-release-core == 'true'
         uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
         with:
           create-github-release: true
           publish-command: "pnpm publish-prod --no-git-checks"
           package-json-directory: contracts
+
+
+      - name: Validate version
+        if: needs.tag-check.outputs.is-release-cre == 'true'
+        working-directory: contracts/cre
+        shell: bash
+        env:
+          IS_RELEASE_CRE: ${{ needs.tag-check.outputs.is-release-cre }}
+          RELEASE_VERSION_CRE: ${{ needs.tag-check.outputs.release-version-cre }}
+        run: |
+          VERSION=""
+          if [[ "${IS_RELEASE_CRE}" == 'true' ]]; then
+            VERSION="${RELEASE_VERSION_CRE}"
+          else
+            echo "::error::No release version found."
+            exit 1
+          fi
+          PACKAGE_JSON_VERSION="$(jq -r '.version' package.json)"
+          if [[ "${PACKAGE_JSON_VERSION}" != "${VERSION}" ]]; then
+            echo "::error::Version mismatch: package.json version (${PACKAGE_JSON_VERSION}) does not match version computed from tag ${VERSION}"
+            exit 1
+          fi
+
+      - name: Publish to NPM (latest)
+        if: needs.tag-check.outputs.is-release-cre == 'true'
+        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
+        with:
+          create-github-release: true
+          publish-command: "pnpm publish-prod --no-git-checks"
+          package-json-directory: contracts/cre

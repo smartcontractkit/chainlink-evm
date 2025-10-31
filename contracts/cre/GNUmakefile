@@ -1,6 +1,6 @@
 # ALL_FOUNDRY_PRODUCTS contains a list of all products that have a foundry
 # profile defined and use the Foundry snapshots.
-ALL_FOUNDRY_PRODUCTS = functions keystone l2ep llo-feeds operatorforwarder payments shared workflow data-feeds
+ALL_FOUNDRY_PRODUCTS = keystone workflow
 
 # To make a snapshot for a specific product, either set the `FOUNDRY_PROFILE` env var
 # or call the target with `FOUNDRY_PROFILE=product`
@@ -35,33 +35,11 @@ pnpmdep: ## Install solidity contract dependencies through pnpm
 
 .PHONY: abigen
 abigen: ## Build & install abigen.
-	../tools/bin/build_abigen
+	../../tools/bin/build_abigen
 
 .PHONY: mockery
 mockery: $(mockery) ## Install mockery.
 	go install github.com/vektra/mockery/v2@v2.52.3
-
-.PHONY: foundry
-foundry: ## Install foundry.
-	foundryup --install v1.3.5
-
-.PHONY: forge-zksync
-forge-zksync:
-	../tools/bin/install_forge_zksync
-
-.PHONY: foundry-refresh
-foundry-refresh: foundry
-	git submodule deinit -f .
-	git submodule update --init --recursive
-
-data-feeds-precommit: export FOUNDRY_PROFILE=data-feeds
-.PHONY: data-feeds-precommit
-data-feeds-precommit:
-	forge test
-	make snapshot
-	forge fmt
-	make wrappers
-	pnpm solhint
 
 # To generate gethwrappers for a specific product, either set the `FOUNDRY_PROFILE`
 # env var or call the target with `FOUNDRY_PROFILE=product`
@@ -69,25 +47,14 @@ data-feeds-precommit:
 # is to improve the workflow for developers working with Foundry, which is the
 # recommended way to develop Solidity for CL products.
 # env var example
-#		export FOUNDRY_PROFILE=llo-feeds
+#		export FOUNDRY_PROFILE=workflow
 #		make wrappers
 # make call example
-# 		make FOUNDRY_PROFILE=llo-feeds wrappers
+# 		make FOUNDRY_PROFILE=workflow wrappers
 .PHONY: wrappers
 wrappers: pnpmdep mockery abigen ## Recompiles solidity contracts and their go wrappers.
-	./scripts/native_solc_compile_all_$(FOUNDRY_PROFILE)
-	cd ../gethwrappers; go generate ./$(FOUNDRY_PROFILE)
-
-
-# This call generates all gethwrappers for all products. It does so based on the
-# assumption that native_solc_compile_all contains sub-calls to each product, and
-# go_generate does the same.
-.PHONY: wrappers-all
-wrappers-all: pnpmdep mockery abigen ## Recompiles solidity contracts and their go wrappers.
-	# go_generate contains a call to compile all contracts before generating wrappers
-	cd ../gethwrappers; go generate ./go_generate.go
-    # Since this is used in CI to ensure all wrappers are up to date, we also generate the CRE wrappers here
-	cd ./cre/gobindings; go generate ./go_generate.go
+	./scripts/compile_all_$(FOUNDRY_PROFILE)
+	cd gobindings; go generate ./$(FOUNDRY_PROFILE)
 
 .PHONY: wrappers-zksync
 wrappers-zksync: pnpmdep forge-zksync
