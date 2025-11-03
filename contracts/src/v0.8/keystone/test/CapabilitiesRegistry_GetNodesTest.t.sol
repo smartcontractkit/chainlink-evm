@@ -79,7 +79,7 @@ contract CapabilitiesRegistry_GetNodesTest is BaseTest {
     p2pIds[0] = keccak256(abi.encodePacked("invalid"));
 
     vm.expectRevert(abi.encodeWithSelector(INodeInfoProvider.NodeDoesNotExist.selector, p2pIds[0]));
-    CapabilitiesRegistry.NodeInfo[] memory nodes = s_CapabilitiesRegistry.getNodesByP2PIds(p2pIds);
+    s_CapabilitiesRegistry.getNodesByP2PIds(p2pIds);
   }
 
   function test_DoesNotIncludeRemovedNodes() public {

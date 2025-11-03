@@ -29,7 +29,7 @@ contract VRFV2PlusSubscriptionAPITest is BaseTest {
     s_subscriptionAPI = new ExposedVRFCoordinatorV2_5(bhs);
   }
 
-  function testDefaultState() public {
+  function testDefaultState() public view {
     assertEq(address(s_subscriptionAPI.LINK()), address(0));
     assertEq(address(s_subscriptionAPI.LINK_NATIVE_FEED()), address(0));
     assertEq(s_subscriptionAPI.s_currentSubNonce(), 0);

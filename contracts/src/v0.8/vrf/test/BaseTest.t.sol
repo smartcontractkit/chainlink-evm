@@ -17,7 +17,7 @@ contract BaseTest is Test {
 
   function getRandomAddresses(
     uint256 length
-  ) internal returns (address[] memory) {
+  ) internal pure returns (address[] memory) {
     address[] memory addresses = new address[](length);
     for (uint256 i = 0; i < length; ++i) {
       addresses[i] = address(uint160(uint256(keccak256(abi.encodePacked(i)))));
@@ -25,7 +25,7 @@ contract BaseTest is Test {
     return addresses;
   }
 
-  function addressIsIn(address addr, address[] memory addresses) internal returns (bool) {
+  function addressIsIn(address addr, address[] memory addresses) internal pure returns (bool) {
     for (uint256 i = 0; i < addresses.length; ++i) {
       if (addresses[i] == addr) {
         return true;

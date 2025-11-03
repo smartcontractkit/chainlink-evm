@@ -42,7 +42,7 @@ contract ReserveManagerTest is Test {
     assertEq(s_manager.lastTotalReserve(), 456);
   }
 
-  function testSupportsInterface() public {
+  function testSupportsInterface() public view {
     // ERC165 ID (0x01ffc9a7) via local interface
     bytes4 erc165Id = type(IERC165Local).interfaceId;
     assertTrue(s_manager.supportsInterface(erc165Id), "should support IERC165");

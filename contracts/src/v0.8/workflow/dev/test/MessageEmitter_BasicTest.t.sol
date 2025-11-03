@@ -17,7 +17,7 @@ contract MessageEmitter_BasicTest is Test {
     s_emitter = new MessageEmitter();
   }
 
-  function test_TypeAndVersion() public {
+  function test_TypeAndVersion() public view {
     assertEq(s_emitter.typeAndVersion(), "MessageEmitter 1.0.0-dev");
   }
 

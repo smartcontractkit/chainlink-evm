@@ -122,7 +122,7 @@ contract FixtureVRFCoordinatorV2_5 is BaseTest, VRF {
     uint64 nonce,
     uint256 requestBlock,
     bool nativePayment
-  ) internal {
+  ) internal view {
     (, uint256 preSeed) = s_coordinator.computeRequestIdExternal(VRF_KEY_HASH, sender, s_subId, nonce);
 
     console.log("go run . generate-proof-v2-plus \\");
