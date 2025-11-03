@@ -121,6 +121,7 @@ func (m *InMemoryStore) CreateEmptyUnconfirmedTransaction(nonce uint64, gasLimit
 		SpecifiedGasLimit: gasLimit,
 		CreatedAt:         time.Now(),
 		State:             txmgr.TxUnconfirmed,
+		IsPurgeable:       true,
 	}
 
 	if _, exists := m.UnconfirmedTransactions[nonce]; exists {

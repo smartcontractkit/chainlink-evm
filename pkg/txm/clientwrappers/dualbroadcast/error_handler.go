@@ -20,12 +20,13 @@ func NewErrorHandler() *errorHandler {
 func (e *errorHandler) HandleError(
 	ctx context.Context,
 	tx *types.Transaction,
-	err error,
+	txErr error,
 	txStore txm.TxStore,
 	setNonce func(common.Address, uint64),
 	isFromBroadcastMethod bool,
 ) error {
-	if strings.Contains(err.Error(), NoBidsError) {
+	// If there are past broadcasts, don't mark the tx as fatal as they might be included on-chain.
+	if strings.Contains(txErr.Error(), NoBidsError) && tx.AttemptCount == 1 {
 		if err := txStore.MarkTxFatal(ctx, tx, tx.FromAddress); err != nil {
 			return err
 		}
@@ -33,5 +34,5 @@ func (e *errorHandler) HandleError(
 		return fmt.Errorf("transaction with txID: %d marked as fatal", tx.ID)
 	}
 
-	return nil
+	return txErr
 }
