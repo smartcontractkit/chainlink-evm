@@ -207,8 +207,13 @@ jobs:
           || contains(fromJson(needs.changes.outputs.all_changes), 'shared')
           || needs.changes.outputs.non_src_changes == 'true') }}
         shell: bash
-        working-directory: contracts${{ matrix.product.setup.subfolder || '' }}/src/
+        working-directory: contracts
         run: |
+          if [ -n "${{ matrix.product.setup.subfolder }}" ]; then
+            cd ${{ matrix.product.setup.subfolder }}/src
+          else 
+            cd src/v0.8
+          fi
           exact_versions=$(grep -rh "pragma solidity" ${{ matrix.product.name }} | sort | uniq | grep -v '\^' | awk '{print $3}' | tr -d ';')
           for version in $exact_versions; do
             echo "Installing exact version: $version"
