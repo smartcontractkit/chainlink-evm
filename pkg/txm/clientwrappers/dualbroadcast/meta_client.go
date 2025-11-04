@@ -522,7 +522,7 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	if err != nil {
 		return fmt.Errorf("failed to sign attempt for txID: %v, err: %w", tx.ID, err)
 	}
-	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
+	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
 	return a.c.SendTransaction(ctx, signedTx)
 }
