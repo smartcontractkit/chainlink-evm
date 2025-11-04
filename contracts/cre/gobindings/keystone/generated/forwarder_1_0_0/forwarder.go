@@ -5,7 +5,6 @@ package forwarder
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -1218,26 +1216,6 @@ func (_KeystoneForwarder *KeystoneForwarderFilterer) ParseReportProcessed(log ty
 	return event, nil
 }
 
-func (_KeystoneForwarder *KeystoneForwarder) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _KeystoneForwarder.abi.Events["ConfigSet"].ID:
-		return _KeystoneForwarder.ParseConfigSet(log)
-	case _KeystoneForwarder.abi.Events["ForwarderAdded"].ID:
-		return _KeystoneForwarder.ParseForwarderAdded(log)
-	case _KeystoneForwarder.abi.Events["ForwarderRemoved"].ID:
-		return _KeystoneForwarder.ParseForwarderRemoved(log)
-	case _KeystoneForwarder.abi.Events["OwnershipTransferRequested"].ID:
-		return _KeystoneForwarder.ParseOwnershipTransferRequested(log)
-	case _KeystoneForwarder.abi.Events["OwnershipTransferred"].ID:
-		return _KeystoneForwarder.ParseOwnershipTransferred(log)
-	case _KeystoneForwarder.abi.Events["ReportProcessed"].ID:
-		return _KeystoneForwarder.ParseReportProcessed(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (KeystoneForwarderConfigSet) Topic() common.Hash {
 	return common.HexToHash("0x4120bd3b23957dd423555817d55654d4481b438aa15485c21b4180c784f1a455")
 }
@@ -1330,8 +1308,6 @@ type KeystoneForwarderInterface interface {
 	WatchReportProcessed(opts *bind.WatchOpts, sink chan<- *KeystoneForwarderReportProcessed, receiver []common.Address, workflowExecutionId [][32]byte, reportId [][2]byte) (event.Subscription, error)
 
 	ParseReportProcessed(log types.Log) (*KeystoneForwarderReportProcessed, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

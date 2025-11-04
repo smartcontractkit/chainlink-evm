@@ -5,7 +5,6 @@ package capabilities_registry
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -2145,36 +2143,6 @@ func (_CapabilitiesRegistry *CapabilitiesRegistryFilterer) ParseOwnershipTransfe
 	return event, nil
 }
 
-func (_CapabilitiesRegistry *CapabilitiesRegistry) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _CapabilitiesRegistry.abi.Events["CapabilityConfigured"].ID:
-		return _CapabilitiesRegistry.ParseCapabilityConfigured(log)
-	case _CapabilitiesRegistry.abi.Events["CapabilityDeprecated"].ID:
-		return _CapabilitiesRegistry.ParseCapabilityDeprecated(log)
-	case _CapabilitiesRegistry.abi.Events["ConfigSet"].ID:
-		return _CapabilitiesRegistry.ParseConfigSet(log)
-	case _CapabilitiesRegistry.abi.Events["NodeAdded"].ID:
-		return _CapabilitiesRegistry.ParseNodeAdded(log)
-	case _CapabilitiesRegistry.abi.Events["NodeOperatorAdded"].ID:
-		return _CapabilitiesRegistry.ParseNodeOperatorAdded(log)
-	case _CapabilitiesRegistry.abi.Events["NodeOperatorRemoved"].ID:
-		return _CapabilitiesRegistry.ParseNodeOperatorRemoved(log)
-	case _CapabilitiesRegistry.abi.Events["NodeOperatorUpdated"].ID:
-		return _CapabilitiesRegistry.ParseNodeOperatorUpdated(log)
-	case _CapabilitiesRegistry.abi.Events["NodeRemoved"].ID:
-		return _CapabilitiesRegistry.ParseNodeRemoved(log)
-	case _CapabilitiesRegistry.abi.Events["NodeUpdated"].ID:
-		return _CapabilitiesRegistry.ParseNodeUpdated(log)
-	case _CapabilitiesRegistry.abi.Events["OwnershipTransferRequested"].ID:
-		return _CapabilitiesRegistry.ParseOwnershipTransferRequested(log)
-	case _CapabilitiesRegistry.abi.Events["OwnershipTransferred"].ID:
-		return _CapabilitiesRegistry.ParseOwnershipTransferred(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (CapabilitiesRegistryCapabilityConfigured) Topic() common.Hash {
 	return common.HexToHash("0x04f0a9bcf3f3a3b42a4d7ca081119755f82ebe43e0d30c8f7292c4fe0dc4a2ae")
 }
@@ -2345,8 +2313,6 @@ type CapabilitiesRegistryInterface interface {
 	WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *CapabilitiesRegistryOwnershipTransferred, from []common.Address, to []common.Address) (event.Subscription, error)
 
 	ParseOwnershipTransferred(log types.Log) (*CapabilitiesRegistryOwnershipTransferred, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

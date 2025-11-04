@@ -5,7 +5,6 @@ package ocr3_capability
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -859,22 +857,6 @@ type LatestConfigDigestAndEpoch struct {
 	Epoch        uint32
 }
 
-func (_OCR3Capability *OCR3Capability) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _OCR3Capability.abi.Events["ConfigSet"].ID:
-		return _OCR3Capability.ParseConfigSet(log)
-	case _OCR3Capability.abi.Events["OwnershipTransferRequested"].ID:
-		return _OCR3Capability.ParseOwnershipTransferRequested(log)
-	case _OCR3Capability.abi.Events["OwnershipTransferred"].ID:
-		return _OCR3Capability.ParseOwnershipTransferred(log)
-	case _OCR3Capability.abi.Events["Transmitted"].ID:
-		return _OCR3Capability.ParseTransmitted(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (OCR3CapabilityConfigSet) Topic() common.Hash {
 	return common.HexToHash("0x36257c6e8d535293ad661e377c0baac536289be6707b8a488ac175ddaa4055c8")
 }
@@ -939,8 +921,6 @@ type OCR3CapabilityInterface interface {
 	WatchTransmitted(opts *bind.WatchOpts, sink chan<- *OCR3CapabilityTransmitted) (event.Subscription, error)
 
 	ParseTransmitted(log types.Log) (*OCR3CapabilityTransmitted, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

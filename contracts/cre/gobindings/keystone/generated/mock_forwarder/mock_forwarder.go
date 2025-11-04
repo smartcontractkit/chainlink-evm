@@ -5,7 +5,6 @@ package mock_forwarder
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -1056,24 +1054,6 @@ func (_MockKeystoneForwarder *MockKeystoneForwarderFilterer) ParseReportProcesse
 	return event, nil
 }
 
-func (_MockKeystoneForwarder *MockKeystoneForwarder) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _MockKeystoneForwarder.abi.Events["ForwarderAdded"].ID:
-		return _MockKeystoneForwarder.ParseForwarderAdded(log)
-	case _MockKeystoneForwarder.abi.Events["ForwarderRemoved"].ID:
-		return _MockKeystoneForwarder.ParseForwarderRemoved(log)
-	case _MockKeystoneForwarder.abi.Events["OwnershipTransferRequested"].ID:
-		return _MockKeystoneForwarder.ParseOwnershipTransferRequested(log)
-	case _MockKeystoneForwarder.abi.Events["OwnershipTransferred"].ID:
-		return _MockKeystoneForwarder.ParseOwnershipTransferred(log)
-	case _MockKeystoneForwarder.abi.Events["ReportProcessed"].ID:
-		return _MockKeystoneForwarder.ParseReportProcessed(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (MockKeystoneForwarderForwarderAdded) Topic() common.Hash {
 	return common.HexToHash("0x0ea0ce2c048ff45a4a95f2947879de3fb94abec2f152190400cab2d1272a68e7")
 }
@@ -1152,8 +1132,6 @@ type MockKeystoneForwarderInterface interface {
 	WatchReportProcessed(opts *bind.WatchOpts, sink chan<- *MockKeystoneForwarderReportProcessed, receiver []common.Address, workflowExecutionId [][32]byte, reportId [][2]byte) (event.Subscription, error)
 
 	ParseReportProcessed(log types.Log) (*MockKeystoneForwarderReportProcessed, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }
