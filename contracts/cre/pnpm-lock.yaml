@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@openzeppelin/contracts-upgradeable': 4.9.6
+  '@openzeppelin/contracts': 4.9.6
+
 importers:
 
   .:
@@ -256,14 +260,8 @@ packages:
   '@offchainlabs/upgrade-executor@1.1.0-beta.0':
     resolution: {integrity: sha512-mpn6PHjH/KDDjNX0pXHEKdyv8m6DVGQiI2nGzQn0JbM1nOSHJpWx6fvfjtH7YxHJ6zBZTcsKkqGkFKDtCfoSLw==}
 
-  '@openzeppelin/contracts-upgradeable@4.7.3':
-    resolution: {integrity: sha512-+wuegAMaLcZnLCJIvrVUDzA9z/Wp93f0Dla/4jJvIhijRrPabjQbZe6fWiECLaJyfn5ci9fqf9vTw3xpQOad2A==}
-
   '@openzeppelin/contracts-upgradeable@4.9.6':
     resolution: {integrity: sha512-m4iHazOsOCv1DgM7eD7GupTJ+NFVujRZt1wzddDPSVGpWdKq1SKkla5htKG7+IS4d2XOCtzkUNwRZ7Vq5aEUMA==}
-
-  '@openzeppelin/contracts@4.7.3':
-    resolution: {integrity: sha512-dGRS0agJzu8ybo44pCIf3xBaPQN/65AIXNgK8+4gzKd5kbvlqyxryUYVLJv7fK98Seyd2hDZzVEHSWAh0Bt1Yw==}
 
   '@openzeppelin/contracts@4.8.3':
     resolution: {integrity: sha512-bQHV8R9Me8IaJoJ2vPG4rXcL7seB7YVuskr4f+f5RyOStSZetwzkWtoqDMl5erkBJy0lDRUnIR2WIkPiC0GJlg==}
@@ -1184,8 +1182,8 @@ snapshots:
   '@arbitrum/nitro-contracts@3.0.0':
     dependencies:
       '@offchainlabs/upgrade-executor': 1.1.0-beta.0
-      '@openzeppelin/contracts': 4.7.3
-      '@openzeppelin/contracts-upgradeable': 4.7.3
+      '@openzeppelin/contracts': 4.9.6
+      '@openzeppelin/contracts-upgradeable': 4.9.6
       patch-package: 6.5.1
       solady: 0.0.182
 
@@ -1206,7 +1204,7 @@ snapshots:
       '@changesets/get-github-info': 0.6.0
       '@eslint/eslintrc': 3.3.1
       '@eth-optimism/contracts': 0.6.0(ethers@5.8.0)
-      '@openzeppelin/contracts-4.7.3': '@openzeppelin/contracts@4.7.3'
+      '@openzeppelin/contracts-4.7.3': '@openzeppelin/contracts@4.8.3'
       '@openzeppelin/contracts-4.8.3': '@openzeppelin/contracts@4.8.3'
       '@openzeppelin/contracts-4.9.6': '@openzeppelin/contracts@4.9.6'
       '@openzeppelin/contracts-5.0.2': '@openzeppelin/contracts@5.0.2'
@@ -1714,14 +1712,10 @@ snapshots:
 
   '@offchainlabs/upgrade-executor@1.1.0-beta.0':
     dependencies:
-      '@openzeppelin/contracts': 4.7.3
-      '@openzeppelin/contracts-upgradeable': 4.7.3
-
-  '@openzeppelin/contracts-upgradeable@4.7.3': {}
+      '@openzeppelin/contracts': 4.9.6
+      '@openzeppelin/contracts-upgradeable': 4.9.6
 
   '@openzeppelin/contracts-upgradeable@4.9.6': {}
-
-  '@openzeppelin/contracts@4.7.3': {}
 
   '@openzeppelin/contracts@4.8.3': {}
 

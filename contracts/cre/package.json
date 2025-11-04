@@ -23,6 +23,12 @@
     "foundry.toml",
     "remappings.txt"
   ],
+  "pnpm": {
+    "overrides": {
+      "@openzeppelin/contracts-upgradeable": "4.9.6",
+      "@openzeppelin/contracts": "4.9.6"
+    }
+  },
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"
