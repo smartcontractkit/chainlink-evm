@@ -7,8 +7,6 @@
   "license": "BUSL-1.1",
   "private": false,
   "scripts": {
-    "lint": "eslint --ext js,ts .",
-    "compile:native": "./scripts/native_solc_compile_all",
     "publish-beta": "pnpm publish --tag beta",
     "publish-prod": "pnpm publish --tag latest",
     "solhint": "solhint --config \"../.solhint.json\" --max-warnings 0 \"./src/**/*.sol\"",
@@ -34,7 +32,6 @@
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1"
   },
   "dependencies": {
-    "@arbitrum/nitro-contracts": "3.0.0",
     "@changesets/cli": "^2.29.7",
     "@changesets/get-github-info": "^0.6.0",
     "@openzeppelin/contracts-4.8.3": "npm:@openzeppelin/contracts@4.8.3",

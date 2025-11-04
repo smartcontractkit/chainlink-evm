@@ -5,7 +5,6 @@ package feeds_consumer
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -687,20 +685,6 @@ func (_KeystoneFeedsConsumer *KeystoneFeedsConsumerFilterer) ParseOwnershipTrans
 	return event, nil
 }
 
-func (_KeystoneFeedsConsumer *KeystoneFeedsConsumer) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _KeystoneFeedsConsumer.abi.Events["FeedReceived"].ID:
-		return _KeystoneFeedsConsumer.ParseFeedReceived(log)
-	case _KeystoneFeedsConsumer.abi.Events["OwnershipTransferRequested"].ID:
-		return _KeystoneFeedsConsumer.ParseOwnershipTransferRequested(log)
-	case _KeystoneFeedsConsumer.abi.Events["OwnershipTransferred"].ID:
-		return _KeystoneFeedsConsumer.ParseOwnershipTransferred(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (KeystoneFeedsConsumerFeedReceived) Topic() common.Hash {
 	return common.HexToHash("0x2c30f5cb3caf4239d0f994ce539d7ef24817fa550169c388e3a110f02e40197d")
 }
@@ -749,8 +733,6 @@ type KeystoneFeedsConsumerInterface interface {
 	WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *KeystoneFeedsConsumerOwnershipTransferred, from []common.Address, to []common.Address) (event.Subscription, error)
 
 	ParseOwnershipTransferred(log types.Log) (*KeystoneFeedsConsumerOwnershipTransferred, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

@@ -5,7 +5,6 @@ package message_emitter
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -386,16 +384,6 @@ func (_MessageEmitter *MessageEmitterFilterer) ParseMessageEmitted(log types.Log
 	return event, nil
 }
 
-func (_MessageEmitter *MessageEmitter) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _MessageEmitter.abi.Events["MessageEmitted"].ID:
-		return _MessageEmitter.ParseMessageEmitted(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (MessageEmitterMessageEmitted) Topic() common.Hash {
 	return common.HexToHash("0xc799f359194674b273986b8c03283265390f642b631c04e6526b99d0d8f4c38d")
 }
@@ -418,8 +406,6 @@ type MessageEmitterInterface interface {
 	WatchMessageEmitted(opts *bind.WatchOpts, sink chan<- *MessageEmitterMessageEmitted, emitter []common.Address, timestamp []*big.Int) (event.Subscription, error)
 
 	ParseMessageEmitted(log types.Log) (*MessageEmitterMessageEmitted, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

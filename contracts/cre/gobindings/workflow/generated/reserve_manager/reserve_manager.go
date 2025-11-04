@@ -5,7 +5,6 @@ package reserve_manager
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -36,7 +34,7 @@ type ReserveManagerUpdateReserves struct {
 }
 
 var ReserveManagerMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"lastTotalMinted\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"lastTotalReserve\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onReport\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"report\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"pure\"},{\"type\":\"event\",\"name\":\"RequestReserveUpdate\",\"inputs\":[{\"name\":\"u\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structReserveManager.UpdateReserves\",\"components\":[{\"name\":\"totalMinted\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"totalReserve\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"lastTotalMinted\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"lastTotalReserve\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onReport\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"report\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"pure\"},{\"type\":\"event\",\"name\":\"RequestReserveUpdate\",\"inputs\":[{\"name\":\"u\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"struct ReserveManager.UpdateReserves\",\"components\":[{\"name\":\"totalMinted\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"totalReserve\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"anonymous\":false}]",
 	Bin: "0x6080806040523460155761026d908161001b8239f35b600080fdfe608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a71461019457508063624bb9e414610176578063805f21321461006e576384a760091461004b57600080fd5b34610069576000366003190112610069576020600054604051908152f35b600080fd5b346100695760403660031901126100695760043567ffffffffffffffff81116100695761009f903690600401610232565b505060243567ffffffffffffffff8111610069576100c36040913690600401610232565b908092918101031261006957600090604051906040820182811067ffffffffffffffff821117610162576040526020813591828452013560208301918183528455600155600254600019811461014e576001016002556040805192518352905160208301527f5e7ff2d8ad6b6eac88310759fab38a6228ed5bff1f5258edf5302b1094503b3891a180f35b602484634e487b7160e01b81526011600452fd5b602484634e487b7160e01b81526041600452fd5b34610069576000366003190112610069576020600154604051908152f35b3461006957602036600319011261006957600435907fffffffff00000000000000000000000000000000000000000000000000000000821680920361006957817f805f21320000000000000000000000000000000000000000000000000000000060209314908115610208575b5015158152f35b7f01ffc9a70000000000000000000000000000000000000000000000000000000091501483610201565b9181601f840112156100695782359167ffffffffffffffff831161006957602083818601950101116100695756fea164736f6c634300081a000a",
 }
 
@@ -371,16 +369,6 @@ func (_ReserveManager *ReserveManagerFilterer) ParseRequestReserveUpdate(log typ
 	return event, nil
 }
 
-func (_ReserveManager *ReserveManager) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _ReserveManager.abi.Events["RequestReserveUpdate"].ID:
-		return _ReserveManager.ParseRequestReserveUpdate(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (ReserveManagerRequestReserveUpdate) Topic() common.Hash {
 	return common.HexToHash("0x5e7ff2d8ad6b6eac88310759fab38a6228ed5bff1f5258edf5302b1094503b38")
 }
@@ -403,8 +391,6 @@ type ReserveManagerInterface interface {
 	WatchRequestReserveUpdate(opts *bind.WatchOpts, sink chan<- *ReserveManagerRequestReserveUpdate) (event.Subscription, error)
 
 	ParseRequestReserveUpdate(log types.Log) (*ReserveManagerRequestReserveUpdate, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }
