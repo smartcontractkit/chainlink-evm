@@ -210,7 +210,7 @@ jobs:
         working-directory: contracts
         run: |
           if [ -n "${{ matrix.product.setup.subfolder }}" ]; then
-            cd ${{ matrix.product.setup.subfolder }}/src
+            cd .${{ matrix.product.setup.subfolder }}/src
           else 
             cd src/v0.8
           fi
