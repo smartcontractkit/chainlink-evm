@@ -29,7 +29,6 @@ number_underscore = "thousands"
 wrap_comments = true
 
 [profile.workflow]
-solc_version = '0.8.26'
 src = 'src/workflow'
 
 [profile.workflow-v1]

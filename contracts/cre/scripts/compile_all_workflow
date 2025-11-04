@@ -7,18 +7,17 @@ echo " │    Compiling Workflow contracts...           │"
 echo " └──────────────────────────────────────────────┘"
 
 PROJECT="workflow"
-
 CONTRACTS_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../ && pwd -P )"
-export FOUNDRY_PROFILE="$PROJECT"
+
 
 compileContract () {
-  local profile="$1"
+  export FOUNDRY_PROFILE="$1"
+
   local src_rel="$2"
   local contract=$(basename "$src_rel")
   echo "Compiling" "$contract"
 
-  env FOUNDRY_PROFILE="$profile" forge build \
-  "$CONTRACTS_DIR/src/$PROJECT/$src_rel.sol" \
+  forge build "$CONTRACTS_DIR/src/$PROJECT/$src_rel.sol" \
   --root "$CONTRACTS_DIR" \
   --extra-output-files bin abi \
   -o "$CONTRACTS_DIR/solc/$PROJECT/$src_rel"
@@ -29,8 +28,9 @@ compileContract () {
 }
 
 compileContract workflow-v1 v1/WorkflowRegistry
+compileContract workflow-v1 dev/MessageEmitter
+
 compileContract workflow-v2 v2/WorkflowRegistry
 compileContract workflow-v2 v2/CapabilitiesRegistry
-compileContract message-emitter dev/MessageEmitter
-compileContract mock-forwarder dev/MockKeystoneForwarder
-compileContract reserve-manager dev/ReserveManager
+compileContract workflow-v2 dev/MockKeystoneForwarder
+compileContract workflow-v2 dev/ReserveManager
