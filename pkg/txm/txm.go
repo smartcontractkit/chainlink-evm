@@ -405,7 +405,7 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 			t.metrics.ReachedMaxAttempts(ctx, false)
 		}
 
-		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) {
+		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) || tx.IsPurgeable {
 			// TODO: add optional graceful bumping strategy
 			t.lggr.Info("Rebroadcasting attempt for txID: ", tx.ID)
 			return t.createAndSendAttempt(ctx, tx, address)
