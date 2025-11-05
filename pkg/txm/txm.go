@@ -132,9 +132,8 @@ func (t *Txm) startAddress(address common.Address) {
 	triggerCh := make(chan struct{}, 1)
 	t.triggerCh[address] = triggerCh
 
-	t.wg.Add(2)
-	go t.broadcastLoop(address, triggerCh)
-	go t.backfillLoop(address)
+	t.wg.Add(1)
+	go t.loop(address, triggerCh)
 }
 
 func (t *Txm) initializeNonce(ctx context.Context, address common.Address) {
@@ -216,12 +215,13 @@ func newBackoff(minDuration time.Duration) backoff.Backoff {
 	}
 }
 
-func (t *Txm) broadcastLoop(address common.Address, triggerCh chan struct{}) {
+func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 	defer t.wg.Done()
 	ctx, cancel := t.stopCh.NewCtx()
 	defer cancel()
 	broadcastWithBackoff := newBackoff(1 * time.Second)
 	var broadcastCh <-chan time.Time
+	backfillCh := time.After(utils.WithJitter(t.config.BlockTime))
 
 	t.initializeNonce(ctx, address)
 
@@ -246,34 +246,14 @@ func (t *Txm) broadcastLoop(address common.Address, triggerCh chan struct{}) {
 			continue
 		case <-broadcastCh:
 			continue
-		}
-	}
-}
-
-func (t *Txm) backfillLoop(address common.Address) {
-	defer t.wg.Done()
-	ctx, cancel := t.stopCh.NewCtx()
-	defer cancel()
-	backfillWithBackoff := newBackoff(t.config.BlockTime)
-	backfillCh := time.After(utils.WithJitter(t.config.BlockTime))
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
 		case <-backfillCh:
+			backfillCh = time.After(utils.WithJitter(t.config.BlockTime))
 			start := time.Now()
-			bo, err := t.backfillTransactions(ctx, address)
+			err := t.backfillTransactions(ctx, address)
 			if err != nil {
 				t.lggr.Errorw("Error during backfill", "err", err)
 			} else {
 				t.lggr.Debug("Backfill time elapsed: ", time.Since(start))
-			}
-			if bo {
-				backfillCh = time.After(backfillWithBackoff.Duration())
-			} else {
-				backfillWithBackoff.Reset()
-				backfillCh = time.After(utils.WithJitter(t.config.BlockTime))
 			}
 		}
 	}
@@ -369,15 +349,15 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	return t.txStore.UpdateTransactionBroadcast(ctx, attempt.TxID, *tx.Nonce, attempt.Hash, fromAddress)
 }
 
-func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) (bool, error) {
+func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) error {
 	latestNonce, err := t.client.NonceAt(ctx, address, nil)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	confirmedTransactions, unconfirmedTransactionIDs, err := t.txStore.MarkConfirmedAndReorgedTransactions(ctx, latestNonce, address)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if len(confirmedTransactions) > 0 || len(unconfirmedTransactionIDs) > 0 {
 		t.metrics.IncrementNumConfirmedTxs(ctx, len(confirmedTransactions))
@@ -387,31 +367,31 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 
 	tx, unconfirmedCount, err := t.txStore.FetchUnconfirmedTransactionAtNonceWithCount(ctx, latestNonce, address)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if unconfirmedCount == 0 {
 		t.lggr.Debugf("All transactions confirmed for address: %v", address)
-		return false, err // TODO: add backoff to optimize requests
+		return err
 	}
 
 	if tx == nil || *tx.Nonce != latestNonce {
 		t.lggr.Warnf("Nonce gap at nonce: %d - address: %v. Creating a new transaction\n", latestNonce, address)
 		t.metrics.IncrementNumNonceGaps(ctx)
-		return false, t.createAndSendEmptyTx(ctx, latestNonce, address)
+		return t.createAndSendEmptyTx(ctx, latestNonce, address)
 	} else { //nolint:revive //easier to read
 		if !tx.IsPurgeable && t.stuckTxDetector != nil {
 			isStuck, err := t.stuckTxDetector.DetectStuckTransaction(ctx, tx)
 			if err != nil {
-				return false, err
+				return err
 			}
 			if isStuck {
 				tx.IsPurgeable = true
 				err = t.txStore.MarkUnconfirmedTransactionPurgeable(ctx, *tx.Nonce, address)
 				if err != nil {
-					return false, err
+					return err
 				}
 				t.lggr.Infof("Marked tx as purgeable. Sending purge attempt for txID: %d", tx.ID)
-				return false, t.createAndSendAttempt(ctx, tx, address)
+				return t.createAndSendAttempt(ctx, tx, address)
 			}
 		}
 
@@ -428,10 +408,10 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) {
 			// TODO: add optional graceful bumping strategy
 			t.lggr.Info("Rebroadcasting attempt for txID: ", tx.ID)
-			return false, t.createAndSendAttempt(ctx, tx, address)
+			return t.createAndSendAttempt(ctx, tx, address)
 		}
 	}
-	return false, nil
+	return nil
 }
 
 func (t *Txm) createAndSendEmptyTx(ctx context.Context, latestNonce uint64, address common.Address) error {
