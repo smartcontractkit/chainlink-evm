@@ -16,7 +16,7 @@ import (
 )
 
 func TestAttemptBuilder_newLegacyAttempt(t *testing.T) {
-	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil))
+	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil), 100)
 	address := testutils.NewAddress()
 	lggr := logger.Test(t)
 	var gasLimit uint64 = 100
@@ -51,7 +51,7 @@ func TestAttemptBuilder_newLegacyAttempt(t *testing.T) {
 }
 
 func TestAttemptBuilder_newDynamicFeeAttempt(t *testing.T) {
-	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil))
+	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil), 100)
 	address := testutils.NewAddress()
 
 	lggr := logger.Test(t)

@@ -17,20 +17,26 @@ import (
 
 type attemptBuilder struct {
 	gas.EvmFeeEstimator
-	priceMaxKey func(common.Address) *assets.Wei
-	keystore    keys.TxSigner
+	priceMaxKey         func(common.Address) *assets.Wei
+	keystore            keys.TxSigner
+	emptyTxLimitDefault uint64
 }
 
-func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner) *attemptBuilder {
+func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, emptyTxLimitDefault uint64) *attemptBuilder {
 	return &attemptBuilder{
-		priceMaxKey:     priceMaxKey,
-		EvmFeeEstimator: estimator,
-		keystore:        keystore,
+		priceMaxKey:         priceMaxKey,
+		EvmFeeEstimator:     estimator,
+		keystore:            keystore,
+		emptyTxLimitDefault: emptyTxLimitDefault,
 	}
 }
 
 func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, dynamic bool) (*types.Attempt, error) {
-	fee, estimatedGasLimit, err := a.EvmFeeEstimator.GetFee(ctx, tx.Data, tx.SpecifiedGasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
+	gasLimit := tx.SpecifiedGasLimit
+	if tx.IsPurgeable {
+		gasLimit = a.emptyTxLimitDefault
+	}
+	fee, estimatedGasLimit, err := a.EvmFeeEstimator.GetFee(ctx, tx.Data, gasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +48,11 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 }
 
 func (a *attemptBuilder) NewBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, previousAttempt types.Attempt) (*types.Attempt, error) {
-	bumpedFee, bumpedFeeLimit, err := a.EvmFeeEstimator.BumpFee(ctx, previousAttempt.Fee, tx.SpecifiedGasLimit, a.priceMaxKey(tx.FromAddress), nil)
+	gasLimit := tx.SpecifiedGasLimit
+	if tx.IsPurgeable {
+		gasLimit = a.emptyTxLimitDefault
+	}
+	bumpedFee, bumpedFeeLimit, err := a.EvmFeeEstimator.BumpFee(ctx, previousAttempt.Fee, gasLimit, a.priceMaxKey(tx.FromAddress), nil)
 	if err != nil {
 		return nil, err
 	}
