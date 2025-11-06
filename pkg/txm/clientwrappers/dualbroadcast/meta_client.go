@@ -27,8 +27,11 @@ import (
 )
 
 const (
-	timeout = time.Second * 5
-	metaABI = `[
+	timeout                    = time.Second * 5
+	NoBidsError                = "no bids"
+	NoSolverOps                = "no solver operations received"
+	NoSolverOpsAfterSimulation = "no valid solver operations after simulation"
+	metaABI                    = `[
   {
     "type": "function",
     "name": "metacall",
@@ -142,7 +145,7 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 	}
 
 	return &MetaClient{
-		lggr:      logger.Sugared(logger.Named(lggr, "Txm.Txm.MetaClient")),
+		lggr:      logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
 		c:         c,
 		ks:        ks,
 		customURL: customURL,
@@ -179,7 +182,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 			return nil
 		}
 		a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
-		return nil
+		return errors.New(NoBidsError)
 	}
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)
@@ -355,7 +358,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	if response.Error.ErrorMessage != "" {
-		if strings.Contains(response.Error.ErrorMessage, "no solver operations received") {
+		if strings.Contains(response.Error.ErrorMessage, NoSolverOps) || strings.Contains(response.Error.ErrorMessage, NoSolverOpsAfterSimulation) {
 			a.metrics.RecordBidsReceived(ctx, 0)
 			return nil, nil
 		}
@@ -521,7 +524,7 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	if err != nil {
 		return fmt.Errorf("failed to sign attempt for txID: %v, err: %w", tx.ID, err)
 	}
-	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
+	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
 	return a.c.SendTransaction(ctx, signedTx)
 }
