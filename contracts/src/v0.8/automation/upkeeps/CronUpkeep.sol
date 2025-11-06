@@ -106,7 +106,7 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
    * @notice Sets the address allowed to call performUpkeep
    * @param newForwarder The address of the permissioned forwarder. Use address(0) to disable performUpkeep.
    */
-   function setPermissionedForwarder(address newForwarder) external onlyOwner {
+  function setPermissionedForwarder(address newForwarder) external onlyOwner {
     address old = s_permissionedForwarder;
     s_permissionedForwarder = newForwarder;
     emit PermissionedForwarderUpdated(old, newForwarder);
