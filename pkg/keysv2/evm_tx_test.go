@@ -14,10 +14,7 @@ import (
 func TestTxKey(t *testing.T) {
 	storage := commonks.NewMemoryStorage()
 	ctx := t.Context()
-	ks, err := commonks.LoadKeystore(ctx, storage, commonks.EncryptionParams{
-		Password:     "test-password",
-		ScryptParams: commonks.FastScryptParams,
-	})
+	ks, err := commonks.LoadKeystore(ctx, storage, "test-password", commonks.WithScryptParams(commonks.FastScryptParams))
 	require.NoError(t, err)
 	testKey, err := evmks.CreateTxKey(ks, "test-tx-key")
 	require.NoError(t, err)

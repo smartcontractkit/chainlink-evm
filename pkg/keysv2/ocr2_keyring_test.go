@@ -13,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	commonks "github.com/smartcontractkit/chainlink-common/keystore"
+	ocr2offchain "github.com/smartcontractkit/chainlink-common/keystore/ocr2offchain"
+	ragep2p "github.com/smartcontractkit/chainlink-common/keystore/ragep2p"
 	logger "github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keysv2"
 	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keysv2"
@@ -217,10 +219,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	lggr := logger.Test(t)
 	storage := commonks.NewMemoryStorage()
 	ctx := context.Background()
-	ks, err := commonks.LoadKeystore(ctx, storage, commonks.EncryptionParams{
-		Password:     "test-password",
-		ScryptParams: commonks.FastScryptParams,
-	})
+	ks, err := commonks.LoadKeystore(ctx, storage, "test-password", commonks.WithScryptParams(commonks.FastScryptParams))
 	require.NoError(t, err)
 	ownerKey, err := evmks.CreateTxKey(ks, "test-tx-key")
 	require.NoError(t, err)
@@ -228,17 +227,17 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	var oracles []confighelper.OracleIdentityExtra
 	var offchainKeyrings []ocrtypes.OffchainKeyring
 	var onchainKeyrings []ocrtypes.OnchainKeyring
-	var peerKeyrings []*keysv2.PeerKeyring
+	var peerKeyrings []*ragep2p.PeerKeyring
 	var oracleTxOpts []*bind.TransactOpts
 
 	for i := 0; i < 4; i++ {
 		onchainKeyring, err := keysv2.CreateOCR2OnchainKeyring(ctx, ks, fmt.Sprintf("test-onchain-keyring-%d", i))
 		require.NoError(t, err)
-		offchainKeyring, err := keysv2.CreateOCR2OffchainKeyring(ctx, ks, fmt.Sprintf("test-offchain-keyring-%d", i))
+		offchainKeyring, err := ocr2offchain.CreateOCR2OffchainKeyring(ctx, ks, fmt.Sprintf("test-offchain-keyring-%d", i))
 		require.NoError(t, err)
 
 		p2pKeyName := fmt.Sprintf("test-p2p-key-%d", i)
-		peerKeyring, err := keysv2.CreatePeerKeyring(ctx, ks, p2pKeyName)
+		peerKeyring, err := ragep2p.CreatePeerKeyring(ctx, ks, p2pKeyName)
 		require.NoError(t, err)
 		peerKeyrings = append(peerKeyrings, peerKeyring)
 
