@@ -98,7 +98,7 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
   /**
    * @notice Returns the address currently allowed to call performUpkeep
    */
-  function permissionedForwarder() external view returns (address) {
+  function getPermissionedForwarder() external view returns (address) {
     return s_permissionedForwarder;
   }
 
