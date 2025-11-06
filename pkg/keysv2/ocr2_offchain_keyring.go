@@ -17,8 +17,8 @@ const (
 )
 
 func CreateOCR2OffchainKeyring(ctx context.Context, ks keystore.Keystore, keyringName string) (ocrtypes.OffchainKeyring, error) {
-	signingKeyPath := NewKeyPath(EVMPrefix, OCR2OffchainPrefix, keyringName, OCR2OffchainSigning)
-	encryptionKeyPath := NewKeyPath(EVMPrefix, OCR2OffchainPrefix, keyringName, OCR2OffchainEncryption)
+	signingKeyPath := NewKeyPath(OCR2OffchainPrefix, keyringName, OCR2OffchainSigning)
+	encryptionKeyPath := NewKeyPath(OCR2OffchainPrefix, keyringName, OCR2OffchainEncryption)
 	createReq := keystore.CreateKeysRequest{
 		Keys: []keystore.CreateKeyRequest{
 			{
