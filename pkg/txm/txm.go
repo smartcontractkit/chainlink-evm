@@ -49,8 +49,7 @@ type TxStore interface {
 }
 
 type AttemptBuilder interface {
-	NewAttempt(context.Context, logger.Logger, *types.Transaction, bool) (*types.Attempt, error)
-	NewBumpAttempt(context.Context, logger.Logger, *types.Transaction, types.Attempt) (*types.Attempt, error)
+	NewAgnosticBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, dynamic bool) (*types.Attempt, error)
 }
 
 type ErrorHandler interface {
@@ -305,7 +304,7 @@ func (t *Txm) broadcastTransaction(ctx context.Context, address common.Address) 
 }
 
 func (t *Txm) createAndSendAttempt(ctx context.Context, tx *types.Transaction, address common.Address) error {
-	attempt, err := t.attemptBuilder.NewAttempt(ctx, t.lggr, tx, t.config.EIP1559)
+	attempt, err := t.attemptBuilder.NewAgnosticBumpAttempt(ctx, t.lggr, tx, t.config.EIP1559)
 	if err != nil {
 		return err
 	}

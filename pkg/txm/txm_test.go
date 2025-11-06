@@ -194,7 +194,7 @@ func TestBroadcastTransaction(t *testing.T) {
 			Fee:      gas.EvmFee{GasPrice: assets.NewWeiI(1)},
 			GasLimit: 22000,
 		}
-		ab.On("NewAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
+		ab.On("NewAgnosticBumpAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		bo, err := txm.broadcastTransaction(ctx, address)
@@ -271,7 +271,7 @@ func TestBackfillTransactions(t *testing.T) {
 			Fee:      gas.EvmFee{GasPrice: assets.NewWeiI(1)},
 			GasLimit: 22000,
 		}
-		ab.On("NewAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
+		ab.On("NewAgnosticBumpAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		err = txm.backfillTransactions(t.Context(), address)
 		require.NoError(t, err)
@@ -311,7 +311,7 @@ func TestBackfillTransactions(t *testing.T) {
 			Fee:      gas.EvmFee{GasPrice: assets.NewWeiI(1)},
 			GasLimit: 22000,
 		}
-		ab.On("NewAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
+		ab.On("NewAgnosticBumpAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
 
 		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(uint64(0), nil).Once()
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
@@ -356,7 +356,7 @@ func TestBackfillTransactions(t *testing.T) {
 			require.NoError(t, txStore.AppendAttemptToTransaction(ctx, nonce, address, attempt))
 		}
 		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(nonce, nil).Once()
-		ab.On("NewAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
+		ab.On("NewAgnosticBumpAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		err = txm.backfillTransactions(ctx, address)

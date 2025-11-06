@@ -15,6 +15,9 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
+// maxBumpThreshold controls the maximum number of bumps for an attempt.
+const maxBumpThreshold = 5
+
 type attemptBuilder struct {
 	gas.EvmFeeEstimator
 	priceMaxKey         func(common.Address) *assets.Wei
@@ -57,6 +60,23 @@ func (a *attemptBuilder) NewBumpAttempt(ctx context.Context, lggr logger.Logger,
 		return nil, err
 	}
 	return a.newCustomAttempt(ctx, tx, bumpedFee, bumpedFeeLimit, previousAttempt.Type, lggr)
+}
+
+func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, dynamic bool) (*types.Attempt, error) {
+	attempt, err := a.NewAttempt(ctx, lggr, tx, dynamic)
+	if err != nil {
+		return nil, err
+	}
+	bumps := min(maxBumpThreshold, tx.AttemptCount)
+	for range bumps {
+		bumpedAttempt, err := a.NewBumpAttempt(ctx, lggr, tx, *attempt)
+		if err != nil {
+			lggr.Errorf("error bumping attempt: %v for txID: %v", err, tx.ID)
+			return attempt, nil
+		}
+		attempt = bumpedAttempt
+	}
+	return attempt, nil
 }
 
 func (a *attemptBuilder) newCustomAttempt(
