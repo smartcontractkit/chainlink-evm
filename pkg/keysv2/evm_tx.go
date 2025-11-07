@@ -2,8 +2,7 @@ package keysv2
 
 import (
 	"context"
-	"fmt"
-
+	"errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
@@ -43,7 +42,7 @@ func (k *TxKey) Address() common.Address {
 
 func (k *TxKey) SignTx(ctx context.Context, req SignTxRequest) (SignTxResponse, error) {
 	if req.ChainID == nil {
-		return SignTxResponse{}, fmt.Errorf("chainID is nil")
+		return SignTxResponse{}, errors.New("chainID is nil")
 	}
 	signer := gethtypes.LatestSignerForChainID(req.ChainID)
 	h := signer.Hash(req.Tx)
@@ -64,7 +63,7 @@ func (k *TxKey) SignTx(ctx context.Context, req SignTxRequest) (SignTxResponse, 
 
 func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.TransactOpts, error) {
 	if chainID == nil {
-		return nil, fmt.Errorf("chainID is nil")
+		return nil, errors.New("chainID is nil")
 	}
 	return &bind.TransactOpts{
 		From: k.addr,
@@ -99,7 +98,7 @@ func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
 		return nil, err
 	}
 	if len(resp.Keys) == 0 {
-		return nil, fmt.Errorf("no keys created")
+		return nil, errors.New("no keys created")
 	}
 	publicKey, err := gethcrypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
 	if err != nil {
@@ -114,7 +113,7 @@ func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
 }
 
 func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*TxKey, error) {
-	var fullNames []string
+	fullNames := make([]string, 0, len(names))
 	for _, name := range names {
 		fullNames = append(fullNames, keystore.NewKeyPath(EVMPrefix, TxKeystorePrefix, name).String())
 	}
@@ -124,7 +123,7 @@ func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*Tx
 	}
 
 	// Note we rely on deterministic order of keys in the response
-	var keys []*TxKey
+	keys := make([]*TxKey, 0, len(resp.Keys))
 	for _, key := range resp.Keys {
 		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
 		if err != nil {

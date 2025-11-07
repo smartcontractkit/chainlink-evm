@@ -26,7 +26,9 @@ func TestTxKey(t *testing.T) {
 			Balance: big.NewInt(0).Mul(big.NewInt(10), big.NewInt(1e18)), // 10 ETH
 		},
 	}, simulated.WithBlockGasLimit(10e6))
-	defer backend.Close()
+	defer func() {
+		require.NoError(t, backend.Close())
+	}()
 	testTransaction := types.NewTransaction(
 		0,                       // Nonce
 		testKey2.Address(),      // To other key

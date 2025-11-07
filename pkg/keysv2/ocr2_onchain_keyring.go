@@ -56,7 +56,7 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNam
 		return nil, err
 	}
 
-	var keyrings []ocrtypes.OnchainKeyring
+	keyrings := make([]ocrtypes.OnchainKeyring, 0, len(resp.Keys))
 	for _, key := range resp.Keys {
 		if !strings.HasPrefix(key.KeyInfo.Name, keystore.NewKeyPath(EVMPrefix, OCR2OnchainPrefix).String()) {
 			continue
