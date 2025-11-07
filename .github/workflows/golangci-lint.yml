@@ -31,5 +31,5 @@ jobs:
         with:
           args: --config=${{ github.workspace }}/.golangci.yml
           only-new-issues: true
-          version: v1.64.8
+          version: v2.4.0
           working-directory: pkg
