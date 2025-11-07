@@ -15,7 +15,7 @@ import (
 
 const (
 	// EVMPrefix is the prefix for EVM-related keys.
-	EVMPrefix        = "evm"
+	EVMPrefix = "evm"
 	// TxKeystorePrefix is the prefix for transaction keys.
 	TxKeystorePrefix = "tx"
 )
