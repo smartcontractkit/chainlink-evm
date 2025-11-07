@@ -2,6 +2,7 @@ package txmgr
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -113,7 +114,7 @@ func NewTxmV2(
 	logPoller logpoller.LogPoller,
 	keyStore keys.ChainStore,
 	estimator gas.EvmFeeEstimator,
-	emptyTxLimitDefault uint64,
+	gasEstimatorConfig config.GasEstimator,
 ) (TxManager, error) {
 	var fwdMgr *forwarders.FwdMgr
 	if txConfig.ForwardersEnabled() {
@@ -138,14 +139,19 @@ func NewTxmV2(
 		stuckTxDetector = txm.NewStuckTxDetector(lggr, chainConfig.ChainType(), stuckTxDetectorConfig)
 	}
 
-	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, emptyTxLimitDefault)
+	// TODO: temporary check until we implement the required methods on the estimator interface
+	if gasEstimatorConfig.Mode() != "BlockHistory" || gasEstimatorConfig.BlockHistory().CheckInclusionBlocks() == 0 {
+		return nil, errors.New("only BlockHistory mode with CheckInclusionBlocks > 0 is supported for TXMv2")
+	}
+
+	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer())
 	inMemoryStoreManager := storage.NewInMemoryStoreManager(lggr, chainID)
 	config := txm.Config{
 		EIP1559:   fCfg.EIP1559DynamicFees(),
 		BlockTime: *txmV2Config.BlockTime(),
 		//nolint:gosec // reuse existing config until migration
 		RetryBlockThreshold: uint16(fCfg.BumpThreshold()),
-		EmptyTxLimitDefault: emptyTxLimitDefault,
+		EmptyTxLimitDefault: gasEstimatorConfig.LimitTransfer(),
 	}
 	var eh txm.ErrorHandler
 	var c txm.Client

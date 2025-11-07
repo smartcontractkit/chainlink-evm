@@ -67,15 +67,30 @@ func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger
 	if err != nil {
 		return nil, err
 	}
-	bumps := min(maxBumpThreshold, tx.AttemptCount)
-	for range bumps {
-		bumpedAttempt, err := a.NewBumpAttempt(ctx, lggr, tx, *attempt)
-		if err != nil {
-			lggr.Errorf("error bumping attempt: %v for txID: %v", err, tx.ID)
-			return attempt, nil
+
+	// bump purge attempts
+	if tx.IsPurgeable {
+		for {
+			// TODO: add better handling
+			bumpedAttempt, err := a.NewBumpAttempt(ctx, lggr, tx, *attempt)
+			if err != nil {
+				return attempt, nil
+			}
+			attempt = bumpedAttempt
 		}
-		attempt = bumpedAttempt
+	} else {
+		// bump regular attempts
+		bumps := min(maxBumpThreshold, tx.AttemptCount)
+		for range bumps {
+			bumpedAttempt, err := a.NewBumpAttempt(ctx, lggr, tx, *attempt)
+			if err != nil {
+				lggr.Errorf("error bumping attempt: %v for txID: %v", err, tx.ID)
+				return attempt, nil
+			}
+			attempt = bumpedAttempt
+		}
 	}
+
 	return attempt, nil
 }
 
