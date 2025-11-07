@@ -27,7 +27,8 @@ jobs:
 
       - name: Run golangci-lint
         if: ${{ always() && !contains(join(github.event.pull_request.labels.*.name, ' '), 'allow-lint-issues') }}
-        uses: golangci/golangci-lint-action@v7
+        # v7.0.0
+        uses: golangci/golangci-lint-action@7119f3d5ddced62a10a044847a6c6bb0f7a5e76a
         with:
           args: --config=${{ github.workspace }}/.golangci.yml
           only-new-issues: true

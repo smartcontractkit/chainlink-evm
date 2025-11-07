@@ -65,7 +65,8 @@ runs:
         fi
 
     - name: Golangci-lint
-      uses: golangci/golangci-lint-action@v7.0.0
+      # v7.0.0
+      uses: golangci/golangci-lint-action@7119f3d5ddced62a10a044847a6c6bb0f7a5e76a
       with:
         version: v2.4.0 
         only-new-issues: true
