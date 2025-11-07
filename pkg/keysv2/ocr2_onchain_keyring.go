@@ -19,6 +19,8 @@ const (
 )
 
 // CreateOCR2OnchainKeyring creates a new OCR2 onchain keyring.
+// Note that key names are prefixed with EVMPrefix and OCR2OnchainPrefix.
+// For example, a key named "test-key" will be stored at the path "evm/ocr2_onchain/test-key".
 func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, keyringName string) (ocrtypes.OnchainKeyring, error) {
 	onchainKeyPath := keystore.NewKeyPath(EVMPrefix, OCR2OnchainPrefix, keyringName)
 	createReq := keystore.CreateKeysRequest{
@@ -44,12 +46,12 @@ func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, keyring
 	return &evmOnchainKeyring{ks: ks, onchainKey: resp.Keys[0].KeyInfo, addr: addr}, nil
 }
 
-// ListOCR2OnchainKeyrings lists OCR2 onchain keyrings, optionally filtered by local names.
-func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNames ...string) ([]ocrtypes.OnchainKeyring, error) {
+// ListOCR2OnchainKeyrings lists OCR2 onchain keyrings, optionally filtered by keyringnames.
+func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]ocrtypes.OnchainKeyring, error) {
 	var names []string
-	if len(localNames) > 0 {
-		for _, ln := range localNames {
-			names = append(names, keystore.NewKeyPath(EVMPrefix, OCR2OnchainPrefix, ln).String())
+	if len(keyringNames) > 0 {
+		for _, krn := range keyringNames {
+			names = append(names, keystore.NewKeyPath(EVMPrefix, OCR2OnchainPrefix, krn).String())
 		}
 	}
 

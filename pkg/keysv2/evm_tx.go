@@ -94,6 +94,8 @@ func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.Tr
 }
 
 // CreateTxKey creates a new transaction signing key.
+// Note that key names are prefixed with EVMPrefix and TxKeystorePrefix.
+// For example, a key named "test-key" will be stored at the path "evm/tx/test-key".
 func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
 	path := keystore.NewKeyPath(EVMPrefix, TxKeystorePrefix, name)
 	createReq := keystore.CreateKeysRequest{
