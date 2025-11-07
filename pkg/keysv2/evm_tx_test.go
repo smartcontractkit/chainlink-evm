@@ -61,7 +61,7 @@ func TestTxKey(t *testing.T) {
 	// Empty names will return all keys.
 	keys, err := evmks.GetTxKeys(ctx, ks, []string{})
 	require.NoError(t, err)
-	require.Equal(t, len(keys), 0)
+	require.Empty(t, keys)
 
 	// Signing will now error.
 	_, err = testKey.SignTx(ctx, evmks.SignTxRequest{

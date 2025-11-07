@@ -349,6 +349,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 			},
 		})
 		require.NoError(t, err2)
+		//nolint:revive // defer in loop is acceptable for test cleanup
 		defer func() {
 			require.NoError(t, peer.Close())
 		}()
@@ -424,6 +425,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 
 		err2 = oracle.Start()
 		require.NoError(t, err2)
+		//nolint:revive // defer in loop is acceptable for test cleanup
 		defer func() {
 			require.NoError(t, oracle.Close())
 		}()

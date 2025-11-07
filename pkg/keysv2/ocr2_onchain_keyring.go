@@ -1,3 +1,4 @@
+// Package keysv2 provides key management functionality for EVM transactions and OCR2 keyrings.
 package keysv2
 
 import (
@@ -7,16 +8,17 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/chainlink-common/keystore"
 	evmutil "github.com/smartcontractkit/libocr/offchainreporting2plus/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 )
 
 const (
+	// OCR2OnchainPrefix is the prefix for OCR2 onchain keyrings.
 	OCR2OnchainPrefix = "ocr2_onchain"
 )
 
+// CreateOCR2OnchainKeyring creates a new OCR2 onchain keyring.
 func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, keyringName string) (ocrtypes.OnchainKeyring, error) {
 	onchainKeyPath := keystore.NewKeyPath(EVMPrefix, OCR2OnchainPrefix, keyringName)
 	createReq := keystore.CreateKeysRequest{
@@ -34,14 +36,15 @@ func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, keyring
 	if len(resp.Keys) != 1 {
 		return nil, fmt.Errorf("expected 1 key, got %d", len(resp.Keys))
 	}
-	publicKey, err := gethcrypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
+	publicKey, err := crypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
 	if err != nil {
 		return nil, err
 	}
-	addr := gethcrypto.PubkeyToAddress(*publicKey)
+	addr := crypto.PubkeyToAddress(*publicKey)
 	return &evmOnchainKeyring{ks: ks, onchainKey: resp.Keys[0].KeyInfo, addr: addr}, nil
 }
 
+// ListOCR2OnchainKeyrings lists OCR2 onchain keyrings, optionally filtered by local names.
 func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNames ...string) ([]ocrtypes.OnchainKeyring, error) {
 	var names []string
 	if len(localNames) > 0 {
@@ -62,11 +65,11 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNam
 			continue
 		}
 		keyPath := keystore.NewKeyPathFromString(key.KeyInfo.Name)
-		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
+		publicKey, err := crypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
 		if err != nil {
 			return nil, err
 		}
-		addr := gethcrypto.PubkeyToAddress(*publicKey)
+		addr := crypto.PubkeyToAddress(*publicKey)
 		keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, onchainKey: key.KeyInfo, addr: addr, keyPath: keyPath})
 	}
 	return keyrings, nil
@@ -89,6 +92,7 @@ func (k *evmOnchainKeyring) PublicKey() ocrtypes.OnchainPublicKey {
 	return k.addr.Bytes()
 }
 
+// ReportToSigData converts a report and report context into signature data.
 func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) []byte {
 	rawReportContext := evmutil.RawReportContext(reportCtx)
 	sigData := crypto.Keccak256(report)

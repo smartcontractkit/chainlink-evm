@@ -1,3 +1,4 @@
+// Package keysv2 provides key management functionality for EVM transactions and OCR2 keyrings.
 package keysv2
 
 import (
@@ -13,33 +14,41 @@ import (
 )
 
 const (
+	// EVMPrefix is the prefix for EVM-related keys.
 	EVMPrefix        = "evm"
+	// TxKeystorePrefix is the prefix for transaction keys.
 	TxKeystorePrefix = "tx"
 )
 
+// TxKey represents an EVM transaction signing key.
 type TxKey struct {
 	ks      keystore.Keystore
 	keyPath keystore.KeyPath
 	addr    common.Address
 }
 
+// SignTxRequest contains the request to sign a transaction.
 type SignTxRequest struct {
 	ChainID *big.Int
 	Tx      *gethtypes.Transaction
 }
 
+// SignTxResponse contains the signed transaction.
 type SignTxResponse struct {
 	Tx *gethtypes.Transaction
 }
 
+// KeyPath returns the key path for this transaction key.
 func (k *TxKey) KeyPath() keystore.KeyPath {
 	return k.keyPath
 }
 
+// Address returns the Ethereum address for this transaction key.
 func (k *TxKey) Address() common.Address {
 	return k.addr
 }
 
+// SignTx signs a transaction using this key.
 func (k *TxKey) SignTx(ctx context.Context, req SignTxRequest) (SignTxResponse, error) {
 	if req.ChainID == nil {
 		return SignTxResponse{}, errors.New("chainID is nil")
@@ -61,6 +70,7 @@ func (k *TxKey) SignTx(ctx context.Context, req SignTxRequest) (SignTxResponse, 
 	return SignTxResponse{Tx: req.Tx}, nil
 }
 
+// GetTransactOpts returns transaction options for this key.
 func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.TransactOpts, error) {
 	if chainID == nil {
 		return nil, errors.New("chainID is nil")
@@ -83,6 +93,7 @@ func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.Tr
 	}, nil
 }
 
+// CreateTxKey creates a new transaction signing key.
 func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
 	path := keystore.NewKeyPath(EVMPrefix, TxKeystorePrefix, name)
 	createReq := keystore.CreateKeysRequest{
@@ -112,6 +123,7 @@ func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
 	}, nil
 }
 
+// GetTxKeys retrieves transaction keys by name.
 func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*TxKey, error) {
 	fullNames := make([]string, 0, len(names))
 	for _, name := range names {
