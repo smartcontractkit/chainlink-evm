@@ -18,7 +18,7 @@ const (
 )
 
 func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, keyringName string) (ocrtypes.OnchainKeyring, error) {
-	onchainKeyPath := NewKeyPath(EVMPrefix, OCR2OnchainPrefix, keyringName)
+	onchainKeyPath := keystore.NewKeyPath(EVMPrefix, OCR2OnchainPrefix, keyringName)
 	createReq := keystore.CreateKeysRequest{
 		Keys: []keystore.CreateKeyRequest{
 			{
@@ -46,7 +46,7 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNam
 	var names []string
 	if len(localNames) > 0 {
 		for _, ln := range localNames {
-			names = append(names, NewKeyPath(EVMPrefix, OCR2OnchainPrefix, ln).String())
+			names = append(names, keystore.NewKeyPath(EVMPrefix, OCR2OnchainPrefix, ln).String())
 		}
 	}
 
@@ -58,10 +58,10 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, localNam
 
 	var keyrings []ocrtypes.OnchainKeyring
 	for _, key := range resp.Keys {
-		if !strings.HasPrefix(key.KeyInfo.Name, NewKeyPath(EVMPrefix, OCR2OnchainPrefix).String()) {
+		if !strings.HasPrefix(key.KeyInfo.Name, keystore.NewKeyPath(EVMPrefix, OCR2OnchainPrefix).String()) {
 			continue
 		}
-		keyPath := NewKeyPathFromString(key.KeyInfo.Name)
+		keyPath := keystore.NewKeyPathFromString(key.KeyInfo.Name)
 		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
 		if err != nil {
 			return nil, err
@@ -78,10 +78,10 @@ type evmOnchainKeyring struct {
 	ks         keystore.Keystore
 	onchainKey keystore.KeyInfo
 	addr       common.Address
-	keyPath    KeyPath
+	keyPath    keystore.KeyPath
 }
 
-func (k *evmOnchainKeyring) KeyPath() KeyPath {
+func (k *evmOnchainKeyring) KeyPath() keystore.KeyPath {
 	return k.keyPath
 }
 

@@ -3,7 +3,6 @@ package keysv2
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"math/big"
 
@@ -19,41 +18,9 @@ const (
 	TxKeystorePrefix = "tx"
 )
 
-type KeyPath []string
-
-func (k KeyPath) String() string {
-	return joinKeySegments(k...)
-}
-
-func (k KeyPath) Leaf() string {
-	return k[len(k)-1]
-}
-
-func NewKeyPath(segments ...string) KeyPath {
-	return segments
-}
-
-func NewKeyPathFromString(fullName string) KeyPath {
-	return strings.Split(fullName, "/")
-}
-
-// JoinKeySegments joins path-like key name segments using "/" and avoids double slashes.
-// Empty segments are skipped so JoinKeySegments("EVM", "TX", "my-key") => "EVM/TX/my-key".
-func joinKeySegments(segments ...string) string {
-	cleaned := make([]string, 0, len(segments))
-	for _, s := range segments {
-		s = strings.Trim(s, "/")
-		if s == "" {
-			continue
-		}
-		cleaned = append(cleaned, s)
-	}
-	return strings.Join(cleaned, "/")
-}
-
 type TxKey struct {
 	ks      keystore.Keystore
-	keyPath KeyPath
+	keyPath keystore.KeyPath
 	addr    common.Address
 }
 
@@ -66,7 +33,7 @@ type SignTxResponse struct {
 	Tx *gethtypes.Transaction
 }
 
-func (k *TxKey) KeyPath() KeyPath {
+func (k *TxKey) KeyPath() keystore.KeyPath {
 	return k.keyPath
 }
 
@@ -118,7 +85,7 @@ func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.Tr
 }
 
 func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
-	path := NewKeyPath(EVMPrefix, TxKeystorePrefix, name)
+	path := keystore.NewKeyPath(EVMPrefix, TxKeystorePrefix, name)
 	createReq := keystore.CreateKeysRequest{
 		Keys: []keystore.CreateKeyRequest{
 			{
@@ -149,7 +116,7 @@ func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
 func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*TxKey, error) {
 	var fullNames []string
 	for _, name := range names {
-		fullNames = append(fullNames, NewKeyPath(EVMPrefix, TxKeystorePrefix, name).String())
+		fullNames = append(fullNames, keystore.NewKeyPath(EVMPrefix, TxKeystorePrefix, name).String())
 	}
 	resp, err := ks.GetKeys(ctx, keystore.GetKeysRequest{KeyNames: fullNames})
 	if err != nil {
@@ -166,7 +133,7 @@ func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*Tx
 		addr := gethcrypto.PubkeyToAddress(*publicKey)
 		keys = append(keys, &TxKey{
 			ks:      ks,
-			keyPath: NewKeyPathFromString(key.KeyInfo.Name),
+			keyPath: keystore.NewKeyPathFromString(key.KeyInfo.Name),
 			addr:    addr,
 		})
 	}
