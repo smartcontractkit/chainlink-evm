@@ -40,10 +40,12 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
   event CronJobCreated(uint256 indexed id, address target, bytes handler);
   event CronJobUpdated(uint256 indexed id, address target, bytes handler);
   event CronJobDeleted(uint256 indexed id);
+  event PermissionedForwarderUpdated(address indexed oldForwarder, address indexed newForwarder);
 
   error CronJobIDNotFound(uint256 id);
   error ExceedsMaxJobs();
   error InvalidHandler();
+  error OnlyPermissionedForwarder();
   error TickInFuture();
   error TickTooOld();
   error TickDoesntMatchSpec();
@@ -52,6 +54,7 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
   uint256 public immutable s_maxJobs;
   uint256 private s_nextCronJobID = 1;
   EnumerableSet.UintSet private s_activeCronJobIDs;
+  address private s_permissionedForwarder;
 
   mapping(uint256 => uint256) private s_lastRuns;
   mapping(uint256 => Spec) private s_specs;
@@ -81,12 +84,34 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
   function performUpkeep(
     bytes calldata performData
   ) external override whenNotPaused {
+    if (msg.sender != s_permissionedForwarder) {
+      revert OnlyPermissionedForwarder();
+    }
     (uint256 id, uint256 tickTime, address target, bytes memory handler) =
       abi.decode(performData, (uint256, uint256, address, bytes));
     validate(id, tickTime, target, handler);
     s_lastRuns[id] = block.timestamp;
     (bool success,) = target.call(handler);
     emit CronJobExecuted(id, success);
+  }
+
+  /**
+   * @notice Returns the address currently allowed to call performUpkeep
+   */
+  function getPermissionedForwarder() external view returns (address) {
+    return s_permissionedForwarder;
+  }
+
+  /**
+   * @notice Sets the address allowed to call performUpkeep
+   * @param newForwarder The address of the permissioned forwarder. Use address(0) to disable performUpkeep.
+   */
+  function setPermissionedForwarder(
+    address newForwarder
+  ) external onlyOwner {
+    address old = s_permissionedForwarder;
+    s_permissionedForwarder = newForwarder;
+    emit PermissionedForwarderUpdated(old, newForwarder);
   }
 
   /**
