@@ -320,6 +320,57 @@ func TestBackfillTransactions(t *testing.T) {
 		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
 	})
 
+	t.Run("retries instantly if the attempt is purgeable", func(t *testing.T) {
+		lggr, observedLogs := logger.TestObserved(t, zap.DebugLevel)
+		txStore := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
+		require.NoError(t, txStore.Add(address))
+		ab := newMockAttemptBuilder(t)
+		c := Config{EIP1559: false, BlockTime: 1 * time.Second, RetryBlockThreshold: 10, EmptyTxLimitDefault: 22000}
+		txm := NewTxm(lggr, testutils.FixtureChainID, client, ab, txStore, nil, c, keystore, nil)
+		emptyMetrics, err := NewTxmMetrics(testutils.FixtureChainID)
+		require.NoError(t, err)
+		txm.metrics = emptyMetrics
+
+		IDK := "IDK"
+		txRequest := &types.TxRequest{
+			Data:              []byte{100, 200},
+			IdempotencyKey:    &IDK,
+			ChainID:           testutils.FixtureChainID,
+			FromAddress:       address,
+			ToAddress:         testutils.NewAddress(),
+			SpecifiedGasLimit: 22000,
+		}
+		_, err = txm.CreateTransaction(t.Context(), txRequest)
+		require.NoError(t, err)
+		tx, err := txStore.UpdateUnstartedTransactionWithNonce(t.Context(), address, 0)
+		require.NoError(t, err)
+
+		attempt := &types.Attempt{
+			TxID:     tx.ID,
+			Fee:      gas.EvmFee{GasPrice: assets.NewWeiI(1)},
+			GasLimit: 22000,
+			Hash:     testutils.NewHash(),
+		}
+		require.NoError(t, txStore.AppendAttemptToTransaction(t.Context(), *tx.Nonce, address, attempt))
+		require.NoError(t, txStore.UpdateTransactionBroadcast(t.Context(), tx.ID, *tx.Nonce, attempt.Hash, address))
+		require.NoError(t, txStore.MarkUnconfirmedTransactionPurgeable(t.Context(), *tx.Nonce, address))
+
+		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(uint64(0), nil).Once()
+		ab.On("NewAgnosticBumpAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
+		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		err = txm.backfillTransactions(t.Context(), address)
+		require.NoError(t, err)
+		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+
+		// Broadcasted once an empty transaction but it didn't get confirmed, so we need to broadcast again.
+		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(uint64(0), nil).Once()
+		ab.On("NewAgnosticBumpAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()
+		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		err = txm.backfillTransactions(t.Context(), address)
+		require.NoError(t, err)
+		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+	})
+
 	t.Run("fetches the unconfirmed transaction for a given nonce, throws a warning for max limit and retries with a new attempt", func(t *testing.T) {
 		ctx := t.Context()
 		lggr, observedLogs := logger.TestObserved(t, zap.DebugLevel)

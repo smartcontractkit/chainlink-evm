@@ -91,6 +91,73 @@ func TestAttemptBuilder_newDynamicFeeAttempt(t *testing.T) {
 	})
 }
 
+func TestAttemptBuilder_NewAttempt(t *testing.T) {
+	mockEstimator := mocks.NewEvmFeeEstimator(t)
+	priceMaxKey := func(addr common.Address) *assets.Wei {
+		return assets.NewWeiI(1000)
+	}
+	var nonce uint64 = 1
+	var gasLimit uint64 = 100
+	ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), gasLimit)
+	address := testutils.NewAddress()
+	lggr := logger.Test(t)
+
+	t.Run("creates legacy attempt with fields", func(t *testing.T) {
+		tx := &types.Transaction{ID: 10, FromAddress: address, Nonce: &nonce}
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, gasLimit, nil).Once()
+		a, err := ab.NewAttempt(t.Context(), lggr, tx, false)
+		require.NoError(t, err)
+		assert.Equal(t, tx.ID, a.TxID)
+		assert.Equal(t, evmtypes.LegacyTxType, int(a.Type))
+		assert.NotNil(t, a.Fee.GasPrice)
+		assert.Equal(t, "100 wei", a.Fee.GasPrice.String())
+		assert.Nil(t, a.Fee.GasTipCap)
+		assert.Nil(t, a.Fee.GasFeeCap)
+		assert.Equal(t, gasLimit, a.GasLimit)
+	})
+
+	t.Run("creates dynamic fee attempt with fields", func(t *testing.T) {
+		tx := &types.Transaction{ID: 10, FromAddress: address, Nonce: &nonce}
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(1), GasFeeCap: assets.NewWeiI(2)}}, gasLimit, nil).Once()
+		a, err := ab.NewAttempt(t.Context(), lggr, tx, true)
+		require.NoError(t, err)
+		assert.Equal(t, tx.ID, a.TxID)
+		assert.Equal(t, evmtypes.DynamicFeeTxType, int(a.Type))
+	})
+
+	t.Run("creates purgeable attempt with fields", func(t *testing.T) {
+		tx := &types.Transaction{ID: 10, FromAddress: address, IsPurgeable: true, Nonce: &nonce}
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, gasLimit, nil).Once()
+		a, err := ab.NewAttempt(t.Context(), lggr, tx, false)
+		require.NoError(t, err)
+		assert.Equal(t, tx.ID, a.TxID)
+		assert.Equal(t, evmtypes.LegacyTxType, int(a.Type))
+	})
+
+	t.Run("creates dynamic fee purgeable attempt with fields", func(t *testing.T) {
+		tx := &types.Transaction{ID: 10, FromAddress: address, IsPurgeable: true, Nonce: &nonce}
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(1), GasFeeCap: assets.NewWeiI(2)}}, gasLimit, nil).Once()
+		a, err := ab.NewAttempt(t.Context(), lggr, tx, true)
+		require.NoError(t, err)
+		assert.Equal(t, tx.ID, a.TxID)
+		assert.Equal(t, evmtypes.DynamicFeeTxType, int(a.Type))
+	})
+
+	t.Run("fails if estimator returns error", func(t *testing.T) {
+		tx := &types.Transaction{ID: 10, FromAddress: address}
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{}, uint64(0), errors.New("estimator error")).Once()
+		_, err := ab.NewAttempt(t.Context(), lggr, tx, false)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "estimator error")
+		mockEstimator.AssertExpectations(t)
+	})
+}
+
 func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 	address := testutils.NewAddress()
 	lggr := logger.Test(t)
@@ -112,7 +179,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 		gasPrice := assets.NewWeiI(100)
 		initialFee := gas.EvmFee{GasPrice: gasPrice}
-		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(initialFee, uint64(21000), nil).Once()
 
 		attempt, err := ab.NewAgnosticBumpAttempt(t.Context(), lggr, tx, false)
@@ -137,7 +204,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 		gasPrice := assets.NewWeiI(100)
 		initialFee := gas.EvmFee{GasPrice: gasPrice}
 		bumpedFee := gas.EvmFee{GasPrice: gasPrice.Add(assets.NewWeiI(20))}
-		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(initialFee, uint64(21000), nil).Once()
 		mockEstimator.On("BumpFee", mock.Anything, initialFee, mock.Anything, mock.Anything, mock.Anything).
 			Return(bumpedFee, uint64(21000), nil).Once()
@@ -164,7 +231,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 		firstBump := gas.EvmFee{GasPrice: assets.NewWeiI(110)}
 		secondBump := gas.EvmFee{GasPrice: assets.NewWeiI(121)}
 		thirdBump := gas.EvmFee{GasPrice: assets.NewWeiI(133)}
-		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(initialFee, uint64(21000), nil).Once()
 		mockEstimator.On("BumpFee", mock.Anything, initialFee, mock.Anything, mock.Anything, mock.Anything).
 			Return(firstBump, uint64(21000), nil).Once()
@@ -194,7 +261,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 		gasPrice := assets.NewWeiI(100)
 		initialFee := gas.EvmFee{GasPrice: gasPrice}
 		firstBump := gas.EvmFee{GasPrice: gasPrice.Add(assets.NewWeiI(20))}
-		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(initialFee, uint64(21000), nil).Once()
 		mockEstimator.On("BumpFee", mock.Anything, initialFee, mock.Anything, mock.Anything, mock.Anything).
 			Return(firstBump, uint64(21000), nil).Once()
@@ -222,7 +289,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 		initialFee := gas.EvmFee{GasPrice: assets.NewWeiI(100)}
 		bumpedFee := gas.EvmFee{GasPrice: initialFee.GasPrice.Add(assets.NewWeiI(20))}
-		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(initialFee, uint64(21000), nil).Once()
 		// Should only bump 5 times (maxBumpThreshold)
 		mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
