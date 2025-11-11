@@ -18,9 +18,10 @@ import (
 )
 
 const (
+	MaxInFlightTransactions int = 16
+	MaxInFlightSubset       int = 5
+
 	broadcastInterval           time.Duration = 30 * time.Second
-	maxInFlightTransactions     int           = 16
-	maxInFlightSubset           int           = 5
 	maxAttemptsThreshold        uint16        = 10
 	pendingNonceDefaultTimeout  time.Duration = 30 * time.Second
 	pendingNonceRecheckInterval time.Duration = 1 * time.Second
@@ -82,7 +83,7 @@ type Txm struct {
 	txStore         TxStore
 	keystore        keys.AddressLister
 	config          Config
-	metrics         *txmMetrics
+	Metrics         *txmMetrics
 
 	nonceMapMu sync.RWMutex
 	nonceMap   map[common.Address]uint64
@@ -114,7 +115,7 @@ func (t *Txm) Start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		t.metrics = tm
+		t.Metrics = tm
 		t.stopCh = make(chan struct{})
 
 		addresses, err := t.keystore.EnabledAddresses(ctx)
@@ -151,7 +152,7 @@ func (t *Txm) initializeNonce(ctx context.Context, address common.Address) {
 			}
 			continue
 		}
-		t.setNonce(address, pendingNonce)
+		t.SetNonce(address, pendingNonce)
 		t.lggr.Debugf("Set initial nonce for address: %v to %d", address, pendingNonce)
 		return
 	}
@@ -195,13 +196,13 @@ func (t *Txm) Abandon(address common.Address) error {
 	return t.txStore.AbandonPendingTransactions(context.TODO(), address)
 }
 
-func (t *Txm) getNonce(address common.Address) uint64 {
+func (t *Txm) GetNonce(address common.Address) uint64 {
 	t.nonceMapMu.RLock()
 	defer t.nonceMapMu.RUnlock()
 	return t.nonceMap[address]
 }
 
-func (t *Txm) setNonce(address common.Address, nonce uint64) {
+func (t *Txm) SetNonce(address common.Address, nonce uint64) {
 	t.nonceMapMu.Lock()
 	defer t.nonceMapMu.Unlock()
 	t.nonceMap[address] = nonce
@@ -227,7 +228,7 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 
 	for {
 		start := time.Now()
-		bo, err := t.broadcastTransaction(ctx, address)
+		bo, err := t.BroadcastTransaction(ctx, address)
 		if err != nil {
 			t.lggr.Errorw("Error during transaction broadcasting", "err", err)
 		} else {
@@ -249,7 +250,7 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 		case <-backfillCh:
 			backfillCh = time.After(utils.WithJitter(t.config.BlockTime))
 			start := time.Now()
-			err := t.backfillTransactions(ctx, address)
+			err := t.BackfillTransactions(ctx, address)
 			if err != nil {
 				t.lggr.Errorw("Error during backfill", "err", err)
 			} else {
@@ -259,27 +260,27 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 	}
 }
 
-func (t *Txm) broadcastTransaction(ctx context.Context, address common.Address) (bool, error) {
+func (t *Txm) BroadcastTransaction(ctx context.Context, address common.Address) (bool, error) {
 	for {
 		_, unconfirmedCount, err := t.txStore.FetchUnconfirmedTransactionAtNonceWithCount(ctx, 0, address)
 		if err != nil {
 			return false, err
 		}
 
-		// Optimistically send up to maxInFlightSubset of the maxInFlightTransactions. After that threshold, broadcast more cautiously
-		// by checking the pending nonce so no more than maxInFlightSubset can get stuck simultaneously i.e. due
+		// Optimistically send up to MaxInFlightSubset of the MaxInFlightTransactions. After that threshold, broadcast more cautiously
+		// by checking the pending nonce so no more than MaxInFlightSubset can get stuck simultaneously i.e. due
 		// to insufficient balance. We're making this trade-off to avoid storing stuck transactions and making unnecessary
-		// RPC calls. The upper limit is always maxInFlightTransactions regardless of the pending nonce.
-		if unconfirmedCount >= maxInFlightSubset {
-			if unconfirmedCount > maxInFlightTransactions {
-				t.lggr.Warnf("Reached transaction limit: %d for unconfirmed transactions", maxInFlightTransactions)
+		// RPC calls. The upper limit is always MaxInFlightTransactions regardless of the pending nonce.
+		if unconfirmedCount >= MaxInFlightSubset {
+			if unconfirmedCount > MaxInFlightTransactions {
+				t.lggr.Warnf("Reached transaction limit: %d for unconfirmed transactions", MaxInFlightTransactions)
 				return true, nil
 			}
 			pendingNonce, e := t.client.PendingNonceAt(ctx, address)
 			if e != nil {
 				return false, e
 			}
-			nonce := t.getNonce(address)
+			nonce := t.GetNonce(address)
 			if nonce > pendingNonce {
 				t.lggr.Warnf("Reached transaction limit. LocalNonce: %d, PendingNonce %d, unconfirmedCount: %d",
 					nonce, pendingNonce, unconfirmedCount)
@@ -287,7 +288,7 @@ func (t *Txm) broadcastTransaction(ctx context.Context, address common.Address) 
 			}
 		}
 
-		nonce := t.getNonce(address)
+		nonce := t.GetNonce(address)
 		tx, err := t.txStore.UpdateUnstartedTransactionWithNonce(ctx, address, nonce)
 		if err != nil {
 			return false, err
@@ -295,7 +296,7 @@ func (t *Txm) broadcastTransaction(ctx context.Context, address common.Address) 
 		if tx == nil {
 			return false, nil
 		}
-		t.setNonce(address, nonce+1)
+		t.SetNonce(address, nonce+1)
 
 		if err := t.createAndSendAttempt(ctx, tx, address); err != nil {
 			return false, err
@@ -328,7 +329,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	tx.AttemptCount++
 	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "duration", time.Since(start), "txErr: ", txErr)
 	if txErr != nil && t.errorHandler != nil {
-		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.setNonce, false); err != nil {
+		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.SetNonce, false); err != nil {
 			return
 		}
 	} else if txErr != nil {
@@ -341,15 +342,15 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 		}
 	}
 
-	t.metrics.IncrementNumBroadcastedTxs(ctx)
-	if err = t.metrics.EmitTxMessage(ctx, attempt.Hash, fromAddress, tx); err != nil {
+	t.Metrics.IncrementNumBroadcastedTxs(ctx)
+	if err = t.Metrics.EmitTxMessage(ctx, attempt.Hash, fromAddress, tx); err != nil {
 		t.lggr.Errorw("Beholder error emitting tx message", "err", err)
 	}
 
 	return t.txStore.UpdateTransactionBroadcast(ctx, attempt.TxID, *tx.Nonce, attempt.Hash, fromAddress)
 }
 
-func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) error {
+func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) error {
 	latestNonce, err := t.client.NonceAt(ctx, address, nil)
 	if err != nil {
 		return err
@@ -360,7 +361,7 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 		return err
 	}
 	if len(confirmedTransactions) > 0 || len(unconfirmedTransactionIDs) > 0 {
-		t.metrics.IncrementNumConfirmedTxs(ctx, len(confirmedTransactions))
+		t.Metrics.IncrementNumConfirmedTxs(ctx, len(confirmedTransactions))
 		confirmedTransactionIDs := t.extractMetrics(ctx, confirmedTransactions)
 		t.lggr.Infof("Confirmed transaction IDs: %v . Re-orged transaction IDs: %v", confirmedTransactionIDs, unconfirmedTransactionIDs)
 	}
@@ -376,7 +377,7 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 
 	if tx == nil || *tx.Nonce != latestNonce {
 		t.lggr.Warnf("Nonce gap at nonce: %d - address: %v. Creating a new transaction\n", latestNonce, address)
-		t.metrics.IncrementNumNonceGaps(ctx)
+		t.Metrics.IncrementNumNonceGaps(ctx)
 		return t.createAndSendEmptyTx(ctx, latestNonce, address)
 	} else { //nolint:revive //easier to read
 		if !tx.IsPurgeable && t.stuckTxDetector != nil {
@@ -396,13 +397,13 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 		}
 
 		if tx.AttemptCount >= maxAttemptsThreshold {
-			t.metrics.ReachedMaxAttempts(ctx, true)
+			t.Metrics.ReachedMaxAttempts(ctx, true)
 			t.lggr.Warnf("Reached max attempts threshold for txID: %d. TXM will broadcast more attempts  but if this"+
 				" error persists, it means the transaction won't likely be confirmed and there is an issue with the transaction."+
 				"Look for any error messages from previous broadcasted attempts that may indicate why this happened, i.e. wallet is out of funds. Tx: %v", tx.ID,
 				tx.PrintWithAttempts())
 		} else {
-			t.metrics.ReachedMaxAttempts(ctx, false)
+			t.Metrics.ReachedMaxAttempts(ctx, false)
 		}
 
 		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) || tx.IsPurgeable {
@@ -427,7 +428,7 @@ func (t *Txm) extractMetrics(ctx context.Context, txs []*types.Transaction) []ui
 	for _, tx := range txs {
 		confirmedTxIDs = append(confirmedTxIDs, tx.ID)
 		if tx.InitialBroadcastAt != nil {
-			t.metrics.RecordTimeUntilTxConfirmed(ctx, float64(time.Since(*tx.InitialBroadcastAt)))
+			t.Metrics.RecordTimeUntilTxConfirmed(ctx, float64(time.Since(*tx.InitialBroadcastAt)))
 		}
 	}
 	return confirmedTxIDs

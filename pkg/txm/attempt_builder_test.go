@@ -18,6 +18,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
+	"github.com/smartcontractkit/chainlink-framework/chains/fees"
 )
 
 func TestAttemptBuilder_newLegacyAttempt(t *testing.T) {
@@ -266,7 +267,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 		mockEstimator.On("BumpFee", mock.Anything, initialFee, mock.Anything, mock.Anything, mock.Anything).
 			Return(firstBump, uint64(21000), nil).Once()
 		mockEstimator.On("BumpFee", mock.Anything, firstBump, mock.Anything, mock.Anything, mock.Anything).
-			Return(gas.EvmFee{}, uint64(0), errors.New("transaction propagation issue: transactions are not being mined")).Once()
+			Return(gas.EvmFee{}, uint64(0), fees.ErrConnectivity).Once()
 
 		attempt, err := ab.NewAgnosticBumpAttempt(t.Context(), lggr, tx, false)
 		require.NoError(t, err)

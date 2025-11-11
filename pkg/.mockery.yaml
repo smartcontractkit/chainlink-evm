@@ -53,7 +53,7 @@ packages:
     config:
       dir: txm
       outpkg: txm
-      mockname: "mock{{ .InterfaceName }}"
+      mockname: "Mock{{ .InterfaceName }}"
       filename: "mock_{{ .InterfaceName | snakecase }}_test.go"
     interfaces:
       Client:
