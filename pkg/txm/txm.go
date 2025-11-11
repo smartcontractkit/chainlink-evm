@@ -203,8 +203,8 @@ func (t *Txm) getNonce(address common.Address) uint64 {
 
 func (t *Txm) setNonce(address common.Address, nonce uint64) {
 	t.nonceMapMu.Lock()
-	t.nonceMap[address] = nonce
 	defer t.nonceMapMu.Unlock()
+	t.nonceMap[address] = nonce
 }
 
 func newBackoff(minDuration time.Duration) backoff.Backoff {
@@ -371,7 +371,7 @@ func (t *Txm) backfillTransactions(ctx context.Context, address common.Address) 
 	}
 	if unconfirmedCount == 0 {
 		t.lggr.Debugf("All transactions confirmed for address: %v", address)
-		return err
+		return nil
 	}
 
 	if tx == nil || *tx.Nonce != latestNonce {

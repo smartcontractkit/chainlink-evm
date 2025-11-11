@@ -17,6 +17,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
+	"github.com/smartcontractkit/chainlink-evm/pkg/gas/mocks"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/storage"
@@ -424,4 +425,95 @@ func TestBackfillTransactions(t *testing.T) {
 		assert.Equal(t, uint64(attemptsTried-storage.MaxAllowedAttempts+1), tx2.Attempts[0].ID) // the initial attempts tried, plus the one during backfill
 		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Reached max attempts threshold for txID: %d", 0))
 	})
+}
+
+func TestFlow_ResendTransaction(t *testing.T) {
+	t.Parallel()
+
+	client := newMockClient(t)
+	txStoreManager := storage.NewInMemoryStoreManager(logger.Test(t), testutils.FixtureChainID)
+	address := testutils.NewAddress()
+	require.NoError(t, txStoreManager.Add(address))
+	config := Config{EIP1559: true, EmptyTxLimitDefault: 22000, RetryBlockThreshold: 1, BlockTime: 2 * time.Second}
+	mockEstimator := mocks.NewEvmFeeEstimator(t)
+	defaultGasLimit := uint64(100000)
+	keystore := &keystest.FakeChainStore{}
+	attemptBuilder := NewAttemptBuilder(func(address common.Address) *assets.Wei { return assets.NewWeiI(1) }, mockEstimator, keystore, 22000)
+	stuckTxDetector := NewStuckTxDetector(logger.Test(t), "", StuckTxDetectorConfig{BlockTime: config.BlockTime, StuckTxBlockThreshold: uint32(config.RetryBlockThreshold + 1)})
+	txm := NewTxm(logger.Test(t), testutils.FixtureChainID, client, attemptBuilder, txStoreManager, stuckTxDetector, config, keystore, nil)
+	metrics, err := NewTxmMetrics(testutils.FixtureChainID)
+	require.NoError(t, err)
+	txm.metrics = metrics
+	initialNonce := uint64(0)
+	txm.setNonce(address, initialNonce)
+	IDK := "IDK"
+
+	// Create transaction
+	_, err = txm.CreateTransaction(t.Context(), &types.TxRequest{
+		IdempotencyKey: &IDK,
+		ChainID:        testutils.FixtureChainID,
+		FromAddress:    address,
+		ToAddress:      testutils.NewAddress(),
+	})
+	require.NoError(t, err)
+
+	// Broadcast transaction
+	mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
+	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	_, err = txm.broadcastTransaction(t.Context(), address)
+	require.NoError(t, err)
+
+	// Backfill transaction
+	client.On("NonceAt", mock.Anything, mock.Anything, mock.Anything).Return(initialNonce, nil).Maybe() // Transaction was not confirmed
+	require.NoError(t, txm.backfillTransactions(t.Context(), address))
+
+	// Set LastBroadcastAt to a time in the past to trigger retry condition
+	txStore := txStoreManager.InMemoryStoreMap[address]
+	require.NotNil(t, txStore)
+	tx := txStore.UnconfirmedTransactions[initialNonce]
+	require.NotNil(t, tx)
+	pastTime := time.Now().Add(-(config.BlockTime*time.Duration(config.RetryBlockThreshold) + 1*time.Second))
+	tx.LastBroadcastAt = &pastTime
+
+	// Retry with bumped fee
+	client.On("NonceAt", mock.Anything, mock.Anything, mock.Anything).Return(initialNonce, nil).Maybe() // Transaction was not confirmed again
+	mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
+	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
+	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	require.NoError(t, txm.backfillTransactions(t.Context(), address)) // retry
+
+	// Set LastBroadcastAt to a time in the past to trigger purge condition
+	pastTime = time.Now().Add(-(config.BlockTime*time.Duration(config.RetryBlockThreshold) + 2*time.Second))
+	tx.LastBroadcastAt = &pastTime
+
+	// Purge transaction
+	client.On("NonceAt", mock.Anything, mock.Anything, mock.Anything).Return(initialNonce, nil).Maybe() // Transaction was not confirmed again
+	mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
+	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
+	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(7), GasFeeCap: assets.NewWeiI(14)}}, defaultGasLimit, nil).Once()
+	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{}, uint64(0), errors.New("transaction propagation issue: transactions are not being mined")).Once() // Purgeable transactions bump up the connectivity percentile, where error is returned
+	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	require.NoError(t, txm.backfillTransactions(t.Context(), address)) // retry
+
+	// Instant retransmission of purgeable transaction
+	client.On("NonceAt", mock.Anything, mock.Anything, mock.Anything).Return(initialNonce, nil).Maybe() // Transaction was not confirmed again
+	mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
+	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
+	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(7), GasFeeCap: assets.NewWeiI(14)}}, defaultGasLimit, nil).Once()
+	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(8), GasFeeCap: assets.NewWeiI(16)}}, defaultGasLimit, nil).Once()
+	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{}, uint64(0), errors.New("transaction propagation issue: transactions are not being mined")).Once() // Purgeable transactions bump up the connectivity percentile, where error is returned
+	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	require.NoError(t, txm.backfillTransactions(t.Context(), address)) // retry
 }

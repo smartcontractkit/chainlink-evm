@@ -2,6 +2,7 @@ package txm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
+	"github.com/smartcontractkit/chainlink-framework/chains/fees"
 )
 
 // maxBumpThreshold controls the maximum number of bumps for an attempt.
@@ -70,11 +72,14 @@ func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger
 
 	// bump purge attempts
 	if tx.IsPurgeable {
+		// TODO: add better handling
 		for {
-			// TODO: add better handling
 			bumpedAttempt, err := a.NewBumpAttempt(ctx, lggr, tx, *attempt)
 			if err != nil {
-				return attempt, nil
+				if errors.Is(err, fees.ErrConnectivity) {
+					return attempt, nil
+				}
+				return nil, fmt.Errorf("error bumping attempt for txID: %v, err: %w", tx.ID, err)
 			}
 			attempt = bumpedAttempt
 		}
