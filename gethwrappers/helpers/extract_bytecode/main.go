@@ -13,14 +13,6 @@ import (
 	"strings"
 )
 
-const (
-	// Directories are relative to the EVM root (i.e. chains/evm)
-	gobindingsSubdir    = "gobindings/generated"
-	ccvGobindingsSubdir = "../../ccv/chains/evm/gobindings/generated"
-	bytecodeSubdir      = "bytecode"
-	abiSubdir           = "abi"
-)
-
 // Metadata holds the extracted bytecode and ABI from a contract binding
 type Metadata struct {
 	Bytecode string
@@ -41,11 +33,6 @@ func run() error {
 	abiDir := flag.String("abi", "", "Output directory for ABI files (required)")
 	flag.Parse()
 
-	// If no input directory is provided, try auto-detection for backward compatibility
-	if *inputDir == "" {
-		return runLegacyMode()
-	}
-
 	// Validate required arguments
 	if *bytecodeDir == "" {
 		return fmt.Errorf("bytecode directory is required (use -bytecode flag)")
@@ -65,51 +52,6 @@ func run() error {
 
 	// Process the input directory (always exclude "latest" directories)
 	return processDirectory(*inputDir, *inputDir, *bytecodeDir, *abiDir, true)
-}
-
-// runLegacyMode provides backward compatibility with the original hardcoded behavior
-func runLegacyMode() error {
-	// Determine the correct paths based on the current working directory
-	gobindingsDir, ccvGobindingsDir, bytecodeDir, abiDir, err := findProjectDirs()
-	if err != nil {
-		return fmt.Errorf("failed to find project directories: %w", err)
-	}
-
-	fmt.Printf("Using gobindings dir: %s\n", gobindingsDir)
-	fmt.Printf("Using ccv gobindings dir: %s\n", ccvGobindingsDir)
-	fmt.Printf("Using bytecode dir: %s\n", bytecodeDir)
-	fmt.Printf("Using ABI dir: %s\n", abiDir)
-
-	// Get all versioned directories (exclude "latest" because it's unaudited)
-	entries, err := os.ReadDir(gobindingsDir)
-	if err != nil {
-		return fmt.Errorf("failed to read gobindings directory: %w", err)
-	}
-	preCCVLen := len(entries)
-	ccvEntries, err := os.ReadDir(ccvGobindingsDir)
-	if err != nil {
-		return fmt.Errorf("failed to read ccv gobindings directory: %w", err)
-	}
-	entries = append(entries, ccvEntries...)
-
-	for i, entry := range entries {
-		if !entry.IsDir() || entry.Name() == "latest" {
-			continue
-		}
-		bindingsDir := gobindingsDir
-		if i >= preCCVLen {
-			bindingsDir = ccvGobindingsDir
-		}
-
-		versionDir := filepath.Join(bindingsDir, entry.Name())
-		fmt.Printf("Processing version: %s\n", entry.Name())
-
-		if err := processVersionDir(versionDir, bindingsDir, bytecodeDir, abiDir); err != nil {
-			return fmt.Errorf("failed to process version %s: %w", entry.Name(), err)
-		}
-	}
-
-	return nil
 }
 
 // processDirectory processes a directory and all its subdirectories for Go wrapper files
@@ -155,80 +97,6 @@ func containsLatestInPath(path string) bool {
 		}
 	}
 	return false
-}
-
-func findProjectDirs() (gobindingsDir, ccvGobindingsDir, bytecodeDir, abiDir string, err error) {
-	// Find the chains/evm root directory
-	evmRoot, err := findEvmRoot()
-	if err != nil {
-		return "", "", "", "", err
-	}
-
-	// Build all paths from the root using constants
-	gobindingsDir = filepath.Join(evmRoot, gobindingsSubdir)
-	ccvGobindingsDir = filepath.Join(evmRoot, ccvGobindingsSubdir)
-	bytecodeDir = filepath.Join(evmRoot, bytecodeSubdir)
-	abiDir = filepath.Join(evmRoot, abiSubdir)
-
-	return gobindingsDir, ccvGobindingsDir, bytecodeDir, abiDir, nil
-}
-
-// findEvmRoot finds the chains/evm directory by walking up from the current directory
-func findEvmRoot() (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("failed to get current working directory: %w", err)
-	}
-
-	// Walk up the directory tree looking for chains/evm root
-	dir := cwd
-	for {
-		// Check if gobindings/generated exists in this directory (indicates we found chains/evm)
-		gobindingsPath := filepath.Join(dir, gobindingsSubdir)
-		if info, err := os.Stat(gobindingsPath); err == nil && info.IsDir() {
-			return dir, nil
-		}
-
-		// Check if we're in a subdirectory of chains/evm (like gobindings or gobindings/cmd)
-		// by checking if the parent has gobindings/generated
-		parent := filepath.Dir(dir)
-		if parent != dir {
-			parentGobindingsPath := filepath.Join(parent, gobindingsSubdir)
-			if info, err := os.Stat(parentGobindingsPath); err == nil && info.IsDir() {
-				return parent, nil
-			}
-		}
-
-		// Check if chains/evm exists as a subdirectory (we might be in project root)
-		chainsEvmPath := filepath.Join(dir, "chains", "evm", gobindingsSubdir)
-		if info, err := os.Stat(chainsEvmPath); err == nil && info.IsDir() {
-			return filepath.Join(dir, "chains", "evm"), nil
-		}
-
-		// Move up one directory
-		if parent == dir {
-			// We've reached the filesystem root
-			break
-		}
-		dir = parent
-	}
-
-	return "", fmt.Errorf("could not find chains/evm root directory. Please run from within the chainlink-ccip project")
-}
-
-func processVersionDir(versionDir, gobindingsDir, bytecodeDir, abiDir string) error {
-	return filepath.Walk(versionDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Only process .go files
-		if info.IsDir() || !strings.HasSuffix(info.Name(), ".go") {
-			return nil
-		}
-
-		return processGoFile(path, gobindingsDir, bytecodeDir, abiDir)
-	})
 }
 
 func processGoFile(path, gobindingsDir, bytecodeDir, abiDir string) error {
