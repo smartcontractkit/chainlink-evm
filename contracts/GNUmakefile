@@ -86,6 +86,8 @@ wrappers: pnpmdep mockery abigen ## Recompiles solidity contracts and their go w
 wrappers-all: pnpmdep mockery abigen ## Recompiles solidity contracts and their go wrappers.
 	# go_generate contains a call to compile all contracts before generating wrappers
 	cd ../gethwrappers; go generate ./go_generate.go
+    # Since this is used in CI to ensure all wrappers are up to date, we also generate the CRE wrappers here
+	cd ./cre/gobindings; go generate ./go_generate.go
 
 .PHONY: wrappers-zksync
 wrappers-zksync: pnpmdep forge-zksync

@@ -32,3 +32,15 @@ runs:
       shell: bash
       run: pnpm i --prod
       working-directory: ${{ inputs.base-path }}/contracts
+
+    - if: ${{ inputs.prod == 'false' }}
+      name: Install dependencies - CRE
+      shell: bash
+      run: pnpm i
+      working-directory: ${{ inputs.base-path }}/contracts/cre
+
+    - if: ${{ inputs.prod == 'true' }}
+      name: Install prod dependencies - CRE
+      shell: bash
+      run: pnpm i --prod
+      working-directory: ${{ inputs.base-path }}/contracts/cre
