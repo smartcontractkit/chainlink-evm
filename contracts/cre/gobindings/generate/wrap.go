@@ -21,6 +21,8 @@ func main() {
 	var outDirSuffix string
 	if len(os.Args) >= 5 {
 		outDirSuffix = os.Args[4]
+	} else {
+		outDirSuffix = "latest"
 	}
 
 	if os.Getenv("ZKSYNC") == "true" {
