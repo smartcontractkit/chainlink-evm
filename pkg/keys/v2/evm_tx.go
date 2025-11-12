@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	// EVMPrefix is the prefix for EVM-related keys.
-	EVMPrefix = "evm"
-	// TxKeystorePrefix is the prefix for transaction keys.
-	TxKeystorePrefix = "tx"
+	// PrefixEVM is the prefix for EVM-related keys.
+	PrefixEVM = "evm"
+	// PrefixTxKeystore is the prefix for transaction keys.
+	PrefixTxKeystore = "tx"
 )
 
 // TxKey represents an EVM transaction signing key.
@@ -94,10 +94,10 @@ func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.Tr
 }
 
 // CreateTxKey creates a new transaction signing key.
-// Note that key names are prefixed with EVMPrefix and TxKeystorePrefix.
+// Note that key names are prefixed with PrefixEVM and PrefixTxKeystore.
 // For example, a key named "test-key" will be stored at the path "evm/tx/test-key".
 func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
-	path := keystore.NewKeyPath(EVMPrefix, TxKeystorePrefix, name)
+	path := keystore.NewKeyPath(PrefixEVM, PrefixTxKeystore, name)
 	createReq := keystore.CreateKeysRequest{
 		Keys: []keystore.CreateKeyRequest{
 			{
@@ -129,7 +129,7 @@ func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
 func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*TxKey, error) {
 	fullNames := make([]string, 0, len(names))
 	for _, name := range names {
-		fullNames = append(fullNames, keystore.NewKeyPath(EVMPrefix, TxKeystorePrefix, name).String())
+		fullNames = append(fullNames, keystore.NewKeyPath(PrefixEVM, PrefixTxKeystore, name).String())
 	}
 	resp, err := ks.GetKeys(ctx, keystore.GetKeysRequest{KeyNames: fullNames})
 	if err != nil {
