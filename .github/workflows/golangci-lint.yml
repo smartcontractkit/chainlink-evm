@@ -26,11 +26,18 @@ jobs:
           go-version-file: go.mod
 
       - name: Run golangci-lint
-        if: ${{ always() && !contains(join(github.event.pull_request.labels.*.name, ' '), 'allow-lint-issues') }}
-        # v7.0.0
-        uses: golangci/golangci-lint-action@7119f3d5ddced62a10a044847a6c6bb0f7a5e76a
+        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # v3.1.0
         with:
-          args: --config=${{ github.workspace }}/.golangci.yml
+          golangci-lint-version: v2.6.1
           only-new-issues: true
-          version: v2.4.0
           working-directory: pkg
+
+      # - name: Run golangci-lint
+      #   if: ${{ always() && !contains(join(github.event.pull_request.labels.*.name, ' '), 'allow-lint-issues') }}
+      #   # v7.0.0
+      #   uses: golangci/golangci-lint-action@7119f3d5ddced62a10a044847a6c6bb0f7a5e76a
+      #   with:
+      #     args: --config=${{ github.workspace }}/.golangci.yml
+      #     only-new-issues: true
+      #     version: v2.4.0
+      #     working-directory: pkg

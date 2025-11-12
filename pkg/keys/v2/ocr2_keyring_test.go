@@ -1,4 +1,4 @@
-package keysv2_test
+package keys_test
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	ocr2offchain "github.com/smartcontractkit/chainlink-common/keystore/ocr2offchain"
 	ragep2p "github.com/smartcontractkit/chainlink-common/keystore/ragep2p"
 	logger "github.com/smartcontractkit/chainlink-common/pkg/logger"
-	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keysv2"
+	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keys/v2"
 	"github.com/smartcontractkit/freeport"
 	"github.com/smartcontractkit/libocr/commontypes"
 	ocr2agg "github.com/smartcontractkit/libocr/gethwrappers2/ocr2aggregator"

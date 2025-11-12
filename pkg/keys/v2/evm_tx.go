@@ -1,5 +1,5 @@
-// Package keysv2 provides key management functionality for EVM transactions and OCR2 keyrings.
-package keysv2
+// Package keys/v2 provides key management functionality for EVM transactions and OCR2 keyrings.
+package keys
 
 import (
 	"context"

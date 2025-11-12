@@ -1,4 +1,4 @@
-package keysv2_test
+package keys_test
 
 import (
 	"math/big"
@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	commonks "github.com/smartcontractkit/chainlink-common/keystore"
-	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keysv2"
+	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keys/v2"
 	"github.com/stretchr/testify/require"
 )
 
