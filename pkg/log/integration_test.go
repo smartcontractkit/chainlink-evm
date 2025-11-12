@@ -138,7 +138,8 @@ func TestBroadcaster_ResubscribesOnAddOrRemoveContract(t *testing.T) {
 	listenerLast := helper.newLogListenerWithJob("last")
 	helper.register(listenerLast, newMockContract(t), 1)
 
-	require.Eventually(t, func() bool { return helper.mockEth.UnsubscribeCallCount() >= 1 }, testutils.WaitTimeout(t), time.Second)
+	require.Eventually(t, func() bool { return helper.mockEth.SubscribeCallCount() == 2 }, testutils.WaitTimeout(t), time.Second)
+	require.Eventually(t, func() bool { return helper.mockEth.UnsubscribeCallCount() == 1 }, testutils.WaitTimeout(t), time.Second)
 	gomega.NewWithT(t).Consistently(func() int32 { return helper.mockEth.SubscribeCallCount() }, 1*time.Second, DBPollingInterval).Should(gomega.Equal(int32(2)))
 	gomega.NewWithT(t).Consistently(func() int32 { return helper.mockEth.UnsubscribeCallCount() }, 1*time.Second, DBPollingInterval).Should(gomega.Equal(int32(1)))
 
