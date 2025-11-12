@@ -24,8 +24,12 @@ flowchart LR
 	chainlink-evm --> chainlink-protos/svr
 	chainlink-evm --> chainlink-tron/relayer
 	click chainlink-evm href "https://github.com/smartcontractkit/chainlink-evm"
+	chainlink-evm/contracts/cre/gobindings --> chainlink-evm/gethwrappers/helpers
+	click chainlink-evm/contracts/cre/gobindings href "https://github.com/smartcontractkit/chainlink-evm"
 	chainlink-evm/gethwrappers
 	click chainlink-evm/gethwrappers href "https://github.com/smartcontractkit/chainlink-evm"
+	chainlink-evm/gethwrappers/helpers
+	click chainlink-evm/gethwrappers/helpers href "https://github.com/smartcontractkit/chainlink-evm"
 	chainlink-framework/capabilities --> chainlink-common
 	click chainlink-framework/capabilities href "https://github.com/smartcontractkit/chainlink-framework"
 	chainlink-framework/chains --> chainlink-framework/multinode
@@ -63,7 +67,9 @@ flowchart LR
 
 	subgraph chainlink-evm-repo[chainlink-evm]
 		 chainlink-evm
+		 chainlink-evm/contracts/cre/gobindings
 		 chainlink-evm/gethwrappers
+		 chainlink-evm/gethwrappers/helpers
 	end
 	click chainlink-evm-repo href "https://github.com/smartcontractkit/chainlink-evm"
 
