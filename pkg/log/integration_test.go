@@ -1146,8 +1146,7 @@ func TestBroadcaster_Register_ResubscribesToMostRecentlySeenBlock(t *testing.T) 
 		t.Fatal("did not subscribe")
 	}
 
-	assert.Eventually(t, func() bool { return ethClient.AssertExpectations(t) },
-		testutils.WaitTimeout(t), time.Second)
+	ethClient.AssertExpectations(t)
 }
 
 func TestBroadcaster_ReceivesAllLogsWhenResubscribing(t *testing.T) {
