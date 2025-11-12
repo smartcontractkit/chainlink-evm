@@ -8,6 +8,7 @@ import {IChannelConfigStore} from "./interfaces/IChannelConfigStore.sol";
 
 contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVersion {
   event NewChannelDefinition(uint256 indexed donId, uint32 version, string url, bytes32 sha);
+  event ChannelDefinitionAdded(uint256 indexed donId, uint32 adderId, string url, bytes32 sha);
 
   constructor() ConfirmedOwner(msg.sender) {}
 
