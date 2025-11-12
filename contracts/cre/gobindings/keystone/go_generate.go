@@ -9,3 +9,6 @@ package gobindings
 //go:generate go run github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/generate keystone KeystoneFeedsConsumer feeds_consumer
 //go:generate go run github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/generate keystone KeystoneForwarder forwarder
 //go:generate go run github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/generate keystone OCR3Capability ocr3_capability
+
+// Extract bytecode and ABI from generated wrappers
+//go:generate go run github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/extract_bytecode -input=generated -bytecode=../../bytecode/keystone -abi=../../abi/keystone

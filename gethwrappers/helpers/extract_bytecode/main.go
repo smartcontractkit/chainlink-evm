@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -34,6 +35,40 @@ func main() {
 }
 
 func run() error {
+	// Parse command-line flags
+	inputDir := flag.String("input", "", "Input directory containing Go wrapper files (required)")
+	bytecodeDir := flag.String("bytecode", "", "Output directory for bytecode files (required)")
+	abiDir := flag.String("abi", "", "Output directory for ABI files (required)")
+	flag.Parse()
+
+	// If no input directory is provided, try auto-detection for backward compatibility
+	if *inputDir == "" {
+		return runLegacyMode()
+	}
+
+	// Validate required arguments
+	if *bytecodeDir == "" {
+		return fmt.Errorf("bytecode directory is required (use -bytecode flag)")
+	}
+	if *abiDir == "" {
+		return fmt.Errorf("abi directory is required (use -abi flag)")
+	}
+
+	// Validate input directory exists
+	if _, err := os.Stat(*inputDir); os.IsNotExist(err) {
+		return fmt.Errorf("input directory does not exist: %s", *inputDir)
+	}
+
+	fmt.Printf("Input dir: %s\n", *inputDir)
+	fmt.Printf("Bytecode dir: %s\n", *bytecodeDir)
+	fmt.Printf("ABI dir: %s\n", *abiDir)
+
+	// Process the input directory (always exclude "latest" directories)
+	return processDirectory(*inputDir, *inputDir, *bytecodeDir, *abiDir, true)
+}
+
+// runLegacyMode provides backward compatibility with the original hardcoded behavior
+func runLegacyMode() error {
 	// Determine the correct paths based on the current working directory
 	gobindingsDir, ccvGobindingsDir, bytecodeDir, abiDir, err := findProjectDirs()
 	if err != nil {
@@ -75,6 +110,51 @@ func run() error {
 	}
 
 	return nil
+}
+
+// processDirectory processes a directory and all its subdirectories for Go wrapper files
+func processDirectory(dir, baseDir, bytecodeDir, abiDir string, excludeLatest bool) error {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("failed to read directory %s: %w", dir, err)
+	}
+
+	for _, entry := range entries {
+		fullPath := filepath.Join(dir, entry.Name())
+
+		// Check if "latest" appears anywhere in the relative path
+		if excludeLatest {
+			relPath, err := filepath.Rel(baseDir, fullPath)
+			if err == nil && containsLatestInPath(relPath) {
+				continue
+			}
+		}
+
+		if entry.IsDir() {
+			// Recursively process subdirectories
+			if err := processDirectory(fullPath, baseDir, bytecodeDir, abiDir, excludeLatest); err != nil {
+				return err
+			}
+		} else if strings.HasSuffix(entry.Name(), ".go") {
+			// Process Go files
+			if err := processGoFile(fullPath, baseDir, bytecodeDir, abiDir); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// containsLatestInPath checks if "latest" appears as a path component
+func containsLatestInPath(path string) bool {
+	parts := strings.Split(filepath.ToSlash(path), "/")
+	for _, part := range parts {
+		if part == "latest" {
+			return true
+		}
+	}
+	return false
 }
 
 func findProjectDirs() (gobindingsDir, ccvGobindingsDir, bytecodeDir, abiDir string, err error) {

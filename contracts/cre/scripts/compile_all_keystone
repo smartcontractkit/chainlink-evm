@@ -25,10 +25,6 @@ compileContract () {
        --extra-output-files bin abi \
        -o $CONTRACTS_DIR/solc/$PROJECT/$contract"
   $command
-
-  # Copy the generated abi files to a single folder
-  mkdir -p "$CONTRACTS_DIR"/abi/"$PROJECT"
-  cp "$CONTRACTS_DIR"/solc/$PROJECT/"$contract"/"$contract".sol/"$contract".abi.json "$CONTRACTS_DIR"/abi/"$PROJECT"/"$contract".abi.json
 }
 
 compileContract CapabilitiesRegistry

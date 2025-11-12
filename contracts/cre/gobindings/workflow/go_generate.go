@@ -10,3 +10,6 @@ package gobindings
 //go:generate go run github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/generate workflow/dev MessageEmitter message_emitter
 //go:generate go run github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/generate workflow/dev MockKeystoneForwarder mock_forwarder
 //go:generate go run github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/generate workflow/dev ReserveManager reserve_manager
+
+// Extract bytecode and ABI from generated wrappers
+//go:generate go run github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/extract_bytecode -input=generated -bytecode=../../bytecode/workflow -abi=../../abi/workflow
