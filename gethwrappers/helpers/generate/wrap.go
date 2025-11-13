@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	gethwrappers "github.com/smartcontractkit/chainlink-evm/contracts/cre/gobindings"
-	zksyncwrapper "github.com/smartcontractkit/chainlink-evm/contracts/cre/gobindings/zksync"
+	gethwrappers "github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers"
+	zksyncwrapper "github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/zksync"
 )
 
 var (
@@ -21,6 +21,8 @@ func main() {
 	var outDirSuffix string
 	if len(os.Args) >= 5 {
 		outDirSuffix = os.Args[4]
+	} else {
+		outDirSuffix = "latest"
 	}
 
 	if os.Getenv("ZKSYNC") == "true" {
