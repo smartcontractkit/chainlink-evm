@@ -43,7 +43,7 @@ func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, keyring
 		return nil, err
 	}
 	addr := crypto.PubkeyToAddress(*publicKey)
-	return &evmOnchainKeyring{ks: ks, onchainKey: resp.Keys[0].KeyInfo, addr: addr}, nil
+	return &evmOnchainKeyring{ks: ks, addr: addr, keyPath: onchainKeyPath}, nil
 }
 
 // ListOCR2OnchainKeyrings lists OCR2 onchain keyrings, optionally filtered by keyringnames.
@@ -72,7 +72,7 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, keyringN
 			return nil, err
 		}
 		addr := crypto.PubkeyToAddress(*publicKey)
-		keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, onchainKey: key.KeyInfo, addr: addr, keyPath: keyPath})
+		keyrings = append(keyrings, &evmOnchainKeyring{ks: ks, addr: addr, keyPath: keyPath})
 	}
 	return keyrings, nil
 }
@@ -80,10 +80,9 @@ func ListOCR2OnchainKeyrings(ctx context.Context, ks keystore.Keystore, keyringN
 var _ ocrtypes.OnchainKeyring = &evmOnchainKeyring{}
 
 type evmOnchainKeyring struct {
-	ks         keystore.Keystore
-	onchainKey keystore.KeyInfo
-	addr       common.Address
-	keyPath    keystore.KeyPath
+	ks      keystore.Keystore
+	addr    common.Address
+	keyPath keystore.KeyPath
 }
 
 func (k *evmOnchainKeyring) KeyPath() keystore.KeyPath {
@@ -106,7 +105,7 @@ func ReportToSigData(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) [
 
 func (k *evmOnchainKeyring) Sign(reportCtx ocrtypes.ReportContext, report ocrtypes.Report) ([]byte, error) {
 	signResp, err := k.ks.Sign(context.Background(), keystore.SignRequest{
-		KeyName: k.onchainKey.Name,
+		KeyName: k.keyPath.String(),
 		Data:    ReportToSigData(reportCtx, report),
 	})
 	return signResp.Signature, err
