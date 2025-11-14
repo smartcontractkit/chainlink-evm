@@ -1,4 +1,4 @@
 # Test files run with a different solhint ruleset, ignore them here.
-./**/*.t.sol
+**/*.t.sol
 
-./node_modules/
+node_modules/

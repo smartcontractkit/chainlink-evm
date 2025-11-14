@@ -34,7 +34,7 @@
     "pnpm": ">=10"
   },
   "devDependencies": {
-    "solhint": "^5.2.0",
+    "solhint": "^6.0.1",
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1"
   },
   "dependencies": {
