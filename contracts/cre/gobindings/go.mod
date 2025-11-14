@@ -4,11 +4,8 @@ go 1.24.5
 
 require (
 	github.com/ethereum/go-ethereum v1.16.2
-	github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers v0.0.0-00010101000000-000000000000
+	github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers v0.0.0-20251113095343-17ab8ce51b7b
 )
-
-// To be removed once the first PR with this package is merged
-replace github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers => ../../../gethwrappers/helpers
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
