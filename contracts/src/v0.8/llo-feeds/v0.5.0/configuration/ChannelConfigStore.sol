@@ -22,14 +22,18 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @notice The version of a channel definition keyed by DON ID
   // Increments by 1 on every update
   mapping(uint256 => uint256) internal s_channelDefinitionVersions;
-  
+
   /// @notice Mapping from channel adder ID to its corresponding address
   mapping(uint32 => address) internal s_channelAdderAddresses;
-  
+
   /// @notice Mapping from DON ID to the set of allowed channel adder IDs
   mapping(uint256 => EnumerableSet.UintSet) internal s_allowedChannelAdders;
 
-  function setChannelDefinitions(uint32 donId, string calldata url, bytes32 sha) external onlyOwner {
+  function setChannelDefinitions(
+    uint32 donId,
+    string calldata url,
+    bytes32 sha
+  ) external onlyOwner {
     uint32 newVersion = uint32(++s_channelDefinitionVersions[uint256(donId)]);
     emit NewChannelDefinition(donId, newVersion, url, sha);
   }
@@ -54,12 +58,15 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
       revert UnauthorizedChannelAdder();
     }
     emit ChannelDefinitionAdded(donId, channelAdderId, url, sha);
-  }  
+  }
 
   /// @notice Sets the address for a channel adder ID
   /// @param channelAdderId The channel adder ID
   /// @param adderAddress The address to associate with the channel adder ID
-  function setChannelAdderAddress(uint32 channelAdderId, address adderAddress) external onlyOwner {
+  function setChannelAdderAddress(
+    uint32 channelAdderId,
+    address adderAddress
+  ) external onlyOwner {
     s_channelAdderAddresses[channelAdderId] = adderAddress;
     emit ChannelAdderAddressSet(channelAdderId, adderAddress);
   }
@@ -68,7 +75,11 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param donId The DON ID
   /// @param channelAdderId The channel adder ID
   /// @param allowed Whether the channel adder should be allowed or removed
-  function setChannelAdder(uint256 donId, uint32 channelAdderId, bool allowed) external onlyOwner {
+  function setChannelAdder(
+    uint256 donId,
+    uint32 channelAdderId,
+    bool allowed
+  ) external onlyOwner {
     if (allowed) {
       s_allowedChannelAdders[donId].add(channelAdderId);
     } else {
@@ -80,7 +91,9 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @notice Gets the address associated with a channel adder ID
   /// @param channelAdderId The channel adder ID
   /// @return The address associated with the channel adder ID
-  function getChannelAdderAddress(uint32 channelAdderId) external view returns (address) {
+  function getChannelAdderAddress(
+    uint32 channelAdderId
+  ) external view returns (address) {
     return s_channelAdderAddresses[channelAdderId];
   }
 
@@ -88,14 +101,19 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param donId The DON ID
   /// @param channelAdderId The channel adder ID
   /// @return True if the channel adder is allowed for the DON
-  function isChannelAdderAllowed(uint256 donId, uint32 channelAdderId) external view returns (bool) {
+  function isChannelAdderAllowed(
+    uint256 donId,
+    uint32 channelAdderId
+  ) external view returns (bool) {
     return s_allowedChannelAdders[donId].contains(channelAdderId);
   }
 
   /// @notice Gets all allowed channel adder IDs for a DON
   /// @param donId The DON ID
   /// @return An array of allowed channel adder IDs
-  function getAllowedChannelAdders(uint256 donId) external view returns (uint256[] memory) {
+  function getAllowedChannelAdders(
+    uint256 donId
+  ) external view returns (uint256[] memory) {
     return s_allowedChannelAdders[donId].values();
   }
 
