@@ -98,15 +98,16 @@ func TestAttemptBuilder_NewAttempt(t *testing.T) {
 		return assets.NewWeiI(1000)
 	}
 	var nonce uint64 = 1
-	var gasLimit uint64 = 100
-	ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), gasLimit)
+	var specifiedGasLimit uint64 = 200
+	var emptyGasLimit uint64 = 100
+	ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), emptyGasLimit)
 	address := testutils.NewAddress()
 	lggr := logger.Test(t)
 
 	t.Run("creates legacy attempt with fields", func(t *testing.T) {
-		tx := &types.Transaction{ID: 10, FromAddress: address, Nonce: &nonce}
+		tx := &types.Transaction{ID: 10, FromAddress: address, Nonce: &nonce, SpecifiedGasLimit: specifiedGasLimit}
 		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, gasLimit, nil).Once()
+			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, specifiedGasLimit, nil).Once()
 		a, err := ab.NewAttempt(t.Context(), lggr, tx, false)
 		require.NoError(t, err)
 		assert.Equal(t, tx.ID, a.TxID)
@@ -115,13 +116,13 @@ func TestAttemptBuilder_NewAttempt(t *testing.T) {
 		assert.Equal(t, "100 wei", a.Fee.GasPrice.String())
 		assert.Nil(t, a.Fee.GasTipCap)
 		assert.Nil(t, a.Fee.GasFeeCap)
-		assert.Equal(t, gasLimit, a.GasLimit)
+		assert.Equal(t, specifiedGasLimit, a.GasLimit)
 	})
 
 	t.Run("creates dynamic fee attempt with fields", func(t *testing.T) {
-		tx := &types.Transaction{ID: 10, FromAddress: address, Nonce: &nonce}
+		tx := &types.Transaction{ID: 10, FromAddress: address, Nonce: &nonce, SpecifiedGasLimit: specifiedGasLimit}
 		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(1), GasFeeCap: assets.NewWeiI(2)}}, gasLimit, nil).Once()
+			Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(1), GasFeeCap: assets.NewWeiI(2)}}, specifiedGasLimit, nil).Once()
 		a, err := ab.NewAttempt(t.Context(), lggr, tx, true)
 		require.NoError(t, err)
 		assert.Equal(t, tx.ID, a.TxID)
@@ -129,23 +130,25 @@ func TestAttemptBuilder_NewAttempt(t *testing.T) {
 	})
 
 	t.Run("creates purgeable attempt with fields", func(t *testing.T) {
-		tx := &types.Transaction{ID: 10, FromAddress: address, IsPurgeable: true, Nonce: &nonce}
+		tx := &types.Transaction{ID: 10, FromAddress: address, IsPurgeable: true, Nonce: &nonce, SpecifiedGasLimit: specifiedGasLimit}
 		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, gasLimit, nil).Once()
+			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, emptyGasLimit, nil).Once()
 		a, err := ab.NewAttempt(t.Context(), lggr, tx, false)
 		require.NoError(t, err)
 		assert.Equal(t, tx.ID, a.TxID)
 		assert.Equal(t, evmtypes.LegacyTxType, int(a.Type))
+		assert.Equal(t, emptyGasLimit, a.GasLimit)
 	})
 
 	t.Run("creates dynamic fee purgeable attempt with fields", func(t *testing.T) {
-		tx := &types.Transaction{ID: 10, FromAddress: address, IsPurgeable: true, Nonce: &nonce}
+		tx := &types.Transaction{ID: 10, FromAddress: address, IsPurgeable: true, Nonce: &nonce, SpecifiedGasLimit: specifiedGasLimit}
 		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(1), GasFeeCap: assets.NewWeiI(2)}}, gasLimit, nil).Once()
+			Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(1), GasFeeCap: assets.NewWeiI(2)}}, emptyGasLimit, nil).Once()
 		a, err := ab.NewAttempt(t.Context(), lggr, tx, true)
 		require.NoError(t, err)
 		assert.Equal(t, tx.ID, a.TxID)
 		assert.Equal(t, evmtypes.DynamicFeeTxType, int(a.Type))
+		assert.Equal(t, emptyGasLimit, a.GasLimit)
 	})
 
 	t.Run("fails if estimator returns error", func(t *testing.T) {
@@ -299,6 +302,43 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 		attempt, err := ab.NewAgnosticBumpAttempt(t.Context(), lggr, tx, false)
 		require.NoError(t, err)
 		assert.Equal(t, tx.ID, attempt.TxID)
+		mockEstimator.AssertExpectations(t)
+	})
+
+	t.Run("returns max percentile attempt when transaction is purgeable", func(t *testing.T) {
+		mockEstimator := mocks.NewEvmFeeEstimator(t)
+		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100)
+
+		tx := &types.Transaction{
+			ID:           10,
+			FromAddress:  address,
+			IsPurgeable:  true,
+			Nonce:        &nonce,
+			AttemptCount: 10,
+		}
+
+		initialFee := gas.EvmFee{GasPrice: assets.NewWeiI(100)}
+		mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(initialFee, uint64(21000), nil).Once()
+		mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: initialFee.GasPrice.Add(assets.NewWeiI(20))}, uint64(21000), nil).Once()
+		mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: initialFee.GasPrice.Add(assets.NewWeiI(40))}, uint64(21000), nil).Once()
+		mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: initialFee.GasPrice.Add(assets.NewWeiI(60))}, uint64(21000), nil).Once()
+		mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: initialFee.GasPrice.Add(assets.NewWeiI(80))}, uint64(21000), nil).Once()
+		mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: initialFee.GasPrice.Add(assets.NewWeiI(100))}, uint64(21000), nil).Once()
+		mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: initialFee.GasPrice.Add(assets.NewWeiI(120))}, uint64(21000), nil).Once()
+		mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{}, uint64(0), fees.ErrConnectivity).Once()
+
+		attempt, err := ab.NewAgnosticBumpAttempt(t.Context(), lggr, tx, false)
+		require.NoError(t, err)
+		assert.Equal(t, tx.ID, attempt.TxID)
+		assert.Equal(t, initialFee.GasPrice.Add(assets.NewWeiI(120)).String(), attempt.Fee.GasPrice.String())
 		mockEstimator.AssertExpectations(t)
 	})
 }

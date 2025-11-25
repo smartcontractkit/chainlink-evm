@@ -222,7 +222,8 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 	defer cancel()
 	broadcastWithBackoff := newBackoff(1 * time.Second)
 	var broadcastCh <-chan time.Time
-	backfillCh := time.After(utils.WithJitter(t.config.BlockTime))
+	backfillTicker := services.TickerConfig{Initial: t.config.BlockTime, JitterPct: services.DefaultJitter}.NewTicker(t.config.BlockTime)
+	defer backfillTicker.Stop()
 
 	t.initializeNonce(ctx, address)
 
@@ -247,8 +248,7 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 			continue
 		case <-broadcastCh:
 			continue
-		case <-backfillCh:
-			backfillCh = time.After(utils.WithJitter(t.config.BlockTime))
+		case <-backfillTicker.C:
 			start := time.Now()
 			err := t.BackfillTransactions(ctx, address)
 			if err != nil {
