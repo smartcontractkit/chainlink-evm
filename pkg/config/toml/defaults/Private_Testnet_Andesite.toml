@@ -5,7 +5,7 @@ LogBroadcasterEnabled = false
 [BalanceMonitor]
 Enabled = false # no gas chain
 
-[EVM.GasEstimator]
+[GasEstimator]
 Mode = 'SuggestedPrice'
 PriceDefault = '0'
 PriceMin = '0'
