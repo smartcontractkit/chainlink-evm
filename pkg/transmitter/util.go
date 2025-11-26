@@ -1,6 +1,7 @@
 package transmitter
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 
@@ -181,16 +182,9 @@ func generateTransmitterFrom(ctx context.Context, rargs types.RelayArgs, ethKeys
 
 func getGasLimitFrom(chain legacyevm.Chain, opts ConfigTransmitterOpts, relayConfig config.RelayConfig) uint64 {
 	gasLimit := chain.Config().EVM().GasEstimator().LimitDefault()
-	ocr2Limit := chain.Config().EVM().GasEstimator().LimitJobType().OCR2()
-	if ocr2Limit != nil {
-		gasLimit = uint64(*ocr2Limit)
+	override := cmp.Or(opts.PluginGasLimit, relayConfig.GasLimit, chain.Config().EVM().GasEstimator().LimitJobType().OCR2())
+	if override != nil {
+		gasLimit = uint64(*override)
 	}
-	if relayConfig.GasLimit != nil {
-		gasLimit = uint64(*relayConfig.GasLimit)
-	}
-	if opts.PluginGasLimit != nil {
-		gasLimit = uint64(*opts.PluginGasLimit)
-	}
-
 	return gasLimit
 }
