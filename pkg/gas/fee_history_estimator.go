@@ -89,6 +89,9 @@ type FeeHistoryEstimator struct {
 	priorityFeeThresholdMu sync.RWMutex
 	priorityFeeThreshold   *assets.Wei
 
+	nextBaseFeeMu sync.RWMutex
+	nextBaseFee   *assets.Wei
+
 	l1Oracle rollups.L1Oracle
 
 	wg        *sync.WaitGroup
@@ -222,8 +225,22 @@ func (f *FeeHistoryEstimator) GetDynamicFee(ctx context.Context, maxPrice *asset
 			fee.GasTipCap = maxPrice
 		}
 	}
-
 	return
+}
+
+func (f *FeeHistoryEstimator) GetMaxDynamicFee(maxPrice *assets.Wei) (fee DynamicFee, err error) {
+
+	priorityFeeThreshold, err := f.getPriorityFeeThreshold()
+	if err != nil {
+		return fee, err
+	}
+
+	nextBaseFee, err := f.getNextBaseFee()
+	if err != nil {
+		return fee, err
+	}
+	maxFeeCap := nextBaseFee.AddPercentage(BaseFeeBufferPercentage).Add(priorityFeeThreshold)
+	return DynamicFee{GasFeeCap: maxFeeCap, GasTipCap: priorityFeeThreshold}, nil
 }
 
 // RefreshDynamicPrice uses eth_feeHistory to fetch the baseFee of the next block and the Nth maxPriorityFeePerGas percentiles
@@ -278,8 +295,12 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 		priorityFeeThresholdWei = assets.NewWei(priorityFeeThreshold)
 		maxPriorityFeePerGas = assets.NewWei(priorityFee.Div(priorityFee, big.NewInt(nonZeroRewardsLen)))
 	}
+
 	// BaseFeeBufferPercentage is used as a safety to catch any fluctuations in the Base Fee during the next blocks.
 	maxFeePerGas := nextBaseFee.AddPercentage(BaseFeeBufferPercentage).Add(maxPriorityFeePerGas)
+	f.nextBaseFeeMu.Lock()
+	f.nextBaseFee = nextBaseFee
+	f.nextBaseFeeMu.Unlock()
 
 	promFeeHistoryEstimatorBaseFee.WithLabelValues(f.chainID.String()).Set(float64(nextBaseFee.Int64()))
 	promFeeHistoryEstimatorMaxPriorityFeePerGas.WithLabelValues(f.chainID.String()).Set(float64(maxPriorityFeePerGas.Int64()))
@@ -433,6 +454,15 @@ func (f *FeeHistoryEstimator) getPriorityFeeThreshold() (*assets.Wei, error) {
 		return f.priorityFeeThreshold, errors.New("priorityFeeThreshold not set")
 	}
 	return f.priorityFeeThreshold, nil
+}
+
+func (f *FeeHistoryEstimator) getNextBaseFee() (*assets.Wei, error) {
+	f.nextBaseFeeMu.RLock()
+	defer f.nextBaseFeeMu.RUnlock()
+	if f.nextBaseFee == nil {
+		return f.nextBaseFee, errors.New("nextBaseFee not set")
+	}
+	return f.nextBaseFee, nil
 }
 
 func (f *FeeHistoryEstimator) Name() string                                      { return f.logger.Name() }

@@ -166,6 +166,11 @@ func (*SuggestedPriceEstimator) GetDynamicFee(_ context.Context, _ *assets.Wei) 
 	return
 }
 
+func (*SuggestedPriceEstimator) GetMaxDynamicFee(_ *assets.Wei) (fee DynamicFee, err error) {
+	err = pkgerrors.New("dynamic fees are not implemented for this estimator")
+	return
+}
+
 func (*SuggestedPriceEstimator) BumpDynamicFee(_ context.Context, _ DynamicFee, _ *assets.Wei, _ []EvmPriorAttempt) (bumped DynamicFee, err error) {
 	err = pkgerrors.New("dynamic fees are not implemented for this estimator")
 	return

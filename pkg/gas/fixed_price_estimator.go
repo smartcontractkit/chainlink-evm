@@ -133,6 +133,10 @@ func (f *fixedPriceEstimator) L1Oracle() rollups.L1Oracle {
 	return f.l1Oracle
 }
 
+func (f *fixedPriceEstimator) GetMaxDynamicFee(maxGasPriceWei *assets.Wei) (fee DynamicFee, err error) {
+	return f.GetDynamicFee(context.Background(), maxGasPriceWei) // context is not used by this method
+}
+
 func (f *fixedPriceEstimator) Name() string                                          { return f.lggr.Name() }
 func (f *fixedPriceEstimator) Ready() error                                          { return nil }
 func (f *fixedPriceEstimator) HealthReport() map[string]error                        { return map[string]error{} }
