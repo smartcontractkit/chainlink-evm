@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm/mocks"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	configmocks "github.com/smartcontractkit/chainlink-evm/pkg/config/mocks"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
 )
@@ -14,44 +15,76 @@ func TestGetGasLimitFrom(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name             string
-		defaultGasLimit  uint64
-		ocr2GasLimit     *uint32
-		pluginGasLimit   *uint32
-		expectedGasLimit uint64
-		description      string
+		name                string
+		defaultGasLimit     uint64
+		ocr2GasLimit        *uint32
+		pluginGasLimit      *uint32
+		relayConfigGasLimit *uint32
+		expectedGasLimit    uint64
+		description         string
 	}{
 		{
-			name:             "uses default gas limit when no overrides",
-			defaultGasLimit:  500000,
-			ocr2GasLimit:     nil,
-			pluginGasLimit:   nil,
-			expectedGasLimit: 500000,
-			description:      "Should use default gas limit from chain config",
+			name:                "uses default gas limit when no overrides",
+			defaultGasLimit:     500000,
+			ocr2GasLimit:        nil,
+			pluginGasLimit:      nil,
+			relayConfigGasLimit: nil,
+			expectedGasLimit:    500000,
+			description:         "Should use default gas limit from chain config",
 		},
 		{
-			name:             "uses OCR2 override when set",
-			defaultGasLimit:  500000,
-			ocr2GasLimit:     uint32Ptr(300000),
-			pluginGasLimit:   nil,
-			expectedGasLimit: 300000,
-			description:      "Should use OCR2 gas limit override from chain config",
+			name:                "uses OCR2 override when set",
+			defaultGasLimit:     500000,
+			ocr2GasLimit:        uint32Ptr(400000),
+			pluginGasLimit:      nil,
+			relayConfigGasLimit: nil,
+			expectedGasLimit:    400000,
+			description:         "Should use OCR2 gas limit override from chain config",
 		},
 		{
-			name:             "plugin gas limit overrides OCR2",
-			defaultGasLimit:  500000,
-			ocr2GasLimit:     uint32Ptr(400000),
-			pluginGasLimit:   uint32Ptr(100000),
-			expectedGasLimit: 100000,
-			description:      "Plugin gas limit should override OCR2 limit",
+			name:                "plugin gas limit overrides OCR2",
+			defaultGasLimit:     500000,
+			ocr2GasLimit:        uint32Ptr(400000),
+			pluginGasLimit:      uint32Ptr(300000),
+			relayConfigGasLimit: nil,
+			expectedGasLimit:    300000,
+			description:         "Plugin gas limit should override OCR2 limit",
 		},
 		{
-			name:             "plugin gas limit overrides default",
-			defaultGasLimit:  500000,
-			ocr2GasLimit:     nil,
-			pluginGasLimit:   uint32Ptr(150000),
-			expectedGasLimit: 150000,
-			description:      "Plugin gas limit should override default limit",
+			name:                "relayconfig gas limit overrides plugin gas limit",
+			defaultGasLimit:     500000,
+			ocr2GasLimit:        uint32Ptr(400000),
+			pluginGasLimit:      uint32Ptr(300000),
+			relayConfigGasLimit: uint32Ptr(200000),
+			expectedGasLimit:    200000,
+			description:         "Relay config gas limit should override plugin gas limit",
+		},
+		{
+			name:                "plugin gas limit overrides default",
+			defaultGasLimit:     500000,
+			ocr2GasLimit:        nil,
+			pluginGasLimit:      uint32Ptr(300000),
+			relayConfigGasLimit: nil,
+			expectedGasLimit:    300000,
+			description:         "Plugin gas limit should override default limit",
+		},
+		{
+			name:                "relay config gas limit overrides default",
+			defaultGasLimit:     500000,
+			ocr2GasLimit:        nil,
+			pluginGasLimit:      nil,
+			relayConfigGasLimit: uint32Ptr(200000),
+			expectedGasLimit:    200000,
+			description:         "Relay config gas limit should override default limit",
+		},
+		{
+			name:                "relay config gas limit overrides OCR2",
+			defaultGasLimit:     500000,
+			ocr2GasLimit:        uint32Ptr(400000),
+			pluginGasLimit:      nil,
+			relayConfigGasLimit: uint32Ptr(200000),
+			expectedGasLimit:    200000,
+			description:         "Relay config gas limit should override OCR2 limit",
 		},
 	}
 
@@ -78,6 +111,8 @@ func TestGetGasLimitFrom(t *testing.T) {
 
 			gasLimit := getGasLimitFrom(mockChain, ConfigTransmitterOpts{
 				PluginGasLimit: tt.pluginGasLimit,
+			}, config.RelayConfig{
+				GasLimit: tt.relayConfigGasLimit,
 			})
 
 			if !assert.Equal(t, tt.expectedGasLimit, gasLimit, tt.description) {
