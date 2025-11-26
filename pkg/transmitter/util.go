@@ -185,11 +185,11 @@ func getGasLimitFrom(chain legacyevm.Chain, opts ConfigTransmitterOpts, relayCon
 	if ocr2Limit != nil {
 		gasLimit = uint64(*ocr2Limit)
 	}
-	if opts.PluginGasLimit != nil {
-		gasLimit = uint64(*opts.PluginGasLimit)
-	}
 	if relayConfig.GasLimit != nil {
 		gasLimit = uint64(*relayConfig.GasLimit)
+	}
+	if opts.PluginGasLimit != nil {
+		gasLimit = uint64(*opts.PluginGasLimit)
 	}
 
 	return gasLimit
