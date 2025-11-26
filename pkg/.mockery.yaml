@@ -24,6 +24,7 @@ packages:
       ChainScopedConfig:
       EVM:
       Workflow:
+      LimitJobType:
   github.com/smartcontractkit/chainlink-evm/pkg/gas:
     interfaces:
       EvmFeeEstimator:

@@ -8,7 +8,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm/mocks"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	configmocks "github.com/smartcontractkit/chainlink-evm/pkg/config/mocks"
-	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
 )
 
 func TestGetGasLimitFrom(t *testing.T) {
@@ -95,6 +94,7 @@ func TestGetGasLimitFrom(t *testing.T) {
 			mockChainConfig := configmocks.NewChainScopedConfig(t)
 			mockEVM := configmocks.NewEVM(t)
 			mockGasEstimator := configmocks.NewGasEstimator(t)
+			mockLimitJobType := configmocks.NewLimitJobType(t)
 
 			// Setup chain mock
 			mockChain.EXPECT().Config().Return(mockChainConfig)
@@ -107,7 +107,8 @@ func TestGetGasLimitFrom(t *testing.T) {
 
 			// Setup gas estimator mock
 			mockGasEstimator.EXPECT().LimitDefault().Return(tt.defaultGasLimit)
-			mockGasEstimator.EXPECT().LimitJobType().Return(&mockJobTypeConfig{gasLimit: tt.ocr2GasLimit})
+			mockGasEstimator.EXPECT().LimitJobType().Return(mockLimitJobType)
+			mockLimitJobType.EXPECT().OCR2().Return(tt.ocr2GasLimit)
 
 			gasLimit := getGasLimitFrom(mockChain, ConfigTransmitterOpts{
 				PluginGasLimit: tt.pluginGasLimit,
@@ -120,15 +121,6 @@ func TestGetGasLimitFrom(t *testing.T) {
 			}
 		})
 	}
-}
-
-type mockJobTypeConfig struct {
-	txmgr.TestLimitJobTypeConfig
-	gasLimit *uint32
-}
-
-func (x mockJobTypeConfig) OCR2() *uint32 {
-	return x.gasLimit
 }
 
 func uint32Ptr(v uint32) *uint32 {
