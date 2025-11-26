@@ -5,8 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm/mocks"
-	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	configmocks "github.com/smartcontractkit/chainlink-evm/pkg/config/mocks"
 )
 
@@ -90,31 +88,17 @@ func TestGetGasLimitFrom(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
-			mockChain := mocks.NewChain(t)
-			mockChainConfig := configmocks.NewChainScopedConfig(t)
-			mockEVM := configmocks.NewEVM(t)
 			mockGasEstimator := configmocks.NewGasEstimator(t)
 			mockLimitJobType := configmocks.NewLimitJobType(t)
-
-			// Setup chain mock
-			mockChain.EXPECT().Config().Return(mockChainConfig)
-
-			// Setup chain config mock
-			mockChainConfig.EXPECT().EVM().Return(mockEVM)
-
-			// Setup EVM config mock
-			mockEVM.EXPECT().GasEstimator().Return(mockGasEstimator)
 
 			// Setup gas estimator mock
 			mockGasEstimator.EXPECT().LimitDefault().Return(tt.defaultGasLimit)
 			mockGasEstimator.EXPECT().LimitJobType().Return(mockLimitJobType)
 			mockLimitJobType.EXPECT().OCR2().Return(tt.ocr2GasLimit)
 
-			gasLimit := getGasLimitFrom(mockChain, ConfigTransmitterOpts{
+			gasLimit := getGasLimitFrom(mockGasEstimator, ConfigTransmitterOpts{
 				PluginGasLimit: tt.pluginGasLimit,
-			}, config.RelayConfig{
-				GasLimit: tt.relayConfigGasLimit,
-			})
+			}, tt.relayConfigGasLimit)
 
 			if !assert.Equal(t, tt.expectedGasLimit, gasLimit, tt.description) {
 				t.Errorf("expected gas limit: %d, got: %d", tt.expectedGasLimit, gasLimit) // to print in decimal format

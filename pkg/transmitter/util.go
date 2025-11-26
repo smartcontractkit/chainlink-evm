@@ -135,7 +135,7 @@ func generateTransmitterFrom(ctx context.Context, rargs types.RelayArgs, ethKeys
 		checker.CheckerType = evmtxmgr.TransmitCheckerTypeSimulate
 	}
 
-	gasLimit := getGasLimitFrom(chain, opts, relayConfig)
+	gasLimit := getGasLimitFrom(chain.Config().EVM().GasEstimator(), opts, relayConfig.GasLimit)
 	var transmitter Transmitter
 	var err error
 
@@ -180,9 +180,9 @@ func generateTransmitterFrom(ctx context.Context, rargs types.RelayArgs, ethKeys
 	return transmitter, nil
 }
 
-func getGasLimitFrom(chain legacyevm.Chain, opts ConfigTransmitterOpts, relayConfig config.RelayConfig) uint64 {
-	gasLimit := chain.Config().EVM().GasEstimator().LimitDefault()
-	override := cmp.Or(opts.PluginGasLimit, relayConfig.GasLimit, chain.Config().EVM().GasEstimator().LimitJobType().OCR2())
+func getGasLimitFrom(gasEstimator config.GasEstimator, opts ConfigTransmitterOpts, relayConfigGasLimit *uint32) uint64 {
+	gasLimit := gasEstimator.LimitDefault()
+	override := cmp.Or(opts.PluginGasLimit, relayConfigGasLimit, gasEstimator.LimitJobType().OCR2())
 	if override != nil {
 		gasLimit = uint64(*override)
 	}
