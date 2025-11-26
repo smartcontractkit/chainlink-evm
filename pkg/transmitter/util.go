@@ -134,15 +134,7 @@ func generateTransmitterFrom(ctx context.Context, rargs types.RelayArgs, ethKeys
 		checker.CheckerType = evmtxmgr.TransmitCheckerTypeSimulate
 	}
 
-	gasLimit := chain.Config().EVM().GasEstimator().LimitDefault()
-	ocr2Limit := chain.Config().EVM().GasEstimator().LimitJobType().OCR2()
-	if ocr2Limit != nil {
-		gasLimit = uint64(*ocr2Limit)
-	}
-	if opts.PluginGasLimit != nil {
-		gasLimit = uint64(*opts.PluginGasLimit)
-	}
-
+	gasLimit := getGasLimitFrom(chain, opts)
 	var transmitter Transmitter
 	var err error
 
@@ -185,4 +177,17 @@ func generateTransmitterFrom(ctx context.Context, rargs types.RelayArgs, ethKeys
 		return nil, errors.Wrap(err, "failed to create transmitter")
 	}
 	return transmitter, nil
+}
+
+func getGasLimitFrom(chain legacyevm.Chain, opts ConfigTransmitterOpts) uint64 {
+	gasLimit := chain.Config().EVM().GasEstimator().LimitDefault()
+	ocr2Limit := chain.Config().EVM().GasEstimator().LimitJobType().OCR2()
+	if ocr2Limit != nil {
+		gasLimit = uint64(*ocr2Limit)
+	}
+	if opts.PluginGasLimit != nil {
+		gasLimit = uint64(*opts.PluginGasLimit)
+	}
+
+	return gasLimit
 }
