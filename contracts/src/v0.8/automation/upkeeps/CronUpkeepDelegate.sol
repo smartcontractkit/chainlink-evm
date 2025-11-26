@@ -23,6 +23,7 @@ contract CronUpkeepDelegate {
   mapping(uint256 => Spec) private s_specs;
   mapping(uint256 => address) private s_targets;
   mapping(uint256 => bytes) private s_handlers;
+  address private s_permissionedForwarder;
 
   /**
    * @notice Get the id of an eligible cron job
