@@ -2,7 +2,6 @@ package txmgr
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -137,11 +136,6 @@ func NewTxmV2(
 			DetectionURL:          detectionURL,
 		}
 		stuckTxDetector = txm.NewStuckTxDetector(lggr, chainConfig.ChainType(), stuckTxDetectorConfig)
-	}
-
-	// TODO: temporary check until we implement the required methods on the estimator interface
-	if gasEstimatorConfig.Mode() != "BlockHistory" || gasEstimatorConfig.BlockHistory().CheckInclusionBlocks() == 0 {
-		return nil, errors.New("only BlockHistory mode with CheckInclusionBlocks > 0 is supported for TXMv2")
 	}
 
 	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer())

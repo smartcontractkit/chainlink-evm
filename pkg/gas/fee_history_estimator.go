@@ -229,7 +229,6 @@ func (f *FeeHistoryEstimator) GetDynamicFee(ctx context.Context, maxPrice *asset
 }
 
 func (f *FeeHistoryEstimator) GetMaxDynamicFee(maxPrice *assets.Wei) (fee DynamicFee, err error) {
-
 	priorityFeeThreshold, err := f.getPriorityFeeThreshold()
 	if err != nil {
 		return fee, err
