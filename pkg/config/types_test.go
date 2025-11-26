@@ -32,11 +32,13 @@ func Test_RelayConfig(t *testing.T) {
 	cid := testutils.NewRandomEVMChainID()
 	fromBlock := uint64(2222)
 	feedID := utils.NewHash()
+	gasLimit := uint32(444444)
 	rawToml := fmt.Sprintf(`
 ChainID = "%s"
 FromBlock = %d
 FeedID = "0x%x"
-`, cid, fromBlock, feedID[:])
+GasLimit = %d
+`, cid, fromBlock, feedID[:], gasLimit)
 
 	var rc RelayConfig
 	err := toml.Unmarshal([]byte(rawToml), &rc)
@@ -45,6 +47,7 @@ FeedID = "0x%x"
 	assert.Equal(t, cid.String(), rc.ChainID.String())
 	assert.Equal(t, fromBlock, rc.FromBlock)
 	assert.Equal(t, feedID.Hex(), rc.FeedID.Hex())
+	assert.Equal(t, gasLimit, *rc.GasLimit)
 }
 
 func Test_ChainReaderConfig(t *testing.T) {

@@ -205,6 +205,9 @@ type RelayConfig struct {
 	// DualTransmission specific
 	EnableDualTransmission bool                    `json:"enableDualTransmission" toml:"enableDualTransmission"`
 	DualTransmissionConfig *DualTransmissionConfig `json:"dualTransmission" toml:"dualTransmission"`
+
+	// GasLimit is the gas limit to use for transactions, it has a higher precedence than the gas limit in the node toml config
+	GasLimit *uint32 `json:"gasLimit"`
 }
 
 var ErrBadRelayConfig = errors.New("bad relay config")
