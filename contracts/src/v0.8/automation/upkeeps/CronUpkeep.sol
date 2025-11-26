@@ -54,13 +54,14 @@ contract CronUpkeep is KeeperCompatibleInterface, KeeperBase, ConfirmedOwner, Pa
   uint256 public immutable s_maxJobs;
   uint256 private s_nextCronJobID = 1;
   EnumerableSet.UintSet private s_activeCronJobIDs;
-  address private s_permissionedForwarder;
 
   mapping(uint256 => uint256) private s_lastRuns;
   mapping(uint256 => Spec) private s_specs;
   mapping(uint256 => address) private s_targets;
   mapping(uint256 => bytes) private s_handlers;
   mapping(uint256 => bytes32) private s_handlerSignatures;
+
+  address private s_permissionedForwarder;
 
   /**
    * @param owner the initial owner of the contract
