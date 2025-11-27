@@ -43,7 +43,7 @@ func TestMetaErrorHandler(t *testing.T) {
 		}
 		require.NoError(t, txStore.AppendAttemptToTransaction(*tx.Nonce, attempt))
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
-		err = errorHandler.HandleError(t.Context(), tx, errors.New("no bids"), txStoreManager, setNonce, false)
+		err = errorHandler.HandleError(t.Context(), tx, ErrNoBids, txStoreManager, setNonce, false)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "transaction with txID: 0 marked as fatal")
 		_, unconfirmedCount := txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
