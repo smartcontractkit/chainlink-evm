@@ -28,7 +28,6 @@ import (
 
 const (
 	timeout                    = time.Second * 5
-	NoBidsError                = "no bids"
 	NoSolverOps                = "no solver operations received"
 	NoSolverOpsAfterSimulation = "no valid solver operations after simulation"
 	metaABI                    = `[
@@ -116,6 +115,8 @@ const (
 ]`
 )
 
+var ErrNoBids = errors.New("no bids")
+
 var _ txm.Client = &MetaClient{}
 
 type MetaClientKeystore interface {
@@ -182,7 +183,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 			return nil
 		}
 		a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
-		return errors.New(NoBidsError)
+		return ErrNoBids
 	}
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)

@@ -555,7 +555,7 @@ func TestFlow_ErrorHandler(t *testing.T) {
 	// Broadcast transaction
 	mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
-	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(errors.New(dualbroadcast.NoBidsError)).Once()
+	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(dualbroadcast.ErrNoBids).Once()
 	_, err = tm.BroadcastTransaction(t.Context(), address)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "transaction with txID: 0 marked as fatal")
@@ -587,10 +587,10 @@ func TestFlow_ErrorHandler(t *testing.T) {
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
 	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
-	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(errors.New(dualbroadcast.NoBidsError)).Once()
+	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(dualbroadcast.ErrNoBids).Once()
 	err = tm.BackfillTransactions(t.Context(), address) // retry
 	require.Error(t, err)
-	require.ErrorContains(t, err, dualbroadcast.NoBidsError)
+	require.ErrorContains(t, err, dualbroadcast.ErrNoBids.Error())
 	tx, count, err = txStoreManager.FetchUnconfirmedTransactionAtNonceWithCount(t.Context(), 0, address) // same transaction is still in the store
 	require.NoError(t, err)
 	require.Equal(t, 1, count)

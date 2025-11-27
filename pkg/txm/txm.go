@@ -406,8 +406,11 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 			t.Metrics.ReachedMaxAttempts(ctx, false)
 		}
 
+		// Rebroadcast if at least one of the following conditions is met:
+		// - The transaction has never been broadcasted successfully before
+		// - The last broadcast was more than RetryBlockThreshold blocks ago
+		// - The transaction is purgeable
 		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) || tx.IsPurgeable {
-			// TODO: add optional graceful bumping strategy
 			t.lggr.Info("Rebroadcasting attempt for txID: ", tx.ID)
 			return t.createAndSendAttempt(ctx, tx, address)
 		}
