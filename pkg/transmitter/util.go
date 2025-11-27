@@ -1,6 +1,7 @@
 package transmitter
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 
@@ -134,15 +135,7 @@ func generateTransmitterFrom(ctx context.Context, rargs types.RelayArgs, ethKeys
 		checker.CheckerType = evmtxmgr.TransmitCheckerTypeSimulate
 	}
 
-	gasLimit := chain.Config().EVM().GasEstimator().LimitDefault()
-	ocr2Limit := chain.Config().EVM().GasEstimator().LimitJobType().OCR2()
-	if ocr2Limit != nil {
-		gasLimit = uint64(*ocr2Limit)
-	}
-	if opts.PluginGasLimit != nil {
-		gasLimit = uint64(*opts.PluginGasLimit)
-	}
-
+	gasLimit := getGasLimitFrom(chain.Config().EVM().GasEstimator(), opts, relayConfig.GasLimit)
 	var transmitter Transmitter
 	var err error
 
@@ -185,4 +178,13 @@ func generateTransmitterFrom(ctx context.Context, rargs types.RelayArgs, ethKeys
 		return nil, errors.Wrap(err, "failed to create transmitter")
 	}
 	return transmitter, nil
+}
+
+func getGasLimitFrom(gasEstimator config.GasEstimator, opts ConfigTransmitterOpts, relayConfigGasLimit *uint32) uint64 {
+	gasLimit := gasEstimator.LimitDefault()
+	override := cmp.Or(opts.PluginGasLimit, relayConfigGasLimit, gasEstimator.LimitJobType().OCR2())
+	if override != nil {
+		gasLimit = uint64(*override)
+	}
+	return gasLimit
 }
