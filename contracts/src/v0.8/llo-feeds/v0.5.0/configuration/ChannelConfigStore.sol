@@ -128,6 +128,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
     for (uint256 i = 0; i < values.length; i++) {
       allowedChannelAdderIds[i] = ChannelAdderId.wrap(uint32(values[i]));
     }
+    return allowedChannelAdderIds;
   }
 
   function typeAndVersion() external pure override returns (string memory) {
