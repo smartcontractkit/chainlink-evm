@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
 import {EnumerableSet} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableSet.sol";
