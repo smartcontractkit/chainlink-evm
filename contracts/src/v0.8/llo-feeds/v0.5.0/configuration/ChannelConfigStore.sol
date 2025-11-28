@@ -112,10 +112,10 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
 
   /// @notice Gets all allowed channel adder IDs for a DON
   /// @param donId The DON ID
-  /// @return An array of allowed channel adder IDs
+  /// @return allowedChannelAdderIds An array of allowed channel adder IDs
   function getAllowedChannelAdders(
     uint256 donId
-  ) external view returns (uint256[] memory) {
+  ) external view returns (uint256[] memory allowedChannelAdderIds) {
     return s_allowedChannelAdders[donId].values();
   }
 
