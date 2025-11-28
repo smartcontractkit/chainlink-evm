@@ -40,7 +40,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
 
   /// @notice Allows a channel adder to add channel definitions to the specified DON.
   /// The DON enforces (in its consensus rules), that the channel definitions provided
-  /// by the channel adder are well-formed, purely additive, and do not overlaod the DON.
+  /// by the channel adder are well-formed, purely additive, and do not overload the DON.
   /// @param donId The DON ID
   /// @param channelAdderId The channel adder ID
   /// @param url The URL of the channel definition
@@ -62,7 +62,9 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
 
   /// @notice Sets the address for a channel adder ID
   /// @param channelAdderId The channel adder ID
-  /// @param adderAddress The address to associate with the channel adder ID
+  /// @param adderAddress The address to associate with the channel adder ID.
+  /// Set this to the zero address (or some other address that cannot make
+  /// calls) to disable the channel adder.
   function setChannelAdderAddress(
     uint32 channelAdderId,
     address adderAddress
