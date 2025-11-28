@@ -15,9 +15,9 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   using EnumerableSet for EnumerableSet.UintSet;
 
   event NewChannelDefinition(uint256 indexed donId, uint32 version, string url, bytes32 sha);
-  event ChannelDefinitionAdded(uint256 indexed donId, uint32 indexed channelAdderId, string url, bytes32 sha);
-  event ChannelAdderSet(uint256 indexed donId, uint32 indexed channelAdderId, bool allowed);
-  event ChannelAdderAddressSet(uint32 indexed channelAdderId, address adderAddress);
+  event ChannelDefinitionAdded(uint256 indexed donId, ChannelAdderId indexed channelAdderId, string url, bytes32 sha);
+  event ChannelAdderSet(uint256 indexed donId, ChannelAdderId indexed channelAdderId, bool allowed);
+  event ChannelAdderAddressSet(ChannelAdderId indexed channelAdderId, address adderAddress);
 
   /// @notice Thrown when a caller is not authorized to add channel definitions
   error UnauthorizedChannelAdder();
@@ -29,7 +29,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   mapping(uint256 => uint256) internal s_channelDefinitionVersions;
 
   /// @notice Mapping from channel adder ID to its corresponding address
-  mapping(uint32 => address) internal s_channelAdderAddresses;
+  mapping(ChannelAdderId => address) internal s_channelAdderAddresses;
 
   /// @notice Mapping from DON ID to the set of allowed channel adder IDs
   mapping(uint256 => EnumerableSet.UintSet) internal s_allowedChannelAdders;
@@ -52,14 +52,14 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param sha The SHA hash of the channel definition
   function addChannelDefinitions(
     uint32 donId,
-    uint32 channelAdderId,
+    ChannelAdderId channelAdderId,
     string calldata url,
     bytes32 sha
   ) external {
     if (msg.sender != s_channelAdderAddresses[channelAdderId]) {
       revert UnauthorizedChannelAdder();
     }
-    if (!s_allowedChannelAdders[donId].contains(channelAdderId)) {
+    if (!s_allowedChannelAdders[donId].contains(ChannelAdderId.unwrap(channelAdderId))) {
       revert UnauthorizedChannelAdder();
     }
     emit ChannelDefinitionAdded(donId, channelAdderId, url, sha);
@@ -71,7 +71,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// Set this to the zero address (or some other address that cannot make
   /// calls) to disable the channel adder.
   function setChannelAdderAddress(
-    uint32 channelAdderId,
+    ChannelAdderId channelAdderId,
     address adderAddress
   ) external onlyOwner {
     s_channelAdderAddresses[channelAdderId] = adderAddress;
@@ -84,13 +84,13 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param allowed Whether the channel adder should be allowed or removed
   function setChannelAdder(
     uint32 donId,
-    uint32 channelAdderId,
+    ChannelAdderId channelAdderId,
     bool allowed
   ) external onlyOwner {
     if (allowed) {
-      s_allowedChannelAdders[donId].add(channelAdderId);
+      s_allowedChannelAdders[donId].add(ChannelAdderId.unwrap(channelAdderId));
     } else {
-      s_allowedChannelAdders[donId].remove(channelAdderId);
+      s_allowedChannelAdders[donId].remove(ChannelAdderId.unwrap(channelAdderId));
     }
     emit ChannelAdderSet(donId, channelAdderId, allowed);
   }
@@ -99,7 +99,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param channelAdderId The channel adder ID
   /// @return The address associated with the channel adder ID
   function getChannelAdderAddress(
-    uint32 channelAdderId
+    ChannelAdderId channelAdderId
   ) external view returns (address) {
     return s_channelAdderAddresses[channelAdderId];
   }
@@ -110,9 +110,9 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @return True if the channel adder is allowed for the DON
   function isChannelAdderAllowed(
     uint32 donId,
-    uint32 channelAdderId
+    ChannelAdderId channelAdderId
   ) external view returns (bool) {
-    return s_allowedChannelAdders[donId].contains(channelAdderId);
+    return s_allowedChannelAdders[donId].contains(ChannelAdderId.unwrap(channelAdderId));
   }
 
   /// @notice Gets all allowed channel adder IDs for a DON

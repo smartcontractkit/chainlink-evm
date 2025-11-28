@@ -4,6 +4,8 @@ pragma solidity 0.8.19;
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
 interface IChannelConfigStore is IERC165 {
+  type ChannelAdderId is uint32;
+
   function setChannelDefinitions(
     uint32 donId,
     string calldata url,
@@ -11,25 +13,25 @@ interface IChannelConfigStore is IERC165 {
   ) external;
   function addChannelDefinitions(
     uint32 donId,
-    uint32 channelAdderId,
+    ChannelAdderId channelAdderId,
     string calldata url,
     bytes32 sha
   ) external;
   function setChannelAdderAddress(
-    uint32 channelAdderId,
+    ChannelAdderId channelAdderId,
     address adderAddress
   ) external;
   function setChannelAdder(
     uint32 donId,
-    uint32 channelAdderId,
+    ChannelAdderId channelAdderId,
     bool allowed
   ) external;
   function getChannelAdderAddress(
-    uint32 channelAdderId
+    ChannelAdderId channelAdderId
   ) external view returns (address);
   function isChannelAdderAllowed(
     uint32 donId,
-    uint32 channelAdderId
+    ChannelAdderId channelAdderId
   ) external view returns (bool);
   function getAllowedChannelAdders(
     uint32 donId
