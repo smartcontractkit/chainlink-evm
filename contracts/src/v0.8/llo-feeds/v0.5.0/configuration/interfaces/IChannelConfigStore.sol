@@ -35,5 +35,5 @@ interface IChannelConfigStore is IERC165 {
   ) external view returns (bool);
   function getAllowedChannelAdders(
     uint32 donId
-  ) external view returns (uint256[] memory);
+  ) external view returns (ChannelAdderId[] memory);
 }

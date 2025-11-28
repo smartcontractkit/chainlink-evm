@@ -120,8 +120,14 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @return allowedChannelAdderIds An array of allowed channel adder IDs
   function getAllowedChannelAdders(
     uint32 donId
-  ) external view returns (uint256[] memory allowedChannelAdderIds) {
-    return s_allowedChannelAdders[donId].values();
+  ) external view returns (ChannelAdderId[] memory allowedChannelAdderIds) {
+    // Not very gas efficient, but we don't expect this function to be called
+    // from onchain anyways.
+    uint256[] memory values = s_allowedChannelAdders[donId].values();
+    allowedChannelAdderIds = new ChannelAdderId[](values.length);
+    for (uint256 i = 0; i < values.length; i++) {
+      allowedChannelAdderIds[i] = ChannelAdderId.wrap(uint32(values[i]));
+    }
   }
 
   function typeAndVersion() external pure override returns (string memory) {
