@@ -131,7 +131,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   }
 
   function typeAndVersion() external pure override returns (string memory) {
-    return "ChannelConfigStore 0.0.1";
+    return "ChannelConfigStore 1.0.0";
   }
 
   function supportsInterface(

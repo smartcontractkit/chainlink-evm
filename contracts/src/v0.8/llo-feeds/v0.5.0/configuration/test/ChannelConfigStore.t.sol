@@ -33,7 +33,7 @@ contract ChannelConfigStoreTest is Test {
   }
 
   function testTypeAndVersion() public view {
-    assertEq(channelConfigStore.typeAndVersion(), "ChannelConfigStore 0.0.1");
+    assertEq(channelConfigStore.typeAndVersion(), "ChannelConfigStore 1.0.0");
   }
 
   function testSupportsInterface() public view {
