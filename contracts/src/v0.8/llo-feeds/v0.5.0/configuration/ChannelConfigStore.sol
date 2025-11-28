@@ -10,7 +10,7 @@ import {IChannelConfigStore} from "./interfaces/IChannelConfigStore.sol";
 contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVersion {
   // This contract uses uint32 for donIds when they are function arguments and
   // uint256 elsewhere (e.g. in storage or event params). This inconsistency is
-  // ugly, but we maintain it for backwards compatibility and consistency.
+  // ugly, but we maintain it for backwards compatibility.
 
   using EnumerableSet for EnumerableSet.UintSet;
 
