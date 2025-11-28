@@ -10,7 +10,7 @@ interface IChannelConfigStore is IERC165 {
     bytes32 sha
   ) external;
   function addChannelDefinitions(
-    uint256 donId,
+    uint32 donId,
     uint32 channelAdderId,
     string calldata url,
     bytes32 sha
@@ -20,7 +20,7 @@ interface IChannelConfigStore is IERC165 {
     address adderAddress
   ) external;
   function setChannelAdder(
-    uint256 donId,
+    uint32 donId,
     uint32 channelAdderId,
     bool allowed
   ) external;
@@ -28,10 +28,10 @@ interface IChannelConfigStore is IERC165 {
     uint32 channelAdderId
   ) external view returns (address);
   function isChannelAdderAllowed(
-    uint256 donId,
+    uint32 donId,
     uint32 channelAdderId
   ) external view returns (bool);
   function getAllowedChannelAdders(
-    uint256 donId
+    uint32 donId
   ) external view returns (uint256[] memory);
 }

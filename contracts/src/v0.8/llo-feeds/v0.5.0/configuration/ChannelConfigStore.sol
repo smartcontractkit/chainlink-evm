@@ -8,6 +8,10 @@ import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {IChannelConfigStore} from "./interfaces/IChannelConfigStore.sol";
 
 contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVersion {
+  // This contract uses uint32 for donIds when they are function arguments and
+  // uint256 elsewhere (e.g. in storage or event params). This inconsistency is
+  // ugly, but we maintain it for backwards compatibility and consistency.
+
   using EnumerableSet for EnumerableSet.UintSet;
 
   event NewChannelDefinition(uint256 indexed donId, uint32 version, string url, bytes32 sha);
@@ -15,6 +19,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   event ChannelAdderSet(uint256 indexed donId, uint32 indexed channelAdderId, bool allowed);
   event ChannelAdderAddressSet(uint32 indexed channelAdderId, address adderAddress);
 
+  /// @notice Thrown when a caller is not authorized to add channel definitions
   error UnauthorizedChannelAdder();
 
   constructor() ConfirmedOwner(msg.sender) {}
@@ -46,7 +51,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param url The URL of the channel definition
   /// @param sha The SHA hash of the channel definition
   function addChannelDefinitions(
-    uint256 donId,
+    uint32 donId,
     uint32 channelAdderId,
     string calldata url,
     bytes32 sha
@@ -78,7 +83,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param channelAdderId The channel adder ID
   /// @param allowed Whether the channel adder should be allowed or removed
   function setChannelAdder(
-    uint256 donId,
+    uint32 donId,
     uint32 channelAdderId,
     bool allowed
   ) external onlyOwner {
@@ -104,7 +109,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param channelAdderId The channel adder ID
   /// @return True if the channel adder is allowed for the DON
   function isChannelAdderAllowed(
-    uint256 donId,
+    uint32 donId,
     uint32 channelAdderId
   ) external view returns (bool) {
     return s_allowedChannelAdders[donId].contains(channelAdderId);
@@ -114,7 +119,7 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param donId The DON ID
   /// @return allowedChannelAdderIds An array of allowed channel adder IDs
   function getAllowedChannelAdders(
-    uint256 donId
+    uint32 donId
   ) external view returns (uint256[] memory allowedChannelAdderIds) {
     return s_allowedChannelAdders[donId].values();
   }
