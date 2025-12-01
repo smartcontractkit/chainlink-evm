@@ -1,0 +1,50 @@
+{
+  "name": "@chainlink/contracts-cre",
+  "version": "1.0.0",
+  "description": "Chainlink CRE smart contracts",
+  "author": "Chainlink devs",
+  "repository": "github:smartcontractkit/chainlink-evm",
+  "license": "BUSL-1.1",
+  "private": false,
+  "scripts": {
+    "publish-beta": "pnpm publish --tag beta",
+    "publish-prod": "pnpm publish --tag latest",
+    "solhint": "solhint --config \"../.solhint.json\" --max-warnings 0 \"./src/**/*.sol\"",
+    "solhint-test": "solhint --config \"../.solhint-test.json\"  --ignore-path \".solhintignore-test\" --max-warnings 0 \"./src/**/*.sol\""
+  },
+  "files": [
+    "src",
+    "abi",
+    "bytecode",
+    "!**/test/**/*",
+    "src/**/test/mocks/**/*.sol",
+    "!src/**/test/mocks/test/*.sol",
+    "src/**/test/helpers/**/*.sol",
+    "foundry.toml",
+    "remappings.txt"
+  ],
+  "pnpm": {
+    "overrides": {
+      "@openzeppelin/contracts-upgradeable": "4.9.6",
+      "@openzeppelin/contracts": "4.9.6"
+    }
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "devDependencies": {
+    "solhint": "^5.2.0",
+    "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1"
+  },
+  "dependencies": {
+    "@changesets/cli": "^2.29.7",
+    "@changesets/get-github-info": "^0.6.0",
+    "@openzeppelin/contracts-4.8.3": "npm:@openzeppelin/contracts@4.8.3",
+    "@openzeppelin/contracts-5.0.2": "npm:@openzeppelin/contracts@5.0.2",
+    "@openzeppelin/contracts-5.1.0": "npm:@openzeppelin/contracts@5.1.0",
+    "@chainlink/contracts": "1.5.0",
+    "semver": "^7.7.3"
+  },
+  "type": "module"
+}

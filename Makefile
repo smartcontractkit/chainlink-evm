@@ -21,7 +21,7 @@ protoc: ## Install protoc
 
 .PHONY: generate
 generate: gomods codecgen mockery protoc modgraph
-	export PATH="$(HOME)/.local/bin:$(PATH)"; gomods -s gethwrappers -go generate ./...
+	export PATH="$(HOME)/.local/bin:$(PATH)"; gomods -s gethwrappers,contracts/cre/ -go generate ./...
 	find . -type f -name .mockery.yaml -not -path "./contracts/" -not -path "./gethwrappers/" -execdir mockery \; ## Execute mockery for all .mockery.yaml files
 
 .PHONY: rm-mocked

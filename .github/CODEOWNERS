@@ -40,17 +40,15 @@
 /contracts/src/v0.8/data-feeds @smartcontractkit/data-feeds-engineers
 /contracts/src/v0.8/shared @smartcontractkit/core-solidity
 /contracts/src/v0.8/vrf @smartcontractkit/dev-services
-/contracts/src/v0.8/keystone @smartcontractkit/keystone
-/contracts/src/v0.8/workflow @smartcontractkit/dev-services
 /contracts/src/v0.8/payments @smartcontractkit/payments
+/contracts/cre @smartcontractkit/dev-services
 
+/gethwrappers @smartcontractkit/core-solidity
 /gethwrappers/functions @smartcontractkit/dev-services
-/gethwrappers/keystone @smartcontractkit/keystone
 /gethwrappers/llo-feeds @smartcontractkit/data-streams-engineers
 /gethwrappers/operatorforwarder @smartcontractkit/data-feeds-engineers
 /gethwrappers/data-feeds @smartcontractkit/data-feeds-engineers
 /gethwrappers/shared @smartcontractkit/core-solidity
-/gethwrappers/workflow @smartcontractkit/dev-services
 /gethwrappers/payments @smartcontractkit/payments
 
 # The following don't exist yet but should. They are already included here to allow the teams to

@@ -27,7 +27,8 @@
     ".solhint.json",
     ".solhint-test.json",
     ".solhintignore",
-    ".solhintignore-test"
+    ".solhintignore-test",
+    "!cre/**/*"
   ],
   "pnpm": {
     "overrides": {

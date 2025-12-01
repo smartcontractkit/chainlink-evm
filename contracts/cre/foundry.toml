@@ -1,0 +1,56 @@
+[profile.default]
+auto_detect_solc = true
+optimizer = true
+optimizer_runs = 1_000_000
+evm_version = 'paris'
+via_ir = true
+
+src = 'src/'
+test = 'test/'
+out = 'foundry-artifacts'
+cache_path = 'foundry-cache'
+libs = ['node_modules']
+bytecode_hash = "none"
+ffi = false
+deny_warnings = true
+
+# default is zero, using a non-zero amount enables us to test e.g. billing based on gas prices.
+gas_price = 1
+block_timestamp = 1234567890
+block_number = 12345
+
+[fmt]
+tab_width = 2
+multiline_func_header = "params_first"
+sort_imports = true
+single_line_statement_blocks = "preserve"
+ignore = ["src/v0.8/vendor/**/*.sol"]
+number_underscore = "thousands"
+wrap_comments = true
+
+[profile.workflow]
+src = 'src/workflow'
+
+[profile.workflow-v1]
+optimizer_runs = 1_000_000
+solc_version = '0.8.24'
+src = 'src/workflow/v1'
+test = 'src/workflow/v1/test'
+
+[profile.workflow-v2]
+optimizer_runs = 1_000
+solc_version = '0.8.26'
+src = 'src/workflow/v2'
+test = 'src/workflow/v2/test'
+
+[profile.keystone]
+optimizer_runs = 1_000_000
+solc_version = '0.8.24'
+src = 'src/keystone'
+test = 'src/keystone/test'
+via_ir = false
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config
+
+[lint]
+lint_on_build = false

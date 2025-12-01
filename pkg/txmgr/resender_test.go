@@ -1,6 +1,7 @@
 package txmgr_test
 
 import (
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -168,18 +169,22 @@ func Test_EthResender_Start(t *testing.T) {
 		etx2 := txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 1, fromAddress, originalBroadcastAt)
 		txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 2, fromAddress, time.Now().Add(1*time.Hour))
 
+		var hit1, hit2 atomic.Bool
 		// First batch of 1
 		ethClient.On("BatchCallContextAll", mock.Anything, mock.MatchedBy(func(b []rpc.BatchElem) bool {
+			hit1.Store(true)
 			return len(b) == 1 &&
 				b[0].Method == "eth_sendRawTransaction" && b[0].Args[0] == hexutil.Encode(etx.TxAttempts[0].SignedRawTx)
 		})).Return(nil)
 		// Second batch of 1
 		ethClient.On("BatchCallContextAll", mock.Anything, mock.MatchedBy(func(b []rpc.BatchElem) bool {
+			hit2.Store(true)
 			return len(b) == 1 &&
 				b[0].Method == "eth_sendRawTransaction" && b[0].Args[0] == hexutil.Encode(etx2.TxAttempts[0].SignedRawTx)
 		})).Return(nil).Run(func(args mock.Arguments) {
 			elems := args.Get(1).([]rpc.BatchElem)
 			// It should update BroadcastAt even if there is an error here
+
 			elems[0].Error = pkgerrors.New("kaboom")
 		})
 
@@ -187,8 +192,10 @@ func Test_EthResender_Start(t *testing.T) {
 			er.Start(ctx)
 			defer er.Stop()
 
-			assert.Eventually(t, func() bool { return ethClient.AssertExpectations(t) },
-				testutils.WaitTimeout(t), time.Second)
+			assert.Eventually(t, func() bool {
+				return hit1.Load() && hit2.Load()
+			}, testutils.WaitTimeout(t), time.Second)
+			assert.True(t, ethClient.AssertExpectations(t))
 		}()
 
 		var dbEtx txmgr.DbEthTx

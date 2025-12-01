@@ -12,10 +12,10 @@ package gethwrappers
 //go:generate go generate go_generate_vrf.go
 
 //go:generate go generate ./functions
-//go:generate go generate ./keystone
+
 //go:generate go generate ./llo-feeds
 //go:generate go generate ./operatorforwarder
 //go:generate go generate ./shared
-//go:generate go generate ./workflow
+
 //go:generate go generate ./data-feeds
 //go:generate go generate ./payments
