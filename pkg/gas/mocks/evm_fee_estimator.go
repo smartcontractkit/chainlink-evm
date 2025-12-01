@@ -309,6 +309,89 @@ func (_c *EvmFeeEstimator_GetMaxCost_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// GetMaxFee provides a mock function with given fields: ctx, calldata, feeLimit, maxFeePrice, fromAddress, toAddress, opts
+func (_m *EvmFeeEstimator) GetMaxFee(ctx context.Context, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress *common.Address, toAddress *common.Address, opts ...fees.Opt) (gas.EvmFee, uint64, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, calldata, feeLimit, maxFeePrice, fromAddress, toAddress)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMaxFee")
+	}
+
+	var r0 gas.EvmFee
+	var r1 uint64
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, []byte, uint64, *assets.Wei, *common.Address, *common.Address, ...fees.Opt) (gas.EvmFee, uint64, error)); ok {
+		return rf(ctx, calldata, feeLimit, maxFeePrice, fromAddress, toAddress, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []byte, uint64, *assets.Wei, *common.Address, *common.Address, ...fees.Opt) gas.EvmFee); ok {
+		r0 = rf(ctx, calldata, feeLimit, maxFeePrice, fromAddress, toAddress, opts...)
+	} else {
+		r0 = ret.Get(0).(gas.EvmFee)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []byte, uint64, *assets.Wei, *common.Address, *common.Address, ...fees.Opt) uint64); ok {
+		r1 = rf(ctx, calldata, feeLimit, maxFeePrice, fromAddress, toAddress, opts...)
+	} else {
+		r1 = ret.Get(1).(uint64)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, []byte, uint64, *assets.Wei, *common.Address, *common.Address, ...fees.Opt) error); ok {
+		r2 = rf(ctx, calldata, feeLimit, maxFeePrice, fromAddress, toAddress, opts...)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// EvmFeeEstimator_GetMaxFee_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMaxFee'
+type EvmFeeEstimator_GetMaxFee_Call struct {
+	*mock.Call
+}
+
+// GetMaxFee is a helper method to define mock.On call
+//   - ctx context.Context
+//   - calldata []byte
+//   - feeLimit uint64
+//   - maxFeePrice *assets.Wei
+//   - fromAddress *common.Address
+//   - toAddress *common.Address
+//   - opts ...fees.Opt
+func (_e *EvmFeeEstimator_Expecter) GetMaxFee(ctx interface{}, calldata interface{}, feeLimit interface{}, maxFeePrice interface{}, fromAddress interface{}, toAddress interface{}, opts ...interface{}) *EvmFeeEstimator_GetMaxFee_Call {
+	return &EvmFeeEstimator_GetMaxFee_Call{Call: _e.mock.On("GetMaxFee",
+		append([]interface{}{ctx, calldata, feeLimit, maxFeePrice, fromAddress, toAddress}, opts...)...)}
+}
+
+func (_c *EvmFeeEstimator_GetMaxFee_Call) Run(run func(ctx context.Context, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress *common.Address, toAddress *common.Address, opts ...fees.Opt)) *EvmFeeEstimator_GetMaxFee_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]fees.Opt, len(args)-6)
+		for i, a := range args[6:] {
+			if a != nil {
+				variadicArgs[i] = a.(fees.Opt)
+			}
+		}
+		run(args[0].(context.Context), args[1].([]byte), args[2].(uint64), args[3].(*assets.Wei), args[4].(*common.Address), args[5].(*common.Address), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *EvmFeeEstimator_GetMaxFee_Call) Return(fee gas.EvmFee, estimatedFeeLimit uint64, err error) *EvmFeeEstimator_GetMaxFee_Call {
+	_c.Call.Return(fee, estimatedFeeLimit, err)
+	return _c
+}
+
+func (_c *EvmFeeEstimator_GetMaxFee_Call) RunAndReturn(run func(context.Context, []byte, uint64, *assets.Wei, *common.Address, *common.Address, ...fees.Opt) (gas.EvmFee, uint64, error)) *EvmFeeEstimator_GetMaxFee_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HealthReport provides a mock function with no fields
 func (_m *EvmFeeEstimator) HealthReport() map[string]error {
 	ret := _m.Called()

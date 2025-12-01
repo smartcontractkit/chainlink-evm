@@ -39,6 +39,7 @@ type EvmFeeEstimator interface {
 
 	// GetMaxCost returns the total value = max price x fee units + transferred value
 	GetMaxCost(ctx context.Context, amount assets.Eth, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress, toAddress *common.Address, opts ...fees.Opt) (*big.Int, error)
+	GetMaxFee(ctx context.Context, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress, toAddress *common.Address, opts ...fees.Opt) (fee EvmFee, estimatedFeeLimit uint64, err error)
 }
 
 type feeEstimatorClient interface {
@@ -160,6 +161,9 @@ type EvmEstimator interface {
 	// GetDynamicFee Calculates initial gas fee for gas for EIP1559 transactions
 	// maxGasPriceWei parameter is the highest possible gas fee cap that the function will return
 	GetDynamicFee(ctx context.Context, maxGasPriceWei *assets.Wei) (fee DynamicFee, err error)
+	// GetMaxDynamicFee Calculates the maximum gas fee for gas for EIP1559 transactions
+	// maxGasPriceWei parameter is the highest possible gas fee cap that the function will return
+	GetMaxDynamicFee(maxGasPriceWei *assets.Wei) (fee DynamicFee, err error)
 	// BumpDynamicFee Increases gas price and/or limit for non-EIP1559 transactions
 	// if the bumped gas fee or tip caps are greater than maxGasPriceWei, the method returns an error
 	// attempts must:
@@ -316,6 +320,29 @@ func (e *evmFeeEstimator) GetMaxCost(ctx context.Context, amount assets.Eth, cal
 	fee := new(big.Int).Mul(gasPrice.ToInt(), big.NewInt(int64(gasLimit)))
 	amountWithFees := new(big.Int).Add(amount.ToInt(), fee)
 	return amountWithFees, nil
+}
+
+func (e *evmFeeEstimator) GetMaxFee(ctx context.Context, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress, toAddress *common.Address, opts ...fees.Opt) (fee EvmFee, estimatedFeeLimit uint64, err error) {
+	var chainSpecificFeeLimit uint64
+	if e.EIP1559Enabled {
+		var dynamicFee DynamicFee
+		dynamicFee, err = e.EvmEstimator.GetMaxDynamicFee(maxFeePrice)
+		if err != nil {
+			return
+		}
+		fee.GasFeeCap = dynamicFee.GasFeeCap
+		fee.GasTipCap = dynamicFee.GasTipCap
+		chainSpecificFeeLimit = feeLimit
+	} else {
+		// For legacy fees assume the chain doesn't have a mempool and there is no priority, so fetching the legacy gas will have the same effect.
+		fee.GasPrice, chainSpecificFeeLimit, err = e.EvmEstimator.GetLegacyGas(ctx, calldata, feeLimit, maxFeePrice, opts...)
+		if err != nil {
+			return
+		}
+	}
+
+	estimatedFeeLimit, err = e.estimateFeeLimit(ctx, chainSpecificFeeLimit, calldata, fromAddress, toAddress)
+	return fee, estimatedFeeLimit, err
 }
 
 func (e *evmFeeEstimator) BumpFee(ctx context.Context, originalFee EvmFee, feeLimit uint64, maxFeePrice *assets.Wei, attempts []EvmPriorAttempt) (bumpedFee EvmFee, chainSpecificFeeLimit uint64, err error) {

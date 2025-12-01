@@ -344,6 +344,62 @@ func (_c *EvmEstimator_GetLegacyGas_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
+// GetMaxDynamicFee provides a mock function with given fields: maxGasPriceWei
+func (_m *EvmEstimator) GetMaxDynamicFee(maxGasPriceWei *assets.Wei) (gas.DynamicFee, error) {
+	ret := _m.Called(maxGasPriceWei)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMaxDynamicFee")
+	}
+
+	var r0 gas.DynamicFee
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*assets.Wei) (gas.DynamicFee, error)); ok {
+		return rf(maxGasPriceWei)
+	}
+	if rf, ok := ret.Get(0).(func(*assets.Wei) gas.DynamicFee); ok {
+		r0 = rf(maxGasPriceWei)
+	} else {
+		r0 = ret.Get(0).(gas.DynamicFee)
+	}
+
+	if rf, ok := ret.Get(1).(func(*assets.Wei) error); ok {
+		r1 = rf(maxGasPriceWei)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// EvmEstimator_GetMaxDynamicFee_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMaxDynamicFee'
+type EvmEstimator_GetMaxDynamicFee_Call struct {
+	*mock.Call
+}
+
+// GetMaxDynamicFee is a helper method to define mock.On call
+//   - maxGasPriceWei *assets.Wei
+func (_e *EvmEstimator_Expecter) GetMaxDynamicFee(maxGasPriceWei interface{}) *EvmEstimator_GetMaxDynamicFee_Call {
+	return &EvmEstimator_GetMaxDynamicFee_Call{Call: _e.mock.On("GetMaxDynamicFee", maxGasPriceWei)}
+}
+
+func (_c *EvmEstimator_GetMaxDynamicFee_Call) Run(run func(maxGasPriceWei *assets.Wei)) *EvmEstimator_GetMaxDynamicFee_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*assets.Wei))
+	})
+	return _c
+}
+
+func (_c *EvmEstimator_GetMaxDynamicFee_Call) Return(fee gas.DynamicFee, err error) *EvmEstimator_GetMaxDynamicFee_Call {
+	_c.Call.Return(fee, err)
+	return _c
+}
+
+func (_c *EvmEstimator_GetMaxDynamicFee_Call) RunAndReturn(run func(*assets.Wei) (gas.DynamicFee, error)) *EvmEstimator_GetMaxDynamicFee_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HealthReport provides a mock function with no fields
 func (_m *EvmEstimator) HealthReport() map[string]error {
 	ret := _m.Called()

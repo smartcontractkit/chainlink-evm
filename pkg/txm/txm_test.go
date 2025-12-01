@@ -24,7 +24,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/storage"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
-	"github.com/smartcontractkit/chainlink-framework/chains/fees"
 )
 
 func TestLifecycle(t *testing.T) {
@@ -494,29 +493,15 @@ func TestFlow_ResendTransaction(t *testing.T) {
 
 	// Purge transaction
 	client.On("NonceAt", mock.Anything, mock.Anything, mock.Anything).Return(initialNonce, nil).Maybe() // Transaction was not confirmed again
-	mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	mockEstimator.On("GetMaxFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
-	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
-	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(7), GasFeeCap: assets.NewWeiI(14)}}, defaultGasLimit, nil).Once()
-	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(gas.EvmFee{}, uint64(0), fees.ErrConnectivity).Once() // Purgeable transactions bump up the connectivity percentile, where error is returned
 	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	require.NoError(t, tm.BackfillTransactions(t.Context(), address)) // retry
 
 	// Instant retransmission of purgeable transaction
 	client.On("NonceAt", mock.Anything, mock.Anything, mock.Anything).Return(initialNonce, nil).Maybe() // Transaction was not confirmed again
-	mockEstimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	mockEstimator.On("GetMaxFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
-	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
-	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(7), GasFeeCap: assets.NewWeiI(14)}}, defaultGasLimit, nil).Once()
-	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(8), GasFeeCap: assets.NewWeiI(16)}}, defaultGasLimit, nil).Once()
-	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(gas.EvmFee{}, uint64(0), fees.ErrConnectivity).Once() // Purgeable transactions bump up the connectivity percentile, where error is returned
 	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	require.NoError(t, tm.BackfillTransactions(t.Context(), address)) // retry
 }
