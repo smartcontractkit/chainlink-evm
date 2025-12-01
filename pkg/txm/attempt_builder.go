@@ -15,24 +15,39 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
+// maxBumpThreshold controls the maximum number of bumps for an attempt.
+const maxBumpThreshold = 5
+
 type attemptBuilder struct {
 	gas.EvmFeeEstimator
-	priceMaxKey func(common.Address) *assets.Wei
-	keystore    keys.TxSigner
+	priceMaxKey         func(common.Address) *assets.Wei
+	keystore            keys.TxSigner
+	emptyTxLimitDefault uint64
 }
 
-func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner) *attemptBuilder {
+func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, emptyTxLimitDefault uint64) *attemptBuilder {
 	return &attemptBuilder{
-		priceMaxKey:     priceMaxKey,
-		EvmFeeEstimator: estimator,
-		keystore:        keystore,
+		priceMaxKey:         priceMaxKey,
+		EvmFeeEstimator:     estimator,
+		keystore:            keystore,
+		emptyTxLimitDefault: emptyTxLimitDefault,
 	}
 }
 
 func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, dynamic bool) (*types.Attempt, error) {
-	fee, estimatedGasLimit, err := a.EvmFeeEstimator.GetFee(ctx, tx.Data, tx.SpecifiedGasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
-	if err != nil {
-		return nil, err
+	var fee gas.EvmFee
+	var estimatedGasLimit uint64
+	var err error
+	if tx.IsPurgeable {
+		fee, estimatedGasLimit, err = a.EvmFeeEstimator.GetMaxFee(ctx, tx.Data, a.emptyTxLimitDefault, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		fee, estimatedGasLimit, err = a.EvmFeeEstimator.GetFee(ctx, tx.Data, tx.SpecifiedGasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
+		if err != nil {
+			return nil, err
+		}
 	}
 	txType := evmtypes.LegacyTxType
 	if dynamic {
@@ -42,11 +57,35 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 }
 
 func (a *attemptBuilder) NewBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, previousAttempt types.Attempt) (*types.Attempt, error) {
-	bumpedFee, bumpedFeeLimit, err := a.EvmFeeEstimator.BumpFee(ctx, previousAttempt.Fee, tx.SpecifiedGasLimit, a.priceMaxKey(tx.FromAddress), nil)
+	gasLimit := tx.SpecifiedGasLimit
+	if tx.IsPurgeable {
+		gasLimit = a.emptyTxLimitDefault
+	}
+	bumpedFee, bumpedFeeLimit, err := a.EvmFeeEstimator.BumpFee(ctx, previousAttempt.Fee, gasLimit, a.priceMaxKey(tx.FromAddress), nil)
 	if err != nil {
 		return nil, err
 	}
 	return a.newCustomAttempt(ctx, tx, bumpedFee, bumpedFeeLimit, previousAttempt.Type, lggr)
+}
+
+func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, dynamic bool) (attempt *types.Attempt, err error) {
+	// if the transaction is purgeable, NewAttempt will return the max fee instantly, so there is no need to bump
+	attempt, err = a.NewAttempt(ctx, lggr, tx, dynamic)
+	if tx.IsPurgeable || err != nil {
+		return
+	}
+
+	bumps := min(maxBumpThreshold, tx.AttemptCount)
+	for range bumps {
+		bumpedAttempt, err := a.NewBumpAttempt(ctx, lggr, tx, *attempt)
+		if err != nil {
+			lggr.Errorf("error bumping attempt: %v for txID: %v", err, tx.ID)
+			return attempt, nil
+		}
+		attempt = bumpedAttempt
+	}
+
+	return attempt, nil
 }
 
 func (a *attemptBuilder) newCustomAttempt(

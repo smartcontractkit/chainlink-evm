@@ -481,6 +481,20 @@ func TestFindTxWithIdempotencyKey(t *testing.T) {
 	assert.Nil(t, itx)
 }
 
+func TestMarkTxFatal(t *testing.T) {
+	t.Parallel()
+	fromAddress := testutils.NewAddress()
+	m := NewInMemoryStore(logger.Test(t), fromAddress, testutils.FixtureChainID)
+
+	var nonce uint64 = 1
+	tx, err := insertUnconfirmedTransaction(m, nonce)
+	require.NoError(t, err)
+	require.NoError(t, m.MarkTxFatal(tx))
+	assert.Equal(t, txmgr.TxFatalError, tx.State)
+	assert.Empty(t, m.UnconfirmedTransactions)
+	assert.Empty(t, m.Transactions)
+}
+
 func TestPruneConfirmedTransactions(t *testing.T) {
 	t.Parallel()
 	fromAddress := testutils.NewAddress()

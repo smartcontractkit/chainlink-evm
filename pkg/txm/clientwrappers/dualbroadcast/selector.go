@@ -12,12 +12,16 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 )
 
-func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, url *url.URL, chainID *big.Int) (txm.Client, error) {
+func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, url *url.URL, chainID *big.Int) (txm.Client, txm.ErrorHandler, error) {
 	urlString := url.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
-		return NewFlashbotsClient(client, keyStore, url), nil
+		return NewFlashbotsClient(client, keyStore, url), nil, nil
 	default:
-		return NewMetaClient(lggr, client, keyStore, url, chainID)
+		mc, err := NewMetaClient(lggr, client, keyStore, url, chainID)
+		if err != nil {
+			return nil, nil, err
+		}
+		return mc, NewErrorHandler(), nil
 	}
 }

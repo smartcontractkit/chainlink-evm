@@ -437,6 +437,28 @@ func (b *BlockHistoryEstimator) GetDynamicFee(_ context.Context, maxGasPriceWei 
 	fee.GasTipCap = tipCap
 	return
 }
+func (b *BlockHistoryEstimator) GetMaxDynamicFee(maxGasPriceWei *assets.Wei) (fee DynamicFee, err error) {
+	if !b.eConfig.EIP1559DynamicFees() {
+		return fee, errors.New("can't get dynamic fee, EIP1559 is disabled")
+	}
+
+	var maxTipCap *assets.Wei
+	ok := b.IfStarted(func() {
+		maxTipCap = b.getMaxPercentileTipCap()
+	})
+	if !ok {
+		return fee, errors.New("BlockHistoryEstimator is not started")
+	}
+	if !b.initialFetch.Load() {
+		return fee, errors.New("BlockHistoryEstimator has not finished the first gas estimation yet, likely because a failure on start")
+	}
+	currentBaseFee := b.getCurrentBaseFee()
+	if maxTipCap == nil || currentBaseFee == nil {
+		return fee, errors.New("BlockHistoryEstimator: no value for latest block base fee or tip cap")
+	}
+	maxFeeCap := calcFeeCap(currentBaseFee, int(b.bhConfig.EIP1559FeeCapBufferBlocks()), maxTipCap, maxGasPriceWei)
+	return DynamicFee{GasFeeCap: maxFeeCap, GasTipCap: maxTipCap}, nil
+}
 
 func calcFeeCap(latestAvailableBaseFeePerGas *assets.Wei, bufferBlocks int, tipCap *assets.Wei, maxGasPriceWei *assets.Wei) (feeCap *assets.Wei) {
 	const maxBaseFeeIncreasePerBlock float64 = 1.125

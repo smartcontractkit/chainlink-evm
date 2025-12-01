@@ -113,6 +113,7 @@ func NewTxmV2(
 	logPoller logpoller.LogPoller,
 	keyStore keys.ChainStore,
 	estimator gas.EvmFeeEstimator,
+	gasEstimatorConfig config.GasEstimator,
 ) (TxManager, error) {
 	var fwdMgr *forwarders.FwdMgr
 	if txConfig.ForwardersEnabled() {
@@ -137,26 +138,27 @@ func NewTxmV2(
 		stuckTxDetector = txm.NewStuckTxDetector(lggr, chainConfig.ChainType(), stuckTxDetectorConfig)
 	}
 
-	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore)
+	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer())
 	inMemoryStoreManager := storage.NewInMemoryStoreManager(lggr, chainID)
 	config := txm.Config{
 		EIP1559:   fCfg.EIP1559DynamicFees(),
 		BlockTime: *txmV2Config.BlockTime(),
 		//nolint:gosec // reuse existing config until migration
 		RetryBlockThreshold: uint16(fCfg.BumpThreshold()),
-		EmptyTxLimitDefault: fCfg.LimitDefault(),
+		EmptyTxLimitDefault: gasEstimatorConfig.LimitTransfer(),
 	}
+	var eh txm.ErrorHandler
 	var c txm.Client
 	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
 		var err error
-		c, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID)
+		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}
 	} else {
 		c = clientwrappers.NewChainClient(client)
 	}
-	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore)
+	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
 	return txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder), nil
 }
 
