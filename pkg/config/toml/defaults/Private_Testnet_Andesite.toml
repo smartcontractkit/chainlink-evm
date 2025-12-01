@@ -1,0 +1,20 @@
+ChainID = '2024'
+FinalityDepth = 1
+LogBroadcasterEnabled = false
+
+[BalanceMonitor]
+Enabled = false # no gas chain
+
+[GasEstimator]
+Mode = 'SuggestedPrice'
+PriceDefault = '0'
+PriceMin = '0'
+LimitDefault = 250000000
+LimitMax = 250000000
+LimitMultiplier = '4'
+FeeCapDefault = '0'
+TipCapDefault = '0'
+TipCapMin = '0'
+
+[HeadTracker]
+PersistenceEnabled = false

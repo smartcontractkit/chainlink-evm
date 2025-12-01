@@ -4,6 +4,7 @@ node_modules
 solc
 zkout
 abi
+bytecode
 coverage
 coverage.json
 typechain
