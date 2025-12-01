@@ -199,7 +199,7 @@ type Parameters struct {
 	Signature    hexutil.Bytes   `json:"signature"`
 }
 
-type RequestResponse struct {
+type Response struct {
 	Result *ResponseResult `json:"result"`
 	Error  struct {
 		ErrorMessage string `json:"message,omitempty"`
@@ -352,7 +352,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		return nil, err
 	}
 
-	var response RequestResponse
+	var response Response
 	err = json.Unmarshal(data, &response)
 	if err != nil {
 		return nil, err
