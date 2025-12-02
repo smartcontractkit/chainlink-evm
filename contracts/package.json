@@ -7,7 +7,6 @@
   "license": "BUSL-1.1",
   "private": false,
   "scripts": {
-    "test": "hardhat test",
     "lint": "eslint --ext js,ts .",
     "compile:native": "./scripts/native_solc_compile_all",
     "publish-beta": "pnpm publish --tag beta",
@@ -61,12 +60,13 @@
     "solhint": "^6.0.1",
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@changesets/cli": "^2.29.8",
+    "@changesets/get-github-info": "^0.7.0",
+    "semver": "^7.7.3"
   },
   "dependencies": {
     "@arbitrum/nitro-contracts": "3.0.0",
-    "@changesets/cli": "^2.29.8",
-    "@changesets/get-github-info": "^0.6.0",
     "@eth-optimism/contracts": "0.6.0",
     "@openzeppelin/contracts-4.7.3": "npm:@openzeppelin/contracts@4.7.3",
     "@openzeppelin/contracts-4.8.3": "npm:@openzeppelin/contracts@4.8.3",
@@ -75,8 +75,7 @@
     "@openzeppelin/contracts-5.1.0": "npm:@openzeppelin/contracts@5.1.0",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@scroll-tech/contracts": "2.0.0",
-    "@zksync/contracts": "github:matter-labs/era-contracts#446d391d34bdb48255d5f8fef8a8248925fc98b9",
-    "semver": "^7.7.3"
+    "@zksync/contracts": "github:matter-labs/era-contracts#446d391d34bdb48255d5f8fef8a8248925fc98b9"
   },
   "type": "module"
 }
