@@ -915,7 +915,7 @@ EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
 VerifyChainID = true # Default
-ExternalRequestMaxResponseSize = 50000 # Default
+ExternalRequestMaxResponseSize = 1000000 # Default
 ```
 The node pool manages multiple RPC endpoints.
 
@@ -1025,7 +1025,7 @@ VerifyChainID enforces RPC Client ChainIDs to match configured ChainID
 
 ### ExternalRequestMaxResponseSize
 ```toml
-ExternalRequestMaxResponseSize = 50000 # Default
+ExternalRequestMaxResponseSize = 1000000 # Default
 ```
 ExternalRequestMaxResponseSize sets the maximum allowed size (in bytes) for responses to external requests.
 Responses larger than this value will be rejected to prevent the node from being overloaded.
