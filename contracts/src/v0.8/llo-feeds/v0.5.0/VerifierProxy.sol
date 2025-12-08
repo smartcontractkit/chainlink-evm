@@ -125,7 +125,7 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
 
   /// @inheritdoc ITypeAndVersion
   function typeAndVersion() external pure override returns (string memory) {
-    return "VerifierProxy 2.0.0";
+    return "VerifierProxy 2.0.1";
   }
 
   /// @inheritdoc IVerifierProxy
@@ -141,6 +141,13 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
     }
 
     return _verify(payload);
+  }
+
+  /// @inheritdoc IVerifierProxy
+  function verifyView(
+    bytes calldata payload
+  ) external view checkAccess returns (bytes memory) {
+    return _verifyView(payload);
   }
 
   /// @inheritdoc IVerifierProxy
@@ -164,6 +171,19 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
     return verifiedReports;
   }
 
+  /// @inheritdoc IVerifierProxy
+  function verifyBulkView(
+    bytes[] calldata payloads
+  ) external view checkAccess returns (bytes[] memory verifiedReports) {
+    //verify the reports
+    verifiedReports = new bytes[](payloads.length);
+    for (uint256 i; i < payloads.length; ++i) {
+      verifiedReports[i] = _verifyView(payloads[i]);
+    }
+
+    return verifiedReports;
+  }
+
   function _verify(
     bytes calldata payload
   ) internal returns (bytes memory verifiedReport) {
@@ -173,6 +193,17 @@ contract VerifierProxy is IVerifierProxy, ConfirmedOwner, ITypeAndVersion {
     if (verifierAddress == address(0)) revert VerifierNotFound(configDigest);
 
     return IVerifier(verifierAddress).verify(payload, msg.sender);
+  }
+
+  function _verifyView(
+    bytes calldata payload
+  ) internal view returns (bytes memory) {
+    // First 32 bytes of the signed report is the config digest
+    bytes32 configDigest = bytes32(payload);
+    address verifierAddress = s_verifiersByConfig[configDigest];
+    if (verifierAddress == address(0)) revert VerifierNotFound(configDigest);
+
+    return IVerifier(verifierAddress).verifyView(payload);
   }
 
   /// @inheritdoc IVerifierProxy

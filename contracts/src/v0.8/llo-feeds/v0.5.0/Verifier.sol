@@ -157,7 +157,7 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
 
   /// @inheritdoc ITypeAndVersion
   function typeAndVersion() external pure override returns (string memory) {
-    return "Verifier 2.0.0";
+    return "Verifier 2.0.1";
   }
 
   /// @inheritdoc IVerifier
@@ -165,6 +165,24 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     bytes calldata signedReport,
     address sender
   ) external override returns (bytes memory verifierResponse) {
+    bytes memory reportData = _verify(signedReport);
+    emit ReportVerified(bytes32(reportData), sender);
+    return reportData;
+  }
+
+  /// @inheritdoc IVerifier
+  function verifyView(
+    bytes calldata signedReport
+  ) external view override returns (bytes memory verifierResponse) {
+    return _verify(signedReport);
+  }
+
+  /// @notice Internal verification logic shared by verify() and verifyView()
+  /// @param signedReport The signed report to verify
+  /// @return verifierResponse The verified report data
+  function _verify(
+    bytes calldata signedReport
+  ) internal view returns (bytes memory verifierResponse) {
     if (msg.sender != i_verifierProxyAddr) revert AccessForbidden();
     (bytes32[3] memory reportContext, bytes memory reportData, bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs)
     = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
@@ -182,7 +200,6 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     bytes32 hashedReport = keccak256(reportData);
 
     _verifySignatures(hashedReport, reportContext, rs, ss, rawVs, verifierState);
-    emit ReportVerified(bytes32(reportData), sender);
 
     return reportData;
   }
