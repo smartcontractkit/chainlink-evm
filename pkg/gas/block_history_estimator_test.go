@@ -47,11 +47,11 @@ func newBlockHistoryConfig() *gas.MockBlockHistoryConfig {
 	return c
 }
 
-func newBlockHistoryEstimatorWithChainID(t *testing.T, c evmclient.Client, chaintype chaintype.ChainType, gCfg gas.GasEstimatorConfig, bhCfg evmconfig.BlockHistory, cid *big.Int, l1Oracle rollups.L1Oracle) gas.EvmEstimator {
+func newBlockHistoryEstimatorWithChainID(t *testing.T, c evmclient.Client, chaintype chaintype.ChainType, gCfg gas.BlockHistoryEstimatorConfig, bhCfg evmconfig.BlockHistory, cid *big.Int, l1Oracle rollups.L1Oracle) gas.EvmEstimator {
 	return gas.NewBlockHistoryEstimator(logger.Test(t), c, chaintype, gCfg, bhCfg, cid, l1Oracle)
 }
 
-func newBlockHistoryEstimator(t *testing.T, c evmclient.Client, chaintype chaintype.ChainType, gCfg gas.GasEstimatorConfig, bhCfg evmconfig.BlockHistory, l1Oracle rollups.L1Oracle) *gas.BlockHistoryEstimator {
+func newBlockHistoryEstimator(t *testing.T, c evmclient.Client, chaintype chaintype.ChainType, gCfg gas.BlockHistoryEstimatorConfig, bhCfg evmconfig.BlockHistory, l1Oracle rollups.L1Oracle) *gas.BlockHistoryEstimator {
 	iface := newBlockHistoryEstimatorWithChainID(t, c, chaintype, gCfg, bhCfg, testutils.FixtureChainID, l1Oracle)
 	return gas.BlockHistoryEstimatorFromInterface(iface)
 }
@@ -1982,6 +1982,295 @@ func TestBlockHistoryEstimator_GetLegacyGas(t *testing.T) {
 
 		assert.Equal(t, assets.NewWeiI(700), fee)
 		assert.Equal(t, 10000, int(limit))
+	})
+}
+
+func TestBlockHistoryEstimator_GetMaxLegacyGas(t *testing.T) {
+	t.Parallel()
+	l1Oracle := rollupMocks.NewL1Oracle(t)
+
+	bhCfg := newBlockHistoryConfig()
+	bhCfg.TransactionPercentileF = uint16(35)
+	bhCfg.BlockHistorySizeF = uint16(8)
+	bhCfg.CheckInclusionBlocksF = uint16(4)
+	bhCfg.CheckInclusionPercentileF = uint16(90)
+
+	maxGasPrice := assets.NewWeiI(1000000)
+	geCfg := &gas.MockGasEstimatorConfig{}
+	geCfg.EIP1559DynamicFeesF = false
+	geCfg.PriceMaxF = maxGasPrice
+	geCfg.PriceMinF = assets.NewWeiI(0)
+
+	t.Run("returns error when EIP1559 is enabled", func(t *testing.T) {
+		geCfg.EIP1559DynamicFeesF = true
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+		gas.SimulateStart(t, bhe)
+
+		gasPrice, limit, err := bhe.GetMaxLegacyGas(t.Context(), make([]byte, 0), 10000, maxGasPrice)
+		require.Error(t, err)
+		assert.Equal(t, "can't get max legacy gas, EIP1559 is enabled", err.Error())
+		assert.Nil(t, gasPrice)
+		assert.Equal(t, uint64(0), limit)
+	})
+
+	t.Run("returns error when estimator is not started", func(t *testing.T) {
+		geCfg.EIP1559DynamicFeesF = false
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+		// Don't start the estimator
+
+		gasPrice, limit, err := bhe.GetMaxLegacyGas(t.Context(), make([]byte, 0), 10000, maxGasPrice)
+		require.Error(t, err)
+		assert.Equal(t, "BlockHistoryEstimator is not started", err.Error())
+		assert.Nil(t, gasPrice)
+		assert.Equal(t, uint64(0), limit)
+	})
+
+	t.Run("returns error when initialFetch is false", func(t *testing.T) {
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+		gas.SimulateStart(t, bhe)
+		// Don't set initialFetch to true
+
+		gasPrice, limit, err := bhe.GetMaxLegacyGas(tests.Context(t), make([]byte, 0), 10000, maxGasPrice)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "BlockHistoryEstimator has not finished the first gas estimation yet")
+		assert.Nil(t, gasPrice)
+		assert.Equal(t, uint64(0), limit)
+	})
+
+	t.Run("returns max gas price", func(t *testing.T) {
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+
+		// Create blocks with different gas prices
+		// CheckInclusionBlocks is 4, so we need at least 4 blocks
+		// CheckInclusionPercentile is 90, so we expect the 90th percentile price
+		blocks := []evmtypes.Block{
+			{
+				Number:       0,
+				Hash:         utils.NewHash(),
+				Transactions: legacyTransactionsFromGasPrices(1000, 2000, 3000, 4000, 5000),
+			},
+			{
+				Number:       1,
+				Hash:         utils.NewHash(),
+				Transactions: legacyTransactionsFromGasPrices(1500, 2500, 3500, 4500, 5500),
+			},
+			{
+				Number:       2,
+				Hash:         utils.NewHash(),
+				Transactions: legacyTransactionsFromGasPrices(1200, 2200, 3200, 4200, 5200),
+			},
+			{
+				Number:       3,
+				Hash:         utils.NewHash(),
+				Transactions: legacyTransactionsFromGasPrices(1800, 2800, 3800, 4800, 5800),
+			},
+		}
+
+		gas.SetRollingBlockHistory(bhe, blocks)
+		bhe.Recalculate(testutils.Head(3))
+		gas.SimulateStart(t, bhe)
+
+		// Set initialFetch to true to simulate successful start
+		gas.SetInitialFetch(bhe, true)
+
+		gasPrice, limit, err := bhe.GetMaxLegacyGas(t.Context(), make([]byte, 0), 10000, maxGasPrice)
+		require.NoError(t, err)
+		require.NotNil(t, gasPrice)
+		// The max percentile gas price should be set based on CheckInclusionPercentile (90th percentile)
+		// from the last CheckInclusionBlocks (4) blocks
+		assert.Greater(t, gasPrice.Int64(), int64(0))
+		assert.Equal(t, uint64(0), limit) // GetMaxLegacyGas always returns 0 for chainSpecificGasLimit
+
+		// Verify it matches the max percentile gas price
+		expectedMaxPercentileGasPrice := gas.GetMaxPercentileGasPrice(bhe)
+		assert.Equal(t, expectedMaxPercentileGasPrice, gasPrice)
+	})
+}
+
+func TestBlockHistoryEstimator_GetMaxDynamicFee(t *testing.T) {
+	t.Parallel()
+	l1Oracle := rollupMocks.NewL1Oracle(t)
+
+	bhCfg := newBlockHistoryConfig()
+	bhCfg.TransactionPercentileF = uint16(35)
+	bhCfg.BlockHistorySizeF = uint16(8)
+	bhCfg.CheckInclusionBlocksF = uint16(4)
+	bhCfg.CheckInclusionPercentileF = uint16(90)
+	bhCfg.EIP1559FeeCapBufferBlocksF = uint16(4)
+
+	maxGasPrice := assets.NewWeiI(1000000)
+	geCfg := &gas.MockGasEstimatorConfig{}
+	geCfg.EIP1559DynamicFeesF = true
+	geCfg.PriceMaxF = maxGasPrice
+	geCfg.PriceMinF = assets.NewWeiI(0)
+	geCfg.TipCapMinF = assets.NewWeiI(0)
+
+	t.Run("returns error when EIP1559 is disabled", func(t *testing.T) {
+		geCfg.EIP1559DynamicFeesF = false
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+		gas.SimulateStart(t, bhe)
+
+		fee, err := bhe.GetMaxDynamicFee(maxGasPrice)
+		require.Error(t, err)
+		assert.Equal(t, "can't get dynamic fee, EIP1559 is disabled", err.Error())
+		assert.Equal(t, gas.DynamicFee{}, fee)
+	})
+
+	t.Run("returns error when estimator is not started", func(t *testing.T) {
+		geCfg.EIP1559DynamicFeesF = true
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+		// Don't start the estimator
+
+		fee, err := bhe.GetMaxDynamicFee(maxGasPrice)
+		require.Error(t, err)
+		assert.Equal(t, "BlockHistoryEstimator is not started", err.Error())
+		assert.Equal(t, gas.DynamicFee{}, fee)
+	})
+
+	t.Run("returns error when initialFetch is false", func(t *testing.T) {
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+		gas.SimulateStart(t, bhe)
+		// Don't set initialFetch to true
+
+		fee, err := bhe.GetMaxDynamicFee(maxGasPrice)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "BlockHistoryEstimator has not finished the first gas estimation yet")
+		assert.Equal(t, gas.DynamicFee{}, fee)
+	})
+
+	t.Run("returns error when maxTipCap is nil", func(t *testing.T) {
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+
+		// Create blocks with no transactions (will cause maxTipCap calculation to fail)
+		blocks := []evmtypes.Block{
+			{
+				BaseFeePerGas: assets.NewWeiI(100000),
+				Number:        0,
+				Hash:          utils.NewHash(),
+				Transactions:  []evmtypes.Transaction{},
+			},
+			{
+				BaseFeePerGas: assets.NewWeiI(100000),
+				Number:        1,
+				Hash:          utils.NewHash(),
+				Transactions:  []evmtypes.Transaction{},
+			},
+			{
+				BaseFeePerGas: assets.NewWeiI(100000),
+				Number:        2,
+				Hash:          utils.NewHash(),
+				Transactions:  []evmtypes.Transaction{},
+			},
+			{
+				BaseFeePerGas: assets.NewWeiI(100000),
+				Number:        3,
+				Hash:          utils.NewHash(),
+				Transactions:  []evmtypes.Transaction{},
+			},
+		}
+
+		gas.SetRollingBlockHistory(bhe, blocks)
+		bhe.Recalculate(testutils.Head(3))
+		gas.SimulateStart(t, bhe)
+		gas.SetInitialFetch(bhe, true)
+
+		fee, err := bhe.GetMaxDynamicFee(maxGasPrice)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "BlockHistoryEstimator: no value for latest block base fee or tip cap")
+		assert.Equal(t, gas.DynamicFee{}, fee)
+	})
+
+	t.Run("returns error when currentBaseFee is nil", func(t *testing.T) {
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+
+		// Create blocks with transactions but no BaseFeePerGas
+		blocks := []evmtypes.Block{
+			{
+				Number:       0,
+				Hash:         utils.NewHash(),
+				Transactions: dynamicFeeTransactionsFromTipCaps(5000, 6000, 7000),
+			},
+			{
+				Number:       1,
+				Hash:         utils.NewHash(),
+				Transactions: dynamicFeeTransactionsFromTipCaps(8000, 9000, 10000),
+			},
+			{
+				Number:       2,
+				Hash:         utils.NewHash(),
+				Transactions: dynamicFeeTransactionsFromTipCaps(11000, 12000, 13000),
+			},
+			{
+				Number:       3,
+				Hash:         utils.NewHash(),
+				Transactions: dynamicFeeTransactionsFromTipCaps(14000, 15000, 16000),
+			},
+		}
+
+		gas.SetRollingBlockHistory(bhe, blocks)
+		bhe.Recalculate(testutils.Head(3))
+		gas.SimulateStart(t, bhe)
+		gas.SetInitialFetch(bhe, true)
+
+		fee, err := bhe.GetMaxDynamicFee(maxGasPrice)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "BlockHistoryEstimator: no value for latest block base fee or tip cap")
+		assert.Equal(t, gas.DynamicFee{}, fee)
+	})
+
+	t.Run("returns max dynamic fee", func(t *testing.T) {
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+
+		// Create blocks with EIP-1559 transactions and base fees
+		blocks := []evmtypes.Block{
+			{
+				BaseFeePerGas: assets.NewWeiI(100000),
+				Number:        0,
+				Hash:          utils.NewHash(),
+				Transactions:  dynamicFeeTransactionsFromTipCaps(5000, 6000, 7000),
+			},
+			{
+				BaseFeePerGas: assets.NewWeiI(110000),
+				Number:        1,
+				Hash:          utils.NewHash(),
+				Transactions:  dynamicFeeTransactionsFromTipCaps(8000, 9000, 10000),
+			},
+			{
+				BaseFeePerGas: assets.NewWeiI(120000),
+				Number:        2,
+				Hash:          utils.NewHash(),
+				Transactions:  dynamicFeeTransactionsFromTipCaps(11000, 12000, 13000),
+			},
+			{
+				BaseFeePerGas: assets.NewWeiI(130000),
+				Number:        3,
+				Hash:          utils.NewHash(),
+				Transactions:  dynamicFeeTransactionsFromTipCaps(14000, 15000, 16000),
+			},
+		}
+
+		gas.SetRollingBlockHistory(bhe, blocks)
+		h := testutils.Head(3)
+		h.BaseFeePerGas = assets.NewWeiI(100000)
+		bhe.Recalculate(h)
+		gas.SimulateStart(t, bhe)
+		gas.SetInitialFetch(bhe, true)
+		bhe.OnNewLongestChain(t.Context(), h)
+
+		fee, err := bhe.GetMaxDynamicFee(maxGasPrice)
+		require.NoError(t, err)
+		require.NotNil(t, fee.GasFeeCap)
+		require.NotNil(t, fee.GasTipCap)
+
+		// Verify it matches the max percentile tip cap
+		expectedMaxPercentileTipCap := gas.GetMaxPercentileTipCap(bhe)
+		assert.Equal(t, expectedMaxPercentileTipCap, fee.GasTipCap)
+
+		// Verify fee cap is calculated correctly (base fee + buffer + tip cap, capped at maxGasPrice)
+		latestBaseFee := gas.GetLatestBaseFee(bhe)
+		require.NotNil(t, latestBaseFee)
+		assert.Greater(t, fee.GasFeeCap.Int64(), int64(0))
+		assert.LessOrEqual(t, fee.GasFeeCap.Int64(), maxGasPrice.Int64())
 	})
 }
 

@@ -16,37 +16,23 @@ import (
 var _ EvmEstimator = (*fixedPriceEstimator)(nil)
 
 type fixedPriceEstimator struct {
-	config   fixedPriceEstimatorConfig
-	bhConfig fixedPriceEstimatorBlockHistoryConfig
-	lggr     logger.SugaredLogger
-	l1Oracle rollups.L1Oracle
+	config                    fixedPriceEstimatorConfig
+	EIP1559FeeCapBufferBlocks uint16
+	lggr                      logger.SugaredLogger
+	l1Oracle                  rollups.L1Oracle
 }
-type bumpConfig interface {
-	LimitMultiplier() float32
-	PriceMax() *assets.Wei
-	BumpPercent() uint16
-	BumpMin() *assets.Wei
-	TipCapDefault() *assets.Wei
-}
-
 type fixedPriceEstimatorConfig interface {
 	BumpThreshold() uint64
 	FeeCapDefault() *assets.Wei
 	PriceDefault() *assets.Wei
-	TipCapDefault() *assets.Wei
-	PriceMax() *assets.Wei
 	Mode() string
 	bumpConfig
 }
 
-type fixedPriceEstimatorBlockHistoryConfig interface {
-	EIP1559FeeCapBufferBlocks() uint16
-}
-
 // NewFixedPriceEstimator returns a new "FixedPrice" estimator which will
 // always use the config default values for gas prices and limits
-func NewFixedPriceEstimator(cfg fixedPriceEstimatorConfig, ethClient feeEstimatorClient, bhCfg fixedPriceEstimatorBlockHistoryConfig, lggr logger.Logger, l1Oracle rollups.L1Oracle) EvmEstimator {
-	return &fixedPriceEstimator{cfg, bhCfg, logger.Sugared(logger.Named(lggr, "FixedPriceEstimator")), l1Oracle}
+func NewFixedPriceEstimator(cfg fixedPriceEstimatorConfig, ethClient feeEstimatorClient, EIP1559FeeCapBufferBlocks uint16, lggr logger.Logger, l1Oracle rollups.L1Oracle) EvmEstimator {
+	return &fixedPriceEstimator{cfg, EIP1559FeeCapBufferBlocks, logger.Sugared(logger.Named(lggr, "FixedPriceEstimator")), l1Oracle}
 }
 
 func (f *fixedPriceEstimator) Start(context.Context) error {
@@ -90,6 +76,12 @@ func (f *fixedPriceEstimator) BumpLegacyGas(
 	return assets.NewWei(gasPrice), chainSpecificGasLimit, err
 }
 
+// GetMaxLegacyGas returns the result of GetLegacyGas. FixedPriceEstimator provides fixed gas prices, which generally indicates there is no priority queue or the network
+// expects fixed prices. Either way, fetching a standard gas estimation will have the same effect for transaction inclusion.
+func (f *fixedPriceEstimator) GetMaxLegacyGas(ctx context.Context, calldata []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+	return f.GetLegacyGas(ctx, calldata, gasLimit, maxGasPriceWei, opts...)
+}
+
 func (f *fixedPriceEstimator) GetDynamicFee(_ context.Context, maxGasPriceWei *assets.Wei) (d DynamicFee, err error) {
 	gasTipCap := f.config.TipCapDefault()
 
@@ -120,7 +112,7 @@ func (f *fixedPriceEstimator) BumpDynamicFee(
 ) (bumped DynamicFee, err error) {
 	return BumpDynamicFeeOnly(
 		f.config,
-		f.bhConfig.EIP1559FeeCapBufferBlocks(),
+		f.EIP1559FeeCapBufferBlocks,
 		f.lggr,
 		f.config.TipCapDefault(),
 		nil,
