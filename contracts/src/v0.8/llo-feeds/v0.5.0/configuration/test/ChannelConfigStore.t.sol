@@ -100,6 +100,24 @@ contract ChannelConfigStoreChannelAdderTest is ChannelConfigStoreTest {
     channelConfigStore.setChannelAdderAddress(CHANNEL_ADDER_ID_1, CHANNEL_ADDER_1);
   }
 
+  function testSetChannelAdderAddress_RevertsForReservedChannelAdderId() public {
+    // Channel adder IDs 0-999 are reserved
+    IChannelConfigStore.ChannelAdderId reservedId = IChannelConfigStore.ChannelAdderId.wrap(0);
+    vm.expectRevert(ChannelConfigStore.ReservedChannelAdderId.selector);
+    channelConfigStore.setChannelAdderAddress(reservedId, CHANNEL_ADDER_1);
+
+    reservedId = IChannelConfigStore.ChannelAdderId.wrap(999);
+    vm.expectRevert(ChannelConfigStore.ReservedChannelAdderId.selector);
+    channelConfigStore.setChannelAdderAddress(reservedId, CHANNEL_ADDER_1);
+  }
+
+  function testSetChannelAdderAddress_SucceedsAtMinimumAllowedId() public {
+    // Channel adder ID 1000 is the minimum allowed
+    IChannelConfigStore.ChannelAdderId minAllowedId = IChannelConfigStore.ChannelAdderId.wrap(1000);
+    channelConfigStore.setChannelAdderAddress(minAllowedId, CHANNEL_ADDER_1);
+    assertEq(channelConfigStore.getChannelAdderAddress(minAllowedId), CHANNEL_ADDER_1);
+  }
+
   function testSetChannelAdder_AllowsChannelAdder() public {
     vm.expectEmit();
     emit ChannelAdderSet(DON_ID_1, CHANNEL_ADDER_ID_1, true);
@@ -309,5 +327,27 @@ contract ChannelConfigStoreChannelAdderTest is ChannelConfigStoreTest {
     // Verify both channel adder IDs are allowed
     assertTrue(channelConfigStore.isChannelAdderAllowed(DON_ID_1, CHANNEL_ADDER_ID_1));
     assertTrue(channelConfigStore.isChannelAdderAllowed(DON_ID_1, CHANNEL_ADDER_ID_2));
+  }
+
+  function testSetChannelAdder_RevertsForReservedChannelAdderId() public {
+    // Channel adder IDs 0-999 are reserved
+    IChannelConfigStore.ChannelAdderId reservedId = IChannelConfigStore.ChannelAdderId.wrap(0);
+    vm.expectRevert(ChannelConfigStore.ReservedChannelAdderId.selector);
+    channelConfigStore.setChannelAdder(DON_ID_1, reservedId, true);
+
+    reservedId = IChannelConfigStore.ChannelAdderId.wrap(999);
+    vm.expectRevert(ChannelConfigStore.ReservedChannelAdderId.selector);
+    channelConfigStore.setChannelAdder(DON_ID_1, reservedId, true);
+
+    // Should also revert when trying to remove a reserved ID
+    vm.expectRevert(ChannelConfigStore.ReservedChannelAdderId.selector);
+    channelConfigStore.setChannelAdder(DON_ID_1, reservedId, false);
+  }
+
+  function testSetChannelAdder_SucceedsAtMinimumAllowedId() public {
+    // Channel adder ID 1000 is the minimum allowed
+    IChannelConfigStore.ChannelAdderId minAllowedId = IChannelConfigStore.ChannelAdderId.wrap(1000);
+    channelConfigStore.setChannelAdder(DON_ID_1, minAllowedId, true);
+    assertTrue(channelConfigStore.isChannelAdderAllowed(DON_ID_1, minAllowedId));
   }
 }
