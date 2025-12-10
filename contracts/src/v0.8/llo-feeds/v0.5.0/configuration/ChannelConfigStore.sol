@@ -19,10 +19,10 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   event ChannelAdderSet(uint256 indexed donId, ChannelAdderId indexed channelAdderId, bool allowed);
   event ChannelAdderAddressSet(ChannelAdderId indexed channelAdderId, address adderAddress);
 
-  /// @notice Thrown when a caller is not authorized to add channel definitions
+  /// @notice Thrown when a caller is not authorized to add channel definitions.
   error UnauthorizedChannelAdder();
 
-  /// @notice Thrown when a ChannelAdderID is reserved.
+  /// @notice Thrown when a ChannelAdderId is reserved.
   error ReservedChannelAdderId();
 
   // We reserve the ChannelAdderIds 0 through 999. 1 is used by the offchain code to internally
@@ -31,8 +31,8 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
 
   constructor() ConfirmedOwner(msg.sender) {}
 
-  /// @notice The version of a channel definition keyed by DON ID
-  // Increments by 1 on every update
+  /// @notice The version of a channel definition keyed by DON ID.
+  // Increments by 1 on every update.
   mapping(uint256 => uint256) internal s_channelDefinitionVersions;
 
   /// @notice Mapping from channel adder ID to its corresponding address
@@ -41,6 +41,13 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @notice Mapping from DON ID to the set of allowed channel adder IDs
   mapping(uint256 => EnumerableSet.UintSet) internal s_allowedChannelAdders;
 
+  /// @notice Allows the owner to arbitrarily set channel definitions to the specified DON.
+  /// Unlike the channel adder, the owner can not only add, but also modify and delete
+  /// channel definitions. The DON enforces (in its consensus rules), that the channel
+  /// definitions provided by the owner are well-formed.
+  /// @param donId The DON ID
+  /// @param url The URL of the channel definition
+  /// @param sha The SHA hash of the channel definition
   function setChannelDefinitions(uint32 donId, string calldata url, bytes32 sha) external onlyOwner {
     uint32 newVersion = uint32(++s_channelDefinitionVersions[uint256(donId)]);
     emit NewChannelDefinition(donId, newVersion, url, sha);
