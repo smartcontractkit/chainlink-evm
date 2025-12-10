@@ -3,11 +3,10 @@ pragma solidity 0.8.24;
 
 import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
+import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 
 import {OwnerIsCreator} from "@chainlink/contracts/src/v0.8/shared/access/OwnerIsCreator.sol";
 
-import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
-import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
 import {ERC165Checker} from "@openzeppelin/contracts@4.8.3/utils/introspection/ERC165Checker.sol";
 import {EnumerableSet} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableSet.sol";
 

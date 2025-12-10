@@ -7,7 +7,6 @@
   "license": "BUSL-1.1",
   "private": false,
   "scripts": {
-    "test": "hardhat test",
     "lint": "eslint --ext js,ts .",
     "compile:native": "./scripts/native_solc_compile_all",
     "publish-beta": "pnpm publish --tag beta",
@@ -37,7 +36,10 @@
       "cookie": "^0.7.0",
       "minimatch@3.1.2>brace-expansion": "^1.1.12",
       "minimatch@5.1.6>brace-expansion": "^2.0.2",
-      "minimatch@9.0.5>brace-expansion": "^2.0.2"
+      "minimatch@9.0.5>brace-expansion": "^2.0.2",
+      "solhint>js-yaml": "^4.1.1",
+      "read-yaml-file>js-yaml": "^3.14.2",
+      "tmp": "^0.2.4"
     },
     "onlyBuiltDependencies": []
   },
@@ -46,27 +48,28 @@
     "pnpm": ">=10"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.0",
-    "@types/node": "^22.18.13",
-    "@typescript-eslint/eslint-plugin": "^8.46.2",
-    "@typescript-eslint/parser": "^8.46.2",
+    "@eslint/js": "^9.39.1",
+    "@eslint/eslintrc": "^3.3.3",
+    "@types/node": "^22.19.2",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
     "abi-to-sol": "^0.8.0",
-    "eslint": "^9.39.0",
+    "eslint": "^9.39.1",
     "eslint-plugin-prettier": "^5.5.4",
-    "globals": "^16.4.0",
-    "hardhat": "^3.0.10",
+    "globals": "^16.5.0",
+    "hardhat": "^3.0.17",
     "moment": "^2.30.1",
-    "prettier": "^3.6.2",
-    "solhint": "^5.2.0",
+    "prettier": "^3.7.4",
+    "solhint": "^6.0.1",
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "@changesets/cli": "^2.29.8",
+    "@changesets/get-github-info": "^0.7.0",
+    "semver": "^7.7.3"
   },
   "dependencies": {
     "@arbitrum/nitro-contracts": "3.0.0",
-    "@changesets/cli": "^2.29.7",
-    "@changesets/get-github-info": "^0.6.0",
-    "@eslint/eslintrc": "^3.3.1",
     "@eth-optimism/contracts": "0.6.0",
     "@openzeppelin/contracts-4.7.3": "npm:@openzeppelin/contracts@4.7.3",
     "@openzeppelin/contracts-4.8.3": "npm:@openzeppelin/contracts@4.8.3",
@@ -75,8 +78,7 @@
     "@openzeppelin/contracts-5.1.0": "npm:@openzeppelin/contracts@5.1.0",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@scroll-tech/contracts": "2.0.0",
-    "@zksync/contracts": "github:matter-labs/era-contracts#446d391d34bdb48255d5f8fef8a8248925fc98b9",
-    "semver": "^7.7.3"
+    "@zksync/contracts": "github:matter-labs/era-contracts#446d391d34bdb48255d5f8fef8a8248925fc98b9"
   },
   "type": "module"
 }

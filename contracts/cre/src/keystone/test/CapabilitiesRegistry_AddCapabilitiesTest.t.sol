@@ -4,7 +4,6 @@ pragma solidity 0.8.24;
 import {CapabilitiesRegistry} from "../CapabilitiesRegistry.sol";
 import {ICapabilityConfiguration} from "../interfaces/ICapabilityConfiguration.sol";
 import {BaseTest} from "./BaseTest.t.sol";
-import {CapabilityConfigurationContract} from "./mocks/CapabilityConfigurationContract.sol";
 
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
