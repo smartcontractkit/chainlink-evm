@@ -23,8 +23,8 @@ contract ChannelConfigStoreTest is Test {
 
   address public constant CHANNEL_ADDER_1 = address(0x1234);
   address public constant CHANNEL_ADDER_2 = address(0x5678);
-  IChannelConfigStore.ChannelAdderId public constant CHANNEL_ADDER_ID_1 = IChannelConfigStore.ChannelAdderId.wrap(1);
-  IChannelConfigStore.ChannelAdderId public constant CHANNEL_ADDER_ID_2 = IChannelConfigStore.ChannelAdderId.wrap(2);
+  IChannelConfigStore.ChannelAdderId public constant CHANNEL_ADDER_ID_1 = IChannelConfigStore.ChannelAdderId.wrap(1000);
+  IChannelConfigStore.ChannelAdderId public constant CHANNEL_ADDER_ID_2 = IChannelConfigStore.ChannelAdderId.wrap(1001);
   uint32 public constant DON_ID_1 = 42;
   uint32 public constant DON_ID_2 = 99;
 

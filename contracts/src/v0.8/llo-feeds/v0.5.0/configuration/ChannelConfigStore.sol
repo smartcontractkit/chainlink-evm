@@ -22,6 +22,13 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @notice Thrown when a caller is not authorized to add channel definitions
   error UnauthorizedChannelAdder();
 
+  /// @notice Thrown when a ChannelAdderID is reserved.
+  error ReservedChannelAdderId();
+
+  // We reserve the ChannelAdderIds 0 through 999. 1 is used by the offchain code to internally
+  // represent the owner. The others are reserved for future use.
+  ChannelAdderId internal constant MIN_CHANNEL_ADDER_ID = ChannelAdderId.wrap(1000);
+
   constructor() ConfirmedOwner(msg.sender) {}
 
   /// @notice The version of a channel definition keyed by DON ID
@@ -67,6 +74,9 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// Set this to the zero address (or some other address that cannot make
   /// calls) to disable the channel adder.
   function setChannelAdderAddress(ChannelAdderId channelAdderId, address adderAddress) external onlyOwner {
+    if (ChannelAdderId.unwrap(channelAdderId) < ChannelAdderId.unwrap(MIN_CHANNEL_ADDER_ID)) {
+      revert ReservedChannelAdderId();
+    }
     s_channelAdderAddresses[channelAdderId] = adderAddress;
     emit ChannelAdderAddressSet(channelAdderId, adderAddress);
   }
@@ -76,6 +86,9 @@ contract ChannelConfigStore is ConfirmedOwner, IChannelConfigStore, ITypeAndVers
   /// @param channelAdderId The channel adder ID
   /// @param allowed Whether the channel adder should be allowed or removed
   function setChannelAdder(uint32 donId, ChannelAdderId channelAdderId, bool allowed) external onlyOwner {
+    if (ChannelAdderId.unwrap(channelAdderId) < ChannelAdderId.unwrap(MIN_CHANNEL_ADDER_ID)) {
+      revert ReservedChannelAdderId();
+    }
     if (allowed) {
       s_allowedChannelAdders[donId].add(ChannelAdderId.unwrap(channelAdderId));
     } else {
