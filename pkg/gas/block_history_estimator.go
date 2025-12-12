@@ -260,16 +260,15 @@ func (b *BlockHistoryEstimator) GetMaxLegacyGas(_ context.Context, _ []byte, _ u
 
 	ok := b.IfStarted(func() {
 		gasPrice = b.getMaxPercentileGasPrice()
-		if gasPrice == nil {
-			err = errors.New("BlockHistoryEstimator has not finished the first gas estimation yet")
-			return
-		}
 	})
 	if !ok {
 		return gasPrice, 0, errors.New("BlockHistoryEstimator is not started")
 	}
 	if !b.initialFetch.Load() {
 		return gasPrice, 0, errors.New("BlockHistoryEstimator has not finished the first gas estimation yet, likely because a failure on start")
+	}
+	if gasPrice == nil {
+		return gasPrice, 0, errors.New("BlockHistoryEstimator has not finished the first gas estimation yet")
 	}
 	return gasPrice, 0, nil
 }
