@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {AccessControllerInterface} from "../../../../shared/interfaces/AccessControllerInterface.sol";
 import {BaseTest} from "./BaseVerifierTest.t.sol";
 
-contract VerifierProxySetAccessControllerTest is BaseTest {
+contract VerifierProxySetAccessControllerTestV03 is BaseTest {
   event AccessControllerSet(address oldAccessController, address newAccessController);
 
   function test_revertsIfCalledByNonOwner() public {

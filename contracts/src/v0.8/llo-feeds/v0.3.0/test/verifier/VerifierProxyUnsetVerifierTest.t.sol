@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {VerifierProxy} from "../../../v0.3.0/VerifierProxy.sol";
 import {BaseTest, BaseTestWithConfiguredVerifierAndFeeManager} from "./BaseVerifierTest.t.sol";
 
-contract VerifierProxyUnsetVerifierTest is BaseTest {
+contract VerifierProxyUnsetVerifierTestV03 is BaseTest {
   function test_revertsIfNotAdmin() public {
     vm.expectRevert("Only callable by owner");
 
@@ -18,7 +18,7 @@ contract VerifierProxyUnsetVerifierTest is BaseTest {
   }
 }
 
-contract VerifierProxyUnsetVerifierWithPreviouslySetVerifierTest is BaseTestWithConfiguredVerifierAndFeeManager {
+contract VerifierProxyUnsetVerifierWithPreviouslySetVerifierTestV03 is BaseTestWithConfiguredVerifierAndFeeManager {
   bytes32 internal s_configDigest;
 
   event VerifierUnset(bytes32 configDigest, address verifierAddr);

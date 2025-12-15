@@ -5,7 +5,7 @@ import {AccessControllerInterface} from "../../../../shared/interfaces/AccessCon
 import {VerifierProxy} from "../../../v0.3.0/VerifierProxy.sol";
 import {BaseTest} from "./BaseVerifierTest.t.sol";
 
-contract VerifierProxyConstructorTest is BaseTest {
+contract VerifierProxyConstructorTestV03 is BaseTest {
   function test_correctlySetsTheOwner() public {
     VerifierProxy proxy = new VerifierProxy(AccessControllerInterface(address(0)));
     assertEq(proxy.owner(), ADMIN);
