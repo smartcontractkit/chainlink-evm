@@ -43,6 +43,12 @@ contract ErroredVerifier is IVerifier {
     revert FailedToVerify();
   }
 
+  function verifyView(
+    bytes calldata
+  ) external pure override returns (bytes memory) {
+    revert FailedToVerify();
+  }
+
   function updateConfig(bytes32, address[] calldata, address[] calldata, uint8) external pure {
     revert FailedToUnsetConfig();
   }

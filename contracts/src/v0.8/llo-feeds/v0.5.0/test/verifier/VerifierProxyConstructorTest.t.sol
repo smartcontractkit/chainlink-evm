@@ -19,6 +19,6 @@ contract VerifierProxyConstructorTest is BaseTest {
 
   function test_correctlySetsVersion() public view {
     string memory version = s_verifierProxy.typeAndVersion();
-    assertEq(version, "VerifierProxy 2.0.0");
+    assertEq(version, "VerifierProxy 2.0.1");
   }
 }

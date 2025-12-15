@@ -18,7 +18,7 @@ contract VerifierConstructorTestV05 is BaseTest {
     assertEq(blockNumber, 0);
 
     string memory typeAndVersion = s_verifier.typeAndVersion();
-    assertEq(typeAndVersion, "Verifier 2.0.0");
+    assertEq(typeAndVersion, "Verifier 2.0.1");
   }
 }
 
