@@ -97,6 +97,7 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
    * @notice Returns 100% discount for any subscriber/feedId/token combination
    * @dev Replicates public mapping getter signature from FeeManager for backwards compatibility
    */
+  // solhint-disable-next-line func-name-mixedcase
   function s_subscriberDiscounts(address, bytes32, address) external pure returns (uint256) {
     return PERCENTAGE_SCALAR;
   }
@@ -105,6 +106,7 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
    * @notice Returns 100% discount for any subscriber/token combination
    * @dev Replicates public mapping getter signature from FeeManager for backwards compatibility
    */
+  // solhint-disable-next-line func-name-mixedcase
   function s_globalDiscounts(address, address) external pure returns (uint256) {
     return PERCENTAGE_SCALAR;
   }
