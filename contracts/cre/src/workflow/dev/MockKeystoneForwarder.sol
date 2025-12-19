@@ -7,8 +7,10 @@ import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/I
 
 import {OwnerIsCreator} from "@chainlink/contracts/src/v0.8/shared/access/OwnerIsCreator.sol";
 
+import {ERC165Checker} from "@openzeppelin/contracts@4.8.3/utils/introspection/ERC165Checker.sol";
+
 /// @notice Simplified mock version of KeystoneForwarder for testing purposes.
-/// The report function is permissionless and skips all validations.
+/// The report function is permissionless and skips all signature/config validations.
 contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
   /// @notice This error is returned when the report is shorter than REPORT_METADATA_LENGTH,
   /// which is the minimum length of a report.
@@ -80,10 +82,17 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
     bytes calldata metadata,
     bytes calldata validatedReport
   ) public returns (bool) {
+    // In the mock we keep this permissionless (no s_forwarders[msg.sender] check),
+    // but still record transmissions like the real contract.
     s_transmissions[transmissionId].transmitter = transmitter;
     s_transmissions[transmissionId].gasLimit = uint80(gasleft());
 
-    // Always call onReport on the receiver
+    // check that the receiver implements IReceiver
+    if (!ERC165Checker.supportsInterface(receiver, type(IReceiver).interfaceId)) {
+      s_transmissions[transmissionId].invalidReceiver = true;
+      return false;
+    }
+
     bool success;
     bytes memory payload = abi.encodeCall(IReceiver.onReport, (metadata, validatedReport));
 
@@ -155,7 +164,6 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
   // ================================================================
 
   /// @notice Simplified permissionless report function that skips all validations
-  /// and does not call onReport on consumer contracts
   function report(address receiver, bytes calldata rawReport, bytes calldata, bytes[] calldata) external {
     if (rawReport.length < METADATA_LENGTH) {
       revert InvalidReport();
@@ -168,8 +176,6 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
       (workflowExecutionId, configId, reportId) = _getMetadata(rawReport);
     }
 
-    // Skip all validations and signature checks
-    // Skip onReport call to consumer contracts
     bool success = this.route(
       getTransmissionId(receiver, workflowExecutionId, reportId),
       msg.sender,
