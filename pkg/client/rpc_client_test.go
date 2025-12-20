@@ -395,6 +395,7 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 			{Name: "Hedera", ChainType: chaintype.ChainHedera},
 			{Name: "Rootstock", ChainType: chaintype.ChainRootstock},
 			{Name: "Pharos", ChainType: chaintype.ChainPharos},
+			{Name: "Jovay", ChainType: chaintype.ChainJovay},
 		}
 
 		testCases := []struct {
