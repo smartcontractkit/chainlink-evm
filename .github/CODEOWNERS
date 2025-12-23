@@ -7,11 +7,11 @@
 # Please put the CODEOWNERS file in .github
 
 # Root
-* @smartcontractkit/foundations @smartcontractkit/core @smartcontractkit/bix-framework @smartcontractkit/core-solidity
+* @smartcontractkit/foundations @smartcontractkit/core @smartcontractkit/bix-framework
 
 # Contracts catch all, for files not matched by the more specific patterns below
 /contracts/ @smartcontractkit/core-solidity
-
+/gethwrappers @smartcontractkit/core-solidity
 /pkg/ @smartcontractkit/foundations
 
 # First we match on project names to catch files like the compilation scripts and other files

@@ -1224,6 +1224,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param capabilityId The Capability ID
   /// @return bytes The DON specific configuration for the capability stored on the capability registry
   /// @return bytes The DON specific configuration stored on the capability's configuration contract
+  // solhint-disable-next-line gas-calldata-parameters
   function getCapabilityConfigs(
     uint32 donId,
     string memory capabilityId

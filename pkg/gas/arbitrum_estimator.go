@@ -143,6 +143,12 @@ func (a *arbitrumEstimator) GetLegacyGas(ctx context.Context, calldata []byte, l
 	return
 }
 
+// GetMaxLegacyGas returns the result of GetLegacyGas. Arbitrum doesn't have a mempool. That means transaction priority follows a FIFO model.
+// Fetching a standard gas estimation will have the same effect for transaction inclusion.
+func (a *arbitrumEstimator) GetMaxLegacyGas(ctx context.Context, calldata []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+	return a.GetLegacyGas(ctx, calldata, gasLimit, maxGasPriceWei, opts...)
+}
+
 // During network congestion Arbitrum's suggested gas price can be extremely volatile, making gas estimations less accurate. For any transaction, Arbitrum will only charge
 // the block's base fee. If the base fee increases rapidly there is a chance the suggested gas price will fall under that value, resulting in a fee too low error.
 // We use gasPriceWithBuffer to increase the estimated gas price by some percentage to avoid fee too low errors. Eventually, only the base fee will be paid, regardless of the price.

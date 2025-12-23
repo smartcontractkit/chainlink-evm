@@ -83,6 +83,10 @@ func SimulateStart(t *testing.T, b *BlockHistoryEstimator) {
 	require.NoError(t, b.StartOnce("BlockHistoryEstimatorSimulatedStart", func() error { return nil }))
 }
 
+func SetInitialFetch(b *BlockHistoryEstimator, value bool) {
+	b.initialFetch.Store(value)
+}
+
 type MockBlockHistoryConfig struct {
 	BatchSizeF                 uint32
 	BlockDelayF                uint16

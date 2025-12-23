@@ -400,6 +400,89 @@ func (_c *EvmEstimator_GetMaxDynamicFee_Call) RunAndReturn(run func(*assets.Wei)
 	return _c
 }
 
+// GetMaxLegacyGas provides a mock function with given fields: ctx, calldata, gasLimit, maxGasPriceWei, opts
+func (_m *EvmEstimator) GetMaxLegacyGas(ctx context.Context, calldata []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (*assets.Wei, uint64, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, calldata, gasLimit, maxGasPriceWei)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMaxLegacyGas")
+	}
+
+	var r0 *assets.Wei
+	var r1 uint64
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, []byte, uint64, *assets.Wei, ...fees.Opt) (*assets.Wei, uint64, error)); ok {
+		return rf(ctx, calldata, gasLimit, maxGasPriceWei, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []byte, uint64, *assets.Wei, ...fees.Opt) *assets.Wei); ok {
+		r0 = rf(ctx, calldata, gasLimit, maxGasPriceWei, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*assets.Wei)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []byte, uint64, *assets.Wei, ...fees.Opt) uint64); ok {
+		r1 = rf(ctx, calldata, gasLimit, maxGasPriceWei, opts...)
+	} else {
+		r1 = ret.Get(1).(uint64)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, []byte, uint64, *assets.Wei, ...fees.Opt) error); ok {
+		r2 = rf(ctx, calldata, gasLimit, maxGasPriceWei, opts...)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// EvmEstimator_GetMaxLegacyGas_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMaxLegacyGas'
+type EvmEstimator_GetMaxLegacyGas_Call struct {
+	*mock.Call
+}
+
+// GetMaxLegacyGas is a helper method to define mock.On call
+//   - ctx context.Context
+//   - calldata []byte
+//   - gasLimit uint64
+//   - maxGasPriceWei *assets.Wei
+//   - opts ...fees.Opt
+func (_e *EvmEstimator_Expecter) GetMaxLegacyGas(ctx interface{}, calldata interface{}, gasLimit interface{}, maxGasPriceWei interface{}, opts ...interface{}) *EvmEstimator_GetMaxLegacyGas_Call {
+	return &EvmEstimator_GetMaxLegacyGas_Call{Call: _e.mock.On("GetMaxLegacyGas",
+		append([]interface{}{ctx, calldata, gasLimit, maxGasPriceWei}, opts...)...)}
+}
+
+func (_c *EvmEstimator_GetMaxLegacyGas_Call) Run(run func(ctx context.Context, calldata []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt)) *EvmEstimator_GetMaxLegacyGas_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]fees.Opt, len(args)-4)
+		for i, a := range args[4:] {
+			if a != nil {
+				variadicArgs[i] = a.(fees.Opt)
+			}
+		}
+		run(args[0].(context.Context), args[1].([]byte), args[2].(uint64), args[3].(*assets.Wei), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *EvmEstimator_GetMaxLegacyGas_Call) Return(gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) *EvmEstimator_GetMaxLegacyGas_Call {
+	_c.Call.Return(gasPrice, chainSpecificGasLimit, err)
+	return _c
+}
+
+func (_c *EvmEstimator_GetMaxLegacyGas_Call) RunAndReturn(run func(context.Context, []byte, uint64, *assets.Wei, ...fees.Opt) (*assets.Wei, uint64, error)) *EvmEstimator_GetMaxLegacyGas_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HealthReport provides a mock function with no fields
 func (_m *EvmEstimator) HealthReport() map[string]error {
 	ret := _m.Called()

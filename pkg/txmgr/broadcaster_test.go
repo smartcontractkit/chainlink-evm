@@ -78,7 +78,7 @@ func NewTestEthBroadcaster(
 	ge := config.GasEstimator()
 
 	estimator := gas.NewEvmFeeEstimator(lggr, func(lggr logger.Logger) gas.EvmEstimator {
-		return gas.NewFixedPriceEstimator(config.GasEstimator(), nil, ge.BlockHistory(), lggr, nil)
+		return gas.NewFixedPriceEstimator(config.GasEstimator(), nil, ge.BlockHistory().EIP1559FeeCapBufferBlocks(), lggr, nil)
 	}, ge.EIP1559DynamicFees(), ge, ethClient)
 	txBuilder := txmgr.NewEvmTxAttemptBuilder(*ethClient.ConfiguredChainID(), ge, keyStore, estimator)
 	metrics, err := txmgr.NewEVMTxmMetrics(ethClient.ConfiguredChainID().String())
@@ -1214,7 +1214,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 				t.Run("callback set by ctor", func(t *testing.T) {
 					evmcfg := configtest.NewChainScopedConfig(t, nil)
 					estimator := gas.NewEvmFeeEstimator(lggr, func(lggr logger.Logger) gas.EvmEstimator {
-						return gas.NewFixedPriceEstimator(evmcfg.EVM().GasEstimator(), nil, evmcfg.EVM().GasEstimator().BlockHistory(), lggr, nil)
+						return gas.NewFixedPriceEstimator(evmcfg.EVM().GasEstimator(), nil, evmcfg.EVM().GasEstimator().BlockHistory().EIP1559FeeCapBufferBlocks(), lggr, nil)
 					}, evmcfg.EVM().GasEstimator().EIP1559DynamicFees(), evmcfg.EVM().GasEstimator(), ethClient)
 					txBuilder := txmgr.NewEvmTxAttemptBuilder(*ethClient.ConfiguredChainID(), evmcfg.EVM().GasEstimator(), ethKeyStore, estimator)
 					localNextNonce = getLocalNextNonce(t, nonceTracker, fromAddress)
@@ -1718,7 +1718,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_GasEstimationError(t *testing.T) 
 	nonceTracker := txmgr.NewNonceTracker(lggr, txStore, txmClient)
 	ge := config.EVM().GasEstimator()
 	estimator := gas.NewEvmFeeEstimator(lggr, func(lggr logger.Logger) gas.EvmEstimator {
-		return gas.NewFixedPriceEstimator(ge, nil, ge.BlockHistory(), lggr, nil)
+		return gas.NewFixedPriceEstimator(ge, nil, ge.BlockHistory().EIP1559FeeCapBufferBlocks(), lggr, nil)
 	}, ge.EIP1559DynamicFees(), ge, ethClient)
 	txBuilder := txmgr.NewEvmTxAttemptBuilder(*ethClient.ConfiguredChainID(), ge, ethKeyStore, estimator)
 	metrics, err := txmgr.NewEVMTxmMetrics(ethClient.ConfiguredChainID().String())
@@ -1852,7 +1852,7 @@ func TestEthBroadcaster_SyncNonce(t *testing.T) {
 	kst := keys.NewChainStore(memKS, ethClient.ConfiguredChainID())
 
 	estimator := gas.NewEvmFeeEstimator(lggr, func(lggr logger.Logger) gas.EvmEstimator {
-		return gas.NewFixedPriceEstimator(evmcfg.EVM().GasEstimator(), nil, evmcfg.EVM().GasEstimator().BlockHistory(), lggr, nil)
+		return gas.NewFixedPriceEstimator(evmcfg.EVM().GasEstimator(), nil, evmcfg.EVM().GasEstimator().BlockHistory().EIP1559FeeCapBufferBlocks(), lggr, nil)
 	}, evmcfg.EVM().GasEstimator().EIP1559DynamicFees(), evmcfg.EVM().GasEstimator(), ethClient)
 	checkerFactory := &testCheckerFactory{}
 
@@ -1926,7 +1926,7 @@ func TestEthBroadcaster_HederaBroadcastValidation(t *testing.T) {
 	lggr, observed := logger.TestObserved(t, zapcore.DebugLevel)
 	ge := evmcfg.EVM().GasEstimator()
 	estimator := gas.NewEvmFeeEstimator(lggr, func(lggr logger.Logger) gas.EvmEstimator {
-		return gas.NewFixedPriceEstimator(evmcfg.EVM().GasEstimator(), nil, ge.BlockHistory(), lggr, nil)
+		return gas.NewFixedPriceEstimator(evmcfg.EVM().GasEstimator(), nil, ge.BlockHistory().EIP1559FeeCapBufferBlocks(), lggr, nil)
 	}, ge.EIP1559DynamicFees(), ge, ethClient)
 	txBuilder := txmgr.NewEvmTxAttemptBuilder(*ethClient.ConfiguredChainID(), ge, ethKeyStore, estimator)
 	checkerFactory := &txmgr.CheckerFactory{Client: ethClient}

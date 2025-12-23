@@ -34,17 +34,17 @@
     "pnpm": ">=10"
   },
   "devDependencies": {
-    "solhint": "^5.2.0",
+    "@changesets/cli": "^2.29.8",
+    "@changesets/get-github-info": "^0.7.0",
+    "solhint": "^6.0.1",
+    "semver": "^7.7.3",
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1"
   },
   "dependencies": {
-    "@changesets/cli": "^2.29.7",
-    "@changesets/get-github-info": "^0.6.0",
     "@openzeppelin/contracts-4.8.3": "npm:@openzeppelin/contracts@4.8.3",
     "@openzeppelin/contracts-5.0.2": "npm:@openzeppelin/contracts@5.0.2",
     "@openzeppelin/contracts-5.1.0": "npm:@openzeppelin/contracts@5.1.0",
-    "@chainlink/contracts": "1.5.0",
-    "semver": "^7.7.3"
+    "@chainlink/contracts": "1.5.0"
   },
   "type": "module"
 }

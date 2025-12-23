@@ -372,6 +372,7 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 	}
 	if unconfirmedCount == 0 {
 		t.lggr.Debugf("All transactions confirmed for address: %v", address)
+		t.Metrics.ReachedMaxAttempts(ctx, false)
 		return nil
 	}
 
