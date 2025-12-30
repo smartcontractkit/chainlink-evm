@@ -96,8 +96,8 @@ importers:
         specifier: ^7.7.3
         version: 7.7.3
       solhint:
-        specifier: ^6.0.1
-        version: 6.0.1(typescript@5.9.3)
+        specifier: ^6.0.2
+        version: 6.0.2(typescript@5.9.3)
       solhint-plugin-chainlink-solidity:
         specifier: github:smartcontractkit/chainlink-solhint-rules#v1.2.1
         version: '@chainlink/solhint-plugin-chainlink-solidity@https://codeload.github.com/smartcontractkit/chainlink-solhint-rules/tar.gz/1b4c0c2663fcd983589d4f33a2e73908624ed43c'
@@ -2097,8 +2097,8 @@ packages:
   solady@0.0.182:
     resolution: {integrity: sha512-FW6xo1akJoYpkXMzu58/56FcNU3HYYNamEbnFO3iSibXk0nSHo0DV2Gu/zI3FPg3So5CCX6IYli1TT1IWATnvg==}
 
-  solhint@6.0.1:
-    resolution: {integrity: sha512-Lew5nhmkXqHPybzBzkMzvvWkpOJSSLTkfTZwRriWvfR2naS4YW2PsjVGaoX9tZFmHh7SuS+e2GEGo5FPYYmJ8g==}
+  solhint@6.0.2:
+    resolution: {integrity: sha512-RInN0tz9FVR4eYlyLS0Pk8iJP3WdfVmmMJR9FIUxe9bKHgAPE8OYUXcMd5PGi5fO5BnZw32e0qMYcJZgH9MiBg==}
     hasBin: true
 
   source-map-support@0.5.21:
@@ -4649,7 +4649,7 @@ snapshots:
 
   solady@0.0.182: {}
 
-  solhint@6.0.1(typescript@5.9.3):
+  solhint@6.0.2(typescript@5.9.3):
     dependencies:
       '@solidity-parser/parser': 0.20.2
       ajv: 6.12.6
