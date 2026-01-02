@@ -6,11 +6,10 @@ require (
 	github.com/ethereum/go-ethereum v1.16.2
 	github.com/fatih/color v1.18.0
 	github.com/pkg/errors v0.9.1
+	github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers v0.0.0-20260102164329-da13302a0ade
 	github.com/stretchr/testify v1.10.0
-	github.com/tidwall/gjson v1.18.0
 	github.com/zksync-sdk/zksync2-go v1.1.0
 	go.uber.org/multierr v1.11.0
-	golang.org/x/text v0.27.0
 	golang.org/x/tools v0.35.0
 )
 
@@ -86,12 +85,9 @@ require (
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
-	github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers v0.0.0-20251222115927-36a18321243c // indirect
 	github.com/stephenlacy/go-ethereum-hdwallet v0.0.0-20230913225845-a4fa94429863 // indirect
 	github.com/supranational/blst v0.3.14 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
@@ -101,6 +97,7 @@ require (
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
