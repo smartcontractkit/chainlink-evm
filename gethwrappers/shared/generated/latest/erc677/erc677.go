@@ -5,7 +5,6 @@ package erc677
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -787,20 +785,6 @@ func (_ERC677 *ERC677Filterer) ParseTransfer0(log types.Log) (*ERC677Transfer0, 
 	return event, nil
 }
 
-func (_ERC677 *ERC677) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _ERC677.abi.Events["Approval"].ID:
-		return _ERC677.ParseApproval(log)
-	case _ERC677.abi.Events["Transfer"].ID:
-		return _ERC677.ParseTransfer(log)
-	case _ERC677.abi.Events["Transfer0"].ID:
-		return _ERC677.ParseTransfer0(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (ERC677Approval) Topic() common.Hash {
 	return common.HexToHash("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925")
 }
@@ -859,8 +843,6 @@ type ERC677Interface interface {
 	WatchTransfer0(opts *bind.WatchOpts, sink chan<- *ERC677Transfer0, from []common.Address, to []common.Address) (event.Subscription, error)
 
 	ParseTransfer0(log types.Log) (*ERC677Transfer0, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

@@ -4,7 +4,7 @@ go 1.24.5
 
 require (
 	github.com/ethereum/go-ethereum v1.16.2
-	github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers v0.0.0-20260102164329-da13302a0ade
+	github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers v0.0.0-20260113095857-e13e0dd04d9f
 )
 
 require (

@@ -5,7 +5,6 @@ package werc20_mock
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -953,22 +951,6 @@ func (_WERC20Mock *WERC20MockFilterer) ParseWithdrawal(log types.Log) (*WERC20Mo
 	return event, nil
 }
 
-func (_WERC20Mock *WERC20Mock) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _WERC20Mock.abi.Events["Approval"].ID:
-		return _WERC20Mock.ParseApproval(log)
-	case _WERC20Mock.abi.Events["Deposit"].ID:
-		return _WERC20Mock.ParseDeposit(log)
-	case _WERC20Mock.abi.Events["Transfer"].ID:
-		return _WERC20Mock.ParseTransfer(log)
-	case _WERC20Mock.abi.Events["Withdrawal"].ID:
-		return _WERC20Mock.ParseWithdrawal(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (WERC20MockApproval) Topic() common.Hash {
 	return common.HexToHash("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925")
 }
@@ -1045,8 +1027,6 @@ type WERC20MockInterface interface {
 	WatchWithdrawal(opts *bind.WatchOpts, sink chan<- *WERC20MockWithdrawal, src []common.Address) (event.Subscription, error)
 
 	ParseWithdrawal(log types.Log) (*WERC20MockWithdrawal, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

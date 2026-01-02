@@ -5,7 +5,6 @@ package burn_mint_erc20
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -1492,26 +1490,6 @@ func (_BurnMintERC20 *BurnMintERC20Filterer) ParseTransfer(log types.Log) (*Burn
 	return event, nil
 }
 
-func (_BurnMintERC20 *BurnMintERC20) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _BurnMintERC20.abi.Events["Approval"].ID:
-		return _BurnMintERC20.ParseApproval(log)
-	case _BurnMintERC20.abi.Events["CCIPAdminTransferred"].ID:
-		return _BurnMintERC20.ParseCCIPAdminTransferred(log)
-	case _BurnMintERC20.abi.Events["RoleAdminChanged"].ID:
-		return _BurnMintERC20.ParseRoleAdminChanged(log)
-	case _BurnMintERC20.abi.Events["RoleGranted"].ID:
-		return _BurnMintERC20.ParseRoleGranted(log)
-	case _BurnMintERC20.abi.Events["RoleRevoked"].ID:
-		return _BurnMintERC20.ParseRoleRevoked(log)
-	case _BurnMintERC20.abi.Events["Transfer"].ID:
-		return _BurnMintERC20.ParseTransfer(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (BurnMintERC20Approval) Topic() common.Hash {
 	return common.HexToHash("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925")
 }
@@ -1632,8 +1610,6 @@ type BurnMintERC20Interface interface {
 	WatchTransfer(opts *bind.WatchOpts, sink chan<- *BurnMintERC20Transfer, from []common.Address, to []common.Address) (event.Subscription, error)
 
 	ParseTransfer(log types.Log) (*BurnMintERC20Transfer, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }
