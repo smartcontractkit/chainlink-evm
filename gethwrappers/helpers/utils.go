@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
 // VersionHash is the hash used to detect changes in the underlying contract
@@ -31,21 +30,4 @@ func Exit(msg string, err error) {
 		fmt.Println(msg)
 	}
 	os.Exit(1)
-}
-
-// GetProjectRoot returns the root of the chainlink project
-func GetProjectRoot() (rootPath string) {
-	root, err := os.Getwd()
-	if err != nil {
-		Exit("could not get current working directory while seeking project root",
-			err)
-	}
-	for root != "/" { // Walk up path to find dir containing go.mod
-		if _, err := os.Stat(filepath.Join(root, "go.mod")); !os.IsNotExist(err) {
-			return root
-		}
-		root = filepath.Dir(root)
-	}
-	Exit("could not find project root", nil)
-	panic("can't get here")
 }
