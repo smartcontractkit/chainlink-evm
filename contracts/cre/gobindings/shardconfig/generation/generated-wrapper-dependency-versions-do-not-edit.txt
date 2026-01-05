@@ -1,0 +1,2 @@
+GETH_VERSION: 1.16.2
+shard_config: ../../solc/shardconfig/ShardConfig/ShardConfig.sol/ShardConfig.abi.json ../../solc/shardconfig/ShardConfig/ShardConfig.sol/ShardConfig.bin 696576c21a6a2197da6ffa6f0ccf6771e857dded0f66dc8a1074a19d102ac2fd

@@ -50,6 +50,13 @@ src = 'src/keystone'
 test = 'src/keystone/test'
 via_ir = false
 
+[profile.shardconfig]
+optimizer_runs = 1_000_000
+solc_version = '0.8.24'
+src = 'src/shardconfig'
+test = 'src/shardconfig/test'
+via_ir = false
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
 [lint]
