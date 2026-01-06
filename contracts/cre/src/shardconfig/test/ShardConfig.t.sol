@@ -3,17 +3,16 @@ pragma solidity 0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {ShardConfig} from "../ShardConfig.sol";
+import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 
 contract ShardConfigTest is Test {
   ShardConfig internal s_shardConfig;
 
-  address internal constant MCMS_ADDRESS = address(0x1234567890123456789012345678901234567890);
-  address internal constant NEW_MCMS_ADDRESS = address(0x0987654321098765432109876543210987654321);
-  address internal constant NON_MCMS_ADDRESS = address(0xDEADBEEF);
+  address internal constant NON_OWNER_ADDRESS = address(0xDEADBEEF);
   uint256 internal constant INITIAL_SHARD_COUNT = 10;
 
   function setUp() public virtual {
-    s_shardConfig = new ShardConfig(INITIAL_SHARD_COUNT, MCMS_ADDRESS);
+    s_shardConfig = new ShardConfig(INITIAL_SHARD_COUNT);
   }
 
   function testTypeAndVersion() public view {
@@ -22,23 +21,17 @@ contract ShardConfigTest is Test {
 
   function testConstructor_Success() public view {
     assertEq(s_shardConfig.desiredShardCount(), INITIAL_SHARD_COUNT);
-    assertEq(s_shardConfig.mcmsAddress(), MCMS_ADDRESS);
-  }
-
-  function testConstructor_RevertZeroMCMS() public {
-    vm.expectRevert("Invalid MCMS address");
-    new ShardConfig(INITIAL_SHARD_COUNT, address(0));
+    assertEq(s_shardConfig.owner(), address(this));
   }
 
   function testConstructor_RevertZeroShardCount() public {
     vm.expectRevert("Shard count must be greater than 0");
-    new ShardConfig(0, MCMS_ADDRESS);
+    new ShardConfig(0);
   }
 
   function testSetDesiredShardCount_Success() public {
     uint256 newCount = 20;
 
-    vm.prank(MCMS_ADDRESS);
     s_shardConfig.setDesiredShardCount(newCount);
 
     assertEq(s_shardConfig.desiredShardCount(), newCount);
@@ -51,50 +44,38 @@ contract ShardConfigTest is Test {
     vm.expectEmit(true, false, false, false);
     emit ShardConfig.ShardCountUpdated(newCount);
 
-    vm.prank(MCMS_ADDRESS);
     s_shardConfig.setDesiredShardCount(newCount);
   }
 
-  function testSetDesiredShardCount_RevertNotMCMS() public {
-    vm.prank(NON_MCMS_ADDRESS);
-    vm.expectRevert("Only MCMS can update shard count");
+  function testSetDesiredShardCount_RevertNotOwner() public {
+    vm.prank(NON_OWNER_ADDRESS);
+    vm.expectRevert(Ownable2Step.OnlyCallableByOwner.selector);
     s_shardConfig.setDesiredShardCount(20);
   }
 
   function testSetDesiredShardCount_RevertZeroCount() public {
-    vm.prank(MCMS_ADDRESS);
     vm.expectRevert("Shard count must be greater than 0");
     s_shardConfig.setDesiredShardCount(0);
   }
 
-  function testSetMCMSAddress_Success() public {
-    vm.prank(MCMS_ADDRESS);
-    s_shardConfig.setMCMSAddress(NEW_MCMS_ADDRESS);
-
-    assertEq(s_shardConfig.mcmsAddress(), NEW_MCMS_ADDRESS);
-  }
-
-  function testSetMCMSAddress_EmitsEvent() public {
-    vm.expectEmit(true, false, false, false);
-    emit ShardConfig.MCMSAddressUpdated(NEW_MCMS_ADDRESS);
-
-    vm.prank(MCMS_ADDRESS);
-    s_shardConfig.setMCMSAddress(NEW_MCMS_ADDRESS);
-  }
-
-  function testSetMCMSAddress_RevertNotMCMS() public {
-    vm.prank(NON_MCMS_ADDRESS);
-    vm.expectRevert("Only MCMS can update its own address");
-    s_shardConfig.setMCMSAddress(NEW_MCMS_ADDRESS);
-  }
-
-  function testSetMCMSAddress_RevertZeroAddress() public {
-    vm.prank(MCMS_ADDRESS);
-    vm.expectRevert("Invalid MCMS address");
-    s_shardConfig.setMCMSAddress(address(0));
-  }
-
   function testGetDesiredShardCount() public view {
     assertEq(s_shardConfig.getDesiredShardCount(), INITIAL_SHARD_COUNT);
+  }
+
+  function testOwnershipTransfer() public {
+    address newOwner = address(0x1234);
+
+    // Step 1: Current owner initiates transfer
+    s_shardConfig.transferOwnership(newOwner);
+
+    // Owner hasn't changed yet
+    assertEq(s_shardConfig.owner(), address(this));
+
+    // Step 2: New owner accepts
+    vm.prank(newOwner);
+    s_shardConfig.acceptOwnership();
+
+    // Now ownership has transferred
+    assertEq(s_shardConfig.owner(), newOwner);
   }
 }
