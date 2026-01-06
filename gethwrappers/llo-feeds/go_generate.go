@@ -21,6 +21,7 @@ package gethwrappers
 //go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 VerifierProxy verifier_proxy_v0_5_0
 //go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 FeeManager fee_manager_v0_5_0
 //go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 RewardManager reward_manager_v0_5_0
+//go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 NoOpFeeManager no_op_fee_manager
 
 //go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 ChannelConfigStore channel_config_store
 //go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 Configurator configurator
