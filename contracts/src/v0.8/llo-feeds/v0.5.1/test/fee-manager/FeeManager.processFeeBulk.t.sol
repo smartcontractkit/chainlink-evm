@@ -9,7 +9,7 @@ import "./BaseFeeManager.t.sol";
  * @author Michael Fletcher
  * @notice This contract will test the functionality of the feeManager processFee
  */
-contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
+contract FeeManagerProcessFeeTestV051 is BaseFeeManagerTest {
   uint256 internal constant NUMBER_OF_REPORTS = 5;
 
   function setUp() public override {

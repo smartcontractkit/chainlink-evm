@@ -27,3 +27,10 @@ package gethwrappers
 //go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 Configurator configurator
 //go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 ExposedConfigurator exposed_configurator
 //go:generate go run ../generation/wrap.go llo-feeds/v0.5.0 MockFeeManager mock_fee_manager_v0_5_0
+
+// Chainlink LLO V0.5.1
+//go:generate go run ../generation/wrap.go llo-feeds/v0.5.1 Verifier verifier_v0_5_1
+//go:generate go run ../generation/wrap.go llo-feeds/v0.5.1 VerifierProxy verifier_proxy_v0_5_1
+//go:generate go run ../generation/wrap.go llo-feeds/v0.5.1 FeeManager fee_manager_v0_5_1
+//go:generate go run ../generation/wrap.go llo-feeds/v0.5.1 RewardManager reward_manager_v0_5_1
+//go:generate go run ../generation/wrap.go llo-feeds/v0.5.1 NoOpFeeManager no_op_fee_manager_v0_5_1

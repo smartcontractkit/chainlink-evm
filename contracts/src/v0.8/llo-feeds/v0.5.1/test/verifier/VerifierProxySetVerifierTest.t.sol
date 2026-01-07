@@ -8,7 +8,7 @@ import {BaseTestWithConfiguredVerifierAndFeeManager} from "./BaseVerifierTest.t.
 
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
-contract VerifierProxyInitializeVerifierTestV05 is BaseTestWithConfiguredVerifierAndFeeManager {
+contract VerifierProxyInitializeVerifierTestV051 is BaseTestWithConfiguredVerifierAndFeeManager {
   function test_revertsIfNotCorrectVerifier() public {
     vm.expectRevert(abi.encodeWithSelector(VerifierProxy.AccessForbidden.selector));
     s_verifierProxy.setVerifier(bytes32("prev-config"), bytes32("new-config"), new Common.AddressAndWeight[](0));

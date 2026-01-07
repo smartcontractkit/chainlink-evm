@@ -6,7 +6,7 @@ import {
   BaseTestWithConfiguredVerifierAndFeeManager, BaseTestWithMultipleConfiguredDigests
 } from "./BaseVerifierTest.t.sol";
 
-contract VerifierActivateConfigTestV05 is BaseTestWithConfiguredVerifierAndFeeManager {
+contract VerifierActivateConfigTestV051 is BaseTestWithConfiguredVerifierAndFeeManager {
   function test_revertsIfNotOwner() public {
     vm.expectRevert("Only callable by owner");
 
@@ -25,7 +25,7 @@ contract VerifierActivateConfigTestV05 is BaseTestWithConfiguredVerifierAndFeeMa
   }
 }
 
-contract VerifierActivateConfigWithDeactivatedConfigTestV05 is BaseTestWithMultipleConfiguredDigests {
+contract VerifierActivateConfigWithDeactivatedConfigTestV051 is BaseTestWithMultipleConfiguredDigests {
   bytes32[3] internal s_reportContext;
 
   event ConfigActivated(bytes32 configDigest);

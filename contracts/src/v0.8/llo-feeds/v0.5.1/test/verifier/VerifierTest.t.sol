@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {Verifier} from "../../Verifier.sol";
 import {BaseTest} from "./BaseVerifierTest.t.sol";
 
-contract VerifierConstructorTestV05 is BaseTest {
+contract VerifierConstructorTestV051 is BaseTest {
   function test_revertsIfInitializedWithEmptyVerifierProxy() public {
     vm.expectRevert(abi.encodeWithSelector(Verifier.ZeroAddress.selector));
     new Verifier(address(0));

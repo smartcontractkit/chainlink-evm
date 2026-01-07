@@ -5,7 +5,7 @@ import {FeeManager} from "../../FeeManager.sol";
 import {VerifierProxy} from "../../VerifierProxy.sol";
 import {BaseTestWithConfiguredVerifierAndFeeManager} from "./BaseVerifierTest.t.sol";
 
-contract VerifierProxyInitializeVerifierTestV05 is BaseTestWithConfiguredVerifierAndFeeManager {
+contract VerifierProxyInitializeVerifierTestV051 is BaseTestWithConfiguredVerifierAndFeeManager {
   function test_setFeeManagerZeroAddress() public {
     vm.expectRevert(abi.encodeWithSelector(VerifierProxy.ZeroAddress.selector));
     s_verifierProxy.setFeeManager(FeeManager(address(0)));

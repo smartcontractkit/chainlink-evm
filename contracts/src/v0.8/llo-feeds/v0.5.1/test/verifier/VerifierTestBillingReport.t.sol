@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {BaseTestWithConfiguredVerifierAndFeeManager} from "./BaseVerifierTest.t.sol";
 
-contract VerifierTestWithConfiguredVerifierAndFeeManager is BaseTestWithConfiguredVerifierAndFeeManager {
+contract VerifierTestWithConfiguredVerifierAndFeeManagerV051 is BaseTestWithConfiguredVerifierAndFeeManager {
   uint256 internal constant DEFAULT_LINK_MINT_QUANTITY = 100 ether;
   uint256 internal constant DEFAULT_NATIVE_MINT_QUANTITY = 100 ether;
 
@@ -20,7 +20,7 @@ contract VerifierTestWithConfiguredVerifierAndFeeManager is BaseTestWithConfigur
   }
 }
 
-contract VerifierTestBillingReportV05 is VerifierTestWithConfiguredVerifierAndFeeManager {
+contract VerifierTestBillingReportV051 is VerifierTestWithConfiguredVerifierAndFeeManagerV051 {
   function test_verifyWithLink() public {
     bytes memory signedReport = _generateV3EncodedBlob(
       _generateV3Report(), _generateReportContext(v3ConfigDigest), _getSigners(FAULT_TOLERANCE + 1)
@@ -69,7 +69,7 @@ contract VerifierTestBillingReportV05 is VerifierTestWithConfiguredVerifierAndFe
   }
 }
 
-contract VerifierBulkVerifyBillingReportV05 is VerifierTestWithConfiguredVerifierAndFeeManager {
+contract VerifierBulkVerifyBillingReportV051 is VerifierTestWithConfiguredVerifierAndFeeManagerV051 {
   uint256 internal constant NUMBERS_OF_REPORTS = 5;
 
   function test_verifyWithBulkLink() public {

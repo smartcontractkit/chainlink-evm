@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {Verifier} from "../../Verifier.sol";
 import {BaseTestWithMultipleConfiguredDigests} from "./BaseVerifierTest.t.sol";
 
-contract VerificationdeactivateConfigWhenThereAreMultipleDigestsTestV05 is BaseTestWithMultipleConfiguredDigests {
+contract VerificationdeactivateConfigWhenThereAreMultipleDigestsTestV051 is BaseTestWithMultipleConfiguredDigests {
   function test_revertsIfCalledByNonOwner() public {
     vm.expectRevert("Only callable by owner");
 

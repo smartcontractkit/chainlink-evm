@@ -6,7 +6,7 @@ import {Verifier} from "../../Verifier.sol";
 import {MockConfigurator} from "../mocks/MockConfigurator.sol";
 import {BaseTest, BaseTestWithMultipleConfiguredDigests} from "./BaseVerifierTest.t.sol";
 
-contract VerifierSetConfigTestV05 is BaseTest {
+contract VerifierSetConfigTestV051 is BaseTest {
   function setUp() public virtual override {
     BaseTest.setUp();
   }
@@ -267,7 +267,7 @@ contract VerifierUpdateConfigTestV051 is BaseTest {
   }
 }
 
-contract VerifierSetConfigWhenThereAreMultipleDigestsTest05 is BaseTestWithMultipleConfiguredDigests {
+contract VerifierSetConfigWhenThereAreMultipleDigestsTestV051 is BaseTestWithMultipleConfiguredDigests {
   function test_correctlyUpdatesTheDigestInTheProxy() public {
     Signer[] memory newSigners = _getSigners(15);
 

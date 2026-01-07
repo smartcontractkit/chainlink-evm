@@ -8,7 +8,7 @@ import "./BaseFeeManager.t.sol";
  * @author Michael Fletcher
  * @notice This contract will test the setup functionality of the feemanager
  */
-contract FeeManagerProcessFeeTestV05 is BaseFeeManagerTest {
+contract FeeManagerProcessFeeTestV051 is BaseFeeManagerTest {
   function setUp() public override {
     super.setUp();
   }
