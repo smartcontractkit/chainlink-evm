@@ -6,7 +6,7 @@ import {Common} from "../../../libraries/Common.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
 import {BaseTest, BaseTestWithConfiguredVerifierAndFeeManager} from "../verifier/BaseVerifierTest.t.sol";
 
-contract Verifier_setConfigV03 is BaseTest {
+contract Verifier_setConfigV051 is BaseTest {
   address[] internal s_signerAddrs;
 
   function setUp() public override {
@@ -17,20 +17,24 @@ contract Verifier_setConfigV03 is BaseTest {
   }
 
   function testSetConfigSuccess_gas() public {
-    s_verifier.setConfig(
+    bytes32 configDigest = _configDigestFromConfigData(
       FEED_ID,
+      SOURCE_CHAIN_ID,
+      SOURCE_ADDRESS,
+      1,
       s_signerAddrs,
       s_offchaintransmitters,
       FAULT_TOLERANCE,
       bytes(""),
-      VERIFIER_VERSION,
-      bytes(""),
-      new Common.AddressAndWeight[](0)
+      1,
+      bytes("")
     );
+
+    s_verifier.setConfig(configDigest, s_signerAddrs, FAULT_TOLERANCE, new Common.AddressAndWeight[](0));
   }
 }
 
-contract Verifier_verifyWithFeeV03 is BaseTestWithConfiguredVerifierAndFeeManager {
+contract Verifier_verifyWithFeeV051 is BaseTestWithConfiguredVerifierAndFeeManager {
   uint256 internal constant DEFAULT_LINK_MINT_QUANTITY = 100 ether;
   uint256 internal constant DEFAULT_NATIVE_MINT_QUANTITY = 100 ether;
 
@@ -44,7 +48,7 @@ contract Verifier_verifyWithFeeV03 is BaseTestWithConfiguredVerifierAndFeeManage
     //warm the rewardManager
     link.mint(address(this), DEFAULT_NATIVE_MINT_QUANTITY);
     _approveLink(address(rewardManager), DEFAULT_REPORT_LINK_FEE, address(this));
-    (,, bytes32 latestConfigDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    bytes32 latestConfigDigest = v1ConfigDigest;
 
     //mint some tokens to the user
     link.mint(USER, DEFAULT_LINK_MINT_QUANTITY);
@@ -84,7 +88,7 @@ contract Verifier_verifyWithFeeV03 is BaseTestWithConfiguredVerifierAndFeeManage
   }
 }
 
-contract Verifier_bulkVerifyWithFeeV03 is BaseTestWithConfiguredVerifierAndFeeManager {
+contract Verifier_bulkVerifyWithFeeV051 is BaseTestWithConfiguredVerifierAndFeeManager {
   uint256 internal constant DEFAULT_LINK_MINT_QUANTITY = 100 ether;
   uint256 internal constant DEFAULT_NATIVE_MINT_QUANTITY = 100 ether;
   uint256 internal constant NUMBER_OF_REPORTS_TO_VERIFY = 5;
@@ -99,7 +103,7 @@ contract Verifier_bulkVerifyWithFeeV03 is BaseTestWithConfiguredVerifierAndFeeMa
     //warm the rewardManager
     link.mint(address(this), DEFAULT_NATIVE_MINT_QUANTITY);
     _approveLink(address(rewardManager), DEFAULT_REPORT_LINK_FEE, address(this));
-    (,, bytes32 latestConfigDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    bytes32 latestConfigDigest = v1ConfigDigest;
 
     //mint some tokens to the user
     link.mint(USER, DEFAULT_LINK_MINT_QUANTITY);
@@ -149,7 +153,7 @@ contract Verifier_bulkVerifyWithFeeV03 is BaseTestWithConfiguredVerifierAndFeeMa
   }
 }
 
-contract Verifier_verifyV03 is BaseTestWithConfiguredVerifierAndFeeManager {
+contract Verifier_verifyV051 is BaseTestWithConfiguredVerifierAndFeeManager {
   bytes internal s_signedReport;
   bytes32 internal s_configDigest;
 
@@ -166,7 +170,7 @@ contract Verifier_verifyV03 is BaseTestWithConfiguredVerifierAndFeeManager {
       BLOCKNUMBER_LOWER_BOUND,
       uint32(block.timestamp)
     );
-    (,, s_configDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    s_configDigest = v1ConfigDigest;
     bytes32[3] memory reportContext;
     reportContext[0] = s_configDigest;
     reportContext[1] = bytes32(abi.encode(uint32(5), uint8(1)));
@@ -184,7 +188,7 @@ contract Verifier_verifyV03 is BaseTestWithConfiguredVerifierAndFeeManager {
   }
 }
 
-contract Verifier_accessControlledVerifyV03 is BaseTestWithConfiguredVerifierAndFeeManager {
+contract Verifier_accessControlledVerifyV051 is BaseTestWithConfiguredVerifierAndFeeManager {
   bytes internal s_signedReport;
   bytes32 internal s_configDigest;
   SimpleWriteAccessController s_accessController;
@@ -205,7 +209,7 @@ contract Verifier_accessControlledVerifyV03 is BaseTestWithConfiguredVerifierAnd
       BLOCKNUMBER_LOWER_BOUND,
       uint32(block.timestamp)
     );
-    (,, s_configDigest) = s_verifier.latestConfigDetails(FEED_ID);
+    s_configDigest = v1ConfigDigest;
     bytes32[3] memory reportContext;
     reportContext[0] = s_configDigest;
     reportContext[1] = bytes32(abi.encode(uint32(5), uint8(1)));

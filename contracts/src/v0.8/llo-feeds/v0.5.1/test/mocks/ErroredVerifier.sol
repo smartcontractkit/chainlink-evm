@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.19;
+
+import {Common} from "../../../libraries/Common.sol";
+import {IVerifier} from "../../interfaces/IVerifier.sol";
+
+contract ErroredVerifier is IVerifier {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public pure override returns (bool) {
+    return interfaceId == this.verify.selector || interfaceId == this.verifyView.selector;
+  }
+
+  //define each of the errors thrown in the revert below
+
+  error FailedToVerify();
+  error FailedToVerifyView();
+  error FailedToSetConfig();
+  error FailedToUnsetConfig();
+  error FailedToActivateConfig();
+  error FailedToDeactivateConfig();
+  error FailedToActivateFeed();
+  error FailedToDeactivateFeed();
+  error FailedToGetLatestConfigDigestAndEpoch();
+  error FailedToGetLatestConfigDetails();
+
+  function verify(
+    bytes memory,
+    /**
+     * signedReport*
+     */
+    address
+  )
+    external
+    pure
+    override
+    returns (
+      /**
+       * sender*
+       */
+      bytes memory
+    )
+  {
+    revert FailedToVerify();
+  }
+
+  function verifyView(
+    bytes calldata
+  ) external pure override returns (bytes memory) {
+    revert FailedToVerifyView();
+  }
+
+  function updateConfig(bytes32, address[] calldata, address[] calldata, uint8) external pure {
+    revert FailedToUnsetConfig();
+  }
+
+  function setConfig(bytes32, address[] calldata, uint8, Common.AddressAndWeight[] calldata) external pure override {
+    revert FailedToSetConfig();
+  }
+
+  function activateConfig(
+    bytes32
+  ) external pure {
+    revert FailedToActivateConfig();
+  }
+
+  function deactivateConfig(
+    bytes32
+  ) external pure {
+    revert FailedToDeactivateConfig();
+  }
+
+  function latestConfigDetails(
+    bytes32
+  ) external pure override returns (uint32) {
+    revert FailedToGetLatestConfigDetails();
+  }
+}
