@@ -12,7 +12,7 @@ import {IVerifierFeeManager} from "../../interfaces/IVerifierFeeManager.sol";
 import {FeeManagerProxy} from "../mocks/FeeManagerProxy.sol";
 import {Test} from "forge-std/Test.sol";
 
-contract NoOpFeeManagerTest is Test {
+contract NoOpFeeManagerTestV051 is Test {
   NoOpFeeManager internal noOpFeeManager;
   FeeManager internal feeManager;
   RewardManager internal rewardManager;
