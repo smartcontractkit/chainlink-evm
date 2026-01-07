@@ -25,10 +25,6 @@ func NewTxKeyCoreKeystore(ks keystore.Keystore) *TxKeyCoreKeystore {
 	}
 }
 
-func (s *TxKeyCoreKeystore) GetCache() map[string]string {
-	return s.cache
-}
-
 func (s *TxKeyCoreKeystore) Accounts(ctx context.Context) ([]string, error) {
 	keys, err := GetTxKeys(ctx, s.ks, []string{})
 	if err != nil {

@@ -47,8 +47,7 @@ func TestCoreKeystore(t *testing.T) {
 	require.True(t, resp.Valid)
 
 	// Make sure the cache populated.
-	cache := coreKs.GetCache()
-	require.Equal(t, txKey.KeyPath().String(), cache[txKey.Address().String()])
+	require.Equal(t, txKey.KeyPath().String(), coreKs.cache[txKey.Address().String()])
 
 	// Sign again with cached.
 	signature, err = coreKs.Sign(ctx, txKey.Address().String(), data)
