@@ -20,6 +20,16 @@ interface IVerifierProxy {
   ) external payable returns (bytes memory verifierResponse);
 
   /**
+   * @notice Verifies that the data encoded has been signed correctly (view version)
+   * @param payload The encoded data to be verified, including the signed report.
+   * @return verifierResponse The encoded report from the verifier.
+   * @dev Same as verify() but does not emit events or bill the user (view-compatible)
+   */
+  function verifyView(
+    bytes calldata payload
+  ) external view returns (bytes memory verifierResponse);
+
+  /**
    * @notice Bulk verifies that the data encoded has been signed
    * correctly by routing to the correct verifier, and bills the user if applicable.
    * @param payloads The encoded payloads to be verified, including the signed
@@ -31,6 +41,16 @@ interface IVerifierProxy {
     bytes[] calldata payloads,
     bytes calldata parameterPayload
   ) external payable returns (bytes[] memory verifiedReports);
+
+  /**
+   * @notice Bulk verifies that the data encoded has been signed correctly (view version)
+   * @param payloads The encoded payloads to be verified, including the signed reports.
+   * @return verifiedReports The encoded reports from the verifier.
+   * @dev Same as verifyBulk() but does not emit events or bill the user (view-compatible)
+   */
+  function verifyBulkView(
+    bytes[] calldata payloads
+  ) external view returns (bytes[] memory verifiedReports);
 
   /**
    * @notice Sets the verifier address initially, allowing `setVerifier` to be set by this Verifier in the future

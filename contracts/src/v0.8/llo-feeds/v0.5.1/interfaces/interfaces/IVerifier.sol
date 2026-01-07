@@ -19,6 +19,16 @@ interface IVerifier is IERC165 {
   function verify(bytes calldata signedReport, address sender) external returns (bytes memory verifierResponse);
 
   /**
+   * @notice Verifies that the data encoded has been signed correctly (view version)
+   * @param signedReport The encoded data to be verified.
+   * @return verifierResponse The encoded verified response.
+   * @dev Same as verify() but does not emit events (view-compatible)
+   */
+  function verifyView(
+    bytes calldata signedReport
+  ) external view returns (bytes memory verifierResponse);
+
+  /**
    * @notice sets a configuration and its associated keys and f
    * @param configDigest The digest of the configuration we're setting
    * @param signers addresses with which oracles sign the reports
