@@ -143,5 +143,5 @@ evm_version = 'paris'
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
-[profile.lint]
+[lint]
 lint_on_build = false
