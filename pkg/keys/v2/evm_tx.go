@@ -38,6 +38,16 @@ type SignTxResponse struct {
 	Tx *gethtypes.Transaction
 }
 
+// SignRawDataRequest contains the request to sign raw data.
+type SignRawDataRequest struct {
+	Data []byte
+}
+
+// SignRawDataResponse contains the signed raw data.
+type SignRawDataResponse struct {
+	Signature []byte
+}
+
 // KeyPath returns the key path for this transaction key.
 func (k *TxKey) KeyPath() keystore.KeyPath {
 	return k.keyPath
@@ -68,6 +78,18 @@ func (k *TxKey) SignTx(ctx context.Context, req SignTxRequest) (SignTxResponse, 
 		return SignTxResponse{}, err
 	}
 	return SignTxResponse{Tx: req.Tx}, nil
+}
+
+func (k *TxKey) SignRaw(ctx context.Context, req SignRawDataRequest) (SignRawDataResponse, error) {
+	signReq := keystore.SignRequest{
+		KeyName: k.keyPath.String(),
+		Data:    req.Data,
+	}
+	signResp, err := k.ks.Sign(ctx, signReq)
+	if err != nil {
+		return SignRawDataResponse{}, err
+	}
+	return SignRawDataResponse{Signature: signResp.Signature}, nil
 }
 
 // GetTransactOpts returns transaction options for this key.
