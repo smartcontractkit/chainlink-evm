@@ -43,6 +43,7 @@ contract MockKeystoneForwarder_BasicTest is Test {
 
   function test_TypeAndVersion() public view {
     assertEq(s_forwarder.typeAndVersion(), "MockKeystoneForwarder 1.0.0-dev");
+    assertEq(s_forwarder.typeAndVersion().length, bytes("MockKeystoneForwarder 1.0.0-dev").length);
   }
 
   function test_IsForwarder_SelfTrue_AddRemove() public {
