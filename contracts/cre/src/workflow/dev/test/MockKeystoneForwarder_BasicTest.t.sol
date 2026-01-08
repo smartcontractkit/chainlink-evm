@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IRouter} from "../../../keystone/interfaces/IRouter.sol";
+import {IRouter} from "../../../core/v1/interfaces/IRouter.sol";
 import {MockKeystoneForwarder} from "../../../workflow/dev/MockKeystoneForwarder.sol";
 import {Test} from "forge-std/Test.sol";
 

@@ -43,12 +43,21 @@ solc_version = '0.8.26'
 src = 'src/workflow/v2'
 test = 'src/workflow/v2/test'
 
-[profile.keystone]
+[profile.core]
+src = 'src/core'
+
+[profile.core-v1]
 optimizer_runs = 1_000_000
 solc_version = '0.8.24'
-src = 'src/keystone'
-test = 'src/keystone/test'
+src = 'src/core/v1'
+test = 'src/core/v1/test'
 via_ir = false
+
+[profile.core-v2]
+optimizer_runs = 1_000
+solc_version = '0.8.26'
+src = 'src/core/v2'
+test = 'src/core/v2/test'
 
 [profile.shardconfig]
 optimizer_runs = 1_000_000

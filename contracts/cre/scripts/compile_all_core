@@ -3,10 +3,12 @@
 set -e
 
 echo " ┌──────────────────────────────────────────────┐"
-echo " │    Compiling Workflow contracts...           │"
+echo " │    Compiling CRE Core contracts...           │"
 echo " └──────────────────────────────────────────────┘"
 
-PROJECT="workflow"
+
+PROJECT="core"
+
 CONTRACTS_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../ && pwd -P )"
 echo "Contracts directory: $CONTRACTS_DIR"
 
@@ -23,9 +25,9 @@ compileContract () {
   -o "$CONTRACTS_DIR/solc/$PROJECT/$src_rel"
 }
 
-compileContract workflow-v1 v1/WorkflowRegistry
-compileContract workflow-v1 dev/MessageEmitter
-
-compileContract workflow-v2 v2/WorkflowRegistry
-compileContract workflow-v2 dev/MockKeystoneForwarder
-compileContract workflow-v2 dev/ReserveManager
+compileContract core-v1 v1/CapabilitiesRegistry
+compileContract core-v1 v1/KeystoneForwarder
+compileContract core-v1 v1/OCR3Capability
+compileContract core-v1 v1/KeystoneFeedsConsumer
+compileContract core-v1 v1/BalanceReader
+compileContract core-v2 v2/CapabilitiesRegistry

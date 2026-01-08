@@ -42,6 +42,8 @@
 /contracts/src/v0.8/vrf @smartcontractkit/dev-services
 /contracts/src/v0.8/payments @smartcontractkit/payments
 /contracts/cre @smartcontractkit/dev-services @smartcontractkit/foundations
+/contracts/cre/src/core @smartcontractkit/foundations
+/contracts/cre/src/workflow @smartcontractkit/dev-services
 
 /gethwrappers @smartcontractkit/core-solidity
 /gethwrappers/functions @smartcontractkit/dev-services
