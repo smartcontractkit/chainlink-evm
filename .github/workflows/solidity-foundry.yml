@@ -36,7 +36,8 @@ jobs:
             { "name": "shared", "setup": { "run-coverage": true, "extra-coverage-params": "--no-match-path='*CallWithExactGas*' --ir-minimum", "min-coverage": 29, "run-gas-snapshot": true }},
             { "name": "vrf", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false }},
             { "name": "workflow", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum --no-match-coverage='(.*v1/test.*)|(.*v2/test.*)'", "min-coverage": 93.0, "run-gas-snapshot": true, "subfolder": "/cre" }},
-            { "name": "core", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum", "min-coverage": 72.8, "run-gas-snapshot": false, "subfolder": "/cre" }},
+            { "name": "core-v1", "setup": { "run-coverage": true, "min-coverage": 72.8, "run-gas-snapshot": true, "subfolder": "/cre" }},
+            { "name": "core-v2", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum", "min-coverage": 72.8, "run-gas-snapshot": true, "subfolder": "/cre" }},
             { "name": "data-feeds", "setup": { "run-coverage": true, "min-coverage": 98.5, "run-gas-snapshot": true, "extra-coverage-params": "--no-match-coverage='WIP*'" }},
             { "name": "payments", "setup": { "run-coverage": true, "min-coverage": 100, "run-gas-snapshot": true, "extra-coverage-params": "" }}
           ]
@@ -132,7 +133,7 @@ jobs:
       matrix:
         product: ${{fromJson(needs.define-matrix.outputs.matrix)}}
     needs: [define-matrix, changes]
-    name: Foundry Tests ${{ matrix.product.name }}
+    name: Foundry Tests ${{ matrix.product.setup.subfolder || '' }} ${{ matrix.product.name }}
     runs-on: ubuntu-22.04
 
     # The if statements for steps after checkout repo is workaround for
