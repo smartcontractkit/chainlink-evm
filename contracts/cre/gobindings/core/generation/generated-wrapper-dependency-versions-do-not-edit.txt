@@ -1,6 +1,5 @@
 GETH_VERSION: 1.16.2
 balance_reader: ../../solc/core/v1/BalanceReader/BalanceReader.sol/BalanceReader.abi.json ../../solc/core/v1/BalanceReader/BalanceReader.sol/BalanceReader.bin e7a44b3cf9611b33243a8f966ce18b98326cb9172c64578c0a30a3850573e423
-capabilities_registry: ../../solc/keystone/CapabilitiesRegistry/CapabilitiesRegistry.sol/CapabilitiesRegistry.abi.json ../../solc/keystone/CapabilitiesRegistry/CapabilitiesRegistry.sol/CapabilitiesRegistry.bin 2e3a56553903d0bf457e5e03d098aab90d03fdfe8fb0125ce54bb5ccdbc07803
 capabilities_registry_v1: ../../solc/core/v1/CapabilitiesRegistry/CapabilitiesRegistry.sol/CapabilitiesRegistry.abi.json ../../solc/core/v1/CapabilitiesRegistry/CapabilitiesRegistry.sol/CapabilitiesRegistry.bin 2e3a56553903d0bf457e5e03d098aab90d03fdfe8fb0125ce54bb5ccdbc07803
 capabilities_registry_wrapper_v2: ../../solc/core/v2/CapabilitiesRegistry/CapabilitiesRegistry.sol/CapabilitiesRegistry.abi.json ../../solc/core/v2/CapabilitiesRegistry/CapabilitiesRegistry.sol/CapabilitiesRegistry.bin 4da4a10c2fa6e7fd049c6b2470d1403df9a4a77f516941cfd2d5f1f067a14d8b
 feeds_consumer: ../../solc/core/v1/KeystoneFeedsConsumer/KeystoneFeedsConsumer.sol/KeystoneFeedsConsumer.abi.json ../../solc/core/v1/KeystoneFeedsConsumer/KeystoneFeedsConsumer.sol/KeystoneFeedsConsumer.bin 5baf27ad3326083755408c35b7eb09fe1ea2eef45eaa59c29cfad6cc45a1d720
