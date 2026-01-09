@@ -52,6 +52,9 @@ func (c *evmTxAttemptBuilder) NewTxAttempt(ctx context.Context, etx Tx, lggr log
 // used for L2 re-estimation on broadcasting (note EIP1559 must be disabled otherwise this will fail with mismatched fees + tx type)
 func (c *evmTxAttemptBuilder) NewTxAttemptWithType(ctx context.Context, etx Tx, lggr logger.Logger, txType int, opts ...fees.Opt) (attempt TxAttempt, fee gas.EvmFee, feeLimit uint64, retryable bool, err error) {
 	keySpecificMaxGasPriceWei := c.feeConfig.PriceMaxKey(etx.FromAddress)
+	if etx.MaxGasPrice != nil {
+		keySpecificMaxGasPriceWei = assets.NewWei(etx.MaxGasPrice) // give prefence to max gas price from tx request
+	}
 	fee, feeLimit, err = c.EvmFeeEstimator.GetFee(ctx, etx.EncodedPayload, etx.FeeLimit, keySpecificMaxGasPriceWei, &etx.FromAddress, &etx.ToAddress, opts...)
 	if err != nil {
 		return attempt, fee, feeLimit, true, pkgerrors.Wrap(err, "failed to get fee") // estimator errors are retryable
