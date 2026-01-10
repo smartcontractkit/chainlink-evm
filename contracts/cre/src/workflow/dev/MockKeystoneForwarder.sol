@@ -41,7 +41,7 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
     s_forwarders[address(this)] = true;
   }
 
-  uint256 internal constant METADATA_LENGTH = 109;
+  uint256 internal constant METADATA_LENGTHH = 109;
   uint256 internal constant FORWARDER_METADATA_LENGTH = 45;
 
   /// @dev This is the gas required to store `success` after the report is processed.
@@ -165,7 +165,7 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
 
   /// @notice Simplified permissionless report function that skips all validations
   function report(address receiver, bytes calldata rawReport, bytes calldata, bytes[] calldata) external {
-    if (rawReport.length < METADATA_LENGTH) {
+    if (rawReport.length < METADATA_LENGTHH) {
       revert InvalidReport();
     }
 
@@ -180,8 +180,8 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
       getTransmissionId(receiver, workflowExecutionId, reportId),
       msg.sender,
       receiver,
-      rawReport[FORWARDER_METADATA_LENGTH:METADATA_LENGTH],
-      rawReport[METADATA_LENGTH:]
+      rawReport[FORWARDER_METADATA_LENGTH:METADATA_LENGTHH],
+      rawReport[METADATA_LENGTHH:]
     );
 
     emit ReportProcessed(receiver, workflowExecutionId, reportId, success);
