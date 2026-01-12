@@ -22,10 +22,10 @@ import (
 // the <project>/generated, so the overridden location would be
 // <project>/generated/<outDirSuffixInput>/<pkgName>/<pkgName>.go.
 func GenWrapper(projectRoot, contract, pkgName, outDirSuffixInput, abiGenPath string) {
-	abiPath := projectRoot + "/" + contract + "/" + contract + ".sol/" + contract + ".abi.json"
-	metadataPath := projectRoot + "/" + contract + "/" + contract + ".sol/" + contract + ".metadata.json"
-	binPath := projectRoot + "/" + contract + "/" + contract + ".sol/" + contract + ".bin"
-	buildInfoPath := projectRoot + "/" + contract + "/build/build.json"
+	abiPath := filepath.Join(projectRoot, contract, contract+".sol", contract+".abi.json")
+	metadataPath := filepath.Join(projectRoot, contract, contract+".sol", contract+".metadata.json")
+	binPath := filepath.Join(projectRoot, contract, contract+".sol", contract+".bin")
+	buildInfoPath := filepath.Join(projectRoot, contract, "build", "build.json")
 
 	fmt.Println("Generating", pkgName, "contract wrapper")
 

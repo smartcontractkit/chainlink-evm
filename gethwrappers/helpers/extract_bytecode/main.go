@@ -42,8 +42,11 @@ func run() error {
 	}
 
 	// Validate input directory exists
-	if _, err := os.Stat(*inputDir); os.IsNotExist(err) {
-		return fmt.Errorf("input directory does not exist: %s", *inputDir)
+	if _, err := os.Stat(*inputDir); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("input directory does not exist: %s", *inputDir)
+		}
+		return fmt.Errorf("failed to stat input directory %s: %w", *inputDir, err)
 	}
 
 	fmt.Printf("Input dir: %s\n", *inputDir)
