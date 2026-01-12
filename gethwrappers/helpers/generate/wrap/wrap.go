@@ -67,7 +67,7 @@ func GetOutDir(outDirSuffixInput, pkgName string) string {
 		gethwrappers.Exit("could not get working directory", err)
 	}
 	outDir := filepath.Join(cwd, "generated", outDirSuffixInput, pkgName)
-	if mkdErr := os.MkdirAll(outDir, 0700); err != nil {
+	if mkdErr := os.MkdirAll(outDir, 0700); mkdErr != nil {
 		gethwrappers.Exit(
 			fmt.Sprintf("failed to create wrapper dir, outDirSuffixInput: %s (could be empty)", outDirSuffixInput),
 			mkdErr)
