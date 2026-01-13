@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -23,12 +21,6 @@ func main() {
 	}
 
 	abiGenPath := "../../../../tools/bin/abigen"
-
-	path, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Println(path)
 
 	if os.Getenv("ZKSYNC") == "true" {
 		zksyncBytecodePath := filepath.Join("..", "zkout", contract+".sol", contract+".json")

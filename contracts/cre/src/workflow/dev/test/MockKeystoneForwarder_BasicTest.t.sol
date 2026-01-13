@@ -2,23 +2,35 @@
 pragma solidity 0.8.24;
 
 import {IRouter} from "../../../keystone/interfaces/IRouter.sol";
+import {IReceiver} from "../../../keystone/interfaces/IReceiver.sol";
+
 import {MockKeystoneForwarder} from "../../../workflow/dev/MockKeystoneForwarder.sol";
+
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Test} from "forge-std/Test.sol";
 
 // Minimal receivers to exercise success/failure paths.
-contract GoodReceiver {
+contract GoodReceiver is IReceiver {
   event OnReport(bytes metadata, bytes validatedReport);
 
   function onReport(bytes calldata metadata, bytes calldata validatedReport) external {
     emit OnReport(metadata, validatedReport);
   }
+
+  function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    return interfaceId == type(IReceiver).interfaceId || interfaceId == type(IERC165).interfaceId;
+  }
 }
 
-contract BadReceiver {
+contract BadReceiver is IReceiver {
   error Oops();
 
   function onReport(bytes calldata, bytes calldata) external pure {
     revert Oops();
+  }
+
+  function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    return interfaceId == type(IReceiver).interfaceId || interfaceId == type(IERC165).interfaceId;
   }
 }
 
