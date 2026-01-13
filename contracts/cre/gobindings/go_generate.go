@@ -3,10 +3,10 @@
 package gobindings
 
 // Make sure solidity compiler artifacts are up-to-date. Only output stdout on failure.
-//go:generate ../scripts/compile_all_keystone
-//go:generate ../scripts/compile_all_workflow
-//go:generate ../scripts/compile_all_shardconfig
+//go:generate ../scripts/compile_all_dev
+//go:generate ../scripts/compile_all_v1
+//go:generate ../scripts/compile_all_v2
 
-//go:generate go generate ./keystone
-//go:generate go generate ./workflow
-//go:generate go generate ./shardconfig
+//go:generate go generate ./dev
+//go:generate go generate ./v1
+//go:generate go generate ./v2
