@@ -330,6 +330,48 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 			t.Errorf("Expected subscription to return an error, but test timeout instead")
 		}
 	})
+	t.Run("Health-check prefetch updates latest before WS messages", func(t *testing.T) {
+		server := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_subscribe":
+				require.True(t, params.IsArray())
+				require.Equal(t, "newHeads", params.Array()[0].String())
+				resp.Result = `"0x00"`
+			case "eth_getBlockByNumber":
+				// WS server that responds to eth_getBlockByNumber("latest") with a fixed 42 head
+				require.True(t, params.IsArray())
+				require.Equal(t, "latest", params.Array()[0].String())
+				resp.Result = client.MakeHeadMsgForNumber(42)
+			}
+			return
+		})
+		wsURL := server.WSURL()
+
+		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{WS: wsURL, Cfg: nodePoolCfgWSSub})
+		defer rpc.Close()
+		require.NoError(t, rpc.Dial(ctx))
+
+		// subscribe with health-check flag; no WS head will be sent
+		ch, sub, err := rpc.SubscribeToHeads(multinode.CtxAddHealthCheckFlag(ctx))
+		require.NoError(t, err)
+		defer sub.Unsubscribe()
+
+		// ensure no message is received on the channel within a short timeout
+		nonRecvCtx, nonRecvCancel := context.WithTimeout(ctx, 100*time.Millisecond)
+		defer nonRecvCancel()
+		select {
+		case <-ch:
+			require.Fail(t, "did not expect WS head before assertion; server did not send any")
+		case <-nonRecvCtx.Done():
+			// expected path: no WS messages
+		}
+
+		latest, highestUserObservations := rpc.GetInterceptedChainInfo()
+		assert.Equal(t, int64(42), latest.BlockNumber, "latest should be updated by prefetch")
+		assert.Equal(t, int64(0), latest.FinalizedBlockNumber)
+		assert.Equal(t, int64(0), highestUserObservations.BlockNumber, "user observations should remain unchanged on health-check")
+		assert.Equal(t, int64(0), highestUserObservations.FinalizedBlockNumber)
+	})
 }
 
 func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
