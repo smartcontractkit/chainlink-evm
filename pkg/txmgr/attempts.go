@@ -51,11 +51,8 @@ func (c *evmTxAttemptBuilder) NewTxAttempt(ctx context.Context, etx Tx, lggr log
 // NewTxAttemptWithType builds a new attempt with a new fee estimation where the txType can be specified by the caller
 // used for L2 re-estimation on broadcasting (note EIP1559 must be disabled otherwise this will fail with mismatched fees + tx type)
 func (c *evmTxAttemptBuilder) NewTxAttemptWithType(ctx context.Context, etx Tx, lggr logger.Logger, txType int, opts ...fees.Opt) (attempt TxAttempt, fee gas.EvmFee, feeLimit uint64, retryable bool, err error) {
-	keySpecificMaxGasPriceWei := c.feeConfig.PriceMaxKey(etx.FromAddress)
-	if etx.MaxGasPrice != nil {
-		keySpecificMaxGasPriceWei = assets.NewWei(etx.MaxGasPrice) // give prefence to max gas price from tx request
-	}
-	fee, feeLimit, err = c.EvmFeeEstimator.GetFee(ctx, etx.EncodedPayload, etx.FeeLimit, keySpecificMaxGasPriceWei, &etx.FromAddress, &etx.ToAddress, opts...)
+	maxGasPrice := c.getEffectiveMaxGasPrice(etx)
+	fee, feeLimit, err = c.EvmFeeEstimator.GetFee(ctx, etx.EncodedPayload, etx.FeeLimit, maxGasPrice, &etx.FromAddress, &etx.ToAddress, opts...)
 	if err != nil {
 		return attempt, fee, feeLimit, true, pkgerrors.Wrap(err, "failed to get fee") // estimator errors are retryable
 	}
@@ -67,9 +64,9 @@ func (c *evmTxAttemptBuilder) NewTxAttemptWithType(ctx context.Context, etx Tx, 
 // NewBumpTxAttempt builds a new attempt with a bumped fee - based on the previous attempt tx type
 // used in the txm broadcaster + confirmer when tx ix rejected for too low fee or is not included in a timely manner
 func (c *evmTxAttemptBuilder) NewBumpTxAttempt(ctx context.Context, etx Tx, previousAttempt TxAttempt, priorAttempts []TxAttempt, lggr logger.Logger) (attempt TxAttempt, bumpedFee gas.EvmFee, bumpedFeeLimit uint64, retryable bool, err error) {
-	keySpecificMaxGasPriceWei := c.feeConfig.PriceMaxKey(etx.FromAddress)
+	maxGasPrice := c.getEffectiveMaxGasPrice(etx)
 	// Use the fee limit from the previous attempt to maintain limits adjusted for 2D fees or by estimation
-	bumpedFee, bumpedFeeLimit, err = c.EvmFeeEstimator.BumpFee(ctx, previousAttempt.TxFee, previousAttempt.ChainSpecificFeeLimit, keySpecificMaxGasPriceWei, newEvmPriorAttempts(priorAttempts))
+	bumpedFee, bumpedFeeLimit, err = c.EvmFeeEstimator.BumpFee(ctx, previousAttempt.TxFee, previousAttempt.ChainSpecificFeeLimit, maxGasPrice, newEvmPriorAttempts(priorAttempts))
 	if err != nil {
 		return attempt, bumpedFee, bumpedFeeLimit, true, pkgerrors.Wrap(err, "failed to bump fee") // estimator errors are retryable
 	}
@@ -92,8 +89,8 @@ func (c *evmTxAttemptBuilder) NewPurgeTxAttempt(ctx context.Context, etx Tx, lgg
 	gasLimit := c.feeConfig.LimitDefault()
 	// Transactions being purged will always have a previous attempt since it had to have been broadcasted before at least once
 	previousAttempt := etx.TxAttempts[0]
-	keySpecificMaxGasPriceWei := c.feeConfig.PriceMaxKey(etx.FromAddress)
-	bumpedFee, _, err := c.EvmFeeEstimator.BumpFee(ctx, previousAttempt.TxFee, etx.FeeLimit, keySpecificMaxGasPriceWei, newEvmPriorAttempts(etx.TxAttempts))
+	maxGasPrice := c.getEffectiveMaxGasPrice(etx)
+	bumpedFee, _, err := c.EvmFeeEstimator.BumpFee(ctx, previousAttempt.TxFee, etx.FeeLimit, maxGasPrice, newEvmPriorAttempts(etx.TxAttempts))
 	if err != nil {
 		return attempt, fmt.Errorf("failed to bump previous fee to use for the purge attempt: %w", err)
 	}
@@ -347,4 +344,20 @@ func newEvmPriorAttempts(attempts []TxAttempt) (prior []gas.EvmPriorAttempt) {
 		prior = append(prior, priorAttempt)
 	}
 	return
+}
+
+// getEffectiveMaxGasPrice returns the effective maximum gas price to use for a transaction.
+// It takes the minimum of the key-specific configured max and the transaction's MaxGasPrice (if set).
+// This ensures that per-transaction spend limits from billing are respected while still honoring
+// the node's configured maximum gas price.
+func (c *evmTxAttemptBuilder) getEffectiveMaxGasPrice(etx Tx) *assets.Wei {
+	keySpecificMaxGasPriceWei := c.feeConfig.PriceMaxKey(etx.FromAddress)
+	if etx.MaxGasPrice != nil {
+		txMaxGasPrice := assets.NewWei(etx.MaxGasPrice)
+		// Only use tx request's MaxGasPrice if it's more restrictive (lower) than the key-specific max
+		if txMaxGasPrice.Cmp(keySpecificMaxGasPriceWei) < 0 {
+			return txMaxGasPrice
+		}
+	}
+	return keySpecificMaxGasPriceWei
 }
