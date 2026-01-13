@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	projectRoot := os.Args[1]
+	solcProjectRoot := os.Args[1]
 	abiGenPath := os.Args[2]
 	contract := os.Args[3]
 	pkgName := os.Args[4]
@@ -22,6 +22,6 @@ func main() {
 		outPath := filepath.Join(wrap.GetOutDir(outDirSuffix, pkgName), pkgName+"_zksync.go")
 		zksyncwrapper.WrapZksyncDeploy(zksyncBytecode, contract, pkgName, outPath)
 	} else {
-		wrap.GenWrapper(projectRoot, contract, pkgName, outDirSuffix, abiGenPath)
+		wrap.GenWrapper(solcProjectRoot, contract, pkgName, outDirSuffix, abiGenPath)
 	}
 }

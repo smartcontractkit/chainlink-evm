@@ -10,6 +10,7 @@ import (
 
 // GenWrapper generates a contract wrapper for the given contract.
 //
+// solcProjectRoot is the path to the solc artifacts for the project, e.g. `"../../contracts/solc/" + project`
 // abiPath is the path to the contract's ABI JSON file.
 // binPath is the path to the contract's binary file, typically with .bin extension.
 // contract is the name of the generated contract class.
@@ -21,11 +22,11 @@ import (
 // <project>/generated/<pkgName>/<pkgName>.go. The suffix will take place after
 // the <project>/generated, so the overridden location would be
 // <project>/generated/<outDirSuffixInput>/<pkgName>/<pkgName>.go.
-func GenWrapper(projectRoot, contract, pkgName, outDirSuffixInput, abiGenPath string) {
-	abiPath := filepath.Join(projectRoot, contract, contract+".sol", contract+".abi.json")
-	metadataPath := filepath.Join(projectRoot, contract, contract+".sol", contract+".metadata.json")
-	binPath := filepath.Join(projectRoot, contract, contract+".sol", contract+".bin")
-	buildInfoPath := filepath.Join(projectRoot, contract, "build", "build.json")
+func GenWrapper(solcProjectRoot, contract, pkgName, outDirSuffixInput, abiGenPath string) {
+	abiPath := filepath.Join(solcProjectRoot, contract, contract+".sol", contract+".abi.json")
+	metadataPath := filepath.Join(solcProjectRoot, contract, contract+".sol", contract+".metadata.json")
+	binPath := filepath.Join(solcProjectRoot, contract, contract+".sol", contract+".bin")
+	buildInfoPath := filepath.Join(solcProjectRoot, contract, "build", "build.json")
 
 	fmt.Println("Generating", pkgName, "contract wrapper")
 
