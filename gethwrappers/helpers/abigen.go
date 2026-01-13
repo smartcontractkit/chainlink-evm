@@ -10,7 +10,6 @@ import (
 	"go/token"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,7 +29,7 @@ var GethVersion = fmt.Sprintf("%d.%d.%d", version.Major, version.Minor, version.
 // AbigenArgs is the arguments to the abigen executable. E.g., Bin is the -bin arg.
 // Metadata is the only exception, as it is not passed to abigen but rather used to create a separate metadata variable.
 type AbigenArgs struct {
-	Bin, ABI, BuildInfo, Metadata, Out, BuildInfoOut, Type, Pkg string
+	Bin, ABI, BuildInfo, Metadata, Out, BuildInfoOut, Type, Pkg, AbiGenPath string
 }
 
 // compiler defines the compiler section of contract metadata.
@@ -67,12 +66,10 @@ func Abigen(a AbigenArgs) {
 	includeMetadata := os.Getenv("metadata") == "true"
 
 	var versionResponse bytes.Buffer
-	abigenExecutablePath := filepath.Join(GetProjectRoot(), "../../../tools/bin/abigen")
-	abigenVersionCheck := exec.Command(abigenExecutablePath, "--version")
+	abigenVersionCheck := exec.Command(a.AbiGenPath, "--version")
 	abigenVersionCheck.Stdout = &versionResponse
 	if err := abigenVersionCheck.Run(); err != nil {
-		Exit("no native abigen; you must install it (`make abigen` in the "+
-			"chainlink root dir)", err)
+		Exit("no native abigen; you must install it (`make abigen` in the chainlink root dir)", err)
 	}
 	version := string(regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`).Find(
 		versionResponse.Bytes()))
@@ -89,7 +86,7 @@ func Abigen(a AbigenArgs) {
 	if a.Bin != "-" {
 		args = append(args, "-bin", a.Bin)
 	}
-	buildCommand := exec.Command(abigenExecutablePath, args...)
+	buildCommand := exec.Command(a.AbiGenPath, args...)
 	var buildResponse bytes.Buffer
 	buildCommand.Stderr = &buildResponse
 	if err := buildCommand.Run(); err != nil {
@@ -110,13 +107,13 @@ func genMetadata(abigenArgs AbigenArgs) {
 		Exit("Error while reading build info file", err)
 	}
 	// Unmarshal into BuildInfo struct to filter out unnecessary fields
-	// and marshal back to JSON bytes afterwards
+	// and marshal back to JSON bytes afterward
 	var build buildInfo
 	err = json.Unmarshal(info, &build)
 	if err != nil {
 		Exit("Error while unmarshalling build info JSON", err)
 	}
-	// Get version from metadata file, as it contains the commit hash required by etherscan
+	// Get version from metadata file, as it contains the commit hash required by Etherscan
 	metadataBytes, err := os.ReadFile(abigenArgs.Metadata)
 	if err != nil {
 		Exit("Error while reading metadata file", err)
