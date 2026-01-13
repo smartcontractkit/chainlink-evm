@@ -133,7 +133,7 @@ jobs:
       matrix:
         product: ${{fromJson(needs.define-matrix.outputs.matrix)}}
     needs: [define-matrix, changes]
-    name: Foundry Tests ${{ matrix.product.name }}
+    name: Foundry Tests ${{ matrix.product.setup.subfolder || '' }} ${{ matrix.product.name }}
     runs-on: ubuntu-22.04
 
     # The if statements for steps after checkout repo is workaround for
