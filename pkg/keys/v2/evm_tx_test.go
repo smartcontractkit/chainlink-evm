@@ -4,12 +4,24 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	commonks "github.com/smartcontractkit/chainlink-common/keystore"
 	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keys/v2"
 	"github.com/stretchr/testify/require"
 )
+
+func setupBackend(t *testing.T, testKey common.Address) (*simulated.Backend, func() error) {
+	backend := simulated.NewBackend(types.GenesisAlloc{
+		testKey: {
+			Balance: big.NewInt(0).Mul(big.NewInt(10), big.NewInt(1e18)), // 10 ETH
+		},
+	}, simulated.WithBlockGasLimit(10e6))
+	return backend, func() error {
+		return backend.Close()
+	}
+}
 
 func TestTxKey(t *testing.T) {
 	storage := commonks.NewMemoryStorage()
@@ -21,14 +33,9 @@ func TestTxKey(t *testing.T) {
 	testKey2, err := evmks.CreateTxKey(ks, "test-tx-key-2")
 	require.NoError(t, err)
 
-	backend := simulated.NewBackend(types.GenesisAlloc{
-		testKey.Address(): {
-			Balance: big.NewInt(0).Mul(big.NewInt(10), big.NewInt(1e18)), // 10 ETH
-		},
-	}, simulated.WithBlockGasLimit(10e6))
-	defer func() {
-		require.NoError(t, backend.Close())
-	}()
+	backend, cleanup := setupBackend(t, testKey2.Address())
+	defer cleanup()
+
 	testTransaction := types.NewTransaction(
 		0,                       // Nonce
 		testKey2.Address(),      // To other key
@@ -70,4 +77,38 @@ func TestTxKey(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.ErrorIs(t, err, commonks.ErrKeyNotFound)
+}
+
+func TestLoadTxKeys(t *testing.T) {
+	storage := commonks.NewMemoryStorage()
+	ctx := t.Context()
+	ks, err := commonks.LoadKeystore(ctx, storage, "test-password", commonks.WithScryptParams(commonks.FastScryptParams))
+	require.NoError(t, err)
+	_, err = ks.CreateKeys(ctx, commonks.CreateKeysRequest{
+		Keys: []commonks.CreateKeyRequest{
+			{KeyName: "test-tx-key", KeyType: commonks.ECDSA_S256},
+			{KeyName: "test-tx-key-2", KeyType: commonks.ECDSA_S256},
+		},
+	})
+	require.NoError(t, err)
+	txKeys, err := evmks.LoadTxKeys(ctx, ks, []string{"test-tx-key", "test-tx-key-2"})
+	require.NoError(t, err)
+	require.Len(t, txKeys, 2)
+	require.Equal(t, "test-tx-key", txKeys[0].KeyPath().String())
+	require.Equal(t, "test-tx-key-2", txKeys[1].KeyPath().String())
+
+	// Ensure we can sign with a loaded key just as usual.
+	backend, cleanup := setupBackend(t, txKeys[1].Address())
+	defer cleanup()
+	resp, err := txKeys[1].SignTx(ctx, evmks.SignTxRequest{
+		ChainID: big.NewInt(1337),
+		Tx:      types.NewTransaction(0, txKeys[1].Address(), big.NewInt(1), 21000, big.NewInt(20000000000), nil),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.Tx)
+	require.NoError(t, backend.Client().SendTransaction(ctx, resp.Tx))
+	backend.Commit()
+	receipt, err := backend.Client().TransactionReceipt(ctx, resp.Tx.Hash())
+	require.NoError(t, err)
+	require.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 }

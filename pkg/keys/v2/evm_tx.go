@@ -4,7 +4,9 @@ package keys
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
@@ -159,6 +161,32 @@ func GetTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*Tx
 	}
 
 	// Note we rely on deterministic order of keys in the response
+	keys := make([]*TxKey, 0, len(resp.Keys))
+	for _, key := range resp.Keys {
+		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		addr := gethcrypto.PubkeyToAddress(*publicKey)
+		keys = append(keys, &TxKey{
+			ks:      ks,
+			keyPath: keystore.NewKeyPathFromString(key.KeyInfo.Name),
+			addr:    addr,
+		})
+	}
+	return keys, nil
+}
+
+// LoadTxKey loads a transaction key from a keystore directly by name.
+// Used for KMS-backed keystores where keys/key names are managed externally.
+func LoadTxKeys(ctx context.Context, ks keystore.Keystore, names []string) ([]*TxKey, error) {
+	resp, err := ks.GetKeys(ctx, keystore.GetKeysRequest{KeyNames: names})
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Keys) != len(names) {
+		return nil, fmt.Errorf("some keys not found: %s", strings.Join(names, ", "))
+	}
 	keys := make([]*TxKey, 0, len(resp.Keys))
 	for _, key := range resp.Keys {
 		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
