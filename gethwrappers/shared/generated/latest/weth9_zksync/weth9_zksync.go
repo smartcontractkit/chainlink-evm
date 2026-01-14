@@ -5,7 +5,6 @@ package weth9_zksync
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -905,22 +903,6 @@ func (_WETH9ZKSync *WETH9ZKSyncFilterer) ParseWithdrawal(log types.Log) (*WETH9Z
 	return event, nil
 }
 
-func (_WETH9ZKSync *WETH9ZKSync) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _WETH9ZKSync.abi.Events["Approval"].ID:
-		return _WETH9ZKSync.ParseApproval(log)
-	case _WETH9ZKSync.abi.Events["Deposit"].ID:
-		return _WETH9ZKSync.ParseDeposit(log)
-	case _WETH9ZKSync.abi.Events["Transfer"].ID:
-		return _WETH9ZKSync.ParseTransfer(log)
-	case _WETH9ZKSync.abi.Events["Withdrawal"].ID:
-		return _WETH9ZKSync.ParseWithdrawal(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (WETH9ZKSyncApproval) Topic() common.Hash {
 	return common.HexToHash("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925")
 }
@@ -989,8 +971,6 @@ type WETH9ZKSyncInterface interface {
 	WatchWithdrawal(opts *bind.WatchOpts, sink chan<- *WETH9ZKSyncWithdrawal, src []common.Address) (event.Subscription, error)
 
 	ParseWithdrawal(log types.Log) (*WETH9ZKSyncWithdrawal, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

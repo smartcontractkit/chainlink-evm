@@ -5,7 +5,6 @@ package vrf_log_emitter
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -479,18 +477,6 @@ func (_VRFLogEmitter *VRFLogEmitterFilterer) ParseRandomWordsRequested(log types
 	return event, nil
 }
 
-func (_VRFLogEmitter *VRFLogEmitter) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _VRFLogEmitter.abi.Events["RandomWordsFulfilled"].ID:
-		return _VRFLogEmitter.ParseRandomWordsFulfilled(log)
-	case _VRFLogEmitter.abi.Events["RandomWordsRequested"].ID:
-		return _VRFLogEmitter.ParseRandomWordsRequested(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (VRFLogEmitterRandomWordsFulfilled) Topic() common.Hash {
 	return common.HexToHash("0x7dffc5ae5ee4e2e4df1651cf6ad329a73cebdb728f37ea0187b9b17e036756e4")
 }
@@ -519,8 +505,6 @@ type VRFLogEmitterInterface interface {
 	WatchRandomWordsRequested(opts *bind.WatchOpts, sink chan<- *VRFLogEmitterRandomWordsRequested, keyHash [][32]byte, subId []uint64, sender []common.Address) (event.Subscription, error)
 
 	ParseRandomWordsRequested(log types.Log) (*VRFLogEmitterRandomWordsRequested, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

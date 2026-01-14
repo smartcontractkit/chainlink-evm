@@ -5,7 +5,6 @@ package i_burn_mint_erc20_upgradeable
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -576,18 +574,6 @@ func (_IBurnMintERC20Upgradeable *IBurnMintERC20UpgradeableFilterer) ParseTransf
 	return event, nil
 }
 
-func (_IBurnMintERC20Upgradeable *IBurnMintERC20Upgradeable) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _IBurnMintERC20Upgradeable.abi.Events["Approval"].ID:
-		return _IBurnMintERC20Upgradeable.ParseApproval(log)
-	case _IBurnMintERC20Upgradeable.abi.Events["Transfer"].ID:
-		return _IBurnMintERC20Upgradeable.ParseTransfer(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (IBurnMintERC20UpgradeableApproval) Topic() common.Hash {
 	return common.HexToHash("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925")
 }
@@ -632,8 +618,6 @@ type IBurnMintERC20UpgradeableInterface interface {
 	WatchTransfer(opts *bind.WatchOpts, sink chan<- *IBurnMintERC20UpgradeableTransfer, from []common.Address, to []common.Address) (event.Subscription, error)
 
 	ParseTransfer(log types.Log) (*IBurnMintERC20UpgradeableTransfer, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

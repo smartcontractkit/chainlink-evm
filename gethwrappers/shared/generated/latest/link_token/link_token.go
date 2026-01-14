@@ -5,7 +5,6 @@ package link_token
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -1877,32 +1875,6 @@ func (_LinkToken *LinkTokenFilterer) ParseTransfer0(log types.Log) (*LinkTokenTr
 	return event, nil
 }
 
-func (_LinkToken *LinkToken) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _LinkToken.abi.Events["Approval"].ID:
-		return _LinkToken.ParseApproval(log)
-	case _LinkToken.abi.Events["BurnAccessGranted"].ID:
-		return _LinkToken.ParseBurnAccessGranted(log)
-	case _LinkToken.abi.Events["BurnAccessRevoked"].ID:
-		return _LinkToken.ParseBurnAccessRevoked(log)
-	case _LinkToken.abi.Events["MintAccessGranted"].ID:
-		return _LinkToken.ParseMintAccessGranted(log)
-	case _LinkToken.abi.Events["MintAccessRevoked"].ID:
-		return _LinkToken.ParseMintAccessRevoked(log)
-	case _LinkToken.abi.Events["OwnershipTransferRequested"].ID:
-		return _LinkToken.ParseOwnershipTransferRequested(log)
-	case _LinkToken.abi.Events["OwnershipTransferred"].ID:
-		return _LinkToken.ParseOwnershipTransferred(log)
-	case _LinkToken.abi.Events["Transfer"].ID:
-		return _LinkToken.ParseTransfer(log)
-	case _LinkToken.abi.Events["Transfer0"].ID:
-		return _LinkToken.ParseTransfer0(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (LinkTokenApproval) Topic() common.Hash {
 	return common.HexToHash("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925")
 }
@@ -2061,8 +2033,6 @@ type LinkTokenInterface interface {
 	WatchTransfer0(opts *bind.WatchOpts, sink chan<- *LinkTokenTransfer0, from []common.Address, to []common.Address) (event.Subscription, error)
 
 	ParseTransfer0(log types.Log) (*LinkTokenTransfer0, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

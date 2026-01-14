@@ -5,7 +5,6 @@ package burn_mint_erc677
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -1877,32 +1875,6 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) ParseTransfer0(log types.Log) (*B
 	return event, nil
 }
 
-func (_BurnMintERC677 *BurnMintERC677) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _BurnMintERC677.abi.Events["Approval"].ID:
-		return _BurnMintERC677.ParseApproval(log)
-	case _BurnMintERC677.abi.Events["BurnAccessGranted"].ID:
-		return _BurnMintERC677.ParseBurnAccessGranted(log)
-	case _BurnMintERC677.abi.Events["BurnAccessRevoked"].ID:
-		return _BurnMintERC677.ParseBurnAccessRevoked(log)
-	case _BurnMintERC677.abi.Events["MintAccessGranted"].ID:
-		return _BurnMintERC677.ParseMintAccessGranted(log)
-	case _BurnMintERC677.abi.Events["MintAccessRevoked"].ID:
-		return _BurnMintERC677.ParseMintAccessRevoked(log)
-	case _BurnMintERC677.abi.Events["OwnershipTransferRequested"].ID:
-		return _BurnMintERC677.ParseOwnershipTransferRequested(log)
-	case _BurnMintERC677.abi.Events["OwnershipTransferred"].ID:
-		return _BurnMintERC677.ParseOwnershipTransferred(log)
-	case _BurnMintERC677.abi.Events["Transfer"].ID:
-		return _BurnMintERC677.ParseTransfer(log)
-	case _BurnMintERC677.abi.Events["Transfer0"].ID:
-		return _BurnMintERC677.ParseTransfer0(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (BurnMintERC677Approval) Topic() common.Hash {
 	return common.HexToHash("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925")
 }
@@ -2061,8 +2033,6 @@ type BurnMintERC677Interface interface {
 	WatchTransfer0(opts *bind.WatchOpts, sink chan<- *BurnMintERC677Transfer0, from []common.Address, to []common.Address) (event.Subscription, error)
 
 	ParseTransfer0(log types.Log) (*BurnMintERC677Transfer0, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }
