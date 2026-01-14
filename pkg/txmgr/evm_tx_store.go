@@ -1679,13 +1679,18 @@ func (o *evmTxStore) CreateTransaction(ctx context.Context, txRequest TxRequest,
 				return nil
 			}
 		}
+		// Convert MaxGasPrice to ubig.Big for database storage
+		var maxGasPriceUbig *ubig.Big
+		if txRequest.MaxGasPrice != nil {
+			maxGasPriceUbig = ubig.New(txRequest.MaxGasPrice)
+		}
 		err = orm.q.GetContext(ctx, &dbEtx, `
 INSERT INTO evm.txes (from_address, to_address, encoded_payload, value, gas_limit, state, created_at, meta, subject, evm_chain_id, min_confirmations, pipeline_task_run_id, transmit_checker, idempotency_key, signal_callback, max_gas_price)
 VALUES (
 $1,$2,$3,$4,$5,'unstarted',NOW(),$6,$7,$8,$9,$10,$11,$12,$13,$14
 )
 RETURNING "txes".*
-`, txRequest.FromAddress, txRequest.ToAddress, txRequest.EncodedPayload, assets.Eth(txRequest.Value), txRequest.FeeLimit, txRequest.Meta, txRequest.Strategy.Subject(), chainID.String(), txRequest.MinConfirmations, txRequest.PipelineTaskRunID, txRequest.Checker, txRequest.IdempotencyKey, txRequest.SignalCallback, txRequest.MaxGasPrice)
+`, txRequest.FromAddress, txRequest.ToAddress, txRequest.EncodedPayload, assets.Eth(txRequest.Value), txRequest.FeeLimit, txRequest.Meta, txRequest.Strategy.Subject(), chainID.String(), txRequest.MinConfirmations, txRequest.PipelineTaskRunID, txRequest.Checker, txRequest.IdempotencyKey, txRequest.SignalCallback, maxGasPriceUbig)
 		if err != nil {
 			return pkgerrors.Wrap(err, "CreateEthTransaction failed to insert evm tx")
 		}

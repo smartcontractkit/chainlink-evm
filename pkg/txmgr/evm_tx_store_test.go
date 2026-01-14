@@ -1650,6 +1650,7 @@ func TestORM_CreateTransaction(t *testing.T) {
 			FeeLimit:       gasLimit,
 			Meta:           nil,
 			Strategy:       strategy,
+			MaxGasPrice:    big.NewInt(1000000000),
 		}, ethClient.ConfiguredChainID())
 		assert.NoError(t, err)
 
