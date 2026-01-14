@@ -30,7 +30,7 @@ require (
 	github.com/smartcontractkit/chainlink-common/keystore v0.1.0
 	github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20251022073203-7d8ae8cf67c1
 	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250818175541-3389ac08a563
-	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20260109154526-a30110f341a2
+	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20260114133625-907ef99f2a14
 	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20251020150604-8ab84f7bad1a
 	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20251021173435-e86785845942
 	github.com/smartcontractkit/chainlink-protos/svr v1.1.0
