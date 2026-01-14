@@ -51,7 +51,7 @@ func (c *evmTxAttemptBuilder) NewTxAttempt(ctx context.Context, etx Tx, lggr log
 // NewTxAttemptWithType builds a new attempt with a new fee estimation where the txType can be specified by the caller
 // used for L2 re-estimation on broadcasting (note EIP1559 must be disabled otherwise this will fail with mismatched fees + tx type)
 func (c *evmTxAttemptBuilder) NewTxAttemptWithType(ctx context.Context, etx Tx, lggr logger.Logger, txType int, opts ...fees.Opt) (attempt TxAttempt, fee gas.EvmFee, feeLimit uint64, retryable bool, err error) {
-	maxGasPrice := c.getEffectiveMaxGasPrice(etx)
+	maxGasPrice := c.getEffectiveMaxGasPrice(etx, lggr)
 	lggr.Infow("DEBUG NewTxAttemptWithType BEFORE GetFee", "maxGasPrice", maxGasPrice)
 	fee, feeLimit, err = c.EvmFeeEstimator.GetFee(ctx, etx.EncodedPayload, etx.FeeLimit, maxGasPrice, &etx.FromAddress, &etx.ToAddress, opts...)
 	if err != nil {
@@ -351,12 +351,15 @@ func newEvmPriorAttempts(attempts []TxAttempt) (prior []gas.EvmPriorAttempt) {
 // It takes the minimum of the key-specific configured max and the transaction's MaxGasPrice (if set).
 // This ensures that per-transaction spend limits from billing are respected while still honoring
 // the node's configured maximum gas price.
-func (c *evmTxAttemptBuilder) getEffectiveMaxGasPrice(etx Tx) *assets.Wei {
+func (c *evmTxAttemptBuilder) getEffectiveMaxGasPrice(etx Tx, lggr logger.Logger) *assets.Wei {
 	keySpecificMaxGasPriceWei := c.feeConfig.PriceMaxKey(etx.FromAddress)
+	lggr.Infow("DEBUG getEffectiveMaxGasPrice BEFORE keySpecificMaxGasPriceWei", "keySpecificMaxGasPriceWei", keySpecificMaxGasPriceWei)
 	if etx.MaxGasPrice != nil {
+		lggr.Infow("DEBUG getEffectiveMaxGasPrice BEFORE txMaxGasPrice", "txMaxGasPrice", etx.MaxGasPrice)
 		txMaxGasPrice := assets.NewWei(etx.MaxGasPrice)
 		// Only use tx request's MaxGasPrice if it's more restrictive (lower) than the key-specific max
 		if txMaxGasPrice.Cmp(keySpecificMaxGasPriceWei) < 0 {
+			lggr.Infow("DEBUG getEffectiveMaxGasPrice AFTER txMaxGasPrice", "txMaxGasPrice", txMaxGasPrice)
 			return txMaxGasPrice
 		}
 	}
