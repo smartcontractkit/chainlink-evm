@@ -16,7 +16,7 @@ contract ShardConfigTest is Test {
   }
 
   function testTypeAndVersion() public view {
-    assertEq(s_shardConfig.typeAndVersion(), "ShardConfig 1.0.0");
+    assertEq(s_shardConfig.typeAndVersion(), "ShardConfig 1.0.0-dev");
   }
 
   function testConstructor_Success() public view {

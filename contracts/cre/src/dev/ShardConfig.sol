@@ -8,7 +8,7 @@ import {Ownable2StepMsgSender} from "@chainlink/contracts/src/v0.8/shared/access
 /// @notice Centralized onchain configuration contract for managing desired shard count
 /// @dev This contract stores the desired number of shards and uses Ownable2StepMsgSender for secure ownership management
 contract ShardConfig is ITypeAndVersion, Ownable2StepMsgSender {
-    string public constant override typeAndVersion = "ShardConfig 1.0.0";
+    string public constant override typeAndVersion = "ShardConfig 1.0.0-dev";
 
     /// @notice The desired number of shards
     uint256 public desiredShardCount;
