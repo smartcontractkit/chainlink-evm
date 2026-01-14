@@ -297,6 +297,7 @@ func (e *evmFeeEstimator) GetFee(ctx context.Context, calldata []byte, feeLimit 
 		chainSpecificFeeLimit = feeLimit
 	} else {
 		// get legacy fee
+		e.lggr.Infow("DEBUG GetFee BEFORE GetLegacyGas", "maxFeePrice", maxFeePrice)
 		fee.GasPrice, chainSpecificFeeLimit, err = e.EvmEstimator.GetLegacyGas(ctx, calldata, feeLimit, maxFeePrice, opts...)
 		if err != nil {
 			return
@@ -308,7 +309,9 @@ func (e *evmFeeEstimator) GetFee(ctx context.Context, calldata []byte, feeLimit 
 }
 
 func (e *evmFeeEstimator) GetMaxCost(ctx context.Context, amount assets.Eth, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress, toAddress *common.Address, opts ...fees.Opt) (*big.Int, error) {
+	e.lggr.Infow("DEBUG GetMaxCost BEFORE GetFee", "maxFeePrice", maxFeePrice)
 	fees, gasLimit, err := e.GetFee(ctx, calldata, feeLimit, maxFeePrice, fromAddress, toAddress, opts...)
+	e.lggr.Infow("DEBUG GetMaxCost AFTER GetFee", "fees", fees, "gasLimit", gasLimit)
 	if err != nil {
 		return nil, err
 	}
