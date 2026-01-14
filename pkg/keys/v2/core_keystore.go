@@ -47,8 +47,15 @@ func NewTxKeyCoreKeystore(ks interface {
 	return txKeyCoreKeystore
 }
 
+func (s *TxKeyCoreKeystore) getKeys(ctx context.Context) ([]*TxKey, error) {
+	if len(s.allowedKeyNames) != 0 {
+		return LoadTxKeys(ctx, s.ks, s.allowedKeyNames)
+	}
+	return GetTxKeys(ctx, s.ks, []string{})
+}
+
 func (s *TxKeyCoreKeystore) Accounts(ctx context.Context) ([]string, error) {
-	keys, err := GetTxKeys(ctx, s.ks, s.allowedKeyNames)
+	keys, err := s.getKeys(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +78,7 @@ func (s *TxKeyCoreKeystore) Sign(ctx context.Context, account string, data []byt
 		return resp.Signature, nil
 	}
 	// Otherwise do the first time lookup to find the key by address.
-	keys, err := GetTxKeys(ctx, s.ks, s.allowedKeyNames)
+	keys, err := s.getKeys(ctx)
 	if err != nil {
 		return nil, err
 	}
