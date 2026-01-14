@@ -2,4 +2,4 @@ GETH_VERSION: 1.16.2
 message_emitter: ../../solc/dev/MessageEmitter/MessageEmitter.sol/MessageEmitter.abi.json ../../solc/dev/MessageEmitter/MessageEmitter.sol/MessageEmitter.bin 14234aed0e58dbad3581517107bd851cebddc75892050fc207cbfb12dcdfe695
 mock_forwarder: ../../solc/dev/MockKeystoneForwarder/MockKeystoneForwarder.sol/MockKeystoneForwarder.abi.json ../../solc/dev/MockKeystoneForwarder/MockKeystoneForwarder.sol/MockKeystoneForwarder.bin c6c9a6e84780eacc6fd358daab8b5f11b3cddfe47416cc84c18b093ce6a65503
 reserve_manager: ../../solc/dev/ReserveManager/ReserveManager.sol/ReserveManager.abi.json ../../solc/dev/ReserveManager/ReserveManager.sol/ReserveManager.bin 113a433c32bf094b3ab25bf8c3ae0eddf2e31e4e525b85924c0688fc48148c75
-shard_config: ../../solc/dev/ShardConfig/ShardConfig.sol/ShardConfig.abi.json ../../solc/dev/ShardConfig/ShardConfig.sol/ShardConfig.bin 0e57cbc67a80116cf1f72466ae4face5cd200af5b8d1f02bd98793afb3c5fe5d
+shard_config: ../../solc/dev/ShardConfig/ShardConfig.sol/ShardConfig.abi.json ../../solc/dev/ShardConfig/ShardConfig.sol/ShardConfig.bin f8bdce9cdc5de834c2a280685b9adf4a7217a8ab6fdba9400e899891998e4d28
