@@ -33,7 +33,7 @@ func TestTxKey(t *testing.T) {
 	testKey2, err := evmks.CreateTxKey(ks, "test-tx-key-2")
 	require.NoError(t, err)
 
-	backend, cleanup := setupBackend(t, testKey2.Address())
+	backend, cleanup := setupBackend(t, testKey.Address())
 	defer cleanup()
 
 	testTransaction := types.NewTransaction(
