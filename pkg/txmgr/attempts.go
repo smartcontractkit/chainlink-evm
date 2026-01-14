@@ -65,7 +65,7 @@ func (c *evmTxAttemptBuilder) NewTxAttemptWithType(ctx context.Context, etx Tx, 
 // NewBumpTxAttempt builds a new attempt with a bumped fee - based on the previous attempt tx type
 // used in the txm broadcaster + confirmer when tx ix rejected for too low fee or is not included in a timely manner
 func (c *evmTxAttemptBuilder) NewBumpTxAttempt(ctx context.Context, etx Tx, previousAttempt TxAttempt, priorAttempts []TxAttempt, lggr logger.Logger) (attempt TxAttempt, bumpedFee gas.EvmFee, bumpedFeeLimit uint64, retryable bool, err error) {
-	maxGasPrice := c.getEffectiveMaxGasPrice(etx)
+	maxGasPrice := c.getEffectiveMaxGasPrice(etx, lggr)
 	// Use the fee limit from the previous attempt to maintain limits adjusted for 2D fees or by estimation
 	bumpedFee, bumpedFeeLimit, err = c.EvmFeeEstimator.BumpFee(ctx, previousAttempt.TxFee, previousAttempt.ChainSpecificFeeLimit, maxGasPrice, newEvmPriorAttempts(priorAttempts))
 	if err != nil {
@@ -90,7 +90,7 @@ func (c *evmTxAttemptBuilder) NewPurgeTxAttempt(ctx context.Context, etx Tx, lgg
 	gasLimit := c.feeConfig.LimitDefault()
 	// Transactions being purged will always have a previous attempt since it had to have been broadcasted before at least once
 	previousAttempt := etx.TxAttempts[0]
-	maxGasPrice := c.getEffectiveMaxGasPrice(etx)
+	maxGasPrice := c.getEffectiveMaxGasPrice(etx, lggr)
 	bumpedFee, _, err := c.EvmFeeEstimator.BumpFee(ctx, previousAttempt.TxFee, etx.FeeLimit, maxGasPrice, newEvmPriorAttempts(etx.TxAttempts))
 	if err != nil {
 		return attempt, fmt.Errorf("failed to bump previous fee to use for the purge attempt: %w", err)
