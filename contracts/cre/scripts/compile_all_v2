@@ -11,9 +11,9 @@ CONTRACTS_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../ && pwd -P )"
 echo "Contracts directory: $CONTRACTS_DIR"
 
 compileContract () {
-  export FOUNDRY_PROFILE="$1"
+  export FOUNDRY_PROFILE=$PROJECT
 
-  local src_rel="$2"
+  local src_rel="$1"
   local contract=$(basename "$src_rel")
   echo "Compiling" "$contract"
 

@@ -123,8 +123,8 @@ jobs:
               - '!contracts/src/v0.8/**/testhelpers/**'
               - '!contracts/src/v0.8/testhelpers/**'
               - '!contracts/src/v0.8/vendor/**'
-              - '!contracts/src/cre/**/test/**'
-              - '!contracts/src/cre/**/mocks/**'
+              - '!contracts/cre/src/**/test/**'
+              - '!contracts/cre/src/**/mocks/**'
 
   tests:
     if: ${{ needs.changes.outputs.non_src_changes == 'true' || needs.changes.outputs.sol_modified_added == 'true' }}
