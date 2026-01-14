@@ -248,7 +248,13 @@ func (b *BlockHistoryEstimator) GetLegacyGas(_ context.Context, _ []byte, gasLim
 			"Using Evm.GasEstimator.PriceDefault as fallback.", "blocks", b.getBlockHistoryNumbers())
 		gasPrice = b.eConfig.PriceDefault()
 	}
+	b.logger.Infow("DEBUG GetLegacyGas BEFORE cap",
+		"estimatedGasPrice", gasPrice,
+		"maxGasPriceWei", maxGasPriceWei,
+		"PriceMax", b.eConfig.PriceMax())
 	gasPrice = capGasPrice(gasPrice, maxGasPriceWei, b.eConfig.PriceMax())
+	b.logger.Infow("DEBUG GetLegacyGas AFTER cap",
+		"cappedGasPrice", gasPrice)
 	chainSpecificGasLimit = gasLimit
 	return
 }
