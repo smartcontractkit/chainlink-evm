@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IRouter} from "../../../keystone/interfaces/IRouter.sol";
-import {IReceiver} from "../../../keystone/interfaces/IReceiver.sol";
+import {IRouter} from "../../v1/interfaces/IRouter.sol";
+import {IReceiver} from "../../v1/interfaces/IReceiver.sol";
 
-import {MockKeystoneForwarder} from "../../../workflow/dev/MockKeystoneForwarder.sol";
+import {MockKeystoneForwarder} from "../MockKeystoneForwarder.sol";
 
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Test} from "forge-std/Test.sol";
