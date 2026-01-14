@@ -499,6 +499,9 @@ func TestEthClient_SendTransaction_WithSecondaryURLs(t *testing.T) {
 			return
 		case "eth_sendRawTransaction":
 			resp.Result = `"` + tx.Hash().Hex() + `"`
+		case "eth_getBlockByNumber":
+			resp.Result = client.MakeHeadMsgForNumber(42)
+			return
 		}
 		return
 	}).WSURL().String()
