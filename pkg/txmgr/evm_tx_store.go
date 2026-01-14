@@ -202,6 +202,8 @@ type DbEthTx struct {
 	SignalCallback bool
 	// Marks tx callback as signaled
 	CallbackCompleted bool
+	// MaxGasPrice is the maximum gas price that can be used for transaction attempts
+	MaxGasPrice *ubig.Big
 }
 
 func (db *DbEthTx) FromTx(tx *Tx) {
@@ -224,6 +226,10 @@ func (db *DbEthTx) FromTx(tx *Tx) {
 	db.InitialBroadcastAt = tx.InitialBroadcastAt
 	db.SignalCallback = tx.SignalCallback
 	db.CallbackCompleted = tx.CallbackCompleted
+
+	if tx.MaxGasPrice != nil {
+		db.MaxGasPrice = ubig.New(tx.MaxGasPrice)
+	}
 
 	if tx.ChainID != nil {
 		db.EVMChainID = *ubig.New(tx.ChainID)
@@ -259,6 +265,9 @@ func (db DbEthTx) ToTx(tx *Tx) {
 	tx.InitialBroadcastAt = db.InitialBroadcastAt
 	tx.SignalCallback = db.SignalCallback
 	tx.CallbackCompleted = db.CallbackCompleted
+	if db.MaxGasPrice != nil {
+		tx.MaxGasPrice = db.MaxGasPrice.ToInt()
+	}
 }
 
 func dbEthTxsToEvmEthTxs(dbEthTxs []DbEthTx) []Tx {
@@ -533,8 +542,8 @@ func (o *evmTxStore) InsertTx(ctx context.Context, etx *Tx) error {
 	if etx.CreatedAt == (time.Time{}) {
 		etx.CreatedAt = time.Now()
 	}
-	const insertEthTxSQL = `INSERT INTO evm.txes (nonce, from_address, to_address, encoded_payload, value, gas_limit, error, broadcast_at, initial_broadcast_at, created_at, state, meta, subject, pipeline_task_run_id, min_confirmations, evm_chain_id, transmit_checker, idempotency_key, signal_callback, callback_completed) VALUES (
-:nonce, :from_address, :to_address, :encoded_payload, :value, :gas_limit, :error, :broadcast_at, :initial_broadcast_at, :created_at, :state, :meta, :subject, :pipeline_task_run_id, :min_confirmations, :evm_chain_id, :transmit_checker, :idempotency_key, :signal_callback, :callback_completed
+	const insertEthTxSQL = `INSERT INTO evm.txes (nonce, from_address, to_address, encoded_payload, value, gas_limit, error, broadcast_at, initial_broadcast_at, created_at, state, meta, subject, pipeline_task_run_id, min_confirmations, evm_chain_id, transmit_checker, idempotency_key, signal_callback, callback_completed, max_gas_price) VALUES (
+:nonce, :from_address, :to_address, :encoded_payload, :value, :gas_limit, :error, :broadcast_at, :initial_broadcast_at, :created_at, :state, :meta, :subject, :pipeline_task_run_id, :min_confirmations, :evm_chain_id, :transmit_checker, :idempotency_key, :signal_callback, :callback_completed, :max_gas_price
 ) RETURNING *`
 	var dbTx DbEthTx
 	dbTx.FromTx(etx)
@@ -1671,12 +1680,12 @@ func (o *evmTxStore) CreateTransaction(ctx context.Context, txRequest TxRequest,
 			}
 		}
 		err = orm.q.GetContext(ctx, &dbEtx, `
-INSERT INTO evm.txes (from_address, to_address, encoded_payload, value, gas_limit, state, created_at, meta, subject, evm_chain_id, min_confirmations, pipeline_task_run_id, transmit_checker, idempotency_key, signal_callback)
+INSERT INTO evm.txes (from_address, to_address, encoded_payload, value, gas_limit, state, created_at, meta, subject, evm_chain_id, min_confirmations, pipeline_task_run_id, transmit_checker, idempotency_key, signal_callback, max_gas_price)
 VALUES (
-$1,$2,$3,$4,$5,'unstarted',NOW(),$6,$7,$8,$9,$10,$11,$12,$13
+$1,$2,$3,$4,$5,'unstarted',NOW(),$6,$7,$8,$9,$10,$11,$12,$13,$14
 )
 RETURNING "txes".*
-`, txRequest.FromAddress, txRequest.ToAddress, txRequest.EncodedPayload, assets.Eth(txRequest.Value), txRequest.FeeLimit, txRequest.Meta, txRequest.Strategy.Subject(), chainID.String(), txRequest.MinConfirmations, txRequest.PipelineTaskRunID, txRequest.Checker, txRequest.IdempotencyKey, txRequest.SignalCallback)
+`, txRequest.FromAddress, txRequest.ToAddress, txRequest.EncodedPayload, assets.Eth(txRequest.Value), txRequest.FeeLimit, txRequest.Meta, txRequest.Strategy.Subject(), chainID.String(), txRequest.MinConfirmations, txRequest.PipelineTaskRunID, txRequest.Checker, txRequest.IdempotencyKey, txRequest.SignalCallback, txRequest.MaxGasPrice)
 		if err != nil {
 			return pkgerrors.Wrap(err, "CreateEthTransaction failed to insert evm tx")
 		}
