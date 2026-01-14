@@ -64,14 +64,17 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 	}
 
 	serverCallBack := func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
-		if method == "eth_unsubscribe" {
+		switch method {
+		case "eth_unsubscribe":
 			resp.Result = "true"
 			return
-		} else if method == "eth_subscribe" {
-			assert.Equal(t, "eth_subscribe", method)
-			if assert.True(t, params.IsArray()) && assert.Equal(t, "newHeads", params.Array()[0].String()) {
-				resp.Result = `"0x00"`
-			}
+		case "eth_subscribe":
+			assert.True(t, params.IsArray())
+			assert.Equal(t, "newHeads", params.Array()[0].String())
+			resp.Result = `"0x00"`
+			return
+		case "eth_getBlockByNumber":
+			resp.Result = client.MakeHeadMsgForNumber(42)
 			return
 		}
 		return
