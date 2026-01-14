@@ -11,14 +11,20 @@ import (
 var _ core.Keystore = &TxKeyCoreKeystore{}
 
 type TxKeyCoreKeystore struct {
-	ks    keystore.Keystore
+	ks interface {
+		keystore.Reader
+		keystore.Signer
+	}
 	cache map[string]string
 }
 
 // NewTxKeyCoreKeystore creates a new CoreKeystore for transaction keys.
 // This wrapper is required for using TxKeys with the txm
 // which requires address based lookups.
-func NewTxKeyCoreKeystore(ks keystore.Keystore) *TxKeyCoreKeystore {
+func NewTxKeyCoreKeystore(ks interface {
+	keystore.Reader
+	keystore.Signer
+}) *TxKeyCoreKeystore {
 	return &TxKeyCoreKeystore{
 		ks:    ks,
 		cache: make(map[string]string),
