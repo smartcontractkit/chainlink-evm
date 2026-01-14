@@ -15,7 +15,18 @@ type TxKeyCoreKeystore struct {
 		keystore.Reader
 		keystore.Signer
 	}
-	cache map[string]string
+	cache           map[string]string
+	allowedKeyNames []string
+}
+
+type Option func(*TxKeyCoreKeystore)
+
+// Filter key names for example if using KMS and only certain key names are accessible.
+// (may not have ListKeys permission)
+func WithAllowedKeyNames(names []string) Option {
+	return func(s *TxKeyCoreKeystore) {
+		s.allowedKeyNames = names
+	}
 }
 
 // NewTxKeyCoreKeystore creates a new CoreKeystore for transaction keys.
@@ -24,15 +35,20 @@ type TxKeyCoreKeystore struct {
 func NewTxKeyCoreKeystore(ks interface {
 	keystore.Reader
 	keystore.Signer
-}) *TxKeyCoreKeystore {
-	return &TxKeyCoreKeystore{
-		ks:    ks,
-		cache: make(map[string]string),
+}, options ...Option) *TxKeyCoreKeystore {
+	txKeyCoreKeystore := &TxKeyCoreKeystore{
+		ks:              ks,
+		cache:           make(map[string]string),
+		allowedKeyNames: []string{},
 	}
+	for _, opt := range options {
+		opt(txKeyCoreKeystore)
+	}
+	return txKeyCoreKeystore
 }
 
 func (s *TxKeyCoreKeystore) Accounts(ctx context.Context) ([]string, error) {
-	keys, err := GetTxKeys(ctx, s.ks, []string{})
+	keys, err := GetTxKeys(ctx, s.ks, s.allowedKeyNames)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +71,7 @@ func (s *TxKeyCoreKeystore) Sign(ctx context.Context, account string, data []byt
 		return resp.Signature, nil
 	}
 	// Otherwise do the first time lookup to find the key by address.
-	keys, err := GetTxKeys(ctx, s.ks, []string{})
+	keys, err := GetTxKeys(ctx, s.ks, s.allowedKeyNames)
 	if err != nil {
 		return nil, err
 	}
