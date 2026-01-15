@@ -27,8 +27,8 @@
 /contracts/**/*operatorforwarder* @smartcontractkit/data-feeds-engineers
 /contracts/**/*data-feeds* @smartcontractkit/data-feeds-engineers
 /contracts/**/*vrf* @smartcontractkit/dev-services
-/contracts/**/*keystone* @smartcontractkit/keystone
-/contracts/**/*workflow* @smartcontractkit/dev-services
+/contracts/**/*keystone* @smartcontractkit/cre-onchain
+/contracts/**/*workflow* @smartcontractkit/cre-onchain
 /contracts/**/*payments* @smartcontractkit/payments
 
 /contracts/src/v0.8/automation @smartcontractkit/dev-services
@@ -41,7 +41,7 @@
 /contracts/src/v0.8/shared @smartcontractkit/core-solidity
 /contracts/src/v0.8/vrf @smartcontractkit/dev-services
 /contracts/src/v0.8/payments @smartcontractkit/payments
-/contracts/cre @smartcontractkit/dev-services @smartcontractkit/foundations
+/contracts/cre @smartcontractkit/cre-onchain
 
 /gethwrappers @smartcontractkit/core-solidity
 /gethwrappers/functions @smartcontractkit/dev-services
