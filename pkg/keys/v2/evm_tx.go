@@ -4,9 +4,7 @@ package keys
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
@@ -152,52 +150,72 @@ func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
 	}, nil
 }
 
+// GetTxKeysOption configures GetTxKeys behavior.
+type GetTxKeysOption func(*getTxKeysOptions)
+
+type getTxKeysOptions struct {
+	noPrefix bool
+}
+
+// WithNoPrefix disables adding the evm/tx prefix to key names.
+// When set, names are used as-is (useful for keystores with externally managed names
+// like KMS-backed keystores).
+func WithNoPrefix() GetTxKeysOption {
+	return func(opts *getTxKeysOptions) {
+		opts.noPrefix = true
+	}
+}
+
 // GetTxKeys retrieves transaction keys by name.
+// By default, prepends the evm/tx prefix to names.
+// For example, a key named "test-key" will be retrieved at the path "evm/tx/test-key".
+// Use WithNoPrefix() to use names as-is (for KMS-backed keystores).
 func GetTxKeys(ctx context.Context, ks interface {
 	keystore.Reader
 	keystore.Signer
-}, names []string) ([]*TxKey, error) {
-	fullNames := make([]string, 0, len(names))
-	for _, name := range names {
-		fullNames = append(fullNames, keystore.NewKeyPath(PrefixEVM, PrefixTxKeystore, name).String())
+}, names []string, opts ...GetTxKeysOption) ([]*TxKey, error) {
+	options := &getTxKeysOptions{}
+	for _, opt := range opts {
+		opt(options)
 	}
+
+	fullNames := make([]string, 0, len(names))
+	if options.noPrefix {
+		fullNames = names
+	} else {
+		for _, name := range names {
+			fullNames = append(fullNames, keystore.NewKeyPath(PrefixEVM, PrefixTxKeystore, name).String())
+		}
+	}
+
 	resp, err := ks.GetKeys(ctx, keystore.GetKeysRequest{KeyNames: fullNames})
 	if err != nil {
 		return nil, err
 	}
 
+	// Always require all requested keys to be found
+	if len(names) > 0 && len(resp.Keys) != len(names) {
+		return nil, errors.New("some keys not found")
+	}
+
 	// Note we rely on deterministic order of keys in the response
 	keys := make([]*TxKey, 0, len(resp.Keys))
+	prefixPath := keystore.NewKeyPath(PrefixEVM, PrefixTxKeystore)
 	for _, key := range resp.Keys {
-		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
-		if err != nil {
-			return nil, err
-		}
-		addr := gethcrypto.PubkeyToAddress(*publicKey)
-		keys = append(keys, &TxKey{
-			ks:      ks,
-			keyPath: keystore.NewKeyPathFromString(key.KeyInfo.Name),
-			addr:    addr,
-		})
-	}
-	return keys, nil
-}
+		path := keystore.NewKeyPathFromString(key.KeyInfo.Name)
 
-// LoadTxKey loads a transaction key from a keystore directly by name.
-// Used for KMS-backed keystores where keys/key names are managed externally.
-func LoadTxKeys(ctx context.Context, ks interface {
-	keystore.Reader
-	keystore.Signer
-}, names []string) ([]*TxKey, error) {
-	resp, err := ks.GetKeys(ctx, keystore.GetKeysRequest{KeyNames: names})
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Keys) != len(names) {
-		return nil, fmt.Errorf("some keys not found: %s", strings.Join(names, ", "))
-	}
-	keys := make([]*TxKey, 0, len(resp.Keys))
-	for _, key := range resp.Keys {
+		// If no prefix, sanity check key type (for KMS-backed keystores)
+		if options.noPrefix {
+			if key.KeyInfo.KeyType != keystore.ECDSA_S256 {
+				return nil, errors.New("tried to load a non-ECDSA_S256 key: " + key.KeyInfo.Name)
+			}
+		}
+
+		// If no names are provided and we're using prefix, filter only evm keys
+		if !options.noPrefix && len(names) == 0 && !path.HasPrefix(prefixPath) {
+			continue
+		}
+
 		publicKey, err := gethcrypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
 		if err != nil {
 			return nil, err
@@ -205,7 +223,7 @@ func LoadTxKeys(ctx context.Context, ks interface {
 		addr := gethcrypto.PubkeyToAddress(*publicKey)
 		keys = append(keys, &TxKey{
 			ks:      ks,
-			keyPath: keystore.NewKeyPathFromString(key.KeyInfo.Name),
+			keyPath: path,
 			addr:    addr,
 		})
 	}
