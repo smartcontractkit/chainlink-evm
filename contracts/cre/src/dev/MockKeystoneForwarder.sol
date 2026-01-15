@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IReceiver} from "../../keystone/interfaces/IReceiver.sol";
-import {IRouter} from "../../keystone/interfaces/IRouter.sol";
+import {IReceiver} from "../v1/interfaces/IReceiver.sol";
+import {IRouter} from "../v1/interfaces/IRouter.sol";
 import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 
 import {ERC165Checker} from "@openzeppelin/contracts@4.8.3/utils/introspection/ERC165Checker.sol";
