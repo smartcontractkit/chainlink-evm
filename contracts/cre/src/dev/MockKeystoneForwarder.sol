@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IReceiver} from "../v1/interfaces/IReceiver.sol";
-import {IRouter} from "../v1/interfaces/IRouter.sol";
+import {IReceiver} from "../../keystone/interfaces/IReceiver.sol";
+import {IRouter} from "../../keystone/interfaces/IRouter.sol";
 import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
-
-import {OwnerIsCreator} from "@chainlink/contracts/src/v0.8/shared/access/OwnerIsCreator.sol";
 
 import {ERC165Checker} from "@openzeppelin/contracts@4.8.3/utils/introspection/ERC165Checker.sol";
 
 /// @notice Simplified mock version of KeystoneForwarder for testing purposes.
 /// The report function is permissionless and skips all signature/config validations.
-contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
+contract MockKeystoneForwarder is ITypeAndVersion, IRouter {
   /// @notice This error is returned when the report is shorter than REPORT_METADATA_LENGTH,
   /// which is the minimum length of a report.
   error InvalidReport();
@@ -37,9 +35,7 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
 
   string public constant override typeAndVersion = "MockKeystoneForwarder 1.0.0-dev";
 
-  constructor() OwnerIsCreator() {
-    s_forwarders[address(this)] = true;
-  }
+  constructor() {}
 
   uint256 internal constant METADATA_LENGTH = 109;
   uint256 internal constant FORWARDER_METADATA_LENGTH = 45;
@@ -58,22 +54,7 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
   // │                          Router                              │
   // ================================================================
 
-  mapping(address forwarder => bool isForwarder) internal s_forwarders;
   mapping(bytes32 transmissionId => Transmission transmission) internal s_transmissions;
-
-  function addForwarder(
-    address forwarder
-  ) external onlyOwner {
-    s_forwarders[forwarder] = true;
-    emit ForwarderAdded(forwarder);
-  }
-
-  function removeForwarder(
-    address forwarder
-  ) external onlyOwner {
-    s_forwarders[forwarder] = false;
-    emit ForwarderRemoved(forwarder);
-  }
 
   function route(
     bytes32 transmissionId,
@@ -151,12 +132,6 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
     bytes2 reportId
   ) external view returns (address) {
     return s_transmissions[getTransmissionId(receiver, workflowExecutionId, reportId)].transmitter;
-  }
-
-  function isForwarder(
-    address forwarder
-  ) external view returns (bool) {
-    return s_forwarders[forwarder];
   }
 
   // ================================================================
