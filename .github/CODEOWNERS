@@ -27,8 +27,8 @@
 /contracts/**/*operatorforwarder* @smartcontractkit/data-feeds-engineers
 /contracts/**/*data-feeds* @smartcontractkit/data-feeds-engineers
 /contracts/**/*vrf* @smartcontractkit/dev-services
-/contracts/**/*keystone* @smartcontractkit/onchain
-/contracts/**/*workflow* @smartcontractkit/onchain
+/contracts/**/*keystone* @smartcontractkit/cre-onchain
+/contracts/**/*workflow* @smartcontractkit/cre-onchain
 /contracts/**/*payments* @smartcontractkit/payments
 
 /contracts/src/v0.8/automation @smartcontractkit/dev-services
