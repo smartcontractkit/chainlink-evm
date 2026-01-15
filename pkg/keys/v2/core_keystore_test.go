@@ -61,4 +61,13 @@ func TestCoreKeystore(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.True(t, resp.Valid)
+
+	// Test WithAllowedKeyNames
+	_, err = CreateTxKey(ks, "key2")
+	require.NoError(t, err)
+	filteredCoreKs := NewTxKeyCoreKeystore(ks, WithAllowedKeyNames([]string{txKey.KeyPath().String()}))
+	accounts, err = filteredCoreKs.Accounts(ctx)
+	require.NoError(t, err)
+	require.Len(t, accounts, 1)
+	require.Equal(t, txKey.Address().String(), accounts[0])
 }

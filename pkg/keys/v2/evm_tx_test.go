@@ -70,6 +70,17 @@ func TestTxKey(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, keys)
 
+	// Create a non-EVM key and verify filtering
+	_, err = ks.CreateKeys(ctx, commonks.CreateKeysRequest{
+		Keys: []commonks.CreateKeyRequest{
+			{KeyName: "solana/tx/non-evm-key", KeyType: commonks.Ed25519},
+		},
+	})
+	require.NoError(t, err)
+	keys, err = evmks.GetTxKeys(ctx, ks, []string{})
+	require.NoError(t, err)
+	require.Empty(t, keys) // Should filter out non-EVM keys
+
 	// Signing will now error.
 	_, err = testKey.SignTx(ctx, evmks.SignTxRequest{
 		ChainID: big.NewInt(1337), // Use a test chain ID
@@ -77,38 +88,4 @@ func TestTxKey(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.ErrorIs(t, err, commonks.ErrKeyNotFound)
-}
-
-func TestLoadTxKeys(t *testing.T) {
-	storage := commonks.NewMemoryStorage()
-	ctx := t.Context()
-	ks, err := commonks.LoadKeystore(ctx, storage, "test-password", commonks.WithScryptParams(commonks.FastScryptParams))
-	require.NoError(t, err)
-	_, err = ks.CreateKeys(ctx, commonks.CreateKeysRequest{
-		Keys: []commonks.CreateKeyRequest{
-			{KeyName: "test-tx-key", KeyType: commonks.ECDSA_S256},
-			{KeyName: "test-tx-key-2", KeyType: commonks.ECDSA_S256},
-		},
-	})
-	require.NoError(t, err)
-	txKeys, err := evmks.LoadTxKeys(ctx, ks, []string{"test-tx-key", "test-tx-key-2"})
-	require.NoError(t, err)
-	require.Len(t, txKeys, 2)
-	require.Equal(t, "test-tx-key", txKeys[0].KeyPath().String())
-	require.Equal(t, "test-tx-key-2", txKeys[1].KeyPath().String())
-
-	// Ensure we can sign with a loaded key just as usual.
-	backend, cleanup := setupBackend(t, txKeys[1].Address())
-	defer cleanup()
-	resp, err := txKeys[1].SignTx(ctx, evmks.SignTxRequest{
-		ChainID: big.NewInt(1337),
-		Tx:      types.NewTransaction(0, txKeys[1].Address(), big.NewInt(1), 21000, big.NewInt(20000000000), nil),
-	})
-	require.NoError(t, err)
-	require.NotNil(t, resp.Tx)
-	require.NoError(t, backend.Client().SendTransaction(ctx, resp.Tx))
-	backend.Commit()
-	receipt, err := backend.Client().TransactionReceipt(ctx, resp.Tx.Hash())
-	require.NoError(t, err)
-	require.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 }

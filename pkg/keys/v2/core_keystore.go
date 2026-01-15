@@ -3,6 +3,7 @@ package keys
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/smartcontractkit/chainlink-common/keystore"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
@@ -15,6 +16,7 @@ type TxKeyCoreKeystore struct {
 		keystore.Reader
 		keystore.Signer
 	}
+	cacheMu         sync.RWMutex
 	cache           map[string]string
 	allowedKeyNames []string
 }
@@ -49,7 +51,7 @@ func NewTxKeyCoreKeystore(ks interface {
 
 func (s *TxKeyCoreKeystore) getKeys(ctx context.Context) ([]*TxKey, error) {
 	if len(s.allowedKeyNames) != 0 {
-		return LoadTxKeys(ctx, s.ks, s.allowedKeyNames)
+		return GetTxKeys(ctx, s.ks, s.allowedKeyNames, WithNoPrefix())
 	}
 	return GetTxKeys(ctx, s.ks, []string{})
 }
@@ -67,15 +69,11 @@ func (s *TxKeyCoreKeystore) Accounts(ctx context.Context) ([]string, error) {
 }
 
 func (s *TxKeyCoreKeystore) Sign(ctx context.Context, account string, data []byte) ([]byte, error) {
-	if addr, ok := s.cache[account]; ok {
-		resp, err := s.ks.Sign(ctx, keystore.SignRequest{
-			KeyName: addr,
-			Data:    data,
-		})
-		if err != nil {
-			return nil, err
-		}
-		return resp.Signature, nil
+	s.cacheMu.RLock()
+	keyPath, ok := s.cache[account]
+	s.cacheMu.RUnlock()
+	if ok {
+		return s.getSignature(ctx, keyPath, data)
 	}
 	// Otherwise do the first time lookup to find the key by address.
 	keys, err := s.getKeys(ctx)
@@ -87,15 +85,24 @@ func (s *TxKeyCoreKeystore) Sign(ctx context.Context, account string, data []byt
 	}
 	for _, key := range keys {
 		if key.Address().String() == account {
+			s.cacheMu.Lock()
 			s.cache[account] = key.KeyPath().String()
-			resp, err := key.SignRaw(ctx, SignRawDataRequest{Data: data})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Signature, nil
+			s.cacheMu.Unlock()
+			return s.getSignature(ctx, key.KeyPath().String(), data)
 		}
 	}
 	return nil, errors.New("key not found")
+}
+
+func (s *TxKeyCoreKeystore) getSignature(ctx context.Context, keyName string, data []byte) ([]byte, error) {
+	resp, err := s.ks.Sign(ctx, keystore.SignRequest{
+		KeyName: keyName,
+		Data:    data,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Signature, nil
 }
 
 func (s *TxKeyCoreKeystore) Decrypt(ctx context.Context, account string, data []byte) ([]byte, error) {
