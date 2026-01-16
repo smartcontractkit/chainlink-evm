@@ -28,7 +28,7 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/gas:
     interfaces:
       EvmFeeEstimator:
-      feeEstimatorClient:
+      FeeEstimatorClient:
         config:
           mockname: FeeEstimatorClient
       feeHistoryEstimatorClient:
