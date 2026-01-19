@@ -73,7 +73,11 @@ func TestLogPoller_RegisterFilter(t *testing.T) {
 		RPCBatchSize:             2,
 		KeepFinalizedBlocksDepth: 1000,
 	}
-	lp := NewLogPoller(orm, nil, lggr, nil, lpOpts)
+	ec := clienttest.NewClient(t)
+	contractCode := []byte{0x60, 0x80, 0x60, 0x40, 0x52}
+	ec.On("CodeAt", mock.Anything, mock.Anything, (*big.Int)(nil)).Return(contractCode, nil).Maybe()
+
+	lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
 
 	// We expect a zero Filter if nothing registered yet.
 	f := lp.Filter(nil, nil, nil)
@@ -150,6 +154,92 @@ func TestLogPoller_RegisterFilter(t *testing.T) {
 	assert.Equal(t, lp.Filter(nil, nil, nil).Addresses[0], common.HexToAddress("0x0000000000000000000000000000000000000000"))
 	assert.Len(t, lp.Filter(nil, nil, nil).Topics, 1)
 	assert.Empty(t, lp.Filter(nil, nil, nil).Topics[0])
+}
+
+func TestLogPoller_RegisterFilter_ContractValidation(t *testing.T) {
+	t.Parallel()
+	contractAddr := common.HexToAddress("0x2ab9a2dc53736b361b72d900cdf9f78f9406fbbb")
+	contractCode := []byte{0x60, 0x80, 0x60, 0x40, 0x52}
+
+	eoaAddr := common.HexToAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb") // Example EOA address
+
+	lggr, _ := logger.TestObserved(t, zapcore.InfoLevel)
+	chainID := testutils.NewRandomEVMChainID()
+	db := testutils.NewSqlxDB(t)
+	ctx := testutils.Context(t)
+
+	orm := NewORM(chainID, db, lggr)
+	ec := clienttest.NewClient(t)
+
+	lpOpts := Opts{
+		PollPeriod:               time.Hour,
+		BackfillBatchSize:        1,
+		RPCBatchSize:             2,
+		KeepFinalizedBlocksDepth: 1000,
+	}
+
+	t.Run("rejects EOA address", func(t *testing.T) {
+		lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
+
+		ec.On("CodeAt", mock.Anything, eoaAddr, (*big.Int)(nil)).Return([]byte{}, nil).Once()
+
+		err := lp.RegisterFilter(ctx, Filter{
+			Name:      "test-filter-eoa",
+			EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID},
+			Addresses: []common.Address{eoaAddr},
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not contracts")
+		require.Contains(t, err.Error(), eoaAddr.Hex())
+		require.Contains(t, err.Error(), "EOA, not a contract")
+	})
+
+	t.Run("accepts contract address", func(t *testing.T) {
+		lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
+
+		ec.On("CodeAt", mock.Anything, contractAddr, (*big.Int)(nil)).Return(contractCode, nil).Once()
+
+		err := lp.RegisterFilter(ctx, Filter{
+			Name:      "test-filter-contract",
+			EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID},
+			Addresses: []common.Address{contractAddr},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects mix of contracts and EOAs", func(t *testing.T) {
+		lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
+
+		ec.On("CodeAt", mock.Anything, contractAddr, (*big.Int)(nil)).Return(contractCode, nil).Once()
+		ec.On("CodeAt", mock.Anything, eoaAddr, (*big.Int)(nil)).Return([]byte{}, nil).Once()
+
+		err := lp.RegisterFilter(ctx, Filter{
+			Name:      "test-filter-mixed",
+			EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID},
+			Addresses: []common.Address{contractAddr, eoaAddr},
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not contracts")
+		require.Contains(t, err.Error(), eoaAddr.Hex())
+		require.Contains(t, err.Error(), "index 1") // Second address (index 1) is the EOA
+	})
+
+	t.Run("handles CodeAt RPC failure", func(t *testing.T) {
+		lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
+
+		rpcError := errors.New("RPC connection failed")
+		ec.On("CodeAt", mock.Anything, contractAddr, (*big.Int)(nil)).Return(nil, rpcError).Once()
+
+		err := lp.RegisterFilter(ctx, Filter{
+			Name:      "test-filter-rpc-error",
+			EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID},
+			Addresses: []common.Address{contractAddr},
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to check if address")
+		require.Contains(t, err.Error(), contractAddr.Hex())
+	})
+
 }
 
 func TestLogPoller_ConvertLogs(t *testing.T) {
@@ -858,7 +948,13 @@ func benchmarkFilter(b *testing.B, nFilters, nAddresses, nEvents int) {
 		RPCBatchSize:             2,
 		KeepFinalizedBlocksDepth: 1000,
 	}
-	lp := NewLogPoller(nil, nil, lggr, nil, lpOpts)
+	chainID := testutils.NewRandomEVMChainID()
+	db := testutils.NewSqlxDB(b)
+	orm := NewORM(chainID, db, lggr)
+	ec := clienttest.NewClient(b)
+	contractCode := []byte{0x60, 0x80, 0x60, 0x40, 0x52}
+	ec.On("CodeAt", mock.Anything, mock.Anything, (*big.Int)(nil)).Return(contractCode, nil).Maybe()
+	lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
 	for i := 0; i < nFilters; i++ {
 		var addresses []common.Address
 		var events []common.Hash

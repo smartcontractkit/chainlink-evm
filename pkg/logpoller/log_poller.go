@@ -89,6 +89,7 @@ type Client interface {
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
 	ConfiguredChainID() *big.Int
+	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
 }
 
 type HeadTracker interface {
@@ -282,6 +283,21 @@ func (lp *logPoller) RegisterFilter(ctx context.Context, filter Filter) error {
 		if addr == [common.AddressLength]byte{} {
 			return pkgerrors.Errorf("empty address")
 		}
+	}
+
+	var invalidAddresses []string
+	for i, addr := range filter.Addresses {
+		code, err := lp.ec.CodeAt(ctx, addr, nil)
+		if err != nil {
+			return pkgerrors.Wrapf(err, "failed to check if address at index %d (%s) is a contract", i, addr.Hex())
+		}
+		if len(code) == 0 {
+			invalidAddresses = append(invalidAddresses, fmt.Sprintf("index %d: %s (EOA, not a contract)", i, addr.Hex()))
+		}
+	}
+
+	if len(invalidAddresses) > 0 {
+		return pkgerrors.Errorf("one or more addresses are not contracts: %s", strings.Join(invalidAddresses, ", "))
 	}
 
 	lp.filterMu.Lock()

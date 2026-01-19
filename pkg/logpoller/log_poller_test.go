@@ -1615,6 +1615,9 @@ func TestTooManyLogResults(t *testing.T) {
 		})
 
 		addr := testutils.NewAddress()
+		// Mock CodeAt to return contract code so validation passes
+		contractCode := []byte{0x60, 0x80, 0x60, 0x40, 0x52}
+		ec.On("CodeAt", mock.Anything, addr, (*big.Int)(nil)).Return(contractCode, nil).Once()
 		err := lp.RegisterFilter(ctx, logpoller.Filter{
 			Name:      "Integration test",
 			EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID},
