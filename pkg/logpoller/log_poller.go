@@ -23,6 +23,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	"golang.org/x/exp/maps"
 
+	caperrors "github.com/smartcontractkit/chainlink-common/pkg/capabilities/errors"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
@@ -289,7 +290,8 @@ func (lp *logPoller) RegisterFilter(ctx context.Context, filter Filter) error {
 	for i, addr := range filter.Addresses {
 		code, err := lp.ec.CodeAt(ctx, addr, nil)
 		if err != nil {
-			return pkgerrors.Wrapf(err, "failed to check if address at index %d (%s) is a contract", i, addr.Hex())
+			systemError := pkgerrors.Wrapf(err, "failed to check if address at index %d (%s) is a contract", i, addr.Hex())
+			return caperrors.NewPublicSystemError(systemError, caperrors.Unknown)
 		}
 		if len(code) == 0 {
 			invalidAddresses = append(invalidAddresses, fmt.Sprintf("index %d: %s (EOA, not a contract)", i, addr.Hex()))
@@ -297,7 +299,8 @@ func (lp *logPoller) RegisterFilter(ctx context.Context, filter Filter) error {
 	}
 
 	if len(invalidAddresses) > 0 {
-		return pkgerrors.Errorf("one or more addresses are not contracts: %s", strings.Join(invalidAddresses, ", "))
+		addressesError := pkgerrors.Errorf("one or more addresses are not contracts: %s", strings.Join(invalidAddresses, ", "))
+		return caperrors.NewPublicUserError(addressesError, caperrors.InvalidArgument)
 	}
 
 	lp.filterMu.Lock()

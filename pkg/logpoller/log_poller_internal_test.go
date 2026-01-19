@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
 
+	caperrors "github.com/smartcontractkit/chainlink-common/pkg/capabilities/errors"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
@@ -192,6 +193,12 @@ func TestLogPoller_RegisterFilter_ContractValidation(t *testing.T) {
 		require.Contains(t, err.Error(), "not contracts")
 		require.Contains(t, err.Error(), eoaAddr.Hex())
 		require.Contains(t, err.Error(), "EOA, not a contract")
+
+		var capErr caperrors.Error
+		require.True(t, errors.As(err, &capErr), "error should be a caperrors.Error")
+		require.Equal(t, caperrors.OriginUser, capErr.Origin(), "error should have user origin")
+		require.Equal(t, caperrors.VisibilityPublic, capErr.Visibility(), "error should be public")
+		require.Equal(t, caperrors.InvalidArgument, capErr.Code(), "error should have InvalidArgument code")
 	})
 
 	t.Run("accepts contract address", func(t *testing.T) {
@@ -222,6 +229,12 @@ func TestLogPoller_RegisterFilter_ContractValidation(t *testing.T) {
 		require.Contains(t, err.Error(), "not contracts")
 		require.Contains(t, err.Error(), eoaAddr.Hex())
 		require.Contains(t, err.Error(), "index 1") // Second address (index 1) is the EOA
+
+		var capErr caperrors.Error
+		require.True(t, errors.As(err, &capErr), "error should be a caperrors.Error")
+		require.Equal(t, caperrors.OriginUser, capErr.Origin(), "error should have user origin")
+		require.Equal(t, caperrors.VisibilityPublic, capErr.Visibility(), "error should be public")
+		require.Equal(t, caperrors.InvalidArgument, capErr.Code(), "error should have InvalidArgument code")
 	})
 
 	t.Run("handles CodeAt RPC failure", func(t *testing.T) {
@@ -238,6 +251,12 @@ func TestLogPoller_RegisterFilter_ContractValidation(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to check if address")
 		require.Contains(t, err.Error(), contractAddr.Hex())
+
+		var capErr caperrors.Error
+		require.True(t, errors.As(err, &capErr), "error should be a caperrors.Error")
+		require.Equal(t, caperrors.OriginSystem, capErr.Origin(), "RPC failure should be a system error, not user error")
+		require.Equal(t, caperrors.VisibilityPublic, capErr.Visibility(), "error should be public")
+		require.Equal(t, caperrors.Unknown, capErr.Code(), "error should have Unknown code")
 	})
 
 }
