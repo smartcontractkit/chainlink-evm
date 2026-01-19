@@ -168,7 +168,7 @@ jobs:
     name: Publish Beta NPM
     environment: publish-contracts
     needs: [tag-check, changes, lint, native-compile]
-    if: needs.tag-check.outputs.is-pre-release-core == 'true'
+    if: needs.tag-check.outputs.is-pre-release-core == 'true' || needs.tag-check.outputs.is-pre-release-cre == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
@@ -245,7 +245,7 @@ jobs:
     name: Publish Prod NPM
     environment: publish-contracts
     needs: [tag-check, changes, lint, native-compile]
-    if: needs.tag-check.outputs.is-release == 'true'
+    if: needs.tag-check.outputs.is-release == 'true' || needs.tag-check.outputs.is-release-cre == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
