@@ -74,8 +74,8 @@ jobs:
           # Match semver git tags with a "contracts-cre-" prefix.
           RELEASE_REGEX: '^contracts-cre-v[0-9]+\.[0-9]+\.[0-9]+$'
           PRE_RELEASE_REGEX: '^contracts-cre-v[0-9]+\.[0-9]+\.[0-9]+-(.+)$'
-          # Get the version by stripping the "contracts-v" prefix.
-          VERSION_PREFIX: "contracts-v-cre"
+          # Get the version by stripping the "contracts-cre-v" prefix.
+          VERSION_PREFIX: "contracts-cre-v"
 
   native-compile:
     needs: [changes, tag-check]
@@ -219,8 +219,8 @@ jobs:
         working-directory: contracts/cre
         shell: bash
         env:
-          IS_PRE_RELEASE_CRE: ${{ needs.tag-check.outputs.is-pre-release-core }}
-          PRE_RELEASE_VERSION_CRE: ${{ needs.tag-check.outputs.pre-release-version-core }}
+          IS_PRE_RELEASE_CRE: ${{ needs.tag-check.outputs.is-pre-release-cre }}
+          PRE_RELEASE_VERSION_CRE: ${{ needs.tag-check.outputs.pre-release-version-cre }}
         run: |
           version=""
           if [[ $IS_PRE_RELEASE_CRE == 'true' ]]; then
@@ -295,7 +295,7 @@ jobs:
           package-json-directory: contracts
 
 
-      - name: Validate version
+      - name: Validate version - CRE
         if: needs.tag-check.outputs.is-release-cre == 'true'
         working-directory: contracts/cre
         shell: bash
