@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
@@ -17,10 +18,10 @@ import (
 type SimulationMode string
 
 const (
-	Standard       SimulationMode = "standard"
-	Retransmission SimulationMode = "retransmission"
-	Flashbots      SimulationMode = "flashbots"
-	MetaClient     SimulationMode = "meta_client"
+	Standard         SimulationMode = "standard"
+	Retransmission   SimulationMode = "retransmission"
+	StuckTxDetection SimulationMode = "stuck_tx_detection"
+	ErrorHandling    SimulationMode = "error_handling"
 )
 
 type SimulatedClient interface {
@@ -52,9 +53,23 @@ func NewGethSimulatedClient(client *clientwrappers.GethClient, mode SimulationMo
 
 func (s *gethSimulatedClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	switch s.Mode {
+	case ErrorHandling:
+		// ErrorHandling: Force the TXM to inject transactions with certain error messages so we can test error handling.
+		if tx.ID%2 == 0 && attempt.ID%2 == 0 {
+			return dualbroadcast.ErrNoBids
+		}
+		return s.GethClient.SendTransaction(ctx, tx, attempt)
+	case StuckTxDetection:
+		// StuckTxDetection: Force the TXM to assume some of the attempts were successful while they weren't so we can test stuck tx detection.
+		// We fail on every other tx and attempt to inject a more realistic mix of transactions for the TXM to handle.
+		if tx.ID%2 == 0 && attempt.ID%2 == 0 {
+			return nil
+		}
+		return s.GethClient.SendTransaction(ctx, tx, attempt)
 	case Retransmission:
+		// Retransmission: Force the TXM to assume some of the attempts were successful while they weren't so we can test retransmission.
 		if attempt.ID%2 == 0 {
-			return nil // This will force the TXM to assume some of the attempts were successful while they weren't so we can test retransmission.
+			return nil
 		}
 		return s.GethClient.SendTransaction(ctx, tx, attempt)
 	case Standard:
@@ -92,9 +107,23 @@ func (s *backendSimulatedClient) PendingNonceAt(ctx context.Context, account com
 
 func (s *backendSimulatedClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	switch s.Mode {
+	case ErrorHandling:
+		// ErrorHandling: Force the TXM to inject transactions with certain error messages so we can test error handling.
+		if tx.ID%2 == 0 && attempt.ID%2 == 0 {
+			return dualbroadcast.ErrNoBids
+		}
+		return s.Backend.Client().SendTransaction(ctx, attempt.SignedTransaction)
+	case StuckTxDetection:
+		// StuckTxDetection: Force the TXM to assume some of the attempts were successful while they weren't so we can test stuck tx detection.
+		// We fail on every other tx and attempt to inject a more realistic mix of transactions for the TXM to handle.
+		if tx.ID%2 == 0 && attempt.ID%2 == 0 {
+			return nil
+		}
+		return s.Backend.Client().SendTransaction(ctx, attempt.SignedTransaction)
 	case Retransmission:
+		// Retransmission: Force the TXM to assume some of the attempts were successful while they weren't so we can test retransmission.
 		if attempt.ID%2 == 0 {
-			return nil // This will force the TXM to assume some of the attempts were successful while they weren't so we can test retransmission.
+			return nil
 		}
 		return s.Backend.Client().SendTransaction(ctx, attempt.SignedTransaction)
 	case Standard:

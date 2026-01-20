@@ -26,6 +26,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/storage"
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -110,8 +111,21 @@ func setupTestnetTXM(
 		EmptyTxLimitDefault: configs.LimitTransfer(),
 	}
 
+	var stuckTxDetector txm.StuckTxDetector
+	if simulationMode == StuckTxDetection {
+		stuckTxDetector = txm.NewStuckTxDetector(lggr, "", txm.StuckTxDetectorConfig{
+			BlockTime:             configs.BlockTime(),
+			StuckTxBlockThreshold: uint32(configs.BumpThreshold() - 1),
+		})
+	}
+
+	var errorHandler txm.ErrorHandler
+	if simulationMode == ErrorHandling {
+		errorHandler = dualbroadcast.NewErrorHandler()
+	}
+
 	// TXM
-	txm := txm.NewTxm(lggr, chainID, client, ab, store, nil, txmConfig, keystore, nil)
+	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler)
 	require.NotNil(t, txm)
 	servicetest.Run(t, txm)
 	return txm, store, client
@@ -152,8 +166,21 @@ func setupDevnetTXM(
 		EmptyTxLimitDefault: configs.LimitTransfer(),
 	}
 
+	var stuckTxDetector txm.StuckTxDetector
+	if simulationMode == StuckTxDetection {
+		stuckTxDetector = txm.NewStuckTxDetector(lggr, "", txm.StuckTxDetectorConfig{
+			BlockTime:             configs.BlockTime(),
+			StuckTxBlockThreshold: uint32(configs.BumpThreshold() - 1),
+		})
+	}
+
+	var errorHandler txm.ErrorHandler
+	if simulationMode == ErrorHandling {
+		errorHandler = dualbroadcast.NewErrorHandler()
+	}
+
 	// TXM
-	txm := txm.NewTxm(lggr, chainID, client, ab, store, nil, txmConfig, keystore, nil)
+	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler)
 	require.NotNil(t, txm)
 	servicetest.Run(t, txm)
 
@@ -258,22 +285,7 @@ func waitUntilQueuesAreEmpty(t *testing.T, store *storage.InMemoryStoreManager, 
 func TestIntegration_StandardFlow(t *testing.T) {
 	txm, store, chainID, lggr, fromAddress, simulatedClient := setupBackend(t, Standard)
 
-	// Logic
-	for range 20 {
-		//Create request
-		txRequest := txmtypes.TxRequest{
-			ChainID:           chainID,
-			FromAddress:       fromAddress,
-			ToAddress:         fromAddress,
-			Value:             big.NewInt(50),
-			Data:              []byte{128, 100, 11},
-			SpecifiedGasLimit: 40000,
-		}
-
-		_, err := txm.CreateTransaction(t.Context(), &txRequest) // Transaction is created
-		require.NoError(t, err, "failed to create transaction")
-
-	}
+	createTransactions(t, txm, chainID, fromAddress, 20)
 	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
 	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
 }
@@ -284,8 +296,33 @@ func TestIntegration_StandardFlow(t *testing.T) {
 func TestIntegration_Retransmission(t *testing.T) {
 	txm, store, chainID, lggr, fromAddress, simulatedClient := setupBackend(t, Retransmission)
 
-	// Logic
-	for range 20 {
+	createTransactions(t, txm, chainID, fromAddress, 20)
+	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
+	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
+}
+
+// TestIntegration_StuckTxDetection tests the TXM's stuck tx detection logic. It injects a mix of stuck and
+// non-stuck transactions and attempts.
+func TestIntegration_StuckTxDetection(t *testing.T) {
+	txm, store, chainID, lggr, fromAddress, simulatedClient := setupBackend(t, StuckTxDetection)
+
+	createTransactions(t, txm, chainID, fromAddress, 20)
+	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
+	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
+}
+
+// TestIntegration_ErrorHandling tests the TXM's error handling logic by injecting transactions with certain error messages
+// and checking if the TXM will handle the nonce reassignment correctly.
+func TestIntegration_ErrorHandling(t *testing.T) {
+	txm, store, chainID, lggr, fromAddress, simulatedClient := setupBackend(t, ErrorHandling)
+
+	createTransactions(t, txm, chainID, fromAddress, 20)
+	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
+	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
+}
+
+func createTransactions(t *testing.T, txm *txm.Txm, chainID *big.Int, fromAddress common.Address, count int) {
+	for range count {
 		//Create request
 		txRequest := txmtypes.TxRequest{
 			ChainID:           chainID,
@@ -295,11 +332,7 @@ func TestIntegration_Retransmission(t *testing.T) {
 			Data:              []byte{128, 100, 11},
 			SpecifiedGasLimit: 40000,
 		}
-
-		_, err := txm.CreateTransaction(t.Context(), &txRequest) // Transaction is created
+		_, err := txm.CreateTransaction(t.Context(), &txRequest)
 		require.NoError(t, err, "failed to create transaction")
-
 	}
-	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
-	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
 }
