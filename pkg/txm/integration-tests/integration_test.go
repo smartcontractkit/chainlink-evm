@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
@@ -64,7 +65,7 @@ func setupBackend(t *testing.T, simulationMode SimulationMode) (*txm.Txm, *stora
 func setupGasEstimator(t *testing.T, lggr logger.Logger, observedLogs *observer.ObservedLogs, client gas.FeeEstimatorClient, chainID *big.Int, configs AppConfig) gas.EvmFeeEstimator {
 	estimator, err := gas.NewEstimator(lggr, client, "", chainID, configs, nil)
 	require.NoError(t, err)
-	err = estimator.Start(t.Context())
+	servicetest.Run(t, estimator)
 	require.NoError(t, err)
 	tests.AssertLogEventually(t, observedLogs, "Fetched") // Ensure there is at least one successful gas estimation stored
 	return estimator
@@ -112,7 +113,7 @@ func setupTestnetTXM(
 	// TXM
 	txm := txm.NewTxm(lggr, chainID, client, ab, store, nil, txmConfig, keystore, nil)
 	require.NotNil(t, txm)
-	require.NoError(t, txm.Start(t.Context()))
+	servicetest.Run(t, txm)
 	return txm, store, client
 }
 
@@ -154,7 +155,7 @@ func setupDevnetTXM(
 	// TXM
 	txm := txm.NewTxm(lggr, chainID, client, ab, store, nil, txmConfig, keystore, nil)
 	require.NotNil(t, txm)
-	require.NoError(t, txm.Start(t.Context()))
+	servicetest.Run(t, txm)
 
 	return txm, store, chainID, fromAddress, client
 }
@@ -275,7 +276,6 @@ func TestIntegration_StandardFlow(t *testing.T) {
 	}
 	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
 	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
-	require.NoError(t, txm.Close())
 }
 
 // TestIntegration_Retransmission utilizes the Retransmission simulation mode to test the TXM's
@@ -302,5 +302,4 @@ func TestIntegration_Retransmission(t *testing.T) {
 	}
 	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
 	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
-	require.NoError(t, txm.Close())
 }
