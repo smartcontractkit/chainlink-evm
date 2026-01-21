@@ -1,11 +1,13 @@
 package integrationtests
 
 import (
+	"crypto/ecdsa"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	tomldecode "github.com/pelletier/go-toml/v2"
 	"github.com/stretchr/testify/require"
 
@@ -18,17 +20,17 @@ import (
 
 const (
 	envPath    = "env.toml"
-	configPath = "config.toml"
+	configPath = "configs.toml"
 )
 
 // This wrapper is required because of the way Gas Estimator components expect configs.
 // Instead of passing down a struct with values, we need to implement an interface with
 // the required methods.
 type AppConfig struct {
-	BlockTimeF          time.Duration `toml:"BlockTime"`
-	EIP1559DynamicFeesF bool          `toml:"EIP1559DynamicFees"`
+	BlockTimeF          time.Duration
+	EIP1559DynamicFeesF bool
 	BumpPercentF        uint16
-	BumpThresholdF      uint64 `toml:"BumpThreshold"`
+	BumpThresholdF      uint64
 	BumpTxDepthF        uint32
 	BumpMinF            *assets.Wei
 	FeeCapDefaultF      *assets.Wei
@@ -213,9 +215,9 @@ func (b BlockHistory) TransactionPercentile() uint16 {
 
 // EnvVariables holds the environment variables.
 type EnvVariables struct {
-	RPC         string `toml:"rpc"`
-	PrivateKey  string `toml:"private_key"`
-	FromAddress string `toml:"from_address"`
+	RPC         string `toml:"RPC"`
+	PrivateKey  string `toml:"PrivateKey"`
+	FromAddress string
 }
 
 // LoadEnvVariables loads the environment variables from a config file.
@@ -226,6 +228,12 @@ func LoadEnvVariables(t *testing.T) *EnvVariables {
 
 	envs := &EnvVariables{}
 	require.NoError(t, tomldecode.Unmarshal(data, envs), "failed to parse TOML config")
+	privateKey, err := crypto.HexToECDSA(envs.PrivateKey)
+	require.NoError(t, err)
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	require.True(t, ok, "cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	envs.FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
 	return envs
 }
 
@@ -237,8 +245,22 @@ func LoadConfigVariablesWithDefaults(t *testing.T) AppConfig {
 	data, err := os.ReadFile(configPath)
 	require.NoError(t, err)
 
-	configs := AppConfig{}
-	require.NoError(t, tomldecode.Unmarshal(data, configs), "failed to parse TOML config")
+	// First unmarshal into a temporary struct that uses int64 for BlockTime
+	type tempConfig struct {
+		BlockTimeSeconds    int64  `toml:"BlockTime"`
+		EIP1559DynamicFeesF bool   `toml:"EIP1559DynamicFees"`
+		BumpThresholdF      uint64 `toml:"BumpThreshold"`
+	}
+	temp := &tempConfig{}
+	require.NoError(t, tomldecode.Unmarshal(data, temp), "failed to parse TOML config")
+
+	// Convert BlockTime from seconds to time.Duration
+	configs := &AppConfig{
+		BlockTimeF:          time.Duration(temp.BlockTimeSeconds) * time.Second,
+		EIP1559DynamicFeesF: temp.EIP1559DynamicFeesF,
+		BumpThresholdF:      temp.BumpThresholdF,
+	}
+
 	// Add default values to the configs that don't affect the tests
 	configs.BumpPercentF = 20
 	configs.LimitDefaultF = 30000
@@ -247,13 +269,13 @@ func LoadConfigVariablesWithDefaults(t *testing.T) AppConfig {
 	configs.PriceMaxF = assets.GWei(1000)
 	configs.ModeF = "FeeHistory"
 	configs.FeeHistoryF = &FeeHistory{
-		CacheTimeoutF: configs.BlockTime(),
+		CacheTimeoutF: configs.BlockTimeF,
 	}
 	configs.BlockHistoryF = &BlockHistory{
-		BlockHistorySizeF:      4,
+		BlockHistorySizeF:      8,
 		TransactionPercentileF: 55,
 	}
-	return configs
+	return *configs
 }
 
 // defaultConfigs returns the default configurations for Ethereum chains (Mainnet and Testnet).

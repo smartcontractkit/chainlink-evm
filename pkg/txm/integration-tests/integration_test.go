@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,9 +32,12 @@ import (
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-const SimulatedChainID = 1337
+const (
+	SimulatedChainID     = 1337
+	NumberOfTransactions = 20
+)
 
-func setupBackend(t *testing.T, simulationMode SimulationMode) (*txm.Txm, *storage.InMemoryStoreManager, *big.Int, logger.Logger, common.Address, SimulatedClient) {
+func setupBackend(t *testing.T, simulationMode SimulationMode) (*txm.Txm, *storage.InMemoryStoreManager, *big.Int, logger.Logger, common.Address, SimulatedClient, AppConfig) {
 	env := os.Getenv("ENV")
 
 	// Logger
@@ -54,13 +58,13 @@ func setupBackend(t *testing.T, simulationMode SimulationMode) (*txm.Txm, *stora
 		// TXM
 		txm, store, simulatedClient := setupTestnetTXM(t, client, lggr, observedLogs, simulationMode, envs, configs)
 		fromAddress := common.HexToAddress(envs.FromAddress)
-		return txm, store, chainID, lggr, fromAddress, simulatedClient
+		return txm, store, chainID, lggr, fromAddress, simulatedClient, configs
 	case "DEVNET":
 	default:
-		txm, store, chainID, fromAddress, simulatedClient := setupDevnetTXM(t, lggr, observedLogs, simulationMode)
-		return txm, store, chainID, lggr, fromAddress, simulatedClient
+		txm, store, chainID, fromAddress, simulatedClient, configs := setupDevnetTXM(t, lggr, observedLogs, simulationMode)
+		return txm, store, chainID, lggr, fromAddress, simulatedClient, configs
 	}
-	return nil, nil, nil, nil, common.Address{}, nil
+	return nil, nil, nil, nil, common.Address{}, nil, AppConfig{}
 }
 
 func setupGasEstimator(t *testing.T, lggr logger.Logger, observedLogs *observer.ObservedLogs, client gas.FeeEstimatorClient, chainID *big.Int, configs AppConfig) gas.EvmFeeEstimator {
@@ -136,7 +140,7 @@ func setupDevnetTXM(
 	lggr logger.Logger,
 	observedLogs *observer.ObservedLogs,
 	simulationMode SimulationMode,
-) (*txm.Txm, *storage.InMemoryStoreManager, *big.Int, common.Address, SimulatedClient) {
+) (*txm.Txm, *storage.InMemoryStoreManager, *big.Int, common.Address, SimulatedClient, AppConfig) {
 	// Configs
 	configs := defaultConfigs()
 
@@ -184,7 +188,7 @@ func setupDevnetTXM(
 	require.NotNil(t, txm)
 	servicetest.Run(t, txm)
 
-	return txm, store, chainID, fromAddress, client
+	return txm, store, chainID, fromAddress, client, configs
 }
 
 func setupSimulatedBackendClient(t *testing.T, chainID *big.Int, simulationMode SimulationMode, EIP1559DynamicFees bool) (SimulatedClient, common.Address, string) {
@@ -266,7 +270,14 @@ func setupSimulatedBackendClient(t *testing.T, chainID *big.Int, simulationMode 
 	return c, address, privateKeyHex
 }
 
-func waitUntilQueuesAreEmpty(t *testing.T, store *storage.InMemoryStoreManager, fromAddress common.Address, lggr logger.Logger, client SimulatedClient) {
+func waitUntilQueuesAreEmpty(
+	t *testing.T,
+	store *storage.InMemoryStoreManager,
+	fromAddress common.Address,
+	lggr logger.Logger,
+	client SimulatedClient,
+	blockTime time.Duration,
+) {
 	require.Eventually(t, func() bool {
 		client.Commit()
 		unstartedCount, err := store.CountUnstartedTransactions(fromAddress)
@@ -275,7 +286,7 @@ func waitUntilQueuesAreEmpty(t *testing.T, store *storage.InMemoryStoreManager, 
 		require.NoError(t, err)
 		lggr.Debugw("Queue status", "unstarted", unstartedCount, "unconfirmed", unconfirmedCount)
 		return unstartedCount == 0 && unconfirmedCount == 0
-	}, testutils.WaitTimeout(t), testutils.TestInterval)
+	}, testutils.WaitTimeout(t), blockTime)
 }
 
 // TestIntegration_StandardFlow creates 20 transaction requests and queues them in the TXM.
@@ -283,42 +294,42 @@ func waitUntilQueuesAreEmpty(t *testing.T, store *storage.InMemoryStoreManager, 
 // This test is used to verify TXM's standard flow. The number 20 was chosen because it will
 // trigger a thottling scenario and will enable the TXM to gracefully handle it.
 func TestIntegration_StandardFlow(t *testing.T) {
-	txm, store, chainID, lggr, fromAddress, simulatedClient := setupBackend(t, Standard)
+	txm, store, chainID, lggr, fromAddress, simulatedClient, configs := setupBackend(t, Standard)
 
-	createTransactions(t, txm, chainID, fromAddress, 20)
+	createTransactions(t, txm, chainID, fromAddress, NumberOfTransactions)
 	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
-	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
+	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient, configs.BlockTime())
 }
 
 // TestIntegration_Retransmission utilizes the Retransmission simulation mode to test the TXM's
 // retransmission logic. That means every other attempt will be assumed to be successful while it wasn't,
 // so the TXM will have to handle that.
 func TestIntegration_Retransmission(t *testing.T) {
-	txm, store, chainID, lggr, fromAddress, simulatedClient := setupBackend(t, Retransmission)
+	txm, store, chainID, lggr, fromAddress, simulatedClient, configs := setupBackend(t, Retransmission)
 
-	createTransactions(t, txm, chainID, fromAddress, 20)
+	createTransactions(t, txm, chainID, fromAddress, NumberOfTransactions)
 	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
-	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
+	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient, configs.BlockTime())
 }
 
 // TestIntegration_StuckTxDetection tests the TXM's stuck tx detection logic. It injects a mix of stuck and
 // non-stuck transactions and attempts.
 func TestIntegration_StuckTxDetection(t *testing.T) {
-	txm, store, chainID, lggr, fromAddress, simulatedClient := setupBackend(t, StuckTxDetection)
+	txm, store, chainID, lggr, fromAddress, simulatedClient, configs := setupBackend(t, StuckTxDetection)
 
-	createTransactions(t, txm, chainID, fromAddress, 20)
+	createTransactions(t, txm, chainID, fromAddress, NumberOfTransactions)
 	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
-	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
+	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient, configs.BlockTime())
 }
 
 // TestIntegration_ErrorHandling tests the TXM's error handling logic by injecting transactions with certain error messages
 // and checking if the TXM will handle the nonce reassignment correctly.
 func TestIntegration_ErrorHandling(t *testing.T) {
-	txm, store, chainID, lggr, fromAddress, simulatedClient := setupBackend(t, ErrorHandling)
+	txm, store, chainID, lggr, fromAddress, simulatedClient, configs := setupBackend(t, ErrorHandling)
 
-	createTransactions(t, txm, chainID, fromAddress, 20)
+	createTransactions(t, txm, chainID, fromAddress, NumberOfTransactions)
 	txm.Trigger(fromAddress) // Trigger instantly triggers the TXM instead of waiting for the next cycle.
-	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient)
+	waitUntilQueuesAreEmpty(t, store, fromAddress, lggr, simulatedClient, configs.BlockTime())
 }
 
 func createTransactions(t *testing.T, txm *txm.Txm, chainID *big.Int, fromAddress common.Address, count int) {
