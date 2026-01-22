@@ -16,9 +16,8 @@
     "src",
     "abi",
     "bytecode",
+    "!src/dev/*",
     "!**/test/**/*",
-    "src/**/test/mocks/**/*.sol",
-    "!src/**/test/mocks/test/*.sol",
     "src/**/test/helpers/**/*.sol",
     "foundry.toml",
     "remappings.txt"
