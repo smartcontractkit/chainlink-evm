@@ -23,6 +23,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	"golang.org/x/exp/maps"
 
+	caperrors "github.com/smartcontractkit/chainlink-common/pkg/capabilities/errors"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
@@ -89,6 +90,7 @@ type Client interface {
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
 	ConfiguredChainID() *big.Int
+	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
 }
 
 type HeadTracker interface {
@@ -282,6 +284,23 @@ func (lp *logPoller) RegisterFilter(ctx context.Context, filter Filter) error {
 		if addr == [common.AddressLength]byte{} {
 			return pkgerrors.Errorf("empty address")
 		}
+	}
+
+	var invalidAddresses []string
+	for i, addr := range filter.Addresses {
+		code, err := lp.ec.CodeAt(ctx, addr, nil)
+		if err != nil {
+			systemError := pkgerrors.Wrapf(err, "failed to check if address at index %d (%s) is a contract", i, addr.Hex())
+			return caperrors.NewPublicSystemError(systemError, caperrors.Unknown)
+		}
+		if len(code) == 0 {
+			invalidAddresses = append(invalidAddresses, fmt.Sprintf("index %d: %s (EOA, not a contract)", i, addr.Hex()))
+		}
+	}
+
+	if len(invalidAddresses) > 0 {
+		addressesError := pkgerrors.Errorf("one or more addresses are not contracts: %s", strings.Join(invalidAddresses, ", "))
+		return caperrors.NewPublicUserError(addressesError, caperrors.InvalidArgument)
 	}
 
 	lp.filterMu.Lock()
