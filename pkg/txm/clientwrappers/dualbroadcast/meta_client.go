@@ -133,13 +133,13 @@ type MetaClientRPC interface {
 }
 
 type MetaClient struct {
-	lggr      logger.SugaredLogger
-	c         MetaClientRPC
-	ks        MetaClientKeystore
-	customURL *url.URL
-	chainID   *big.Int
-	metrics   *MetaMetrics
-	emitter   beholder.ProtoEmitter
+	lggr            logger.SugaredLogger
+	c               MetaClientRPC
+	ks              MetaClientKeystore
+	customURL       *url.URL
+	chainID         *big.Int
+	metrics         *MetaMetrics
+	beholderEmitter beholder.ProtoEmitter
 }
 
 const schemaBasePath = "/oev-fastlane-atlas-error/versions/1"
@@ -155,13 +155,13 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 	emitter := beholder.NewProtoEmitter(lggr, &client, schemaBasePath)
 
 	return &MetaClient{
-		lggr:      logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
-		c:         c,
-		ks:        ks,
-		customURL: customURL,
-		chainID:   chainID,
-		metrics:   metrics,
-		emitter:   emitter,
+		lggr:            logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
+		c:               c,
+		ks:              ks,
+		customURL:       customURL,
+		chainID:         chainID,
+		metrics:         metrics,
+		beholderEmitter: emitter,
 	}, nil
 }
 
@@ -173,7 +173,7 @@ func (a *MetaClient) PendingNonceAt(ctx context.Context, address common.Address)
 	return a.c.PendingNonceAt(ctx, address)
 }
 
-// emitAtlasError emits an OTel event for FastLane Atlas errors
+// emitAtlasError emits an OTel event to track FastLane Atlas errors
 func (a *MetaClient) emitAtlasError(ctx context.Context, errType string, err error, httpStatusCode int, tx *types.Transaction) {
 	msg := &oevpb.FastLaneAtlasError{
 		ChainId:        a.chainID.String(),
@@ -184,10 +184,10 @@ func (a *MetaClient) emitAtlasError(ctx context.Context, errType string, err err
 		HttpStatusCode: int32(httpStatusCode),
 		TransactionId:  int64(tx.ID), //nolint:gosec // overflow is acceptable for telemetry
 		AtlasUrl:       a.customURL.String(),
-		CreatedAt:      time.Now().UnixMicro(),
+		CreatedAt:      time.Now().UnixMilli()(),
 	}
-	if emitErr := a.emitter.EmitWithLog(ctx, msg); emitErr != nil {
-		a.lggr.Warnw("Failed to emit Atlas error event", "err", emitErr)
+	if emitErr := a.beholderEmitter.EmitWithLog(ctx, msg); emitErr != nil {
+		a.lggr.Errorw("Failed to emit Atlas error event", "err", emitErr)
 	}
 }
 
