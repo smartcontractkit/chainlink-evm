@@ -71,7 +71,6 @@ func setupGasEstimator(t *testing.T, lggr logger.Logger, observedLogs *observer.
 	estimator, err := gas.NewEstimator(lggr, client, "", chainID, configs, nil)
 	require.NoError(t, err)
 	servicetest.Run(t, estimator)
-	require.NoError(t, err)
 	tests.AssertLogEventually(t, observedLogs, "Fetched") // Ensure there is at least one successful gas estimation stored
 	return estimator
 }
