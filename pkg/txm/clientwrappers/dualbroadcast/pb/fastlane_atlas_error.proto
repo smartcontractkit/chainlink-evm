@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package oev.v1;
+
+option go_package = "github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast/pb;oevpb";
+
+message FastLaneAtlasError {
+  string chain_id = 1;
+  string from_address = 2;
+  string to_address = 3;
+  string error_type = 4;
+  string error_message = 5;
+  int32 http_status_code = 6;
+  int64 transaction_id = 7;
+  string atlas_url = 8;
+  int64 created_at = 9;
+}
