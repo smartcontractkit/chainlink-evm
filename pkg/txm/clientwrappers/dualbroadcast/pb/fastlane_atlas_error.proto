@@ -8,10 +8,11 @@ message FastLaneAtlasError {
   string chain_id = 1;
   string from_address = 2;
   string to_address = 3;
-  string error_type = 4;
-  string error_message = 5;
-  int32 http_status_code = 6;
-  int64 transaction_id = 7;
-  string atlas_url = 8;
-  int64 created_at = 9;
+  string nonce = 4;
+  string error_type = 5;
+  string error_message = 6;
+  int32 http_status_code = 7;
+  int64 transaction_id = 8;
+  string atlas_url = 9;
+  int64 created_at = 10;
 }

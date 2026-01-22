@@ -24,7 +24,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
-	oevpb "github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast/pb"
+	atlaspb "github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast/pb"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -175,16 +175,21 @@ func (a *MetaClient) PendingNonceAt(ctx context.Context, address common.Address)
 
 // emitAtlasError emits an OTel event to track FastLane Atlas errors
 func (a *MetaClient) emitAtlasError(ctx context.Context, errType string, err error, httpStatusCode int, tx *types.Transaction) {
-	msg := &oevpb.FastLaneAtlasError{
+	var nonce string
+	if tx.Nonce != nil {
+		nonce = fmt.Sprintf("%d", *tx.Nonce)
+	}
+	msg := &atlaspb.FastLaneAtlasError{
 		ChainId:        a.chainID.String(),
 		FromAddress:    tx.FromAddress.Hex(),
 		ToAddress:      tx.ToAddress.Hex(),
+		Nonce:          nonce,
 		ErrorType:      errType,
 		ErrorMessage:   err.Error(),
 		HttpStatusCode: int32(httpStatusCode),
 		TransactionId:  int64(tx.ID), //nolint:gosec // overflow is acceptable for telemetry
 		AtlasUrl:       a.customURL.String(),
-		CreatedAt:      time.Now().UnixMilli()(),
+		CreatedAt:      time.Now().UnixMicro(),
 	}
 	if emitErr := a.beholderEmitter.EmitWithLog(ctx, msg); emitErr != nil {
 		a.lggr.Errorw("Failed to emit Atlas error event", "err", emitErr)

@@ -4,7 +4,7 @@
 // 	protoc        v5.29.3
 // source: fastlane_atlas_error.proto
 
-package oevpb
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -26,12 +26,13 @@ type FastLaneAtlasError struct {
 	ChainId        string                 `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	FromAddress    string                 `protobuf:"bytes,2,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
 	ToAddress      string                 `protobuf:"bytes,3,opt,name=to_address,json=toAddress,proto3" json:"to_address,omitempty"`
-	ErrorType      string                 `protobuf:"bytes,4,opt,name=error_type,json=errorType,proto3" json:"error_type,omitempty"`
-	ErrorMessage   string                 `protobuf:"bytes,5,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
-	HttpStatusCode int32                  `protobuf:"varint,6,opt,name=http_status_code,json=httpStatusCode,proto3" json:"http_status_code,omitempty"`
-	TransactionId  int64                  `protobuf:"varint,7,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
-	AtlasUrl       string                 `protobuf:"bytes,8,opt,name=atlas_url,json=atlasUrl,proto3" json:"atlas_url,omitempty"`
-	CreatedAt      int64                  `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Nonce          string                 `protobuf:"bytes,4,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	ErrorType      string                 `protobuf:"bytes,5,opt,name=error_type,json=errorType,proto3" json:"error_type,omitempty"`
+	ErrorMessage   string                 `protobuf:"bytes,6,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	HttpStatusCode int32                  `protobuf:"varint,7,opt,name=http_status_code,json=httpStatusCode,proto3" json:"http_status_code,omitempty"`
+	TransactionId  int64                  `protobuf:"varint,8,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
+	AtlasUrl       string                 `protobuf:"bytes,9,opt,name=atlas_url,json=atlasUrl,proto3" json:"atlas_url,omitempty"`
+	CreatedAt      int64                  `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -87,6 +88,13 @@ func (x *FastLaneAtlasError) GetToAddress() string {
 	return ""
 }
 
+func (x *FastLaneAtlasError) GetNonce() string {
+	if x != nil {
+		return x.Nonce
+	}
+	return ""
+}
+
 func (x *FastLaneAtlasError) GetErrorType() string {
 	if x != nil {
 		return x.ErrorType
@@ -133,20 +141,22 @@ var File_fastlane_atlas_error_proto protoreflect.FileDescriptor
 
 const file_fastlane_atlas_error_proto_rawDesc = "" +
 	"\n" +
-	"\x1afastlane_atlas_error.proto\x12\x06oev.v1\"\xc2\x02\n" +
+	"\x1afastlane_atlas_error.proto\x12\x06svr.v1\"\xd8\x02\n" +
 	"\x12FastLaneAtlasError\x12\x19\n" +
 	"\bchain_id\x18\x01 \x01(\tR\achainId\x12!\n" +
 	"\ffrom_address\x18\x02 \x01(\tR\vfromAddress\x12\x1d\n" +
 	"\n" +
-	"to_address\x18\x03 \x01(\tR\ttoAddress\x12\x1d\n" +
+	"to_address\x18\x03 \x01(\tR\ttoAddress\x12\x14\n" +
+	"\x05nonce\x18\x04 \x01(\tR\x05nonce\x12\x1d\n" +
 	"\n" +
-	"error_type\x18\x04 \x01(\tR\terrorType\x12#\n" +
-	"\rerror_message\x18\x05 \x01(\tR\ferrorMessage\x12(\n" +
-	"\x10http_status_code\x18\x06 \x01(\x05R\x0ehttpStatusCode\x12%\n" +
-	"\x0etransaction_id\x18\a \x01(\x03R\rtransactionId\x12\x1b\n" +
-	"\tatlas_url\x18\b \x01(\tR\batlasUrl\x12\x1d\n" +
+	"error_type\x18\x05 \x01(\tR\terrorType\x12#\n" +
+	"\rerror_message\x18\x06 \x01(\tR\ferrorMessage\x12(\n" +
+	"\x10http_status_code\x18\a \x01(\x05R\x0ehttpStatusCode\x12%\n" +
+	"\x0etransaction_id\x18\b \x01(\x03R\rtransactionId\x12\x1b\n" +
+	"\tatlas_url\x18\t \x01(\tR\batlasUrl\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\t \x01(\x03R\tcreatedAtBYZWgithub.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast/pb;oevpbb\x06proto3"
+	"created_at\x18\n" +
+	" \x01(\x03R\tcreatedAtB5Z3github.com/smartcontractkit/chainlink-protos/svr/v1b\x06proto3"
 
 var (
 	file_fastlane_atlas_error_proto_rawDescOnce sync.Once
@@ -162,7 +172,7 @@ func file_fastlane_atlas_error_proto_rawDescGZIP() []byte {
 
 var file_fastlane_atlas_error_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_fastlane_atlas_error_proto_goTypes = []any{
-	(*FastLaneAtlasError)(nil), // 0: oev.v1.FastLaneAtlasError
+	(*FastLaneAtlasError)(nil), // 0: svr.v1.FastLaneAtlasError
 }
 var file_fastlane_atlas_error_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
