@@ -357,6 +357,65 @@ func (_c *MockTxStore_FetchUnconfirmedTransactionAtNonceWithCount_Call) RunAndRe
 	return _c
 }
 
+// FetchUnconfirmedTransactions provides a mock function with given fields: _a0, _a1
+func (_m *MockTxStore) FetchUnconfirmedTransactions(_a0 context.Context, _a1 common.Address) ([]*types.Transaction, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FetchUnconfirmedTransactions")
+	}
+
+	var r0 []*types.Transaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address) ([]*types.Transaction, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address) []*types.Transaction); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*types.Transaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, common.Address) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockTxStore_FetchUnconfirmedTransactions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FetchUnconfirmedTransactions'
+type MockTxStore_FetchUnconfirmedTransactions_Call struct {
+	*mock.Call
+}
+
+// FetchUnconfirmedTransactions is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 common.Address
+func (_e *MockTxStore_Expecter) FetchUnconfirmedTransactions(_a0 interface{}, _a1 interface{}) *MockTxStore_FetchUnconfirmedTransactions_Call {
+	return &MockTxStore_FetchUnconfirmedTransactions_Call{Call: _e.mock.On("FetchUnconfirmedTransactions", _a0, _a1)}
+}
+
+func (_c *MockTxStore_FetchUnconfirmedTransactions_Call) Run(run func(_a0 context.Context, _a1 common.Address)) *MockTxStore_FetchUnconfirmedTransactions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Address))
+	})
+	return _c
+}
+
+func (_c *MockTxStore_FetchUnconfirmedTransactions_Call) Return(_a0 []*types.Transaction, _a1 error) *MockTxStore_FetchUnconfirmedTransactions_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockTxStore_FetchUnconfirmedTransactions_Call) RunAndReturn(run func(context.Context, common.Address) ([]*types.Transaction, error)) *MockTxStore_FetchUnconfirmedTransactions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MarkConfirmedAndReorgedTransactions provides a mock function with given fields: _a0, _a1, _a2
 func (_m *MockTxStore) MarkConfirmedAndReorgedTransactions(_a0 context.Context, _a1 uint64, _a2 common.Address) ([]*types.Transaction, []uint64, error) {
 	ret := _m.Called(_a0, _a1, _a2)

@@ -30,7 +30,7 @@ const (
 type Client interface {
 	PendingNonceAt(context.Context, common.Address) (uint64, error)
 	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
-	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
+	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, store TxStore) error
 }
 
 type TxStore interface {
@@ -39,6 +39,7 @@ type TxStore interface {
 	CreateEmptyUnconfirmedTransaction(context.Context, common.Address, uint64, uint64) (*types.Transaction, error)
 	CreateTransaction(context.Context, *types.TxRequest) (*types.Transaction, error)
 	FetchUnconfirmedTransactionAtNonceWithCount(context.Context, uint64, common.Address) (*types.Transaction, int, error)
+	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
 	MarkConfirmedAndReorgedTransactions(context.Context, uint64, common.Address) ([]*types.Transaction, []uint64, error)
 	MarkUnconfirmedTransactionPurgeable(context.Context, uint64, common.Address) error
 	UpdateTransactionBroadcast(context.Context, uint64, uint64, common.Hash, common.Address) error
@@ -325,7 +326,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 		return fmt.Errorf("nonce for txID: %v is empty", tx.ID)
 	}
 	start := time.Now()
-	txErr := t.client.SendTransaction(ctx, tx, attempt)
+	txErr := t.client.SendTransaction(ctx, tx, attempt, t.txStore)
 	tx.AttemptCount++
 	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "duration", time.Since(start), "txErr: ", txErr)
 	if txErr != nil && t.errorHandler != nil {

@@ -141,17 +141,17 @@ func (_c *MockClient_PendingNonceAt_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// SendTransaction provides a mock function with given fields: ctx, tx, attempt
-func (_m *MockClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
-	ret := _m.Called(ctx, tx, attempt)
+// SendTransaction provides a mock function with given fields: ctx, tx, attempt, store
+func (_m *MockClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, store TxStore) error {
+	ret := _m.Called(ctx, tx, attempt, store)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SendTransaction")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *types.Transaction, *types.Attempt) error); ok {
-		r0 = rf(ctx, tx, attempt)
+	if rf, ok := ret.Get(0).(func(context.Context, *types.Transaction, *types.Attempt, TxStore) error); ok {
+		r0 = rf(ctx, tx, attempt, store)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -168,13 +168,14 @@ type MockClient_SendTransaction_Call struct {
 //   - ctx context.Context
 //   - tx *types.Transaction
 //   - attempt *types.Attempt
-func (_e *MockClient_Expecter) SendTransaction(ctx interface{}, tx interface{}, attempt interface{}) *MockClient_SendTransaction_Call {
-	return &MockClient_SendTransaction_Call{Call: _e.mock.On("SendTransaction", ctx, tx, attempt)}
+//   - store txm.TxStore
+func (_e *MockClient_Expecter) SendTransaction(ctx interface{}, tx interface{}, attempt interface{}, store interface{}) *MockClient_SendTransaction_Call {
+	return &MockClient_SendTransaction_Call{Call: _e.mock.On("SendTransaction", ctx, tx, attempt, store)}
 }
 
-func (_c *MockClient_SendTransaction_Call) Run(run func(ctx context.Context, tx *types.Transaction, attempt *types.Attempt)) *MockClient_SendTransaction_Call {
+func (_c *MockClient_SendTransaction_Call) Run(run func(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, store TxStore)) *MockClient_SendTransaction_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*types.Transaction), args[2].(*types.Attempt))
+		run(args[0].(context.Context), args[1].(*types.Transaction), args[2].(*types.Attempt), args[3].(TxStore))
 	})
 	return _c
 }
@@ -184,7 +185,7 @@ func (_c *MockClient_SendTransaction_Call) Return(_a0 error) *MockClient_SendTra
 	return _c
 }
 
-func (_c *MockClient_SendTransaction_Call) RunAndReturn(run func(context.Context, *types.Transaction, *types.Attempt) error) *MockClient_SendTransaction_Call {
+func (_c *MockClient_SendTransaction_Call) RunAndReturn(run func(context.Context, *types.Transaction, *types.Attempt, TxStore) error) *MockClient_SendTransaction_Call {
 	_c.Call.Return(run)
 	return _c
 }

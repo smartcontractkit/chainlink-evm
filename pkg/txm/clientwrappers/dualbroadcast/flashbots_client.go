@@ -55,7 +55,7 @@ func (d *FlashbotsClient) PendingNonceAt(ctx context.Context, address common.Add
 	return nonce, nil
 }
 
-func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, txStore txm.TxStore) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return err
@@ -72,7 +72,14 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		}
 		body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
 		_, err = d.signAndPostMessage(ctx, tx.FromAddress, body, params)
-		return err
+		if err != nil {
+			return err
+		}
+
+		// After successfully sending the transaction, send a bundle with all unconfirmed transactions
+		_ = d.SendBundle(ctx, txStore, tx.FromAddress, params)
+		// Don't return bundle error - the single transaction was already sent successfully
+		return nil
 	}
 
 	return d.c.SendTransaction(ctx, attempt.SignedTransaction)
@@ -125,4 +132,71 @@ type postResponse struct {
 
 type postError struct {
 	Message string `json:"message,omitempty"`
+}
+
+func (d *FlashbotsClient) SendBundle(ctx context.Context, txStore txm.TxStore, fromAddress common.Address, urlParams string) error {
+	unconfirmedTxs, err := txStore.FetchUnconfirmedTransactions(ctx, fromAddress)
+	if err != nil {
+		return fmt.Errorf("failed to fetch unconfirmed transactions: %w", err)
+	}
+
+	// TODO: Get the first attempt from each transaction for now.
+	attempts := make([]*types.Attempt, 0, len(unconfirmedTxs))
+	for _, unconfirmedTx := range unconfirmedTxs {
+		if len(unconfirmedTx.Attempts) > 0 {
+			attempts = append(attempts, unconfirmedTx.Attempts[0])
+		}
+	}
+
+	// Need at least 2 transactions to send a bundle
+	if len(attempts) < 2 {
+		return nil
+	}
+
+	// TODO: we don't have a good way to get this other than making an RPC call. Some async caching may help with the overhead.
+	currentBlock, err := d.c.LatestBlockHeight(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get current block height: %w", err)
+	}
+	targetBlock := new(big.Int).Add(currentBlock, big.NewInt(1))
+
+	bodyItems := make([]map[string]any, 0, len(attempts))
+	for _, attempt := range attempts {
+		if attempt.SignedTransaction == nil {
+			return fmt.Errorf("attempt with ID %d has nil SignedTransaction", attempt.ID)
+		}
+
+		txData, err := attempt.SignedTransaction.MarshalBinary()
+		if err != nil {
+			return fmt.Errorf("failed to marshal transaction for attempt ID %d: %w", attempt.ID, err)
+		}
+
+		bodyItems = append(bodyItems, map[string]interface{}{
+			"tx":        hexutil.Encode(txData),
+			"canRevert": false,
+		})
+	}
+
+	bundleParams := map[string]interface{}{
+		"version": "v0.1",
+		"inclusion": map[string]interface{}{
+			"block": hexutil.EncodeBig(targetBlock),
+		},
+		"body": bodyItems,
+	}
+
+	requestBody := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "mev_sendBundle",
+		"params":  []any{bundleParams},
+	}
+
+	bodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal bundle request: %w", err)
+	}
+
+	_, err = d.signAndPostMessage(ctx, fromAddress, bodyBytes, urlParams)
+	return err
 }
