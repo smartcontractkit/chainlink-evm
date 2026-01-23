@@ -125,6 +125,7 @@ func (t *Txm) Start(ctx context.Context) error {
 		for _, address := range addresses {
 			t.startAddress(address)
 		}
+		t.lggr.Infof("Started Txm")
 		return nil
 	})
 }

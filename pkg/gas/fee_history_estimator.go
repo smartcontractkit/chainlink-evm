@@ -125,6 +125,7 @@ func (f *FeeHistoryEstimator) Start(context.Context) error {
 		f.wg.Add(1)
 		go f.run()
 
+		f.logger.Infof("Started FeeHistoryEstimator")
 		return nil
 	})
 }
@@ -198,7 +199,7 @@ func (f *FeeHistoryEstimator) RefreshGasPrice() (*assets.Wei, error) {
 
 	gasPriceWei := assets.NewWei(gasPrice)
 
-	f.logger.Debugf("fetched new gas price: %v", gasPriceWei)
+	f.logger.Debugf("Fetched new gas price: %v", gasPriceWei)
 
 	f.gasPriceMu.Lock()
 	defer f.gasPriceMu.Unlock()
