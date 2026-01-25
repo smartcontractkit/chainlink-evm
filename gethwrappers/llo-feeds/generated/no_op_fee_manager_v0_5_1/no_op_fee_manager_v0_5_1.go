@@ -39,15 +39,15 @@ type CommonAsset struct {
 }
 
 var NoOpFeeManagerMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"getFeeAndReward\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"fee\",\"type\":\"tuple\",\"internalType\":\"structCommon.Asset\",\"components\":[{\"name\":\"assetAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"reward\",\"type\":\"tuple\",\"internalType\":\"structCommon.Asset\",\"components\":[{\"name\":\"assetAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"appliedDiscount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"linkAvailableForPayment\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"payLinkDeficit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"processFee\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"subscriber\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"processFeeBulk\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"subscriber\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"s_globalDiscounts\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"s_subscriberDiscounts\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"setFeeRecipients\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structCommon.AddressAndWeight[]\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"weight\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setNativeSurcharge\",\"inputs\":[{\"name\":\"\",\"type\":\"uint64\",\"internalType\":\"uint64\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"typeAndVersion\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"updateSubscriberDiscount\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"uint64\",\"internalType\":\"uint64\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateSubscriberGlobalDiscount\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"uint64\",\"internalType\":\"uint64\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"withdraw\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"uint192\",\"internalType\":\"uint192\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"RefundFailed\",\"inputs\":[]}]",
-	Bin: "0x608060405234801561001057600080fd5b50610a09806100206000396000f3fe6080604052600436106100dd5760003560e01c806387d6d8431161007f578063dba45fe011610059578063dba45fe014610269578063e03dab1a14610277578063e389d9a414610313578063f65df9621461032e57600080fd5b806387d6d84314610209578063ce7817d114610234578063d09dc3391461025557600080fd5b80631d4d84a2116100bb5780631d4d84a21461019b57806350538094146101bd5780636c2f1a17146101db57806376cf3187146101ee57600080fd5b806301ffc9a7146100e2578063181f5a77146101175780631cc7f2d814610163575b600080fd5b3480156100ee57600080fd5b506101026100fd366004610496565b610349565b60405190151581526020015b60405180910390f35b34801561012357600080fd5b50604080518082018252601481527f4e6f4f704665654d616e6167657220302e352e300000000000000000000000006020820152905161010e91906104df565b34801561016f57600080fd5b5061018d61017e366004610574565b670de0b6b3a764000092915050565b60405190815260200161010e565b3480156101a757600080fd5b506101bb6101b63660046105a7565b505050565b005b3480156101c957600080fd5b506101bb6101d8366004610623565b50565b6101bb6101e9366004610687565b6103e2565b3480156101fa57600080fd5b506101bb6101b6366004610736565b34801561021557600080fd5b5061018d610224366004610779565b670de0b6b3a76400009392505050565b34801561024057600080fd5b506101bb61024f3660046107ac565b50505050565b34801561026157600080fd5b50600061018d565b6101bb6101e93660046107f9565b34801561028357600080fd5b506102c861029236600461087d565b505060408051808201825260008082526020808301829052835180850190945281845283015292909150670de0b6b3a764000090565b60408051845173ffffffffffffffffffffffffffffffffffffffff9081168252602095860151868301528451169181019190915292909101516060830152608082015260a00161010e565b34801561031f57600080fd5b506101bb6101d8366004610964565b34801561033a57600080fd5b506101bb6101b636600461097d565b60007fffffffff0000000000000000000000000000000000000000000000000000000082167fdba45fe00000000000000000000000000000000000000000000000000000000014806103dc57507fffffffff0000000000000000000000000000000000000000000000000000000082167f6c2f1a1700000000000000000000000000000000000000000000000000000000145b92915050565b6103eb816103f2565b5050505050565b34156101d85760008173ffffffffffffffffffffffffffffffffffffffff163460405160006040518083038185875af1925050503d8060008114610452576040519150601f19603f3d011682016040523d82523d6000602084013e610457565b606091505b5050905080610492576040517ff0c49d4400000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5050565b6000602082840312156104a857600080fd5b81357fffffffff00000000000000000000000000000000000000000000000000000000811681146104d857600080fd5b9392505050565b600060208083528351808285015260005b8181101561050c578581018301518582016040015282016104f0565b5060006040828601015260407fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f8301168501019250505092915050565b803573ffffffffffffffffffffffffffffffffffffffff8116811461056f57600080fd5b919050565b6000806040838503121561058757600080fd5b6105908361054b565b915061059e6020840161054b565b90509250929050565b6000806000606084860312156105bc57600080fd5b6105c58461054b565b92506105d36020850161054b565b9150604084013577ffffffffffffffffffffffffffffffffffffffffffffffff8116811461060057600080fd5b809150509250925092565b803567ffffffffffffffff8116811461056f57600080fd5b60006020828403121561063557600080fd5b6104d88261060b565b60008083601f84011261065057600080fd5b50813567ffffffffffffffff81111561066857600080fd5b60208301915083602082850101111561068057600080fd5b9250929050565b60008060008060006060868803121561069f57600080fd5b853567ffffffffffffffff808211156106b757600080fd5b818801915088601f8301126106cb57600080fd5b8135818111156106da57600080fd5b8960208260051b85010111156106ef57600080fd5b60209283019750955090870135908082111561070a57600080fd5b506107178882890161063e565b909450925061072a90506040870161054b565b90509295509295909350565b60008060006060848603121561074b57600080fd5b6107548461054b565b92506107626020850161054b565b91506107706040850161060b565b90509250925092565b60008060006060848603121561078e57600080fd5b6107978461054b565b9250602084013591506107706040850161054b565b600080600080608085870312156107c257600080fd5b6107cb8561054b565b9350602085013592506107e06040860161054b565b91506107ee6060860161060b565b905092959194509250565b60008060008060006060868803121561081157600080fd5b853567ffffffffffffffff8082111561082957600080fd5b61083589838a0161063e565b9097509550602088013591508082111561070a57600080fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052604160045260246000fd5b60008060006060848603121561089257600080fd5b61089b8461054b565b9250602084013567ffffffffffffffff808211156108b857600080fd5b818601915086601f8301126108cc57600080fd5b8135818111156108de576108de61084e565b604051601f82017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0908116603f011681019083821181831017156109245761092461084e565b8160405282815289602084870101111561093d57600080fd5b8260208601602083013760006020848301015280965050505050506107706040850161054b565b60006020828403121561097657600080fd5b5035919050565b60008060006040848603121561099257600080fd5b83359250602084013567ffffffffffffffff808211156109b157600080fd5b818601915086601f8301126109c557600080fd5b8135818111156109d457600080fd5b8760208260061b85010111156109e957600080fd5b602083019450809350505050925092509256fea164736f6c6343000813000a",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_linkAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_nativeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_rewardManagerAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getFeeAndReward\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"fee\",\"type\":\"tuple\",\"internalType\":\"structCommon.Asset\",\"components\":[{\"name\":\"assetAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"reward\",\"type\":\"tuple\",\"internalType\":\"structCommon.Asset\",\"components\":[{\"name\":\"assetAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"appliedDiscount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"i_linkAddress\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"i_nativeAddress\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"i_rewardManager\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIRewardManager\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"linkAvailableForPayment\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"payLinkDeficit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"processFee\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"subscriber\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"processFeeBulk\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"subscriber\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"s_globalDiscounts\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"s_nativeSurcharge\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"s_subscriberDiscounts\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"setFeeRecipients\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structCommon.AddressAndWeight[]\",\"components\":[{\"name\":\"addr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"weight\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setNativeSurcharge\",\"inputs\":[{\"name\":\"\",\"type\":\"uint64\",\"internalType\":\"uint64\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"typeAndVersion\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"updateSubscriberDiscount\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"uint64\",\"internalType\":\"uint64\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateSubscriberGlobalDiscount\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"uint64\",\"internalType\":\"uint64\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"withdraw\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"\",\"type\":\"uint192\",\"internalType\":\"uint192\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"RefundFailed\",\"inputs\":[]}]",
+	Bin: "0x60e060405234801561001057600080fd5b50604051610bf0380380610bf083398101604081905261002f91610068565b6001600160a01b0392831660805290821660a0521660c0526100ab565b80516001600160a01b038116811461006357600080fd5b919050565b60008060006060848603121561007d57600080fd5b6100868461004c565b92506100946020850161004c565b91506100a26040850161004c565b90509250925092565b60805160a05160c051610b166100da600039600061022f015260006102a6015260006104190152610b166000f3fe6080604052600436106101295760003560e01c806376cf3187116100a5578063dba45fe011610074578063e389d9a411610059578063e389d9a4146103ec578063ea4b861b14610407578063f65df9621461043b57600080fd5b8063dba45fe014610342578063e03dab1a1461035057600080fd5b806376cf3187146102db57806387d6d843146102f6578063ce7817d114610321578063d09dc3391461020957600080fd5b806332f5f746116100fc57806350538094116100e1578063505380941461027657806363878668146102945780636c2f1a17146102c857600080fd5b806332f5f746146102095780633aa5ac071461021d57600080fd5b806301ffc9a71461012e578063181f5a77146101635780631cc7f2d8146101af5780631d4d84a2146101e7575b600080fd5b34801561013a57600080fd5b5061014e6101493660046105a3565b610456565b60405190151581526020015b60405180910390f35b34801561016f57600080fd5b50604080518082018252601481527f4e6f4f704665654d616e6167657220302e352e300000000000000000000000006020820152905161015a91906105ec565b3480156101bb57600080fd5b506101d96101ca366004610681565b670de0b6b3a764000092915050565b60405190815260200161015a565b3480156101f357600080fd5b506102076102023660046106b4565b505050565b005b34801561021557600080fd5b5060006101d9565b34801561022957600080fd5b506102517f000000000000000000000000000000000000000000000000000000000000000081565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200161015a565b34801561028257600080fd5b50610207610291366004610730565b50565b3480156102a057600080fd5b506102517f000000000000000000000000000000000000000000000000000000000000000081565b6102076102d6366004610794565b6104ef565b3480156102e757600080fd5b50610207610202366004610843565b34801561030257600080fd5b506101d9610311366004610886565b670de0b6b3a76400009392505050565b34801561032d57600080fd5b5061020761033c3660046108b9565b50505050565b6102076102d6366004610906565b34801561035c57600080fd5b506103a161036b36600461098a565b505060408051808201825260008082526020808301829052835180850190945281845283015292909150670de0b6b3a764000090565b60408051845173ffffffffffffffffffffffffffffffffffffffff9081168252602095860151868301528451169181019190915292909101516060830152608082015260a00161015a565b3480156103f857600080fd5b50610207610291366004610a71565b34801561041357600080fd5b506102517f000000000000000000000000000000000000000000000000000000000000000081565b34801561044757600080fd5b50610207610202366004610a8a565b60007fffffffff0000000000000000000000000000000000000000000000000000000082167fdba45fe00000000000000000000000000000000000000000000000000000000014806104e957507fffffffff0000000000000000000000000000000000000000000000000000000082167f6c2f1a1700000000000000000000000000000000000000000000000000000000145b92915050565b6104f8816104ff565b5050505050565b34156102915760008173ffffffffffffffffffffffffffffffffffffffff163460405160006040518083038185875af1925050503d806000811461055f576040519150601f19603f3d011682016040523d82523d6000602084013e610564565b606091505b505090508061059f576040517ff0c49d4400000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5050565b6000602082840312156105b557600080fd5b81357fffffffff00000000000000000000000000000000000000000000000000000000811681146105e557600080fd5b9392505050565b600060208083528351808285015260005b81811015610619578581018301518582016040015282016105fd565b5060006040828601015260407fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f8301168501019250505092915050565b803573ffffffffffffffffffffffffffffffffffffffff8116811461067c57600080fd5b919050565b6000806040838503121561069457600080fd5b61069d83610658565b91506106ab60208401610658565b90509250929050565b6000806000606084860312156106c957600080fd5b6106d284610658565b92506106e060208501610658565b9150604084013577ffffffffffffffffffffffffffffffffffffffffffffffff8116811461070d57600080fd5b809150509250925092565b803567ffffffffffffffff8116811461067c57600080fd5b60006020828403121561074257600080fd5b6105e582610718565b60008083601f84011261075d57600080fd5b50813567ffffffffffffffff81111561077557600080fd5b60208301915083602082850101111561078d57600080fd5b9250929050565b6000806000806000606086880312156107ac57600080fd5b853567ffffffffffffffff808211156107c457600080fd5b818801915088601f8301126107d857600080fd5b8135818111156107e757600080fd5b8960208260051b85010111156107fc57600080fd5b60209283019750955090870135908082111561081757600080fd5b506108248882890161074b565b9094509250610837905060408701610658565b90509295509295909350565b60008060006060848603121561085857600080fd5b61086184610658565b925061086f60208501610658565b915061087d60408501610718565b90509250925092565b60008060006060848603121561089b57600080fd5b6108a484610658565b92506020840135915061087d60408501610658565b600080600080608085870312156108cf57600080fd5b6108d885610658565b9350602085013592506108ed60408601610658565b91506108fb60608601610718565b905092959194509250565b60008060008060006060868803121561091e57600080fd5b853567ffffffffffffffff8082111561093657600080fd5b61094289838a0161074b565b9097509550602088013591508082111561081757600080fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052604160045260246000fd5b60008060006060848603121561099f57600080fd5b6109a884610658565b9250602084013567ffffffffffffffff808211156109c557600080fd5b818601915086601f8301126109d957600080fd5b8135818111156109eb576109eb61095b565b604051601f82017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0908116603f01168101908382118183101715610a3157610a3161095b565b81604052828152896020848701011115610a4a57600080fd5b82602086016020830137600060208483010152809650505050505061087d60408501610658565b600060208284031215610a8357600080fd5b5035919050565b600080600060408486031215610a9f57600080fd5b83359250602084013567ffffffffffffffff80821115610abe57600080fd5b818601915086601f830112610ad257600080fd5b813581811115610ae157600080fd5b8760208260061b8501011115610af657600080fd5b602083019450809350505050925092509256fea164736f6c6343000813000a",
 }
 
 var NoOpFeeManagerABI = NoOpFeeManagerMetaData.ABI
 
 var NoOpFeeManagerBin = NoOpFeeManagerMetaData.Bin
 
-func DeployNoOpFeeManager(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *NoOpFeeManager, error) {
+func DeployNoOpFeeManager(auth *bind.TransactOpts, backend bind.ContractBackend, _linkAddress common.Address, _nativeAddress common.Address, _rewardManagerAddress common.Address) (common.Address, *types.Transaction, *NoOpFeeManager, error) {
 	parsed, err := NoOpFeeManagerMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -56,7 +56,7 @@ func DeployNoOpFeeManager(auth *bind.TransactOpts, backend bind.ContractBackend)
 		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(NoOpFeeManagerBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(NoOpFeeManagerBin), backend, _linkAddress, _nativeAddress, _rewardManagerAddress)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -210,6 +210,72 @@ func (_NoOpFeeManager *NoOpFeeManagerCallerSession) GetFeeAndReward(arg0 common.
 	return _NoOpFeeManager.Contract.GetFeeAndReward(&_NoOpFeeManager.CallOpts, arg0, arg1, arg2)
 }
 
+func (_NoOpFeeManager *NoOpFeeManagerCaller) ILinkAddress(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _NoOpFeeManager.contract.Call(opts, &out, "i_linkAddress")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerSession) ILinkAddress() (common.Address, error) {
+	return _NoOpFeeManager.Contract.ILinkAddress(&_NoOpFeeManager.CallOpts)
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerCallerSession) ILinkAddress() (common.Address, error) {
+	return _NoOpFeeManager.Contract.ILinkAddress(&_NoOpFeeManager.CallOpts)
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerCaller) INativeAddress(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _NoOpFeeManager.contract.Call(opts, &out, "i_nativeAddress")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerSession) INativeAddress() (common.Address, error) {
+	return _NoOpFeeManager.Contract.INativeAddress(&_NoOpFeeManager.CallOpts)
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerCallerSession) INativeAddress() (common.Address, error) {
+	return _NoOpFeeManager.Contract.INativeAddress(&_NoOpFeeManager.CallOpts)
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerCaller) IRewardManager(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _NoOpFeeManager.contract.Call(opts, &out, "i_rewardManager")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerSession) IRewardManager() (common.Address, error) {
+	return _NoOpFeeManager.Contract.IRewardManager(&_NoOpFeeManager.CallOpts)
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerCallerSession) IRewardManager() (common.Address, error) {
+	return _NoOpFeeManager.Contract.IRewardManager(&_NoOpFeeManager.CallOpts)
+}
+
 func (_NoOpFeeManager *NoOpFeeManagerCaller) LinkAvailableForPayment(opts *bind.CallOpts) (*big.Int, error) {
 	var out []interface{}
 	err := _NoOpFeeManager.contract.Call(opts, &out, "linkAvailableForPayment")
@@ -252,6 +318,28 @@ func (_NoOpFeeManager *NoOpFeeManagerSession) SGlobalDiscounts(arg0 common.Addre
 
 func (_NoOpFeeManager *NoOpFeeManagerCallerSession) SGlobalDiscounts(arg0 common.Address, arg1 common.Address) (*big.Int, error) {
 	return _NoOpFeeManager.Contract.SGlobalDiscounts(&_NoOpFeeManager.CallOpts, arg0, arg1)
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerCaller) SNativeSurcharge(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _NoOpFeeManager.contract.Call(opts, &out, "s_nativeSurcharge")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerSession) SNativeSurcharge() (*big.Int, error) {
+	return _NoOpFeeManager.Contract.SNativeSurcharge(&_NoOpFeeManager.CallOpts)
+}
+
+func (_NoOpFeeManager *NoOpFeeManagerCallerSession) SNativeSurcharge() (*big.Int, error) {
+	return _NoOpFeeManager.Contract.SNativeSurcharge(&_NoOpFeeManager.CallOpts)
 }
 
 func (_NoOpFeeManager *NoOpFeeManagerCaller) SSubscriberDiscounts(opts *bind.CallOpts, arg0 common.Address, arg1 [32]byte, arg2 common.Address) (*big.Int, error) {
@@ -431,9 +519,17 @@ type NoOpFeeManagerInterface interface {
 
 		error)
 
+	ILinkAddress(opts *bind.CallOpts) (common.Address, error)
+
+	INativeAddress(opts *bind.CallOpts) (common.Address, error)
+
+	IRewardManager(opts *bind.CallOpts) (common.Address, error)
+
 	LinkAvailableForPayment(opts *bind.CallOpts) (*big.Int, error)
 
 	SGlobalDiscounts(opts *bind.CallOpts, arg0 common.Address, arg1 common.Address) (*big.Int, error)
+
+	SNativeSurcharge(opts *bind.CallOpts) (*big.Int, error)
 
 	SSubscriberDiscounts(opts *bind.CallOpts, arg0 common.Address, arg1 [32]byte, arg2 common.Address) (*big.Int, error)
 

@@ -30,7 +30,6 @@ contract NoOpFeeManagerTestV051 is Test {
 
     link = new ERC20Mock(18);
     native = new WERC20Mock();
-    noOpFeeManager = new NoOpFeeManager();
 
     // Deploy real FeeManager for comparison tests
     feeManagerProxy = new FeeManagerProxy();
@@ -38,6 +37,8 @@ contract NoOpFeeManagerTestV051 is Test {
     feeManager = new FeeManager(address(link), address(native), address(feeManagerProxy), address(rewardManager));
     feeManagerProxy.setFeeManager(feeManager);
     rewardManager.setFeeManager(address(feeManager));
+
+    noOpFeeManager = new NoOpFeeManager(address(link), address(native), address(rewardManager));
 
     vm.stopPrank();
   }
@@ -53,12 +54,24 @@ contract NoOpFeeManagerTestV051 is Test {
     assertFalse(noOpFeeManager.supportsInterface(bytes4(0xdeadbeef)));
   }
 
+  // Verify constructor parameters are stored correctly for interface compatibility
+  function test_constructorParameters() public view {
+    assertEq(noOpFeeManager.i_linkAddress(), address(link));
+    assertEq(noOpFeeManager.i_nativeAddress(), address(native));
+    assertEq(address(noOpFeeManager.i_rewardManager()), address(rewardManager));
+  }
+
   // Some code queries these to check discount status - must always return 100%
   function test_discountGettersReturn100Percent() public view {
     bytes32 feedId = keccak256("ETH-USD");
 
     assertEq(noOpFeeManager.s_globalDiscounts(SUBSCRIBER, address(link)), PERCENTAGE_SCALAR);
     assertEq(noOpFeeManager.s_subscriberDiscounts(SUBSCRIBER, feedId, address(link)), PERCENTAGE_SCALAR);
+  }
+
+  // Native surcharge getter should return 0 since no fees are charged
+  function test_nativeSurchargeReturnsZero() public view {
+    assertEq(noOpFeeManager.s_nativeSurcharge(), 0);
   }
 
   // Ensures our view functions match FeeManager's public mapping getter signatures
