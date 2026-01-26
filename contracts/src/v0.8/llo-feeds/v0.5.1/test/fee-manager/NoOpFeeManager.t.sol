@@ -44,7 +44,7 @@ contract NoOpFeeManagerTestV051 is Test {
   }
 
   function test_typeAndVersion() public view {
-    assertEq(noOpFeeManager.typeAndVersion(), "NoOpFeeManager 0.5.0");
+    assertEq(noOpFeeManager.typeAndVersion(), "NoOpFeeManager 0.5.1");
   }
 
   // VerifierProxy checks these interface support before accepting a fee manager
