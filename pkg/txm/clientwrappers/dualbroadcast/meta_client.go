@@ -24,8 +24,8 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
-	atlaspb "github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast/pb"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
+	atlaspb "github.com/smartcontractkit/chainlink-protos/svr/v1"
 )
 
 const (
