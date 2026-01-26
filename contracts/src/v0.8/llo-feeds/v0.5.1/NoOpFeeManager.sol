@@ -48,7 +48,7 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
 
   /// @inheritdoc ITypeAndVersion
   function typeAndVersion() external pure override returns (string memory) {
-    return "NoOpFeeManager 0.5.0";
+    return "NoOpFeeManager 0.5.1";
   }
 
   /// @inheritdoc IERC165
