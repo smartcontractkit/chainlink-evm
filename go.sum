@@ -644,6 +644,8 @@ github.com/smartcontractkit/chainlink-protos/svr v0.0.0-20260126141633-6e2417998
 github.com/smartcontractkit/chainlink-protos/svr v0.0.0-20260126141633-6e2417998710/go.mod h1:TcOliTQU6r59DwG4lo3U+mFM9WWyBHGuFkkxQpvSujo=
 github.com/smartcontractkit/chainlink-protos/svr v1.1.1-0.20260126141927-b984c6f68455 h1:7iIIRgvejQ2dFHI7YhYI4X0supXvkZHrzo2ueJta494=
 github.com/smartcontractkit/chainlink-protos/svr v1.1.1-0.20260126141927-b984c6f68455/go.mod h1:TcOliTQU6r59DwG4lo3U+mFM9WWyBHGuFkkxQpvSujo=
+github.com/smartcontractkit/chainlink-protos/svr v1.1.1-0.20260127180652-a6229ee26d64 h1:tHdBvgxEB4ABZaEyYN3SBcmhFfFU5ML6WhA2s9dnncQ=
+github.com/smartcontractkit/chainlink-protos/svr v1.1.1-0.20260127180652-a6229ee26d64/go.mod h1:TcOliTQU6r59DwG4lo3U+mFM9WWyBHGuFkkxQpvSujo=
 github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20250815105909-75499abc4335 h1:7bxYNrPpygn8PUSBiEKn8riMd7CXMi/4bjTy0fHhcrY=
 github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20250815105909-75499abc4335/go.mod h1:ccjEgNeqOO+bjPddnL4lUrNLzyCvGCxgBjJdhFX3wa8=
 github.com/smartcontractkit/chainlink-tron/relayer/gotron-sdk v0.0.5-0.20250528121202-292529af39df h1:36e3ROIZyV/qE8SvFOACXtXfMOMd9vG4+zY2v2ScXkI=

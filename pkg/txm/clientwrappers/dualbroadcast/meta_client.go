@@ -17,6 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/gogo/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -139,7 +141,7 @@ type MetaClient struct {
 	customURL       *url.URL
 	chainID         *big.Int
 	metrics         *MetaMetrics
-	beholderEmitter beholder.ProtoEmitter
+	beholderEmitter beholder.Emitter
 }
 
 const schemaBasePath = "/oev-fastlane-atlas-error/versions/1"
@@ -150,10 +152,6 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
 	}
 
-	// Initialize the beholder client with a proto emitter for OTel events
-	client := beholder.GetClient().ForPackage("oev")
-	emitter := beholder.NewProtoEmitter(lggr, &client, schemaBasePath)
-
 	return &MetaClient{
 		lggr:            logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
 		c:               c,
@@ -161,7 +159,7 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 		customURL:       customURL,
 		chainID:         chainID,
 		metrics:         metrics,
-		beholderEmitter: emitter,
+		beholderEmitter: beholder.GetEmitter(),
 	}, nil
 }
 
@@ -173,27 +171,65 @@ func (a *MetaClient) PendingNonceAt(ctx context.Context, address common.Address)
 	return a.c.PendingNonceAt(ctx, address)
 }
 
-// emitAtlasError emits an OTel event to track FastLane Atlas errors
-func (a *MetaClient) emitAtlasError(ctx context.Context, errType string, err error, httpStatusCode int, tx *types.Transaction) {
+// TODO(gg): move this to meta_metrics.go
+// emitAtlasErrorWithHttpStatusCode emits an OTel event to track FastLane Atlas errors with an HTTP status code
+func (a *MetaClient) emitAtlasErrorWithHttpStatusCode(ctx context.Context, errType string, cause error, httpStatusCode int, tx *types.Transaction) {
 	var nonce string
 	if tx.Nonce != nil {
 		nonce = fmt.Sprintf("%d", *tx.Nonce)
 	}
+
+	meta, err := tx.GetMeta()
+	if err != nil {
+		a.lggr.Errorw(fmt.Sprintf("Failed to get meta for tx. Error to emit was: %v", cause), "txId", tx.ID, "err", err)
+		return
+	}
+
+	var destAddress string
+	if meta != nil && meta.FwdrDestAddress != nil {
+		destAddress = meta.FwdrDestAddress.String()
+	}
+
 	msg := &atlaspb.FastLaneAtlasError{
 		ChainId:        a.chainID.String(),
 		FromAddress:    tx.FromAddress.Hex(),
 		ToAddress:      tx.ToAddress.Hex(),
+		FeedAddress:    destAddress,
 		Nonce:          nonce,
 		ErrorType:      errType,
-		ErrorMessage:   err.Error(),
+		ErrorMessage:   cause.Error(),
 		HttpStatusCode: int32(httpStatusCode),
 		TransactionId:  int64(tx.ID), //nolint:gosec // overflow is acceptable for telemetry
 		AtlasUrl:       a.customURL.String(),
 		CreatedAt:      time.Now().UnixMicro(),
 	}
-	if emitErr := a.beholderEmitter.EmitWithLog(ctx, msg); emitErr != nil {
+
+	messageBytes, err := proto.Marshal(msg)
+	if err != nil {
+		a.lggr.Errorw("Failed to marshal Atlas error event", "err", err)
+		return
+	}
+
+	attrKVs := []any{
+		"beholder_domain", "svr",
+		"beholder_entity", "svr.v1.FastLaneAtlasError",
+		"beholder_data_schema", "/fastlane-atlas-error/versions/1",
+	}
+
+	mStr := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Format(msg)
+	a.lggr.Infow("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
+
+	if emitErr := a.beholderEmitter.Emit(ctx, messageBytes, attrKVs...); emitErr != nil {
 		a.lggr.Errorw("Failed to emit Atlas error event", "err", emitErr)
 	}
+}
+
+// emitAtlasError emits an OTel event to track FastLane Atlas errors
+func (a *MetaClient) emitAtlasError(ctx context.Context, errType string, err error, tx *types.Transaction) {
+	a.emitAtlasErrorWithHttpStatusCode(ctx, errType, err, -1, tx)
 }
 
 func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
@@ -206,13 +242,13 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
 		if err != nil {
 			a.metrics.RecordSendRequestError(ctx)
-			a.emitAtlasError(ctx, "send_request", err, 0, tx)
+			a.emitAtlasError(ctx, "send_request", err, tx)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
 		}
 		if meta != nil {
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
 				a.metrics.RecordSendOperationError(ctx)
-				a.emitAtlasError(ctx, "send_operation", err, 0, tx)
+				a.emitAtlasError(ctx, "send_operation", err, tx)
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
 			return nil
@@ -350,21 +386,21 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	signature, err := a.ks.SignMessage(parentCtx, tx.FromAddress, []byte(payload))
 	if err != nil {
 		wrappedErr := fmt.Errorf("failed to sign message: %w", err)
-		a.emitAtlasError(ctx, "sign_message", wrappedErr, 0, tx)
+		a.emitAtlasError(ctx, "sign_message", wrappedErr, tx)
 		return nil, wrappedErr
 	}
 	params.Signature = signature
 	marshalledParamsExtended, err := json.Marshal(params)
 	if err != nil {
 		wrappedErr := fmt.Errorf("failed to marshal signed params: %w", err)
-		a.emitAtlasError(ctx, "marshal_params", wrappedErr, 0, tx)
+		a.emitAtlasError(ctx, "marshal_params", wrappedErr, tx)
 		return nil, wrappedErr
 	}
 	body := fmt.Appendf(nil, `{"jsonrpc":"2.0","method":"%s","params":[%s], "id":1}`, string(m), marshalledParamsExtended)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.customURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		wrappedErr := fmt.Errorf("failed to create POST request: %w", err)
-		a.emitAtlasError(ctx, "create_request", wrappedErr, 0, tx)
+		a.emitAtlasError(ctx, "create_request", wrappedErr, tx)
 		return nil, wrappedErr
 	}
 	req.Header.Add("Content-Type", "application/json")
@@ -378,7 +414,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	a.metrics.RecordLatency(ctx, latency)
 	if err != nil {
 		wrappedErr := fmt.Errorf("failed to send POST request: %w", err)
-		a.emitAtlasError(ctx, "http_request", wrappedErr, 0, tx)
+		a.emitAtlasError(ctx, "http_request", wrappedErr, tx)
 		return nil, wrappedErr
 	}
 	defer resp.Body.Close()
@@ -388,20 +424,20 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	if resp.StatusCode != http.StatusOK {
 		httpErr := fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
-		a.emitAtlasError(ctx, "http_status", httpErr, resp.StatusCode, tx)
+		a.emitAtlasErrorWithHttpStatusCode(ctx, "http_status", httpErr, resp.StatusCode, tx)
 		return nil, httpErr
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		a.emitAtlasError(ctx, "read_response", err, resp.StatusCode, tx)
+		a.emitAtlasErrorWithHttpStatusCode(ctx, "read_response", err, resp.StatusCode, tx)
 		return nil, err
 	}
 
 	var response Response
 	err = json.Unmarshal(data, &response)
 	if err != nil {
-		a.emitAtlasError(ctx, "unmarshal_response", err, resp.StatusCode, tx)
+		a.emitAtlasErrorWithHttpStatusCode(ctx, "unmarshal_response", err, resp.StatusCode, tx)
 		return nil, err
 	}
 
@@ -411,7 +447,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 			return nil, nil
 		}
 		atlasErr := errors.New(response.Error.ErrorMessage)
-		a.emitAtlasError(ctx, "atlas_error", atlasErr, resp.StatusCode, tx)
+		a.emitAtlasErrorWithHttpStatusCode(ctx, "atlas_error", atlasErr, resp.StatusCode, tx)
 		return nil, atlasErr
 	}
 
@@ -550,7 +586,7 @@ func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacallda
 func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta MetacalldataResponse) error {
 	if tx.Nonce == nil {
 		nonceErr := fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
-		a.emitAtlasError(ctx, "nonce_empty", nonceErr, 0, tx)
+		a.emitAtlasError(ctx, "nonce_empty", nonceErr, tx)
 		return nonceErr
 	}
 
@@ -562,7 +598,7 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	gas := meta.GasLimit.ToInt()
 	if !gas.IsUint64() {
 		gasErr := fmt.Errorf("gas value does not fit in uint64: %s", gas)
-		a.emitAtlasError(ctx, "gas_overflow", gasErr, 0, tx)
+		a.emitAtlasError(ctx, "gas_overflow", gasErr, tx)
 		return gasErr
 	}
 	dynamicTx := evmtypes.DynamicFeeTx{
@@ -577,13 +613,13 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	signedTx, err := a.ks.SignTx(ctx, tx.FromAddress, evmtypes.NewTx(&dynamicTx))
 	if err != nil {
 		signErr := fmt.Errorf("failed to sign attempt for txID: %v, err: %w", tx.ID, err)
-		a.emitAtlasError(ctx, "sign_tx", signErr, 0, tx)
+		a.emitAtlasError(ctx, "sign_tx", signErr, tx)
 		return signErr
 	}
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
 	if err := a.c.SendTransaction(ctx, signedTx); err != nil {
-		a.emitAtlasError(ctx, "send_tx", err, 0, tx)
+		a.emitAtlasError(ctx, "send_tx", err, tx)
 		return err
 	}
 	return nil
