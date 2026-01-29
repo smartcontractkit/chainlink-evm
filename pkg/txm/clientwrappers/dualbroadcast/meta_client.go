@@ -316,23 +316,17 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	signature, err := a.ks.SignMessage(parentCtx, tx.FromAddress, []byte(payload))
 	if err != nil {
-		wrappedErr := fmt.Errorf("failed to sign message: %w", err)
-		a.metrics.emitAtlasError(ctx, "sign_message", a.customURL, wrappedErr, tx)
-		return nil, wrappedErr
+		return nil, fmt.Errorf("failed to sign message: %w", err)
 	}
 	params.Signature = signature
 	marshalledParamsExtended, err := json.Marshal(params)
 	if err != nil {
-		wrappedErr := fmt.Errorf("failed to marshal signed params: %w", err)
-		a.metrics.emitAtlasError(ctx, "marshal_params", a.customURL, wrappedErr, tx)
-		return nil, wrappedErr
+		return nil, fmt.Errorf("failed to marshal signed params: %w", err)
 	}
 	body := fmt.Appendf(nil, `{"jsonrpc":"2.0","method":"%s","params":[%s], "id":1}`, string(m), marshalledParamsExtended)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.customURL.String(), bytes.NewBuffer(body))
 	if err != nil {
-		wrappedErr := fmt.Errorf("failed to create POST request: %w", err)
-		a.metrics.emitAtlasError(ctx, "create_request", a.customURL, wrappedErr, tx)
-		return nil, wrappedErr
+		return nil, fmt.Errorf("failed to create POST request: %w", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
 
@@ -344,9 +338,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	// Record latency
 	a.metrics.RecordLatency(ctx, latency)
 	if err != nil {
-		wrappedErr := fmt.Errorf("failed to send POST request: %w", err)
-		a.metrics.emitAtlasError(ctx, "http_request", a.customURL, wrappedErr, tx)
-		return nil, wrappedErr
+		return nil, fmt.Errorf("failed to send POST request: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -354,21 +346,17 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	a.metrics.RecordStatusCode(ctx, resp.StatusCode)
 
 	if resp.StatusCode != http.StatusOK {
-		httpErr := fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
-		a.metrics.emitAtlasErrorWithHttpStatusCode(ctx, "http_status", a.customURL, httpErr, resp.StatusCode, tx)
-		return nil, httpErr
+		return nil, fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		a.metrics.emitAtlasErrorWithHttpStatusCode(ctx, "read_response", a.customURL, err, resp.StatusCode, tx)
 		return nil, err
 	}
 
 	var response Response
 	err = json.Unmarshal(data, &response)
 	if err != nil {
-		a.metrics.emitAtlasErrorWithHttpStatusCode(ctx, "unmarshal_response", a.customURL, err, resp.StatusCode, tx)
 		return nil, err
 	}
 
@@ -377,9 +365,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 			a.metrics.RecordBidsReceived(ctx, 0)
 			return nil, nil
 		}
-		atlasErr := errors.New(response.Error.ErrorMessage)
-		a.metrics.emitAtlasErrorWithHttpStatusCode(ctx, "atlas_error", a.customURL, atlasErr, resp.StatusCode, tx)
-		return nil, atlasErr
+		return nil, errors.New(response.Error.ErrorMessage)
 	}
 
 	if response.Result == nil {
@@ -516,9 +502,7 @@ func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacallda
 
 func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta MetacalldataResponse) error {
 	if tx.Nonce == nil {
-		nonceErr := fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
-		a.metrics.emitAtlasError(ctx, "nonce_empty", a.customURL, nonceErr, tx)
-		return nonceErr
+		return fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
 	}
 
 	// TODO: fastest way to avoid overpaying, but might require additional checks.
@@ -528,9 +512,7 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	}
 	gas := meta.GasLimit.ToInt()
 	if !gas.IsUint64() {
-		gasErr := fmt.Errorf("gas value does not fit in uint64: %s", gas)
-		a.metrics.emitAtlasError(ctx, "gas_overflow", a.customURL, gasErr, tx)
-		return gasErr
+		return fmt.Errorf("gas value does not fit in uint64: %s", gas)
 	}
 	dynamicTx := evmtypes.DynamicFeeTx{
 		Nonce:     *tx.Nonce,
@@ -543,15 +525,9 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 
 	signedTx, err := a.ks.SignTx(ctx, tx.FromAddress, evmtypes.NewTx(&dynamicTx))
 	if err != nil {
-		signErr := fmt.Errorf("failed to sign attempt for txID: %v, err: %w", tx.ID, err)
-		a.metrics.emitAtlasError(ctx, "sign_tx", a.customURL, signErr, tx)
-		return signErr
+		return fmt.Errorf("failed to sign attempt for txID: %v, err: %w", tx.ID, err)
 	}
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
-	if err := a.c.SendTransaction(ctx, signedTx); err != nil {
-		a.metrics.emitAtlasError(ctx, "send_tx", a.customURL, err, tx)
-		return err
-	}
-	return nil
+	return a.c.SendTransaction(ctx, signedTx)
 }
