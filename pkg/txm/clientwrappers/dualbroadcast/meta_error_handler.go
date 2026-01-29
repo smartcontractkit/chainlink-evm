@@ -19,7 +19,7 @@ func NewErrorHandler() *errorHandler {
 
 func (e *errorHandler) HandleError(ctx context.Context, tx *types.Transaction, txErr error, txStore txm.TxStore, setNonce func(common.Address, uint64), isFromBroadcastMethod bool) error {
 	// Mark the tx as fatal only if this is the first broadcast. In any other case, other txs might be included on-chain.
-	if errors.Is(txErr, ErrNoBids) && tx.AttemptCount == 1 {
+	if (errors.Is(txErr, ErrNoBids) || errors.Is(txErr, ErrAuction)) && tx.AttemptCount == 1 {
 		if err := txStore.MarkTxFatal(ctx, tx, tx.FromAddress); err != nil {
 			return err
 		}

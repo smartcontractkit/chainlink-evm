@@ -116,6 +116,7 @@ const (
 )
 
 var ErrNoBids = errors.New("no bids")
+var ErrAuction = errors.New("auction error")
 
 var _ txm.Client = &MetaClient{}
 
@@ -173,12 +174,12 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
 		if err != nil {
 			a.metrics.RecordSendRequestError(ctx)
-			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
+			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, ErrAuction)
 		}
 		if meta != nil {
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
 				a.metrics.RecordSendOperationError(ctx)
-				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
+				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, ErrAuction)
 			}
 			return nil
 		}
