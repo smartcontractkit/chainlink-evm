@@ -2,6 +2,7 @@ package dualbroadcast
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"math/big"
 	"net/url"
@@ -25,6 +26,7 @@ func TestMetaMetrics(t *testing.T) {
 	chainID := "1"
 
 	t.Run("NewMetaMetrics", func(t *testing.T) {
+		t.Parallel()
 		metrics, err := NewMetaMetrics(chainID, logger.Test(t))
 		require.NoError(t, err)
 		assert.NotNil(t, metrics)
@@ -79,13 +81,17 @@ func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
 		require.NoError(t, err)
 
 		nonce := uint64(450)
+		fwdrDestAddress := common.HexToAddress("0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+		metaBytes, err := json.Marshal(types.TxMeta{FwdrDestAddress: &fwdrDestAddress})
+		require.NoError(t, err)
+		meta := sqlutil.JSON(metaBytes)
 
 		tx := &types.Transaction{
 			ID:          123,
 			Nonce:       &nonce,
 			FromAddress: common.HexToAddress("0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
 			ToAddress:   common.HexToAddress("0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
-			// Meta:        nil,
+			Meta:        &meta,
 		}
 
 		var capturedBody []byte
@@ -107,13 +113,13 @@ func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
 		assert.Equal(t, testChainID.String(), emittedMsg.ChainId)
 		assert.Equal(t, tx.FromAddress.Hex(), emittedMsg.FromAddress)
 		assert.Equal(t, tx.ToAddress.Hex(), emittedMsg.ToAddress)
-		// assert.Equal(t, fwdrDestAddress.String(), emittedMsg.FeedAddress)
-		assert.Equal(t, "42", emittedMsg.Nonce)
-		assert.Equal(t, "test_error_type", emittedMsg.ErrorType)
+		assert.Equal(t, fwdrDestAddress.String(), emittedMsg.FeedAddress)
+		assert.Equal(t, "450", emittedMsg.Nonce)
+		assert.Equal(t, "send_request", emittedMsg.ErrorType)
 		assert.Equal(t, "test error message", emittedMsg.ErrorMessage)
 		assert.Equal(t, int32(500), emittedMsg.HttpStatusCode)
 		assert.Equal(t, int64(123), emittedMsg.TransactionId)
-		assert.Equal(t, testURL.String(), emittedMsg.AtlasUrl)
+		assert.Equal(t, u.String(), emittedMsg.AtlasUrl)
 	})
 
 	t.Run("emits error with nil nonce", func(t *testing.T) {
