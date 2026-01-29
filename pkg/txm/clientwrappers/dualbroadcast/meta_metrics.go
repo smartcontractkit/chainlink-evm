@@ -147,8 +147,6 @@ func (m *MetaMetrics) emitAtlasErrorWithHttpStatusCode(ctx context.Context, errT
 		CreatedAt:      time.Now().UnixMicro(),
 	}
 
-	m.lggr.Infow("Emitting Atlas error event", "msg", msg)
-
 	messageBytes, err := proto.Marshal(msg)
 	if err != nil {
 		m.lggr.Errorw("Failed to marshal Atlas error event", "err", err)
