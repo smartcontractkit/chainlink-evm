@@ -120,6 +120,10 @@ var ErrAuction = errors.New("auction error")
 
 var _ txm.Client = &MetaClient{}
 
+type MetaClientTxStore interface {
+	UpdateSignedAttempt(_ context.Context, txID uint64, attemptID uint64, signedTransaction *evmtypes.Transaction, fromAddress common.Address) error
+}
+
 type MetaClientKeystore interface {
 	SignMessage(ctx context.Context, address common.Address, data []byte) ([]byte, error)
 	SignTx(ctx context.Context, fromAddress common.Address, tx *evmtypes.Transaction) (*evmtypes.Transaction, error)
@@ -138,9 +142,10 @@ type MetaClient struct {
 	customURL *url.URL
 	chainID   *big.Int
 	metrics   *MetaMetrics
+	txStore   MetaClientTxStore
 }
 
-func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) (*MetaClient, error) {
+func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore) (*MetaClient, error) {
 	metrics, err := NewMetaMetrics(chainID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
@@ -153,6 +158,7 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 		customURL: customURL,
 		chainID:   chainID,
 		metrics:   metrics,
+		txStore:   txStore,
 	}, nil
 }
 
@@ -170,7 +176,11 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		return err
 	}
 
-	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil {
+	if meta != nil &&
+		meta.DualBroadcast != nil && *meta.DualBroadcast &&
+		!tx.IsPurgeable && meta.DualBroadcastParams != nil &&
+		meta.FwdrDestAddress != nil &&
+		tx.AttemptCount == 1 {
 		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
 		if err != nil {
 			a.metrics.RecordSendRequestError(ctx)
@@ -185,6 +195,10 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		}
 		a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
 		return ErrNoBids
+	}
+	if !tx.IsPurgeable && len(tx.Attempts) > 1 {
+		a.lggr.Infow("Intercepted attempt for tx(rebroadcasting first attempt)", "txID", tx.ID, "attempt", tx.Attempts[0])
+		return a.c.SendTransaction(ctx, tx.Attempts[0].SignedTransaction)
 	}
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)
@@ -525,6 +539,9 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	signedTx, err := a.ks.SignTx(ctx, tx.FromAddress, evmtypes.NewTx(&dynamicTx))
 	if err != nil {
 		return fmt.Errorf("failed to sign attempt for txID: %v, err: %w", tx.ID, err)
+	}
+	if err := a.txStore.UpdateSignedAttempt(ctx, tx.ID, attempt.ID, signedTx, tx.FromAddress); err != nil {
+		return fmt.Errorf("failed to update signed attempt for txID: %v, err: %w", tx.ID, err)
 	}
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
@@ -375,6 +376,24 @@ func (m *InMemoryStore) MarkTxFatal(txToMark *types.Transaction) error {
 	delete(m.Transactions, txToMark.ID)
 	txToMark.State = txmgr.TxFatalError // update the state in case the caller needs to log
 	return nil
+}
+
+func (m *InMemoryStore) UpdateSignedAttempt(txID uint64, attemptID uint64, signedTransaction *evmtypes.Transaction) error {
+	m.Lock()
+	defer m.Unlock()
+
+	tx, exists := m.Transactions[txID]
+	if !exists {
+		return fmt.Errorf("tx was not found for txID: %v", txID)
+	}
+
+	for _, attempt := range tx.Attempts {
+		if attempt.ID == attemptID {
+			attempt.SignedTransaction = signedTransaction
+			return nil
+		}
+	}
+	return fmt.Errorf("attempt was not found for attemptID: %v", attemptID)
 }
 
 // Orchestrator

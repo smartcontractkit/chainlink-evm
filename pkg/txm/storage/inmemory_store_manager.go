@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
@@ -121,6 +122,13 @@ func (m *InMemoryStoreManager) DeleteAttemptForUnconfirmedTx(_ context.Context, 
 func (m *InMemoryStoreManager) MarkTxFatal(_ context.Context, tx *types.Transaction, fromAddress common.Address) error {
 	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
 		return store.MarkTxFatal(tx)
+	}
+	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
+}
+
+func (m *InMemoryStoreManager) UpdateSignedAttempt(_ context.Context, txID uint64, attemptID uint64, signedTransaction *evmtypes.Transaction, fromAddress common.Address) error {
+	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+		return store.UpdateSignedAttempt(txID, attemptID, signedTransaction)
 	}
 	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
