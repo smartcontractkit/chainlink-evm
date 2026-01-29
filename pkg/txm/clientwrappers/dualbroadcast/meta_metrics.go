@@ -2,13 +2,20 @@ package dualbroadcast
 
 import (
 	"context"
+	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
+	pb "github.com/smartcontractkit/chainlink-protos/svr/v1"
 )
 
 // MetaMetrics handles all Meta-related metrics via OTEL
@@ -18,10 +25,12 @@ type MetaMetrics struct {
 	latencyHistogram  metric.Int64Histogram
 	bidHistogram      metric.Int64Histogram
 	errorCounter      metric.Int64Counter
+	emitter           beholder.Emitter
+	lggr              logger.SugaredLogger
 }
 
 // NewMetaMetrics creates a new MetaMetrics instance
-func NewMetaMetrics(chainID string) (*MetaMetrics, error) {
+func NewMetaMetrics(chainID string, lggr logger.Logger) (*MetaMetrics, error) {
 	statusCodeCounter, err := beholder.GetMeter().Int64Counter("meta_endpoint_status_codes")
 	if err != nil {
 		return nil, err
@@ -48,6 +57,8 @@ func NewMetaMetrics(chainID string) (*MetaMetrics, error) {
 		latencyHistogram:  latencyHistogram,
 		bidHistogram:      bidHistogram,
 		errorCounter:      errorCounter,
+		emitter:           beholder.GetEmitter(),
+		lggr:              logger.Sugared(logger.Named(lggr, "Txm.MetaClient.MetaMetrics")),
 	}, nil
 }
 
@@ -97,4 +108,67 @@ func (m *MetaMetrics) RecordSendOperationError(ctx context.Context) {
 			attribute.String("errorType", "send_operation"),
 		),
 	)
+}
+
+// emitAtlasError emits an OTel event to track FastLane Atlas errors
+func (m *MetaMetrics) emitAtlasError(ctx context.Context, errType string, customURL *url.URL, err error, tx *types.Transaction) {
+	m.emitAtlasErrorWithHttpStatusCode(ctx, errType, customURL, err, -1, tx)
+}
+
+// emitAtlasErrorWithHttpStatusCode emits an OTel event with an HTTP status code to track FastLane Atlas errors
+func (m *MetaMetrics) emitAtlasErrorWithHttpStatusCode(ctx context.Context, errType string, customURL *url.URL, cause error, httpStatusCode int, tx *types.Transaction) {
+	var nonce string
+	if tx.Nonce != nil {
+		nonce = fmt.Sprintf("%d", *tx.Nonce)
+	}
+
+	meta, err := tx.GetMeta()
+	if err != nil {
+		m.lggr.Errorw(fmt.Sprintf("Failed to get meta for tx. Error to emit was: %v", cause), "txId", tx.ID, "err", err)
+		return
+	}
+
+	var destAddress string
+	if meta != nil && meta.FwdrDestAddress != nil {
+		destAddress = meta.FwdrDestAddress.String()
+	}
+
+	msg := &pb.FastLaneAtlasError{
+		ChainId:        m.chainID,
+		FromAddress:    tx.FromAddress.Hex(),
+		ToAddress:      tx.ToAddress.Hex(),
+		FeedAddress:    destAddress,
+		Nonce:          nonce,
+		ErrorType:      errType,
+		ErrorMessage:   cause.Error(),
+		HttpStatusCode: int32(httpStatusCode),
+		TransactionId:  int64(tx.ID), //nolint:gosec // overflow is acceptable for telemetry
+		AtlasUrl:       customURL.String(),
+		CreatedAt:      time.Now().UnixMicro(),
+	}
+
+	m.lggr.Infow("Emitting Atlas error event", "msg", msg)
+
+	messageBytes, err := proto.Marshal(msg)
+	if err != nil {
+		m.lggr.Errorw("Failed to marshal Atlas error event", "err", err)
+		return
+	}
+
+	attrKVs := []any{
+		"beholder_domain", "svr",
+		"beholder_entity", "svr.v1.FastLaneAtlasError",
+		"beholder_data_schema", "/fastlane-atlas-error/versions/1",
+	}
+
+	mStr := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Format(msg)
+	m.lggr.Infow("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
+
+	if emitErr := m.emitter.Emit(ctx, messageBytes, attrKVs...); emitErr != nil {
+		m.lggr.Errorw("Failed to emit Atlas error event", "err", emitErr)
+	}
+	m.lggr.Debugw("Successfully emitted Atlas error event to Beholder", "message", mStr, "attributes", attrKVs)
 }
