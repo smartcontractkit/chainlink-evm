@@ -591,10 +591,17 @@ func (lp *logPoller) GetReplayFromBlock(ctx context.Context, requested int64) (i
 // loadFilters loads the filters from db, and activates count-based Log Pruning
 // if required by any of the filters
 func (lp *logPoller) loadFilters(ctx context.Context) error {
-	filters, err := lp.lockAndLoadFilters(ctx)
+	lp.filterMu.Lock()
+	defer lp.filterMu.Unlock()
+
+	filters, err := lp.orm.LoadFilters(ctx)
 	if err != nil {
 		return pkgerrors.Wrapf(err, "Failed to load initial filters from db, retrying")
 	}
+
+	lp.filters = filters
+	lp.filterDirty = true
+
 	if lp.countBasedLogPruningActive.Load() {
 		return nil
 	}
@@ -605,21 +612,6 @@ func (lp *logPoller) loadFilters(ctx context.Context) error {
 		}
 	}
 	return nil
-}
-
-// lockAndLoadFilters is the part of loadFilters() requiring a filterMu lock
-func (lp *logPoller) lockAndLoadFilters(ctx context.Context) (filters map[string]Filter, err error) {
-	lp.filterMu.Lock()
-	defer lp.filterMu.Unlock()
-
-	filters, err = lp.orm.LoadFilters(ctx)
-	if err != nil {
-		return filters, err
-	}
-
-	lp.filters = filters
-	lp.filterDirty = true
-	return filters, nil
 }
 
 // tickStaggeredDelay chooses a uniformly random amount of time to delay between minDelay and minDelay + period
