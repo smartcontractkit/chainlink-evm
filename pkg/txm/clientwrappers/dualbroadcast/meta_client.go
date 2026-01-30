@@ -170,6 +170,10 @@ func (a *MetaClient) PendingNonceAt(ctx context.Context, address common.Address)
 	return a.c.PendingNonceAt(ctx, address)
 }
 
+// SendTransactions handles three diffenent cases:
+// 1. Auctions & Sends an attempt if it's a meta transaction and it hasn't broadcasted before.
+// 2. Sends the first attempt if it's a meta transaction and it has broadcasted before. This covers RPC errors.
+// 3. Sends an empty transaction to the mempool to clear the nonce.
 func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
