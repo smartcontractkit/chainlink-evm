@@ -180,29 +180,29 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		return err
 	}
 
-	if meta != nil &&
-		meta.DualBroadcast != nil && *meta.DualBroadcast &&
-		!tx.IsPurgeable && meta.DualBroadcastParams != nil &&
-		meta.FwdrDestAddress != nil &&
-		tx.AttemptCount == 1 {
-		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
-		if err != nil {
-			a.metrics.RecordSendRequestError(ctx)
-			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, ErrAuction)
-		}
-		if meta != nil {
-			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
-				a.metrics.RecordSendOperationError(ctx)
-				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, ErrAuction)
+	if !tx.IsPurgeable {
+		if meta != nil &&
+			meta.DualBroadcast != nil && *meta.DualBroadcast && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil &&
+			tx.AttemptCount == 1 {
+			meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
+			if err != nil {
+				a.metrics.RecordSendRequestError(ctx)
+				return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, ErrAuction)
 			}
-			return nil
+			if meta != nil {
+				if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
+					a.metrics.RecordSendOperationError(ctx)
+					return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, ErrAuction)
+				}
+				return nil
+			}
+			a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
+			return ErrNoBids
 		}
-		a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
-		return ErrNoBids
-	}
-	if !tx.IsPurgeable && len(tx.Attempts) > 1 {
-		a.lggr.Infow("Intercepted attempt for tx(rebroadcasting first attempt)", "txID", tx.ID, "attempt", tx.Attempts[0])
-		return a.c.SendTransaction(ctx, tx.Attempts[0].SignedTransaction)
+		if len(tx.Attempts) > 1 {
+			a.lggr.Infow("Intercepted attempt for tx(rebroadcasting first attempt)", "txID", tx.ID, "attempt", tx.Attempts[0])
+			return a.c.SendTransaction(ctx, tx.Attempts[0].SignedTransaction)
+		}
 	}
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)
