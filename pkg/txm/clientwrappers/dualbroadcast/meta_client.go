@@ -170,7 +170,7 @@ func (a *MetaClient) PendingNonceAt(ctx context.Context, address common.Address)
 	return a.c.PendingNonceAt(ctx, address)
 }
 
-// SendTransactions handles three diffenent cases:
+// SendTransactions handles three different cases:
 // 1. Auctions & Sends an attempt if it's a meta transaction and it hasn't broadcasted before.
 // 2. Sends the first attempt if it's a meta transaction and it has broadcasted before. This covers RPC errors.
 // 3. Sends an empty transaction to the mempool to clear the nonce.
@@ -180,30 +180,33 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		return err
 	}
 
-	if !tx.IsPurgeable {
-		if meta != nil &&
-			meta.DualBroadcast != nil && *meta.DualBroadcast && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil &&
-			tx.AttemptCount == 1 {
-			meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
-			if err != nil {
-				a.metrics.RecordSendRequestError(ctx)
-				return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, ErrAuction)
-			}
-			if meta != nil {
-				if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
-					a.metrics.RecordSendOperationError(ctx)
-					return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, ErrAuction)
-				}
-				return nil
-			}
-			a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
-			return ErrNoBids
+	// #1
+	if meta != nil &&
+		meta.DualBroadcast != nil && *meta.DualBroadcast && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil &&
+		tx.AttemptCount == 1 && !tx.IsPurgeable {
+		// Auction & Validate
+		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
+		if err != nil {
+			a.metrics.RecordSendRequestError(ctx)
+			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, errors.Join(err, ErrAuction))
 		}
-		if len(tx.Attempts) > 1 {
-			a.lggr.Infow("Intercepted attempt for tx(rebroadcasting first attempt)", "txID", tx.ID, "attempt", tx.Attempts[0])
-			return a.c.SendTransaction(ctx, tx.Attempts[0].SignedTransaction)
+		// Send Metacall
+		if meta != nil {
+			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
+				a.metrics.RecordSendOperationError(ctx)
+				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, errors.Join(err, ErrAuction))
+			}
+			return nil
 		}
+		a.lggr.Infof("No bids for transactionID(%d): ", tx.ID)
+		return ErrNoBids
 	}
+	// #2
+	if !tx.IsPurgeable && len(tx.Attempts) > 1 {
+		a.lggr.Infow("Intercepted attempt for tx(rebroadcasting first attempt)", "txID", tx.ID, "attempt", tx.Attempts[0])
+		return a.c.SendTransaction(ctx, tx.Attempts[0].SignedTransaction)
+	}
+	// #3
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)
 }
