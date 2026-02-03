@@ -41,7 +41,8 @@ func TestMetaErrorHandler(t *testing.T) {
 			GasLimit: 22000,
 			Hash:     testutils.NewHash(),
 		}
-		require.NoError(t, txStore.AppendAttemptToTransaction(*tx.Nonce, attempt))
+		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
+		require.NoError(t, err)
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		err = errorHandler.HandleError(t.Context(), tx, ErrNoBids, txStoreManager, setNonce, false)
 		require.Error(t, err)
@@ -72,13 +73,47 @@ func TestMetaErrorHandler(t *testing.T) {
 			GasLimit: 22000,
 			Hash:     testutils.NewHash(),
 		}
-		require.NoError(t, txStore.AppendAttemptToTransaction(*tx.Nonce, attempt))
-		require.NoError(t, txStore.AppendAttemptToTransaction(*tx.Nonce, attempt))
+		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
+		require.NoError(t, err)
+		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
+		require.NoError(t, err)
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		err = errorHandler.HandleError(t.Context(), tx, txErr, txStoreManager, setNonce, false)
 		require.Error(t, err)
 		require.ErrorIs(t, err, txErr)
 		_, unconfirmedCount := txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		assert.Equal(t, 1, unconfirmedCount)
+	})
+
+	t.Run("handles auction error for first attempt", func(t *testing.T) {
+		nonce := uint64(1)
+		address := testutils.NewAddress()
+		txRequest := &types.TxRequest{
+			ChainID:     testutils.FixtureChainID,
+			FromAddress: address,
+			ToAddress:   testutils.NewAddress(),
+		}
+		txErr := ErrAuction
+		setNonce := func(address common.Address, nonce uint64) {}
+		txStoreManager := storage.NewInMemoryStoreManager(logger.Test(t), testutils.FixtureChainID)
+		require.NoError(t, txStoreManager.Add(address))
+		txStore := txStoreManager.InMemoryStoreMap[address]
+		_ = txStore.CreateTransaction(txRequest)
+		tx, err := txStore.UpdateUnstartedTransactionWithNonce(nonce)
+		require.NoError(t, err)
+		attempt := &types.Attempt{
+			TxID:     tx.ID,
+			Fee:      gas.EvmFee{GasPrice: assets.NewWeiI(1)},
+			GasLimit: 22000,
+			Hash:     testutils.NewHash(),
+		}
+		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
+		require.NoError(t, err)
+		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
+		err = errorHandler.HandleError(t.Context(), tx, txErr, txStoreManager, setNonce, false)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "transaction with txID: 0 marked as fatal")
+		_, unconfirmedCount := txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
+		assert.Equal(t, 0, unconfirmedCount)
 	})
 }

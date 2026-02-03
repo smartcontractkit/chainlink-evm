@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
@@ -46,11 +47,11 @@ func (m *InMemoryStoreManager) Add(addresses ...common.Address) (err error) {
 	return
 }
 
-func (m *InMemoryStoreManager) AppendAttemptToTransaction(_ context.Context, txNonce uint64, fromAddress common.Address, attempt *types.Attempt) error {
+func (m *InMemoryStoreManager) AppendAttemptToTransaction(_ context.Context, txNonce uint64, fromAddress common.Address, attempt *types.Attempt) (attempts []*types.Attempt, err error) {
 	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
 		return store.AppendAttemptToTransaction(txNonce, attempt)
 	}
-	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
+	return nil, fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) CountUnstartedTransactions(fromAddress common.Address) (int, error) {
@@ -121,6 +122,13 @@ func (m *InMemoryStoreManager) DeleteAttemptForUnconfirmedTx(_ context.Context, 
 func (m *InMemoryStoreManager) MarkTxFatal(_ context.Context, tx *types.Transaction, fromAddress common.Address) error {
 	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
 		return store.MarkTxFatal(tx)
+	}
+	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
+}
+
+func (m *InMemoryStoreManager) UpdateSignedAttempt(_ context.Context, txID uint64, attemptID uint64, signedTransaction *evmtypes.Transaction, fromAddress common.Address) error {
+	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+		return store.UpdateSignedAttempt(txID, attemptID, signedTransaction)
 	}
 	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }

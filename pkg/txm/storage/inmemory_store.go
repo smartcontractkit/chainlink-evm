@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
@@ -74,17 +75,17 @@ func (m *InMemoryStore) AbandonPendingTransactions() {
 	m.UnconfirmedTransactions = make(map[uint64]*types.Transaction)
 }
 
-func (m *InMemoryStore) AppendAttemptToTransaction(txNonce uint64, attempt *types.Attempt) error {
+func (m *InMemoryStore) AppendAttemptToTransaction(txNonce uint64, attempt *types.Attempt) (attempts []*types.Attempt, err error) {
 	m.Lock()
 	defer m.Unlock()
 
 	tx, exists := m.UnconfirmedTransactions[txNonce]
 	if !exists {
-		return fmt.Errorf("unconfirmed tx was not found for nonce: %d - txID: %v", txNonce, attempt.TxID)
+		return nil, fmt.Errorf("unconfirmed tx was not found for nonce: %d - txID: %v", txNonce, attempt.TxID)
 	}
 
 	if tx.ID != attempt.TxID {
-		return fmt.Errorf("unconfirmed tx with nonce exists but attempt points to a different txID. Found Tx: %v - txID: %v", m.UnconfirmedTransactions[txNonce], attempt.TxID)
+		return nil, fmt.Errorf("unconfirmed tx with nonce exists but attempt points to a different txID. Found Tx: %v - txID: %v", tx, attempt.TxID)
 	}
 
 	attempt.CreatedAt = time.Now()
@@ -97,7 +98,11 @@ func (m *InMemoryStore) AppendAttemptToTransaction(txNonce uint64, attempt *type
 	}
 	m.UnconfirmedTransactions[txNonce].Attempts = append(m.UnconfirmedTransactions[txNonce].Attempts, attempt.DeepCopy())
 
-	return nil
+	attempts = make([]*types.Attempt, len(tx.Attempts))
+	for i, a := range tx.Attempts {
+		attempts[i] = a.DeepCopy()
+	}
+	return attempts, nil
 }
 
 func (m *InMemoryStore) CountUnstartedTransactions() int {
@@ -375,6 +380,24 @@ func (m *InMemoryStore) MarkTxFatal(txToMark *types.Transaction) error {
 	delete(m.Transactions, txToMark.ID)
 	txToMark.State = txmgr.TxFatalError // update the state in case the caller needs to log
 	return nil
+}
+
+func (m *InMemoryStore) UpdateSignedAttempt(txID uint64, attemptID uint64, signedTransaction *evmtypes.Transaction) error {
+	m.Lock()
+	defer m.Unlock()
+
+	tx, exists := m.Transactions[txID]
+	if !exists {
+		return fmt.Errorf("tx was not found for txID: %v", txID)
+	}
+
+	for _, attempt := range tx.Attempts {
+		if attempt.ID == attemptID {
+			attempt.SignedTransaction = signedTransaction
+			return nil
+		}
+	}
+	return fmt.Errorf("attempt was not found for attemptID: %v", attemptID)
 }
 
 // Orchestrator
