@@ -136,8 +136,8 @@ func (m *MetaMetrics) emitAtlasError(ctx context.Context, errType string, custom
 		Nonce:          nonce,
 		ErrorType:      errType,
 		ErrorMessage:   cause.Error(),
-		HttpStatusCode: -1,           // field is not used for now
-		TransactionId:  int64(tx.ID), //nolint:gosec // overflow is acceptable for telemetry
+		HttpStatusCode: -1,           // field is not used for now, will be removed with https://github.com/smartcontractkit/chainlink-protos/pull/277
+		TransactionId:  int64(tx.ID), //nolint:gosec // overflow is acceptable for telemetry, fixing this in https://github.com/smartcontractkit/chainlink-protos/pull/277
 		AtlasUrl:       customURL.String(),
 		CreatedAt:      time.Now().UnixMicro(),
 	}
