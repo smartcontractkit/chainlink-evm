@@ -41,7 +41,8 @@ func TestMetaErrorHandler(t *testing.T) {
 			GasLimit: 22000,
 			Hash:     testutils.NewHash(),
 		}
-		require.NoError(t, txStore.AppendAttemptToTransaction(*tx.Nonce, attempt))
+		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
+		require.NoError(t, err)
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		err = errorHandler.HandleError(t.Context(), tx, ErrNoBids, txStoreManager, setNonce, false)
 		require.Error(t, err)
@@ -72,8 +73,10 @@ func TestMetaErrorHandler(t *testing.T) {
 			GasLimit: 22000,
 			Hash:     testutils.NewHash(),
 		}
-		require.NoError(t, txStore.AppendAttemptToTransaction(*tx.Nonce, attempt))
-		require.NoError(t, txStore.AppendAttemptToTransaction(*tx.Nonce, attempt))
+		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
+		require.NoError(t, err)
+		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
+		require.NoError(t, err)
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		err = errorHandler.HandleError(t.Context(), tx, txErr, txStoreManager, setNonce, false)
 		require.Error(t, err)
@@ -104,7 +107,8 @@ func TestMetaErrorHandler(t *testing.T) {
 			GasLimit: 22000,
 			Hash:     testutils.NewHash(),
 		}
-		require.NoError(t, txStore.AppendAttemptToTransaction(*tx.Nonce, attempt))
+		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
+		require.NoError(t, err)
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		err = errorHandler.HandleError(t.Context(), tx, txErr, txStoreManager, setNonce, false)
 		require.Error(t, err)

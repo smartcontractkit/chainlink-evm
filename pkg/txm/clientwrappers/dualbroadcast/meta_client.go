@@ -202,10 +202,14 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		return ErrNoBids
 	}
 	// #2
-	if !tx.IsPurgeable && len(tx.Attempts) > 1 {
-		a.lggr.Infow("Intercepted attempt for tx(rebroadcasting first attempt)", "txID", tx.ID, "attempt", tx.Attempts[0])
-		return a.c.SendTransaction(ctx, tx.Attempts[0].SignedTransaction)
+	if !tx.IsPurgeable && tx.AttemptCount > 1 && len(tx.Attempts) > 0 {
+		first := tx.Attempts[0]
+		if first.SignedTransaction != nil {
+			a.lggr.Infow("Intercepted attempt for tx(rebroadcasting first attempt)", "txID", tx.ID, "attempt", first)
+			return a.c.SendTransaction(ctx, first.SignedTransaction)
+		}
 	}
+
 	// #3
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, attempt.SignedTransaction)

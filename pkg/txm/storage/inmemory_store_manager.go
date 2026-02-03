@@ -47,11 +47,11 @@ func (m *InMemoryStoreManager) Add(addresses ...common.Address) (err error) {
 	return
 }
 
-func (m *InMemoryStoreManager) AppendAttemptToTransaction(_ context.Context, txNonce uint64, fromAddress common.Address, attempt *types.Attempt) error {
+func (m *InMemoryStoreManager) AppendAttemptToTransaction(_ context.Context, txNonce uint64, fromAddress common.Address, attempt *types.Attempt) (attempts []*types.Attempt, err error) {
 	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
 		return store.AppendAttemptToTransaction(txNonce, attempt)
 	}
-	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
+	return nil, fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) CountUnstartedTransactions(fromAddress common.Address) (int, error) {
