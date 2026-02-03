@@ -154,6 +154,9 @@ jobs:
     needs: [tag-check, changes, lint, native-compile]
     if: needs.tag-check.outputs.is-pre-release-core == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
@@ -202,6 +205,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
