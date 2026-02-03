@@ -43,7 +43,7 @@ contract AuthorizedCallers is Ownable2StepMsgSender {
   /// @param authorizedCallerArgs Callers to add and remove. Removals are performed first.
   function applyAuthorizedCallerUpdates(
     AuthorizedCallerArgs memory authorizedCallerArgs
-  ) external onlyOwner {
+  ) external virtual onlyOwner {
     _applyAuthorizedCallerUpdates(authorizedCallerArgs);
   }
 
