@@ -140,7 +140,7 @@ type MetaClient struct {
 }
 
 func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int) (*MetaClient, error) {
-	metrics, err := NewMetaMetrics(chainID.String())
+	metrics, err := NewMetaMetrics(chainID.String(), lggr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
 	}
@@ -173,11 +173,13 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
 		if err != nil {
 			a.metrics.RecordSendRequestError(ctx)
+			a.metrics.emitAtlasError(ctx, "send_request", a.customURL, err, tx)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, err)
 		}
 		if meta != nil {
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
 				a.metrics.RecordSendOperationError(ctx)
+				a.metrics.emitAtlasError(ctx, "send_operation", a.customURL, err, tx)
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
 			return nil
