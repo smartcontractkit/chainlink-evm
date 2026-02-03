@@ -1,5 +1,10 @@
 # @chainlink/contracts
 
+## 1.5.1
+
+### Patch Changes
+- [#345](https://github.com/smartcontractkit/chainlink-evm/pull/345) [`9e9f333`](https://github.com/smartcontractkit/chainlink-evm/commit/9e9f333c6c) - Mark `AuthorizedCallers.applyAuthorizedCallerUpdates` as `virtual`.
+
 ## 1.5.0
 
 ### Contracts In This Release
