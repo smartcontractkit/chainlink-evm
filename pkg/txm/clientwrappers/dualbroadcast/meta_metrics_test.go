@@ -117,8 +117,7 @@ func TestMetaClient_emitAtlasError(t *testing.T) {
 		assert.Equal(t, "450", emittedMsg.Nonce)
 		assert.Equal(t, "send_request", emittedMsg.ErrorType)
 		assert.Equal(t, "test error message", emittedMsg.ErrorMessage)
-		assert.Equal(t, int32(-1), emittedMsg.HttpStatusCode) // not used
-		assert.Equal(t, int64(123), emittedMsg.TransactionId)
+		assert.Equal(t, uint64(123), emittedMsg.TransactionId)
 		assert.Equal(t, u.String(), emittedMsg.AtlasUrl)
 	})
 

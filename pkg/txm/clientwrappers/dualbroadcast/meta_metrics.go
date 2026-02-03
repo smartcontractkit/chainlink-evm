@@ -129,17 +129,16 @@ func (m *MetaMetrics) emitAtlasError(ctx context.Context, errType string, custom
 	}
 
 	msg := &pb.FastLaneAtlasError{
-		ChainId:        m.chainID,
-		FromAddress:    tx.FromAddress.Hex(),
-		ToAddress:      tx.ToAddress.Hex(),
-		FeedAddress:    destAddress,
-		Nonce:          nonce,
-		ErrorType:      errType,
-		ErrorMessage:   cause.Error(),
-		HttpStatusCode: -1,           // field is not used for now, will be removed with https://github.com/smartcontractkit/chainlink-protos/pull/277
-		TransactionId:  int64(tx.ID), //nolint:gosec // overflow is acceptable for telemetry, fixing this in https://github.com/smartcontractkit/chainlink-protos/pull/277
-		AtlasUrl:       customURL.String(),
-		CreatedAt:      time.Now().UnixMicro(),
+		ChainId:       m.chainID,
+		FromAddress:   tx.FromAddress.Hex(),
+		ToAddress:     tx.ToAddress.Hex(),
+		FeedAddress:   destAddress,
+		Nonce:         nonce,
+		ErrorType:     errType,
+		ErrorMessage:  cause.Error(),
+		TransactionId: tx.ID,
+		AtlasUrl:      customURL.String(),
+		CreatedAt:     time.Now().UnixMicro(),
 	}
 
 	messageBytes, err := proto.Marshal(msg)
