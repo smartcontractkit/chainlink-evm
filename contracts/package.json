@@ -39,9 +39,6 @@
       "minimatch@9.0.5>brace-expansion": "^2.0.2"
     },
     "onlyBuiltDependencies": [
-      "// keccak@3.0.4, secp256k1@4.0.4 run node-gyp-build during install",
-      "// core-js@3.4.0 has a postinstall script to print a banner",
-      "// @arbitrum/nitro-contracts@1.1.1 has a postinstall script that runs patch-package. But has no patches.",
       "secp256k1",
       "keccak",
       "core-js",
