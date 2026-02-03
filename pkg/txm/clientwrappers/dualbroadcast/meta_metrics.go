@@ -111,12 +111,7 @@ func (m *MetaMetrics) RecordSendOperationError(ctx context.Context) {
 }
 
 // emitAtlasError emits an OTel event to track FastLane Atlas errors
-func (m *MetaMetrics) emitAtlasError(ctx context.Context, errType string, customURL *url.URL, err error, tx *types.Transaction) {
-	m.emitAtlasErrorWithHttpStatusCode(ctx, errType, customURL, err, -1, tx)
-}
-
-// emitAtlasErrorWithHttpStatusCode emits an OTel event with an HTTP status code to track FastLane Atlas errors
-func (m *MetaMetrics) emitAtlasErrorWithHttpStatusCode(ctx context.Context, errType string, customURL *url.URL, cause error, httpStatusCode int, tx *types.Transaction) {
+func (m *MetaMetrics) emitAtlasError(ctx context.Context, errType string, customURL *url.URL, cause error, tx *types.Transaction) {
 	var nonce string
 	if tx.Nonce != nil {
 		nonce = fmt.Sprintf("%d", *tx.Nonce)
@@ -141,7 +136,7 @@ func (m *MetaMetrics) emitAtlasErrorWithHttpStatusCode(ctx context.Context, errT
 		Nonce:          nonce,
 		ErrorType:      errType,
 		ErrorMessage:   cause.Error(),
-		HttpStatusCode: int32(httpStatusCode),
+		HttpStatusCode: -1,           // field is not used for now
 		TransactionId:  int64(tx.ID), //nolint:gosec // overflow is acceptable for telemetry
 		AtlasUrl:       customURL.String(),
 		CreatedAt:      time.Now().UnixMicro(),

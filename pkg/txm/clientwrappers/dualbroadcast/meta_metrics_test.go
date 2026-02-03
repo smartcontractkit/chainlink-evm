@@ -64,7 +64,7 @@ func (m *mockBeholderEmitter) Close() error {
 	return args.Error(0)
 }
 
-func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
+func TestMetaClient_emitAtlasError(t *testing.T) {
 	t.Parallel()
 	testChainID := big.NewInt(1)
 	testURL, _ := url.Parse("https://atlas.example.com")
@@ -101,7 +101,7 @@ func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
 			}).
 			Return(nil)
 
-		metrics.emitAtlasErrorWithHttpStatusCode(t.Context(), "send_request", u, errors.New("test error message"), 500, tx)
+		metrics.emitAtlasError(t.Context(), "send_request", u, errors.New("test error message"), tx)
 
 		mockEmitter.AssertExpectations(t)
 
@@ -117,7 +117,7 @@ func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
 		assert.Equal(t, "450", emittedMsg.Nonce)
 		assert.Equal(t, "send_request", emittedMsg.ErrorType)
 		assert.Equal(t, "test error message", emittedMsg.ErrorMessage)
-		assert.Equal(t, int32(500), emittedMsg.HttpStatusCode)
+		assert.Equal(t, int32(-1), emittedMsg.HttpStatusCode) // not used
 		assert.Equal(t, int64(123), emittedMsg.TransactionId)
 		assert.Equal(t, u.String(), emittedMsg.AtlasUrl)
 	})
@@ -144,7 +144,7 @@ func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
 			}).
 			Return(nil)
 
-		metrics.emitAtlasErrorWithHttpStatusCode(t.Context(), "error_type", testURL, errors.New("some error"), 400, tx)
+		metrics.emitAtlasError(t.Context(), "error_type", testURL, errors.New("some error"), tx)
 
 		mockEmitter.AssertExpectations(t)
 
@@ -154,37 +154,6 @@ func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
 
 		assert.Equal(t, "", emittedMsg.Nonce)       // empty string when nonce is nil
 		assert.Equal(t, "", emittedMsg.FeedAddress) // empty string when meta is nil
-	})
-
-	t.Run("emits error with negative http status code for non-http errors", func(t *testing.T) {
-		t.Parallel()
-		mockEmitter := new(mockBeholderEmitter)
-		metrics, err := NewMetaMetrics(testChainID.String(), lggr)
-		require.NoError(t, err)
-		metrics.emitter = mockEmitter
-
-		tx := &types.Transaction{
-			ID:          789,
-			FromAddress: common.HexToAddress("0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-			ToAddress:   common.HexToAddress("0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
-		}
-
-		var capturedBody []byte
-		mockEmitter.On("Emit", mock.Anything, mock.Anything, mock.Anything).
-			Run(func(args mock.Arguments) {
-				capturedBody = args.Get(1).([]byte)
-			}).
-			Return(nil)
-
-		metrics.emitAtlasErrorWithHttpStatusCode(t.Context(), "non_http_error", testURL, errors.New("network error"), -1, tx)
-
-		mockEmitter.AssertExpectations(t)
-
-		var emittedMsg pb.FastLaneAtlasError
-		err = proto.Unmarshal(capturedBody, &emittedMsg)
-		require.NoError(t, err)
-
-		assert.Equal(t, int32(-1), emittedMsg.HttpStatusCode)
 	})
 
 	t.Run("handles emit error gracefully", func(t *testing.T) {
@@ -204,7 +173,7 @@ func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
 			Return(errors.New("emit failed"))
 
 		// Should not panic, just log the error
-		metrics.emitAtlasErrorWithHttpStatusCode(t.Context(), "error_type", testURL, errors.New("some error"), 500, tx)
+		metrics.emitAtlasError(t.Context(), "error_type", testURL, errors.New("some error"), tx)
 
 		mockEmitter.AssertExpectations(t)
 	})
@@ -225,7 +194,7 @@ func TestMetaClient_emitAtlasErrorWithHttpStatusCode(t *testing.T) {
 		}
 
 		// Should not call Emit because GetMeta will fail
-		metrics.emitAtlasErrorWithHttpStatusCode(t.Context(), "error_type", testURL, errors.New("some error"), 500, tx)
+		metrics.emitAtlasError(t.Context(), "error_type", testURL, errors.New("some error"), tx)
 
 		// Emit should not be called when meta parsing fails
 		mockEmitter.AssertNotCalled(t, "Emit", mock.Anything, mock.Anything, mock.Anything)
