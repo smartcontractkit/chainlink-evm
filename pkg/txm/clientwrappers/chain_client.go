@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
-	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -27,6 +26,6 @@ func (c *ChainClient) PendingNonceAt(ctx context.Context, address common.Address
 	return c.c.PendingNonceAt(ctx, address)
 }
 
-func (c *ChainClient) SendTransaction(ctx context.Context, _ *types.Transaction, attempt *types.Attempt, txStore txm.TxStore) error {
+func (c *ChainClient) SendTransaction(ctx context.Context, _ *types.Transaction, attempt *types.Attempt) error {
 	return c.c.SendTransaction(ctx, attempt.SignedTransaction)
 }

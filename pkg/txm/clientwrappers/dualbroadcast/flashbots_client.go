@@ -23,17 +23,22 @@ import (
 
 var _ txm.Client = &FlashbotsClient{}
 
+type FlashbotsTxStore interface {
+	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
+}
 type FlashbotsClient struct {
 	c         client.Client
 	keystore  keys.MessageSigner
 	customURL *url.URL
+	txStore   FlashbotsTxStore
 }
 
-func NewFlashbotsClient(c client.Client, keystore keys.MessageSigner, customURL *url.URL) *FlashbotsClient {
+func NewFlashbotsClient(c client.Client, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore) *FlashbotsClient {
 	return &FlashbotsClient{
 		c:         c,
 		keystore:  keystore,
 		customURL: customURL,
+		txStore:   txStore,
 	}
 }
 
@@ -55,7 +60,7 @@ func (d *FlashbotsClient) PendingNonceAt(ctx context.Context, address common.Add
 	return nonce, nil
 }
 
-func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, txStore txm.TxStore) error {
+func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return err
@@ -77,7 +82,7 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		}
 
 		// After successfully sending the transaction, send a bundle with all unconfirmed transactions
-		_ = d.SendBundle(ctx, txStore, tx.FromAddress, params)
+		_ = d.SendBundle(ctx, tx.FromAddress, params)
 		// Don't return bundle error - the single transaction was already sent successfully
 		return nil
 	}
@@ -134,8 +139,8 @@ type postError struct {
 	Message string `json:"message,omitempty"`
 }
 
-func (d *FlashbotsClient) SendBundle(ctx context.Context, txStore txm.TxStore, fromAddress common.Address, urlParams string) error {
-	unconfirmedTxs, err := txStore.FetchUnconfirmedTransactions(ctx, fromAddress)
+func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Address, urlParams string) error {
+	unconfirmedTxs, err := d.txStore.FetchUnconfirmedTransactions(ctx, fromAddress)
 	if err != nil {
 		return fmt.Errorf("failed to fetch unconfirmed transactions: %w", err)
 	}

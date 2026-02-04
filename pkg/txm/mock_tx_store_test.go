@@ -7,6 +7,8 @@ import (
 
 	common "github.com/ethereum/go-ethereum/common"
 
+	coretypes "github.com/ethereum/go-ethereum/core/types"
+
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
@@ -589,6 +591,56 @@ func (_c *MockTxStore_MarkUnconfirmedTransactionPurgeable_Call) Return(_a0 error
 }
 
 func (_c *MockTxStore_MarkUnconfirmedTransactionPurgeable_Call) RunAndReturn(run func(context.Context, uint64, common.Address) error) *MockTxStore_MarkUnconfirmedTransactionPurgeable_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateSignedAttempt provides a mock function with given fields: _a0, _a1, _a2, _a3, _a4
+func (_m *MockTxStore) UpdateSignedAttempt(_a0 context.Context, _a1 uint64, _a2 uint64, _a3 *coretypes.Transaction, _a4 common.Address) error {
+	ret := _m.Called(_a0, _a1, _a2, _a3, _a4)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateSignedAttempt")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint64, *coretypes.Transaction, common.Address) error); ok {
+		r0 = rf(_a0, _a1, _a2, _a3, _a4)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockTxStore_UpdateSignedAttempt_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateSignedAttempt'
+type MockTxStore_UpdateSignedAttempt_Call struct {
+	*mock.Call
+}
+
+// UpdateSignedAttempt is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 uint64
+//   - _a2 uint64
+//   - _a3 *coretypes.Transaction
+//   - _a4 common.Address
+func (_e *MockTxStore_Expecter) UpdateSignedAttempt(_a0 interface{}, _a1 interface{}, _a2 interface{}, _a3 interface{}, _a4 interface{}) *MockTxStore_UpdateSignedAttempt_Call {
+	return &MockTxStore_UpdateSignedAttempt_Call{Call: _e.mock.On("UpdateSignedAttempt", _a0, _a1, _a2, _a3, _a4)}
+}
+
+func (_c *MockTxStore_UpdateSignedAttempt_Call) Run(run func(_a0 context.Context, _a1 uint64, _a2 uint64, _a3 *coretypes.Transaction, _a4 common.Address)) *MockTxStore_UpdateSignedAttempt_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint64), args[2].(uint64), args[3].(*coretypes.Transaction), args[4].(common.Address))
+	})
+	return _c
+}
+
+func (_c *MockTxStore_UpdateSignedAttempt_Call) Return(_a0 error) *MockTxStore_UpdateSignedAttempt_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockTxStore_UpdateSignedAttempt_Call) RunAndReturn(run func(context.Context, uint64, uint64, *coretypes.Transaction, common.Address) error) *MockTxStore_UpdateSignedAttempt_Call {
 	_c.Call.Return(run)
 	return _c
 }
