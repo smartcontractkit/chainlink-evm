@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/jpillora/backoff"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -30,18 +31,19 @@ const (
 type Client interface {
 	PendingNonceAt(context.Context, common.Address) (uint64, error)
 	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
-	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, store TxStore) error
+	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
 }
 
 type TxStore interface {
 	AbandonPendingTransactions(context.Context, common.Address) error
-	AppendAttemptToTransaction(context.Context, uint64, common.Address, *types.Attempt) error
+	AppendAttemptToTransaction(context.Context, uint64, common.Address, *types.Attempt) (attempts []*types.Attempt, err error)
 	CreateEmptyUnconfirmedTransaction(context.Context, common.Address, uint64, uint64) (*types.Transaction, error)
 	CreateTransaction(context.Context, *types.TxRequest) (*types.Transaction, error)
-	FetchUnconfirmedTransactionAtNonceWithCount(context.Context, uint64, common.Address) (*types.Transaction, int, error)
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
+	FetchUnconfirmedTransactionAtNonceWithCount(context.Context, uint64, common.Address) (*types.Transaction, int, error)
 	MarkConfirmedAndReorgedTransactions(context.Context, uint64, common.Address) ([]*types.Transaction, []uint64, error)
 	MarkUnconfirmedTransactionPurgeable(context.Context, uint64, common.Address) error
+	UpdateSignedAttempt(context.Context, uint64, uint64, *evmtypes.Transaction, common.Address) error
 	UpdateTransactionBroadcast(context.Context, uint64, uint64, common.Hash, common.Address) error
 	UpdateUnstartedTransactionWithNonce(context.Context, common.Address, uint64) (*types.Transaction, error)
 
@@ -126,6 +128,7 @@ func (t *Txm) Start(ctx context.Context) error {
 		for _, address := range addresses {
 			t.startAddress(address)
 		}
+		t.lggr.Infof("Started Txm")
 		return nil
 	})
 }
@@ -314,9 +317,12 @@ func (t *Txm) createAndSendAttempt(ctx context.Context, tx *types.Transaction, a
 	if tx.Nonce == nil {
 		return fmt.Errorf("nonce for txID: %v is empty", tx.ID)
 	}
-	if err = t.txStore.AppendAttemptToTransaction(ctx, *tx.Nonce, address, attempt); err != nil {
+	attempts, err := t.txStore.AppendAttemptToTransaction(ctx, *tx.Nonce, address, attempt)
+	if err != nil {
 		return err
 	}
+	tx.AttemptCount++
+	tx.Attempts = attempts
 
 	return t.sendTransactionWithError(ctx, tx, attempt, address)
 }
@@ -326,8 +332,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 		return fmt.Errorf("nonce for txID: %v is empty", tx.ID)
 	}
 	start := time.Now()
-	txErr := t.client.SendTransaction(ctx, tx, attempt, t.txStore)
-	tx.AttemptCount++
+	txErr := t.client.SendTransaction(ctx, tx, attempt)
 	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "duration", time.Since(start), "txErr: ", txErr)
 	if txErr != nil && t.errorHandler != nil {
 		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.SetNonce, false); err != nil {

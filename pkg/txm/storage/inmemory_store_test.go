@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
@@ -78,7 +80,7 @@ func TestAppendAttemptToTransaction(t *testing.T) {
 	t.Run("fails if corresponding unconfirmed transaction for attempt was not found", func(t *testing.T) {
 		var nonce uint64 = 1
 		newAttempt := &types.Attempt{}
-		err := m.AppendAttemptToTransaction(nonce, newAttempt)
+		_, err := m.AppendAttemptToTransaction(nonce, newAttempt)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "unconfirmed tx was not found")
 	})
@@ -88,7 +90,7 @@ func TestAppendAttemptToTransaction(t *testing.T) {
 		newAttempt := &types.Attempt{
 			TxID: 2,
 		}
-		err := m.AppendAttemptToTransaction(nonce, newAttempt)
+		_, err := m.AppendAttemptToTransaction(nonce, newAttempt)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "attempt points to a different txID")
 	})
@@ -98,11 +100,19 @@ func TestAppendAttemptToTransaction(t *testing.T) {
 		newAttempt := &types.Attempt{
 			TxID: 1,
 		}
-		require.NoError(t, m.AppendAttemptToTransaction(nonce, newAttempt))
+		attempts, err := m.AppendAttemptToTransaction(nonce, newAttempt)
+		require.NoError(t, err)
+		require.Len(t, attempts, 1, "returned attempts should have one element")
+		assert.False(t, attempts[0].CreatedAt.IsZero())
+		assert.Equal(t, uint64(0), attempts[0].ID)
+
 		tx, _ := m.FetchUnconfirmedTransactionAtNonceWithCount(10)
 		assert.Len(t, tx.Attempts, 1)
 		assert.Equal(t, uint16(1), tx.AttemptCount)
 		assert.False(t, tx.Attempts[0].CreatedAt.IsZero())
+
+		// Returned attempts are deep copies, not references to store state.
+		assert.NotSame(t, attempts[0], tx.Attempts[0])
 	})
 
 	t.Run("appends attempt to transaction and prunes the oldest one if limit is reached", func(t *testing.T) {
@@ -117,7 +127,8 @@ func TestAppendAttemptToTransaction(t *testing.T) {
 			newAttempt := &types.Attempt{
 				TxID: 1,
 			}
-			require.NoError(t, m2.AppendAttemptToTransaction(nonce, newAttempt))
+			_, err := m2.AppendAttemptToTransaction(nonce, newAttempt)
+			require.NoError(t, err)
 		}
 		tx, _ := m2.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		fmt.Println("TX:", tx)
@@ -370,6 +381,53 @@ func TestUpdateTransactionBroadcast(t *testing.T) {
 		assert.False(t, tx.LastBroadcastAt.IsZero())
 		assert.False(t, attempt.BroadcastAt.IsZero())
 		assert.False(t, tx.InitialBroadcastAt.IsZero())
+	})
+}
+
+func TestUpdateSignedAttempt(t *testing.T) {
+	t.Parallel()
+
+	fromAddress := testutils.NewAddress()
+	toAddress := testutils.NewAddress()
+	signedTx := evmtypes.NewTx(&evmtypes.LegacyTx{
+		Nonce:    0,
+		To:       &toAddress,
+		Value:    big.NewInt(0),
+		Gas:      21000,
+		GasPrice: big.NewInt(1),
+		Data:     nil,
+	})
+
+	t.Run("fails if tx was not found for txID", func(t *testing.T) {
+		m := NewInMemoryStore(logger.Test(t), fromAddress, testutils.FixtureChainID)
+		err := m.UpdateSignedAttempt(999, 0, signedTx)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "tx was not found for txID")
+	})
+
+	t.Run("fails if attempt was not found for attemptID", func(t *testing.T) {
+		m := NewInMemoryStore(logger.Test(t), fromAddress, testutils.FixtureChainID)
+		tx, err := insertUnconfirmedTransaction(m, 10)
+		require.NoError(t, err)
+		_, err = m.AppendAttemptToTransaction(10, &types.Attempt{TxID: tx.ID})
+		require.NoError(t, err)
+
+		err = m.UpdateSignedAttempt(tx.ID, 99, signedTx)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "attempt was not found for attemptID")
+	})
+
+	t.Run("updates signed transaction on attempt", func(t *testing.T) {
+		m := NewInMemoryStore(logger.Test(t), fromAddress, testutils.FixtureChainID)
+		tx, err := insertUnconfirmedTransaction(m, 10)
+		require.NoError(t, err)
+		_, err = m.AppendAttemptToTransaction(10, &types.Attempt{TxID: tx.ID})
+		require.NoError(t, err)
+
+		require.NoError(t, m.UpdateSignedAttempt(tx.ID, 0, signedTx))
+
+		require.Len(t, tx.Attempts, 1)
+		assert.Same(t, signedTx, tx.Attempts[0].SignedTransaction)
 	})
 }
 

@@ -28,7 +28,7 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/gas:
     interfaces:
       EvmFeeEstimator:
-      feeEstimatorClient:
+      FeeEstimatorClient:
         config:
           mockname: FeeEstimatorClient
       feeHistoryEstimatorClient:
@@ -95,3 +95,15 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/round:
     interfaces:
       RequestRoundDB:
+  github.com/smartcontractkit/chainlink-evm/pkg/read:
+    config:
+      dir: "{{ .InterfaceDir }}/mocks"
+    interfaces:
+      Registrar:
+      Reader:
+      BatchCaller:
+  github.com/smartcontractkit/chainlink-common/pkg/types:
+    interfaces:
+      Codec:
+        config:
+          dir: read/mocks

@@ -73,21 +73,33 @@ func (_c *MockTxStore_AbandonPendingTransactions_Call) RunAndReturn(run func(con
 }
 
 // AppendAttemptToTransaction provides a mock function with given fields: _a0, _a1, _a2, _a3
-func (_m *MockTxStore) AppendAttemptToTransaction(_a0 context.Context, _a1 uint64, _a2 common.Address, _a3 *types.Attempt) error {
+func (_m *MockTxStore) AppendAttemptToTransaction(_a0 context.Context, _a1 uint64, _a2 common.Address, _a3 *types.Attempt) ([]*types.Attempt, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AppendAttemptToTransaction")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint64, common.Address, *types.Attempt) error); ok {
+	var r0 []*types.Attempt
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, common.Address, *types.Attempt) ([]*types.Attempt, error)); ok {
+		return rf(_a0, _a1, _a2, _a3)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, common.Address, *types.Attempt) []*types.Attempt); ok {
 		r0 = rf(_a0, _a1, _a2, _a3)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*types.Attempt)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, uint64, common.Address, *types.Attempt) error); ok {
+		r1 = rf(_a0, _a1, _a2, _a3)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockTxStore_AppendAttemptToTransaction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AppendAttemptToTransaction'
@@ -111,12 +123,12 @@ func (_c *MockTxStore_AppendAttemptToTransaction_Call) Run(run func(_a0 context.
 	return _c
 }
 
-func (_c *MockTxStore_AppendAttemptToTransaction_Call) Return(_a0 error) *MockTxStore_AppendAttemptToTransaction_Call {
-	_c.Call.Return(_a0)
+func (_c *MockTxStore_AppendAttemptToTransaction_Call) Return(attempts []*types.Attempt, err error) *MockTxStore_AppendAttemptToTransaction_Call {
+	_c.Call.Return(attempts, err)
 	return _c
 }
 
-func (_c *MockTxStore_AppendAttemptToTransaction_Call) RunAndReturn(run func(context.Context, uint64, common.Address, *types.Attempt) error) *MockTxStore_AppendAttemptToTransaction_Call {
+func (_c *MockTxStore_AppendAttemptToTransaction_Call) RunAndReturn(run func(context.Context, uint64, common.Address, *types.Attempt) ([]*types.Attempt, error)) *MockTxStore_AppendAttemptToTransaction_Call {
 	_c.Call.Return(run)
 	return _c
 }

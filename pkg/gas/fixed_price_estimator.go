@@ -31,7 +31,7 @@ type fixedPriceEstimatorConfig interface {
 
 // NewFixedPriceEstimator returns a new "FixedPrice" estimator which will
 // always use the config default values for gas prices and limits
-func NewFixedPriceEstimator(cfg fixedPriceEstimatorConfig, ethClient feeEstimatorClient, EIP1559FeeCapBufferBlocks uint16, lggr logger.Logger, l1Oracle rollups.L1Oracle) EvmEstimator {
+func NewFixedPriceEstimator(cfg fixedPriceEstimatorConfig, ethClient FeeEstimatorClient, EIP1559FeeCapBufferBlocks uint16, lggr logger.Logger, l1Oracle rollups.L1Oracle) EvmEstimator {
 	return &fixedPriceEstimator{cfg, EIP1559FeeCapBufferBlocks, logger.Sugared(logger.Named(lggr, "FixedPriceEstimator")), l1Oracle}
 }
 
