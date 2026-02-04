@@ -163,8 +163,32 @@ jobs:
         with:
           persist-credentials: false
 
+      # npm Trusted Publishing (OIDC):
+      # - requires id-token: write permission
+      # - requires actions/setup-node with registry-url
+      # - requires recent npm CLI (update npm@latest)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3.0.0
+        with:
+          version: ^10.0.0
+
       - name: Setup NodeJS
-        uses: ./.github/actions/setup-nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: "contracts/pnpm-lock.yaml"
+          always-auth: true
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Update npm
+        shell: bash
+        run: npm install -g npm@latest
+
+      - name: Install dependencies (prod)
+        shell: bash
+        working-directory: contracts
+        run: pnpm i --prod
 
       - name: Install Foundry
         uses: ./.github/actions/install-solidity-foundry
@@ -191,11 +215,9 @@ jobs:
           pnpm version "${version}" --no-git-tag-version --no-commit-hooks --no-git-checks
 
       - name: Publish to NPM (beta)
-        uses: smartcontractkit/.github/actions/ci-publish-npm@4b0ab756abcb1760cb82e1e87b94ff431905bffc # ci-publish-npm@0.4.0
-        with:
-          create-github-release: false
-          publish-command: "pnpm publish-beta --no-git-checks"
-          package-json-directory: contracts
+        shell: bash
+        working-directory: contracts
+        run: pnpm publish --tag beta --no-git-checks --access public
 
   publish-prod:
     name: Publish Prod NPM
