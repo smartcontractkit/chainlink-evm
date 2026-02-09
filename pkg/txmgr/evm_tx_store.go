@@ -1654,15 +1654,21 @@ func (o *evmTxStore) CheckTxQueueCapacity(ctx context.Context, fromAddress commo
 		err = pkgerrors.Wrap(err, "CheckTxQueueCapacity query failed")
 		return
 	}
-
-	// checked division by zero above
-	util := float64(count) / float64(maxQueuedTransactions)
-	o.metrics.RecordPendingTxQueueUtilization(ctx, util)
+	o.recordPendingTxQueueUtilization(ctx, count, maxQueuedTransactions)
 
 	if count >= maxQueuedTransactions {
 		err = pkgerrors.Errorf("cannot create transaction; too many unstarted transactions in the queue (%v/%v). %s", count, maxQueuedTransactions, label.MaxQueuedTransactionsWarning)
 	}
 	return
+}
+
+func (o *evmTxStore) recordPendingTxQueueUtilization(ctx context.Context, count, maxQueuedTransactions uint64) {
+	if maxQueuedTransactions == 0 || o.metrics == nil {
+		return
+	}
+	// checked division by zero above
+	util := float64(count) / float64(maxQueuedTransactions)
+	o.metrics.RecordPendingTxQueueUtilization(ctx, util)
 }
 
 func (o *evmTxStore) CreateTransaction(ctx context.Context, txRequest TxRequest, chainID *big.Int) (tx Tx, err error) {
