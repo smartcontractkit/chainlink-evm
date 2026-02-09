@@ -83,9 +83,10 @@ type TestEvmTxStore interface {
 }
 
 type evmTxStore struct {
-	q      sqlutil.DataSource
-	logger logger.SugaredLogger
-	stopCh services.StopChan
+	q       sqlutil.DataSource
+	logger  logger.SugaredLogger
+	stopCh  services.StopChan
+	metrics *evmTxmMetrics
 }
 
 var _ EvmTxStore = (*evmTxStore)(nil)
@@ -127,7 +128,9 @@ func (o *evmTxStore) Transact(ctx context.Context, readOnly bool, fn func(*evmTx
 }
 
 // new returns a NewORM like o, but backed by q.
-func (o *evmTxStore) new(q sqlutil.DataSource) *evmTxStore { return NewTxStore(q, o.logger) }
+func (o *evmTxStore) new(q sqlutil.DataSource) *evmTxStore {
+	return NewTxStore(q, o.logger).WithMetrics(o.metrics)
+}
 
 // Directly maps to some columns of few database tables.
 // Does not map to a single database table.
@@ -358,6 +361,11 @@ func NewTxStore(
 		logger: logger.Sugared(namedLogger),
 		stopCh: make(chan struct{}),
 	}
+}
+
+func (o *evmTxStore) WithMetrics(metrics *evmTxmMetrics) *evmTxStore {
+	o.metrics = metrics
+	return o
 }
 
 const insertIntoEthTxAttemptsQuery = `
@@ -1646,6 +1654,10 @@ func (o *evmTxStore) CheckTxQueueCapacity(ctx context.Context, fromAddress commo
 		err = pkgerrors.Wrap(err, "CheckTxQueueCapacity query failed")
 		return
 	}
+
+	// checked division by zero above
+	util := float64(count) / float64(maxQueuedTransactions)
+	o.metrics.RecordPendingTxQueueUtilization(ctx, util)
 
 	if count >= maxQueuedTransactions {
 		err = pkgerrors.Errorf("cannot create transaction; too many unstarted transactions in the queue (%v/%v). %s", count, maxQueuedTransactions, label.MaxQueuedTransactionsWarning)
