@@ -5,7 +5,6 @@ package burn_mint_erc20_pausable_freezable_uups
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -3121,46 +3119,6 @@ type PendingDefaultAdminDelay struct {
 	Schedule *big.Int
 }
 
-func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPS) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["AccountFrozen"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseAccountFrozen(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["AccountUnfrozen"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseAccountUnfrozen(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["Approval"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseApproval(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["CCIPAdminTransferred"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseCCIPAdminTransferred(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["DefaultAdminDelayChangeCanceled"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseDefaultAdminDelayChangeCanceled(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["DefaultAdminDelayChangeScheduled"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseDefaultAdminDelayChangeScheduled(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["DefaultAdminTransferCanceled"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseDefaultAdminTransferCanceled(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["DefaultAdminTransferScheduled"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseDefaultAdminTransferScheduled(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["Initialized"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseInitialized(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["Paused"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParsePaused(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["RoleAdminChanged"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseRoleAdminChanged(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["RoleGranted"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseRoleGranted(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["RoleRevoked"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseRoleRevoked(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["Transfer"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseTransfer(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["Unpaused"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseUnpaused(log)
-	case _BurnMintERC20PausableFreezableUUPS.abi.Events["Upgraded"].ID:
-		return _BurnMintERC20PausableFreezableUUPS.ParseUpgraded(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (BurnMintERC20PausableFreezableUUPSAccountFrozen) Topic() common.Hash {
 	return common.HexToHash("0x4f2a367e694e71282f29ab5eaa04c4c0be45ac5bf2ca74fb67068b98bdc2887d")
 }
@@ -3429,8 +3387,6 @@ type BurnMintERC20PausableFreezableUUPSInterface interface {
 	WatchUpgraded(opts *bind.WatchOpts, sink chan<- *BurnMintERC20PausableFreezableUUPSUpgraded, implementation []common.Address) (event.Subscription, error)
 
 	ParseUpgraded(log types.Log) (*BurnMintERC20PausableFreezableUUPSUpgraded, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

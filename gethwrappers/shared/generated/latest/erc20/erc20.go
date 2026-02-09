@@ -5,7 +5,6 @@ package erc20
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -637,18 +635,6 @@ func (_ERC20 *ERC20Filterer) ParseTransfer(log types.Log) (*ERC20Transfer, error
 	return event, nil
 }
 
-func (_ERC20 *ERC20) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _ERC20.abi.Events["Approval"].ID:
-		return _ERC20.ParseApproval(log)
-	case _ERC20.abi.Events["Transfer"].ID:
-		return _ERC20.ParseTransfer(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (ERC20Approval) Topic() common.Hash {
 	return common.HexToHash("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925")
 }
@@ -695,8 +681,6 @@ type ERC20Interface interface {
 	WatchTransfer(opts *bind.WatchOpts, sink chan<- *ERC20Transfer, from []common.Address, to []common.Address) (event.Subscription, error)
 
 	ParseTransfer(log types.Log) (*ERC20Transfer, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

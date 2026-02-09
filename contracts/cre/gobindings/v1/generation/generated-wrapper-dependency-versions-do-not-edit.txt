@@ -1,0 +1,7 @@
+GETH_VERSION: 1.16.8
+balance_reader: ../../solc/v1/BalanceReader/BalanceReader.sol/BalanceReader.abi.json ../../solc/v1/BalanceReader/BalanceReader.sol/BalanceReader.bin a39a8b0ab5c2fbdd3d6dc7208ffa6b777f2d9e0ad0ddd00fdc299e65a782f22b
+capabilities_registry_wrapper: ../../solc/v1/CapabilitiesRegistry/CapabilitiesRegistry.sol/CapabilitiesRegistry.abi.json ../../solc/v1/CapabilitiesRegistry/CapabilitiesRegistry.sol/CapabilitiesRegistry.bin c5635a7f210b40b64ebcff39a4a816835f3492c029a61a47eae4b138f70dd1e8
+feeds_consumer: ../../solc/v1/KeystoneFeedsConsumer/KeystoneFeedsConsumer.sol/KeystoneFeedsConsumer.abi.json ../../solc/v1/KeystoneFeedsConsumer/KeystoneFeedsConsumer.sol/KeystoneFeedsConsumer.bin d91722f385ae2babb6ad31646956e49dd7c7011a2ed7f3d7bfea3fe92794ffa0
+forwarder: ../../solc/v1/KeystoneForwarder/KeystoneForwarder.sol/KeystoneForwarder.abi.json ../../solc/v1/KeystoneForwarder/KeystoneForwarder.sol/KeystoneForwarder.bin 9a496e61e87685936f84ddb88a91d616eb98725cc8bf9ae85623371d713c9ee3
+ocr3_capability: ../../solc/v1/OCR3Capability/OCR3Capability.sol/OCR3Capability.abi.json ../../solc/v1/OCR3Capability/OCR3Capability.sol/OCR3Capability.bin e98733fb996b6633c2cba6496c0b772dea381ec2a687079b927df736ceb07518
+workflow_registry_wrapper: ../../solc/v1/WorkflowRegistry/WorkflowRegistry.sol/WorkflowRegistry.abi.json ../../solc/v1/WorkflowRegistry/WorkflowRegistry.sol/WorkflowRegistry.bin 5adc185ac7dabf6f75297855adc0d77e0bfe64af6491de944083fb10f6f9fb06

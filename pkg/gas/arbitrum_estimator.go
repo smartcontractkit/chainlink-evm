@@ -46,7 +46,7 @@ type arbitrumEstimator struct {
 	l1Oracle rollups.ArbL1GasOracle
 }
 
-func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient feeEstimatorClient, l1Oracle rollups.ArbL1GasOracle) EvmEstimator {
+func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient FeeEstimatorClient, l1Oracle rollups.ArbL1GasOracle) EvmEstimator {
 	lggr = logger.Named(lggr, "ArbitrumEstimator")
 
 	return &arbitrumEstimator{
@@ -141,6 +141,12 @@ func (a *arbitrumEstimator) GetLegacyGas(ctx context.Context, calldata []byte, l
 		return
 	}
 	return
+}
+
+// GetMaxLegacyGas returns the result of GetLegacyGas. Arbitrum doesn't have a mempool. That means transaction priority follows a FIFO model.
+// Fetching a standard gas estimation will have the same effect for transaction inclusion.
+func (a *arbitrumEstimator) GetMaxLegacyGas(ctx context.Context, calldata []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+	return a.GetLegacyGas(ctx, calldata, gasLimit, maxGasPriceWei, opts...)
 }
 
 // During network congestion Arbitrum's suggested gas price can be extremely volatile, making gas estimations less accurate. For any transaction, Arbitrum will only charge

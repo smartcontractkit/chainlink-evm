@@ -6,7 +6,7 @@ import {Common} from "../../../libraries/Common.sol";
 import {IRewardManager} from "../../interfaces/IRewardManager.sol";
 import {BaseTest, BaseTestWithConfiguredVerifierAndFeeManager} from "../verifier/BaseVerifierTest.t.sol";
 
-contract Verifier_setConfig is BaseTest {
+contract Verifier_setConfigV03 is BaseTest {
   address[] internal s_signerAddrs;
 
   function setUp() public override {
@@ -30,7 +30,7 @@ contract Verifier_setConfig is BaseTest {
   }
 }
 
-contract Verifier_verifyWithFee is BaseTestWithConfiguredVerifierAndFeeManager {
+contract Verifier_verifyWithFeeV03 is BaseTestWithConfiguredVerifierAndFeeManager {
   uint256 internal constant DEFAULT_LINK_MINT_QUANTITY = 100 ether;
   uint256 internal constant DEFAULT_NATIVE_MINT_QUANTITY = 100 ether;
 
@@ -84,7 +84,7 @@ contract Verifier_verifyWithFee is BaseTestWithConfiguredVerifierAndFeeManager {
   }
 }
 
-contract Verifier_bulkVerifyWithFee is BaseTestWithConfiguredVerifierAndFeeManager {
+contract Verifier_bulkVerifyWithFeeV03 is BaseTestWithConfiguredVerifierAndFeeManager {
   uint256 internal constant DEFAULT_LINK_MINT_QUANTITY = 100 ether;
   uint256 internal constant DEFAULT_NATIVE_MINT_QUANTITY = 100 ether;
   uint256 internal constant NUMBER_OF_REPORTS_TO_VERIFY = 5;
@@ -149,7 +149,7 @@ contract Verifier_bulkVerifyWithFee is BaseTestWithConfiguredVerifierAndFeeManag
   }
 }
 
-contract Verifier_verify is BaseTestWithConfiguredVerifierAndFeeManager {
+contract Verifier_verifyV03 is BaseTestWithConfiguredVerifierAndFeeManager {
   bytes internal s_signedReport;
   bytes32 internal s_configDigest;
 
@@ -184,7 +184,7 @@ contract Verifier_verify is BaseTestWithConfiguredVerifierAndFeeManager {
   }
 }
 
-contract Verifier_accessControlledVerify is BaseTestWithConfiguredVerifierAndFeeManager {
+contract Verifier_accessControlledVerifyV03 is BaseTestWithConfiguredVerifierAndFeeManager {
   bytes internal s_signedReport;
   bytes32 internal s_configDigest;
   SimpleWriteAccessController s_accessController;

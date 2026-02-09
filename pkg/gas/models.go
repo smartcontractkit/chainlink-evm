@@ -39,10 +39,11 @@ type EvmFeeEstimator interface {
 
 	// GetMaxCost returns the total value = max price x fee units + transferred value
 	GetMaxCost(ctx context.Context, amount assets.Eth, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress, toAddress *common.Address, opts ...fees.Opt) (*big.Int, error)
+	// GetMaxFee returns the maximum fee allowed by the connectivity threshold to improve inclusion probability.
 	GetMaxFee(ctx context.Context, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress, toAddress *common.Address, opts ...fees.Opt) (fee EvmFee, estimatedFeeLimit uint64, err error)
 }
 
-type feeEstimatorClient interface {
+type FeeEstimatorClient interface {
 	CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
@@ -53,7 +54,7 @@ type feeEstimatorClient interface {
 }
 
 // NewEstimator returns the estimator for a given config
-func NewEstimator(lggr logger.Logger, ethClient feeEstimatorClient, chaintype chaintype.ChainType, chainID *big.Int, geCfg evmconfig.GasEstimator, clientsByChainID map[string]rollups.DAClient) (EvmFeeEstimator, error) {
+func NewEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype chaintype.ChainType, chainID *big.Int, geCfg evmconfig.GasEstimator, clientsByChainID map[string]rollups.DAClient) (EvmFeeEstimator, error) {
 	bh := geCfg.BlockHistory()
 	s := geCfg.Mode()
 	lggr.Infow("Initializing EVM gas estimator in mode: "+s,
@@ -102,7 +103,7 @@ func NewEstimator(lggr logger.Logger, ethClient feeEstimatorClient, chaintype ch
 		}
 	case "FixedPrice":
 		newEstimator = func(l logger.Logger) EvmEstimator {
-			return NewFixedPriceEstimator(geCfg, ethClient, bh, lggr, l1Oracle)
+			return NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)
 		}
 	case "L2Suggested", "SuggestedPrice":
 		newEstimator = func(l logger.Logger) EvmEstimator {
@@ -123,7 +124,7 @@ func NewEstimator(lggr logger.Logger, ethClient feeEstimatorClient, chaintype ch
 	default:
 		lggr.Warnf("GasEstimator: unrecognised mode '%s', falling back to FixedPriceEstimator", s)
 		newEstimator = func(l logger.Logger) EvmEstimator {
-			return NewFixedPriceEstimator(geCfg, ethClient, bh, lggr, l1Oracle)
+			return NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)
 		}
 	}
 	return NewEvmFeeEstimator(lggr, newEstimator, df, geCfg, ethClient), nil
@@ -152,6 +153,8 @@ type EvmEstimator interface {
 	// GetLegacyGas Calculates initial gas fee for non-EIP1559 transaction
 	// maxGasPriceWei parameter is the highest possible gas fee cap that the function will return
 	GetLegacyGas(ctx context.Context, calldata []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error)
+	// GetMaxLegacyGas returns the maximum non-EIP1159 gas fee allowed by the connectivity threshold to improve inclusion probability.
+	GetMaxLegacyGas(ctx context.Context, calldata []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error)
 	// BumpLegacyGas Increases gas price and/or limit for non-EIP1559 transactions
 	// if the bumped gas fee is greater than maxGasPriceWei, the method returns an error
 	// attempts must:
@@ -196,12 +199,12 @@ type evmFeeEstimator struct {
 	EvmEstimator
 	EIP1559Enabled bool
 	geCfg          GasEstimatorConfig
-	ethClient      feeEstimatorClient
+	ethClient      FeeEstimatorClient
 }
 
 var _ EvmFeeEstimator = (*evmFeeEstimator)(nil)
 
-func NewEvmFeeEstimator(lggr logger.Logger, newEstimator func(logger.Logger) EvmEstimator, eip1559Enabled bool, geCfg GasEstimatorConfig, ethClient feeEstimatorClient) EvmFeeEstimator {
+func NewEvmFeeEstimator(lggr logger.Logger, newEstimator func(logger.Logger) EvmEstimator, eip1559Enabled bool, geCfg GasEstimatorConfig, ethClient FeeEstimatorClient) EvmFeeEstimator {
 	lggr = logger.Named(lggr, "WrappedEvmEstimator")
 	return &evmFeeEstimator{
 		lggr:           lggr,
@@ -334,8 +337,7 @@ func (e *evmFeeEstimator) GetMaxFee(ctx context.Context, calldata []byte, feeLim
 		fee.GasTipCap = dynamicFee.GasTipCap
 		chainSpecificFeeLimit = feeLimit
 	} else {
-		// For legacy fees assume the chain doesn't have a mempool and there is no priority, so fetching the legacy gas will have the same effect.
-		fee.GasPrice, chainSpecificFeeLimit, err = e.EvmEstimator.GetLegacyGas(ctx, calldata, feeLimit, maxFeePrice, opts...)
+		fee.GasPrice, chainSpecificFeeLimit, err = e.EvmEstimator.GetMaxLegacyGas(ctx, calldata, feeLimit, maxFeePrice, opts...)
 		if err != nil {
 			return
 		}
@@ -448,6 +450,13 @@ type GasEstimatorConfig interface {
 	Mode() string
 	EstimateLimit() bool
 	SenderAddress() *evmtypes.EIP55Address
+}
+
+type bumpConfig interface {
+	PriceMax() *assets.Wei
+	BumpPercent() uint16
+	BumpMin() *assets.Wei
+	TipCapDefault() *assets.Wei
 }
 
 // BumpLegacyGasPriceOnly will increase the price
@@ -569,9 +578,4 @@ func maxBumpedFee(lggr logger.SugaredLogger, currentFeePrice, bumpedFeePrice, ma
 
 func getMaxGasPrice(userSpecifiedMax, maxGasPriceWei *assets.Wei) *assets.Wei {
 	return assets.NewWei(bigmath.Min(userSpecifiedMax.ToInt(), maxGasPriceWei.ToInt()))
-}
-
-func capGasPrice(calculatedGasPrice, userSpecifiedMax, maxGasPriceWei *assets.Wei) *assets.Wei {
-	maxGasPrice := fees.CalculateFee(calculatedGasPrice.ToInt(), userSpecifiedMax.ToInt(), maxGasPriceWei.ToInt())
-	return assets.NewWei(maxGasPrice)
 }

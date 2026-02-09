@@ -2,13 +2,13 @@ package gas
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	pkgerrors "github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -55,7 +55,7 @@ type SuggestedPriceEstimator struct {
 }
 
 // NewSuggestedPriceEstimator returns a new Estimator which uses the suggested gas price.
-func NewSuggestedPriceEstimator(lggr logger.Logger, client feeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle) EvmEstimator {
+func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle) EvmEstimator {
 	return &SuggestedPriceEstimator{
 		client:         client,
 		pollPeriod:     10 * time.Second,
@@ -145,14 +145,14 @@ func (o *SuggestedPriceEstimator) forceRefresh(ctx context.Context) (err error) 
 	select {
 	case o.chForceRefetch <- ch:
 	case <-o.chStop:
-		return pkgerrors.New("estimator stopped")
+		return errors.New("estimator stopped")
 	case <-ctx.Done():
 		return ctx.Err()
 	}
 	select {
 	case <-ch:
 	case <-o.chStop:
-		return pkgerrors.New("estimator stopped")
+		return errors.New("estimator stopped")
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -162,18 +162,22 @@ func (o *SuggestedPriceEstimator) forceRefresh(ctx context.Context) (err error) 
 func (o *SuggestedPriceEstimator) OnNewLongestChain(context.Context, *types.Head) {}
 
 func (*SuggestedPriceEstimator) GetDynamicFee(_ context.Context, _ *assets.Wei) (fee DynamicFee, err error) {
-	err = pkgerrors.New("dynamic fees are not implemented for this estimator")
+	err = errors.New("dynamic fees are not implemented for this estimator")
 	return
 }
 
 func (*SuggestedPriceEstimator) GetMaxDynamicFee(_ *assets.Wei) (fee DynamicFee, err error) {
-	err = pkgerrors.New("dynamic fees are not implemented for this estimator")
+	err = errors.New("dynamic fees are not implemented for this estimator")
 	return
 }
 
 func (*SuggestedPriceEstimator) BumpDynamicFee(_ context.Context, _ DynamicFee, _ *assets.Wei, _ []EvmPriorAttempt) (bumped DynamicFee, err error) {
-	err = pkgerrors.New("dynamic fees are not implemented for this estimator")
+	err = errors.New("dynamic fees are not implemented for this estimator")
 	return
+}
+
+func (o *SuggestedPriceEstimator) GetMaxLegacyGas(_ context.Context, _ []byte, _ uint64, maxGasPriceWei *assets.Wei, _ ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+	return nil, 0, errors.New("GetMaxLegacyGas is not implemented for this estimator")
 }
 
 func (o *SuggestedPriceEstimator) GetLegacyGas(ctx context.Context, _ []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
@@ -183,19 +187,19 @@ func (o *SuggestedPriceEstimator) GetLegacyGas(ctx context.Context, _ []byte, ga
 			err = o.forceRefresh(ctx)
 		}
 		if gasPrice = o.getGasPrice(); gasPrice == nil {
-			err = pkgerrors.New("failed to estimate gas; gas price not set")
+			err = errors.New("failed to estimate gas; gas price not set")
 			return
 		}
 		o.logger.Debugw("GetLegacyGas", "GasPrice", gasPrice, "GasLimit", gasLimit)
 	})
 	if !ok {
-		return nil, 0, pkgerrors.New("estimator is not started")
+		return nil, 0, errors.New("estimator is not started")
 	} else if err != nil {
 		return
 	}
 	// For L2 chains, submitting a transaction that is not priced high enough will cause the call to fail, so if the cap is lower than the RPC suggested gas price, this transaction cannot succeed
 	if gasPrice != nil && gasPrice.Cmp(maxGasPriceWei) > 0 {
-		return nil, 0, pkgerrors.Errorf("estimated gas price: %s is greater than the maximum gas price configured: %s", gasPrice.String(), maxGasPriceWei.String())
+		return nil, 0, fmt.Errorf("estimated gas price: %s is greater than the maximum gas price configured: %s", gasPrice.String(), maxGasPriceWei.String())
 	}
 	return
 }
@@ -215,18 +219,18 @@ func (o *SuggestedPriceEstimator) BumpLegacyGas(ctx context.Context, originalFee
 		}
 		err = o.forceRefresh(ctx)
 		if newGasPrice = o.getGasPrice(); newGasPrice == nil {
-			err = pkgerrors.New("failed to refresh and return gas; gas price not set")
+			err = errors.New("failed to refresh and return gas; gas price not set")
 			return
 		}
 		o.logger.Debugw("BumpLegacyGas", "GasPrice", newGasPrice, "GasLimit", feeLimit)
 	})
 	if !ok {
-		return nil, 0, pkgerrors.New("estimator is not started")
+		return nil, 0, errors.New("estimator is not started")
 	} else if err != nil {
 		return
 	}
 	if newGasPrice != nil && newGasPrice.Cmp(maxGasPriceWei) > 0 {
-		return nil, 0, pkgerrors.Errorf("estimated gas price: %s is greater than the maximum gas price configured: %s", newGasPrice.String(), maxGasPriceWei.String())
+		return nil, 0, fmt.Errorf("estimated gas price: %s is greater than the maximum gas price configured: %s", newGasPrice.String(), maxGasPriceWei.String())
 	}
 	// Add a buffer on top of the gas price returned by the RPC.
 	// Bump logic when using the suggested gas price from an RPC is realistically only needed when there is increased volatility in gas price.

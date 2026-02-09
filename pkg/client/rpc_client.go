@@ -425,7 +425,7 @@ func isRequestingFinalizedBlock(el rpc.BatchElem) bool {
 	}
 }
 
-// SubscribeToHeads implements custom SubscribeToheads method to override the RPCClientBase
+// SubscribeToHeads implements custom SubscribeToHeads method to override the RPCClientBase
 // with added ws support.
 func (r *RPCClient) SubscribeToHeads(ctx context.Context) (ch <-chan *evmtypes.Head, sub multinode.Subscription, err error) {
 	ctx, cancel, chStopInFlight, ws, _ := r.acquireQueryCtx(ctx, r.rpcTimeout)
@@ -442,6 +442,17 @@ func (r *RPCClient) SubscribeToHeads(ctx context.Context) (ch <-chan *evmtypes.H
 
 	if ws == nil {
 		return nil, nil, errors.New("SubscribeNewHead is not allowed without ws url")
+	}
+
+	if multinode.CtxIsHealthCheckRequest(ctx) {
+		// Best-effort: if this is a health-check request, fetch the latest block before subscribing
+		// to ensure latest observation is up-to-date even if WS delivers new heads with delay.
+		head, preErr := r.BlockByNumber(ctx, nil)
+		if preErr != nil {
+			lggr.Debugw("Pre-fetch latest head before WS subscription failed (health-check)", "error", preErr)
+		} else {
+			lggr.Debugw("Pre-fetch latest head before WS subscription succeeded (health-check)", "headNumber", head.Number)
+		}
 	}
 
 	lggr.Debug("RPC call: evmclient.Client#EthSubscribe")
@@ -1360,7 +1371,7 @@ func ToBlockNumArg(number *big.Int) string {
 func (r *RPCClient) makeLogsValid(logs []types.Log) error {
 
 	switch r.chainType {
-	case chaintype.ChainSei, chaintype.ChainHedera, chaintype.ChainRootstock, chaintype.ChainPharos:
+	case chaintype.ChainSei, chaintype.ChainHedera, chaintype.ChainRootstock, chaintype.ChainPharos, chaintype.ChainJovay:
 		// Sei, Rootstock and Hedera does not have unique log index position in the block.
 	default:
 		return nil
@@ -1379,7 +1390,7 @@ func (r *RPCClient) makeLogsValid(logs []types.Log) error {
 
 func (r *RPCClient) makeLogValid(log types.Log) (types.Log, error) {
 	switch r.chainType {
-	case chaintype.ChainSei, chaintype.ChainHedera, chaintype.ChainRootstock, chaintype.ChainPharos:
+	case chaintype.ChainSei, chaintype.ChainHedera, chaintype.ChainRootstock, chaintype.ChainPharos, chaintype.ChainJovay:
 		// Sei, Rootstock and Hedera does not have unique log index position in the block.
 	default:
 		return log, nil

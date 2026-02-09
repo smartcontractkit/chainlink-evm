@@ -5,7 +5,6 @@ package mock_v3_aggregator_contract
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -726,18 +724,6 @@ type LatestRoundData struct {
 	AnsweredInRound *big.Int
 }
 
-func (_MockV3Aggregator *MockV3Aggregator) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _MockV3Aggregator.abi.Events["AnswerUpdated"].ID:
-		return _MockV3Aggregator.ParseAnswerUpdated(log)
-	case _MockV3Aggregator.abi.Events["NewRound"].ID:
-		return _MockV3Aggregator.ParseNewRound(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (MockV3AggregatorAnswerUpdated) Topic() common.Hash {
 	return common.HexToHash("0x0559884fd3a460db3073b7fc896cc77986f16e378210ded43186175bf646fc5f")
 }
@@ -790,8 +776,6 @@ type MockV3AggregatorInterface interface {
 	WatchNewRound(opts *bind.WatchOpts, sink chan<- *MockV3AggregatorNewRound, roundId []*big.Int, startedBy []common.Address) (event.Subscription, error)
 
 	ParseNewRound(log types.Log) (*MockV3AggregatorNewRound, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

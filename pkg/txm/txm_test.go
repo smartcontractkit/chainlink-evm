@@ -354,7 +354,8 @@ func TestBackfillTransactions(t *testing.T) {
 			GasLimit: 22000,
 			Hash:     testutils.NewHash(),
 		}
-		require.NoError(t, txStore.AppendAttemptToTransaction(t.Context(), *tx.Nonce, address, attempt))
+		_, err = txStore.AppendAttemptToTransaction(t.Context(), *tx.Nonce, address, attempt)
+		require.NoError(t, err)
 		require.NoError(t, txStore.UpdateTransactionBroadcast(t.Context(), tx.ID, *tx.Nonce, attempt.Hash, address))
 		require.NoError(t, txStore.MarkUnconfirmedTransactionPurgeable(t.Context(), *tx.Nonce, address))
 
@@ -407,7 +408,8 @@ func TestBackfillTransactions(t *testing.T) {
 		}
 		var attemptsTried uint16 = storage.MaxAllowedAttempts + 2
 		for range attemptsTried {
-			require.NoError(t, txStore.AppendAttemptToTransaction(ctx, nonce, address, attempt))
+			_, err := txStore.AppendAttemptToTransaction(ctx, nonce, address, attempt)
+			require.NoError(t, err)
 		}
 		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(nonce, nil).Once()
 		ab.On("NewAgnosticBumpAttempt", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(attempt, nil).Once()

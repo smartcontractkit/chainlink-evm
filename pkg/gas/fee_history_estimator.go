@@ -125,6 +125,7 @@ func (f *FeeHistoryEstimator) Start(context.Context) error {
 		f.wg.Add(1)
 		go f.run()
 
+		f.logger.Infof("Started FeeHistoryEstimator")
 		return nil
 	})
 }
@@ -178,6 +179,12 @@ func (f *FeeHistoryEstimator) GetLegacyGas(ctx context.Context, _ []byte, gasLim
 	return
 }
 
+// GetMaxLegacyGas is not supported for FeeHistoryEstimator because eth_gasPrice fetches a single value gas price, so there is no way to increase the priority via this method.
+// If there is a need to support this, we can always return the result of GetLegacyGas but that wouldn't increase the priority.
+func (f *FeeHistoryEstimator) GetMaxLegacyGas(_ context.Context, _ []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, _ ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+	return nil, 0, errors.New("max legacy gas is not supported for FeeHistoryEstimator")
+}
+
 // RefreshGasPrice will use eth_gasPrice to fetch and cache the latest gas price from the RPC.
 func (f *FeeHistoryEstimator) RefreshGasPrice() (*assets.Wei, error) {
 	ctx, cancel := f.stopCh.CtxWithTimeout(client.QueryTimeout)
@@ -192,7 +199,7 @@ func (f *FeeHistoryEstimator) RefreshGasPrice() (*assets.Wei, error) {
 
 	gasPriceWei := assets.NewWei(gasPrice)
 
-	f.logger.Debugf("fetched new gas price: %v", gasPriceWei)
+	f.logger.Debugf("Fetched new gas price: %v", gasPriceWei)
 
 	f.gasPriceMu.Lock()
 	defer f.gasPriceMu.Unlock()

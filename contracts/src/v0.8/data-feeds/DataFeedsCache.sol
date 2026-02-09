@@ -164,6 +164,7 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
   /// @notice Checks to see if this data ID, msg.sender, workflow owner, and workflow name are permissioned
   /// @param dataId The data ID for the feed
   /// @param workflowMetadata workflow metadata
+  // solhint-disable-next-line gas-calldata-parameters
   function checkFeedPermission(
     bytes16 dataId,
     WorkflowMetadata memory workflowMetadata

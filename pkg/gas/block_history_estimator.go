@@ -78,23 +78,21 @@ const BumpingHaltedLabel = "Tx gas bumping halted since price exceeds current bl
 
 var _ EvmEstimator = &BlockHistoryEstimator{}
 
-type estimatorGasEstimatorConfig interface {
+type BlockHistoryEstimatorConfig interface {
 	EIP1559DynamicFees() bool
 	BumpThreshold() uint64
 	PriceDefault() *assets.Wei
-	TipCapDefault() *assets.Wei
 	TipCapMin() *assets.Wei
-	PriceMax() *assets.Wei
 	PriceMin() *assets.Wei
 	bumpConfig
 }
 
 type BlockHistoryEstimator struct {
 	services.StateMachine
-	ethClient feeEstimatorClient
+	ethClient FeeEstimatorClient
 	chainID   *big.Int
 	chaintype chaintype.ChainType
-	eConfig   estimatorGasEstimatorConfig
+	eConfig   BlockHistoryEstimatorConfig
 	bhConfig  evmconfig.BlockHistory
 	// NOTE: it is assumed that blocks will be kept sorted by
 	// block number ascending
@@ -123,7 +121,7 @@ type BlockHistoryEstimator struct {
 // NewBlockHistoryEstimator returns a new BlockHistoryEstimator that listens
 // for new heads and updates the base gas price dynamically based on the
 // configured percentile of gas prices in that block
-func NewBlockHistoryEstimator(lggr logger.Logger, ethClient feeEstimatorClient, chaintype chaintype.ChainType, eCfg estimatorGasEstimatorConfig, bhCfg evmconfig.BlockHistory, chainID *big.Int, l1Oracle rollups.L1Oracle) EvmEstimator {
+func NewBlockHistoryEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype chaintype.ChainType, eCfg BlockHistoryEstimatorConfig, bhCfg evmconfig.BlockHistory, chainID *big.Int, l1Oracle rollups.L1Oracle) EvmEstimator {
 	return &BlockHistoryEstimator{
 		ethClient: ethClient,
 		chainID:   chainID,
@@ -253,6 +251,26 @@ func (b *BlockHistoryEstimator) GetLegacyGas(_ context.Context, _ []byte, gasLim
 	gasPrice = capGasPrice(gasPrice, maxGasPriceWei, b.eConfig.PriceMax())
 	chainSpecificGasLimit = gasLimit
 	return
+}
+
+func (b *BlockHistoryEstimator) GetMaxLegacyGas(_ context.Context, _ []byte, _ uint64, maxGasPriceWei *assets.Wei, _ ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+	if b.eConfig.EIP1559DynamicFees() {
+		return gasPrice, 0, errors.New("can't get max legacy gas, EIP1559 is enabled")
+	}
+
+	ok := b.IfStarted(func() {
+		gasPrice = b.getMaxPercentileGasPrice()
+	})
+	if !ok {
+		return gasPrice, 0, errors.New("BlockHistoryEstimator is not started")
+	}
+	if !b.initialFetch.Load() {
+		return gasPrice, 0, errors.New("BlockHistoryEstimator has not finished the first gas estimation yet, likely because a failure on start")
+	}
+	if gasPrice == nil {
+		return gasPrice, 0, errors.New("BlockHistoryEstimator has not finished the first gas estimation yet")
+	}
+	return gasPrice, 0, nil
 }
 
 func (b *BlockHistoryEstimator) getGasPrice() *assets.Wei {
@@ -454,7 +472,7 @@ func (b *BlockHistoryEstimator) GetMaxDynamicFee(maxGasPriceWei *assets.Wei) (fe
 	}
 	currentBaseFee := b.getCurrentBaseFee()
 	if maxTipCap == nil || currentBaseFee == nil {
-		return fee, errors.New("BlockHistoryEstimator: no value for latest block base fee or tip cap")
+		return fee, fmt.Errorf("BlockHistoryEstimator: no value for latest block base fee or tip cap: maxTipCap: %v, currentBaseFee: %v", maxTipCap, currentBaseFee)
 	}
 	maxFeeCap := calcFeeCap(currentBaseFee, int(b.bhConfig.EIP1559FeeCapBufferBlocks()), maxTipCap, maxGasPriceWei)
 	return DynamicFee{GasFeeCap: maxFeeCap, GasTipCap: maxTipCap}, nil
@@ -996,6 +1014,11 @@ func (b *BlockHistoryEstimator) EffectiveTipCap(block evmtypes.Block, tx evmtype
 		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "block", block, "tx", tx)
 		return nil
 	}
+}
+
+func capGasPrice(calculatedGasPrice, userSpecifiedMax, maxGasPriceWei *assets.Wei) *assets.Wei {
+	maxGasPrice := fees.CalculateFee(calculatedGasPrice.ToInt(), userSpecifiedMax.ToInt(), maxGasPriceWei.ToInt())
+	return assets.NewWei(maxGasPrice)
 }
 
 // Int64ToHex formats an int64 as a hex string with 0x prefix.

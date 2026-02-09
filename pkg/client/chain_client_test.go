@@ -83,6 +83,9 @@ func TestEthClient_TransactionReceipt(t *testing.T) {
 			case "eth_unsubscribe":
 				resp.Result = "true"
 				return
+			case "eth_getBlockByNumber":
+				resp.Result = client.MakeHeadMsgForNumber(42)
+				return
 			}
 			if assert.Equal(t, "eth_getTransactionReceipt", method) && assert.True(t, params.IsArray()) &&
 				assert.Equal(t, txHash, params.Array()[0].String()) {
@@ -110,6 +113,9 @@ func TestEthClient_TransactionReceipt(t *testing.T) {
 				return
 			case "eth_unsubscribe":
 				resp.Result = "true"
+				return
+			case "eth_getBlockByNumber":
+				resp.Result = client.MakeHeadMsgForNumber(42)
 				return
 			}
 			if assert.Equal(t, "eth_getTransactionReceipt", method) && assert.True(t, params.IsArray()) &&
@@ -140,6 +146,9 @@ func TestEthClient_PendingNonceAt(t *testing.T) {
 			return
 		case "eth_unsubscribe":
 			resp.Result = "true"
+			return
+		case "eth_getBlockByNumber":
+			resp.Result = client.MakeHeadMsgForNumber(42)
 			return
 		}
 		if !assert.Equal(t, "eth_getTransactionCount", method) || !assert.True(t, params.IsArray()) {
@@ -188,6 +197,9 @@ func TestEthClient_BalanceAt(t *testing.T) {
 				case "eth_unsubscribe":
 					resp.Result = "true"
 					return
+				case "eth_getBlockByNumber":
+					resp.Result = client.MakeHeadMsgForNumber(42)
+					return
 				}
 				if assert.Equal(t, "eth_getBalance", method) && assert.True(t, params.IsArray()) &&
 					assert.Equal(t, strings.ToLower(address.Hex()), strings.ToLower(params.Array()[0].String())) {
@@ -216,6 +228,9 @@ func TestEthClient_LatestBlockHeight(t *testing.T) {
 			return
 		case "eth_unsubscribe":
 			resp.Result = "true"
+			return
+		case "eth_getBlockByNumber":
+			resp.Result = client.MakeHeadMsgForNumber(42)
 			return
 		}
 		if !assert.Equal(t, "eth_blockNumber", method) {
@@ -262,6 +277,9 @@ func TestEthClient_GetERC20Balance(t *testing.T) {
 					return
 				case "eth_unsubscribe":
 					resp.Result = "true"
+					return
+				case "eth_getBlockByNumber":
+					resp.Result = client.MakeHeadMsgForNumber(42)
 					return
 				}
 				if !assert.Equal(t, "eth_call", method) || !assert.True(t, params.IsArray()) {
@@ -403,6 +421,10 @@ func TestEthClient_HeaderByNumber(t *testing.T) {
 					return
 				}
 				arr := params.Array()
+				if "latest" == arr[0].String() {
+					resp.Result = client.MakeHeadMsgForNumber(42)
+					return
+				}
 				blockNumStr := arr[0].String()
 				var blockNum hexutil.Big
 				err := blockNum.UnmarshalText([]byte(blockNumStr))
@@ -444,6 +466,9 @@ func TestEthClient_SendTransaction_NoSecondaryURL(t *testing.T) {
 		case "eth_unsubscribe":
 			resp.Result = "true"
 			return
+		case "eth_getBlockByNumber":
+			resp.Result = client.MakeHeadMsgForNumber(42)
+			return
 		}
 		if !assert.Equal(t, "eth_sendRawTransaction", method) {
 			return
@@ -474,6 +499,9 @@ func TestEthClient_SendTransaction_WithSecondaryURLs(t *testing.T) {
 			return
 		case "eth_sendRawTransaction":
 			resp.Result = `"` + tx.Hash().Hex() + `"`
+		case "eth_getBlockByNumber":
+			resp.Result = client.MakeHeadMsgForNumber(42)
+			return
 		}
 		return
 	}).WSURL().String()
@@ -529,6 +557,9 @@ func TestEthClient_SendTransactionReturnCode(t *testing.T) {
 				return
 			case "eth_unsubscribe":
 				resp.Result = "true"
+				return
+			case "eth_getBlockByNumber":
+				resp.Result = client.MakeHeadMsgForNumber(42)
 				return
 			case "eth_sendRawTransaction":
 				resp.Result = `"` + tx.Hash().Hex() + `"`
@@ -748,6 +779,10 @@ func TestEthClient_SubscribeNewHead(t *testing.T) {
 			resp.Result = "true"
 			return
 		}
+		if method == "eth_getBlockByNumber" {
+			resp.Result = client.MakeHeadMsgForNumber(42)
+			return
+		}
 		assert.Equal(t, "eth_subscribe", method)
 		if assert.True(t, params.IsArray()) && assert.Equal(t, "newHeads", params.Array()[0].String()) {
 			resp.Result = `"0x00"`
@@ -799,6 +834,9 @@ func TestEthClient_BatchCallContext(t *testing.T) {
 				return
 			case "eth_unsubscribe":
 				resp.Result = "true"
+				return
+			case "eth_getBlockByNumber":
+				resp.Result = client.MakeHeadMsgForNumber(42)
 				return
 			}
 			require.Equal(t, "eth_call", method)

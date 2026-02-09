@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo " ┌─────────────────────────────────────┐"
+echo " │    Compiling CRE V1 contracts...    │"
+echo " └─────────────────────────────────────┘"
+
+PROJECT="v1"
+CONTRACTS_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../ && pwd -P )"
+echo "Contracts directory: $CONTRACTS_DIR"
+
+compileContract () {
+  export FOUNDRY_PROFILE=$PROJECT
+
+  local src_rel="$1"
+  local contract=$(basename "$src_rel")
+  echo "Compiling" "$contract"
+
+  forge build "$CONTRACTS_DIR/src/$PROJECT/$src_rel.sol" \
+  --root "$CONTRACTS_DIR" \
+  --extra-output-files bin abi \
+  -o "$CONTRACTS_DIR/solc/$PROJECT/$src_rel"
+}
+
+compileContract WorkflowRegistry
+compileContract CapabilitiesRegistry
+compileContract KeystoneForwarder
+compileContract OCR3Capability
+compileContract KeystoneFeedsConsumer
+compileContract BalanceReader
+
+

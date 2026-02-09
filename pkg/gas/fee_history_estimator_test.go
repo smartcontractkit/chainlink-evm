@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
@@ -281,6 +282,62 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, maxPrice, dynamicFee.GasFeeCap)
 		assert.Equal(t, maxPrice, dynamicFee.GasTipCap)
+	})
+}
+
+func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
+	t.Parallel()
+
+	maxPrice := assets.NewWeiI(100)
+	chainID := testutils.FixtureChainID
+
+	t.Run("returns error when priorityFeeThreshold is not set", func(t *testing.T) {
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BumpPercent:      20,
+			RewardPercentile: 60,
+			EIP1559:          true,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
+		fee, err := u.GetMaxDynamicFee(maxPrice)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "priorityFeeThreshold not set")
+		assert.Equal(t, gas.DynamicFee{}, fee)
+	})
+
+	t.Run("returns max dynamic fee", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		baseFee := big.NewInt(5)
+		marketMaxPriorityFeePerGas := big.NewInt(10)
+		connectivityMaxPriorityFeePerGas := big.NewInt(20)
+
+		feeHistoryResult := &ethereum.FeeHistory{
+			OldestBlock:  big.NewInt(1),
+			Reward:       [][]*big.Int{{marketMaxPriorityFeePerGas, connectivityMaxPriorityFeePerGas}}, // first one represents market price and second one connectivity price
+			BaseFee:      []*big.Int{baseFee, baseFee},
+			GasUsedRatio: nil,
+		}
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(feeHistoryResult, nil).Once()
+
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BumpPercent:      20,
+			RewardPercentile: 60,
+			EIP1559:          true,
+			BlockHistorySize: 2,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		err := u.RefreshDynamicPrice()
+		require.NoError(t, err)
+
+		expectedPriorityFeeThreshold := assets.NewWei(connectivityMaxPriorityFeePerGas)
+		expectedNextBaseFee := assets.NewWei(baseFee)
+		expectedMaxFeeCap := expectedNextBaseFee.AddPercentage(gas.BaseFeeBufferPercentage).Add(expectedPriorityFeeThreshold)
+
+		fee, err := u.GetMaxDynamicFee(maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, expectedMaxFeeCap, fee.GasFeeCap)
+		assert.Equal(t, expectedPriorityFeeThreshold, fee.GasTipCap)
 	})
 }
 

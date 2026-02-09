@@ -5,7 +5,6 @@ package log_emitter
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -716,22 +714,6 @@ func (_LogEmitter *LogEmitterFilterer) ParseLog4(log types.Log) (*LogEmitterLog4
 	return event, nil
 }
 
-func (_LogEmitter *LogEmitter) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _LogEmitter.abi.Events["Log1"].ID:
-		return _LogEmitter.ParseLog1(log)
-	case _LogEmitter.abi.Events["Log2"].ID:
-		return _LogEmitter.ParseLog2(log)
-	case _LogEmitter.abi.Events["Log3"].ID:
-		return _LogEmitter.ParseLog3(log)
-	case _LogEmitter.abi.Events["Log4"].ID:
-		return _LogEmitter.ParseLog4(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (LogEmitterLog1) Topic() common.Hash {
 	return common.HexToHash("0x46692c0e59ca9cd1ad8f984a9d11715ec83424398b7eed4e05c8ce84662415a8")
 }
@@ -784,8 +766,6 @@ type LogEmitterInterface interface {
 	WatchLog4(opts *bind.WatchOpts, sink chan<- *LogEmitterLog4, arg0 []*big.Int, arg1 []*big.Int) (event.Subscription, error)
 
 	ParseLog4(log types.Log) (*LogEmitterLog4, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }

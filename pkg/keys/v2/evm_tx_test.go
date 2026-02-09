@@ -4,12 +4,24 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	commonks "github.com/smartcontractkit/chainlink-common/keystore"
 	evmks "github.com/smartcontractkit/chainlink-evm/pkg/keys/v2"
 	"github.com/stretchr/testify/require"
 )
+
+func setupBackend(t *testing.T, testKey common.Address) (*simulated.Backend, func() error) {
+	backend := simulated.NewBackend(types.GenesisAlloc{
+		testKey: {
+			Balance: big.NewInt(0).Mul(big.NewInt(10), big.NewInt(1e18)), // 10 ETH
+		},
+	}, simulated.WithBlockGasLimit(10e6))
+	return backend, func() error {
+		return backend.Close()
+	}
+}
 
 func TestTxKey(t *testing.T) {
 	storage := commonks.NewMemoryStorage()
@@ -21,14 +33,9 @@ func TestTxKey(t *testing.T) {
 	testKey2, err := evmks.CreateTxKey(ks, "test-tx-key-2")
 	require.NoError(t, err)
 
-	backend := simulated.NewBackend(types.GenesisAlloc{
-		testKey.Address(): {
-			Balance: big.NewInt(0).Mul(big.NewInt(10), big.NewInt(1e18)), // 10 ETH
-		},
-	}, simulated.WithBlockGasLimit(10e6))
-	defer func() {
-		require.NoError(t, backend.Close())
-	}()
+	backend, cleanup := setupBackend(t, testKey.Address())
+	defer cleanup()
+
 	testTransaction := types.NewTransaction(
 		0,                       // Nonce
 		testKey2.Address(),      // To other key
@@ -62,6 +69,17 @@ func TestTxKey(t *testing.T) {
 	keys, err := evmks.GetTxKeys(ctx, ks, []string{})
 	require.NoError(t, err)
 	require.Empty(t, keys)
+
+	// Create a non-EVM key and verify filtering
+	_, err = ks.CreateKeys(ctx, commonks.CreateKeysRequest{
+		Keys: []commonks.CreateKeyRequest{
+			{KeyName: "solana/tx/non-evm-key", KeyType: commonks.Ed25519},
+		},
+	})
+	require.NoError(t, err)
+	keys, err = evmks.GetTxKeys(ctx, ks, []string{})
+	require.NoError(t, err)
+	require.Empty(t, keys) // Should filter out non-EVM keys
 
 	// Signing will now error.
 	_, err = testKey.SignTx(ctx, evmks.SignTxRequest{
