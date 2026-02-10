@@ -1,4 +1,4 @@
-ChainID = '2020'
+ChainID = '202601'
 FinalityTagEnabled = true
 # Ronin produces blocks every 3 seconds
 LogPollInterval = "3s"
