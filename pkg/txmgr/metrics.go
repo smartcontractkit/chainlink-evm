@@ -35,16 +35,21 @@ var (
 		Name: "tx_manager_num_finalized_transactions",
 		Help: "Total number of finalized transactions",
 	}, []string{"chainID"})
+	promPendingTxQueueUtilization = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "txm_pending_tx_queue_utilization",
+		Help: "Queue utilization in [0,1] = depth/capacity.",
+	}, []string{"chainID"})
 )
 
 type evmTxmMetrics struct {
 	metrics.GenericTXMMetrics
-	chainID          string
-	numSuccessfulTxs metric.Int64Counter
-	numRevertedTxs   metric.Int64Counter
-	fwdTxCount       metric.Int64Counter
-	txAttemptCount   metric.Float64Gauge
-	numFinalizedTxs  metric.Int64Counter
+	chainID                   string
+	numSuccessfulTxs          metric.Int64Counter
+	numRevertedTxs            metric.Int64Counter
+	fwdTxCount                metric.Int64Counter
+	txAttemptCount            metric.Float64Gauge
+	numFinalizedTxs           metric.Int64Counter
+	pendingTxQueueUtilization metric.Float64Gauge
 }
 
 func NewEVMTxmMetrics(chainID string) (*evmTxmMetrics, error) {
@@ -78,15 +83,26 @@ func NewEVMTxmMetrics(chainID string) (*evmTxmMetrics, error) {
 		return nil, fmt.Errorf("failed to register number of finalized transactions metric: %w", err)
 	}
 
+	pendingTxQueueUtilization, err := beholder.GetMeter().Float64Gauge("txm_pending_tx_queue_utilization")
+	if err != nil {
+		return nil, fmt.Errorf("failed to register pending tx queue utilization: %w", err)
+	}
+
 	return &evmTxmMetrics{
-		chainID:           chainID,
-		GenericTXMMetrics: genericTXMMetrics,
-		numSuccessfulTxs:  numSuccessfulTxs,
-		numRevertedTxs:    numRevertedTxs,
-		fwdTxCount:        fwdTxCount,
-		txAttemptCount:    txAttemptCount,
-		numFinalizedTxs:   numFinalizedTxs,
+		chainID:                   chainID,
+		GenericTXMMetrics:         genericTXMMetrics,
+		numSuccessfulTxs:          numSuccessfulTxs,
+		numRevertedTxs:            numRevertedTxs,
+		fwdTxCount:                fwdTxCount,
+		txAttemptCount:            txAttemptCount,
+		numFinalizedTxs:           numFinalizedTxs,
+		pendingTxQueueUtilization: pendingTxQueueUtilization,
 	}, nil
+}
+
+func (m *evmTxmMetrics) RecordPendingTxQueueUtilization(ctx context.Context, utilization float64) {
+	promPendingTxQueueUtilization.WithLabelValues(m.chainID).Set(utilization)
+	m.pendingTxQueueUtilization.Record(ctx, utilization, metric.WithAttributes(attribute.String("chainID", m.chainID)))
 }
 
 func (m *evmTxmMetrics) IncrementNumSuccessfulTxs(ctx context.Context) {
