@@ -706,7 +706,7 @@ var hyperliquid = ClientErrors{
 
 // Linkpool, Blockdaemon, and Chainstack all return "request timed out" if the log results are too large for them to process
 var defaultClient = ClientErrors{
-	TooManyResults: regexp.MustCompile(`request timed out|408 Request Timed Out$`),
+	TooManyResults: regexp.MustCompile(`(request timed out|408 Request Timed Out)$`),
 }
 
 // JSON-RPC error codes which can indicate a refusal of the server to process an eth_getLogs request because the result set is too large
