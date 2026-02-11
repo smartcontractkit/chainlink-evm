@@ -452,6 +452,15 @@ NodeIsSyncingEnabled = false # Default
 #
 # Set to 0 to disable.
 FinalizedBlockPollInterval = '5s' # Default
+# HistoricalBalanceCheckEnabled controls whether NodePool health polling also verifies historical state availability
+# by executing `eth_getBalance` for HistoricalBalanceCheckAddress at the latest finalized block.
+# Finalized block selection follows chain finality settings:
+# - `FinalityTagEnabled = true`: use `finalized` tag
+# - `FinalityTagEnabled = false`: use `latest - FinalityDepth`
+HistoricalBalanceCheckEnabled = false # Default
+# HistoricalBalanceCheckAddress is the probe account used by the historical balance health check.
+# This check is only active when `HistoricalBalanceCheckEnabled = true`.
+HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000' # Default
 # EnforceRepeatableRead defines if Core should only use RPCs whose most recently finalized block is greater or equal to
 # `highest finalized block - FinalizedBlockOffset`. In other words, exclude RPCs lagging on latest finalized
 # block.

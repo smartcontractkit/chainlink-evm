@@ -306,6 +306,8 @@ var fullConfig = EVMConfig{
 			LeaseDuration:                  config.MustNewDuration(0),
 			NodeIsSyncingEnabled:           ptr(true),
 			FinalizedBlockPollInterval:     config.MustNewDuration(time.Second),
+			HistoricalBalanceCheckEnabled:  ptr(true),
+			HistoricalBalanceCheckAddress:  ptr(types.MustEIP55Address("0x0000000000000000000000000000000000000001")),
 			EnforceRepeatableRead:          ptr(true),
 			DeathDeclarationDelay:          config.MustNewDuration(time.Minute),
 			VerifyChainID:                  ptr(true),

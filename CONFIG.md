@@ -911,6 +911,8 @@ SyncThreshold = 5 # Default
 LeaseDuration = '0s' # Default
 NodeIsSyncingEnabled = false # Default
 FinalizedBlockPollInterval = '5s' # Default
+HistoricalBalanceCheckEnabled = false # Default
+HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000' # Default
 EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
@@ -988,6 +990,23 @@ If `FinalityTagEnabled = false`, poll is not performed and `pool_rpc_node_highes
 reported based on latest block and finality depth.
 
 Set to 0 to disable.
+
+### HistoricalBalanceCheckEnabled
+```toml
+HistoricalBalanceCheckEnabled = false # Default
+```
+HistoricalBalanceCheckEnabled controls whether NodePool health polling verifies historical state availability
+via `eth_getBalance` against `HistoricalBalanceCheckAddress`.
+
+When enabled, the probe reads balance at the latest finalized block:
+- if `FinalityTagEnabled = true`, it uses the `finalized` block tag
+- if `FinalityTagEnabled = false`, it uses `latest - FinalityDepth`
+
+### HistoricalBalanceCheckAddress
+```toml
+HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000' # Default
+```
+HistoricalBalanceCheckAddress is the account used by the historical balance health check probe.
 
 ### EnforceRepeatableRead
 ```toml

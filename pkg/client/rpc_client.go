@@ -105,6 +105,8 @@ type RPCClient struct {
 	finalityTagEnabled             bool
 	finalityDepth                  uint32
 	safeDepth                      uint32
+	historicalBalanceCheckEnabled  bool
+	historicalBalanceCheckAddress  common.Address
 	externalRequestMaxResponseSize uint32
 
 	ws        atomic.Pointer[rawclient]
@@ -142,6 +144,8 @@ func NewRPCClient(
 		finalityTagEnabled:             supportsFinalityTags,
 		finalityDepth:                  finalityDepth,
 		safeDepth:                      safeDepth,
+		historicalBalanceCheckEnabled:  cfg.HistoricalBalanceCheckEnabled(),
+		historicalBalanceCheckAddress:  common.HexToAddress(cfg.HistoricalBalanceCheckAddress()),
 		externalRequestMaxResponseSize: externalRequestMaxResponseSize,
 	}
 	r.cfg = cfg
@@ -180,8 +184,33 @@ func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err erro
 	if err != nil {
 		return "", fmt.Errorf("fetching client version failed: %w", err)
 	}
+	if r.historicalBalanceCheckEnabled {
+		if err = r.checkHistoricalStateAtFinalized(ctx); err != nil {
+			return "", fmt.Errorf("historical balance health check failed: %w", err)
+		}
+	}
 	r.rpcLog.Debugf("client version: %s", version)
 	return version, nil
+}
+
+func (r *RPCClient) checkHistoricalStateAtFinalized(ctx context.Context) error {
+	var blockNumber *big.Int
+	if r.finalityTagEnabled {
+		blockNumber = big.NewInt(rpc.FinalizedBlockNumber.Int64())
+	} else {
+		latestBlock, err := r.BlockNumber(ctx)
+		if err != nil {
+			return fmt.Errorf("fetching latest block number failed: %w", err)
+		}
+		latest := int64(latestBlock)
+		finalizedHeight := max(int64(0), latest-int64(r.finalityDepth))
+		blockNumber = big.NewInt(finalizedHeight)
+	}
+	_, err := r.BalanceAt(ctx, r.historicalBalanceCheckAddress, blockNumber)
+	if err != nil {
+		return fmt.Errorf("fetching balance for address %s at block %s failed: %w", r.historicalBalanceCheckAddress.String(), blockNumber.String(), err)
+	}
+	return nil
 }
 
 func (r *RPCClient) Dial(callerCtx context.Context) error {

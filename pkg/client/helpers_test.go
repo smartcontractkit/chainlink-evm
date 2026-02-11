@@ -95,6 +95,8 @@ type TestNodePoolConfig struct {
 	NodeLeaseDuration                 time.Duration
 	NodeIsSyncingEnabledVal           bool
 	NodeFinalizedBlockPollInterval    time.Duration
+	HistoricalBalanceCheckEnabledVal  bool
+	HistoricalBalanceCheckAddressVal  string
 	NodeErrors                        config.ClientErrors
 	EnforceRepeatableReadVal          bool
 	NodeDeathDeclarationDelay         time.Duration
@@ -116,6 +118,14 @@ func (tc TestNodePoolConfig) NodeIsSyncingEnabled() bool {
 
 func (tc TestNodePoolConfig) FinalizedBlockPollInterval() time.Duration {
 	return tc.NodeFinalizedBlockPollInterval
+}
+
+func (tc TestNodePoolConfig) HistoricalBalanceCheckEnabled() bool {
+	return tc.HistoricalBalanceCheckEnabledVal
+}
+
+func (tc TestNodePoolConfig) HistoricalBalanceCheckAddress() string {
+	return tc.HistoricalBalanceCheckAddressVal
 }
 
 func (tc TestNodePoolConfig) NewHeadsPollInterval() time.Duration {
