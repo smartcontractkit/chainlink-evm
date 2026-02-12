@@ -22,7 +22,7 @@ jobs:
       changesets_files: ${{ steps.files-changed.outputs.changesets_files }}
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -59,7 +59,7 @@ jobs:
       # Include the pull request ref in the checkout action to prevent merge commit
       # https://github.com/actions/checkout?tab=readme-ov-file#checkout-pull-request-head-commit-instead-of-merge-commit
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha }}
@@ -73,7 +73,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Make a comment
-        uses: thollander/actions-comment-pull-request@fabd468d3a1a0b97feee5f6b9e499eab0dd903f6 # v2.5.0
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
             I see you updated files related to `contracts`. Please run `pnpm changeset` in the `contracts` directory to add a changeset.
@@ -95,7 +95,7 @@ jobs:
         uses: ./.github/actions/setup-nodejs
 
       - name: Checkout .Github repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           repository: smartcontractkit/.github
@@ -157,7 +157,7 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
       # Commit appended changeset file back to repo
-      - uses: planetscale/ghcommit-action@13a844326508cdefc72235201bb0446d6d10a85f # v0.1.6
+      - uses: planetscale/ghcommit-action@v0.2.20
         with:
           commit_message: "[Bot] Update changeset file with jira issues"
           repo: ${{ github.repository }}
@@ -176,7 +176,7 @@ jobs:
           echo "Jira issue key related to solidity review: ${{ env.SOLIDITY_REVIEW_JIRA_ISSUE_KEY }}"
 
       - name: Find traceability comment in the PR
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.0.0
+        uses: peter-evans/find-comment@v4
         if: steps.enforce-solidity-review.outputs.solidity_review_ticket_found == 'true'
         id: find-comment
         with:
@@ -185,7 +185,7 @@ jobs:
           body-includes: 'Solidity Review Jira issue'
 
       - name: Create or update traceability comment in the PR
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        uses: peter-evans/create-or-update-comment@v5
         if: steps.enforce-solidity-review.outputs.solidity_review_ticket_found == 'true'
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}

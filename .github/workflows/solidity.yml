@@ -18,7 +18,7 @@ jobs:
       changes: ${{ steps.ch.outputs.changes }}
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Detect readonly solidity file changes
@@ -32,7 +32,7 @@ jobs:
       changes: ${{ steps.ch.outputs.changes }}
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Detect changes
@@ -55,7 +55,7 @@ jobs:
       is-release: ${{ steps.release-tag-check-core.outputs.is-release == 'true' || steps.release-tag-check-cre.outputs.is-release == 'true'}}
       is-pre-release: ${{ steps.release-tag-check-core.outputs.is-pre-release == 'true' || steps.release-tag-check-cre.outputs.is-pre-release == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Check release tag (core)
@@ -84,13 +84,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           path: chainlink
 
       - name: Checkout diff-so-fancy
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           repository: so-fancy/diff-so-fancy
@@ -152,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Setup NodeJS
@@ -174,7 +174,7 @@ jobs:
       id-token: write  # Required for OIDC
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -251,7 +251,7 @@ jobs:
       id-token: write  # Required for OIDC
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 

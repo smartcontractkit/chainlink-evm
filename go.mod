@@ -5,8 +5,8 @@ go 1.25.3
 require (
 	github.com/ethereum/go-ethereum v1.16.8
 	github.com/fbsobreira/gotron-sdk v0.0.0-20250403083053-2943ce8c759b
-	github.com/fxamacker/cbor/v2 v2.7.0
-	github.com/go-viper/mapstructure/v2 v2.4.0
+	github.com/fxamacker/cbor/v2 v2.9.0
+	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jackc/pgconn v1.14.3

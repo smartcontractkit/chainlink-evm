@@ -11,7 +11,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    uses: smartcontractkit/.github/.github/workflows/reusable-stale-prs-issues.yml@de0ec7feedae310c287330a2bb2b9e61db035114 # 2025-06-05
+    uses: smartcontractkit/.github/.github/workflows/reusable-stale-prs-issues.yml@06c37aea6174dcc0ce72be17bfa00a95547d7aa6 # 2025-06-05
     with:
       days-before-pr-stale: 30 # days
       days-before-pr-close: 7 # days

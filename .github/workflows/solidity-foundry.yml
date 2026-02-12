@@ -47,7 +47,7 @@ jobs:
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -64,7 +64,7 @@ jobs:
       all_changes: ${{ steps.changes.outputs.changes }}
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Detect changes
@@ -144,7 +144,7 @@ jobs:
           ${{ contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name)
           || contains(fromJson(needs.changes.outputs.all_changes), 'shared')
           || needs.changes.outputs.non_src_changes == 'true' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           submodules: recursive
@@ -197,7 +197,7 @@ jobs:
           && (contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name)
           || contains(fromJson(needs.changes.outputs.all_changes), 'shared')
           || needs.changes.outputs.non_src_changes == 'true') }}
-        uses: baptiste0928/cargo-install@904927dbe77864e0f2281519fe9d5bd097a220b3 # v3.1.1
+        uses: baptiste0928/cargo-install@b687c656bda5733207e629b50a22bf68974a0305 # v3.3.2
         with:
           crate: svm-rs
           version: "0.5.17"
@@ -273,7 +273,7 @@ jobs:
           || contains(fromJson(needs.changes.outputs.all_changes), 'shared')
           || needs.changes.outputs.non_src_changes == 'true')
           && matrix.product.setup.run-coverage }}
-        uses: hrishikesh-kadam/setup-lcov@f5da1b26b0dcf5d893077a3c4f29cf78079c841d # v1.0.0
+        uses: hrishikesh-kadam/setup-lcov@6c1aa0cc9e1c02f9f58f01ac599f1064ccc83470 # v1.1.0
 
       - name: Run coverage for ${{ matrix.product.name }}
         if:
@@ -307,7 +307,7 @@ jobs:
           || contains(fromJson(needs.changes.outputs.all_changes), 'shared')
           || needs.changes.outputs.non_src_changes == 'true')
           && matrix.product.setup.run-coverage }}
-        uses: zgosalvez/github-actions-report-lcov@a546f89a65a0cdcd82a92ae8d65e74d450ff3fbc # v4.1.4
+        uses: zgosalvez/github-actions-report-lcov@4eb99c09644c30cceb609413620bd9e1bf80ee79 # v6.0.1
         with:
           update-comment: false
           coverage-files: ./contracts${{ matrix.product.setup.subfolder || '' }}/lcov.info.pruned
@@ -323,12 +323,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout this repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Checkout .github repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           repository: smartcontractkit/.github
@@ -342,7 +342,7 @@ jobs:
         uses: ./.github/actions/install-solidity-foundry
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.8"
 
@@ -373,7 +373,7 @@ jobs:
       # in that case we extract new issues introduced by the changes by using an LLM model
       - name: Upload Slither results for current branch
         if: needs.changes.outputs.sol_mod_only == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         timeout-minutes: 2
         continue-on-error: true
         with:
@@ -384,7 +384,7 @@ jobs:
       # we need to upload scripts and configuration in case base_ref doesn't have the scripts, or they are in different version
       - name: Upload Slither scripts
         if: needs.changes.outputs.sol_mod_only == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         timeout-minutes: 2
         continue-on-error: true
         with:
@@ -394,7 +394,7 @@ jobs:
 
       - name: Upload configs
         if: needs.changes.outputs.sol_mod_only == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         timeout-minutes: 2
         with:
           name: tmp-configs-${{ github.sha }}
@@ -405,21 +405,21 @@ jobs:
 
       - name: Checkout earlier version of this repository
         if: needs.changes.outputs.sol_mod_only == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           ref: ${{ github.base_ref }}
 
       - name: Download Slither scripts
         if: needs.changes.outputs.sol_mod_only == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tmp-slither-scripts-${{ github.sha }}
           path: ./dot_github/tools/scripts/solidity
 
       - name: Download configs
         if: needs.changes.outputs.sol_mod_only == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: tmp-configs-${{ github.sha }}
           path: contracts/configs
@@ -456,7 +456,7 @@ jobs:
 
       - name: Upload Slither report
         if: needs.changes.outputs.sol_mod_only == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         timeout-minutes: 10
         continue-on-error: true
         with:
@@ -467,7 +467,7 @@ jobs:
 
       - name: Download Slither results for current branch
         if: needs.changes.outputs.sol_mod_only == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: slither-reports-current-${{ github.sha }}
           path: contracts/slither-reports-current
@@ -520,7 +520,7 @@ jobs:
           sol_files: ${{ needs.changes.outputs.not_test_sol_modified_files }}
 
       - name: Upload Slither reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         timeout-minutes: 10
         continue-on-error: true
         with:
@@ -532,7 +532,7 @@ jobs:
       - name: Find Slither comment in the PR
         # We only want to create the comment if the PR is not modified by a bot
         if: "(github.event_name == 'push' && github.event.pusher.username && ! contains(github.event.pusher.username, '[bot]')) || (github.event_name != 'push' && ! contains(github.actor, '[bot]'))"
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.0.0
+        uses: peter-evans/find-comment@v4
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -559,7 +559,7 @@ jobs:
       - name: Create or update Slither comment in the PR
         # We only want to create the comment if the PR is not modified by a bot
         if: "(github.event_name == 'push' && github.event.pusher.username && ! contains(github.event.pusher.username, '[bot]')) || (github.event_name != 'push' && ! contains(github.actor, '[bot]'))"
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        uses: peter-evans/create-or-update-comment@v5
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -570,7 +570,7 @@ jobs:
           edit-mode: replace
 
       - name: Remove temp artifacts
-        uses: geekyeggo/delete-artifact@24928e75e6e6590170563b8ddae9fac674508aa1 # v5.0
+        uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0
         with:
           name: tmp-*
 
@@ -599,7 +599,7 @@ jobs:
     steps:
       - name: Checkout the repo
         if: ${{ contains(fromJson(needs.changes.outputs.all_changes), matrix.product.name) || needs.changes.outputs.non_src_changes == 'true' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           submodules: recursive
