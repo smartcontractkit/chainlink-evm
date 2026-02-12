@@ -377,7 +377,7 @@ func Test_BackupLogPoller(t *testing.T) {
 			th.finalizeThroughBlock(t, 64)
 
 			// Run ordinary poller + backup poller at least once more
-			th.LogPoller.PollAndSaveLogs(ctx, currentBlockNumber)
+			th.LogPoller.PollAndSaveLogs(ctx, currentBlockNumber, false)
 			require.NoError(t, th.LogPoller.BackupPollAndSaveLogs(ctx))
 			currentBlock, err := th.LogPoller.LatestBlock(ctx)
 			require.NoError(t, err)
@@ -718,7 +718,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 			backend.Commit()
 		}
 		currentBlockNumber := int64(1)
-		lp.PollAndSaveLogs(testutils.Context(t), currentBlockNumber)
+		lp.PollAndSaveLogs(testutils.Context(t), currentBlockNumber, false)
 		currentBlock, err := lp.LatestBlock(testutils.Context(t))
 		require.NoError(t, err)
 		matchesGeth := func() bool {
@@ -770,7 +770,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 				require.NoError(t, err1)
 				t.Logf("New latest (%v, %x), latest parent %x)\n", latest.NumberU64(), latest.Hash(), latest.ParentHash())
 			}
-			lp.PollAndSaveLogs(testutils.Context(t), currentBlock.BlockNumber)
+			lp.PollAndSaveLogs(testutils.Context(t), currentBlock.BlockNumber, false)
 			currentBlock, err = lp.LatestBlock(testutils.Context(t))
 			require.NoError(t, err)
 		}
@@ -1370,7 +1370,7 @@ func TestLogPoller_GetBlocks_Range(t *testing.T) {
 	assert.Equal(t, 3, int(rpcBlocks2[1].FinalizedBlockNumber))
 
 	// after calling PollAndSaveLogs, block 3 (latest finalized block) is persisted in DB
-	th.LogPoller.PollAndSaveLogs(testutils.Context(t), 1)
+	th.LogPoller.PollAndSaveLogs(testutils.Context(t), 1, false)
 	block, err := th.ORM.SelectBlockByNumber(testutils.Context(t), 3)
 	require.NoError(t, err)
 	assert.Equal(t, 3, int(block.BlockNumber))
@@ -1624,7 +1624,7 @@ func TestTooManyLogResults(t *testing.T) {
 			Addresses: []common.Address{addr},
 		})
 		require.NoError(t, err)
-		lp.PollAndSaveLogs(ctx, 5)
+		lp.PollAndSaveLogs(ctx, 5, false)
 		block, err2 := o.SelectLatestBlock(ctx)
 		require.NoError(t, err2)
 		assert.Equal(t, int64(298), block.BlockNumber)
@@ -1656,7 +1656,7 @@ func TestTooManyLogResults(t *testing.T) {
 			return []types.Log{}, tooLargeErr // return "too many results" error if block range spans 4 or more blocks
 		})
 
-		lp.PollAndSaveLogs(ctx, 298)
+		lp.PollAndSaveLogs(ctx, 298, false)
 		block, err := o.SelectLatestBlock(ctx)
 		if err != nil {
 			require.ErrorContains(t, err, "no rows") // In case this subtest is run by itself
@@ -1690,7 +1690,7 @@ func TestTooManyLogResults(t *testing.T) {
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil).Once()
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(finalized, nil).Once()
 
-		lp.PollAndSaveLogs(ctx, 298)
+		lp.PollAndSaveLogs(ctx, 298, false)
 		block, err := o.SelectLatestBlock(ctx)
 		if err != nil {
 			require.ErrorContains(t, err, "no rows") // In case this subtest is run by itself
