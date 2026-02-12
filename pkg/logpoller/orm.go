@@ -24,7 +24,7 @@ import (
 // What is more, LogPoller should not be aware of the underlying database implementation and delegate all the queries to the ORM.
 type ORM interface {
 	InsertLogs(ctx context.Context, logs []Log) error
-	InsertLogsWithBlock(ctx context.Context, logs []Log, block Block) error
+	InsertLogsWithBlocks(ctx context.Context, logs []Log, blocks []Block) error
 	InsertFilter(ctx context.Context, filter Filter) error
 
 	LoadFilters(ctx context.Context) (map[string]Filter, error)
@@ -110,6 +110,18 @@ func (o *DSORM) InsertBlock(ctx context.Context, blockHash common.Hash, blockNum
 			ON CONFLICT DO NOTHING`
 	_, err = o.ds.NamedExecContext(ctx, query, args)
 	return err
+}
+
+func (o *DSORM) InsertBlocks(ctx context.Context, blocks []Block) error {
+	const q = `INSERT INTO evm.log_poller_blocks
+				(evm_chain_id, block_hash, block_number, block_timestamp, finalized_block_number, created_at, safe_block_number)
+      		VALUES (:evm_chain_id, :block_hash, :block_number, :block_timestamp, :finalized_block_number, NOW(), :safe_block_number)
+			ON CONFLICT DO NOTHING`
+	// maintain behaviour of InsertBlock
+	for i := range blocks {
+		blocks[i].EVMChainID = ubig.New(o.chainID)
+	}
+	return batchInsert(ctx, o.ds, q, blocks, 1000)
 }
 
 // InsertFilter is idempotent.
@@ -544,10 +556,10 @@ func (o *DSORM) InsertLogs(ctx context.Context, logs []Log) error {
 	})
 }
 
-func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block) error {
+func (o *DSORM) InsertLogsWithBlocks(ctx context.Context, logs []Log, blocks []Block) error {
 	// Optimization, don't open TX when there is only a block to be persisted
 	if len(logs) == 0 {
-		return o.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber)
+		return o.InsertBlocks(ctx, blocks)
 	}
 
 	if err := o.validateLogs(logs); err != nil {
@@ -556,7 +568,7 @@ func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block
 
 	// Block and logs goes with the same TX to ensure atomicity
 	return o.Transact(ctx, func(orm *DSORM) error {
-		err := orm.InsertBlock(ctx, block.BlockHash, block.BlockNumber, block.BlockTimestamp, block.FinalizedBlockNumber, block.SafeBlockNumber)
+		err := orm.InsertBlocks(ctx, blocks)
 		if err != nil {
 			return err
 		}
@@ -565,20 +577,23 @@ func (o *DSORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block
 }
 
 func (o *DSORM) insertLogsWithinTx(ctx context.Context, logs []Log, tx sqlutil.DataSource) error {
-	batchInsertSize := 4000
-	for i := 0; i < len(logs); i += batchInsertSize {
-		start, end := i, i+batchInsertSize
-		if end > len(logs) {
-			end = len(logs)
-		}
-
-		query := `INSERT INTO evm.logs
+	const q = `INSERT INTO evm.logs
 					(evm_chain_id, log_index, block_hash, block_number, block_timestamp, address, event_sig, topics, tx_hash, data, created_at)
 				VALUES
 					(:evm_chain_id, :log_index, :block_hash, :block_number, :block_timestamp, :address, :event_sig, :topics, :tx_hash, :data, NOW())
 				ON CONFLICT DO NOTHING`
+	return batchInsert(ctx, tx, q, logs, 4000)
+}
 
-		_, err := tx.NamedExecContext(ctx, query, logs[start:end])
+func batchInsert[T any](ctx context.Context, ds sqlutil.DataSource, query string, objs []T, batchSize int) error {
+	batchInsertSize := 4000
+	for i := 0; i < len(objs); i += batchInsertSize {
+		start, end := i, i+batchInsertSize
+		if end > len(objs) {
+			end = len(objs)
+		}
+
+		_, err := ds.NamedExecContext(ctx, query, objs[start:end])
 		if err != nil {
 			if pkgerrors.Is(err, context.DeadlineExceeded) && batchInsertSize > 500 {
 				// In case of DB timeouts, try to insert again with a smaller batch upto a limit

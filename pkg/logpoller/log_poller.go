@@ -956,7 +956,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 		}
 
 		lp.lggr.Debugw("Inserting backfilled logs with batch endblock", "from", from, "to", to, "logs", len(gethLogs), "blocks", blocks)
-		err = lp.orm.InsertLogsWithBlock(ctx, convertLogs(gethLogs, blocks, lp.lggr, lp.ec.ConfiguredChainID()), endblock)
+		err = lp.orm.InsertLogsWithBlocks(ctx, convertLogs(gethLogs, blocks, lp.lggr, lp.ec.ConfiguredChainID()), []Block{endblock})
 		if err != nil {
 			lp.lggr.Warnw("Unable to insert logs, retrying", "err", err, "from", from, "to", to)
 			return err
@@ -1206,10 +1206,10 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 			FinalizedBlockNumber: latestFinalizedBlockNumber,
 			SafeBlockNumber:      safeBlockNumber,
 		}
-		err = lp.orm.InsertLogsWithBlock(
+		err = lp.orm.InsertLogsWithBlocks(
 			ctx,
 			convertLogs(logs, []Block{block}, lp.lggr, lp.ec.ConfiguredChainID()),
-			block,
+			[]Block{block},
 		)
 		if err != nil {
 			lp.lggr.Warnw("Unable to save logs resuming from last saved block + 1", "err", err, "block", currentBlockNumber)

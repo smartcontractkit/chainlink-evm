@@ -94,6 +94,32 @@ func TestLogPoller_Batching(t *testing.T) {
 	require.Equal(t, len(logs), len(lgs))
 }
 
+func TestLogPoller_Blocks_Batching(t *testing.T) {
+	t.Parallel()
+	ctx := testutils.Context(t)
+	th := SetupTH(t, lpOpts)
+	var blocks []logpoller.Block
+	var logs []logpoller.Log
+	const numBlocks = 2000
+	for i := 0; i < numBlocks; i++ {
+		blockHash := common.HexToHash(fmt.Sprintf("0x%d", i+1))
+		blocks = append(blocks, logpoller.Block{
+			EVMChainID:  ubig.New(th.ChainID),
+			BlockHash:   blockHash,
+			BlockNumber: int64(i + 1),
+		})
+		logs = append(logs, GenLog(th.ChainID, int64(i), int64(i+1), blockHash.String(), EmitterABI.Events["Log1"].ID.Bytes(), th.EmitterAddress1))
+	}
+	require.NoError(t, th.ORM.InsertLogsWithBlocks(ctx, logs, blocks))
+	lgs, err := th.ORM.SelectLogsByBlockRange(ctx, 1, numBlocks)
+	require.NoError(t, err)
+	// Make sure all logs are inserted
+	require.Equal(t, len(logs), len(lgs))
+	dbBlocks, err := th.ORM.GetBlocksRange(ctx, 1, numBlocks)
+	require.NoError(t, err)
+	require.Equal(t, numBlocks, len(dbBlocks))
+}
+
 func TestORM_GetBlocks_From_Range(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
@@ -2116,7 +2142,7 @@ func TestInsertLogsWithBlock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// clean all logs and blocks between test cases
 			defer func() { _ = o.DeleteLogsAndBlocksAfter(ctx, 0) }()
-			insertError := o.InsertLogsWithBlock(ctx, tt.logs, tt.block)
+			insertError := o.InsertLogsWithBlocks(ctx, tt.logs, []logpoller.Block{tt.block})
 
 			logs, logsErr := o.SelectLogs(ctx, 0, math.MaxInt, address, event)
 			block, blockErr := o.SelectLatestBlock(ctx)
@@ -2209,16 +2235,18 @@ func TestSelectLogsDataWordBetween(t *testing.T) {
 	secondLogData = append(secondLogData, logpoller.EvmWord(5).Bytes()...)
 	secondLogData = append(secondLogData, logpoller.EvmWord(20).Bytes()...)
 
-	err := th.ORM.InsertLogsWithBlock(ctx,
+	err := th.ORM.InsertLogsWithBlocks(ctx,
 		[]logpoller.Log{
 			GenLogWithData(th.ChainID, address, eventSig, 1, 1, firstLogData),
 			GenLogWithData(th.ChainID, address, eventSig, 2, 2, secondLogData),
 		},
-		logpoller.Block{
-			BlockHash:            utils.RandomBytes32(),
-			BlockNumber:          10,
-			BlockTimestamp:       time.Now(),
-			FinalizedBlockNumber: 1,
+		[]logpoller.Block{
+			{
+				BlockHash:            utils.RandomBytes32(),
+				BlockNumber:          10,
+				BlockTimestamp:       time.Now(),
+				FinalizedBlockNumber: 1,
+			},
 		},
 	)
 	require.NoError(t, err)

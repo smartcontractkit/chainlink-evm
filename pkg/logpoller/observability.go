@@ -52,16 +52,16 @@ func (o *ObservedORM) InsertLogs(ctx context.Context, logs []Log) error {
 	err := withObservedExec(ctx, o, "InsertLogs", metrics.Create, func() error {
 		return o.ORM.InsertLogs(ctx, logs)
 	})
-	trackInsertedLogsAndBlock(ctx, o, logs, nil, err)
+	trackInsertedLogsAndBlocks(ctx, o, logs, nil, err)
 	trackInsertedBlockLatency(ctx, o, logs, err)
 	return err
 }
 
-func (o *ObservedORM) InsertLogsWithBlock(ctx context.Context, logs []Log, block Block) error {
+func (o *ObservedORM) InsertLogsWithBlocks(ctx context.Context, logs []Log, blocks []Block) error {
 	err := withObservedExec(ctx, o, "InsertLogsWithBlock", metrics.Create, func() error {
-		return o.ORM.InsertLogsWithBlock(ctx, logs, block)
+		return o.ORM.InsertLogsWithBlocks(ctx, logs, blocks)
 	})
-	trackInsertedLogsAndBlock(ctx, o, logs, &block, err)
+	trackInsertedLogsAndBlocks(ctx, o, logs, blocks, err)
 	trackInsertedBlockLatency(ctx, o, logs, err)
 	return err
 }
@@ -290,15 +290,15 @@ func withObservedExec(ctx context.Context, o *ObservedORM, query string, queryTy
 	return exec()
 }
 
-func trackInsertedLogsAndBlock(ctx context.Context, o *ObservedORM, logs []Log, block *Block, err error) {
+func trackInsertedLogsAndBlocks(ctx context.Context, o *ObservedORM, logs []Log, blocks []Block, err error) {
 	if err != nil {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, client.QueryTimeout)
 	defer cancel()
 	o.metrics.IncrementLogsInserted(ctx, int64(len(logs)))
-	if block != nil {
-		o.metrics.IncrementBlocksInserted(ctx, 1)
+	if len(blocks) > 0 {
+		o.metrics.IncrementBlocksInserted(ctx, int64(len(blocks)))
 	}
 }
 
