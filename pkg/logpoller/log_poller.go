@@ -954,6 +954,26 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 	return nil
 }
 
+func (lp *logPoller) headerByNumber(ctx context.Context, blockNumber int64) (*evmtypes.Head, error) {
+	// If we don't have the current block already, lets get it.
+	header, err := lp.latencyMonitor.HeadByNumber(ctx, big.NewInt(blockNumber))
+	if err != nil {
+		lp.lggr.Warnw("Unable to get currentBlock", "err", err, "blockNumber", blockNumber)
+		return nil, fmt.Errorf("unable to get current block header for block number %d: %w", blockNumber, err)
+	}
+	// Additional sanity checks, don't necessarily trust the RPC.
+	if header == nil {
+		lp.lggr.Errorw("Unexpected nil block from RPC", "blockNumber", blockNumber)
+		return nil, fmt.Errorf("got nil block for %d", blockNumber)
+	}
+	if header.Number != blockNumber {
+		lp.lggr.Warnw("Unable to get currentBlock, rpc returned incorrect block", "blockNumber", blockNumber, "got", header.Number)
+		return nil, fmt.Errorf("block mismatch have %d want %d", header.Number, blockNumber)
+	}
+
+	return header, nil
+}
+
 // getCurrentBlockMaybeHandleReorg accepts a block number
 // and will return that block if its parent points to our last saved block.
 // One can optionally pass the block header if it has already been queried to avoid an extra RPC call.
@@ -965,20 +985,9 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, currentBlockNumber int64, currentBlock *evmtypes.Head) (head *evmtypes.Head, err error) {
 	var err1 error
 	if currentBlock == nil {
-		// If we don't have the current block already, lets get it.
-		currentBlock, err1 = lp.latencyMonitor.HeadByNumber(ctx, big.NewInt(currentBlockNumber))
+		currentBlock, err1 = lp.headerByNumber(ctx, currentBlockNumber)
 		if err1 != nil {
-			lp.lggr.Warnw("Unable to get currentBlock", "err", err1, "currentBlockNumber", currentBlockNumber)
-			return nil, err1
-		}
-		// Additional sanity checks, don't necessarily trust the RPC.
-		if currentBlock == nil {
-			lp.lggr.Errorw("Unexpected nil block from RPC", "currentBlockNumber", currentBlockNumber)
-			return nil, pkgerrors.Errorf("Got nil block for %d", currentBlockNumber)
-		}
-		if currentBlock.Number != currentBlockNumber {
-			lp.lggr.Warnw("Unable to get currentBlock, rpc returned incorrect block", "currentBlockNumber", currentBlockNumber, "got", currentBlock.Number)
-			return nil, pkgerrors.Errorf("Block mismatch have %d want %d", currentBlock.Number, currentBlockNumber)
+			return nil, fmt.Errorf("unable to get current block header for block number %d: %w", currentBlockNumber, err1)
 		}
 	}
 	// Does this currentBlock point to the same parent that we have saved?
@@ -997,32 +1006,77 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 	}
 	// Check for reorg.
 	if currentBlock.ParentHash != expectedParent.BlockHash {
-		// There can be another reorg while we're finding the LCA.
-		// That is ok, since we'll detect it on the next iteration.
-		// Since we go currentBlock by currentBlock for unfinalized logs, the mismatch starts at currentBlockNumber - 1.
-		blockAfterLCA, err2 := lp.findBlockAfterLCA(ctx, currentBlock, expectedParent.FinalizedBlockNumber)
-		if err2 != nil {
-			return nil, fmt.Errorf("unable to find LCA after reorg: %w", err2)
+		return lp.handleReorg(ctx, currentBlock)
+	}
+
+	// No reorg for current block, but during replay it's possible that current block is older than the latest block, let's check it too to be safe.
+	latestBlockDB, err1 := lp.orm.SelectLatestBlock(ctx)
+	if err1 != nil {
+		if pkgerrors.Is(err1, sql.ErrNoRows) {
+			lp.lggr.Criticalw("Unexpected state. Expected at least one block to be present in the db when checking for reorg during replay, but got no rows", "currentBlockNumber", currentBlockNumber, "err", err1)
+		}
+		return nil, pkgerrors.Wrap(err1, "unable to get latest block")
+	}
+
+	if currentBlock.BlockNumber() >= latestBlockDB.BlockNumber {
+		// currentBlock is newest, nothing more to check
+		return currentBlock, nil
+	}
+
+	latestBlockRPC, err := lp.headerByNumber(ctx, latestBlockDB.BlockNumber)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get latest block header for block number %d: %w", latestBlockDB.BlockNumber, err)
+	}
+
+	if latestBlockRPC.Hash != latestBlockDB.BlockHash {
+		// Reorg detected, handle it
+		lca, err := lp.handleReorg(ctx, currentBlock)
+		if err != nil {
+			return nil, fmt.Errorf("failed to handle reorg: %w", err)
 		}
 
-		lp.lggr.Infow("Reorg detected", "blockAfterLCA", blockAfterLCA.Number, "currentBlockNumber", currentBlockNumber)
-		// We truncate all the blocks and logs after the LCA.
-		// We could preserve the logs for forensics, since its possible
-		// that applications see them and take action upon it, however that
-		// results in significantly slower reads since we must then compute
-		// the canonical set per read. Typically, if an application took action on a log
-		// it would be saved elsewhere e.g. evm.txes, so it seems better to just support the fast reads.
-		// Its also nicely analogous to reading from the chain itself.
-		err2 = lp.orm.DeleteLogsAndBlocksAfter(ctx, blockAfterLCA.Number)
-		if err2 != nil {
-			// If we error on db commit, we can't know if the tx went through or not.
-			// We return an error here which will cause us to restart polling from lastBlockSaved + 1
-			return nil, err2
+		if lca.Number < currentBlock.BlockNumber() {
+			// LCA is older than current block, we need to get the new current block after reorg
+			return lca, nil
 		}
-		return blockAfterLCA, nil
 	}
-	// No reorg, return current block.
+
 	return currentBlock, nil
+}
+
+func (lp *logPoller) handleReorg(ctx context.Context, currentBlock *evmtypes.Head) (*evmtypes.Head, error) {
+	// during replay currentBlock may be older than the latest block, thus it's possible to miss finality violation,
+	// if we use its view on latest finalized block. To be safe, we get the latest block from the db.
+	latestBlock, err := lp.orm.SelectLatestBlock(ctx)
+	if err != nil {
+		if pkgerrors.Is(err, sql.ErrNoRows) {
+			lp.lggr.Criticalw("Unexpected state. Expected at least one block to be present in the db when handling reorg, but got no rows", "currentBlockNumber", currentBlock.Number, "err", err)
+		}
+		return nil, pkgerrors.Wrap(err, "failed to get latest finalized block from db")
+	}
+	// There can be another reorg while we're finding the LCA.
+	// That is ok, since we'll detect it on the next iteration.
+	// Since we go currentBlock by currentBlock for unfinalized logs, the mismatch starts at currentBlockNumber - 1.
+	blockAfterLCA, err2 := lp.findBlockAfterLCA(ctx, currentBlock, latestBlock.FinalizedBlockNumber)
+	if err2 != nil {
+		return nil, fmt.Errorf("unable to find LCA after reorg: %w", err2)
+	}
+
+	lp.lggr.Infow("Reorg detected", "blockAfterLCA", blockAfterLCA.Number, "currentBlockNumber", currentBlock.Number)
+	// We truncate all the blocks and logs after the LCA.
+	// We could preserve the logs for forensics, since its possible
+	// that applications see them and take action upon it, however that
+	// results in significantly slower reads since we must then compute
+	// the canonical set per read. Typically, if an application took action on a log
+	// it would be saved elsewhere e.g. evm.txes, so it seems better to just support the fast reads.
+	// Its also nicely analogous to reading from the chain itself.
+	err2 = lp.orm.DeleteLogsAndBlocksAfter(ctx, blockAfterLCA.Number)
+	if err2 != nil {
+		// If we error on db commit, we can't know if the tx went through or not.
+		// We return an error here which will cause us to restart polling from lastBlockSaved + 1
+		return nil, err2
+	}
+	return blockAfterLCA, nil
 }
 
 // PollAndSaveLogs On startup/crash current is the first block after the last processed block.
