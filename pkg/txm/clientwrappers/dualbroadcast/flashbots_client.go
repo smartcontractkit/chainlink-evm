@@ -10,31 +10,42 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
-	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-var _ txm.Client = &FlashbotsClient{}
+const flashbotsRPCTimeout = 10 * time.Second
 
 type FlashbotsTxStore interface {
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
 }
+
+type FlashbotsClientRPC interface {
+	BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error)
+	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
+	SendTransaction(context.Context, *evmtypes.Transaction) error
+}
+
 type FlashbotsClient struct {
-	c         client.Client
+	lggr      logger.SugaredLogger
+	c         FlashbotsClientRPC
 	keystore  keys.MessageSigner
 	customURL *url.URL
 	txStore   FlashbotsTxStore
 }
 
-func NewFlashbotsClient(c client.Client, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore) *FlashbotsClient {
+func NewFlashbotsClient(lggr logger.Logger, c FlashbotsClientRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore) *FlashbotsClient {
 	return &FlashbotsClient{
+		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
 		c:         c,
 		keystore:  keystore,
 		customURL: customURL,
@@ -47,15 +58,21 @@ func (d *FlashbotsClient) NonceAt(ctx context.Context, address common.Address, b
 }
 
 func (d *FlashbotsClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
+	ctx, cancel := context.WithTimeout(ctx, flashbotsRPCTimeout)
+	defer cancel()
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.String()))
-	response, err := d.signAndPostMessage(ctx, address, body, "")
+	raw, err := d.signAndPostMessage(ctx, address, body, "")
 	if err != nil {
 		return 0, err
 	}
 
-	nonce, err := hexutil.DecodeUint64(response)
+	var resultStr string
+	if err := json.Unmarshal(raw, &resultStr); err != nil {
+		return 0, fmt.Errorf("failed to unmarshal response into string: %w", err)
+	}
+	nonce, err := hexutil.DecodeUint64(resultStr)
 	if err != nil {
-		return 0, fmt.Errorf("failed to decode response %v into uint64: %w", response, err)
+		return 0, fmt.Errorf("failed to decode response %v into uint64: %w", resultStr, err)
 	}
 	return nonce, nil
 }
@@ -82,25 +99,29 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		}
 
 		// After successfully sending the transaction, send a bundle with all unconfirmed transactions
-		_ = d.SendBundle(ctx, tx.FromAddress, params)
-		// Don't return bundle error - the single transaction was already sent successfully
+		// Don't act on a bundle error - this is a fire and forget operation but we do want to log the error.
+		if err := d.SendBundle(ctx, tx.FromAddress, params); err != nil {
+			d.lggr.Error("error sending bundle: ", err)
+		}
 		return nil
 	}
 
 	return d.c.SendTransaction(ctx, attempt.SignedTransaction)
 }
 
-func (d *FlashbotsClient) signAndPostMessage(ctx context.Context, address common.Address, body []byte, urlParams string) (result string, err error) {
+func (d *FlashbotsClient) signAndPostMessage(ctx context.Context, address common.Address, body []byte, urlParams string) (json.RawMessage, error) {
+	ctx, cancel := context.WithTimeout(ctx, flashbotsRPCTimeout)
+	defer cancel()
 	bodyReader := bytes.NewReader(body)
 	postReq, err := http.NewRequestWithContext(ctx, http.MethodPost, d.customURL.String()+"?"+urlParams, bodyReader)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	hashedBody := crypto.Keccak256Hash(body).Hex()
 	signedMessage, err := d.keystore.SignMessage(ctx, address, []byte(hashedBody))
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	postReq.Header.Add("X-Flashbots-signature", address.String()+":"+hexutil.Encode(signedMessage))
@@ -108,30 +129,30 @@ func (d *FlashbotsClient) signAndPostMessage(ctx context.Context, address common
 
 	resp, err := http.DefaultClient.Do(postReq)
 	if err != nil {
-		return result, fmt.Errorf("request %v failed: %w", postReq, err)
+		return nil, fmt.Errorf("request %v failed: %w", postReq, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("request %v failed with status: %d", postReq, resp.StatusCode)
+		return nil, fmt.Errorf("request %v failed with status: %d", postReq, resp.StatusCode)
 	}
 
 	keyJSON, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return
+		return nil, err
 	}
 	var response postResponse
 	err = json.Unmarshal(keyJSON, &response)
 	if err != nil {
-		return result, fmt.Errorf("failed to unmarshal response into struct: %w: %s", err, string(keyJSON))
+		return nil, fmt.Errorf("failed to unmarshal response into struct: %w: %s", err, string(keyJSON))
 	}
 	if response.Error.Message != "" {
-		return result, errors.New(response.Error.Message)
+		return nil, errors.New(response.Error.Message)
 	}
 	return response.Result, nil
 }
 
 type postResponse struct {
-	Result string `json:"result,omitempty"`
+	Result json.RawMessage `json:"result,omitempty"`
 	Error  postError
 }
 
@@ -147,9 +168,13 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 
 	// TODO: Get the first attempt from each transaction for now.
 	attempts := make([]*types.Attempt, 0, len(unconfirmedTxs))
+	nonces := make([]uint64, 0, len(unconfirmedTxs))
 	for _, unconfirmedTx := range unconfirmedTxs {
 		if len(unconfirmedTx.Attempts) > 0 {
 			attempts = append(attempts, unconfirmedTx.Attempts[0])
+			if unconfirmedTx.Nonce != nil {
+				nonces = append(nonces, *unconfirmedTx.Nonce)
+			}
 		}
 	}
 
@@ -159,11 +184,11 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	}
 
 	// TODO: we don't have a good way to get this other than making an RPC call. Some async caching may help with the overhead.
-	currentBlock, err := d.c.LatestBlockHeight(ctx)
+	currentBlock, err := d.c.BlockByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get current block height: %w", err)
 	}
-	targetBlock := new(big.Int).Add(currentBlock, big.NewInt(1))
+	targetBlock := currentBlock.NumberU64() + 10
 
 	bodyItems := make([]map[string]any, 0, len(attempts))
 	for _, attempt := range attempts {
@@ -178,14 +203,14 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 
 		bodyItems = append(bodyItems, map[string]interface{}{
 			"tx":        hexutil.Encode(txData),
-			"canRevert": false,
+			"canRevert": true,
 		})
 	}
 
 	bundleParams := map[string]interface{}{
 		"version": "v0.1",
 		"inclusion": map[string]interface{}{
-			"block": hexutil.EncodeBig(targetBlock),
+			"block": hexutil.EncodeBig(new(big.Int).SetUint64(targetBlock)),
 		},
 		"body": bodyItems,
 	}
@@ -202,6 +227,17 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 		return fmt.Errorf("failed to marshal bundle request: %w", err)
 	}
 
-	_, err = d.signAndPostMessage(ctx, fromAddress, bodyBytes, urlParams)
-	return err
+	raw, err := d.signAndPostMessage(ctx, fromAddress, bodyBytes, urlParams)
+	if err != nil {
+		return err
+	}
+
+	var bundleResult struct {
+		BundleHash string `json:"bundleHash"`
+	}
+	if err := json.Unmarshal(raw, &bundleResult); err != nil {
+		return fmt.Errorf("failed to decode response %v into bundle result: %w", raw, err)
+	}
+	d.lggr.Infow("Broadcasted transaction bundle", "nonces", nonces, "bundleHash", bundleResult.BundleHash)
+	return nil
 }

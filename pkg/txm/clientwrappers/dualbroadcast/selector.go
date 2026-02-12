@@ -16,7 +16,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	urlString := url.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
-		return NewFlashbotsClient(client, keyStore, url, txStore), nil, nil
+		return NewFlashbotsClient(lggr, client, keyStore, url, txStore), nil, nil
 	default:
 		mc, err := NewMetaClient(lggr, client, keyStore, url, chainID, txStore)
 		if err != nil {
