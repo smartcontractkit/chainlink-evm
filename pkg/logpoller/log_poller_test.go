@@ -2152,3 +2152,113 @@ func TestWhere(t *testing.T) {
 		assert.Equal(t, []query.Expression{}, result)
 	})
 }
+
+func TestLogPoller_Reorg_On_Replay(t *testing.T) {
+	// TestCase:
+	// 1. LogPoller processes blocks to block 11
+	// 2. Reorg replaces block 11 with a new block (some additional blocks may be added on top of it)
+	// 3. Replay is initiated from block below 11.
+	// Expected behaviour:
+	// 1. LogPoller should replace reorged block 11 with a new data.
+	// 2. DB must not contain at any point logs from both old and new block 11.
+	// 3. Finality Violation must not occur, since chain did not violate finality depth. 
+	t.Parallel()
+	const reorgedBlockNumber = 11
+	testCases := []struct {
+		name                     string
+		numberOfBlocksAfterReorg int
+	}{
+		{
+			name:                     "Replay start right after reorg",
+			numberOfBlocksAfterReorg: 0,
+		},
+		{
+			name:                     "Replay start a few blocks after reorg",
+			numberOfBlocksAfterReorg: 1,
+		},
+		{
+			name:                     "Replay start once reorged block is finalized",
+			numberOfBlocksAfterReorg: 5,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			lpOpts := logpoller.Opts{
+				PollPeriod:               24 * time.Hour, // effectively disable automatic polling, so we can control when we poll in the test
+				UseFinalityTag:           false,
+				FinalityDepth:            3,
+				BackfillBatchSize:        3,
+				RPCBatchSize:             2,
+				KeepFinalizedBlocksDepth: 1000,
+			}
+			th := SetupTH(t, lpOpts)
+
+			// Set up a log poller listening for log emitter logs.
+			err := th.LogPoller.RegisterFilter(testutils.Context(t), logpoller.Filter{
+				Name:      "Test Emitter 1",
+				EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID},
+				Addresses: []common.Address{th.EmitterAddress1},
+			})
+			require.NoError(t, err)
+
+			// populate chain with data
+			for range reorgedBlockNumber - 1 {
+				_, err = th.Emitter1.EmitLog1(th.Owner, []*big.Int{big.NewInt(int64(1))})
+				require.NoError(t, err)
+				th.Backend.Commit()
+			}
+
+			// start LogPoller and wait for it to complete first poll. Second poll won't happen until we call PollAndSaveLogs again, since poll period is very long.
+			require.NoError(t, th.LogPoller.Start(t.Context()))
+			defer func() {
+				require.NoError(t, th.LogPoller.Close())
+			}()
+			testutils.RequireEventually(t, func() bool {
+				latest, err := th.LogPoller.LatestBlock(t.Context())
+				return err == nil && latest.BlockNumber == reorgedBlockNumber
+			})
+
+			reorgedBlock, err := th.Client.BlockByNumber(t.Context(), nil)
+			require.NoError(t, err)
+			require.Equal(t, int64(reorgedBlockNumber), reorgedBlock.Number().Int64())
+
+			// Replace block 11 with a new block and burry it under 1 new block
+			require.NoError(t, th.Backend.Fork(reorgedBlock.ParentHash()))
+			const newLogData = int64(123)
+			// Commit reorgedBlock and numberOfBlocksAfterReorg on top of it
+			for range tc.numberOfBlocksAfterReorg + 1 {
+				// emit log that is not tracked by LP to ensure that tracked log has a different index.
+				// So if reorg is not properly handled and both logs end up in the database
+				_, err = th.Emitter2.EmitLog1(th.Owner, []*big.Int{big.NewInt(int64(10))})
+				require.NoError(t, err)
+				_, err = th.Emitter1.EmitLog1(th.Owner, []*big.Int{big.NewInt(newLogData)})
+				th.Backend.Commit()
+			}
+
+			newReorgedBlock, err := th.Client.BlockByNumber(t.Context(), big.NewInt(reorgedBlockNumber))
+			require.NoError(t, err)
+			require.NotEqual(t, reorgedBlock.Hash().String(), newReorgedBlock.Hash().String())
+
+			latest, err := th.Client.BlockByNumber(t.Context(), nil)
+			require.NoError(t, err)
+			require.Equal(t, int64(tc.numberOfBlocksAfterReorg+reorgedBlockNumber), latest.Number().Int64())
+
+			// Trigger replay, which should gracefully handle the reorg and end up on the new latest block
+			err = th.LogPoller.Replay(t.Context(), 5)
+			require.NoError(t, err)
+			// LP should be on latest block now
+			lpLatest, err := th.LogPoller.LatestBlock(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, int64(tc.numberOfBlocksAfterReorg+reorgedBlockNumber), lpLatest.BlockNumber)
+			logs, err := th.ORM.SelectLogsByBlockRange(t.Context(), reorgedBlockNumber, reorgedBlockNumber)
+			require.NoError(t, err)
+			require.Len(t, logs, 1)
+			require.Equal(t, newLogData, big.NewInt(0).SetBytes(logs[0].Data).Int64(), "Log data should match the log from the new block, indicating that the old block's log was properly removed during replay")
+			// Ensure reorged block was replaced by a new one
+			dbBlock, err := th.ORM.SelectBlockByNumber(testutils.Context(t), reorgedBlock.Number().Int64())
+			require.NoError(t, err)
+			require.Equal(t, reorgedBlock.Number().Int64(), dbBlock.BlockNumber)
+			require.NotEqual(t, reorgedBlock.Hash(), dbBlock.BlockHash)
+		})
+	}
+}
