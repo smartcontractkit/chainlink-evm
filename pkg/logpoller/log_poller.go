@@ -1178,52 +1178,109 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 			return fmt.Errorf("failed to backfill finalized logs: %w", err)
 		}
 		currentBlockNumber = lastSafeBackfillBlock + 1
+		currentBlock, err = lp.getCurrentBlockMaybeHandleReorg(ctx, currentBlockNumber, nil, isReplay)
+		if err != nil {
+			// If there's an error handling the reorg, we can't be sure what state the db was left in.
+			// Resume from the latest block saved.
+			return fmt.Errorf("failed to get current block: %w", err)
+		}
+		currentBlockNumber = currentBlock.Number
 	}
 
 	for {
-		if currentBlockNumber > currentBlock.Number {
-			currentBlock, err = lp.getCurrentBlockMaybeHandleReorg(ctx, currentBlockNumber, nil, isReplay)
-			if err != nil {
-				// If there's an error handling the reorg, we can't be sure what state the db was left in.
-				// Resume from the latest block saved.
-				return fmt.Errorf("failed to get current block: %w", err)
+
+		blocks, logs, err := lp.getUnfinalizedLogs(ctx, currentBlock, latestBlockNumber, safeBlockNumber, latestFinalizedBlockNumber, isReplay)
+		// even if we have an error, we may have partial logs and blocks that can be saved, so we save what we have and then retry.
+		if len(logs) > 0 || len(blocks) > 0 {
+			lp.lggr.Debugw("Saving logs", "logs", len(logs), "blocks", len(blocks), "currentBlockNumber", currentBlockNumber)
+			insertErr := lp.orm.InsertLogsWithBlocks(ctx, logs, blocks)
+			if insertErr != nil {
+				lp.lggr.Warnw("Unable to save logs, retrying later", "insertErr", insertErr, "block", currentBlockNumber, "err", err)
+				return nil
 			}
-			currentBlockNumber = currentBlock.Number
 		}
 
-		h := currentBlock.Hash
-		var logs []types.Log
-		logs, err = lp.latencyMonitor.FilterLogs(ctx, lp.Filter(nil, nil, &h))
-		if err != nil {
-			lp.lggr.Warnw("Unable to query for logs, retrying", "err", err, "block", currentBlockNumber)
+		if err == nil {
+			lp.lggr.Debugw("Finished processing unfinalized blocks", "from", currentBlockNumber, "to", latestBlockNumber)
 			return nil
 		}
-		lp.lggr.Debugw("Unfinalized log query", "logs", len(logs), "currentBlockNumber", currentBlockNumber, "blockHash", currentBlock.Hash, "timestamp", currentBlock.Timestamp)
+
+		var reorgErr *reorgError
+		if !errors.As(err, &reorgErr) {
+			return fmt.Errorf("failed to get unfinalized logs: %w", err)
+		}
+
+		lp.lggr.Warnw("Reorg detected during unfinalized log processing, handling reorg", "err", err, "currentBlockNumber", currentBlockNumber, "lastKnownMatchingHead", reorgErr.ReorgedAt.Number)
+		currentBlock, err = lp.handleReorg(ctx, reorgErr.ReorgedAt)
+		if err != nil {
+			return fmt.Errorf("failed to handle reorg: %w", err)
+		}
+		lp.lggr.Infow("Finished handling reorg, resuming log processing from new block after LCA", "currentBlockNumber", currentBlock.Number)
+	}
+}
+
+type reorgError struct {
+	ReorgedAt *evmtypes.Head
+}
+
+func newReorgError(reorgedAt *evmtypes.Head) error {
+	return &reorgError{ReorgedAt: reorgedAt}
+}
+
+func (e *reorgError) Error() string {
+	return fmt.Sprintf("reorg detected at block %d", e.ReorgedAt.Number)
+}
+
+func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmtypes.Head, latest, safe, finalized int64, isReplay bool) ([]Block, []Log, error) {
+	var logs []Log
+	var blocks []Block
+	for {
+		h := currentBlock.Hash
+		rpcLogs, err := lp.latencyMonitor.FilterLogs(ctx, lp.Filter(nil, nil, &h))
+		if err != nil {
+			lp.lggr.Warnw("Unable to query for logs, retrying on next poll", "err", err, "block", currentBlock.Number)
+			return blocks, logs, nil
+		}
+		lp.lggr.Debugw("Unfinalized log query", "logs", len(logs), "currentBlockNumber", currentBlock.Number, "blockHash", currentBlock.Hash, "timestamp", currentBlock.Timestamp)
 		block := Block{
 			BlockHash:            h,
-			BlockNumber:          currentBlockNumber,
+			BlockNumber:          currentBlock.Number,
 			BlockTimestamp:       currentBlock.Timestamp,
-			FinalizedBlockNumber: latestFinalizedBlockNumber,
-			SafeBlockNumber:      safeBlockNumber,
+			FinalizedBlockNumber: finalized,
+			SafeBlockNumber:      safe,
 		}
-		err = lp.orm.InsertLogsWithBlocks(
-			ctx,
-			convertLogs(logs, []Block{block}, lp.lggr, lp.ec.ConfiguredChainID()),
-			[]Block{block},
-		)
-		if err != nil {
-			lp.lggr.Warnw("Unable to save logs resuming from last saved block + 1", "err", err, "block", currentBlockNumber)
-			return nil
-		}
-		// Update current block.
-		// Same reorg detection on unfinalized blocks.
-		currentBlockNumber++
-		if currentBlockNumber > latestBlockNumber {
-			break
-		}
-	}
+		logs = append(logs, convertLogs(rpcLogs, []Block{block}, lp.lggr, lp.ec.ConfiguredChainID())...)
+		blocks = append(blocks, block)
 
-	return nil
+		if currentBlock.Number >= latest {
+			return blocks, logs, nil
+		}
+
+		nextBlock, err := lp.headerByNumber(ctx, currentBlock.Number+1)
+		if err != nil {
+			lp.lggr.Warnw("Unable to get next block header, retrying on next poll", "err", err, "block", currentBlock.Number)
+			return blocks, logs, nil
+		}
+
+		if nextBlock.ParentHash != currentBlock.Hash {
+			return blocks, logs, newReorgError(nextBlock)
+		}
+
+		if isReplay {
+			// During replay, we also check if the next block matches what we have in the DB to avoid false positives on reorgs due to finality violation.
+			nextBlockDB, err := lp.orm.SelectBlockByNumber(ctx, nextBlock.Number)
+			if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
+				lp.lggr.Warnw("Unable to get next block from DB during replay, retrying on next poll", "err", err, "block", nextBlock.Number)
+				return blocks, logs, nil
+			}
+
+			if nextBlockDB != nil && nextBlock.Hash != nextBlockDB.BlockHash {
+				return blocks, logs, newReorgError(nextBlock)
+			}
+		}
+
+		currentBlock = nextBlock
+	}
 }
 
 // Returns information about latestBlock, latestFinalizedBlockNumber provided by HeadTracker

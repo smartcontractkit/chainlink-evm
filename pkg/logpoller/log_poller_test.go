@@ -690,7 +690,9 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 	owner.GasPrice = big.NewInt(10e9)
 	p.Property("synchronized with geth", prop.ForAll(func(mineOrReorg []uint64) bool {
 		// After the set of reorgs, we should have the same canonical blocks that geth does.
-		t.Log("Starting test", mineOrReorg)
+		seed := time.Now().UnixNano()
+		localRand := rand.New(rand.NewSource(seed))
+		t.Log("Starting test", mineOrReorg, "seed", seed)
 		chainID := testutils.NewRandomEVMChainID()
 		// Set up a test chain with a log emitting contract deployed.
 		orm := logpoller.NewORM(chainID, db, lggr)
@@ -742,7 +744,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 		}
 		// Randomly pick to mine or reorg
 		for i := 0; i < numChainInserts; i++ {
-			if rand.Int63()%2 == 0 {
+			if localRand.Int63()%2 == 0 {
 				// Mine blocks
 				for j := 0; j < int(mineOrReorg[i]); j++ {
 					backend.Commit()
@@ -770,7 +772,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 				require.NoError(t, err1)
 				t.Logf("New latest (%v, %x), latest parent %x)\n", latest.NumberU64(), latest.Hash(), latest.ParentHash())
 			}
-			lp.PollAndSaveLogs(testutils.Context(t), currentBlock.BlockNumber, false)
+			lp.PollAndSaveLogs(testutils.Context(t), currentBlock.BlockNumber+1, false)
 			currentBlock, err = lp.LatestBlock(testutils.Context(t))
 			require.NoError(t, err)
 		}
