@@ -217,7 +217,7 @@ func TestRPCClient_doWithConfidence(t *testing.T) {
 			EthCallResult:       "0x00",
 			ExpectedTag:         "safe",
 			BlockByNumberResult: "null",
-			ExpectedError:       "referenced block request returned nil. RPC is unhealthy or chain does not support specified tag",
+			ExpectedError:       "referenced block request returned nil block header: the RPC node may be unhealthy, still syncing, or the chain does not support the specified block tag. Verify the RPC node status and chain compatibility",
 		},
 		{
 			Name:                "Happy path",

@@ -51,9 +51,9 @@ func newErrorFromCall(err error, call Call, block string, tp readType) Error {
 func (e Error) Error() string {
 	var builder strings.Builder
 
-	builder.WriteString("[read error]")
+	builder.WriteString("[contract read error]")
 	builder.WriteString(fmt.Sprintf(" err: %s;", e.Err.Error()))
-	builder.WriteString(fmt.Sprintf(" type: %s;", e.Type))
+	builder.WriteString(fmt.Sprintf(" read type: %s;", e.Type))
 
 	if e.Detail != nil {
 		builder.WriteString(fmt.Sprintf(" block: %s;", e.Detail.Block))
@@ -101,9 +101,9 @@ func newErrorFromCalls(err error, calls []Call, block string, tp readType) Multi
 func (e MultiCallError) Error() string {
 	var builder strings.Builder
 
-	builder.WriteString("[read error]")
+	builder.WriteString("[batch contract read error]")
 	builder.WriteString(fmt.Sprintf(" err: %s;", e.Err.Error()))
-	builder.WriteString(fmt.Sprintf(" type: %s;", e.Type))
+	builder.WriteString(fmt.Sprintf(" read type: %s;", e.Type))
 
 	if e.Detail != nil {
 		builder.WriteString(fmt.Sprintf(" block: %s;", e.Detail.Block))
@@ -133,25 +133,25 @@ type ConfigError struct {
 
 func newMissingReadIdentifierErr(readIdentifier string) ConfigError {
 	return ConfigError{
-		Msg: fmt.Sprintf("[no configured reader] read-identifier: '%s'", readIdentifier),
+		Msg: fmt.Sprintf("[contract reader configuration error] no configured reader found for read-identifier: '%s'. Ensure the contract and read name are registered in the chain reader configuration", readIdentifier),
 	}
 }
 
 func newMissingContractErr(readIdentifier, contract string) ConfigError {
 	return ConfigError{
-		Msg: fmt.Sprintf("[no configured reader] read-identifier: %s; contract: %s;", readIdentifier, contract),
+		Msg: fmt.Sprintf("[contract reader configuration error] no configured reader found for contract '%s' (read-identifier: %s). Ensure the contract is registered in the chain reader configuration", contract, readIdentifier),
 	}
 }
 
 func newMissingReadNameErr(readIdentifier, contract, readName string) ConfigError {
 	return ConfigError{
-		Msg: fmt.Sprintf("[no configured reader] read-identifier: %s; contract: %s; read-name: %s;", readIdentifier, contract, readName),
+		Msg: fmt.Sprintf("[contract reader configuration error] no configured reader found for read-name '%s' on contract '%s' (read-identifier: %s). Ensure the method or event is registered in the chain reader configuration", readName, contract, readIdentifier),
 	}
 }
 
 func newUnboundAddressErr(address, contract, readName string) ConfigError {
 	return ConfigError{
-		Msg: fmt.Sprintf("[address not bound] address: %s; contract: %s; read-name: %s;", address, contract, readName),
+		Msg: fmt.Sprintf("[contract reader configuration error] address '%s' is not bound to contract '%s' for read-name '%s'. Bind the address to the contract before attempting reads", address, contract, readName),
 	}
 }
 
@@ -166,7 +166,7 @@ type FilterError struct {
 }
 
 func (e FilterError) Error() string {
-	return fmt.Sprintf("[logpoller filter error] action: %s; err: %s; filter: %+v;", e.Action, e.Err.Error(), e.Filter)
+	return fmt.Sprintf("[log poller filter error] failed during '%s' action: %s; filter details: %+v. Check that the filter configuration matches the expected contract events and addresses", e.Action, e.Err.Error(), e.Filter)
 }
 
 func (e FilterError) Unwrap() error {
@@ -179,7 +179,7 @@ type NoContractExistsError struct {
 }
 
 func (e NoContractExistsError) Error() string {
-	return fmt.Sprintf("%s: contract does not exist at address: %s", e.Err.Error(), e.Address)
+	return fmt.Sprintf("%s: no contract exists at address %s. Verify that the contract has been deployed to this address on the correct chain and that the address is not an externally-owned account (EOA)", e.Err.Error(), e.Address)
 }
 
 func (e NoContractExistsError) Unwrap() error {

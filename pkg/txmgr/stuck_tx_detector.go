@@ -195,7 +195,7 @@ func (d *stuckTxDetector) FindUnconfirmedTxWithLowestNonce(ctx context.Context, 
 // 5. If 4 is true, the transaction is likely stuck due to overflow
 func (d *stuckTxDetector) detectStuckTransactionsHeuristic(ctx context.Context, txs []Tx, blockNum int64) ([]Tx, error) {
 	if d.cfg.Threshold() == nil || d.cfg.MinAttempts() == nil {
-		err := errors.New("missing required configs for the stuck transaction heuristic. Transactions.AutoPurge.Threshold and Transactions.AutoPurge.MinAttempts are required")
+		err := errors.New("stuck transaction detection cannot run: missing required configuration values. Both Transactions.AutoPurge.Threshold and Transactions.AutoPurge.MinAttempts must be set in the chain configuration to enable automatic stuck transaction detection")
 		d.lggr.Error(err.Error())
 		return txs, err
 	}

@@ -29,7 +29,7 @@ var _ Finalizer = (*evmFinalizer)(nil)
 var (
 	// ErrCouldNotGetReceipt is the error string we save if we reach our LatestFinalizedBlockNum for a confirmed transaction
 	// without ever getting a receipt. This most likely happened because an external wallet used the account for this nonce
-	ErrCouldNotGetReceipt = "could not get receipt"
+	ErrCouldNotGetReceipt = "failed to retrieve transaction receipt before finalization: the transaction reached the finalized block without a receipt. This likely means an external wallet used the same account nonce, or the transaction was dropped by the network. Verify that no other wallet or Chainlink instance is using the same private key"
 )
 
 // processHeadTimeout represents a sanity limit on how long ProcessHead should take to complete

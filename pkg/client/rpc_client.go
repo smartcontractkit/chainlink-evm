@@ -191,7 +191,7 @@ func (r *RPCClient) Dial(callerCtx context.Context) error {
 	ws := r.ws.Load()
 	httpClient := r.http.Load()
 	if ws == nil && httpClient == nil {
-		return errors.New("cannot dial rpc client when both ws and http info are missing")
+		return errors.New("failed to dial RPC client: both WebSocket and HTTP URLs are missing. At least one connection URL must be configured")
 	}
 
 	promEVMPoolRPCNodeDials.WithLabelValues(r.chainID.String(), r.name).Inc()
@@ -356,8 +356,8 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 	if r.chainType == chaintype.ChainAstar {
 		for _, el := range b {
 			if el.Method == "eth_getLogs" {
-				r.rpcLog.Critical("evmclient.BatchCallContext: eth_getLogs is not supported")
-				return errors.New("evmclient.BatchCallContext: eth_getLogs is not supported")
+				r.rpcLog.Critical("evmclient.BatchCallContext failed: eth_getLogs is not supported for Astar chain type in batch calls")
+				return errors.New("evmclient.BatchCallContext failed: eth_getLogs is not supported for Astar chain type in batch calls. Use individual log queries instead")
 			}
 			if !isRequestingFinalizedBlock(el) {
 				continue
@@ -441,7 +441,7 @@ func (r *RPCClient) SubscribeToHeads(ctx context.Context) (ch <-chan *evmtypes.H
 	}
 
 	if ws == nil {
-		return nil, nil, errors.New("SubscribeNewHead is not allowed without ws url")
+		return nil, nil, errors.New("failed to subscribe to new heads: WebSocket URL is required for head subscriptions but none was configured. Enable HTTP polling or configure a WebSocket URL")
 	}
 
 	if multinode.CtxIsHealthCheckRequest(ctx) {
@@ -639,7 +639,7 @@ func (r *RPCClient) astarLatestFinalizedBlock(ctx context.Context, result interf
 	}
 
 	if astarHead.Number == nil {
-		return r.wrapRPCClientError(errors.New("expected non empty head number of finalized block"))
+		return r.wrapRPCClientError(errors.New("failed to get Astar finalized block: the finalized block header returned a nil block number. The RPC node may be syncing or unhealthy"))
 	}
 
 	err = r.ethGetBlockByNumber(ctx, astarHead.Number.String(), result)
@@ -790,7 +790,7 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 	lggr.Debug("RPC call: evmclient.Client#SendTransaction")
 	start := time.Now()
 	if r.isChainType(chaintype.ChainTron) {
-		err := errors.New("SendTransaction not implemented for Tron, this should never be called")
+		err := errors.New("SendTransaction is not supported for Tron chain type: Tron uses a different transaction submission mechanism. This method should never be called for Tron nodes")
 		return struct{}{}, multinode.Fatal, err
 	}
 
@@ -804,7 +804,7 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 
 func (r *RPCClient) SimulateTransaction(ctx context.Context, tx *types.Transaction) error {
 	// Not Implemented
-	return pkgerrors.New("SimulateTransaction not implemented")
+	return pkgerrors.New("SimulateTransaction is not implemented for this RPC client")
 }
 
 func (r *RPCClient) SendEmptyTransaction(
@@ -816,7 +816,7 @@ func (r *RPCClient) SendEmptyTransaction(
 	fromAddress common.Address,
 ) (txhash string, err error) {
 	// Not Implemented
-	return "", pkgerrors.New("SendEmptyTransaction not implemented")
+	return "", pkgerrors.New("SendEmptyTransaction is not implemented for this RPC client")
 }
 
 // PendingSequenceAt returns one higher than the highest nonce from both mempool and mined transactions
@@ -831,7 +831,7 @@ func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Addres
 
 	// Tron doesn't have the concept of nonces, this shouldn't be called but just in case we'll return an error
 	if r.isChainType(chaintype.ChainTron) {
-		err = errors.New("tron does not support eth_getTransactionCount")
+		err = errors.New("Tron chain type does not support eth_getTransactionCount: Tron does not use the nonce-based transaction model")
 		return
 	}
 
@@ -861,7 +861,7 @@ func (r *RPCClient) NonceAt(ctx context.Context, account common.Address, blockNu
 
 	// Tron doesn't have the concept of nonces, this shouldn't be called but just in case we'll return an error
 	if r.isChainType(chaintype.ChainTron) {
-		err = errors.New("tron does not support eth_getTransactionCount")
+		err = errors.New("Tron chain type does not support eth_getTransactionCount: Tron does not use the nonce-based transaction model")
 		return
 	}
 
@@ -1225,7 +1225,7 @@ func (r *RPCClient) SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQu
 	ctx, cancel, chStopInFlight, ws, _ := r.acquireQueryCtx(ctx, r.rpcTimeout)
 	defer cancel()
 	if ws == nil {
-		return nil, errors.New("SubscribeFilterLogs is not allowed without ws url")
+		return nil, errors.New("failed to subscribe to filter logs: WebSocket URL is required for log subscriptions but none was configured. Configure a WebSocket URL to enable log subscriptions")
 	}
 	lggr := r.newRqLggr().With("q", q)
 
@@ -1486,7 +1486,7 @@ func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem,
 	}
 
 	if referencedHead == nil {
-		return errors.New("referenced block request returned nil. RPC is unhealthy or chain does not support specified tag")
+		return errors.New("referenced block request returned nil block header: the RPC node may be unhealthy, still syncing, or the chain does not support the specified block tag. Verify the RPC node status and chain compatibility")
 	}
 
 	maxAvailableHeight, err := r.referenceHeadToMaxAvailableHeight(confidence, referencedHead.Number)

@@ -98,7 +98,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 	t.Run("WS and HTTP URL cannot be both empty", func(t *testing.T) {
 		// ws is optional when LogBroadcaster is disabled, however SubscribeFilterLogs will return error if ws is missing
 		rpcClient := client.NewTestRPCClient(t, client.RPCClientOpts{})
-		require.Equal(t, errors.New("cannot dial rpc client when both ws and http info are missing"), rpcClient.Dial(ctx))
+		require.Equal(t, errors.New("failed to dial RPC client: both WebSocket and HTTP URLs are missing. At least one connection URL must be configured"), rpcClient.Dial(ctx))
 	})
 
 	t.Run("Updates chain info on new blocks", func(t *testing.T) {
@@ -391,7 +391,7 @@ func TestRPCClient_SubscribeFilterLogs(t *testing.T) {
 		require.NoError(t, rpcClient.Dial(ctx))
 
 		_, err = rpcClient.SubscribeFilterLogs(ctx, ethereum.FilterQuery{}, make(chan types.Log))
-		require.Equal(t, errors.New("SubscribeFilterLogs is not allowed without ws url"), err)
+		require.Equal(t, errors.New("failed to subscribe to filter logs: WebSocket URL is required for log subscriptions but none was configured. Configure a WebSocket URL to enable log subscriptions"), err)
 	})
 	t.Run("Failed SubscribeFilterLogs logs and returns proper error", func(t *testing.T) {
 		server := testutils.NewWSServer(t, chainID, func(reqMethod string, reqParams gjson.Result) (resp testutils.JSONRPCResponse) {
@@ -901,7 +901,7 @@ func TestRPCClient_Tron(t *testing.T) {
 
 		// Verify it returns the expected error for Tron
 		require.Error(t, err)
-		assert.Equal(t, "SendTransaction not implemented for Tron, this should never be called", err.Error())
+		assert.Equal(t, "SendTransaction is not supported for Tron chain type: Tron uses a different transaction submission mechanism. This method should never be called for Tron nodes", err.Error())
 	})
 
 	t.Run("NonceAt", func(t *testing.T) {

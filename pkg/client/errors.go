@@ -307,7 +307,7 @@ var monad = ClientErrors{
 	InsufficientEth: regexp.MustCompile("Signer had insufficient balance"),
 }
 
-const TerminallyStuckMsg = "transaction terminally stuck"
+const TerminallyStuckMsg = "transaction is terminally stuck in the mempool and cannot be included in a block: this transaction will not be retried and must be investigated manually"
 
 // Tx.Error messages that are set internally so they are not chain or client specific
 var internal = ClientErrors{
@@ -567,20 +567,20 @@ func ExtractRPCErrorOrNil(err error) *JsonError {
 // { "error":  { "code": 3, "data": "0xABC123...", "message": "execution reverted: hello world" } } // revert reason automatically parsed if a simple require and included in message.
 func ExtractRPCError(baseErr error) (*JsonError, error) {
 	if baseErr == nil {
-		return nil, pkgerrors.New("no error present")
+		return nil, pkgerrors.New("failed to extract RPC error: no error was provided to ExtractRPCError")
 	}
 	cause := pkgerrors.Cause(baseErr)
 	jsonBytes, err := json.Marshal(cause)
 	if err != nil {
-		return nil, pkgerrors.Wrap(err, "unable to marshal err to json")
+		return nil, pkgerrors.Wrap(err, "failed to extract RPC error: unable to marshal the underlying error to JSON for inspection")
 	}
 	jErr := JsonError{}
 	err = json.Unmarshal(jsonBytes, &jErr)
 	if err != nil {
-		return nil, pkgerrors.Wrapf(err, "unable to unmarshal json into jsonError struct (got: %v)", baseErr)
+		return nil, pkgerrors.Wrapf(err, "failed to extract RPC error: unable to unmarshal JSON into JsonError struct, the error may not be a standard JSON-RPC error (got: %v)", baseErr)
 	}
 	if jErr.Code == 0 {
-		return nil, pkgerrors.Errorf("not a RPCError because it does not have a code (got: %v)", baseErr)
+		return nil, pkgerrors.Errorf("failed to extract RPC error: error does not contain a JSON-RPC error code, so it is not a standard RPC error (got: %v)", baseErr)
 	}
 	return &jErr, nil
 }

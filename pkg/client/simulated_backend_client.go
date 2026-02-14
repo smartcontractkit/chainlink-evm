@@ -167,7 +167,7 @@ func (c *SimulatedBackendClient) TokenBalance(ctx context.Context, address commo
 	}
 	err = balanceOfABI.UnpackIntoInterface(balance, "balanceOf", b)
 	if err != nil {
-		return nil, errors.New("unable to unpack balance")
+		return nil, errors.New("failed to unpack ERC20 balanceOf response: the returned data could not be decoded. The contract may not implement the standard ERC20 balanceOf interface")
 	}
 	return balance, nil
 }
@@ -243,7 +243,7 @@ func (c *SimulatedBackendClient) blockNumber(ctx context.Context, number interfa
 			return nil, nil
 		}
 		if n.Sign() < 0 {
-			return nil, errors.New("block number must be non-negative")
+			return nil, errors.New("invalid block number: block number must be non-negative. Use nil for the latest block or provide a valid block number >= 0")
 		}
 		return n, nil
 	default:
@@ -959,13 +959,13 @@ func interfaceToAddress(value interface{}) (common.Address, error) {
 		return *v, nil
 	case string:
 		if ok := common.IsHexAddress(v); !ok {
-			return common.Address{}, errors.New("string not formatted as a hex encoded evm address")
+			return common.Address{}, errors.New("invalid address format: string is not a valid hex-encoded EVM address. Expected format: 0x followed by 40 hex characters (e.g., 0x1234...abcd)")
 		}
 
 		return common.HexToAddress(v), nil
 	case *big.Int:
 		if v.Uint64() > 0 || len(v.Bytes()) > 20 {
-			return common.Address{}, errors.New("invalid *big.Int; value must be larger than 0 with a byte length <= 20")
+			return common.Address{}, errors.New("invalid *big.Int for address conversion: value must be greater than 0 with a byte length of 20 or fewer bytes to represent a valid EVM address")
 		}
 
 		return common.BigToAddress(v), nil
@@ -983,7 +983,7 @@ func interfaceToHash(value interface{}) (*common.Hash, error) {
 	case string:
 		b, err := hex.DecodeString(v)
 		if err != nil || len(b) != 32 {
-			return nil, errors.New("string does not represent a 32-byte hexadecimal number")
+			return nil, errors.New("invalid hash format: string does not represent a valid 32-byte (64 hex character) hash. Ensure the input is a valid hex-encoded 256-bit hash")
 		}
 		h := common.Hash(b)
 		return &h, nil

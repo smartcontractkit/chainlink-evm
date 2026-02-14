@@ -54,7 +54,7 @@ func GetResponseSizeLimit(ctx context.Context) uint32 {
 	return limit
 }
 
-var errResponseTooLarge = errors.New("response is too large")
+var errResponseTooLarge = errors.New("response is too large: the RPC response exceeded the configured maximum size limit. Consider increasing the response size limit in node configuration or narrowing the query scope")
 
 // limitReader returns a Reader that reads from r
 // but stops with EOF after n bytes.
