@@ -142,7 +142,7 @@ func (c *evmTxAttemptBuilder) NewEmptyTxAttempt(ctx context.Context, nonce evmty
 	payload := []byte{}
 
 	if fee.GasPrice == nil {
-		return attempt, pkgerrors.New("NewEmptyTransaction failed: gas price cannot be nil. A valid gas price is required to create a transaction for force rebroadcast")
+		return attempt, pkgerrors.New("NewEmptyTranscation: gas price cannot be nil")
 	}
 
 	tx := newLegacyTransaction(
@@ -213,10 +213,10 @@ func validateDynamicFeeGas(kse keySpecificEstimator, fee gas.DynamicFee, etx Tx)
 	// Assertions from:	https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1559.md
 	// Prevent impossibly large numbers
 	if gasFeeCap.ToInt().Cmp(Max256BitUInt) > 0 {
-		return pkgerrors.New("gas fee cap validation failed: fee cap exceeds the maximum 256-bit unsigned integer value (2^256). This likely indicates a configuration error in gas price settings")
+		return pkgerrors.New("impossibly large fee cap")
 	}
 	if gasTipCap.ToInt().Cmp(Max256BitUInt) > 0 {
-		return pkgerrors.New("gas tip cap validation failed: tip cap exceeds the maximum 256-bit unsigned integer value (2^256). This likely indicates a configuration error in gas price settings")
+		return pkgerrors.New("impossibly large tip cap")
 	}
 	// The total must be at least as large as the tip
 	if gasFeeCap.Cmp(gasTipCap) < 0 {

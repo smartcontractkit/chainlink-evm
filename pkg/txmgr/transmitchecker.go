@@ -73,7 +73,7 @@ func (c *CheckerFactory) BuildChecker(spec TransmitCheckerSpec) (TransmitChecker
 				"failed to create VRF V2 coordinator at address %v", spec.VRFCoordinatorAddress)
 		}
 		if spec.VRFRequestBlockNumber == nil {
-			return nil, pkgerrors.New("VRF checker configuration error: VRFRequestBlockNumber parameter must be non-nil. This block number is required to verify VRF request fulfillment status")
+			return nil, pkgerrors.New("VRFRequestBlockNumber parameter must be non-nil")
 		}
 		return &VRFV2Checker{
 			GetCommitment:      coord.GetCommitment,
@@ -90,7 +90,7 @@ func (c *CheckerFactory) BuildChecker(spec TransmitCheckerSpec) (TransmitChecker
 				"failed to create VRF V2 coordinator plus at address %v", spec.VRFCoordinatorAddress)
 		}
 		if spec.VRFRequestBlockNumber == nil {
-			return nil, pkgerrors.New("VRF checker configuration error: VRFRequestBlockNumber parameter must be non-nil. This block number is required to verify VRF request fulfillment status")
+			return nil, pkgerrors.New("VRFRequestBlockNumber parameter must be non-nil")
 		}
 		return &VRFV2Checker{
 			GetCommitment:      coord.SRequestCommitments,
@@ -258,7 +258,7 @@ func (v *VRFV1Checker) Check(
 			"ethTxID", tx.ID,
 			"meta", tx.Meta,
 			"reqID", reqID)
-		return pkgerrors.New("VRF transmit check failed: request already fulfilled on-chain. Skipping transaction to avoid unnecessary gas expenditure on a duplicate fulfillment")
+		return pkgerrors.New("request already fulfilled")
 	}
 	// Request not fulfilled
 	return nil
@@ -349,7 +349,7 @@ func (v *VRFV2Checker) Check(
 			"ethTxID", tx.ID,
 			"meta", tx.Meta,
 			"vrfRequestId", vrfRequestID)
-		return pkgerrors.New("VRF transmit check failed: request already fulfilled on-chain. Skipping transaction to avoid unnecessary gas expenditure on a duplicate fulfillment")
+		return pkgerrors.New("request already fulfilled")
 	}
 	l.Debugw("Request not yet fulfilled",
 		"ethTxID", tx.ID,

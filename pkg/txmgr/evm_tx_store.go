@@ -34,7 +34,7 @@ import (
 )
 
 var (
-	ErrKeyNotUpdated = errors.New("evmTxStore: key was not updated in the database. The key may not exist or the update conditions were not met")
+	ErrKeyNotUpdated = errors.New("evmTxStore: Key not updated")
 )
 
 // EvmTxStore combines the txmgr tx store interface and the interface needed for the API to read from the tx DB
@@ -1197,7 +1197,7 @@ func (o *evmTxStore) SaveInsufficientFundsAttempt(ctx context.Context, timeout t
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 	if !(attempt.State == txmgrtypes.TxAttemptInProgress || attempt.State == txmgrtypes.TxAttemptInsufficientFunds) {
-		return errors.New("SaveInsufficientFundsAttempt failed: expected attempt state to be either 'in_progress' or 'insufficient_funds', but got an unexpected state. Ensure the attempt has not already been finalized or broadcast")
+		return errors.New("expected state to be either in_progress or insufficient_eth")
 	}
 	attempt.State = txmgrtypes.TxAttemptInsufficientFunds
 	ctx, cancel = context.WithTimeout(ctx, timeout)
@@ -1207,7 +1207,7 @@ func (o *evmTxStore) SaveInsufficientFundsAttempt(ctx context.Context, timeout t
 
 func (o *evmTxStore) saveSentAttempt(ctx context.Context, timeout time.Duration, attempt *TxAttempt, broadcastAt time.Time) error {
 	if attempt.State != txmgrtypes.TxAttemptInProgress {
-		return errors.New("saveSentAttempt failed: expected attempt state to be 'in_progress' before marking as broadcast. The attempt may have already been processed")
+		return errors.New("expected state to be in_progress")
 	}
 	attempt.State = txmgrtypes.TxAttemptBroadcast
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -1243,10 +1243,10 @@ func (o *evmTxStore) DeleteInProgressAttempt(ctx context.Context, attempt TxAtte
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 	if attempt.State != txmgrtypes.TxAttemptInProgress {
-		return errors.New("DeleteInProgressAttempt failed: expected attempt state to be 'in_progress', but got a different state. Only in-progress attempts can be deleted")
+		return errors.New("DeleteInProgressAttempt: expected attempt state to be in_progress")
 	}
 	if attempt.ID == 0 {
-		return errors.New("DeleteInProgressAttempt failed: attempt has no database ID (id=0). The attempt may not have been persisted yet")
+		return errors.New("DeleteInProgressAttempt: expected attempt to have an id")
 	}
 	_, err := o.q.ExecContext(ctx, `DELETE FROM evm.tx_attempts WHERE id = $1`, attempt.ID)
 	return pkgerrors.Wrap(err, "DeleteInProgressAttempt failed")
@@ -1258,7 +1258,7 @@ func (o *evmTxStore) SaveInProgressAttempt(ctx context.Context, attempt *TxAttem
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 	if attempt.State != txmgrtypes.TxAttemptInProgress {
-		return errors.New("SaveInProgressAttempt failed: attempt state must be 'in_progress' to be saved. The attempt may have already been broadcast or finalized")
+		return errors.New("SaveInProgressAttempt failed: attempt state must be in_progress")
 	}
 	var dbAttempt DbEthTxAttempt
 	dbAttempt.FromTxAttempt(attempt)
@@ -1401,10 +1401,10 @@ func (o *evmTxStore) SaveReplacementInProgressAttempt(ctx context.Context, oldAt
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 	if oldAttempt.State != txmgrtypes.TxAttemptInProgress || replacementAttempt.State != txmgrtypes.TxAttemptInProgress {
-		return errors.New("SaveReplacementInProgressAttempt failed: both the old and replacement attempts must have state 'in_progress'. Verify that neither attempt has been broadcast or finalized")
+		return errors.New("expected attempts to be in_progress")
 	}
 	if oldAttempt.ID == 0 {
-		return errors.New("SaveReplacementInProgressAttempt failed: the old attempt has no database ID (id=0). It may not have been persisted yet")
+		return errors.New("expected oldAttempt to have an ID")
 	}
 	return o.Transact(ctx, false, func(orm *evmTxStore) error {
 		if _, err := orm.q.ExecContext(ctx, `DELETE FROM evm.tx_attempts WHERE id=$1`, oldAttempt.ID); err != nil {
@@ -1443,7 +1443,7 @@ func (o *evmTxStore) UpdateTxFatalErrorAndDeleteAttempts(ctx context.Context, et
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 	if !etx.Error.Valid {
-		return errors.New("UpdateTxFatalErrorAndDeleteAttempts failed: the transaction's Error field must be set before marking it as fatally errored")
+		return errors.New("expected error field to be set")
 	}
 
 	etx.Sequence = nil
@@ -1467,16 +1467,16 @@ func (o *evmTxStore) UpdateTxAttemptInProgressToBroadcast(ctx context.Context, e
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 	if etx.BroadcastAt == nil {
-		return errors.New("UpdateTxAttemptInProgressToBroadcast failed: unconfirmed transaction is missing its broadcast_at timestamp. This field is required to track when the transaction was broadcast")
+		return errors.New("unconfirmed transaction must have broadcast_at time")
 	}
 	if etx.InitialBroadcastAt == nil {
-		return errors.New("UpdateTxAttemptInProgressToBroadcast failed: unconfirmed transaction is missing its initial_broadcast_at timestamp. This field is required to track when the transaction was first broadcast")
+		return errors.New("unconfirmed transaction must have initial_broadcast_at time")
 	}
 	if etx.State != txmgr.TxInProgress {
 		return pkgerrors.Errorf("can only transition to unconfirmed from in_progress, transaction is currently %s", etx.State)
 	}
 	if attempt.State != txmgrtypes.TxAttemptInProgress {
-		return errors.New("UpdateTxAttemptInProgressToBroadcast failed: attempt must be in 'in_progress' state before transitioning to broadcast. The attempt may have already been broadcast or finalized")
+		return errors.New("attempt must be in in_progress state")
 	}
 	if NewAttemptState != txmgrtypes.TxAttemptBroadcast {
 		return pkgerrors.Errorf("new attempt state must be broadcast, got: %s", NewAttemptState)
@@ -1505,13 +1505,13 @@ func (o *evmTxStore) UpdateTxUnstartedToInProgress(ctx context.Context, etx *Tx,
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 	if etx.Sequence == nil {
-		return errors.New("UpdateTxUnstartedToInProgress failed: transaction must have a nonce (Sequence) assigned before transitioning to 'in_progress' state")
+		return errors.New("in_progress transaction must have nonce")
 	}
 	if etx.State != txmgr.TxUnstarted {
 		return pkgerrors.Errorf("can only transition to in_progress from unstarted, transaction is currently %s", etx.State)
 	}
 	if attempt.State != txmgrtypes.TxAttemptInProgress {
-		return errors.New("UpdateTxUnstartedToInProgress failed: attempt state must be 'in_progress' when beginning transaction processing")
+		return errors.New("attempt state must be in_progress")
 	}
 	etx.State = txmgr.TxInProgress
 	return o.Transact(ctx, false, func(orm *evmTxStore) error {
