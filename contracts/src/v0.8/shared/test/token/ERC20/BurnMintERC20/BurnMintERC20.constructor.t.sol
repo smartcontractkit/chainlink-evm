@@ -13,7 +13,7 @@ contract BurnMintERC20_constructor is BurnMintERC20Setup {
     uint8 decimals = 19;
     uint256 maxSupply = 1e33;
 
-    s_burnMintERC20 = new BurnMintERC20(name, symbol, decimals, maxSupply, 1e18);
+    s_burnMintERC20 = new BurnMintERC20(name, symbol, decimals, maxSupply, 1e18, address(0));
 
     assertEq(name, s_burnMintERC20.name());
     assertEq(symbol, s_burnMintERC20.symbol());

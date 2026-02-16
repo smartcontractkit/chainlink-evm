@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {BaseERC20} from "../../../../token/ERC20/BaseERC20.sol";
 import {BurnMintERC20} from "../../../../token/ERC20/BurnMintERC20.sol";
 import {BurnMintERC20Setup} from "./BurnMintERC20Setup.t.sol";
 
@@ -24,7 +25,7 @@ contract BurnMintERC20_approve is BurnMintERC20Setup {
   // Reverts
 
   function test_approve_RevertWhen_InvalidAddress() public {
-    vm.expectRevert(abi.encodeWithSelector(BurnMintERC20.InvalidRecipient.selector, address(s_burnMintERC20)));
+    vm.expectRevert(abi.encodeWithSelector(BaseERC20.InvalidRecipient.selector, address(s_burnMintERC20)));
 
     s_burnMintERC20.approve(address(s_burnMintERC20), s_amount);
   }

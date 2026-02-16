@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {IGetCCIPAdmin} from "../../../shared/interfaces/IGetCCIPAdmin.sol";
+import {ITypeAndVersion} from "../../interfaces/ITypeAndVersion.sol";
 
 import {AccessControl} from "@openzeppelin/contracts@5.3.0/access/AccessControl.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.3.0/access/IAccessControl.sol";
@@ -12,7 +13,11 @@ import {IERC165} from "@openzeppelin/contracts@5.3.0/utils/introspection/IERC165
 
 /// @notice A basic ERC20 compatible token contract with burn and minting roles.
 /// @dev The total supply can be limited during deployment.
-contract BurnMintERC20 is IGetCCIPAdmin, IERC165, ERC20, AccessControl {
+contract BaseERC20 is IGetCCIPAdmin, IERC165, ERC20, AccessControl, ITypeAndVersion {
+  function typeAndVersion() external pure virtual override returns (string memory) {
+    return "BasicERC20 2.0.0-dev";
+  }
+
   error InvalidRecipient(address recipient);
 
   event CCIPAdminTransferred(address indexed previousAdmin, address indexed newAdmin);
@@ -83,7 +88,7 @@ contract BurnMintERC20 is IGetCCIPAdmin, IERC165, ERC20, AccessControl {
 
   /// @dev Uses OZ ERC20 _approve to disallow approving for address(0).
   /// @dev Disallows approving for address(this).
-  function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override{
+  function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
     if (spender == address(this)) revert InvalidRecipient(spender);
 
     super._approve(owner, spender, value, emitEvent);
@@ -91,7 +96,7 @@ contract BurnMintERC20 is IGetCCIPAdmin, IERC165, ERC20, AccessControl {
 
   /// @dev This check applies to transfer, minting, and burning.
   /// @dev Disallows approving for address(this).
-  function _update(address from, address to, uint256 value) internal override virtual {
+  function _update(address from, address to, uint256 value) internal virtual override {
     if (to == address(this)) revert InvalidRecipient(to);
 
     super._update(from, to, value);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {IBurnMintERC20} from "../ERC20/IBurnMintERC20.sol";
+import {IBurnMintERC20} from "../ERC20/IBurnMintERC20_OZ_4.sol";
 import {IERC677} from "./IERC677.sol";
 
 import {OwnerIsCreator} from "../../access/OwnerIsCreator.sol";

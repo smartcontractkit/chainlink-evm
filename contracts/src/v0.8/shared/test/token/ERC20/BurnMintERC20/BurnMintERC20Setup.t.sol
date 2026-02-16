@@ -17,7 +17,7 @@ contract BurnMintERC20Setup is BaseTest {
 
     s_alice = makeAddr("alice");
 
-    s_burnMintERC20 = new BurnMintERC20("Chainlink Token", "LINK", 18, 1e27, 0);
+    s_burnMintERC20 = new BurnMintERC20("Chainlink Token", "LINK", 18, 1e27, 0, address(0));
 
     // Set s_mockPool to be a burner and minter
     s_burnMintERC20.grantMintAndBurnRoles(s_mockPool);
