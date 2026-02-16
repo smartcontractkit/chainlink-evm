@@ -33,7 +33,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitor"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 	trontxm "github.com/smartcontractkit/chainlink-tron/relayer/txm"
 )
 
@@ -118,7 +117,7 @@ type chain struct {
 }
 
 type errChainDisabled struct {
-	ChainID *ubig.Big
+	ChainID *sqlutil.Big
 }
 
 func (e errChainDisabled) Error() string {

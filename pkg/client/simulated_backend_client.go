@@ -22,12 +22,12 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/hex"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func init() {
@@ -274,7 +274,7 @@ func (c *SimulatedBackendClient) HeadByNumber(ctx context.Context, n *big.Int) (
 		}
 	}
 
-	head := &evmtypes.Head{EVMChainID: ubig.New(c.chainID)}
+	head := &evmtypes.Head{EVMChainID: sqlutil.New(c.chainID)}
 	head.SetFromHeader(header)
 	return head, nil
 }
@@ -292,7 +292,7 @@ func (c *SimulatedBackendClient) HeadByHash(ctx context.Context, h common.Hash) 
 	} else if header == nil {
 		return nil, ethereum.NotFound
 	}
-	head := &evmtypes.Head{EVMChainID: ubig.NewI(c.chainID.Int64())}
+	head := &evmtypes.Head{EVMChainID: sqlutil.NewI(c.chainID.Int64())}
 	head.SetFromHeader(header)
 	return head, nil
 }
@@ -389,7 +389,7 @@ func (c *SimulatedBackendClient) SubscribeToHeads(
 						Number:     h.Number.Int64(),
 						Hash:       h.Hash(),
 						ParentHash: h.ParentHash,
-						EVMChainID: ubig.New(c.chainID),
+						EVMChainID: sqlutil.New(c.chainID),
 					}
 					head.Parent.Store(lastHead)
 					lastHead = head
@@ -783,7 +783,7 @@ func (c *SimulatedBackendClient) LatestSafeBlock(ctx context.Context) (*evmtypes
 	if err != nil {
 		return nil, err
 	}
-	head := &evmtypes.Head{EVMChainID: ubig.New(c.chainID)}
+	head := &evmtypes.Head{EVMChainID: sqlutil.New(c.chainID)}
 	head.SetFromHeader(h)
 	return head, nil
 }
@@ -793,7 +793,7 @@ func (c *SimulatedBackendClient) LatestFinalizedBlock(ctx context.Context) (*evm
 	if err != nil {
 		return nil, err
 	}
-	head := &evmtypes.Head{EVMChainID: ubig.New(c.chainID)}
+	head := &evmtypes.Head{EVMChainID: sqlutil.New(c.chainID)}
 	head.SetFromHeader(h)
 	return head, nil
 }

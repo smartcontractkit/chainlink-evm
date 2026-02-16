@@ -3,14 +3,14 @@ package configtest
 import (
 	"testing"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func NewChainScopedConfig(t testing.TB, overrideFn func(c *toml.EVMConfig)) *config.ChainScoped {
-	chainID := big.NewI(types.NullClientChainID)
+	chainID := sqlutil.NewI(types.NullClientChainID)
 	evmCfg := &toml.EVMConfig{
 		ChainID: chainID,
 		Chain:   toml.Defaults(chainID),

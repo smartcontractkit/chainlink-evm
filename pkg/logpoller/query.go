@@ -8,8 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 type bytesProducer interface {
@@ -35,7 +35,7 @@ type queryArgs struct {
 func newQueryArgs(chainID *big.Int) *queryArgs {
 	return &queryArgs{
 		args: map[string]any{
-			"evm_chain_id": ubig.New(chainID),
+			"evm_chain_id": sqlutil.New(chainID),
 		},
 		idxLookup: make(map[string]uint8),
 		err:       []error{},

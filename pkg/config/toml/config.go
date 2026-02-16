@@ -16,12 +16,12 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 var (
@@ -89,7 +89,7 @@ func (cs *EVMConfigs) SetFrom(fs *EVMConfigs) (err error) {
 		if f.ChainID == nil {
 			*cs = append(*cs, f)
 		} else if i := slices.IndexFunc(*cs, func(c *EVMConfig) bool {
-			return c.ChainID != nil && c.ChainID.Cmp(f.ChainID) == 0
+			return c.ChainID != nil && c.ChainID.ToInt().Cmp(f.ChainID.ToInt()) == 0
 		}); i == -1 {
 			*cs = append(*cs, f)
 		} else {
@@ -183,7 +183,7 @@ func (cs EVMConfigs) RPCEnabled() bool {
 	return false
 }
 
-func legacyNode(n *Node, chainID *big.Big) (v2 types.Node) {
+func legacyNode(n *Node, chainID *sqlutil.Big) (v2 types.Node) {
 	v2.Name = *n.Name
 	v2.EVMChainID = *chainID
 	if n.HTTPURL != nil {
@@ -240,7 +240,7 @@ func (cs EVMConfigs) Nodes(chainID string) (ns []types.Node, err error) {
 			continue
 		}
 
-		ns = append(ns, legacyNode(n, big.NewI(evmID)))
+		ns = append(ns, legacyNode(n, sqlutil.NewI(evmID)))
 	}
 	return
 }
@@ -293,7 +293,7 @@ func (ns *EVMNodes) SetFrom(fs *EVMNodes) {
 }
 
 type EVMConfig struct {
-	ChainID *big.Big
+	ChainID *sqlutil.Big
 	Enabled *bool
 	Chain
 	Nodes EVMNodes

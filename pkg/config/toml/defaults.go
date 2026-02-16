@@ -13,8 +13,8 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/config"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 const ENV_CUSTOM_DEFAULTS = "CL_CHAIN_DEFAULTS"
@@ -29,7 +29,7 @@ var (
 	customDefaults = map[string]Chain{}
 
 	// DefaultIDs is the set of chain ids which have defaults.
-	DefaultIDs []*big.Big
+	DefaultIDs []*sqlutil.Big
 )
 
 func init() {
@@ -73,7 +73,7 @@ func initDefaults(
 	dirReader func(name string) ([]fs.DirEntry, error),
 	fileReader func(name string) ([]byte, error),
 	root string,
-) ([]*big.Big, map[string]string, map[string]Chain, *Chain, error) {
+) ([]*sqlutil.Big, map[string]string, map[string]Chain, *Chain, error) {
 	entries, err := dirReader(root)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to read directory: %w", err)
@@ -81,7 +81,7 @@ func initDefaults(
 
 	var fb *Chain
 
-	ids := make([]*big.Big, 0)
+	ids := make([]*sqlutil.Big, 0)
 	configs := make(map[string]Chain)
 	names := make(map[string]string)
 
@@ -130,21 +130,21 @@ func initDefaults(
 	}
 
 	// sort IDs in numeric order
-	slices.SortFunc(ids, func(a, b *big.Big) int {
-		return a.Cmp(b)
+	slices.SortFunc(ids, func(a, b *sqlutil.Big) int {
+		return a.ToInt().Cmp(b.ToInt())
 	})
 
 	return ids, names, configs, fb, nil
 }
 
-func readConfig(path string, reader func(name string) ([]byte, error)) (*big.Big, Chain, error) {
+func readConfig(path string, reader func(name string) ([]byte, error)) (*sqlutil.Big, Chain, error) {
 	bts, err := reader(path)
 	if err != nil {
 		return nil, Chain{}, fmt.Errorf("error reading file: %w", err)
 	}
 
 	var cfg = struct {
-		ChainID *big.Big
+		ChainID *sqlutil.Big
 		Chain
 	}{}
 
@@ -157,7 +157,7 @@ func readConfig(path string, reader func(name string) ([]byte, error)) (*big.Big
 }
 
 // DefaultsNamed returns the default Chain values, optionally for the given chainID, as well as a name if the chainID is known.
-func DefaultsNamed(chainID *big.Big) (c Chain, name string) {
+func DefaultsNamed(chainID *sqlutil.Big) (c Chain, name string) {
 	c.SetFrom(&fallback)
 	if chainID == nil {
 		return
@@ -175,7 +175,7 @@ func DefaultsNamed(chainID *big.Big) (c Chain, name string) {
 
 // Defaults returns a Chain based on the defaults for chainID and fields from with, applied in order so later Chains
 // override earlier ones.
-func Defaults(chainID *big.Big, with ...*Chain) Chain {
+func Defaults(chainID *sqlutil.Big, with ...*Chain) Chain {
 	c, _ := DefaultsNamed(chainID)
 	for _, w := range with {
 		c.SetFrom(w)
@@ -183,7 +183,7 @@ func Defaults(chainID *big.Big, with ...*Chain) Chain {
 	return c
 }
 
-func ChainTypeForID(chainID *big.Big) (chaintype.ChainType, bool) {
+func ChainTypeForID(chainID *sqlutil.Big) (chaintype.ChainType, bool) {
 	s := chainID.String()
 	if d, ok := defaults[s]; ok {
 		return d.ChainType.ChainType(), true

@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/heads"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func TestHeads_LatestHead(t *testing.T) {
@@ -86,11 +86,11 @@ func TestHeads_AddHeads(t *testing.T) {
 	var parentHash common.Hash
 	for i := 1; i < 6; i++ {
 		hash := common.BigToHash(big.NewInt(int64(i)))
-		h := evmtypes.NewHead(big.NewInt(int64(i)), hash, parentHash, ubig.NewI(0))
+		h := evmtypes.NewHead(big.NewInt(int64(i)), hash, parentHash, sqlutil.NewI(0))
 		testHeads = append(testHeads, &h)
 		if i == 3 {
 			// uncled block
-			h := evmtypes.NewHead(big.NewInt(int64(i)), uncleHash, parentHash, ubig.NewI(0))
+			h := evmtypes.NewHead(big.NewInt(int64(i)), uncleHash, parentHash, sqlutil.NewI(0))
 			testHeads = append(testHeads, &h)
 		}
 		parentHash = hash
@@ -142,7 +142,7 @@ func TestHeads_MarkFinalized(t *testing.T) {
 	//    H1Uncle       H2Uncle
 	//
 	newHead := func(num int, parent common.Hash) *evmtypes.Head {
-		h := evmtypes.NewHead(big.NewInt(int64(num)), utils.NewHash(), parent, ubig.NewI(0))
+		h := evmtypes.NewHead(big.NewInt(int64(num)), utils.NewHash(), parent, sqlutil.NewI(0))
 		return &h
 	}
 	h0 := newHead(0, utils.NewHash())

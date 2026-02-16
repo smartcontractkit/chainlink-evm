@@ -19,6 +19,7 @@ import (
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/config/configtest"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-framework/multinode"
@@ -26,7 +27,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func TestEVMConfig_ValidateConfig(t *testing.T) {
@@ -175,7 +175,7 @@ func TestDocs(t *testing.T) {
 var fullTOML string
 
 var fullConfig = EVMConfig{
-	ChainID: big.NewI(42),
+	ChainID: sqlutil.NewI(42),
 	Enabled: ptr(false),
 	Chain: Chain{
 		AutoCreateKey: ptr(false),

@@ -10,8 +10,6 @@ import (
 	pkgerrors "github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
-
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 // ORM is the interface for log broadcasts.
@@ -46,13 +44,13 @@ type ORM interface {
 
 type orm struct {
 	ds         sqlutil.DataSource
-	evmChainID ubig.Big
+	evmChainID sqlutil.Big
 }
 
 var _ ORM = (*orm)(nil)
 
 func NewORM(ds sqlutil.DataSource, evmChainID big.Int) *orm {
-	return &orm{ds, *ubig.New(&evmChainID)}
+	return &orm{ds, *sqlutil.New(&evmChainID)}
 }
 
 func (o *orm) WithDataSource(ds sqlutil.DataSource) ORM {
