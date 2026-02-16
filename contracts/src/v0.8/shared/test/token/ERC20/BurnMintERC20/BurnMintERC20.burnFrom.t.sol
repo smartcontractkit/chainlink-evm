@@ -4,7 +4,8 @@ pragma solidity ^0.8.24;
 import {BurnMintERC20} from "../../../../token/ERC20/BurnMintERC20.sol";
 import {BurnMintERC20Setup} from "./BurnMintERC20Setup.t.sol";
 
-import {Strings} from "@openzeppelin/contracts@4.8.3/utils/Strings.sol";
+import {IAccessControl} from "@openzeppelin/contracts@5.3.0/access/IAccessControl.sol";
+import {IERC20Errors} from "@openzeppelin/contracts@5.3.0/interfaces/draft-IERC6093.sol";
 
 contract BurnMintERC20_burnFrom is BurnMintERC20Setup {
   function setUp() public virtual override {
@@ -24,15 +25,11 @@ contract BurnMintERC20_burnFrom is BurnMintERC20Setup {
   // Reverts
 
   function test_burnFrom_RevertWhen_SenderNotBurner() public {
-    // OZ Access Control v4.8.3 inherited by BurnMintERC20 does not use custom errors, but the revert message is still
-    // useful
-    // and should be checked
     vm.expectRevert(
-      abi.encodePacked(
-        "AccessControl: account ",
-        Strings.toHexString(OWNER),
-        " is missing role ",
-        Strings.toHexString(uint256(s_burnMintERC20.BURNER_ROLE()), 32)
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector,
+        OWNER,
+        s_burnMintERC20.BURNER_ROLE()
       )
     );
 
@@ -42,7 +39,14 @@ contract BurnMintERC20_burnFrom is BurnMintERC20Setup {
   function test_burnFrom_RevertWhen_InsufficientAllowance() public {
     changePrank(s_mockPool);
 
-    vm.expectRevert("ERC20: insufficient allowance");
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IERC20Errors.ERC20InsufficientAllowance.selector,
+        s_mockPool,
+        0,
+        s_amount
+      )
+    );
 
     s_burnMintERC20.burnFrom(OWNER, s_amount);
   }
@@ -52,7 +56,14 @@ contract BurnMintERC20_burnFrom is BurnMintERC20Setup {
 
     changePrank(s_mockPool);
 
-    vm.expectRevert("ERC20: burn amount exceeds balance");
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IERC20Errors.ERC20InsufficientBalance.selector,
+        OWNER,
+        s_amount,
+        s_amount * 2
+      )
+    );
 
     s_burnMintERC20.burnFrom(OWNER, s_amount * 2);
   }

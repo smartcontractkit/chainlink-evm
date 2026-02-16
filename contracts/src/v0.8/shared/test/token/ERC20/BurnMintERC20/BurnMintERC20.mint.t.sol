@@ -5,8 +5,8 @@ import {BaseERC20} from "../../../../token/ERC20/BaseERC20.sol";
 import {BurnMintERC20} from "../../../../token/ERC20/BurnMintERC20.sol";
 import {BurnMintERC20Setup} from "./BurnMintERC20Setup.t.sol";
 
-import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
-import {Strings} from "@openzeppelin/contracts@4.8.3/utils/Strings.sol";
+import {IERC20} from "@openzeppelin/contracts@5.3.0/token/ERC20/IERC20.sol";
+import {IAccessControl} from "@openzeppelin/contracts@5.3.0/access/IAccessControl.sol";
 
 contract BurnMintERC20_mint is BurnMintERC20Setup {
   function test_mint() public {
@@ -27,15 +27,11 @@ contract BurnMintERC20_mint is BurnMintERC20Setup {
   function test_mint_RevertWhen_SenderNotMinter() public {
     vm.startPrank(STRANGER);
 
-    // OZ Access Control v4.8.3 inherited by BurnMintERC20 does not use custom errors, but the revert message is still
-    // useful
-    // and should be checked
     vm.expectRevert(
-      abi.encodePacked(
-        "AccessControl: account ",
-        Strings.toHexString(STRANGER),
-        " is missing role ",
-        Strings.toHexString(uint256(s_burnMintERC20.MINTER_ROLE()), 32)
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector,
+        STRANGER,
+        s_burnMintERC20.MINTER_ROLE()
       )
     );
 
