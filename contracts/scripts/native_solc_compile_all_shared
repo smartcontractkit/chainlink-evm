@@ -56,7 +56,7 @@ compileContract interfaces/ITypeAndVersion 0.8.19
 compileContract token/ERC677/ERC677 0.8.19
 compileContract token/ERC677/BurnMintERC677 0.8.19
 compileContract token/ERC677/LinkToken 0.8.19
-compileContract token/ERC20/BurnMintERC20 0.8.19
+compileContract token/ERC20/BurnMintERC20
 
 compileContract token/ERC20/upgradeable/BurnMintERC20PausableFreezableTransparent
 compileContract token/ERC20/upgradeable/BurnMintERC20PausableFreezableUUPS
@@ -66,7 +66,7 @@ compileContract token/ERC20/upgradeable/BurnMintERC20Transparent
 compileContract token/ERC20/upgradeable/BurnMintERC20UUPS
 compileContract token/ERC20/upgradeable/IBurnMintERC20Upgradeable
 
-compileContract test/helpers/BurnMintERC20WithDrip 0.8.19
+compileContract test/helpers/BurnMintERC20WithDrip
 compileContract test/helpers/ChainReaderTester 0.8.19
 compileContract test/helpers/LogEmitter 0.8.19
 compileContract test/helpers/VRFLogEmitter 0.8.19
