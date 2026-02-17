@@ -5,8 +5,8 @@ import {BaseERC20} from "../../../../token/ERC20/BaseERC20.sol";
 import {BurnMintERC20} from "../../../../token/ERC20/BurnMintERC20.sol";
 import {BurnMintERC20Setup} from "./BurnMintERC20Setup.t.sol";
 
-import {IERC20} from "@openzeppelin/contracts@5.3.0/token/ERC20/IERC20.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.3.0/access/IAccessControl.sol";
+import {IERC20} from "@openzeppelin/contracts@5.3.0/token/ERC20/IERC20.sol";
 
 contract BurnMintERC20_mint is BurnMintERC20Setup {
   function test_mint() public {
@@ -29,9 +29,7 @@ contract BurnMintERC20_mint is BurnMintERC20Setup {
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        IAccessControl.AccessControlUnauthorizedAccount.selector,
-        STRANGER,
-        s_burnMintERC20.MINTER_ROLE()
+        IAccessControl.AccessControlUnauthorizedAccount.selector, STRANGER, s_burnMintERC20.MINTER_ROLE()
       )
     );
 

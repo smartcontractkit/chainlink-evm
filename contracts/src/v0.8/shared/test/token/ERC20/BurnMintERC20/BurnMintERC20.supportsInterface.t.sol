@@ -5,9 +5,9 @@ import {IBurnMintERC20} from "../../../../token/ERC20/IBurnMintERC20.sol";
 
 import {BurnMintERC20Setup} from "./BurnMintERC20Setup.t.sol";
 
+import {IAccessControl} from "@openzeppelin/contracts@4.8.3/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
 import {IERC165} from "@openzeppelin/contracts@4.8.3/utils/introspection/IERC165.sol";
-import {IAccessControl} from "@openzeppelin/contracts@4.8.3/access/IAccessControl.sol";
 
 contract BurnMintERC20_supportsInterface is BurnMintERC20Setup {
   function test_SupportsInterface() public view {

@@ -9,7 +9,7 @@ import {IERC165} from "@openzeppelin/contracts@5.3.0/utils/introspection/IERC165
 
 /// @notice A basic ERC20 compatible token contract with burn and minting roles.
 /// @dev The total supply can be limited during deployment.
-contract BurnMintERC20 is BaseERC20, IBurnMintERC20  {
+contract BurnMintERC20 is BaseERC20, IBurnMintERC20 {
   function typeAndVersion() external pure virtual override returns (string memory) {
     return "CCT 2.0.0-dev";
   }

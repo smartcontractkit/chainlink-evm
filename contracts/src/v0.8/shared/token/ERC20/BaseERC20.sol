@@ -8,7 +8,6 @@ import {AccessControl} from "@openzeppelin/contracts@5.3.0/access/AccessControl.
 import {IAccessControl} from "@openzeppelin/contracts@5.3.0/access/IAccessControl.sol";
 import {ERC20} from "@openzeppelin/contracts@5.3.0/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts@5.3.0/token/ERC20/IERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts@5.3.0/token/ERC20/extensions/ERC20Burnable.sol";
 import {IERC165} from "@openzeppelin/contracts@5.3.0/utils/introspection/IERC165.sol";
 
 /// @notice A basic ERC20 compatible token contract with burn and minting roles.

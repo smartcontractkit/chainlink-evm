@@ -27,9 +27,7 @@ contract BurnMintERC20_burnFrom is BurnMintERC20Setup {
   function test_burnFrom_RevertWhen_SenderNotBurner() public {
     vm.expectRevert(
       abi.encodeWithSelector(
-        IAccessControl.AccessControlUnauthorizedAccount.selector,
-        OWNER,
-        s_burnMintERC20.BURNER_ROLE()
+        IAccessControl.AccessControlUnauthorizedAccount.selector, OWNER, s_burnMintERC20.BURNER_ROLE()
       )
     );
 
@@ -39,14 +37,7 @@ contract BurnMintERC20_burnFrom is BurnMintERC20Setup {
   function test_burnFrom_RevertWhen_InsufficientAllowance() public {
     changePrank(s_mockPool);
 
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        IERC20Errors.ERC20InsufficientAllowance.selector,
-        s_mockPool,
-        0,
-        s_amount
-      )
-    );
+    vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, s_mockPool, 0, s_amount));
 
     s_burnMintERC20.burnFrom(OWNER, s_amount);
   }
@@ -57,12 +48,7 @@ contract BurnMintERC20_burnFrom is BurnMintERC20Setup {
     changePrank(s_mockPool);
 
     vm.expectRevert(
-      abi.encodeWithSelector(
-        IERC20Errors.ERC20InsufficientBalance.selector,
-        OWNER,
-        s_amount,
-        s_amount * 2
-      )
+      abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, OWNER, s_amount, s_amount * 2)
     );
 
     s_burnMintERC20.burnFrom(OWNER, s_amount * 2);
