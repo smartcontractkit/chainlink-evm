@@ -10,6 +10,8 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -125,6 +127,7 @@ func (d *FlashbotsClient) signAndPostMessage(ctx context.Context, address common
 	}
 
 	postReq.Header.Add("X-Flashbots-signature", address.String()+":"+hexutil.Encode(signedMessage))
+	postReq.Header.Add("X-Flashbots-Origin", "chainlink")
 	postReq.Header.Add("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(postReq)
@@ -188,7 +191,7 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	if err != nil {
 		return fmt.Errorf("failed to get current block height: %w", err)
 	}
-	targetBlock := currentBlock.NumberU64() + 10
+	targetBlock := currentBlock.NumberU64() + 24
 
 	bodyItems := make([]map[string]any, 0, len(attempts))
 	for _, attempt := range attempts {
@@ -201,21 +204,32 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 			return fmt.Errorf("failed to marshal transaction for attempt ID %d: %w", attempt.ID, err)
 		}
 
-		bodyItems = append(bodyItems, map[string]interface{}{
-			"tx":        hexutil.Encode(txData),
-			"canRevert": true,
+		bodyItems = append(bodyItems, map[string]any{
+			"tx":         hexutil.Encode(txData),
+			"revertMode": "allow", // we always want to allow reverts so bundles are valid even if a single transaction within the bundle goes through
 		})
 	}
-
-	bundleParams := map[string]interface{}{
-		"version": "v0.1",
-		"inclusion": map[string]interface{}{
-			"block": hexutil.EncodeBig(new(big.Int).SetUint64(targetBlock)),
-		},
-		"body": bodyItems,
+	privacy, refundConfig, err := parseURLParams(urlParams)
+	if err != nil {
+		return err
 	}
 
-	requestBody := map[string]interface{}{
+	bundleParams := map[string]any{
+		"body": bodyItems,
+		"inclusion": map[string]any{
+			"block":    hexutil.EncodeBig(new(big.Int).SetUint64(currentBlock.NumberU64())),
+			"maxBlock": hexutil.EncodeBig(new(big.Int).SetUint64(targetBlock)),
+		},
+		"privacy": privacy,
+		"version": "v0.1",
+	}
+	if refundConfig.Address != "" {
+		bundleParams["validity"] = map[string]any{
+			"refundConfig": []any{refundConfig},
+		}
+	}
+
+	requestBody := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      1,
 		"method":  "mev_sendBundle",
@@ -227,7 +241,7 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 		return fmt.Errorf("failed to marshal bundle request: %w", err)
 	}
 
-	raw, err := d.signAndPostMessage(ctx, fromAddress, bodyBytes, urlParams)
+	raw, err := d.signAndPostMessage(ctx, fromAddress, bodyBytes, "")
 	if err != nil {
 		return err
 	}
@@ -240,4 +254,52 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	}
 	d.lggr.Infow("Broadcasted transaction bundle", "nonces", nonces, "bundleHash", bundleResult.BundleHash)
 	return nil
+}
+
+func parseURLParams(params string) (Privacy, RefundConfig, error) {
+	values, err := url.ParseQuery(params)
+	if err != nil {
+		return Privacy{}, RefundConfig{}, fmt.Errorf("unable to parse params: %w", err)
+	}
+
+	privacy := Privacy{}
+	if timeout, err := strconv.Atoi(values.Get("auctionTimeout")); err == nil {
+		privacy.AuctionTimeout = timeout
+	}
+
+	privacy.Builders = append(privacy.Builders, values["builder"]...)
+
+	privacy.Hints = append(privacy.Hints, values["hint"]...)
+
+	refundConfig := RefundConfig{}
+	refundRaw := values.Get("refund")
+	if refundRaw != "" {
+		parts := strings.Split(refundRaw, ":")
+		if len(parts) == 2 {
+			address := parts[0]
+			percentVal, err := strconv.Atoi(parts[1])
+			if err != nil {
+				return Privacy{}, RefundConfig{}, fmt.Errorf("unable to parse percentage: %w", err)
+			}
+
+			privacy.WantRefund = percentVal
+			refundConfig = RefundConfig{
+				Address: address,
+				Percent: 100, // wantRefund is an absolute percent of the kickback, and refundConfig.percent=100 means entire refund goes to this address (no longer supported)
+			}
+		}
+	}
+	return privacy, refundConfig, nil
+}
+
+type Privacy struct {
+	WantRefund     int      `json:"wantRefund"`
+	AuctionTimeout int      `json:"auctionTimeout"`
+	Builders       []string `json:"builders"`
+	Hints          []string `json:"hints"`
+}
+
+type RefundConfig struct {
+	Address string `json:"address"`
+	Percent int    `json:"percent"`
 }
