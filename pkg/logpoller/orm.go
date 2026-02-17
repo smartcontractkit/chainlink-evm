@@ -585,8 +585,7 @@ func (o *DSORM) insertLogsWithinTx(ctx context.Context, logs []Log, tx sqlutil.D
 	return batchInsert(ctx, tx, q, logs, 4000)
 }
 
-func batchInsert[T any](ctx context.Context, ds sqlutil.DataSource, query string, objs []T, batchSize int) error {
-	batchInsertSize := 4000
+func batchInsert[T any](ctx context.Context, ds sqlutil.DataSource, query string, objs []T, batchInsertSize int) error {
 	for i := 0; i < len(objs); i += batchInsertSize {
 		start, end := i, i+batchInsertSize
 		if end > len(objs) {

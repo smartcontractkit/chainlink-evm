@@ -1232,6 +1232,7 @@ func (e *reorgError) Error() string {
 }
 
 func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmtypes.Head, latest, safe, finalized int64, isReplay bool) ([]Block, []Log, error) {
+	const maxUnfinalizedBlocks = 2000
 	var logs []Log
 	var blocks []Block
 	for {
@@ -1253,6 +1254,11 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 		blocks = append(blocks, block)
 
 		if currentBlock.Number >= latest {
+			return blocks, logs, nil
+		}
+
+		if len(blocks) >= maxUnfinalizedBlocks {
+			lp.lggr.Warnw("Too many unfinalized blocks, stopping log retrieval to avoid OOM", "currentBlockNumber", currentBlock.Number, "latestBlockNumber", latest)
 			return blocks, logs, nil
 		}
 
