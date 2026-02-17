@@ -2164,7 +2164,7 @@ func TestLogPoller_Reorg_On_Replay(t *testing.T) {
 	// Expected behaviour:
 	// 1. LogPoller should replace reorged block 11 with a new data.
 	// 2. DB must not contain at any point logs from both old and new block 11.
-	// 3. Finality Violation must not occur, since chain did not violate finality depth. 
+	// 3. Finality Violation must not occur, since chain did not violate finality depth.
 	t.Parallel()
 	const reorgedBlockNumber = 11
 	testCases := []struct {
@@ -2211,7 +2211,7 @@ func TestLogPoller_Reorg_On_Replay(t *testing.T) {
 				th.Backend.Commit()
 			}
 
-			// start LogPoller and wait for it to complete first poll. Second poll won't happen until we call PollAndSaveLogs again, since poll period is very long.
+			// Start LogPoller and wait for it to complete the first poll. The second poll won't happen until we call Replay, since the poll period is very long.
 			require.NoError(t, th.LogPoller.Start(t.Context()))
 			defer func() {
 				require.NoError(t, th.LogPoller.Close())
@@ -2225,16 +2225,17 @@ func TestLogPoller_Reorg_On_Replay(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, int64(reorgedBlockNumber), reorgedBlock.Number().Int64())
 
-			// Replace block 11 with a new block and burry it under 1 new block
+			// Replace block 11 with a new block and bury it under 1 new block
 			require.NoError(t, th.Backend.Fork(reorgedBlock.ParentHash()))
 			const newLogData = int64(123)
 			// Commit reorgedBlock and numberOfBlocksAfterReorg on top of it
 			for range tc.numberOfBlocksAfterReorg + 1 {
 				// emit log that is not tracked by LP to ensure that tracked log has a different index.
-				// So if reorg is not properly handled and both logs end up in the database
+				// So if reorg is not properly handled, both logs end up in the database and the test fails.
 				_, err = th.Emitter2.EmitLog1(th.Owner, []*big.Int{big.NewInt(int64(10))})
 				require.NoError(t, err)
 				_, err = th.Emitter1.EmitLog1(th.Owner, []*big.Int{big.NewInt(newLogData)})
+				require.NoError(t, err)
 				th.Backend.Commit()
 			}
 

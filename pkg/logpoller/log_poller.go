@@ -966,7 +966,6 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 }
 
 func (lp *logPoller) headerByNumber(ctx context.Context, blockNumber int64) (*evmtypes.Head, error) {
-	// If we don't have the current block already, lets get it.
 	header, err := lp.latencyMonitor.HeadByNumber(ctx, big.NewInt(blockNumber))
 	if err != nil {
 		lp.lggr.Warnw("Unable to get currentBlock", "err", err, "blockNumber", blockNumber)
@@ -1056,14 +1055,13 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 
 	if latestBlockRPC.Hash != latestBlockDB.BlockHash {
 		// Reorg detected, handle it
-		lca, err := lp.handleReorg(ctx, latestBlockRPC)
+		blockAfterLCA, err := lp.handleReorg(ctx, latestBlockRPC)
 		if err != nil {
 			return nil, fmt.Errorf("failed to handle reorg: %w", err)
 		}
 
-		if lca.Number < currentBlock.BlockNumber() {
-			// LCA is older than current block, we need to get the new current block after reorg
-			return lca, nil
+		if blockAfterLCA.Number < currentBlock.BlockNumber() {
+			return blockAfterLCA, nil
 		}
 	}
 
