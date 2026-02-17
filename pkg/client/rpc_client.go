@@ -26,6 +26,7 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
@@ -35,7 +36,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 var (
@@ -464,7 +464,7 @@ func (r *RPCClient) SubscribeToHeads(ctx context.Context) (ch <-chan *evmtypes.H
 
 	channel := make(chan *evmtypes.Head)
 	forwarder := newSubForwarder(channel, func(head *evmtypes.Head) (*evmtypes.Head, error) {
-		head.EVMChainID = ubig.New(r.chainID)
+		head.EVMChainID = sqlutil.New(r.chainID)
 		r.OnNewHead(ctx, chStopInFlight, head)
 		return head, nil
 	}, r.wrapRPCClientError)
@@ -591,7 +591,7 @@ func (r *RPCClient) LatestSafeBlock(ctx context.Context) (head *evmtypes.Head, e
 		return
 	}
 
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 
 	return
 }
@@ -619,7 +619,7 @@ func (r *RPCClient) latestFinalizedBlock(ctx context.Context) (head *evmtypes.He
 		err = r.wrapRPCClientError(ethereum.NotFound)
 		return
 	}
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 	return
 }
 
@@ -664,7 +664,7 @@ func (r *RPCClient) BlockByNumber(ctx context.Context, number *big.Int) (head *e
 		return
 	}
 
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 
 	if hexNumber == rpc.LatestBlockNumber.String() {
 		r.OnNewHead(ctx, chStopInFlight, head)
@@ -710,7 +710,7 @@ func (r *RPCClient) HeaderByNumberWithOpts(ctx context.Context, blockNumber *big
 		return nil, r.wrapRPCClientError(ethereum.NotFound)
 	}
 
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 	return (*evmtypes.Header)(head), nil
 }
 
@@ -742,7 +742,7 @@ func (r *RPCClient) BlockByHash(ctx context.Context, hash common.Hash) (head *ev
 		err = r.wrapRPCClientError(ethereum.NotFound)
 		return
 	}
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 	return
 }
 

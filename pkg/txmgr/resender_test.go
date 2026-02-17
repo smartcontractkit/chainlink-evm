@@ -15,17 +15,17 @@ import (
 
 	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
-	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
-	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
-	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
-	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr/txmgrtest"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
+	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
+	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr/txmgrtest"
 )
 
 func Test_EthResender_resendUnconfirmed(t *testing.T) {
@@ -115,7 +115,7 @@ func Test_EthResender_alertUnconfirmed(t *testing.T) {
 	// Set this to the smallest non-zero value possible for the attempt to be eligible for resend
 	delay := commonconfig.MustNewDuration(1 * time.Nanosecond)
 	ccfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.Chain = toml.Defaults(ubig.New(testutils.FixtureChainID), &toml.Chain{
+		c.Chain = toml.Defaults(sqlutil.New(testutils.FixtureChainID), &toml.Chain{
 			Transactions: toml.Transactions{ResendAfterThreshold: delay},
 		})
 	})

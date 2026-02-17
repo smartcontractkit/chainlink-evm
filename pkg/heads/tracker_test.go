@@ -25,23 +25,22 @@ import (
 	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox/mailboxtest"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
-
 	"github.com/smartcontractkit/chainlink-framework/chains/heads"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 	evmheads "github.com/smartcontractkit/chainlink-evm/pkg/heads"
 	"github.com/smartcontractkit/chainlink-evm/pkg/heads/headstest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func firstHead(t *testing.T, db *sqlx.DB) *evmtypes.Head {
@@ -554,7 +553,7 @@ func TestHeadTracker_CallsHeadTrackableCallbacks(t *testing.T) {
 	assert.Equal(t, int32(0), checker.OnNewLongestChainCount())
 
 	headers := <-chchHeaders
-	headers.TrySend(&evmtypes.Head{Number: 1, Hash: utils.NewHash(), EVMChainID: ubig.New(testutils.FixtureChainID)})
+	headers.TrySend(&evmtypes.Head{Number: 1, Hash: utils.NewHash(), EVMChainID: sqlutil.New(testutils.FixtureChainID)})
 	tests.AssertEventually(t, func() bool { return checker.OnNewLongestChainCount() == 1 })
 
 	ht.Stop(t)
@@ -993,17 +992,17 @@ func testHeadTrackerBackfill(t *testing.T, newORM func(t *testing.T) evmheads.OR
 	//                    +->(13)->(12)->(11)->(H10)->(9)->(H8)
 	// (15)->(14)---------+
 
-	head0 := evmtypes.NewHead(big.NewInt(0), utils.NewHash(), common.BigToHash(big.NewInt(0)), ubig.New(testutils.FixtureChainID))
+	head0 := evmtypes.NewHead(big.NewInt(0), utils.NewHash(), common.BigToHash(big.NewInt(0)), sqlutil.New(testutils.FixtureChainID))
 
 	h1 := testutils.Head(1)
 	h1.ParentHash = head0.Hash
 
-	head8 := evmtypes.NewHead(big.NewInt(8), utils.NewHash(), utils.NewHash(), ubig.New(testutils.FixtureChainID))
+	head8 := evmtypes.NewHead(big.NewInt(8), utils.NewHash(), utils.NewHash(), sqlutil.New(testutils.FixtureChainID))
 
 	h9 := testutils.Head(9)
 	h9.ParentHash = head8.Hash
 
-	head10 := evmtypes.NewHead(big.NewInt(10), utils.NewHash(), h9.Hash, ubig.New(testutils.FixtureChainID))
+	head10 := evmtypes.NewHead(big.NewInt(10), utils.NewHash(), h9.Hash, sqlutil.New(testutils.FixtureChainID))
 
 	h11 := testutils.Head(11)
 	h11.ParentHash = head10.Hash
@@ -1737,7 +1736,7 @@ func NewBlocks(t testing.TB, numHashes int) *blocks {
 	}
 
 	now := time.Now()
-	b.Heads[0] = &evmtypes.Head{Hash: testutils.NewHash(), Number: 0, Timestamp: now, EVMChainID: ubig.New(testutils.FixtureChainID)}
+	b.Heads[0] = &evmtypes.Head{Hash: testutils.NewHash(), Number: 0, Timestamp: now, EVMChainID: sqlutil.New(testutils.FixtureChainID)}
 	for i := 1; i < numHashes; i++ {
 		//nolint:gosec // G115
 		head := b.NewHead(uint64(i))
@@ -1773,7 +1772,7 @@ func (b *blocks) NewHead(number uint64) *evmtypes.Head {
 		Hash:       testutils.NewHash(),
 		ParentHash: parent.Hash,
 		Timestamp:  parent.Timestamp.Add(time.Second),
-		EVMChainID: ubig.New(testutils.FixtureChainID),
+		EVMChainID: sqlutil.New(testutils.FixtureChainID),
 	}
 	head.Parent.Store(parent)
 	return head

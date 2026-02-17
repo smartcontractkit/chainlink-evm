@@ -12,8 +12,8 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 	commontypes "github.com/smartcontractkit/chainlink-framework/chains"
 )
 
@@ -22,7 +22,7 @@ func TestChainIDSubForwarder(t *testing.T) {
 
 	newChainIDSubForwarder := func(chainID *big.Int, ch chan<- *evmtypes.Head) *subForwarder[*evmtypes.Head] {
 		return newSubForwarder(ch, func(head *evmtypes.Head) (*evmtypes.Head, error) {
-			head.EVMChainID = ubig.New(chainID)
+			head.EVMChainID = sqlutil.New(chainID)
 			return head, nil
 		}, nil)
 	}
@@ -110,7 +110,7 @@ func TestChainIDSubForwarder(t *testing.T) {
 		forwarder.srcCh <- head
 		receivedHead := <-ch
 		assert.Equal(t, head, receivedHead)
-		assert.Equal(t, ubig.New(chainID), receivedHead.EVMChainID)
+		assert.Equal(t, sqlutil.New(chainID), receivedHead.EVMChainID)
 
 		expectedErr := errors.New("error")
 		sub.Errors <- expectedErr

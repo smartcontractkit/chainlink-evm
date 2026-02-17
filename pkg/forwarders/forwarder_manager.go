@@ -22,7 +22,6 @@ import (
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	evmlogpoller "github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 var forwardABI = evmtypes.MustGetABI(authorized_forwarder.AuthorizedForwarderABI).Methods["forward"]
@@ -72,7 +71,7 @@ func NewFwdMgr(ds sqlutil.DataSource, client evmclient.Client, logpoller evmlogp
 func (f *FwdMgr) start(ctx context.Context) error {
 	chainId := f.evmClient.ConfiguredChainID()
 
-	fwdrs, err := f.ORM.FindForwardersByChain(ctx, big.Big(*chainId))
+	fwdrs, err := f.ORM.FindForwardersByChain(ctx, sqlutil.Big(*chainId))
 	if err != nil {
 		return pkgerrors.Wrapf(err, "Failed to retrieve forwarders for chain %d", chainId)
 	}
@@ -103,7 +102,7 @@ func FilterName(addr common.Address) string {
 
 func (f *FwdMgr) ForwarderFor(ctx context.Context, addr common.Address) (forwarder common.Address, err error) {
 	// Gets forwarders for current chain.
-	fwdrs, err := f.ORM.FindForwardersByChain(ctx, big.Big(*f.evmClient.ConfiguredChainID()))
+	fwdrs, err := f.ORM.FindForwardersByChain(ctx, sqlutil.Big(*f.evmClient.ConfiguredChainID()))
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -127,7 +126,7 @@ func (f *FwdMgr) ForwarderFor(ctx context.Context, addr common.Address) (forward
 var ErrForwarderForEOANotFound = errors.New("cannot find forwarder for given EOA")
 
 func (f *FwdMgr) ForwarderForOCR2Feeds(ctx context.Context, eoa, ocr2Aggregator common.Address) (forwarder common.Address, err error) {
-	fwdrs, err := f.ORM.FindForwardersByChain(ctx, big.Big(*f.evmClient.ConfiguredChainID()))
+	fwdrs, err := f.ORM.FindForwardersByChain(ctx, sqlutil.Big(*f.evmClient.ConfiguredChainID()))
 	if err != nil {
 		return common.Address{}, err
 	}

@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/hex"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func TestHead_NewHead(t *testing.T) {
@@ -1187,7 +1187,7 @@ func mustHexToBig(t *testing.T, hx string) *big.Int {
 }
 
 func testHead(t int) *Head {
-	h := NewHead(big.NewInt(int64(t)), utils.NewHash(), utils.NewHash(), ubig.NewI(0))
+	h := NewHead(big.NewInt(int64(t)), utils.NewHash(), utils.NewHash(), sqlutil.NewI(0))
 	return &h
 }
 
