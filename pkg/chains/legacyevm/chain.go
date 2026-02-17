@@ -481,7 +481,10 @@ func (c *chain) GetChainStatus(ctx context.Context) (types.ChainStatus, error) {
 func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
 	chainID := c.cfg.EVM().ChainID()
 
-	chainSelector := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	chainSelector, ok := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	if !ok {
+		return types.ChainInfo{}, fmt.Errorf("evm chain selector not found for chain ID: %d", chainID)
+	}
 	chainFamily, err := chainselectors.GetSelectorFamily(chainSelector)
 	if err != nil {
 		return types.ChainInfo{}, fmt.Errorf("failed to get chain family for selector %d: %w", chainSelector, err)
