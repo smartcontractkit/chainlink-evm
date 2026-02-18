@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
-	evmbig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/block"
 )
@@ -54,7 +54,7 @@ func ChainArbitrumMainnet(t *testing.T) config.ChainScopedConfig { return scoped
 func ChainArbitrumRinkeby(t *testing.T) config.ChainScopedConfig { return scopedConfig(t, 421611) }
 
 func scopedConfig(t *testing.T, chainID int64) config.ChainScopedConfig {
-	id := evmbig.NewI(chainID)
+	id := sqlutil.NewI(chainID)
 	evmCfg := toml.EVMConfig{ChainID: id, Chain: toml.Defaults(id)}
 	return config.NewTOMLChainScopedConfig(&evmCfg)
 }

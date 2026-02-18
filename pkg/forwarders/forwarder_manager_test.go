@@ -25,7 +25,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/heads/headstest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/operatorforwarder/generated/authorized_forwarder"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/operatorforwarder/generated/operator"
@@ -72,9 +71,9 @@ func TestFwdMgr_MaybeForwardTransaction(t *testing.T) {
 	fwdMgr := forwarders.NewFwdMgr(db, evmClient, lp, lggr, evmcfg.EVM())
 	fwdMgr.ORM = forwarders.NewORM(db)
 
-	fwd, err := fwdMgr.ORM.CreateForwarder(ctx, forwarderAddr, ubig.Big(*testutils.FixtureChainID))
+	fwd, err := fwdMgr.ORM.CreateForwarder(ctx, forwarderAddr, sqlutil.Big(*testutils.FixtureChainID))
 	require.NoError(t, err)
-	lst, err := fwdMgr.ORM.FindForwardersByChain(ctx, ubig.Big(*testutils.FixtureChainID))
+	lst, err := fwdMgr.ORM.FindForwardersByChain(ctx, sqlutil.Big(*testutils.FixtureChainID))
 	require.NoError(t, err)
 	require.Equal(t, len(lst), 1)
 	require.Equal(t, lst[0].Address, forwarderAddr)
@@ -133,9 +132,9 @@ func TestFwdMgr_AccountUnauthorizedToForward_SkipsForwarding(t *testing.T) {
 	fwdMgr := forwarders.NewFwdMgr(db, evmClient, lp, lggr, evmcfg.EVM())
 	fwdMgr.ORM = forwarders.NewORM(db)
 
-	_, err = fwdMgr.ORM.CreateForwarder(ctx, forwarderAddr, ubig.Big(*testutils.FixtureChainID))
+	_, err = fwdMgr.ORM.CreateForwarder(ctx, forwarderAddr, sqlutil.Big(*testutils.FixtureChainID))
 	require.NoError(t, err)
-	lst, err := fwdMgr.ORM.FindForwardersByChain(ctx, ubig.Big(*testutils.FixtureChainID))
+	lst, err := fwdMgr.ORM.FindForwardersByChain(ctx, sqlutil.Big(*testutils.FixtureChainID))
 	require.NoError(t, err)
 	require.Equal(t, len(lst), 1)
 	require.Equal(t, lst[0].Address, forwarderAddr)
@@ -198,9 +197,9 @@ func TestFwdMgr_InvalidForwarderForOCR2FeedsStates(t *testing.T) {
 	fwdMgr := forwarders.NewFwdMgr(db, evmClient, lp, lggr, evmcfg.EVM())
 	fwdMgr.ORM = forwarders.NewORM(db)
 
-	_, err = fwdMgr.ORM.CreateForwarder(ctx, forwarderAddr, ubig.Big(*testutils.FixtureChainID))
+	_, err = fwdMgr.ORM.CreateForwarder(ctx, forwarderAddr, sqlutil.Big(*testutils.FixtureChainID))
 	require.NoError(t, err)
-	lst, err := fwdMgr.ORM.FindForwardersByChain(ctx, ubig.Big(*testutils.FixtureChainID))
+	lst, err := fwdMgr.ORM.FindForwardersByChain(ctx, sqlutil.Big(*testutils.FixtureChainID))
 	require.NoError(t, err)
 	require.Equal(t, len(lst), 1)
 	require.Equal(t, lst[0].Address, forwarderAddr)

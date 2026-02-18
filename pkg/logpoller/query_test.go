@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func Test_QueryArgs(t *testing.T) {
@@ -22,7 +22,7 @@ func Test_QueryArgs(t *testing.T) {
 			name:      "valid arguments",
 			queryArgs: newQueryArgs(big.NewInt(20)).withAddress(utils.ZeroAddress),
 			want: map[string]interface{}{
-				"evm_chain_id": ubig.NewI(20),
+				"evm_chain_id": sqlutil.NewI(20),
 				"address":      utils.ZeroAddress,
 			},
 		},

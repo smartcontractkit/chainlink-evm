@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 // Tests the atomicity of cleanup function passed to DeleteForwarder, during DELETE operation
@@ -23,7 +22,7 @@ func Test_DeleteForwarder(t *testing.T) {
 	chainID := testutils.FixtureChainID
 	ctx := testutils.Context(t)
 
-	fwd, err := orm.CreateForwarder(ctx, addr, *big.New(chainID))
+	fwd, err := orm.CreateForwarder(ctx, addr, *sqlutil.New(chainID))
 	require.NoError(t, err)
 	assert.Equal(t, addr, fwd.Address)
 

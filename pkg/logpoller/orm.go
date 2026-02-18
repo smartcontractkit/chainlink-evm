@@ -17,7 +17,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
 
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 // ORM represents the persistent data access layer used by the log poller. At this moment, it's a bit leaky abstraction, because
@@ -162,7 +161,7 @@ func (o *DSORM) InsertFilter(ctx context.Context, filter Filter) (err error) {
 func (o *DSORM) DeleteFilter(ctx context.Context, name string) error {
 	_, err := o.ds.ExecContext(ctx,
 		`DELETE FROM evm.log_poller_filters WHERE name = $1 AND evm_chain_id = $2`,
-		name, ubig.New(o.chainID))
+		name, sqlutil.New(o.chainID))
 	return err
 }
 
@@ -180,7 +179,7 @@ func (o *DSORM) LoadFilters(ctx context.Context) (map[string]Filter, error) {
 		FROM evm.log_poller_filters WHERE evm_chain_id = $1
 		GROUP BY name`
 	var rows []Filter
-	err := o.ds.SelectContext(ctx, &rows, query, ubig.New(o.chainID))
+	err := o.ds.SelectContext(ctx, &rows, query, sqlutil.New(o.chainID))
 	filters := make(map[string]Filter)
 	for _, filter := range rows {
 		filters[filter.Name] = filter
@@ -235,7 +234,7 @@ func (o *DSORM) SelectBlockByHash(ctx context.Context, hash common.Hash) (*Block
 	var b Block
 	if err := o.ds.GetContext(ctx, &b,
 		blocksQuery(`WHERE block_hash = $1 AND evm_chain_id = $2`),
-		hash.Bytes(), ubig.New(o.chainID)); err != nil {
+		hash.Bytes(), sqlutil.New(o.chainID)); err != nil {
 		return nil, err
 	}
 	return &b, nil
@@ -244,7 +243,7 @@ func (o *DSORM) SelectBlockByHash(ctx context.Context, hash common.Hash) (*Block
 func (o *DSORM) SelectBlockByNumber(ctx context.Context, n int64) (*Block, error) {
 	var b Block
 	if err := o.ds.GetContext(ctx, &b,
-		blocksQuery(`WHERE block_number = $1 AND evm_chain_id = $2`), n, ubig.New(o.chainID),
+		blocksQuery(`WHERE block_number = $1 AND evm_chain_id = $2`), n, sqlutil.New(o.chainID),
 	); err != nil {
 		return nil, err
 	}
@@ -254,7 +253,7 @@ func (o *DSORM) SelectBlockByNumber(ctx context.Context, n int64) (*Block, error
 func (o *DSORM) SelectLatestBlock(ctx context.Context) (*Block, error) {
 	var b Block
 	if err := o.ds.GetContext(ctx, &b,
-		blocksQuery(`WHERE evm_chain_id = $1 ORDER BY block_number DESC LIMIT 1`), ubig.New(o.chainID),
+		blocksQuery(`WHERE evm_chain_id = $1 ORDER BY block_number DESC LIMIT 1`), sqlutil.New(o.chainID),
 	); err != nil {
 		return nil, err
 	}
@@ -266,7 +265,7 @@ func (o *DSORM) SelectLatestFinalizedBlock(ctx context.Context) (*Block, error) 
 	if err := o.ds.GetContext(ctx, &b,
 		blocksQuery(`WHERE evm_chain_id = $1 AND block_number <= (
 			SELECT finalized_block_number FROM evm.log_poller_blocks WHERE evm_chain_id = $1 ORDER BY block_number DESC LIMIT 1
-		) ORDER BY block_number DESC LIMIT 1`), ubig.New(o.chainID),
+		) ORDER BY block_number DESC LIMIT 1`), sqlutil.New(o.chainID),
 	); err != nil {
 		return nil, err
 	}
@@ -277,7 +276,7 @@ func (o *DSORM) SelectOldestBlock(ctx context.Context, minAllowedBlockNumber int
 	var b Block
 	if err := o.ds.GetContext(ctx, &b,
 		blocksQuery(`WHERE evm_chain_id = $1 AND block_number >= $2 ORDER BY block_number ASC LIMIT 1`),
-		ubig.New(o.chainID), minAllowedBlockNumber,
+		sqlutil.New(o.chainID), minAllowedBlockNumber,
 	); err != nil {
 		return nil, err
 	}
@@ -309,7 +308,7 @@ func (o *DSORM) SelectLatestLogByEventSigWithConfs(ctx context.Context, eventSig
 }
 
 type RangeQueryer[T comparable] struct {
-	chainID *ubig.Big
+	chainID *sqlutil.Big
 	ds      sqlutil.DataSource
 	query   func(ctx context.Context, r *RangeQueryer[T], lower, upper int64) (rowsAffected int64, err error)
 	acc     []T
@@ -317,7 +316,7 @@ type RangeQueryer[T comparable] struct {
 
 func NewRangeQueryer[T comparable](evmChainID *big.Int, ds sqlutil.DataSource, query func(ctx context.Context, r *RangeQueryer[T], lower, upper int64) (rowsAffected int64, err error)) *RangeQueryer[T] {
 	return &RangeQueryer[T]{
-		chainID: ubig.New(evmChainID),
+		chainID: sqlutil.New(evmChainID),
 		ds:      ds,
 		query:   query,
 	}
@@ -403,7 +402,7 @@ func (o *DSORM) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error
 							AND block_number <= (SELECT MAX(block_number)
 						 		FROM evm.log_poller_blocks
 						 		WHERE evm_chain_id = $1)`,
-			ubig.New(o.chainID), start)
+			sqlutil.New(o.chainID), start)
 		if err != nil {
 			o.lggr.Warnw("Unable to clear reorged blocks, retrying", "err", err)
 			return err
@@ -413,7 +412,7 @@ func (o *DSORM) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error
        						WHERE evm_chain_id = $1
        						AND block_number >= $2
        						AND block_number <= (SELECT MAX(block_number) FROM evm.logs WHERE evm_chain_id = $1)`,
-			ubig.New(o.chainID), start)
+			sqlutil.New(o.chainID), start)
 		if err != nil {
 			o.lggr.Warnw("Unable to clear reorged logs, retrying", "err", err)
 			return err
@@ -528,7 +527,7 @@ func (o *DSORM) DeleteExpiredLogs(ctx context.Context, limit int64) (int64, erro
 			) r ON l.evm_chain_id = r.evm_chain_id AND l.address = r.address AND l.event_sig = r.event AND
 				l.block_timestamp <= STATEMENT_TIMESTAMP() - (r.retention / 10^9 * interval '1 second') %s
 		) DELETE FROM evm.logs WHERE id IN (SELECT id FROM rows_to_delete)`, limitClause)
-	result, err := o.ds.ExecContext(ctx, query, ubig.New(o.chainID))
+	result, err := o.ds.ExecContext(ctx, query, sqlutil.New(o.chainID))
 	if err != nil {
 		return 0, err
 	}

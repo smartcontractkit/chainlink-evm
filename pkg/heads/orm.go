@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 type ORM interface {
@@ -32,7 +31,7 @@ type ORM interface {
 var _ ORM = &DbORM{}
 
 type DbORM struct {
-	chainID                ubig.Big
+	chainID                sqlutil.Big
 	ds                     sqlutil.DataSource
 	lastTrimmedBlockNumber int64            // the last block number that was trimmed
 	headsBatch             []*evmtypes.Head // used to batch insert heads
@@ -43,7 +42,7 @@ type DbORM struct {
 // NewORM creates an ORM scoped to chainID.
 func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
 	return &DbORM{
-		chainID:                ubig.Big(chainID),
+		chainID:                sqlutil.Big(chainID),
 		ds:                     ds,
 		lastTrimmedBlockNumber: -1,
 		headsBatch:             make([]*evmtypes.Head, 0),

@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/configtest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func TestChainScopedConfig(t *testing.T) {
@@ -286,7 +286,7 @@ func TestChainScopedConfig_GasEstimator(t *testing.T) {
 
 func TestChainScopedConfig_BSCDefaults(t *testing.T) {
 	cfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.ChainID = (*ubig.Big)(big.NewInt(56))
+		c.ChainID = (*sqlutil.Big)(big.NewInt(56))
 	})
 
 	timeout := cfg.EVM().OCR().DatabaseTimeout()
@@ -331,7 +331,7 @@ func TestChainScopedConfig_Profiles(t *testing.T) {
 			t.Parallel()
 
 			config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-				c.ChainID = ubig.NewI(tt.chainID)
+				c.ChainID = sqlutil.NewI(tt.chainID)
 			})
 
 			assert.Equal(t, tt.expectedGasLimitDefault, config.EVM().GasEstimator().LimitDefault())
@@ -376,7 +376,7 @@ func TestClientErrorsConfig(t *testing.T) {
 
 	t.Run("EVM().NodePool().Errors()", func(t *testing.T) {
 		cfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			id := ubig.New(big.NewInt(rand.Int63()))
+			id := sqlutil.New(big.NewInt(rand.Int63()))
 			c.ChainID = id
 			c.NodePool = toml.NodePool{
 				Errors: toml.ClientErrors{

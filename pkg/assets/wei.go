@@ -9,8 +9,8 @@ import (
 	"github.com/shopspring/decimal"
 	"golang.org/x/exp/constraints"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	bigmath "github.com/smartcontractkit/chainlink-common/pkg/utils/big_math"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 const (
@@ -57,10 +57,10 @@ func suffixExp(suf string) int32 {
 	}
 }
 
-// Wei extends ubig.Big to implement encoding.TextMarshaler and
+// Wei extends sqlutil.Big to implement encoding.TextMarshaler and
 // encoding.TextUnmarshaler with support for unit suffixes, as well as
 // additional functions
-type Wei ubig.Big
+type Wei sqlutil.Big
 
 func MaxWei(w, x *Wei) *Wei {
 	return NewWei(bigmath.Max(w.ToInt(), x.ToInt()))
@@ -267,10 +267,10 @@ func (w *Wei) AddPercentage(percentage uint16) *Wei {
 
 // Scan reads the database value and returns an instance.
 func (w *Wei) Scan(value interface{}) error {
-	return (*ubig.Big)(w).Scan(value)
+	return (*sqlutil.Big)(w).Scan(value)
 }
 
 // Value returns this instance serialized for database storage.
 func (w Wei) Value() (driver.Value, error) {
-	return (ubig.Big)(w).Value()
+	return (sqlutil.Big)(w).Value()
 }

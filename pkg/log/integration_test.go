@@ -22,6 +22,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox/mailboxtest"
 
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
@@ -35,7 +36,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/log"
 	logmocks "github.com/smartcontractkit/chainlink-evm/pkg/log/mocks"
@@ -2072,7 +2072,7 @@ func (b *blocks) NewHead(number uint64) *evmtypes.Head {
 		Hash:       utils.NewHash(),
 		ParentHash: parent.Hash,
 		Timestamp:  time.Unix(parent.Number+1, 0),
-		EVMChainID: ubig.New(testutils.FixtureChainID),
+		EVMChainID: sqlutil.New(testutils.FixtureChainID),
 	}
 	head.Parent.Store(parent)
 	return head
@@ -2117,7 +2117,7 @@ func newBlocks(t *testing.T, numHashes int) *blocks {
 			Hash:       hash,
 			Number:     i,
 			Timestamp:  now.Add(time.Duration(i) * time.Second),
-			EVMChainID: ubig.New(testutils.FixtureChainID),
+			EVMChainID: sqlutil.New(testutils.FixtureChainID),
 		}
 		if i > 0 {
 			parent := heads[i-1]
@@ -2146,6 +2146,6 @@ func (fn headTrackableFunc) OnNewLongestChain(ctx context.Context, head *evmtype
 }
 
 func head(num int64) *evmtypes.Head {
-	h := evmtypes.NewHead(big.NewInt(num), utils.NewHash(), utils.NewHash(), ubig.New(testutils.FixtureChainID))
+	h := evmtypes.NewHead(big.NewInt(num), utils.NewHash(), utils.NewHash(), sqlutil.New(testutils.FixtureChainID))
 	return &h
 }

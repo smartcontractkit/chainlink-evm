@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
@@ -39,7 +40,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func logRuntime(t testing.TB, start time.Time) {
@@ -65,7 +65,7 @@ func populateDatabase(t testing.TB, o logpoller.ORM, chainID *big.Int) (common.H
 			blockTimestamp := startDate.Add(time.Duration(j*1000) * time.Hour)
 
 			logs = append(logs, logpoller.Log{
-				EVMChainID:     ubig.New(chainID),
+				EVMChainID:     sqlutil.New(chainID),
 				LogIndex:       1,
 				BlockHash:      common.HexToHash(fmt.Sprintf("0x%d", i+(1000*j))),
 				BlockNumber:    blockNumber,

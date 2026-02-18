@@ -68,6 +68,7 @@ func NewTxm(
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize EVM TXM metrics: %w", err)
 	}
+	txStore = txStore.WithMetrics(metrics)
 	evmBroadcaster := NewEvmBroadcaster(txStore, txmClient, txmCfg, feeCfg, txConfig, listenerConfig, keyStore, txAttemptBuilder, lggr, checker, chainConfig.NonceAutoSync(), chainConfig.ChainType(), metrics)
 	evmTracker := NewEvmTracker(txStore, keyStore, chainID, lggr)
 	stuckTxDetector := NewStuckTxDetector(lggr, client.ConfiguredChainID(), chainConfig.ChainType(), fCfg.PriceMax(), txConfig.AutoPurge(), estimator, txStore, client)

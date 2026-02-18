@@ -9,16 +9,14 @@ import (
 	pkgerrors "github.com/pkg/errors"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
-
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 type ORM interface {
-	CreateForwarder(ctx context.Context, addr common.Address, evmChainId big.Big) (fwd Forwarder, err error)
+	CreateForwarder(ctx context.Context, addr common.Address, evmChainId sqlutil.Big) (fwd Forwarder, err error)
 	FindForwarders(ctx context.Context, offset, limit int) ([]Forwarder, int, error)
-	FindForwardersByChain(ctx context.Context, evmChainId big.Big) ([]Forwarder, error)
+	FindForwardersByChain(ctx context.Context, evmChainId sqlutil.Big) ([]Forwarder, error)
 	DeleteForwarder(ctx context.Context, id int64, cleanup func(tx sqlutil.DataSource, evmChainId int64, addr common.Address) error) error
-	FindForwardersInListByChain(ctx context.Context, evmChainId big.Big, addrs []common.Address) ([]Forwarder, error)
+	FindForwardersInListByChain(ctx context.Context, evmChainId sqlutil.Big, addrs []common.Address) ([]Forwarder, error)
 }
 
 type DSORM struct {
@@ -39,7 +37,7 @@ func (o *DSORM) Transact(ctx context.Context, fn func(*DSORM) error) (err error)
 func (o *DSORM) new(q sqlutil.DataSource) *DSORM { return NewORM(q) }
 
 // CreateForwarder creates the Forwarder address associated with the current EVM chain id.
-func (o *DSORM) CreateForwarder(ctx context.Context, addr common.Address, evmChainId big.Big) (fwd Forwarder, err error) {
+func (o *DSORM) CreateForwarder(ctx context.Context, addr common.Address, evmChainId sqlutil.Big) (fwd Forwarder, err error) {
 	sql := `INSERT INTO evm.forwarders (address, evm_chain_id, created_at, updated_at) VALUES ($1, $2, now(), now()) RETURNING *`
 	err = o.ds.GetContext(ctx, &fwd, sql, addr, evmChainId)
 	return fwd, err
@@ -94,13 +92,13 @@ func (o *DSORM) FindForwarders(ctx context.Context, offset, limit int) (fwds []F
 }
 
 // FindForwardersByChain returns all forwarder addresses for a chain.
-func (o *DSORM) FindForwardersByChain(ctx context.Context, evmChainId big.Big) (fwds []Forwarder, err error) {
+func (o *DSORM) FindForwardersByChain(ctx context.Context, evmChainId sqlutil.Big) (fwds []Forwarder, err error) {
 	sql := `SELECT * FROM evm.forwarders where evm_chain_id = $1 ORDER BY created_at DESC, id DESC`
 	err = o.ds.SelectContext(ctx, &fwds, sql, evmChainId)
 	return
 }
 
-func (o *DSORM) FindForwardersInListByChain(ctx context.Context, evmChainId big.Big, addrs []common.Address) ([]Forwarder, error) {
+func (o *DSORM) FindForwardersInListByChain(ctx context.Context, evmChainId sqlutil.Big, addrs []common.Address) ([]Forwarder, error) {
 	var fwdrs []Forwarder
 
 	arg := map[string]interface{}{

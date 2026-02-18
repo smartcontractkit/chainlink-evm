@@ -20,7 +20,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/types/evm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 type ChainWriterConfig struct {
@@ -179,7 +178,7 @@ type DualTransmissionConfig struct {
 }
 
 type RelayConfig struct {
-	ChainID                *big.Big           `json:"chainID"`
+	ChainID                *sqlutil.Big       `json:"chainID"`
 	FromBlock              uint64             `json:"fromBlock"`
 	EffectiveTransmitterID null.String        `json:"effectiveTransmitterID"`
 	ConfigContractAddress  *common.Address    `json:"configContractAddress"`
