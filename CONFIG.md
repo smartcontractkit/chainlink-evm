@@ -995,18 +995,18 @@ Set to 0 to disable.
 ```toml
 HistoricalBalanceCheckEnabled = false # Default
 ```
-HistoricalBalanceCheckEnabled controls whether NodePool health polling verifies historical state availability
-via `eth_getBalance` against `HistoricalBalanceCheckAddress`.
-
-When enabled, the probe reads balance at the latest finalized block:
-- if `FinalityTagEnabled = true`, it uses the `finalized` block tag
-- if `FinalityTagEnabled = false`, it uses `latest - FinalityDepth`
+HistoricalBalanceCheckEnabled controls whether NodePool health polling also verifies historical state availability
+by executing `eth_getBalance` for HistoricalBalanceCheckAddress at the latest finalized block.
+Finalized block selection follows chain finality settings:
+- `FinalityTagEnabled = true`: use `finalized` tag
+- `FinalityTagEnabled = false`: use `latest - FinalityDepth`
 
 ### HistoricalBalanceCheckAddress
 ```toml
 HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000' # Default
 ```
-HistoricalBalanceCheckAddress is the account used by the historical balance health check probe.
+HistoricalBalanceCheckAddress is the probe account used by the historical balance health check.
+This check is only active when `HistoricalBalanceCheckEnabled = true`.
 
 ### EnforceRepeatableRead
 ```toml
