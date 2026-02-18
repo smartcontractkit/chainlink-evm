@@ -171,6 +171,8 @@ BlockTime = '10s' # Example
 CustomURL = 'https://example.api.io' # Example
 # DualBroadcast enables DualBroadcast functionality.
 DualBroadcast = false # Example
+# Bundles enables sending bundles for auctioning (not compatible with all OFAs).
+Bundles = false # Example
 
 [BalanceMonitor]
 # Enabled balance monitoring for all keys.

@@ -589,6 +589,7 @@ type TransactionManagerV2Config struct {
 	BlockTime     *commonconfig.Duration `toml:",omitempty"`
 	CustomURL     *commonconfig.URL      `toml:",omitempty"`
 	DualBroadcast *bool                  `toml:",omitempty"`
+	Bundles       *bool                  `toml:",omitempty"`
 }
 
 func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
@@ -603,6 +604,9 @@ func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
 	}
 	if v := f.DualBroadcast; v != nil {
 		t.DualBroadcast = f.DualBroadcast
+	}
+	if v := f.Bundles; v != nil {
+		t.Bundles = f.Bundles
 	}
 }
 

@@ -43,15 +43,18 @@ type FlashbotsClient struct {
 	keystore  keys.MessageSigner
 	customURL *url.URL
 	txStore   FlashbotsTxStore
+	bundles   bool
 }
 
-func NewFlashbotsClient(lggr logger.Logger, c FlashbotsClientRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore) *FlashbotsClient {
+func NewFlashbotsClient(lggr logger.Logger, c FlashbotsClientRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool) *FlashbotsClient {
+	b := bundles != nil && *bundles
 	return &FlashbotsClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
 		c:         c,
 		keystore:  keystore,
 		customURL: customURL,
 		txStore:   txStore,
+		bundles:   b,
 	}
 }
 
@@ -102,8 +105,10 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 
 		// After successfully sending the transaction, send a bundle with all unconfirmed transactions
 		// Don't act on a bundle error - this is a fire and forget operation but we do want to log the error.
-		if err := d.SendBundle(ctx, tx.FromAddress, params); err != nil {
-			d.lggr.Error("error sending bundle: ", err)
+		if d.bundles {
+			if err := d.SendBundle(ctx, tx.FromAddress, params); err != nil {
+				d.lggr.Error("error sending bundle: ", err)
+			}
 		}
 		return nil
 	}
