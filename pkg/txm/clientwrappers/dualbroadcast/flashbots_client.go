@@ -135,13 +135,14 @@ func (d *FlashbotsClient) signAndPostMessage(ctx context.Context, address common
 	postReq.Header.Add("X-Flashbots-Origin", "chainlink")
 	postReq.Header.Add("Content-Type", "application/json")
 
+	reqDesc := fmt.Sprintf("%s %s body: %s", postReq.Method, postReq.URL.String(), string(body))
 	resp, err := http.DefaultClient.Do(postReq)
 	if err != nil {
-		return nil, fmt.Errorf("request %v failed: %w", postReq, err)
+		return nil, fmt.Errorf("request %s failed: %w", reqDesc, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request %v failed with status: %d", postReq, resp.StatusCode)
+		return nil, fmt.Errorf("request %s failed with status: %d", reqDesc, resp.StatusCode)
 	}
 
 	keyJSON, err := io.ReadAll(resp.Body)
