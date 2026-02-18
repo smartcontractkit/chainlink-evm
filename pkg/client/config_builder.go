@@ -21,6 +21,9 @@ type NodeConfig struct {
 	SendOnly          *bool
 	Order             *int32
 	IsLoadBalancedRPC *bool
+	// Archive marks this node as archive-only. Archive nodes are excluded from the primary pool
+	// and are only contacted as a fallback when the primary nodes have pruned requested blocks.
+	Archive *bool
 }
 
 // Build the configs needed to initialize the chain client
@@ -103,6 +106,7 @@ func parseNodeConfigs(nodeCfgs []NodeConfig) ([]*toml.Node, error) {
 			SendOnly:          nodeCfg.SendOnly,
 			Order:             nodeCfg.Order,
 			IsLoadBalancedRPC: nodeCfg.IsLoadBalancedRPC,
+			Archive:           nodeCfg.Archive,
 		}
 		nodes[i] = node
 	}

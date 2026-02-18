@@ -29,6 +29,51 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
+func TestNode_ValidateConfig_Archive(t *testing.T) {
+	t.Parallel()
+
+	t.Run("archive node without WS URL is valid", func(t *testing.T) {
+		t.Parallel()
+		name := "archive"
+		trueVal := true
+		n := &Node{
+			Name:    &name,
+			HTTPURL: config.MustParseURL("http://archive.test"),
+			Archive: &trueVal,
+		}
+		assert.NoError(t, n.ValidateConfig())
+	})
+
+	t.Run("archive node defaults Archive to false", func(t *testing.T) {
+		t.Parallel()
+		name := "primary"
+		n := &Node{
+			Name:    &name,
+			HTTPURL: config.MustParseURL("http://primary.test"),
+			WSURL:   config.MustParseURL("wss://primary.test/ws"),
+		}
+		require.NoError(t, n.ValidateConfig())
+		require.NotNil(t, n.Archive)
+		assert.False(t, *n.Archive)
+	})
+
+	t.Run("archive + sendOnly is invalid", func(t *testing.T) {
+		t.Parallel()
+		name := "conflict"
+		trueVal := true
+		n := &Node{
+			Name:     &name,
+			HTTPURL:  config.MustParseURL("http://conflict.test"),
+			Archive:  &trueVal,
+			SendOnly: &trueVal,
+		}
+		err := n.ValidateConfig()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "Archive")
+		assert.Contains(t, err.Error(), "SendOnly")
+	})
+}
+
 func TestEVMConfig_ValidateConfig(t *testing.T) {
 	name := "fake"
 	for _, id := range DefaultIDs {

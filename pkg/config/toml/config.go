@@ -1194,6 +1194,11 @@ type Node struct {
 	SendOnly          *bool
 	Order             *int32
 	IsLoadBalancedRPC *bool
+	// Archive marks this node as an archive-capable RPC. Archive nodes are excluded from the
+	// primary node pool and are only contacted as a fallback when the primary nodes report
+	// missing blocks (i.e. the node has pruned the requested block range). Only HTTPURL is
+	// required; WSURL is not used for archive nodes.
+	Archive *bool
 }
 
 func (n *Node) ValidateConfig() (err error) {
@@ -1244,6 +1249,13 @@ func (n *Node) ValidateConfig() (err error) {
 		n.IsLoadBalancedRPC = &z
 	}
 
+	if n.Archive == nil {
+		z := false
+		n.Archive = &z
+	} else if *n.Archive && n.SendOnly != nil && *n.SendOnly {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "Archive", Value: true, Msg: "cannot be used together with SendOnly"})
+	}
+
 	return
 }
 
@@ -1268,6 +1280,9 @@ func (n *Node) SetFrom(f *Node) {
 	}
 	if f.IsLoadBalancedRPC != nil {
 		n.IsLoadBalancedRPC = f.IsLoadBalancedRPC
+	}
+	if f.Archive != nil {
+		n.Archive = f.Archive
 	}
 }
 

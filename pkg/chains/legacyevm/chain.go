@@ -234,6 +234,11 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 		if opts.GenLogPoller != nil {
 			logPoller = opts.GenLogPoller(chainID)
 		} else {
+			archiveClient, archiveErr := client.NewArchiveFilterClient(cfg.EVM().NodePool(), l, chainID, nodes, cfg.EVM().ChainType())
+			if archiveErr != nil {
+				return nil, fmt.Errorf("failed to initialize archive filter client: %w", archiveErr)
+			}
+
 			lpOpts := logpoller.Opts{
 				PollPeriod:               cfg.EVM().LogPollInterval(),
 				UseFinalityTag:           cfg.EVM().FinalityTagEnabled(),
@@ -244,6 +249,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 				LogPrunePageSize:         int64(cfg.EVM().LogPrunePageSize()),
 				BackupPollerBlockDelay:   int64(cfg.EVM().BackupLogPollerBlockDelay()),
 				ClientErrors:             cfg.EVM().NodePool().Errors(),
+				ArchiveClient:            archiveClient,
 			}
 
 			lpORM, err := logpoller.NewObservedORM(chainID, opts.DS, l)

@@ -93,6 +93,12 @@ type Client interface {
 	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
 }
 
+// ArchiveClient is a minimal read-only client used exclusively when the primary nodes have
+// pruned the requested block range. It is contacted as a fallback during log backfill only.
+type ArchiveClient interface {
+	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
+}
+
 type HeadTracker interface {
 	services.Service
 	LatestAndFinalizedBlock(ctx context.Context) (latest, finalized *evmtypes.Head, err error)
@@ -109,6 +115,7 @@ var (
 type logPoller struct {
 	services.StateMachine
 	ec                       Client
+	archiveClient            ArchiveClient
 	orm                      ORM
 	headTracker              HeadTracker
 	latencyMonitor           LatencyMonitor
@@ -154,6 +161,9 @@ type Opts struct {
 	BackupPollerBlockDelay   int64
 	LogPrunePageSize         int64
 	ClientErrors             config.ClientErrors
+	// ArchiveClient is an optional client used to retry log backfill requests when the primary
+	// nodes report missing blocks due to history pruning. If nil, no fallback is attempted.
+	ArchiveClient ArchiveClient
 }
 
 // NewLogPoller creates a log poller. Note there is an assumption
@@ -170,6 +180,7 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 	return &logPoller{
 		stopCh:                   make(chan struct{}),
 		ec:                       ec,
+		archiveClient:            opts.ArchiveClient,
 		orm:                      orm,
 		headTracker:              headTracker,
 		latencyMonitor:           NewLatencyMonitor(ec, lggr, opts.PollPeriod),
@@ -919,28 +930,40 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 		gethLogs, err := lp.latencyMonitor.FilterLogs(ctx, lp.Filter(big.NewInt(from), big.NewInt(to), nil))
 		if err != nil {
 			if client.IsMissingBlocks(err, lp.clientErrors) {
-				errCount := lp.missingBlocksErrorCount.Add(1)
-				if errCount < 2 {
-					lp.lggr.Errorw("Missing blocks", "err", err, "from", from, "to", to)
+				if lp.archiveClient != nil {
+					lp.lggr.Warnw("Primary RPC missing blocks, retrying via archive node", "err", err, "from", from, "to", to)
+					if archiveLogs, archiveErr := lp.archiveClient.FilterLogs(ctx, lp.Filter(big.NewInt(from), big.NewInt(to), nil)); archiveErr == nil {
+						lp.lggr.Infow("Archive node successfully recovered missing blocks", "from", from, "to", to, "logs", len(archiveLogs))
+						lp.missingBlocksErrorCount.Store(0)
+						gethLogs = archiveLogs
+						err = nil
+					} else {
+						lp.lggr.Warnw("Archive node also failed to fetch missing blocks", "archiveErr", archiveErr, "from", from, "to", to)
+					}
+				}
+				if err != nil {
+					errCount := lp.missingBlocksErrorCount.Add(1)
+					if errCount < 2 {
+						lp.lggr.Errorw("Missing blocks", "err", err, "from", from, "to", to)
+						return err
+					}
+					lp.lggr.Criticalw("Missing blocks: cannot continue until at least one rpc server we're connected to has the logs for these blocks", "err", err, "from", from, "to", to)
+					lp.SvcErrBuffer.Append(err)
 					return err
 				}
-				lp.lggr.Criticalw("Missing blocks: cannot continue until at least one rpc server we're connected to has the logs for these blocks", "err", err, "from", from, "to", to)
-				lp.SvcErrBuffer.Append(err)
-				return err
-			}
-			if !client.IsTooManyResults(err, lp.clientErrors) {
+			} else if client.IsTooManyResults(err, lp.clientErrors) {
+				if batchSize == 1 {
+					lp.lggr.Criticalw("Too many log results in a single block, failed to retrieve logs! Node may be running in a degraded state.", "err", err, "from", from, "to", to, "LogBackfillBatchSize", lp.backfillBatchSize)
+					return err
+				}
+				batchSize /= 2
+				lp.lggr.Warnw("Too many log results, halving block range batch size.  Consider increasing LogBackfillBatchSize if this happens frequently", "err", err, "from", from, "to", to, "newBatchSize", batchSize, "LogBackfillBatchSize", lp.backfillBatchSize)
+				from -= batchSize // counteract +=batchSize on next loop iteration, so starting block does not change
+				continue
+			} else {
 				lp.lggr.Errorw("Unable to query for logs", "err", err, "from", from, "to", to)
 				return err
 			}
-
-			if batchSize == 1 {
-				lp.lggr.Criticalw("Too many log results in a single block, failed to retrieve logs! Node may be running in a degraded state.", "err", err, "from", from, "to", to, "LogBackfillBatchSize", lp.backfillBatchSize)
-				return err
-			}
-			batchSize /= 2
-			lp.lggr.Warnw("Too many log results, halving block range batch size.  Consider increasing LogBackfillBatchSize if this happens frequently", "err", err, "from", from, "to", to, "newBatchSize", batchSize, "LogBackfillBatchSize", lp.backfillBatchSize)
-			from -= batchSize // counteract +=batchSize on next loop iteration, so starting block does not change
-			continue
 		}
 		lp.missingBlocksErrorCount.Store(0) // clear unhealthy node state in case we were missing blocks and just found them
 

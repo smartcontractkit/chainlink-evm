@@ -62,6 +62,67 @@ func TestNewEvmClient(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestNewEvmClient_ArchiveNodesExcludedFromPrimaryPool(t *testing.T) {
+	t.Parallel()
+
+	trueVal := true
+	nodeConfigs := []client.NodeConfig{
+		{
+			Name:    ptr("primary"),
+			WSURL:   ptr("ws://primary.test"),
+			HTTPURL: ptr("http://primary.test"),
+		},
+		{
+			Name:    ptr("archive"),
+			HTTPURL: ptr("http://archive.test"),
+			Archive: &trueVal,
+		},
+	}
+
+	chainCfg, nodePool, nodes, err := client.NewClientConfigs(
+		ptr("HighestHead"), time.Duration(0), "", nodeConfigs,
+		ptr[uint32](5), 10*time.Second, ptr[uint32](5), ptr(false), time.Minute,
+		ptr[uint32](5), ptr(false), ptr(false), ptr[uint32](5), ptr(false),
+		10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second, 60*time.Second, ptr[uint32](10))
+	require.NoError(t, err)
+
+	chainID := testutils.NewRandomEVMChainID()
+	evmClient, err := client.NewEvmClient(nodePool, chainCfg, nil, logger.Test(t), chainID, nodes, "")
+	require.NoError(t, err)
+
+	states := evmClient.NodeStates()
+	// Only the primary node should be in the pool; archive is excluded.
+	require.Len(t, states, 1)
+	_, hasPrimary := states["primary"]
+	assert.True(t, hasPrimary, "primary node should be in the pool")
+	_, hasArchive := states["archive"]
+	assert.False(t, hasArchive, "archive node must not be in the primary pool")
+}
+
+func TestNewArchiveFilterClient_ReturnsNilWhenNoArchiveNodes(t *testing.T) {
+	t.Parallel()
+
+	nodeConfigs := []client.NodeConfig{
+		{
+			Name:    ptr("primary"),
+			WSURL:   ptr("ws://primary.test"),
+			HTTPURL: ptr("http://primary.test"),
+		},
+	}
+
+	_, nodePool, nodes, err := client.NewClientConfigs(
+		ptr("HighestHead"), time.Duration(0), "", nodeConfigs,
+		ptr[uint32](5), 10*time.Second, ptr[uint32](5), ptr(false), time.Minute,
+		ptr[uint32](5), ptr(false), ptr(false), ptr[uint32](5), ptr(false),
+		10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second, 60*time.Second, ptr[uint32](10))
+	require.NoError(t, err)
+
+	chainID := testutils.NewRandomEVMChainID()
+	archiveClient, err := client.NewArchiveFilterClient(nodePool, logger.Test(t), chainID, nodes, "")
+	require.NoError(t, err)
+	assert.Nil(t, archiveClient, "NewArchiveFilterClient should return nil when no archive nodes are configured")
+}
+
 func TestChainClientMetrics(t *testing.T) {
 	ctx, cancel := context.WithTimeout(tests.Context(t), tests.WaitTimeout(t))
 	defer cancel()

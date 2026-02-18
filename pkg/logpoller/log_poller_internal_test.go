@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -27,6 +28,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/heads/headstest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller/internal/log_emitter"
@@ -955,6 +957,243 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
 		lp.PollAndSaveLogs(t.Context(), 4)
 		require.NoError(t, lp.HealthReport()[lp.Name()])
+	})
+}
+
+// stubORM is a no-op ORM that returns an error on any call that touches the DB.
+// It is used by unit tests that want to exercise backfill logic without a real database.
+type stubORM struct{}
+
+var errStubORM = errors.New("stub ORM: not implemented")
+
+func (s *stubORM) InsertLogs(context.Context, []Log) error                          { return nil }
+func (s *stubORM) InsertLogsWithBlock(context.Context, []Log, Block) error          { return nil }
+func (s *stubORM) InsertFilter(context.Context, Filter) error                       { return nil }
+func (s *stubORM) LoadFilters(context.Context) (map[string]Filter, error) {
+	return map[string]Filter{}, nil
+}
+func (s *stubORM) DeleteFilter(context.Context, string) error                               { return nil }
+func (s *stubORM) DeleteLogsByRowID(context.Context, []uint64) (int64, error)               { return 0, nil }
+func (s *stubORM) InsertBlock(context.Context, common.Hash, int64, time.Time, int64, int64) error {
+	return nil
+}
+func (s *stubORM) DeleteBlocksBefore(context.Context, int64, int64) (int64, error) { return 0, nil }
+func (s *stubORM) DeleteLogsAndBlocksAfter(context.Context, int64) error            { return nil }
+func (s *stubORM) SelectUnmatchedLogIDs(context.Context, int64) ([]uint64, error)   { return nil, nil }
+func (s *stubORM) DeleteExpiredLogs(context.Context, int64) (int64, error)          { return 0, nil }
+func (s *stubORM) SelectExcessLogIDs(context.Context, int64) ([]uint64, error)      { return nil, nil }
+func (s *stubORM) GetBlocksRange(context.Context, int64, int64) ([]Block, error) {
+	return nil, errStubORM
+}
+func (s *stubORM) SelectBlockByNumber(context.Context, int64) (*Block, error) { return nil, nil }
+func (s *stubORM) SelectBlockByHash(context.Context, common.Hash) (*Block, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLatestBlock(context.Context) (*Block, error)          { return nil, nil }
+func (s *stubORM) SelectOldestBlock(context.Context, int64) (*Block, error)   { return nil, nil }
+func (s *stubORM) SelectLatestFinalizedBlock(context.Context) (*Block, error) { return nil, nil }
+func (s *stubORM) SelectLogs(context.Context, int64, int64, common.Address, common.Hash) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLogsWithSigs(context.Context, int64, int64, common.Address, []common.Hash) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLogsCreatedAfter(context.Context, common.Address, common.Hash, time.Time, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLatestLogByEventSigWithConfs(context.Context, common.Hash, common.Address, evmtypes.Confirmations) (*Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLatestLogEventSigsAddrsWithConfs(context.Context, int64, []common.Address, []common.Hash, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLatestBlockByEventSigsAddrsWithConfs(context.Context, int64, []common.Hash, []common.Address, evmtypes.Confirmations) (int64, error) {
+	return 0, nil
+}
+func (s *stubORM) SelectLogsByBlockRange(context.Context, int64, int64) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectIndexedLogs(context.Context, common.Address, common.Hash, int, []common.Hash, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectIndexedLogsByBlockRange(context.Context, int64, int64, common.Address, common.Hash, int, []common.Hash) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectIndexedLogsCreatedAfter(context.Context, common.Address, common.Hash, int, []common.Hash, time.Time, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectIndexedLogsTopicGreaterThan(context.Context, common.Address, common.Hash, int, common.Hash, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectIndexedLogsTopicRange(context.Context, common.Address, common.Hash, int, common.Hash, common.Hash, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectIndexedLogsWithSigsExcluding(context.Context, common.Hash, common.Hash, int, common.Address, int64, int64, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectIndexedLogsByTxHash(context.Context, common.Address, common.Hash, common.Hash) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLogsDataWordRange(context.Context, common.Address, common.Hash, int, common.Hash, common.Hash, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLogsDataWordGreaterThan(context.Context, common.Address, common.Hash, int, common.Hash, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) SelectLogsDataWordBetween(context.Context, common.Address, common.Hash, int, int, common.Hash, evmtypes.Confirmations) ([]Log, error) {
+	return nil, nil
+}
+func (s *stubORM) FilteredLogs(context.Context, []query.Expression, query.LimitAndSort, string) ([]Log, error) {
+	return nil, nil
+}
+
+// testRPCError is a minimal rpc.Error implementation used to trigger IsMissingBlocks in tests.
+// We use Hyperliquid's hardcoded path: error code -32602 with message "invalid block range"
+// so no ClientErrors config is needed.
+type testRPCError struct {
+	code int
+	msg  string
+}
+
+func (e *testRPCError) Error() string  { return e.msg }
+func (e *testRPCError) ErrorCode() int { return e.code }
+
+// mockArchiveClient is a simple ArchiveClient for testing.
+type mockArchiveClient struct {
+	filterFn func(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
+}
+
+func (m *mockArchiveClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error) {
+	return m.filterFn(ctx, q)
+}
+
+func TestLogPoller_Backfill_ArchiveFallback(t *testing.T) {
+	t.Parallel()
+
+	// Use the Hyperliquid hardcoded MissingBlocks path in IsMissingBlocks:
+	//   error code -32602 + message matching "(: |^)invalid block range$"
+	// This avoids needing a ClientErrors config.
+	missingBlocksErr := &testRPCError{code: -32602, msg: "invalid block range"}
+
+	// stubORM is used for all sub-tests; it returns errStubORM from GetBlocksRange so
+	// blocksFromFinalizedLogs will fail gracefully (without panic) when logs would otherwise
+	// be written to a real database.
+	orm := &stubORM{}
+
+	t.Run("archive client recovers missing blocks, error count reset to zero", func(t *testing.T) {
+		t.Parallel()
+		lggr := logger.Test(t)
+		ctx := testutils.Context(t)
+
+		ec := clienttest.NewClient(t)
+
+		archiveCalled := false
+		archive := &mockArchiveClient{
+			filterFn: func(_ context.Context, _ ethereum.FilterQuery) ([]types.Log, error) {
+				archiveCalled = true
+				return nil, nil // empty logs; avoids further DB interaction
+			},
+		}
+
+		// Pre-set the error count to confirm it gets reset.
+		lpOpts := Opts{
+			BackfillBatchSize:        5,
+			KeepFinalizedBlocksDepth: 100,
+			ArchiveClient:            archive,
+		}
+		lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
+		lp.missingBlocksErrorCount.Store(1)
+
+		// Primary fails with missing-blocks; archive succeeds with empty logs; ORM then
+		// returns an error from GetBlocksRange (stub), causing backfill to return non-nil.
+		// The important assertions are BEFORE the ORM is hit.
+		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).
+			Return(nil, missingBlocksErr).Once()
+		ec.EXPECT().BatchCallContext(mock.Anything, mock.Anything).
+			Return(nil).Maybe()
+
+		_ = lp.backfill(ctx, 1, 1) // may return errStubORM; that is expected
+		assert.True(t, archiveCalled, "archive client should have been called")
+		assert.Equal(t, uint64(0), lp.missingBlocksErrorCount.Load(),
+			"error count must be reset after archive success")
+	})
+
+	t.Run("archive client also fails — error count incremented", func(t *testing.T) {
+		t.Parallel()
+		lggr := logger.Test(t)
+		ctx := testutils.Context(t)
+
+		ec := clienttest.NewClient(t)
+		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).
+			Return(nil, missingBlocksErr).Once()
+
+		archiveErr := errors.New("archive node also unavailable")
+		archive := &mockArchiveClient{
+			filterFn: func(_ context.Context, _ ethereum.FilterQuery) ([]types.Log, error) {
+				return nil, archiveErr
+			},
+		}
+
+		lpOpts := Opts{
+			BackfillBatchSize:        5,
+			KeepFinalizedBlocksDepth: 100,
+			ArchiveClient:            archive,
+		}
+		lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
+
+		err := lp.backfill(ctx, 1, 1)
+		require.Error(t, err)
+		assert.Equal(t, uint64(1), lp.missingBlocksErrorCount.Load())
+	})
+
+	t.Run("no archive client — existing missing-blocks behaviour preserved", func(t *testing.T) {
+		t.Parallel()
+		lggr := logger.Test(t)
+		ctx := testutils.Context(t)
+
+		ec := clienttest.NewClient(t)
+		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).
+			Return(nil, missingBlocksErr).Once()
+
+		lpOpts := Opts{
+			BackfillBatchSize:        5,
+			KeepFinalizedBlocksDepth: 100,
+		}
+		lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
+
+		err := lp.backfill(ctx, 1, 1)
+		require.Error(t, err)
+		assert.Equal(t, uint64(1), lp.missingBlocksErrorCount.Load())
+	})
+
+	t.Run("archive client not called on non-missing-blocks errors", func(t *testing.T) {
+		t.Parallel()
+		lggr := logger.Test(t)
+		ctx := testutils.Context(t)
+
+		ec := clienttest.NewClient(t)
+		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).
+			Return(nil, errors.New("some transient rpc error")).Once()
+
+		archiveCalled := false
+		archive := &mockArchiveClient{
+			filterFn: func(_ context.Context, _ ethereum.FilterQuery) ([]types.Log, error) {
+				archiveCalled = true
+				return nil, nil
+			},
+		}
+
+		lpOpts := Opts{
+			BackfillBatchSize:        5,
+			KeepFinalizedBlocksDepth: 100,
+			ArchiveClient:            archive,
+		}
+		lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
+
+		err := lp.backfill(ctx, 1, 1)
+		require.Error(t, err)
+		assert.False(t, archiveCalled, "archive client must not be called for non-missing-block errors")
+		assert.Equal(t, uint64(0), lp.missingBlocksErrorCount.Load())
 	})
 }
 
