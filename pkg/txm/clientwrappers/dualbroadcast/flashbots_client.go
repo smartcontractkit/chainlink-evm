@@ -169,13 +169,16 @@ type postError struct {
 	Message string `json:"message,omitempty"`
 }
 
+// SendBundle sends a bundle of all the in-flight transactions.
 func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Address, urlParams string) error {
 	unconfirmedTxs, err := d.txStore.FetchUnconfirmedTransactions(ctx, fromAddress)
 	if err != nil {
 		return fmt.Errorf("failed to fetch unconfirmed transactions: %w", err)
 	}
 
-	// TODO: Get the first attempt from each transaction for now.
+	// We fetch all the unconfirmed transactions in an ascending nonce order.
+	// For the bundle we need a signed transaction so we get the first attempt from each transaction.
+	// TODO: Implement a more sophisticated attempt selection logic if necessary.
 	attempts := make([]*types.Attempt, 0, len(unconfirmedTxs))
 	nonces := make([]uint64, 0, len(unconfirmedTxs))
 	for _, unconfirmedTx := range unconfirmedTxs {
@@ -197,7 +200,7 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	if err != nil {
 		return fmt.Errorf("failed to get current block height: %w", err)
 	}
-	targetBlock := currentBlock.NumberU64() + 24
+	maxBlock := currentBlock.NumberU64() + 24
 
 	bodyItems := make([]map[string]any, 0, len(attempts))
 	for _, attempt := range attempts {
@@ -224,7 +227,7 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 		"body": bodyItems,
 		"inclusion": map[string]any{
 			"block":    hexutil.EncodeBig(new(big.Int).SetUint64(currentBlock.NumberU64())),
-			"maxBlock": hexutil.EncodeBig(new(big.Int).SetUint64(targetBlock)),
+			"maxBlock": hexutil.EncodeBig(new(big.Int).SetUint64(maxBlock)),
 		},
 		"privacy": privacy,
 		"version": "v0.1",
