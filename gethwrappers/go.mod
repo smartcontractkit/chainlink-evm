@@ -3,7 +3,7 @@ module github.com/smartcontractkit/chainlink-evm/gethwrappers
 go 1.24.5
 
 require (
-	github.com/ethereum/go-ethereum v1.16.8
+	github.com/ethereum/go-ethereum v1.16.9
 	github.com/fatih/color v1.18.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers v0.0.0-20260113095857-e13e0dd04d9f
