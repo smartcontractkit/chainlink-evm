@@ -55,12 +55,9 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
   function supportsInterface(
     bytes4 interfaceId
   ) external pure override returns (bool) {
-    return
-      interfaceId == type(IERC165).interfaceId ||
-      interfaceId == type(IFeeManager).interfaceId ||
-      interfaceId == type(IVerifierFeeManager).interfaceId ||
-      interfaceId == IVerifierFeeManager.processFee.selector ||
-      interfaceId == IVerifierFeeManager.processFeeBulk.selector;
+    return interfaceId == type(IERC165).interfaceId || interfaceId == type(IFeeManager).interfaceId
+      || interfaceId == type(IVerifierFeeManager).interfaceId || interfaceId == IVerifierFeeManager.processFee.selector
+      || interfaceId == IVerifierFeeManager.processFeeBulk.selector;
   }
 
   /// @inheritdoc IVerifierFeeManager
