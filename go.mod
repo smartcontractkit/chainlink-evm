@@ -3,7 +3,7 @@ module github.com/smartcontractkit/chainlink-evm
 go 1.25.3
 
 require (
-	github.com/ethereum/go-ethereum v1.16.9
+	github.com/ethereum/go-ethereum v1.17.0
 	github.com/fbsobreira/gotron-sdk v0.0.0-20250403083053-2943ce8c759b
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/go-viper/mapstructure/v2 v2.4.0
