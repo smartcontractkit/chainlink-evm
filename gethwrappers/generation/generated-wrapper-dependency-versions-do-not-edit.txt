@@ -1,4 +1,4 @@
-GETH_VERSION: 1.16.8
+GETH_VERSION: 1.16.9
 arbitrum_module: ../contracts/solc/automation/ArbitrumModule/ArbitrumModule.sol/ArbitrumModule.abi.json ../contracts/solc/automation/ArbitrumModule/ArbitrumModule.sol/ArbitrumModule.bin 9b11a5fbc0c3c2839ba15515eab52ff4d509b918fdc177d454979d69a503bc40
 automation_compatible_utils: ../contracts/solc/automation/AutomationCompatibleUtils/AutomationCompatibleUtils.sol/AutomationCompatibleUtils.abi.json ../contracts/solc/automation/AutomationCompatibleUtils/AutomationCompatibleUtils.sol/AutomationCompatibleUtils.bin 6054a3c82fde7e76641c8f9607a86332932d8f8f4f92216803ef245091fd7544
 automation_consumer_benchmark: ../contracts/solc/automation/AutomationConsumerBenchmark/AutomationConsumerBenchmark.sol/AutomationConsumerBenchmark.abi.json ../contracts/solc/automation/AutomationConsumerBenchmark/AutomationConsumerBenchmark.sol/AutomationConsumerBenchmark.bin 0033c709cb99becaf375c876da93c63a27a748942e2b70d8650016f61d5e8a7c
