@@ -417,6 +417,9 @@ func (c *chain) Ready() (merr error) {
 	if c.balanceMonitor != nil {
 		merr = multierr.Combine(merr, c.balanceMonitor.Ready())
 	}
+	if c.logPoller != logpoller.LogPollerDisabled {
+		merr = multierr.Combine(merr, c.logPoller.Ready())
+	}
 	return
 }
 
@@ -433,6 +436,10 @@ func (c *chain) HealthReport() map[string]error {
 
 	if c.balanceMonitor != nil {
 		services.CopyHealth(report, c.balanceMonitor.HealthReport())
+	}
+
+	if c.logPoller != logpoller.LogPollerDisabled {
+		services.CopyHealth(report, c.logPoller.HealthReport())
 	}
 
 	return report
