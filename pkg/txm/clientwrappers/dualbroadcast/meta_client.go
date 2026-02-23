@@ -196,7 +196,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
 				a.metrics.RecordSendOperationError(ctx)
 				a.metrics.emitAtlasError(ctx, "send_operation", a.customURL, err, tx)
-				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, errors.Join(err, ErrAuction))
+				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
 			return nil
 		}
