@@ -208,7 +208,7 @@ jobs:
 
       - name: Publish to NPM (beta) - Core
         if: needs.tag-check.outputs.is-pre-release-core == 'true'
-        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
+        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm@1861140c62d65adc4b573f826446ba7106beed1a
         with:
           create-github-release: false
           publish-command: "pnpm publish-beta --no-git-checks"
@@ -235,7 +235,7 @@ jobs:
 
       - name: Publish to NPM (beta) - CRE
         if: needs.tag-check.outputs.is-pre-release-cre == 'true'
-        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
+        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm@1861140c62d65adc4b573f826446ba7106beed1a
         with:
           create-github-release: false
           publish-command: "pnpm publish-beta --no-git-checks"
@@ -288,7 +288,7 @@ jobs:
 
       - name: Publish to NPM (latest)
         if: needs.tag-check.outputs.is-release-core == 'true'
-        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
+        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm@1861140c62d65adc4b573f826446ba7106beed1a
         with:
           create-github-release: true
           publish-command: "pnpm publish-prod --no-git-checks"
@@ -318,7 +318,7 @@ jobs:
 
       - name: Publish to NPM (latest)
         if: needs.tag-check.outputs.is-release-cre == 'true'
-        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm/v1
+        uses: smartcontractkit/.github/actions/ci-publish-npm@ci-publish-npm@1861140c62d65adc4b573f826446ba7106beed1a
         with:
           create-github-release: true
           publish-command: "pnpm publish-prod --no-git-checks"
