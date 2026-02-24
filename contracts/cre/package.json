@@ -26,7 +26,8 @@
   "pnpm": {
     "overrides": {
       "@openzeppelin/contracts-upgradeable": "4.9.6",
-      "@openzeppelin/contracts": "4.9.6"
+      "@openzeppelin/contracts": "4.9.6",
+      "tmp": "^0.2.4"
     }
   },
   "engines": {
@@ -41,7 +42,7 @@
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1"
   },
   "dependencies": {
-    "@openzeppelin/contracts-4.8.3": "npm:@openzeppelin/contracts@4.8.3",
+    "@openzeppelin/contracts-4.8.3": "npm:@openzeppelin/contracts@4.9.6",
     "@openzeppelin/contracts-5.0.2": "npm:@openzeppelin/contracts@5.0.2",
     "@openzeppelin/contracts-5.1.0": "npm:@openzeppelin/contracts@5.1.0",
     "@chainlink/contracts": "1.5.0"
