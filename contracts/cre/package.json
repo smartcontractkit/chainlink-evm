@@ -27,7 +27,8 @@
     "overrides": {
       "@openzeppelin/contracts-upgradeable": "4.9.6",
       "@openzeppelin/contracts": "4.9.6",
-      "tmp": "^0.2.4"
+      "tmp": "^0.2.4",
+      "minimatch@<9": ">=9.0.5"
     }
   },
   "engines": {
