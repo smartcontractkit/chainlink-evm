@@ -1081,7 +1081,7 @@ func (lp *logPoller) handleReorg(ctx context.Context, currentBlock *evmtypes.Hea
 	// There can be another reorg while we're finding the LCA.
 	// That is ok, since we'll detect it on the next iteration.
 	// Since we go currentBlock by currentBlock for unfinalized logs, the mismatch starts at currentBlockNumber - 1.
-	blockAfterLCA, err2 := lp.findBlockAfterLCA(ctx, currentBlock, latestBlock.FinalizedBlockNumber)
+	blockAfterLCA, err2 := lp.findBlockAfterLCA(ctx, currentBlock.Number, latestBlock.FinalizedBlockNumber)
 	if err2 != nil {
 		return nil, fmt.Errorf("unable to find LCA after reorg: %w", err2)
 	}
@@ -1231,10 +1231,15 @@ func (e *reorgError) Error() string {
 	return fmt.Sprintf("reorg detected at block %d", e.ReorgedAt.Number)
 }
 
-func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmtypes.Head, latest, safe, finalized int64, isReplay bool) ([]Block, []Log, error) {
+func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmtypes.Head, latest, safe, finalized int64, isReplay bool) (blocks []Block, logs []Log, err error) {
 	const maxUnfinalizedBlocks = 2000
-	var logs []Log
-	var blocks []Block
+	var block *Block
+	defer func() {
+		// ensure that we always include the last block even if it's empty to use it as check point for next poll.
+		if block != nil && (len(blocks) == 0 || blocks[len(blocks)-1].BlockNumber != block.BlockNumber) {
+			blocks = append(blocks, *block)
+		}
+	}()
 	for {
 		h := currentBlock.Hash
 		rpcLogs, err := lp.latencyMonitor.FilterLogs(ctx, lp.Filter(nil, nil, &h))
@@ -1243,15 +1248,18 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 			return blocks, logs, nil
 		}
 		lp.lggr.Debugw("Unfinalized log query", "logs", len(logs), "currentBlockNumber", currentBlock.Number, "blockHash", currentBlock.Hash, "timestamp", currentBlock.Timestamp)
-		block := Block{
+		block = &Block{
 			BlockHash:            h,
 			BlockNumber:          currentBlock.Number,
 			BlockTimestamp:       currentBlock.Timestamp,
 			FinalizedBlockNumber: finalized,
 			SafeBlockNumber:      safe,
 		}
-		logs = append(logs, convertLogs(rpcLogs, []Block{block}, lp.lggr, lp.ec.ConfiguredChainID())...)
-		blocks = append(blocks, block)
+		logs = append(logs, convertLogs(rpcLogs, []Block{*block}, lp.lggr, lp.ec.ConfiguredChainID())...)
+		// Always save the block with logs, to know an impact of finality violation and for better observability.
+		if len(rpcLogs) > 0 {
+			blocks = append(blocks, *block)
+		}
 
 		if currentBlock.Number >= latest {
 			return blocks, logs, nil
@@ -1328,39 +1336,50 @@ func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNu
 
 // Find the first place where our chain and their chain have the same block,
 // that block number is the LCA. Return the block after that, where we want to resume polling.
-func (lp *logPoller) findBlockAfterLCA(ctx context.Context, current *evmtypes.Head, latestFinalizedBlockNumber int64) (*evmtypes.Head, error) {
-	// Current is where the mismatch starts.
-	// Check its parent to see if its the same as ours saved.
-	parent, err := lp.latencyMonitor.HeadByHash(ctx, current.ParentHash)
-	if err != nil {
-		return nil, err
-	}
-	blockAfterLCA := current
-	// We expect reorgs up to the block after latestFinalizedBlock
-	// We loop via parent instead of current so current always holds the LCA+1.
-	// If the parent block number becomes < the first finalized block our reorg is too deep.
-	// This can happen only if finalityTag is not enabled and fixed finalityDepth is provided via config.
-	var ourParentBlockHash common.Hash
-	for parent.Number >= latestFinalizedBlockNumber {
-		outParentBlock, err := lp.orm.SelectBlockByNumber(ctx, parent.Number)
-		if err != nil {
-			return nil, err
-		}
-		ourParentBlockHash = outParentBlock.BlockHash
-		if parent.Hash == ourParentBlockHash {
-			// If we do have the blockhash, return blockAfterLCA
-			return blockAfterLCA, nil
-		}
-		// Otherwise get a new parent and update blockAfterLCA.
-		blockAfterLCA = parent
-		parent, err = lp.latencyMonitor.HeadByHash(ctx, parent.ParentHash)
-		if err != nil {
-			return nil, err
-		}
+func (lp *logPoller) findBlockAfterLCA(ctx context.Context, currentHeadNumber int64, dbLatestFinalizedBlockNumber int64) (*evmtypes.Head, error) {
+	if currentHeadNumber < dbLatestFinalizedBlockNumber {
+		lp.lggr.Criticalw("Unexpected state. Current head number is lower than latest finalized block number", "currentHeadNumber", currentHeadNumber, "dbLatestFinalizedBlockNumber", dbLatestFinalizedBlockNumber)
+		return nil, fmt.Errorf("current head number %d is lower than latest finalized block number %d: %w", currentHeadNumber, dbLatestFinalizedBlockNumber, commontypes.ErrFinalityViolated)
 	}
 
-	lp.lggr.Criticalw("Reorg greater than finality depth detected", "finalityTag", lp.useFinalityTag, "current", current.Number, "latestFinalized", latestFinalizedBlockNumber)
-	return nil, fmt.Errorf("%w: finalized block hash %s does not match RPC's %s at height %d", commontypes.ErrFinalityViolated, ourParentBlockHash, blockAfterLCA.Hash, blockAfterLCA.Number)
+	// We expect reorgs up to the block after latestFinalizedBlock
+	// If the parent block number becomes < the first finalized block our reorg is too deep.
+	// This can happen only if finalityTag is not enabled and fixed finalityDepth is provided via config or chain violates finality guarantees.
+	for {
+		// Since we do not store all blocks in the db, it's possible that we do not have the parent block in our db.
+		// Find the nearest ancestor that we have in our db and check if it still belongs to canonical chain.
+		ourParent, err := lp.orm.SelectNewestBlock(ctx, currentHeadNumber-1)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				lp.lggr.Warnw("No ancestor block found in db, this means that the reorg is deeper than the number of blocks we have in the db.", "err", err, "currentHeadNumber", currentHeadNumber, "dbLatestFinalizedBlockNumber", dbLatestFinalizedBlockNumber)
+				// we should return currentHeadNumber as the block after LCA, to avoid drifting too far back.
+				return lp.headerByNumber(ctx, currentHeadNumber)
+			}
+			return nil, fmt.Errorf("failed to select ancestor for current block %d: %w", currentHeadNumber-1, err)
+		}
+
+		// Since we are looking for block after LCA, fetch child of ourParent.
+		// If new current points to ourParent, we found the LCA and can return block after it. Otherwise, keep looking for ancestors.
+		rpcChild, err := lp.headerByNumber(ctx, ourParent.BlockNumber+1)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch block after ancestor %d: %w", ourParent.BlockNumber+1, err)
+		}
+		if ourParent.BlockHash == rpcChild.ParentHash {
+			return rpcChild, nil
+		}
+
+		if ourParent.BlockNumber <= dbLatestFinalizedBlockNumber {
+			lp.lggr.Criticalw("Reorg greater than finality depth detected", "finalityTag", lp.useFinalityTag,
+				"current", rpcChild.Number,
+				"latestFinalized", dbLatestFinalizedBlockNumber,
+				"ourParentHash", ourParent.BlockHash,
+				"expectedParentHash", rpcChild.ParentHash,
+				"childHash", rpcChild.Hash)
+			return nil, fmt.Errorf("%w: finalized block with hash %s is not parent of canonical block at height %d, with parent hash %s", commontypes.ErrFinalityViolated, ourParent.BlockHash, rpcChild.Number, rpcChild.ParentHash)
+		}
+
+		currentHeadNumber = ourParent.BlockNumber
+	}
 }
 
 // PruneOldBlocks removes blocks that are > lp.keepFinalizedBlocksDepth behind the latest finalized block.
