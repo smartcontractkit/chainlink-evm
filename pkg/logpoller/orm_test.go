@@ -104,7 +104,7 @@ func TestLogPoller_Blocks_Batching(t *testing.T) {
 	for i := 0; i < numBlocks; i++ {
 		blockHash := common.HexToHash(fmt.Sprintf("0x%d", i+1))
 		blocks = append(blocks, logpoller.Block{
-			EVMChainID:  ubig.New(th.ChainID),
+			EVMChainID:  sqlutil.New(th.ChainID),
 			BlockHash:   blockHash,
 			BlockNumber: int64(i + 1),
 		})
