@@ -202,6 +202,8 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	}
 	maxBlock := currentBlock.NumberU64() + 24
 
+	// For reference, Flashbots Bundle definition can be found here: https://docs.flashbots.net/flashbots-mev-share/searchers/understanding-bundles#bundle-definition
+	// Keep in mind the docs might be outdated and latest features might not be documented.
 	bodyItems := make([]map[string]any, 0, len(attempts))
 	for _, attempt := range attempts {
 		if attempt.SignedTransaction == nil {
