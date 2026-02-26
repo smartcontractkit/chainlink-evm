@@ -119,7 +119,7 @@ func (o *DSORM) InsertBlocks(ctx context.Context, blocks []Block) error {
 			ON CONFLICT DO NOTHING`
 	// maintain behaviour of InsertBlock
 	for i := range blocks {
-		blocks[i].EVMChainID = ubig.New(o.chainID)
+		blocks[i].EVMChainID = sqlutil.New(o.chainID)
 	}
 	return batchInsert(ctx, o.ds, q, blocks, 1000)
 }
