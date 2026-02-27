@@ -3,7 +3,7 @@ module github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers
 go 1.24.5
 
 require (
-	github.com/ethereum/go-ethereum v1.16.8
+	github.com/ethereum/go-ethereum v1.16.9
 	github.com/pkg/errors v0.9.1
 	github.com/zksync-sdk/zksync2-go v1.1.0
 	go.uber.org/multierr v1.11.0
@@ -37,7 +37,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
 )

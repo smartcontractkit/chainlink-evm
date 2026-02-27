@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 import {Common} from "../libraries/Common.sol";
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
+import {IRewardManager} from "./interfaces/IRewardManager.sol";
 import {IVerifierFeeManager} from "./interfaces/IVerifierFeeManager.sol";
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 
@@ -12,6 +13,8 @@ import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
  * @notice A no-op implementation of IFeeManager that does not collect fees.
  * @dev All functions return successfully without performing any fee collection or state changes.
  *      Any ETH sent to payable functions is refunded to the subscriber.
+ *      Constructor parameters are stored for interface compatibility with integrators
+ *      who call i_linkAddress, i_nativeAddress, or i_rewardManager before getFeeAndReward().
  */
 contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
   /// @notice Error thrown when ETH refund fails
@@ -20,16 +23,41 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
   /// @notice The scalar representing 100% discount (1e18 = 100%)
   uint64 private constant PERCENTAGE_SCALAR = 1e18;
 
+  /// @notice The LINK token address (required for interface compatibility)
+  address public immutable i_linkAddress;
+
+  /// @notice The native token address (required for interface compatibility)
+  address public immutable i_nativeAddress;
+
+  /// @notice The reward manager address (required for interface compatibility)
+  IRewardManager public immutable i_rewardManager;
+
+  /**
+   * @notice Construct the NoOpFeeManager contract
+   * @param _linkAddress The address of the LINK token (for interface compatibility)
+   * @param _nativeAddress The address of the wrapped native token (for interface compatibility)
+   * @param _rewardManagerAddress The address of the reward manager (for interface compatibility)
+   * @dev These addresses are not used internally but are required for compatibility
+   *      with integrators who call these getters before getFeeAndReward().
+   */
+  constructor(address _linkAddress, address _nativeAddress, address _rewardManagerAddress) {
+    i_linkAddress = _linkAddress;
+    i_nativeAddress = _nativeAddress;
+    i_rewardManager = IRewardManager(_rewardManagerAddress);
+  }
+
   /// @inheritdoc ITypeAndVersion
   function typeAndVersion() external pure override returns (string memory) {
-    return "NoOpFeeManager 0.5.0";
+    return "NoOpFeeManager 0.5.1";
   }
 
   /// @inheritdoc IERC165
   function supportsInterface(
     bytes4 interfaceId
   ) external pure override returns (bool) {
-    return interfaceId == this.processFee.selector || interfaceId == this.processFeeBulk.selector;
+    return interfaceId == type(IERC165).interfaceId || interfaceId == type(IFeeManager).interfaceId
+      || interfaceId == type(IVerifierFeeManager).interfaceId || interfaceId == IVerifierFeeManager.processFee.selector
+      || interfaceId == IVerifierFeeManager.processFeeBulk.selector;
   }
 
   /// @inheritdoc IVerifierFeeManager
@@ -109,6 +137,15 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
   // solhint-disable-next-line func-name-mixedcase
   function s_globalDiscounts(address, address) external pure returns (uint256) {
     return PERCENTAGE_SCALAR;
+  }
+
+  /**
+   * @notice Returns 0 surcharge since no fees are charged
+   * @dev Replicates public state variable getter from FeeManager for backwards compatibility
+   */
+  // solhint-disable-next-line func-name-mixedcase
+  function s_nativeSurcharge() external pure returns (uint256) {
+    return 0;
   }
 
   /**

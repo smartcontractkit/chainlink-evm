@@ -416,6 +416,9 @@ func (c *chain) Ready() (merr error) {
 	if c.balanceMonitor != nil {
 		merr = multierr.Combine(merr, c.balanceMonitor.Ready())
 	}
+	if c.logPoller != logpoller.LogPollerDisabled {
+		merr = multierr.Combine(merr, c.logPoller.Ready())
+	}
 	return
 }
 
@@ -432,6 +435,10 @@ func (c *chain) HealthReport() map[string]error {
 
 	if c.balanceMonitor != nil {
 		services.CopyHealth(report, c.balanceMonitor.HealthReport())
+	}
+
+	if c.logPoller != logpoller.LogPollerDisabled {
+		services.CopyHealth(report, c.logPoller.HealthReport())
 	}
 
 	return report
@@ -481,7 +488,10 @@ func (c *chain) GetChainStatus(ctx context.Context) (types.ChainStatus, error) {
 func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
 	chainID := c.cfg.EVM().ChainID()
 
-	chainSelector := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	chainSelector, ok := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	if !ok {
+		return types.ChainInfo{}, fmt.Errorf("evm chain selector not found for chain ID: %d", chainID)
+	}
 	chainFamily, err := chainselectors.GetSelectorFamily(chainSelector)
 	if err != nil {
 		return types.ChainInfo{}, fmt.Errorf("failed to get chain family for selector %d: %w", chainSelector, err)

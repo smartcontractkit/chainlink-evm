@@ -8,8 +8,10 @@ import {Common} from "../../../libraries/Common.sol";
 import {FeeManager} from "../../FeeManager.sol";
 import {NoOpFeeManager} from "../../NoOpFeeManager.sol";
 import {RewardManager} from "../../RewardManager.sol";
+import {IFeeManager} from "../../interfaces/IFeeManager.sol";
 import {IVerifierFeeManager} from "../../interfaces/IVerifierFeeManager.sol";
 import {FeeManagerProxy} from "../mocks/FeeManagerProxy.sol";
+import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 import {Test} from "forge-std/Test.sol";
 
 contract NoOpFeeManagerTestV051 is Test {
@@ -30,7 +32,6 @@ contract NoOpFeeManagerTestV051 is Test {
 
     link = new ERC20Mock(18);
     native = new WERC20Mock();
-    noOpFeeManager = new NoOpFeeManager();
 
     // Deploy real FeeManager for comparison tests
     feeManagerProxy = new FeeManagerProxy();
@@ -39,18 +40,46 @@ contract NoOpFeeManagerTestV051 is Test {
     feeManagerProxy.setFeeManager(feeManager);
     rewardManager.setFeeManager(address(feeManager));
 
+    noOpFeeManager = new NoOpFeeManager(address(link), address(native), address(rewardManager));
+
     vm.stopPrank();
   }
 
   function test_typeAndVersion() public view {
-    assertEq(noOpFeeManager.typeAndVersion(), "NoOpFeeManager 0.5.0");
+    assertEq(noOpFeeManager.typeAndVersion(), "NoOpFeeManager 0.5.1");
   }
 
-  // VerifierProxy checks these interface support before accepting a fee manager
-  function test_supportsInterface() public view {
+  // ERC-165 compliance: must return true for IERC165 interface ID
+  function test_supportsInterface_ERC165() public view {
+    assertTrue(noOpFeeManager.supportsInterface(type(IERC165).interfaceId));
+  }
+
+  // ERC-165 compliance: must return true for IFeeManager interface ID
+  function test_supportsInterface_IFeeManager() public view {
+    assertTrue(noOpFeeManager.supportsInterface(type(IFeeManager).interfaceId));
+  }
+
+  // ERC-165 compliance: must return true for IVerifierFeeManager interface ID
+  function test_supportsInterface_IVerifierFeeManager() public view {
+    assertTrue(noOpFeeManager.supportsInterface(type(IVerifierFeeManager).interfaceId));
+  }
+
+  // Backward compatibility: VerifierProxy checks these function selectors before accepting a fee manager
+  function test_supportsInterface_BackwardCompatibility() public view {
     assertTrue(noOpFeeManager.supportsInterface(IVerifierFeeManager.processFee.selector));
     assertTrue(noOpFeeManager.supportsInterface(IVerifierFeeManager.processFeeBulk.selector));
+  }
+
+  // Must return false for unsupported interfaces
+  function test_supportsInterface_UnsupportedInterface() public view {
     assertFalse(noOpFeeManager.supportsInterface(bytes4(0xdeadbeef)));
+  }
+
+  // Verify constructor parameters are stored correctly for interface compatibility
+  function test_constructorParameters() public view {
+    assertEq(noOpFeeManager.i_linkAddress(), address(link));
+    assertEq(noOpFeeManager.i_nativeAddress(), address(native));
+    assertEq(address(noOpFeeManager.i_rewardManager()), address(rewardManager));
   }
 
   // Some code queries these to check discount status - must always return 100%
@@ -59,6 +88,11 @@ contract NoOpFeeManagerTestV051 is Test {
 
     assertEq(noOpFeeManager.s_globalDiscounts(SUBSCRIBER, address(link)), PERCENTAGE_SCALAR);
     assertEq(noOpFeeManager.s_subscriberDiscounts(SUBSCRIBER, feedId, address(link)), PERCENTAGE_SCALAR);
+  }
+
+  // Native surcharge getter should return 0 since no fees are charged
+  function test_nativeSurchargeReturnsZero() public view {
+    assertEq(noOpFeeManager.s_nativeSurcharge(), 0);
   }
 
   // Ensures our view functions match FeeManager's public mapping getter signatures
