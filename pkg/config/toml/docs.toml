@@ -71,6 +71,9 @@ LogBackfillBatchSize = 1000 # Default
 # LogPollInterval works in conjunction with Feature.LogPoller. Controls how frequently the log poller polls for logs. Defaults to the block production rate.
 LogPollInterval = '15s' # Default
 # **ADVANCED**
+# LogPollerSkipEmptyBlocks works in conjunction with Feature.LogPoller. Controls whether the log poller skips blocks with no logs. Setting this to true can reduce DB load, however it can affect product performance. Consult with specific Chainlink product team before changing this setting.
+LogPollerSkipEmptyBlocks = false # Default
+# **ADVANCED**
 # LogKeepBlocksDepth works in conjunction with Feature.LogPoller. Controls how many blocks the poller will keep, must be greater than FinalityDepth+1.
 LogKeepBlocksDepth = 100000 # Default
 # **ADVANCED**

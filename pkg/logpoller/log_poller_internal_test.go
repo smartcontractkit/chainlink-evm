@@ -960,6 +960,37 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 
 func Test_FindBlockAfterLCA(t *testing.T) {
 	testCases := []struct {
+		Name            string
+		SkipEmptyBlocks bool
+	}{
+		{
+			Name:            "Skip empty block",
+			SkipEmptyBlocks: true,
+		},
+		{
+			Name:            "Don't skip empty block",
+			SkipEmptyBlocks: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			lpOpts := Opts{
+				PollPeriod:               time.Second,
+				FinalityDepth:            3,
+				BackfillBatchSize:        3,
+				RPCBatchSize:             3,
+				KeepFinalizedBlocksDepth: 20,
+				BackupPollerBlockDelay:   0,
+				SkipEmptyBlocks:          tc.SkipEmptyBlocks,
+			}
+			testFindBlockAfterLCA(t, lpOpts)
+		})
+	}
+}
+
+func testFindBlockAfterLCA(t *testing.T, opts Opts) {
+	testCases := []struct {
 		Name               string
 		CurrentBlockNumber int64
 		DBLatestFinalized  int64
@@ -1133,15 +1164,7 @@ func Test_FindBlockAfterLCA(t *testing.T) {
 			if tc.Setup != nil {
 				tc.Setup(t, ec)
 			}
-			lpOpts := Opts{
-				PollPeriod:               time.Second,
-				FinalityDepth:            3,
-				BackfillBatchSize:        3,
-				RPCBatchSize:             3,
-				KeepFinalizedBlocksDepth: 20,
-				BackupPollerBlockDelay:   0,
-			}
-			lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
+			lp := NewLogPoller(orm, ec, lggr, headTracker, opts)
 			blockAfterLCA, err := lp.findBlockAfterLCA(ctx, tc.CurrentBlockNumber, tc.DBLatestFinalized)
 			if tc.ExpectedError != nil {
 				require.ErrorContains(t, err, tc.ExpectedError.Error())

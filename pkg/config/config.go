@@ -42,6 +42,7 @@ type EVM interface {
 	LogKeepBlocksDepth() uint32
 	BackupLogPollerBlockDelay() uint64
 	LogPollInterval() time.Duration
+	LogPollerSkipEmptyBlocks() bool
 	LogPrunePageSize() uint32
 	MinContractPayment() *commonassets.Link
 	MinIncomingConfirmations() uint32

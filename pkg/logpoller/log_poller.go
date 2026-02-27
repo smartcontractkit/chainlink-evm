@@ -114,11 +114,12 @@ type logPoller struct {
 	latencyMonitor           LatencyMonitor
 	lggr                     logger.SugaredLogger
 	pollPeriod               time.Duration // poll period set by block production rate
-	useFinalityTag           bool          // indicates whether logPoller should use chain's finality or pick a fixed depth for finality
-	finalityDepth            int64         // finality depth is taken to mean that block (head - finality) is finalized. If `useFinalityTag` is set to true, this value is ignored, because finalityDepth is fetched from chain
-	keepFinalizedBlocksDepth int64         // the number of blocks behind the last finalized block we keep in database
-	backfillBatchSize        int64         // batch size to use when backfilling finalized logs
-	rpcBatchSize             int64         // batch size to use for fallback RPC calls made in GetBlocks
+	skipEmptyBlocks          bool
+	useFinalityTag           bool  // indicates whether logPoller should use chain's finality or pick a fixed depth for finality
+	finalityDepth            int64 // finality depth is taken to mean that block (head - finality) is finalized. If `useFinalityTag` is set to true, this value is ignored, because finalityDepth is fetched from chain
+	keepFinalizedBlocksDepth int64 // the number of blocks behind the last finalized block we keep in database
+	backfillBatchSize        int64 // batch size to use when backfilling finalized logs
+	rpcBatchSize             int64 // batch size to use for fallback RPC calls made in GetBlocks
 	logPrunePageSize         int64
 	clientErrors             config.ClientErrors
 	backupPollerNextBlock    int64 // next block to be processed by Backup LogPoller
@@ -154,6 +155,7 @@ type Opts struct {
 	BackupPollerBlockDelay   int64
 	LogPrunePageSize         int64
 	ClientErrors             config.ClientErrors
+	SkipEmptyBlocks          bool
 }
 
 // NewLogPoller creates a log poller. Note there is an assumption
@@ -177,6 +179,7 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 		replayStart:              make(chan int64),
 		replayComplete:           make(chan error),
 		pollPeriod:               opts.PollPeriod,
+		skipEmptyBlocks:          opts.SkipEmptyBlocks,
 		backupPollerBlockDelay:   opts.BackupPollerBlockDelay,
 		finalityDepth:            opts.FinalityDepth,
 		useFinalityTag:           opts.UseFinalityTag,
@@ -1256,8 +1259,8 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 			SafeBlockNumber:      safe,
 		}
 		logs = append(logs, convertLogs(rpcLogs, []Block{*block}, lp.lggr, lp.ec.ConfiguredChainID())...)
-		// Always save the block with logs, to know an impact of finality violation and for better observability.
-		if len(rpcLogs) > 0 {
+		// Skip empty blocks if configured to do so.
+		if len(rpcLogs) > 0 || !lp.skipEmptyBlocks {
 			blocks = append(blocks, *block)
 		}
 
