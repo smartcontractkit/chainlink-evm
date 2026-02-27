@@ -177,13 +177,13 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	}
 
 	// We fetch all the unconfirmed transactions in an ascending nonce order.
-	// For the bundle we need a signed transaction so we get the first attempt from each transaction.
+	// For the bundle we need a signed transaction so we get the last attempt from each transaction.
 	// TODO: Implement a more sophisticated attempt selection logic if necessary.
 	attempts := make([]*types.Attempt, 0, len(unconfirmedTxs))
 	nonces := make([]uint64, 0, len(unconfirmedTxs))
 	for _, unconfirmedTx := range unconfirmedTxs {
 		if len(unconfirmedTx.Attempts) > 0 {
-			attempts = append(attempts, unconfirmedTx.Attempts[0])
+			attempts = append(attempts, unconfirmedTx.Attempts[len(unconfirmedTx.Attempts)-1])
 			if unconfirmedTx.Nonce != nil {
 				nonces = append(nonces, *unconfirmedTx.Nonce)
 			}

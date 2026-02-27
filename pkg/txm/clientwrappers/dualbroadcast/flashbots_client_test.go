@@ -1,11 +1,49 @@
 package dualbroadcast
 
 import (
+	"context"
+	"encoding/json"
+	"io"
+	"math/big"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
+	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type testFlashbotsRPC struct {
+	block *evmtypes.Block
+}
+
+func (m *testFlashbotsRPC) BlockByNumber(context.Context, *big.Int) (*evmtypes.Block, error) {
+	return m.block, nil
+}
+
+func (m *testFlashbotsRPC) NonceAt(context.Context, common.Address, *big.Int) (uint64, error) {
+	return 0, nil
+}
+
+func (m *testFlashbotsRPC) SendTransaction(context.Context, *evmtypes.Transaction) error {
+	return nil
+}
+
+type testFlashbotsTxStore struct {
+	txs []*txmtypes.Transaction
+}
+
+func (s *testFlashbotsTxStore) FetchUnconfirmedTransactions(context.Context, common.Address) ([]*txmtypes.Transaction, error) {
+	return s.txs, nil
+}
 
 func TestParseURLParams(t *testing.T) {
 	tests := []struct {
@@ -83,8 +121,8 @@ func TestParseURLParams(t *testing.T) {
 			wantErrContain: "unable to parse params",
 		},
 		{
-			name:        "combined params",
-			params:      "auctionTimeout=120&builder=test_builder_1&builder=test_builder_2&hint=h1&refund=0xR:75",
+			name:   "combined params",
+			params: "auctionTimeout=120&builder=test_builder_1&builder=test_builder_2&hint=h1&refund=0xR:75",
 			wantPrivacy: Privacy{
 				AuctionTimeout: 120,
 				Builders:       []string{"test_builder_1", "test_builder_2"},
@@ -109,4 +147,79 @@ func TestParseURLParams(t *testing.T) {
 			assert.Equal(t, tt.wantRefund, refund)
 		})
 	}
+}
+
+func TestSendBundle_UsesLatestAttemptPerTransaction(t *testing.T) {
+	fromAddress := common.HexToAddress("0x123")
+	toAddress := common.HexToAddress("0x456")
+
+	makeTx := func(nonce uint64, marker byte) *evmtypes.Transaction {
+		return evmtypes.NewTx(&evmtypes.LegacyTx{
+			Nonce:    nonce,
+			To:       &toAddress,
+			Gas:      21000,
+			GasPrice: big.NewInt(1),
+			Value:    big.NewInt(0),
+			Data:     []byte{marker},
+		})
+	}
+
+	oldAttemptTx := makeTx(1, 0x01)
+	latestAttemptTx := makeTx(1, 0x02)
+	secondTx := makeTx(2, 0x03)
+
+	nonce1 := uint64(1)
+	nonce2 := uint64(2)
+	txStore := &testFlashbotsTxStore{txs: []*txmtypes.Transaction{
+		{
+			Nonce: &nonce1,
+			Attempts: []*txmtypes.Attempt{
+				{ID: 10, SignedTransaction: oldAttemptTx},
+				{ID: 11, SignedTransaction: latestAttemptTx},
+			},
+		},
+		{
+			Nonce: &nonce2,
+			Attempts: []*txmtypes.Attempt{
+				{ID: 20, SignedTransaction: secondTx},
+			},
+		},
+	}}
+
+	var requestBody []byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		requestBody, err = io.ReadAll(r.Body)
+		require.NoError(t, err)
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"bundleHash":"0xabc"}}`))
+		require.NoError(t, err)
+	}))
+	defer server.Close()
+
+	customURL, err := url.Parse(server.URL)
+	require.NoError(t, err)
+
+	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
+	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil)
+
+	err = client.SendBundle(context.Background(), fromAddress, "")
+	require.NoError(t, err)
+
+	var req struct {
+		Method string `json:"method"`
+		Params []struct {
+			Body []struct {
+				Tx string `json:"tx"`
+			} `json:"body"`
+		} `json:"params"`
+	}
+	require.NoError(t, json.Unmarshal(requestBody, &req))
+	require.Equal(t, "mev_sendBundle", req.Method)
+	require.Len(t, req.Params, 1)
+	require.Len(t, req.Params[0].Body, 2)
+
+	expectedLatestTx, err := latestAttemptTx.MarshalBinary()
+	require.NoError(t, err)
+	assert.Equal(t, "0x"+common.Bytes2Hex(expectedLatestTx), req.Params[0].Body[0].Tx)
 }
