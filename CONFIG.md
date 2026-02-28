@@ -1279,6 +1279,8 @@ GasLimit controls the gas limit for transmit transactions from ocr2automation jo
 ```toml
 [Workflow]
 FromAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
+FromAddresses = ['0x2a3e23c6f242F5345320814aC8a1b4E58707D292'] # Example
+KeySelectionStrategy = 'HealthBasedFallback' # Example
 ForwarderAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 GasLimitDefault = 400_000 # Default
 TxAcceptanceState = 2 # Default
@@ -1292,6 +1294,18 @@ AcceptanceTimeout = '30s' # Default
 FromAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 ```
 FromAddress is Address of the transmitter key to use for workflow writes.
+
+### FromAddresses
+```toml
+FromAddresses = ['0x2a3e23c6f242F5345320814aC8a1b4E58707D292'] # Example
+```
+FromAddresses is a list of transmitter key addresses for multi-key support. When multiple keys are configured, the KeySelectionStrategy determines which key is used for each transaction.
+
+### KeySelectionStrategy
+```toml
+KeySelectionStrategy = 'HealthBasedFallback' # Example
+```
+KeySelectionStrategy determines how a sending key is selected when multiple FromAddresses are configured. Options: 'HealthBasedFallback' (use primary, fall back on failure) or 'RoundRobin' (cycle through healthy keys).
 
 ### ForwarderAddress
 ```toml
