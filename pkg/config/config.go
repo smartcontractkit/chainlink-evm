@@ -195,6 +195,8 @@ type Workflow interface {
 	AcceptanceTimeout() time.Duration
 	ForwarderAddress() *types.EIP55Address
 	FromAddress() *types.EIP55Address
+	FromAddresses() []types.EIP55Address
+	KeySelectionStrategy() string
 	GasLimitDefault() *uint64
 	PollPeriod() time.Duration
 	TxAcceptanceState() *commontypes.TransactionStatus

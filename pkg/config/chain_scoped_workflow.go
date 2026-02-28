@@ -16,6 +16,17 @@ func (b *workflowConfig) FromAddress() *types.EIP55Address {
 	return b.c.FromAddress
 }
 
+func (b *workflowConfig) FromAddresses() []types.EIP55Address {
+	return b.c.FromAddresses
+}
+
+func (b *workflowConfig) KeySelectionStrategy() string {
+	if b.c.KeySelectionStrategy != nil {
+		return *b.c.KeySelectionStrategy
+	}
+	return "HealthBasedFallback"
+}
+
 func (b *workflowConfig) ForwarderAddress() *types.EIP55Address {
 	return b.c.ForwarderAddress
 }

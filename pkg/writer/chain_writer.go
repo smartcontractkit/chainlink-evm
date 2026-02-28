@@ -20,6 +20,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/codec"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
+	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	evmtxmgr "github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/chains/txmgr"
@@ -51,6 +52,21 @@ func NewChainWriterService(logger logger.Logger, client evmclient.Client, txm ev
 		contracts:       config.Contracts,
 		parsedContracts: &codec.ParsedTypes{EncoderDefs: map[string]evmtypes.CodecEntry{}, DecoderDefs: map[string]evmtypes.CodecEntry{}},
 		abiMethods:      make(map[string]abi.Method),
+		keySelectors:    make(map[string]keys.Selector),
+	}
+
+	// Initialize key selectors for methods that have multiple from addresses
+	for contract, contractConfig := range config.Contracts {
+		for method, methodConfig := range contractConfig.Configs {
+			if len(methodConfig.FromAddresses) > 0 {
+				selectorKey := contract + "." + method
+				selector, sErr := keys.NewSelector(logger, methodConfig.FromAddresses, keys.StrategyHealthBasedFallback)
+				if sErr != nil {
+					return nil, fmt.Errorf("failed to create key selector for %s: %w", selectorKey, sErr)
+				}
+				w.keySelectors[selectorKey] = selector
+			}
+		}
 	}
 
 	if err := w.parseContracts(); err != nil {
@@ -80,6 +96,8 @@ type chainWriter struct {
 	// Store ABI methods for Tron transaction formatting
 	abiMethods map[string]abi.Method // key: "contract.method"
 
+	keySelectors map[string]keys.Selector // key: "contract.method"
+
 	encoder commontypes.Encoder
 }
 
@@ -101,6 +119,18 @@ func (w *chainWriter) SubmitTransaction(ctx context.Context, contract, method st
 	methodConfig, ok := contractConfig.Configs[method]
 	if !ok {
 		return fmt.Errorf("method config not found: %v", method)
+	}
+
+	fromAddress := methodConfig.FromAddress
+	if len(methodConfig.FromAddresses) > 0 {
+		if selector, sOk := w.keySelectors[contract+"."+method]; sOk {
+			selected, selErr := selector.SelectKey(ctx)
+			if selErr != nil {
+				w.logger.Warnw("Key selector failed, using default FromAddress", "err", selErr)
+			} else {
+				fromAddress = selected
+			}
+		}
 	}
 
 	calldata, err := w.encoder.Encode(ctx, args, codec.WrapItemType(contract, method, true))
@@ -145,7 +175,7 @@ func (w *chainWriter) SubmitTransaction(ctx context.Context, contract, method st
 		}
 
 		err = w.tronTxm.Enqueue(trontxm.TronTxmRequest{
-			FromAddress:     address.EVMAddressToAddress(methodConfig.FromAddress),
+			FromAddress:     address.EVMAddressToAddress(fromAddress),
 			ContractAddress: address.EVMAddressToAddress(common.HexToAddress(toAddress)),
 			Method:          methodSignature,
 			Params:          tronParams,
@@ -159,7 +189,7 @@ func (w *chainWriter) SubmitTransaction(ctx context.Context, contract, method st
 	}
 
 	req := evmtxmgr.TxRequest{
-		FromAddress:    methodConfig.FromAddress,
+		FromAddress:    fromAddress,
 		ToAddress:      common.HexToAddress(toAddress),
 		EncodedPayload: calldata,
 		FeeLimit:       gasLimit,
