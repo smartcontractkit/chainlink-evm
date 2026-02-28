@@ -7,6 +7,7 @@ import (
 	big "math/big"
 
 	ethereum "github.com/ethereum/go-ethereum"
+
 	mock "github.com/stretchr/testify/mock"
 
 	rpc "github.com/ethereum/go-ethereum/rpc"
