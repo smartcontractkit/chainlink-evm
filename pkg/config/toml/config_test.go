@@ -59,6 +59,8 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	addr, err := types.NewEIP55Address("0x2a3e23c6f242F5345320814aC8a1b4E58707D292")
 	require.NoError(t, err)
 	unknown.Workflow.FromAddress = &addr
+	unknown.Workflow.FromAddresses = []types.EIP55Address{addr}
+	unknown.Workflow.KeySelectionStrategy = ptr("HealthBasedFallback")
 	unknown.Workflow.ForwarderAddress = &addr
 	unknown.Workflow.GasLimitDefault = ptr(uint64(400000))
 	unknown.Transactions.TransactionManagerV2.BlockTime = new(config.Duration)
@@ -146,6 +148,8 @@ func TestDocs(t *testing.T) {
 		require.Equal(t, &gasLimitDefault, docDefaults.Workflow.GasLimitDefault)
 
 		docDefaults.Workflow.FromAddress = nil
+		docDefaults.Workflow.FromAddresses = nil
+		docDefaults.Workflow.KeySelectionStrategy = nil
 		docDefaults.Workflow.ForwarderAddress = nil
 		docDefaults.Workflow.GasLimitDefault = &gasLimitDefault
 		docDefaults.NodePool.Errors = ClientErrors{}

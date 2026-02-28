@@ -557,6 +557,10 @@ GasLimit = 5400000 # Default
 [Workflow]
 # FromAddress is Address of the transmitter key to use for workflow writes.
 FromAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
+# FromAddresses is a list of transmitter key addresses for multi-key support. When multiple keys are configured, the KeySelectionStrategy determines which key is used for each transaction.
+FromAddresses = ['0x2a3e23c6f242F5345320814aC8a1b4E58707D292'] # Example
+# KeySelectionStrategy determines how a sending key is selected when multiple FromAddresses are configured. Options: 'HealthBasedFallback' (use primary, fall back on failure) or 'RoundRobin' (cycle through healthy keys).
+KeySelectionStrategy = 'HealthBasedFallback' # Example
 # ForwarderAddress is the keystone forwarder contract address on chain.
 ForwarderAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 # GasLimitDefault is the default gas limit for workflow transactions.
