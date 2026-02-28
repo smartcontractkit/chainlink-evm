@@ -163,6 +163,53 @@ func (_c *Workflow_FromAddress_Call) RunAndReturn(run func() *ethkey.EIP55Addres
 	return _c
 }
 
+// FromAddresses provides a mock function with no fields
+func (_m *Workflow) FromAddresses() []ethkey.EIP55Address {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for FromAddresses")
+	}
+
+	var r0 []ethkey.EIP55Address
+	if rf, ok := ret.Get(0).(func() []ethkey.EIP55Address); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]ethkey.EIP55Address)
+		}
+	}
+
+	return r0
+}
+
+// Workflow_FromAddresses_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FromAddresses'
+type Workflow_FromAddresses_Call struct {
+	*mock.Call
+}
+
+// FromAddresses is a helper method to define mock.On call
+func (_e *Workflow_Expecter) FromAddresses() *Workflow_FromAddresses_Call {
+	return &Workflow_FromAddresses_Call{Call: _e.mock.On("FromAddresses")}
+}
+
+func (_c *Workflow_FromAddresses_Call) Run(run func()) *Workflow_FromAddresses_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Workflow_FromAddresses_Call) Return(_a0 []ethkey.EIP55Address) *Workflow_FromAddresses_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Workflow_FromAddresses_Call) RunAndReturn(run func() []ethkey.EIP55Address) *Workflow_FromAddresses_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GasLimitDefault provides a mock function with no fields
 func (_m *Workflow) GasLimitDefault() *uint64 {
 	ret := _m.Called()
@@ -206,6 +253,51 @@ func (_c *Workflow_GasLimitDefault_Call) Return(_a0 *uint64) *Workflow_GasLimitD
 }
 
 func (_c *Workflow_GasLimitDefault_Call) RunAndReturn(run func() *uint64) *Workflow_GasLimitDefault_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// KeySelectionStrategy provides a mock function with no fields
+func (_m *Workflow) KeySelectionStrategy() string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for KeySelectionStrategy")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// Workflow_KeySelectionStrategy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'KeySelectionStrategy'
+type Workflow_KeySelectionStrategy_Call struct {
+	*mock.Call
+}
+
+// KeySelectionStrategy is a helper method to define mock.On call
+func (_e *Workflow_Expecter) KeySelectionStrategy() *Workflow_KeySelectionStrategy_Call {
+	return &Workflow_KeySelectionStrategy_Call{Call: _e.mock.On("KeySelectionStrategy")}
+}
+
+func (_c *Workflow_KeySelectionStrategy_Call) Run(run func()) *Workflow_KeySelectionStrategy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Workflow_KeySelectionStrategy_Call) Return(_a0 string) *Workflow_KeySelectionStrategy_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Workflow_KeySelectionStrategy_Call) RunAndReturn(run func() string) *Workflow_KeySelectionStrategy_Call {
 	_c.Call.Return(run)
 	return _c
 }
