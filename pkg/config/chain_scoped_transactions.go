@@ -64,6 +64,10 @@ func (t *transactionManagerV2Config) DualBroadcast() *bool {
 	return t.c.DualBroadcast
 }
 
+func (t *transactionManagerV2Config) Bundles() *bool {
+	return t.c.Bundles
+}
+
 func (t *transactionsConfig) AutoPurge() AutoPurgeConfig {
 	return &autoPurgeConfig{c: t.c.AutoPurge}
 }

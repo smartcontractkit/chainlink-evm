@@ -195,6 +195,26 @@ func (m *InMemoryStore) FetchUnconfirmedTransactionAtNonceWithCount(latestNonce 
 	return
 }
 
+func (m *InMemoryStore) FetchUnconfirmedTransactions() ([]*types.Transaction, error) {
+	m.RLock()
+	defer m.RUnlock()
+
+	transactions := make([]*types.Transaction, 0, len(m.UnconfirmedTransactions))
+	for _, tx := range m.UnconfirmedTransactions {
+		if tx.Nonce == nil {
+			return nil, fmt.Errorf("unconfirmed transaction with ID %d has nil nonce", tx.ID)
+		}
+		transactions = append(transactions, tx.DeepCopy())
+	}
+
+	// Sort by nonce in ascending order
+	sort.Slice(transactions, func(i, j int) bool {
+		return *transactions[i].Nonce < *transactions[j].Nonce
+	})
+
+	return transactions, nil
+}
+
 func (m *InMemoryStore) MarkConfirmedAndReorgedTransactions(latestNonce uint64) ([]*types.Transaction, []uint64, error) {
 	m.Lock()
 	defer m.Unlock()

@@ -152,7 +152,7 @@ func NewTxmV2(
 	var c txm.Client
 	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
 		var err error
-		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager)
+		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, txmV2Config.Bundles())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}
