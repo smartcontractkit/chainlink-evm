@@ -73,7 +73,7 @@ func (d *FlashbotsClient) PendingNonceAt(ctx context.Context, address common.Add
 
 	var resultStr string
 	if err := json.Unmarshal(raw, &resultStr); err != nil {
-		return 0, fmt.Errorf("failed to unmarshal response into string: %w", err)
+		return 0, fmt.Errorf("failed to unmarshal response %s into string: %w", string(raw), err)
 	}
 	nonce, err := hexutil.DecodeUint64(resultStr)
 	if err != nil {
@@ -180,13 +180,16 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	// For the bundle we need a signed transaction so we get the last attempt from each transaction.
 	// TODO: Implement a more sophisticated attempt selection logic if necessary.
 	attempts := make([]*types.Attempt, 0, len(unconfirmedTxs))
+	attemptIDs := make([]uint64, 0, len(unconfirmedTxs))
 	nonces := make([]uint64, 0, len(unconfirmedTxs))
+	ids := make([]uint64, 0, len(unconfirmedTxs))
 	for _, unconfirmedTx := range unconfirmedTxs {
-		if len(unconfirmedTx.Attempts) > 0 {
-			attempts = append(attempts, unconfirmedTx.Attempts[len(unconfirmedTx.Attempts)-1])
-			if unconfirmedTx.Nonce != nil {
-				nonces = append(nonces, *unconfirmedTx.Nonce)
-			}
+		if len(unconfirmedTx.Attempts) > 0 && unconfirmedTx.Nonce != nil {
+			latestAttempt := unconfirmedTx.Attempts[len(unconfirmedTx.Attempts)-1]
+			attempts = append(attempts, latestAttempt)
+			attemptIDs = append(attemptIDs, latestAttempt.ID)
+			nonces = append(nonces, *unconfirmedTx.Nonce)
+			ids = append(ids, unconfirmedTx.ID)
 		}
 	}
 
@@ -261,9 +264,9 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 		BundleHash string `json:"bundleHash"`
 	}
 	if err := json.Unmarshal(raw, &bundleResult); err != nil {
-		return fmt.Errorf("failed to decode response %v into bundle result: %w", raw, err)
+		return fmt.Errorf("failed to decode response %s into bundle result: %w", string(raw), err)
 	}
-	d.lggr.Infow("Broadcasted transaction bundle", "nonces", nonces, "bundleHash", bundleResult.BundleHash)
+	d.lggr.Infow("Broadcasted transaction bundle", "txIDs", ids, "attemptIDs", attemptIDs, "nonces", nonces, "bundleHash", bundleResult.BundleHash)
 	return nil
 }
 
@@ -286,18 +289,19 @@ func parseURLParams(params string) (Privacy, RefundConfig, error) {
 	refundRaw := values.Get("refund")
 	if refundRaw != "" {
 		parts := strings.Split(refundRaw, ":")
-		if len(parts) == 2 {
-			address := parts[0]
-			percentVal, err := strconv.Atoi(parts[1])
-			if err != nil {
-				return Privacy{}, RefundConfig{}, fmt.Errorf("unable to parse percentage: %w", err)
-			}
+		if len(parts) != 2 {
+			return Privacy{}, RefundConfig{}, fmt.Errorf("unable to parse refund: %s. Expected format: address:percent", refundRaw)
+		}
+		address := parts[0]
+		percentVal, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return Privacy{}, RefundConfig{}, fmt.Errorf("unable to parse percentage: %w", err)
+		}
 
-			privacy.WantRefund = percentVal
-			refundConfig = RefundConfig{
-				Address: address,
-				Percent: 100, // wantRefund is an absolute percent of the kickback, and refundConfig.percent=100 means entire refund goes to this address (no longer supported)
-			}
+		privacy.WantRefund = percentVal
+		refundConfig = RefundConfig{
+			Address: address,
+			Percent: 100, // wantRefund is an absolute percent of the refund, and refundConfig.percent=100 means entire refund goes to this address (no longer supported)
 		}
 	}
 	return privacy, refundConfig, nil

@@ -109,10 +109,16 @@ func TestParseURLParams(t *testing.T) {
 			wantErrContain: "unable to parse percentage",
 		},
 		{
-			name:        "refund single part ignored",
-			params:      "refund=0xRefundAddr",
-			wantPrivacy: Privacy{},
-			wantRefund:  RefundConfig{},
+			name:           "refund single part returns error",
+			params:         "refund=0xRefundAddr",
+			wantErr:        true,
+			wantErrContain: "unable to parse refund",
+		},
+		{
+			name:           "refund three parts returns error",
+			params:         "refund=0xRefundAddr:50:extra",
+			wantErr:        true,
+			wantErrContain: "unable to parse refund",
 		},
 		{
 			name:           "invalid query",
