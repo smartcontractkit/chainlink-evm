@@ -25,7 +25,10 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-const flashbotsRPCTimeout = 10 * time.Second
+const (
+	flashbotsRPCTimeout = 10 * time.Second
+	maxBlockDiff        = 24
+)
 
 type FlashbotsTxStore interface {
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
@@ -107,7 +110,7 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		// Don't act on a bundle error - this is a fire and forget operation but we do want to log the error.
 		if d.bundles {
 			if err := d.SendBundle(ctx, tx.FromAddress, params); err != nil {
-				d.lggr.Error("error sending bundle: ", err)
+				d.lggr.Errorw("error sending bundle", "err", err)
 			}
 		}
 		return nil
@@ -184,11 +187,10 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	nonces := make([]uint64, 0, len(unconfirmedTxs))
 	ids := make([]uint64, 0, len(unconfirmedTxs))
 	for _, unconfirmedTx := range unconfirmedTxs {
-		if len(unconfirmedTx.Attempts) > 0 && unconfirmedTx.Nonce != nil {
+		if len(unconfirmedTx.Attempts) > 0 && unconfirmedTx.Nonce != nil && unconfirmedTx.Attempts[len(unconfirmedTx.Attempts)-1].SignedTransaction != nil {
 			latestAttempt := unconfirmedTx.Attempts[len(unconfirmedTx.Attempts)-1]
 			attempts = append(attempts, latestAttempt)
 			attemptIDs = append(attemptIDs, latestAttempt.ID)
-			nonces = append(nonces, *unconfirmedTx.Nonce)
 			ids = append(ids, unconfirmedTx.ID)
 		}
 	}
@@ -198,21 +200,29 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 		return nil
 	}
 
+	prevNonce := attempts[0].SignedTransaction.Nonce()
+	nonces = append(nonces, prevNonce)
+	for _, attempt := range attempts[1:] {
+		nonce := attempt.SignedTransaction.Nonce()
+		nonces = append(nonces, nonce)
+		expectedNonce := prevNonce + 1
+		if nonce != expectedNonce {
+			return fmt.Errorf("bundle attempts must be contiguous and strictly increasing: expected nonce %d, got nonce %d", expectedNonce, nonce)
+		}
+		prevNonce = nonce
+	}
+
 	// TODO: we don't have a good way to get this other than making an RPC call. Some async caching may help with the overhead.
 	currentBlock, err := d.c.BlockByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get current block height: %w", err)
 	}
-	maxBlock := currentBlock.NumberU64() + 24
+	maxBlock := currentBlock.NumberU64() + maxBlockDiff
 
 	// For reference, Flashbots Bundle definition can be found here: https://docs.flashbots.net/flashbots-mev-share/searchers/understanding-bundles#bundle-definition
 	// Keep in mind the docs might be outdated and latest features might not be documented.
 	bodyItems := make([]map[string]any, 0, len(attempts))
 	for _, attempt := range attempts {
-		if attempt.SignedTransaction == nil {
-			return fmt.Errorf("attempt with ID %d has nil SignedTransaction", attempt.ID)
-		}
-
 		txData, err := attempt.SignedTransaction.MarshalBinary()
 		if err != nil {
 			return fmt.Errorf("failed to marshal transaction for attempt ID %d: %w", attempt.ID, err)

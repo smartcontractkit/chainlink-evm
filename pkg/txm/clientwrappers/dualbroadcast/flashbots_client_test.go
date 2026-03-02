@@ -229,3 +229,87 @@ func TestSendBundle_UsesLatestAttemptPerTransaction(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "0x"+common.Bytes2Hex(expectedLatestTx), req.Params[0].Body[0].Tx)
 }
+
+func TestSendBundle_SucceedsOnIncreasingNonces(t *testing.T) {
+	fromAddress := common.HexToAddress("0x123")
+	toAddress := common.HexToAddress("0x456")
+
+	makeTx := func(nonce uint64) *evmtypes.Transaction {
+		return evmtypes.NewTx(&evmtypes.LegacyTx{
+			Nonce:    nonce,
+			To:       &toAddress,
+			Gas:      21000,
+			GasPrice: big.NewInt(1),
+			Value:    big.NewInt(0),
+		})
+	}
+
+	nonce7 := uint64(7)
+	nonce8 := uint64(8)
+	nonce9 := uint64(9)
+	txStore := &testFlashbotsTxStore{txs: []*txmtypes.Transaction{
+		{Nonce: &nonce7, Attempts: []*txmtypes.Attempt{{ID: 1, SignedTransaction: makeTx(7)}}},
+		{Nonce: &nonce8, Attempts: []*txmtypes.Attempt{{ID: 2, SignedTransaction: makeTx(8)}}},
+		{Nonce: &nonce9, Attempts: []*txmtypes.Attempt{{ID: 3, SignedTransaction: makeTx(9)}}},
+	}}
+
+	var requestBody []byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		requestBody, err = io.ReadAll(r.Body)
+		require.NoError(t, err)
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"bundleHash":"0xabc"}}`))
+		require.NoError(t, err)
+	}))
+	defer server.Close()
+
+	customURL, err := url.Parse(server.URL)
+	require.NoError(t, err)
+
+	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
+	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil)
+	err = client.SendBundle(context.Background(), fromAddress, "")
+	require.NoError(t, err)
+
+	var req struct {
+		Params []struct {
+			Body []struct {
+				Tx string `json:"tx"`
+			} `json:"body"`
+		} `json:"params"`
+	}
+	require.NoError(t, json.Unmarshal(requestBody, &req))
+	require.Len(t, req.Params, 1)
+	require.Len(t, req.Params[0].Body, 3)
+}
+
+func TestSendBundle_ReturnsErrorOnNonceGap(t *testing.T) {
+	fromAddress := common.HexToAddress("0x123")
+	toAddress := common.HexToAddress("0x456")
+
+	makeTx := func(nonce uint64) *evmtypes.Transaction {
+		return evmtypes.NewTx(&evmtypes.LegacyTx{
+			Nonce:    nonce,
+			To:       &toAddress,
+			Gas:      21000,
+			GasPrice: big.NewInt(1),
+			Value:    big.NewInt(0),
+		})
+	}
+
+	nonce8 := uint64(8)
+	nonce6 := uint64(6)
+	txStore := &testFlashbotsTxStore{txs: []*txmtypes.Transaction{
+		{Nonce: &nonce6, Attempts: []*txmtypes.Attempt{{ID: 1, SignedTransaction: makeTx(nonce6)}}},
+		{Nonce: &nonce8, Attempts: []*txmtypes.Attempt{{ID: 2, SignedTransaction: makeTx(nonce8)}}},
+	}}
+
+	customURL, err := url.Parse("http://localhost")
+	require.NoError(t, err)
+
+	client := NewFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, keystest.MessageSigner(nil), customURL, txStore, nil)
+	err = client.SendBundle(context.Background(), fromAddress, "")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must be contiguous and strictly increasing")
+}
