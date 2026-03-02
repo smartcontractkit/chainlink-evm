@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -437,19 +438,20 @@ func ptr[T any](v T) *T {
 	return &v
 }
 
-func TestRPCClient_ClientVersion_HistoricalBalanceCheck(t *testing.T) {
+func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 	t.Parallel()
 	chainID := big.NewInt(1337)
 	probeAddress := "0x0000000000000000000000000000000000000001"
+	expectedAddress := common.HexToAddress(probeAddress).String()
 
-	t.Run("disabled only calls web3_clientVersion", func(t *testing.T) {
+	t.Run("uses finalized tag when enabled", func(t *testing.T) {
 		t.Parallel()
-		methodCalls := make([]string, 0)
-		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
-			methodCalls = append(methodCalls, method)
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
-			case "web3_clientVersion":
-				resp.Result = `"test-client"`
+			case "eth_getBalance":
+				require.Equal(t, expectedAddress, params.Array()[0].String())
+				require.Equal(t, "finalized", params.Array()[1].String())
+				resp.Result = `"0x0"`
 			default:
 				require.Fail(t, "unexpected method: "+method)
 			}
@@ -465,54 +467,18 @@ func TestRPCClient_ClientVersion_HistoricalBalanceCheck(t *testing.T) {
 			ChainID:             chainID,
 		})
 
-		version, err := rpcClient.ClientVersion(t.Context())
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context(), probeAddress)
 		require.NoError(t, err)
-		require.Equal(t, "test-client", version)
-		require.Equal(t, []string{"web3_clientVersion"}, methodCalls)
 	})
 
-	t.Run("enabled uses finalized tag", func(t *testing.T) {
+	t.Run("uses latest-finalityDepth when finality tags disabled", func(t *testing.T) {
 		t.Parallel()
 		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
-			case "web3_clientVersion":
-				resp.Result = `"test-client"`
-			case "eth_getBalance":
-				require.Equal(t, probeAddress, params.Array()[0].String())
-				require.Equal(t, "finalized", params.Array()[1].String())
-				resp.Result = `"0x0"`
-			default:
-				require.Fail(t, "unexpected method: "+method)
-			}
-			return
-		}).WSURL()
-
-		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
-			HTTP: wsURL,
-			Cfg: &TestNodePoolConfig{
-				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckEnabledVal: true,
-				HistoricalBalanceCheckAddressVal: probeAddress,
-			},
-			FinalityTagsEnabled: true,
-			ChainID:             chainID,
-		})
-
-		version, err := rpcClient.ClientVersion(t.Context())
-		require.NoError(t, err)
-		require.Equal(t, "test-client", version)
-	})
-
-	t.Run("enabled in depth mode uses latest-finalityDepth", func(t *testing.T) {
-		t.Parallel()
-		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
-			switch method {
-			case "web3_clientVersion":
-				resp.Result = `"test-client"`
 			case "eth_blockNumber":
 				resp.Result = `"0x14"` // 20
 			case "eth_getBalance":
-				require.Equal(t, probeAddress, params.Array()[0].String())
+				require.Equal(t, expectedAddress, params.Array()[0].String())
 				require.Equal(t, "0x10", params.Array()[1].String()) // 20 - 4
 				resp.Result = `"0x0"`
 			default:
@@ -524,28 +490,23 @@ func TestRPCClient_ClientVersion_HistoricalBalanceCheck(t *testing.T) {
 		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
-				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckEnabledVal: true,
-				HistoricalBalanceCheckAddressVal: probeAddress,
+				NodeFinalizedBlockPollInterval: 1 * time.Second,
 			},
 			FinalityTagsEnabled: false,
 			FinalityDepth:       4,
 			ChainID:             chainID,
 		})
 
-		version, err := rpcClient.ClientVersion(t.Context())
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context(), probeAddress)
 		require.NoError(t, err)
-		require.Equal(t, "test-client", version)
 	})
 
-	t.Run("probe failure returns health check error", func(t *testing.T) {
+	t.Run("returns error when RPC fails", func(t *testing.T) {
 		t.Parallel()
 		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
-			case "web3_clientVersion":
-				resp.Result = `"test-client"`
 			case "eth_getBalance":
-				resp.Error.Message = "balance failure"
+				resp.Error.Message = "missing trie node"
 			default:
 				require.Fail(t, "unexpected method: "+method)
 			}
@@ -555,16 +516,14 @@ func TestRPCClient_ClientVersion_HistoricalBalanceCheck(t *testing.T) {
 		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
-				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckEnabledVal: true,
-				HistoricalBalanceCheckAddressVal: probeAddress,
+				NodeFinalizedBlockPollInterval: 1 * time.Second,
 			},
 			FinalityTagsEnabled: true,
 			ChainID:             chainID,
 		})
 
-		_, err := rpcClient.ClientVersion(t.Context())
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context(), probeAddress)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "historical balance health check failed")
+		require.ErrorContains(t, err, "fetching balance")
 	})
 }

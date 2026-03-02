@@ -88,20 +88,24 @@ func (c *TestClientErrors) TooManyResults() string          { return c.tooManyRe
 func (c *TestClientErrors) MissingBlocks() string           { return c.missingBlocks }
 
 type TestNodePoolConfig struct {
-	NodePollFailureThreshold          uint32
-	NodePollInterval                  time.Duration
-	NodeSelectionMode                 string
-	NodeSyncThreshold                 uint32
-	NodeLeaseDuration                 time.Duration
-	NodeIsSyncingEnabledVal           bool
-	NodeFinalizedBlockPollInterval    time.Duration
-	HistoricalBalanceCheckEnabledVal  bool
-	HistoricalBalanceCheckAddressVal  string
-	NodeErrors                        config.ClientErrors
-	EnforceRepeatableReadVal          bool
-	NodeDeathDeclarationDelay         time.Duration
-	NodeNewHeadsPollInterval          time.Duration
-	ExternalRequestMaxResponseSizeVal uint32
+	NodePollFailureThreshold                uint32
+	NodePollInterval                        time.Duration
+	NodeSelectionMode                       string
+	NodeSyncThreshold                       uint32
+	NodeLeaseDuration                       time.Duration
+	NodeIsSyncingEnabledVal                 bool
+	NodeFinalizedBlockPollInterval          time.Duration
+	HistoricalBalanceCheckEnabledVal        bool
+	HistoricalBalanceCheckAddressVal        string
+	NodeErrors                              config.ClientErrors
+	EnforceRepeatableReadVal                bool
+	NodeDeathDeclarationDelay               time.Duration
+	NodeNewHeadsPollInterval                time.Duration
+	ExternalRequestMaxResponseSizeVal       uint32
+	FinalizedStateCheckEnabledVal           bool
+	FinalizedStateCheckAddressVal           string
+	FinalizedStateCheckFailureThresholdVal  uint32
+	FinalizedStateUnavailableRegexVal       string
 }
 
 func (tc TestNodePoolConfig) PollFailureThreshold() uint32 { return tc.NodePollFailureThreshold }
@@ -150,6 +154,22 @@ func (tc TestNodePoolConfig) DeathDeclarationDelay() time.Duration {
 
 func (tc TestNodePoolConfig) ExternalRequestMaxResponseSize() uint32 {
 	return tc.ExternalRequestMaxResponseSizeVal
+}
+
+func (tc TestNodePoolConfig) FinalizedStateCheckEnabled() bool {
+	return tc.FinalizedStateCheckEnabledVal
+}
+
+func (tc TestNodePoolConfig) FinalizedStateCheckAddress() string {
+	return tc.FinalizedStateCheckAddressVal
+}
+
+func (tc TestNodePoolConfig) FinalizedStateCheckFailureThreshold() uint32 {
+	return tc.FinalizedStateCheckFailureThresholdVal
+}
+
+func (tc TestNodePoolConfig) FinalizedStateUnavailableRegex() string {
+	return tc.FinalizedStateUnavailableRegexVal
 }
 
 func NewChainClientWithTestNode(

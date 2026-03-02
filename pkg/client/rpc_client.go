@@ -184,16 +184,24 @@ func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err erro
 	if err != nil {
 		return "", fmt.Errorf("fetching client version failed: %w", err)
 	}
-	if r.historicalBalanceCheckEnabled {
-		if err = r.checkHistoricalStateAtFinalized(ctx); err != nil {
-			return "", fmt.Errorf("historical balance health check failed: %w", err)
-		}
-	}
 	r.rpcLog.Debugf("client version: %s", version)
 	return version, nil
 }
 
-func (r *RPCClient) checkHistoricalStateAtFinalized(ctx context.Context) error {
+// CheckFinalizedStateAvailability verifies if the RPC can serve historical state at the finalized block.
+// This is used to detect non-archive nodes that cannot serve state queries for older blocks.
+// If probeAddress is provided, it uses that address; otherwise falls back to the configured HistoricalBalanceCheckAddress.
+// Returns nil immediately if historical balance check is not enabled and no probeAddress is provided.
+func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context, probeAddress string) error {
+	var addr common.Address
+	if probeAddress != "" {
+		addr = common.HexToAddress(probeAddress)
+	} else if r.historicalBalanceCheckEnabled {
+		addr = r.historicalBalanceCheckAddress
+	} else {
+		return nil
+	}
+
 	var blockNumber *big.Int
 	if r.finalityTagEnabled {
 		blockNumber = big.NewInt(rpc.FinalizedBlockNumber.Int64())
@@ -206,9 +214,9 @@ func (r *RPCClient) checkHistoricalStateAtFinalized(ctx context.Context) error {
 		finalizedHeight := max(int64(0), latest-int64(r.finalityDepth))
 		blockNumber = big.NewInt(finalizedHeight)
 	}
-	_, err := r.BalanceAt(ctx, r.historicalBalanceCheckAddress, blockNumber)
+	_, err := r.BalanceAt(ctx, addr, blockNumber)
 	if err != nil {
-		return fmt.Errorf("fetching balance for address %s at block %s failed: %w", r.historicalBalanceCheckAddress.String(), blockNumber.String(), err)
+		return fmt.Errorf("fetching balance for address %s at block %s failed: %w", addr.String(), blockNumber.String(), err)
 	}
 	return nil
 }
