@@ -35,7 +35,6 @@ type Header Head
 
 // Head represents a BlockNumber, BlockHash.
 type Head struct {
-	ID               uint64
 	Hash             common.Hash
 	Number           int64
 	L1BlockNumber    sql.NullInt64
