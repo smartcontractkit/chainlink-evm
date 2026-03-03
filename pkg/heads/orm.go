@@ -128,7 +128,7 @@ func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err e
 
 func (orm *DbORM) LatestHead(ctx context.Context) (head *evmtypes.Head, err error) {
 	head = new(evmtypes.Head)
-	err = orm.ds.GetContext(ctx, head, headsSelectBase+` WHERE evm_chain_id = $1 ORDER BY number DESC LIMIT 1`, orm.chainID)
+	err = orm.ds.GetContext(ctx, head, headsSelectBase+` WHERE evm_chain_id = $1 ORDER BY number DESC, created_at DESC, id DESC LIMIT 1`, orm.chainID)
 	if pkgerrors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -137,7 +137,7 @@ func (orm *DbORM) LatestHead(ctx context.Context) (head *evmtypes.Head, err erro
 }
 
 func (orm *DbORM) LatestHeads(ctx context.Context, minBlockNumer int64) (heads []*evmtypes.Head, err error) {
-	err = orm.ds.SelectContext(ctx, &heads, headsSelectBase+` WHERE evm_chain_id = $1 AND number >= $2 ORDER BY number DESC`, orm.chainID, minBlockNumer)
+	err = orm.ds.SelectContext(ctx, &heads, headsSelectBase+` WHERE evm_chain_id = $1 AND number >= $2 ORDER BY number DESC, created_at DESC, id DESC`, orm.chainID, minBlockNumer)
 	err = pkgerrors.Wrap(err, "LatestHeads failed")
 	return
 }
