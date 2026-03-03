@@ -155,9 +155,11 @@ func (orm *DbORM) FirstHead(ctx context.Context) (*evmtypes.Head, error) {
 	head := new(evmtypes.Head)
 	err := orm.ds.GetContext(ctx, head, headsSelectBase+` WHERE evm_chain_id = $1 ORDER BY number ASC LIMIT 1`, orm.chainID)
 	if err != nil {
+		if pkgerrors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
-
 	return head, nil
 }
 
