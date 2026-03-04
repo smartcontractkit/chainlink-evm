@@ -399,7 +399,11 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	// Record bid count (number of solver operations received)
-	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS))
+	bidCount := len(response.Result.SOS)
+	a.metrics.RecordBidsReceived(ctx, bidCount)
+	if bidCount > 0 {
+		a.metrics.RecordAuctionWithBids(ctx, tx.FromAddress.Hex())
+	}
 
 	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
 		a.lggr.Info("Response: ", string(r))
@@ -558,5 +562,9 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	}
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
-	return a.c.SendTransaction(ctx, signedTx)
+	if err := a.c.SendTransaction(ctx, signedTx); err != nil {
+		return err
+	}
+	a.metrics.RecordMetacallSent(ctx, tx.FromAddress.Hex())
+	return nil
 }

@@ -20,13 +20,15 @@ import (
 
 // MetaMetrics handles all Meta-related metrics via OTEL
 type MetaMetrics struct {
-	chainID           string
-	statusCodeCounter metric.Int64Counter
-	latencyHistogram  metric.Int64Histogram
-	bidHistogram      metric.Int64Histogram
-	errorCounter      metric.Int64Counter
-	emitter           beholder.Emitter
-	lggr              logger.SugaredLogger
+	chainID             string
+	statusCodeCounter   metric.Int64Counter
+	latencyHistogram    metric.Int64Histogram
+	bidHistogram        metric.Int64Histogram
+	errorCounter        metric.Int64Counter
+	auctionsWithBids    metric.Int64Counter
+	metacallsSent       metric.Int64Counter
+	emitter             beholder.Emitter
+	lggr                logger.SugaredLogger
 }
 
 // NewMetaMetrics creates a new MetaMetrics instance
@@ -51,12 +53,24 @@ func NewMetaMetrics(chainID string, lggr logger.Logger) (*MetaMetrics, error) {
 		return nil, err
 	}
 
+	auctionsWithBids, err := beholder.GetMeter().Int64Counter("meta_auctions_with_bids")
+	if err != nil {
+		return nil, err
+	}
+
+	metacallsSent, err := beholder.GetMeter().Int64Counter("meta_metacalls_sent")
+	if err != nil {
+		return nil, err
+	}
+
 	return &MetaMetrics{
 		chainID:           chainID,
 		statusCodeCounter: statusCodeCounter,
 		latencyHistogram:  latencyHistogram,
 		bidHistogram:      bidHistogram,
 		errorCounter:      errorCounter,
+		auctionsWithBids:  auctionsWithBids,
+		metacallsSent:     metacallsSent,
 		emitter:           beholder.GetEmitter(),
 		lggr:              logger.Sugared(logger.Named(lggr, "Txm.MetaClient.MetaMetrics")),
 	}, nil
@@ -106,6 +120,30 @@ func (m *MetaMetrics) RecordSendOperationError(ctx context.Context) {
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("errorType", "send_operation"),
+		),
+	)
+}
+
+// RecordAuctionWithBids records that Atlas returned at least one bid for a transaction.
+// Every increment should be matched by a corresponding RecordMetacallSent; a persistent
+// gap between the two counters indicates that bids are being received but metacalls are
+// not being sent.
+func (m *MetaMetrics) RecordAuctionWithBids(ctx context.Context, fromAddress string) {
+	m.auctionsWithBids.Add(ctx, 1,
+		metric.WithAttributes(
+			attribute.String("chainID", m.chainID),
+			attribute.String("fromAddress", fromAddress),
+		),
+	)
+}
+
+// RecordMetacallSent records that a metacall transaction was successfully submitted to
+// the network after a winning Atlas auction.
+func (m *MetaMetrics) RecordMetacallSent(ctx context.Context, fromAddress string) {
+	m.metacallsSent.Add(ctx, 1,
+		metric.WithAttributes(
+			attribute.String("chainID", m.chainID),
+			attribute.String("fromAddress", fromAddress),
 		),
 	)
 }

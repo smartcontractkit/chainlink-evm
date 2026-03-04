@@ -46,6 +46,8 @@ func TestMetaMetrics(t *testing.T) {
 		metrics.RecordBidsReceived(ctx, 5)
 		metrics.RecordSendRequestError(ctx)
 		metrics.RecordSendOperationError(ctx)
+		metrics.RecordAuctionWithBids(ctx, "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+		metrics.RecordMetacallSent(ctx, "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	})
 }
 
