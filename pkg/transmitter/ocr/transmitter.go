@@ -71,6 +71,7 @@ func NewTransmitter(
 type txManagerOCR2 interface {
 	CreateTransaction(ctx context.Context, txRequest txmgr.TxRequest) (tx txmgr.Tx, err error)
 	GetForwarderForEOAOCR2Feeds(ctx context.Context, eoa, ocr2AggregatorID common.Address) (forwarder common.Address, err error)
+	SupportsDualBroadcast() bool
 }
 
 type ocr2FeedsTransmitter struct {
@@ -104,6 +105,9 @@ func NewOCR2FeedsTransmitter(
 	if dualTransmissionConfig != nil {
 		if keyHasLock(ks, dualTransmissionConfig.TransmitterAddress, keys.TXMv1) {
 			return nil, fmt.Errorf("key %s is used as a primary transmitter in another job. primary and secondary transmitters cannot be mixed", effectiveTransmitterAddress.String())
+		}
+		if !txm.SupportsDualBroadcast() {
+			return nil, fmt.Errorf("job uses a secondary EOA (%s) for dual transmission but TransactionManagerV2 does not have DualBroadcast enabled; secondary transactions would be sent to the public mempool. Enable TransactionManagerV2 with DualBroadcast=true in the node config", dualTransmissionConfig.TransmitterAddress.String())
 		}
 		return &ocr2FeedsDualTransmission{
 			ocr2Aggregator:                     ocr2Aggregator,

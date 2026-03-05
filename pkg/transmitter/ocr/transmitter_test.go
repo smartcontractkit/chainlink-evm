@@ -180,6 +180,8 @@ func Test_DualTransmitter(t *testing.T) {
 		},
 	}
 
+	txm.On("SupportsDualBroadcast").Return(true)
+
 	transmitter, err := ocr.NewOCR2FeedsTransmitter(
 		txm,
 		[]common.Address{fromAddress},
@@ -222,4 +224,37 @@ func Test_DualTransmitter(t *testing.T) {
 
 	require.True(t, primaryTxConfirmed)
 	require.True(t, secondaryTxConfirmed)
+}
+
+func Test_DualTransmitter_DualBroadcastNotEnabled_ReturnsError(t *testing.T) {
+	t.Parallel()
+
+	memoryKeystore := keystest.NewMemoryChainStore()
+	fromAddress := memoryKeystore.MustCreate(t)
+	secondaryFromAddress := memoryKeystore.MustCreate(t)
+
+	contractAddress := utils.RandomAddress()
+	secondaryContractAddress := utils.RandomAddress()
+
+	txm := mocks.NewMockEvmTxManager(t)
+	txm.On("SupportsDualBroadcast").Return(false)
+
+	strategy := newMockTxStrategy(t)
+	dualTransmissionConfig := &config.DualTransmissionConfig{
+		ContractAddress:    secondaryContractAddress,
+		TransmitterAddress: secondaryFromAddress,
+	}
+
+	_, err := ocr.NewOCR2FeedsTransmitter(
+		txm,
+		[]common.Address{fromAddress},
+		contractAddress,
+		uint64(1000),
+		fromAddress,
+		strategy,
+		txmgr.TransmitCheckerSpec{},
+		keys.NewStore(memoryKeystore),
+		dualTransmissionConfig,
+	)
+	require.ErrorContains(t, err, "TransactionManagerV2 does not have DualBroadcast enabled")
 }

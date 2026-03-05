@@ -49,14 +49,15 @@ type Orchestrator[
 	HEAD chains.Head[BLOCK_HASH],
 ] struct {
 	services.StateMachine
-	lggr           logger.SugaredLogger
-	chainID        *big.Int
-	txm            *Txm
-	txStore        OrchestratorTxStore
-	fwdMgr         *forwarders.FwdMgr
-	keystore       keys.Addresses
-	attemptBuilder OrchestratorAttemptBuilder[BLOCK_HASH, HEAD]
-	resumeCallback txmgr.ResumeCallback
+	lggr                 logger.SugaredLogger
+	chainID              *big.Int
+	txm                  *Txm
+	txStore              OrchestratorTxStore
+	fwdMgr               *forwarders.FwdMgr
+	keystore             keys.Addresses
+	attemptBuilder       OrchestratorAttemptBuilder[BLOCK_HASH, HEAD]
+	resumeCallback       txmgr.ResumeCallback
+	dualBroadcastEnabled bool
 }
 
 func NewTxmOrchestrator[BLOCK_HASH chains.Hashable, HEAD chains.Head[BLOCK_HASH]](
@@ -77,6 +78,20 @@ func NewTxmOrchestrator[BLOCK_HASH chains.Hashable, HEAD chains.Head[BLOCK_HASH]
 		attemptBuilder: attemptBuilder,
 		fwdMgr:         fwdMgr,
 	}
+}
+
+// WithDualBroadcast marks the orchestrator as having a dual-broadcast client wired. When true,
+// jobs that use a secondary EOA (DualTransmission) are allowed to start.
+func (o *Orchestrator[BLOCK_HASH, HEAD]) WithDualBroadcast() *Orchestrator[BLOCK_HASH, HEAD] {
+	o.dualBroadcastEnabled = true
+	return o
+}
+
+// SupportsDualBroadcast returns true when the orchestrator was built with a dual-broadcast client,
+// meaning secondary (DualBroadcast) transactions will be routed to the private relay rather than
+// the public mempool.
+func (o *Orchestrator[BLOCK_HASH, HEAD]) SupportsDualBroadcast() bool {
+	return o.dualBroadcastEnabled
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) Start(ctx context.Context) error {

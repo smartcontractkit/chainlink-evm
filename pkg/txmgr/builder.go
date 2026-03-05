@@ -150,7 +150,8 @@ func NewTxmV2(
 	}
 	var eh txm.ErrorHandler
 	var c txm.Client
-	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
+	dualBroadcast := txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil
+	if dualBroadcast {
 		var err error
 		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout())
 		if err != nil {
@@ -160,7 +161,11 @@ func NewTxmV2(
 		c = clientwrappers.NewChainClient(client)
 	}
 	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
-	return txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder), nil
+	o := txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder)
+	if dualBroadcast {
+		o.WithDualBroadcast()
+	}
+	return o, nil
 }
 
 // NewEvmResender creates a new concrete EvmResender

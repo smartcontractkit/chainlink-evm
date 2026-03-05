@@ -1285,6 +1285,50 @@ func (_c *TxManager_Trigger_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE]) RunAn
 	return _c
 }
 
+// SupportsDualBroadcast provides a mock function with given fields:
+func (_m *TxManager[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE]) SupportsDualBroadcast() bool {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SupportsDualBroadcast")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// TxManager_SupportsDualBroadcast_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SupportsDualBroadcast'
+type TxManager_SupportsDualBroadcast_Call[CID chains.ID, HEAD chains.Head[BHASH], ADDR chains.Hashable, THASH chains.Hashable, BHASH chains.Hashable, SEQ chains.Sequence, FEE fees.Fee] struct {
+	*mock.Call
+}
+
+func (_e *TxManager_Expecter[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE]) SupportsDualBroadcast() *TxManager_SupportsDualBroadcast_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE] {
+	return &TxManager_SupportsDualBroadcast_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE]{Call: _e.mock.On("SupportsDualBroadcast")}
+}
+
+func (_c *TxManager_SupportsDualBroadcast_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE]) Run(run func()) *TxManager_SupportsDualBroadcast_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE] {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *TxManager_SupportsDualBroadcast_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE]) Return(r0 bool) *TxManager_SupportsDualBroadcast_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE] {
+	_c.Call.Return(r0)
+	return _c
+}
+
+func (_c *TxManager_SupportsDualBroadcast_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE]) RunAndReturn(run func() bool) *TxManager_SupportsDualBroadcast_Call[CID, HEAD, ADDR, THASH, BHASH, SEQ, FEE] {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewTxManager creates a new instance of TxManager. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewTxManager[CID chains.ID, HEAD chains.Head[BHASH], ADDR chains.Hashable, THASH chains.Hashable, BHASH chains.Hashable, SEQ chains.Sequence, FEE fees.Fee](t interface {
