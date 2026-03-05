@@ -3,8 +3,6 @@ package config
 import (
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 )
 
@@ -41,16 +39,10 @@ func (n *NodePoolConfig) FinalizedBlockPollInterval() time.Duration {
 }
 
 func (n *NodePoolConfig) HistoricalBalanceCheckEnabled() bool {
-	if n.C.HistoricalBalanceCheckEnabled == nil {
-		return false
-	}
 	return *n.C.HistoricalBalanceCheckEnabled
 }
 
 func (n *NodePoolConfig) HistoricalBalanceCheckAddress() string {
-	if n.C.HistoricalBalanceCheckAddress == nil {
-		return common.Address{}.String()
-	}
 	return n.C.HistoricalBalanceCheckAddress.String()
 }
 
@@ -77,4 +69,11 @@ func (n *NodePoolConfig) ExternalRequestMaxResponseSize() uint32 {
 		return 0
 	}
 	return *n.C.ExternalRequestMaxResponseSize
+}
+
+func (n *NodePoolConfig) FinalizedStateCheckFailureThreshold() uint32 {
+	if n.C.FinalizedStateCheckFailureThreshold == nil {
+		return 0
+	}
+	return *n.C.FinalizedStateCheckFailureThreshold
 }

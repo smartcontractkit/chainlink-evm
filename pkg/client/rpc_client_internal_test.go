@@ -444,6 +444,22 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 	probeAddress := "0x0000000000000000000000000000000000000001"
 	expectedAddress := common.HexToAddress(probeAddress).String()
 
+	t.Run("returns nil when historical balance check is disabled", func(t *testing.T) {
+		t.Parallel()
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: &url.URL{Scheme: "http", Host: "localhost:8545"},
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckEnabledVal: false,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.NoError(t, err)
+	})
+
 	t.Run("uses finalized tag when enabled", func(t *testing.T) {
 		t.Parallel()
 		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
@@ -461,13 +477,15 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
-				NodeFinalizedBlockPollInterval: 1 * time.Second,
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckEnabledVal: true,
+				HistoricalBalanceCheckAddressVal: probeAddress,
 			},
 			FinalityTagsEnabled: true,
 			ChainID:             chainID,
 		})
 
-		err := rpcClient.CheckFinalizedStateAvailability(t.Context(), probeAddress)
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
 		require.NoError(t, err)
 	})
 
@@ -490,18 +508,20 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
-				NodeFinalizedBlockPollInterval: 1 * time.Second,
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckEnabledVal: true,
+				HistoricalBalanceCheckAddressVal: probeAddress,
 			},
 			FinalityTagsEnabled: false,
 			FinalityDepth:       4,
 			ChainID:             chainID,
 		})
 
-		err := rpcClient.CheckFinalizedStateAvailability(t.Context(), probeAddress)
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
 		require.NoError(t, err)
 	})
 
-	t.Run("returns error when RPC fails", func(t *testing.T) {
+	t.Run("returns ErrFinalizedStateUnavailable when error matches regex", func(t *testing.T) {
 		t.Parallel()
 		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
@@ -513,17 +533,56 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			return
 		}).WSURL()
 
+		clientErrors := NewTestClientErrors()
+		clientErrors.finalizedStateUnavailable = "missing trie node"
+
 		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
-				NodeFinalizedBlockPollInterval: 1 * time.Second,
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckEnabledVal: true,
+				HistoricalBalanceCheckAddressVal: probeAddress,
+				NodeErrors:                       &clientErrors,
 			},
 			FinalityTagsEnabled: true,
 			ChainID:             chainID,
 		})
 
-		err := rpcClient.CheckFinalizedStateAvailability(t.Context(), probeAddress)
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.Error(t, err)
+		require.ErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
+	})
+
+	t.Run("returns generic error when error does not match regex", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				resp.Error.Message = "connection reset"
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		clientErrors := NewTestClientErrors()
+		clientErrors.finalizedStateUnavailable = "missing trie node"
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckEnabledVal: true,
+				HistoricalBalanceCheckAddressVal: probeAddress,
+				NodeErrors:                       &clientErrors,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
 		require.Error(t, err)
 		require.ErrorContains(t, err, "fetching balance")
+		require.NotErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
 	})
 }

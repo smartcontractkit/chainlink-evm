@@ -107,6 +107,7 @@ type ClientErrors interface {
 	ServiceUnavailable() string
 	TooManyResults() string
 	MissingBlocks() string
+	FinalizedStateUnavailable() string
 }
 
 type Transactions interface {
@@ -216,6 +217,7 @@ type NodePool interface {
 	NewHeadsPollInterval() time.Duration
 	VerifyChainID() bool
 	ExternalRequestMaxResponseSize() uint32
+	FinalizedStateCheckFailureThreshold() uint32
 }
 
 type ChainScopedConfig interface {

@@ -1023,6 +1023,7 @@ type ClientErrors struct {
 	ServiceUnavailable                *string `toml:",omitempty"`
 	TooManyResults                    *string `toml:",omitempty"`
 	MissingBlocks                     *string `toml:",omitempty"`
+	FinalizedStateUnavailable         *string `toml:",omitempty"`
 }
 
 func (r *ClientErrors) setFrom(f *ClientErrors) bool {
@@ -1074,6 +1075,9 @@ func (r *ClientErrors) setFrom(f *ClientErrors) bool {
 	if v := f.MissingBlocks; v != nil {
 		r.MissingBlocks = v
 	}
+	if v := f.FinalizedStateUnavailable; v != nil {
+		r.FinalizedStateUnavailable = v
+	}
 	return true
 }
 
@@ -1087,12 +1091,13 @@ type NodePool struct {
 	FinalizedBlockPollInterval     *commonconfig.Duration
 	HistoricalBalanceCheckEnabled  *bool
 	HistoricalBalanceCheckAddress  *types.EIP55Address
-	Errors                         ClientErrors `toml:",omitempty"`
-	EnforceRepeatableRead          *bool
-	DeathDeclarationDelay          *commonconfig.Duration
-	NewHeadsPollInterval           *commonconfig.Duration
-	VerifyChainID                  *bool
-	ExternalRequestMaxResponseSize *uint32
+	Errors                              ClientErrors `toml:",omitempty"`
+	EnforceRepeatableRead               *bool
+	DeathDeclarationDelay               *commonconfig.Duration
+	NewHeadsPollInterval                *commonconfig.Duration
+	VerifyChainID                       *bool
+	ExternalRequestMaxResponseSize      *uint32
+	FinalizedStateCheckFailureThreshold *uint32
 }
 
 func (p *NodePool) setFrom(f *NodePool) {
@@ -1142,6 +1147,10 @@ func (p *NodePool) setFrom(f *NodePool) {
 
 	if v := f.ExternalRequestMaxResponseSize; v != nil {
 		p.ExternalRequestMaxResponseSize = v
+	}
+
+	if v := f.FinalizedStateCheckFailureThreshold; v != nil {
+		p.FinalizedStateCheckFailureThreshold = v
 	}
 
 	p.Errors.setFrom(&f.Errors)

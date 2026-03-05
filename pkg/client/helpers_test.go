@@ -39,6 +39,7 @@ type TestClientErrors struct {
 	serviceUnavailable                string
 	tooManyResults                    string
 	missingBlocks                     string
+	finalizedStateUnavailable         string
 }
 
 func NewTestClientErrors() TestClientErrors {
@@ -83,9 +84,10 @@ func (c *TestClientErrors) L2FeeTooHigh() string            { return c.l2FeeTooH
 func (c *TestClientErrors) L2Full() string                  { return c.l2Full }
 func (c *TestClientErrors) TransactionAlreadyMined() string { return c.transactionAlreadyMined }
 func (c *TestClientErrors) Fatal() string                   { return c.fatal }
-func (c *TestClientErrors) ServiceUnavailable() string      { return c.serviceUnavailable }
-func (c *TestClientErrors) TooManyResults() string          { return c.tooManyResults }
-func (c *TestClientErrors) MissingBlocks() string           { return c.missingBlocks }
+func (c *TestClientErrors) ServiceUnavailable() string       { return c.serviceUnavailable }
+func (c *TestClientErrors) TooManyResults() string           { return c.tooManyResults }
+func (c *TestClientErrors) MissingBlocks() string            { return c.missingBlocks }
+func (c *TestClientErrors) FinalizedStateUnavailable() string { return c.finalizedStateUnavailable }
 
 type TestNodePoolConfig struct {
 	NodePollFailureThreshold                uint32
@@ -102,10 +104,7 @@ type TestNodePoolConfig struct {
 	NodeDeathDeclarationDelay               time.Duration
 	NodeNewHeadsPollInterval                time.Duration
 	ExternalRequestMaxResponseSizeVal       uint32
-	FinalizedStateCheckEnabledVal           bool
-	FinalizedStateCheckAddressVal           string
 	FinalizedStateCheckFailureThresholdVal  uint32
-	FinalizedStateUnavailableRegexVal       string
 }
 
 func (tc TestNodePoolConfig) PollFailureThreshold() uint32 { return tc.NodePollFailureThreshold }
@@ -156,20 +155,8 @@ func (tc TestNodePoolConfig) ExternalRequestMaxResponseSize() uint32 {
 	return tc.ExternalRequestMaxResponseSizeVal
 }
 
-func (tc TestNodePoolConfig) FinalizedStateCheckEnabled() bool {
-	return tc.FinalizedStateCheckEnabledVal
-}
-
-func (tc TestNodePoolConfig) FinalizedStateCheckAddress() string {
-	return tc.FinalizedStateCheckAddressVal
-}
-
 func (tc TestNodePoolConfig) FinalizedStateCheckFailureThreshold() uint32 {
 	return tc.FinalizedStateCheckFailureThresholdVal
-}
-
-func (tc TestNodePoolConfig) FinalizedStateUnavailableRegex() string {
-	return tc.FinalizedStateUnavailableRegexVal
 }
 
 func NewChainClientWithTestNode(

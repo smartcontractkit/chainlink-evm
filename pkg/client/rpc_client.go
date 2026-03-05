@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -190,15 +191,10 @@ func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err erro
 
 // CheckFinalizedStateAvailability verifies if the RPC can serve historical state at the finalized block.
 // This is used to detect non-archive nodes that cannot serve state queries for older blocks.
-// If probeAddress is provided, it uses that address; otherwise falls back to the configured HistoricalBalanceCheckAddress.
-// Returns nil immediately if historical balance check is not enabled and no probeAddress is provided.
-func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context, probeAddress string) error {
-	var addr common.Address
-	if probeAddress != "" {
-		addr = common.HexToAddress(probeAddress)
-	} else if r.historicalBalanceCheckEnabled {
-		addr = r.historicalBalanceCheckAddress
-	} else {
+// Returns nil immediately if historical balance check is not enabled.
+// Returns multinode.ErrFinalizedStateUnavailable if the error matches the FinalizedStateUnavailable pattern.
+func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context) error {
+	if !r.historicalBalanceCheckEnabled {
 		return nil
 	}
 
@@ -214,11 +210,30 @@ func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context, probeAd
 		finalizedHeight := max(int64(0), latest-int64(r.finalityDepth))
 		blockNumber = big.NewInt(finalizedHeight)
 	}
-	_, err := r.BalanceAt(ctx, addr, blockNumber)
+	_, err := r.BalanceAt(ctx, r.historicalBalanceCheckAddress, blockNumber)
 	if err != nil {
-		return fmt.Errorf("fetching balance for address %s at block %s failed: %w", addr.String(), blockNumber.String(), err)
+		if r.isFinalizedStateUnavailableError(err) {
+			return fmt.Errorf("%w: %w", multinode.ErrFinalizedStateUnavailable, err)
+		}
+		return fmt.Errorf("fetching balance for address %s at block %s failed: %w", r.historicalBalanceCheckAddress.String(), blockNumber.String(), err)
 	}
 	return nil
+}
+
+// isFinalizedStateUnavailableError checks if the error matches the FinalizedStateUnavailable regex pattern.
+func (r *RPCClient) isFinalizedStateUnavailableError(err error) bool {
+	if err == nil {
+		return false
+	}
+	pattern := r.clientErrors.FinalizedStateUnavailable()
+	if pattern == "" {
+		return false
+	}
+	re, compileErr := regexp.Compile(pattern)
+	if compileErr != nil {
+		return false
+	}
+	return re.MatchString(err.Error())
 }
 
 func (r *RPCClient) Dial(callerCtx context.Context) error {
