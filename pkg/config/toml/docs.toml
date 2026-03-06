@@ -173,6 +173,8 @@ CustomURL = 'https://example.api.io' # Example
 DualBroadcast = false # Example
 # Bundles enables sending bundles for auctioning (not compatible with all OFAs).
 Bundles = false # Example
+# FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
+FastlaneAuctionRequestTimeout = '5s' # Example
 
 [BalanceMonitor]
 # Enabled balance monitoring for all keys.

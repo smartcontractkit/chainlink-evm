@@ -68,6 +68,14 @@ func (t *transactionManagerV2Config) Bundles() *bool {
 	return t.c.Bundles
 }
 
+func (t *transactionManagerV2Config) FastlaneAuctionRequestTimeout() *time.Duration {
+	if t.c.FastlaneAuctionRequestTimeout == nil {
+		return nil
+	}
+	d := t.c.FastlaneAuctionRequestTimeout.Duration()
+	return &d
+}
+
 func (t *transactionsConfig) AutoPurge() AutoPurgeConfig {
 	return &autoPurgeConfig{c: t.c.AutoPurge}
 }
