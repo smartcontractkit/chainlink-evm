@@ -585,11 +585,12 @@ func (a *AutoPurgeConfig) setFrom(f *AutoPurgeConfig) {
 }
 
 type TransactionManagerV2Config struct {
-	Enabled       *bool                  `toml:",omitempty"`
-	BlockTime     *commonconfig.Duration `toml:",omitempty"`
-	CustomURL     *commonconfig.URL      `toml:",omitempty"`
-	DualBroadcast *bool                  `toml:",omitempty"`
-	Bundles       *bool                  `toml:",omitempty"`
+	Enabled                       *bool                  `toml:",omitempty"`
+	BlockTime                     *commonconfig.Duration `toml:",omitempty"`
+	CustomURL                     *commonconfig.URL      `toml:",omitempty"`
+	DualBroadcast                 *bool                  `toml:",omitempty"`
+	Bundles                       *bool                  `toml:",omitempty"`
+	FastlaneAuctionRequestTimeout *commonconfig.Duration `toml:",omitempty"`
 }
 
 func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
@@ -607,6 +608,9 @@ func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
 	}
 	if v := f.Bundles; v != nil {
 		t.Bundles = f.Bundles
+	}
+	if v := f.FastlaneAuctionRequestTimeout; v != nil {
+		t.FastlaneAuctionRequestTimeout = f.FastlaneAuctionRequestTimeout
 	}
 }
 

@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	timeout                    = time.Second * 5
+	defaultAuctionRequestTimeout = time.Second * 5
 	NoSolverOps                = "no solver operations received"
 	NoSolverOpsAfterSimulation = "no valid solver operations after simulation"
 	metaABI                    = `[
@@ -136,29 +136,36 @@ type MetaClientRPC interface {
 }
 
 type MetaClient struct {
-	lggr      logger.SugaredLogger
-	c         MetaClientRPC
-	ks        MetaClientKeystore
-	customURL *url.URL
-	chainID   *big.Int
-	metrics   *MetaMetrics
-	txStore   MetaClientTxStore
+	lggr                  logger.SugaredLogger
+	c                     MetaClientRPC
+	ks                    MetaClientKeystore
+	customURL             *url.URL
+	chainID               *big.Int
+	metrics               *MetaMetrics
+	txStore               MetaClientTxStore
+	auctionRequestTimeout time.Duration
 }
 
-func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore) (*MetaClient, error) {
+func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore, auctionRequestTimeout *time.Duration) (*MetaClient, error) {
 	metrics, err := NewMetaMetrics(chainID.String(), lggr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
 	}
 
+	t := defaultAuctionRequestTimeout
+	if auctionRequestTimeout != nil {
+		t = *auctionRequestTimeout
+	}
+
 	return &MetaClient{
-		lggr:      logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
-		c:         c,
-		ks:        ks,
-		customURL: customURL,
-		chainID:   chainID,
-		metrics:   metrics,
-		txStore:   txStore,
+		lggr:                  logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
+		c:                     c,
+		ks:                    ks,
+		customURL:             customURL,
+		chainID:               chainID,
+		metrics:               metrics,
+		txStore:               txStore,
+		auctionRequestTimeout: t,
 	}, nil
 }
 
@@ -309,7 +316,7 @@ type Metacalldata struct {
 }
 
 func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams string, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
-	ctx, cancel := context.WithTimeout(parentCtx, timeout)
+	ctx, cancel := context.WithTimeout(parentCtx, a.auctionRequestTimeout)
 	defer cancel()
 
 	m := []byte{97, 116, 108, 97, 115, 95, 111, 101, 118, 65, 117, 99, 116, 105, 111, 110}
