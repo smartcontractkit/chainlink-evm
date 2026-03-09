@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -60,9 +61,9 @@ func (nc *NullClient) CallContext(ctx context.Context, result interface{}, metho
 	return nil
 }
 
-func (nc *NullClient) CallContextAll(ctx context.Context, method string, args ...interface{}) ([]CallContextAllResult, error) {
-	nc.lggr.Debug("CallContextAll")
-	return []CallContextAllResult{}, nil
+func (nc *NullClient) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, error) {
+	nc.lggr.Debug("CallContextAllSequential")
+	return nil, nil
 }
 
 func (nc *NullClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error) {

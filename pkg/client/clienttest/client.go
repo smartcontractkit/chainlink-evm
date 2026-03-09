@@ -17,6 +17,8 @@ import (
 
 	ethereum "github.com/ethereum/go-ethereum"
 
+	json "encoding/json"
+
 	mock "github.com/stretchr/testify/mock"
 
 	multinode "github.com/smartcontractkit/chainlink-framework/multinode"
@@ -393,39 +395,6 @@ func (_m *Client) CallContext(ctx context.Context, result interface{}, method st
 	return r0
 }
 
-// CallContextAll provides a mock function with given fields: ctx, method, args
-func (_m *Client) CallContextAll(ctx context.Context, method string, args ...interface{}) ([]client.CallContextAllResult, error) {
-	var _ca []interface{}
-	_ca = append(_ca, ctx, method)
-	_ca = append(_ca, args...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CallContextAll")
-	}
-
-	var r0 []client.CallContextAllResult
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) ([]client.CallContextAllResult, error)); ok {
-		return rf(ctx, method, args...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) []client.CallContextAllResult); ok {
-		r0 = rf(ctx, method, args...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.CallContextAllResult)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, ...interface{}) error); ok {
-		r1 = rf(ctx, method, args...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Client_CallContext_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CallContext'
 type Client_CallContext_Call struct {
 	*mock.Call
@@ -460,6 +429,76 @@ func (_c *Client_CallContext_Call) Return(_a0 error) *Client_CallContext_Call {
 }
 
 func (_c *Client_CallContext_Call) RunAndReturn(run func(context.Context, interface{}, string, ...interface{}) error) *Client_CallContext_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CallContextAllSequential provides a mock function with given fields: ctx, method, args
+func (_m *Client) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, error) {
+	var _ca []interface{}
+	_ca = append(_ca, ctx, method)
+	_ca = append(_ca, args...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CallContextAllSequential")
+	}
+
+	var r0 json.RawMessage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (json.RawMessage, error)); ok {
+		return rf(ctx, method, args...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) json.RawMessage); ok {
+		r0 = rf(ctx, method, args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(json.RawMessage)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, ...interface{}) error); ok {
+		r1 = rf(ctx, method, args...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_CallContextAllSequential_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CallContextAllSequential'
+type Client_CallContextAllSequential_Call struct {
+	*mock.Call
+}
+
+// CallContextAllSequential is a helper method to define mock.On call
+//   - ctx context.Context
+//   - method string
+//   - args ...interface{}
+func (_e *Client_Expecter) CallContextAllSequential(ctx interface{}, method interface{}, args ...interface{}) *Client_CallContextAllSequential_Call {
+	return &Client_CallContextAllSequential_Call{Call: _e.mock.On("CallContextAllSequential",
+		append([]interface{}{ctx, method}, args...)...)}
+}
+
+func (_c *Client_CallContextAllSequential_Call) Run(run func(ctx context.Context, method string, args ...interface{})) *Client_CallContextAllSequential_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *Client_CallContextAllSequential_Call) Return(_a0 json.RawMessage, _a1 error) *Client_CallContextAllSequential_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_CallContextAllSequential_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (json.RawMessage, error)) *Client_CallContextAllSequential_Call {
 	_c.Call.Return(run)
 	return _c
 }

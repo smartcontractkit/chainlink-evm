@@ -131,12 +131,10 @@ func (c *SimulatedBackendClient) CallContext(ctx context.Context, result interfa
 	}
 }
 
-func (c *SimulatedBackendClient) CallContextAll(ctx context.Context, method string, args ...interface{}) ([]CallContextAllResult, error) {
+func (c *SimulatedBackendClient) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, error) {
 	var raw json.RawMessage
 	err := c.CallContext(ctx, &raw, method, args...)
-	result := CallContextAllResult{NodeName: "simulated-backend", Result: raw, Err: err}
-
-	return []CallContextAllResult{result}, nil
+	return raw, err
 }
 
 // FilterLogs returns all logs that respect the passed filter query.

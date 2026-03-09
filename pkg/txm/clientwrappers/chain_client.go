@@ -16,18 +16,18 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-// MultiplexingMaxTimeout is the maximum timeout for the multiplexing operation.
+// MultiCallMaxTimeout is the maximum timeout for the multi-call operation.
 // Given how frequently reads are made, we're making a tradeoff between latency and read availability.
-const MultiplexingMaxTimeout = 1 * time.Second
+const MultiCallMaxTimeout = 1 * time.Second
 
 type ChainClient struct {
-	lggr         logger.SugaredLogger
-	c            client.Client
-	multiplexing bool
+	lggr      logger.SugaredLogger
+	c         client.Client
+	multiCall bool
 }
 
-func NewChainClient(lggr logger.Logger, client client.Client, multiplexing bool) *ChainClient {
-	return &ChainClient{lggr: logger.Sugared(logger.Named(lggr, "Txm.ChainClient")), c: client, multiplexing: multiplexing}
+func NewChainClient(lggr logger.Logger, client client.Client, multiCall bool) *ChainClient {
+	return &ChainClient{lggr: logger.Sugared(logger.Named(lggr, "Txm.ChainClient")), c: client, multiCall: multiCall}
 }
 
 func (c *ChainClient) BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error) {
@@ -35,19 +35,19 @@ func (c *ChainClient) BlockByNumber(ctx context.Context, number *big.Int) (*evmt
 }
 
 func (c *ChainClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
-	if c.multiplexing {
+	if c.multiCall {
 		blockTag := "latest"
 		if blockNumber != nil {
 			blockTag = hexutil.EncodeBig(blockNumber)
 		}
-		return GetTransactionCountMultiplexed(ctx, c.c, c.lggr, address, blockTag)
+		return GetTransactionCountMultiCall(ctx, c.c, c.lggr, address, blockTag)
 	}
 	return c.c.NonceAt(ctx, address, blockNumber)
 }
 
 func (c *ChainClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	if c.multiplexing {
-		return GetTransactionCountMultiplexed(ctx, c.c, c.lggr, address, "pending")
+	if c.multiCall {
+		return GetTransactionCountMultiCall(ctx, c.c, c.lggr, address, "pending")
 	}
 	return c.c.PendingNonceAt(ctx, address)
 }
@@ -57,56 +57,34 @@ func (c *ChainClient) SendTransaction(ctx context.Context, _ *types.Transaction,
 }
 
 type DecodeMultiplexedResultFunc[T any] func(raw json.RawMessage) (T, error)
-type IsBetterMultiplexedResultFunc[T any] func(candidate T, current T) bool
 
-func multiplexCallBest[T any](
+func multiCallSequential[T any](
 	parentCtx context.Context,
 	c client.Client,
 	method string,
 	args []interface{},
 	decode DecodeMultiplexedResultFunc[T],
-	isBetter IsBetterMultiplexedResultFunc[T],
-) (best T, allSuccessful []T, callDuration time.Duration, err error) {
-	ctx := parentCtx
-	cancel := func() {}
-	ctx, cancel = context.WithTimeout(parentCtx, MultiplexingMaxTimeout)
+) (result T, callDuration time.Duration, err error) {
+	ctx, cancel := context.WithTimeout(parentCtx, MultiCallMaxTimeout)
 	defer cancel()
 
 	startedAt := time.Now()
-	results, err := c.CallContextAll(ctx, method, args...)
+	raw, err := c.CallContextAllSequential(ctx, method, args...)
 	callDuration = time.Since(startedAt)
 	if err != nil {
-		return best, nil, callDuration, fmt.Errorf("error multiplexing %s call: %w", method, err)
+		return result, callDuration, fmt.Errorf("error calling %s: %w", method, err)
 	}
 
-	allSuccessful = make([]T, 0, len(results))
-	found := false
-	for _, result := range results {
-		if result.Err != nil {
-			continue
-		}
-
-		decoded, decodeErr := decode(result.Result)
-		if decodeErr != nil {
-			continue
-		}
-
-		allSuccessful = append(allSuccessful, decoded)
-		if !found || isBetter(decoded, best) {
-			best = decoded
-			found = true
-		}
+	decoded, decodeErr := decode(raw)
+	if decodeErr != nil {
+		return result, callDuration, fmt.Errorf("error decoding %s result: %w", method, decodeErr)
 	}
 
-	if !found {
-		return best, nil, callDuration, fmt.Errorf("%s returned no successful results from primary nodes", method)
-	}
-
-	return best, allSuccessful, callDuration, nil
+	return decoded, callDuration, nil
 }
 
-func GetTransactionCountMultiplexed(parentCtx context.Context, c client.Client, lggr logger.SugaredLogger, address common.Address, blockTag string) (uint64, error) {
-	highest, nonces, callDuration, err := multiplexCallBest(
+func GetTransactionCountMultiCall(parentCtx context.Context, c client.Client, lggr logger.SugaredLogger, address common.Address, blockTag string) (uint64, error) {
+	nonce, callDuration, err := multiCallSequential(
 		parentCtx,
 		c,
 		"eth_getTransactionCount",
@@ -119,14 +97,11 @@ func GetTransactionCountMultiplexed(parentCtx context.Context, c client.Client, 
 
 			return uint64(nonce), nil
 		},
-		func(candidate uint64, current uint64) bool {
-			return candidate > current
-		},
 	)
 	if err != nil {
 		return 0, err
 	}
 
-	lggr.Debugw("TransactionCount", "address", address, "nonces", nonces, "callDuration", callDuration)
-	return highest, nil
+	lggr.Debugw("TransactionCount", "address", address, "nonce", nonce, "callDuration", callDuration)
+	return nonce, nil
 }

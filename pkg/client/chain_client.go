@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"math/big"
 	"sync"
 	"time"
@@ -44,7 +45,8 @@ type Client interface {
 
 	// Wrapped RPC methods
 	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
-	CallContextAll(ctx context.Context, method string, args ...interface{}) ([]CallContextAllResult, error)
+	// CallContextAllSequential calls CallContext for every single node sequentially and returns the first successful result (excluding sendonlys)
+	CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, error)
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	// BatchCallContextAll calls BatchCallContext for every single node including
 	// sendonlys.
@@ -103,12 +105,6 @@ type Client interface {
 
 	// Simulate the transaction prior to sending to catch zk out-of-counters errors ahead of time
 	CheckTxValidity(ctx context.Context, from common.Address, to common.Address, data []byte) *SendError
-}
-
-type CallContextAllResult struct {
-	NodeName string
-	Result   json.RawMessage
-	Err      error
 }
 
 type chainClient struct {
@@ -268,44 +264,37 @@ func (c *chainClient) CallContext(ctx context.Context, result interface{}, metho
 	return r.CallContext(ctx, result, method, args...)
 }
 
-func (c *chainClient) CallContextAll(ctx context.Context, method string, args ...interface{}) ([]CallContextAllResult, error) {
-	results := make([]CallContextAllResult, 0)
-	var mu sync.Mutex
+func (c *chainClient) CallContextAllSequential(parentCtx context.Context, method string, args ...interface{}) (json.RawMessage, error) {
+	var result json.RawMessage
+	foundSuccess := false
 
-	var wg sync.WaitGroup
 	doFunc := func(ctx context.Context, rpc *RPCClient, isSendOnly bool) {
-		if isSendOnly {
+		// Short circuit if the node is a sendonly or if we've already found a successful result
+		if isSendOnly || foundSuccess {
 			return
 		}
 
-		wg.Add(1)
-		go func(rpc *RPCClient) {
-			defer wg.Done()
+		var raw json.RawMessage
+		err := rpc.CallContext(ctx, &raw, method, args...)
 
-			var raw json.RawMessage
-			err := rpc.CallContext(ctx, &raw, method, args...)
-
-			if err != nil {
-				c.logger.Debugw("Primary node CallContextAll failed", "node", rpc.Name(), "err", err)
-			}
-
-			mu.Lock()
-			results = append(results, CallContextAllResult{
-				NodeName: rpc.Name(),
-				Result:   raw,
-				Err:      err,
-			})
-			mu.Unlock()
-		}(rpc)
+		if err != nil {
+			c.logger.Debugw("RPC call CallContextAllSequential failed", "rpc", rpc.Name(), "err", err)
+		} else {
+			result = raw
+			foundSuccess = true
+		}
 	}
 
-	err := c.multiNode.DoAll(ctx, doFunc)
-	wg.Wait()
+	err := c.multiNode.DoAll(parentCtx, doFunc)
+	if foundSuccess {
+		return result, nil
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	return nil, errors.New("all nodes failed for method: " + method)
 }
 
 func (c *chainClient) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
