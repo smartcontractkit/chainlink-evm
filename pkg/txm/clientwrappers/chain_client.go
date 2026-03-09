@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
@@ -27,6 +28,10 @@ type ChainClient struct {
 
 func NewChainClient(lggr logger.Logger, client client.Client, multiplexing bool) *ChainClient {
 	return &ChainClient{lggr: logger.Sugared(logger.Named(lggr, "Txm.ChainClient")), c: client, multiplexing: multiplexing}
+}
+
+func (c *ChainClient) BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error) {
+	return c.c.BlockByNumber(ctx, number)
 }
 
 func (c *ChainClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
