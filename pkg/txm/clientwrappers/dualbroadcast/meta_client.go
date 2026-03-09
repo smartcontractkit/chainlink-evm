@@ -369,7 +369,9 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	a.lggr.Infow("Auction Request Start", "txID", tx.ID)
 	resp, err := http.DefaultClient.Do(req)
 	latency := time.Since(startTime)
-
+	if ctx.Err() != nil {
+		a.lggr.Infow("Auction Request Context Deadline Exceeded", "txID", tx.ID)
+	}
 	a.lggr.Infow("Auction Request Latency", "txID", tx.ID, "failed", err != nil, "latency", latency)
 	// Record latency
 	a.metrics.RecordLatency(ctx, latency)
