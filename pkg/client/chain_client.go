@@ -278,7 +278,7 @@ func (c *chainClient) CallContextAllSequential(parentCtx context.Context, method
 		err := rpc.CallContext(ctx, &raw, method, args...)
 
 		if err != nil {
-			c.logger.Debugw("RPC call CallContextAllSequential failed", "rpc", rpc.Name(), "err", err)
+			c.logger.Debugw("RPC call CallContextAllSequential failed", "method", method, "rpc", rpc.Name(), "err", err)
 		} else {
 			result = raw
 			foundSuccess = true

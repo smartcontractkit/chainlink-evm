@@ -960,4 +960,99 @@ func TestEthClient_ErroringClient(t *testing.T) {
 	require.Equal(t, multinode.ErrNodeError, err)
 }
 
+func TestChainClient_CallContextAllSequential(t *testing.T) {
+	t.Parallel()
+
+	// Helper to create a standard response handler
+	standardHandler := func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+		switch method {
+		case "eth_subscribe":
+			resp.Result = `"0x00"`
+			resp.Notify = headResult
+		case "eth_unsubscribe":
+			resp.Result = "true"
+		case "eth_getBlockByNumber":
+			resp.Result = client.MakeHeadMsgForNumber(42)
+		}
+		return
+	}
+
+	t.Run("returns error when all nodes fail", func(t *testing.T) {
+		t.Parallel()
+
+		wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			resp = standardHandler(method, params)
+			if method == "eth_blockNumber" {
+				resp.Error.Code = -32000
+				resp.Error.Message = "server error"
+			}
+			return
+		}).WSURL().String()
+
+		ethClient := mustNewChainClient(t, wsURL)
+
+		_, err := ethClient.CallContextAllSequential(tests.Context(t), "eth_blockNumber")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "all nodes failed for method: eth_blockNumber")
+	})
+
+	t.Run("returns first result and stops calling subsequent nodes", func(t *testing.T) {
+		t.Parallel()
+
+		callCount := atomic.Int32{}
+		expectedResult := `"0xabc"`
+
+		wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			resp = standardHandler(method, params)
+			if method == "eth_getTransactionCount" {
+				callCount.Add(1)
+				resp.Result = expectedResult
+			}
+			return
+		}).WSURL().String()
+
+		ethClient := mustNewChainClient(t, wsURL)
+
+		result, err := ethClient.CallContextAllSequential(tests.Context(t), "eth_getTransactionCount", testutils.NewAddress(), "latest")
+		require.NoError(t, err)
+		require.Equal(t, json.RawMessage(expectedResult), result)
+		require.Equal(t, int32(1), callCount.Load())
+	})
+
+	t.Run("handles context cancellation", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(tests.Context(t))
+		cancel()
+
+		wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, standardHandler).WSURL().String()
+		ethClient := mustNewChainClient(t, wsURL)
+
+		_, err := ethClient.CallContextAllSequential(ctx, "eth_blockNumber")
+		require.Error(t, err)
+		require.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("works with method that takes arguments", func(t *testing.T) {
+		t.Parallel()
+
+		address := testutils.NewAddress()
+		expectedNonce := `"0x5"`
+
+		wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			resp = standardHandler(method, params)
+			if method == "eth_getTransactionCount" {
+				resp.Result = expectedNonce
+			}
+			return
+		}).WSURL().String()
+
+		ethClient := mustNewChainClient(t, wsURL)
+
+		result, err := ethClient.CallContextAllSequential(tests.Context(t), "eth_getTransactionCount", address, "latest")
+		require.NoError(t, err)
+		require.Equal(t, json.RawMessage(expectedNonce), result)
+	})
+}
+
 const headResult = client.HeadResult
