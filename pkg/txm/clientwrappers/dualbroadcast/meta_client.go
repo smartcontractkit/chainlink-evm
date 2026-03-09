@@ -28,9 +28,9 @@ import (
 
 const (
 	defaultAuctionRequestTimeout = time.Second * 5
-	NoSolverOps                = "no solver operations received"
-	NoSolverOpsAfterSimulation = "no valid solver operations after simulation"
-	metaABI                    = `[
+	NoSolverOps                  = "no solver operations received"
+	NoSolverOpsAfterSimulation   = "no valid solver operations after simulation"
+	metaABI                      = `[
   {
     "type": "function",
     "name": "metacall",
@@ -317,6 +317,7 @@ type Metacalldata struct {
 
 func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams string, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
 	ctx, cancel := context.WithTimeout(parentCtx, a.auctionRequestTimeout)
+	a.lggr.Info("Auction Request Context Started for tx id", tx.ID)
 	defer cancel()
 
 	m := []byte{97, 116, 108, 97, 115, 95, 111, 101, 118, 65, 117, 99, 116, 105, 111, 110}
@@ -365,13 +366,15 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	// Start timing for endpoint latency measurement
 	startTime := time.Now()
+	a.lggr.Infow("Auction Request Start", "txID", tx.ID)
 	resp, err := http.DefaultClient.Do(req)
 	latency := time.Since(startTime)
 
+	a.lggr.Infow("Auction Request Latency", "txID", tx.ID, "failed", err != nil, "latency", latency)
 	// Record latency
 	a.metrics.RecordLatency(ctx, latency)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send POST request: %w", err)
+		return nil, fmt.Errorf("failed to send POST request with latency %s: %w", latency, err)
 	}
 	defer resp.Body.Close()
 
