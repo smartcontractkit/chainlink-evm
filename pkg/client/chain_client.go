@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"math/big"
 	"sync"
 	"time"
@@ -43,6 +44,7 @@ type Client interface {
 
 	// Wrapped RPC methods
 	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
+	CallContextAll(ctx context.Context, method string, args ...interface{}) ([]CallContextAllResult, error)
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	// BatchCallContextAll calls BatchCallContext for every single node including
 	// sendonlys.
@@ -101,6 +103,12 @@ type Client interface {
 
 	// Simulate the transaction prior to sending to catch zk out-of-counters errors ahead of time
 	CheckTxValidity(ctx context.Context, from common.Address, to common.Address, data []byte) *SendError
+}
+
+type CallContextAllResult struct {
+	NodeName string
+	Result   json.RawMessage
+	Err      error
 }
 
 type chainClient struct {
@@ -258,6 +266,46 @@ func (c *chainClient) CallContext(ctx context.Context, result interface{}, metho
 		return err
 	}
 	return r.CallContext(ctx, result, method, args...)
+}
+
+func (c *chainClient) CallContextAll(ctx context.Context, method string, args ...interface{}) ([]CallContextAllResult, error) {
+	results := make([]CallContextAllResult, 0)
+	var mu sync.Mutex
+
+	var wg sync.WaitGroup
+	doFunc := func(ctx context.Context, rpc *RPCClient, isSendOnly bool) {
+		if isSendOnly {
+			return
+		}
+
+		wg.Add(1)
+		go func(rpc *RPCClient) {
+			defer wg.Done()
+
+			var raw json.RawMessage
+			err := rpc.CallContext(ctx, &raw, method, args...)
+
+			if err != nil {
+				c.logger.Debugw("Primary node CallContextAll failed", "node", rpc.Name(), "err", err)
+			}
+
+			mu.Lock()
+			results = append(results, CallContextAllResult{
+				NodeName: rpc.Name(),
+				Result:   raw,
+				Err:      err,
+			})
+			mu.Unlock()
+		}(rpc)
+	}
+
+	err := c.multiNode.DoAll(ctx, doFunc)
+	wg.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
 
 func (c *chainClient) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {

@@ -60,6 +60,11 @@ func (nc *NullClient) CallContext(ctx context.Context, result interface{}, metho
 	return nil
 }
 
+func (nc *NullClient) CallContextAll(ctx context.Context, method string, args ...interface{}) ([]CallContextAllResult, error) {
+	nc.lggr.Debug("CallContextAll")
+	return []CallContextAllResult{}, nil
+}
+
 func (nc *NullClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error) {
 	nc.lggr.Debug("HeadByNumber")
 	return nil, nil

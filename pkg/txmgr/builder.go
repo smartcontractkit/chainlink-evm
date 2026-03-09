@@ -157,7 +157,7 @@ func NewTxmV2(
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}
 	} else {
-		c = clientwrappers.NewChainClient(client)
+		c = clientwrappers.NewChainClient(lggr, client, true) // TODO: make multiplexing configurable
 	}
 	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
 	return txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder), nil

@@ -10,6 +10,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 )
 
 func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, url *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool) (txm.Client, txm.ErrorHandler, error) {
@@ -18,7 +19,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	case strings.Contains(urlString, "flashbots"):
 		return NewFlashbotsClient(lggr, client, keyStore, url, txStore, bundles), nil, nil
 	default:
-		mc, err := NewMetaClient(lggr, client, keyStore, url, chainID, txStore)
+		mc, err := NewMetaClient(lggr, clientwrappers.NewChainClient(lggr, client, true), keyStore, url, chainID, txStore)
 		if err != nil {
 			return nil, nil, err
 		}

@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -128,6 +129,14 @@ func (c *SimulatedBackendClient) CallContext(ctx context.Context, result interfa
 	default:
 		return fmt.Errorf("second arg to SimulatedBackendClient.Call is an RPC API method which has not yet been implemented: %s. Add processing for it here", method)
 	}
+}
+
+func (c *SimulatedBackendClient) CallContextAll(ctx context.Context, method string, args ...interface{}) ([]CallContextAllResult, error) {
+	var raw json.RawMessage
+	err := c.CallContext(ctx, &raw, method, args...)
+	result := CallContextAllResult{NodeName: "simulated-backend", Result: raw, Err: err}
+
+	return []CallContextAllResult{result}, nil
 }
 
 // FilterLogs returns all logs that respect the passed filter query.

@@ -393,6 +393,39 @@ func (_m *Client) CallContext(ctx context.Context, result interface{}, method st
 	return r0
 }
 
+// CallContextAll provides a mock function with given fields: ctx, method, args
+func (_m *Client) CallContextAll(ctx context.Context, method string, args ...interface{}) ([]client.CallContextAllResult, error) {
+	var _ca []interface{}
+	_ca = append(_ca, ctx, method)
+	_ca = append(_ca, args...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CallContextAll")
+	}
+
+	var r0 []client.CallContextAllResult
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) ([]client.CallContextAllResult, error)); ok {
+		return rf(ctx, method, args...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) []client.CallContextAllResult); ok {
+		r0 = rf(ctx, method, args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.CallContextAllResult)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, ...interface{}) error); ok {
+		r1 = rf(ctx, method, args...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Client_CallContext_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CallContext'
 type Client_CallContext_Call struct {
 	*mock.Call
