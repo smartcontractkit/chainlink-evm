@@ -28,9 +28,9 @@ import (
 
 const (
 	defaultAuctionRequestTimeout = time.Second * 5
-	NoSolverOps                = "no solver operations received"
-	NoSolverOpsAfterSimulation = "no valid solver operations after simulation"
-	metaABI                    = `[
+	NoSolverOps                  = "no solver operations received"
+	NoSolverOpsAfterSimulation   = "no valid solver operations after simulation"
+	metaABI                      = `[
   {
     "type": "function",
     "name": "metacall",
@@ -423,11 +423,16 @@ func VerifyResponse(metacalldata MetacalldataResponse, dualBroadcastParams strin
 
 	destination := params["destination"]
 	dapp := params["dapp"]
-	if len(destination) != 1 || len(dapp) != 1 {
+	if len(destination) != 1 || len(dapp) == 0 {
 		return nil, fmt.Errorf("incorrect size for info params: %v - %v", destination, dapp)
 	}
 	to := common.HexToAddress(destination[0]) // metacall address
-	dApp := common.HexToAddress(dapp[0])
+
+	// Convert dapp strings to addresses
+	dApps := make([]common.Address, len(dapp))
+	for i, d := range dapp {
+		dApps[i] = common.HexToAddress(d)
+	}
 
 	if metacalldata.ToAddress != to {
 		return nil, fmt.Errorf("incorrect metacall: metacall.ToAddress: %v, to: %v",
@@ -469,10 +474,20 @@ func VerifyResponse(metacalldata MetacalldataResponse, dualBroadcastParams strin
 	if err != nil {
 		return nil, fmt.Errorf("error unpacking DOP: %w", err)
 	}
-	return VerifyMetadata(txData, fromAddress, *result, fwdrDestAddress, dApp, to, metacalldata)
+	return VerifyMetadata(txData, fromAddress, *result, fwdrDestAddress, dApps, to, metacalldata)
 }
 
-func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacalldata, fwdrDestAddress common.Address, dApp common.Address, to common.Address, metacalldata MetacalldataResponse) (*MetacalldataResponse, error) {
+// isValidDApp checks if the given address is in the list of valid dApps
+func isValidDApp(addr common.Address, validDApps []common.Address) bool {
+	for _, dApp := range validDApps {
+		if addr == dApp {
+			return true
+		}
+	}
+	return false
+}
+
+func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacalldata, fwdrDestAddress common.Address, dApps []common.Address, to common.Address, metacalldata MetacalldataResponse) (*MetacalldataResponse, error) {
 	abi, err := abi.JSON(strings.NewReader(ABI))
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read ABI: %w", err)
@@ -501,18 +516,19 @@ func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacallda
 		return nil, fmt.Errorf("incorrect type for update.calldata: %v", args[1])
 	}
 
-	// DOP
-	if result.DOP.To != to || result.DOP.Control != dApp || result.DOP.Bundler != fromAddress {
-		return nil, fmt.Errorf("incorrect DOP: dop.To: %v, dop.Control: %v, dop.Bundler: %v, to: %v, dApp: %v, fromAddress: %v",
-			result.DOP.To, result.DOP.Control, result.DOP.Bundler, to, dApp, fromAddress)
+	if result.DOP.To != to || !isValidDApp(result.DOP.Control, dApps) || result.DOP.Bundler != fromAddress {
+		return nil, fmt.Errorf("incorrect DOP: dop.To: %v, dop.Control: %v, dop.Bundler: %v, to: %v, validDApps: %v, fromAddress: %v",
+			result.DOP.To, result.DOP.Control, result.DOP.Bundler, to, dApps, fromAddress)
 	}
+
+	expectedDApp := result.DOP.Control
 
 	// SOP
 	atLeastOne := false
 	for _, sop := range result.SOPs {
-		if sop.To != to || sop.Control != dApp {
+		if sop.To != to || sop.Control != expectedDApp {
 			// Exit early
-			return nil, fmt.Errorf("incorrect SOP: sop.To: %v, sop.Control: %v, to: %v, dApp: %v", sop.To, sop.Control, to, dApp)
+			return nil, fmt.Errorf("incorrect SOP: sop.To: %v, sop.Control: %v, to: %v, dApp: %v", sop.To, sop.Control, to, expectedDApp)
 		}
 		atLeastOne = true
 	}
@@ -523,11 +539,11 @@ func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacallda
 	// UOP
 	if result.UOP.To != to ||
 		result.UOP.MaxFeePerGas == nil || metacalldata.MaxFeePerGas == nil || result.UOP.MaxFeePerGas.Cmp(metacalldata.MaxFeePerGas.ToInt()) != 0 ||
-		result.UOP.Dapp != dApp ||
-		result.UOP.Control != dApp ||
+		result.UOP.Dapp != expectedDApp ||
+		result.UOP.Control != expectedDApp ||
 		destinationAddress != fwdrDestAddress || !bytes.Equal(updateCalldata, txData) {
 		return nil, fmt.Errorf("incorrect UOP: uop.To: %v, uop.MaxFeePerGas: %v, uop.Dapp: %v, uop.update.destinationAddress: %v, uop.update.calldata: %v, to: %v, metacall.MaxFeePerGas: %v, dApp: %v, fwdrDestAddress: %v, txData: %v",
-			result.UOP.To, result.UOP.MaxFeePerGas, result.UOP.Dapp, destinationAddress, updateCalldata, to, metacalldata.MaxFeePerGas, dApp, fwdrDestAddress, txData)
+			result.UOP.To, result.UOP.MaxFeePerGas, result.UOP.Dapp, destinationAddress, updateCalldata, to, metacalldata.MaxFeePerGas, expectedDApp, fwdrDestAddress, txData)
 	}
 
 	return &metacalldata, nil
