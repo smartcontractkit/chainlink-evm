@@ -49,15 +49,14 @@ type Orchestrator[
 	HEAD chains.Head[BLOCK_HASH],
 ] struct {
 	services.StateMachine
-	lggr                 logger.SugaredLogger
-	chainID              *big.Int
-	txm                  *Txm
-	txStore              OrchestratorTxStore
-	fwdMgr               *forwarders.FwdMgr
-	keystore             keys.Addresses
-	attemptBuilder       OrchestratorAttemptBuilder[BLOCK_HASH, HEAD]
-	resumeCallback       txmgr.ResumeCallback
-	dualBroadcastEnabled bool
+	lggr           logger.SugaredLogger
+	chainID        *big.Int
+	txm            *Txm
+	txStore        OrchestratorTxStore
+	fwdMgr         *forwarders.FwdMgr
+	keystore       keys.Addresses
+	attemptBuilder OrchestratorAttemptBuilder[BLOCK_HASH, HEAD]
+	resumeCallback txmgr.ResumeCallback
 }
 
 func NewTxmOrchestrator[BLOCK_HASH chains.Hashable, HEAD chains.Head[BLOCK_HASH]](
@@ -80,18 +79,11 @@ func NewTxmOrchestrator[BLOCK_HASH chains.Hashable, HEAD chains.Head[BLOCK_HASH]
 	}
 }
 
-// WithDualBroadcast marks the orchestrator as having a dual-broadcast client wired. When true,
-// jobs that use a secondary EOA (DualTransmission) are allowed to start.
-func (o *Orchestrator[BLOCK_HASH, HEAD]) WithDualBroadcast() *Orchestrator[BLOCK_HASH, HEAD] {
-	o.dualBroadcastEnabled = true
-	return o
-}
-
-// SupportsDualBroadcast returns true when the orchestrator was built with a dual-broadcast client,
-// meaning secondary (DualBroadcast) transactions will be routed to the private relay rather than
-// the public mempool.
+// SupportsDualBroadcast always returns false for the Orchestrator (TXMv2). When dual-broadcast is
+// enabled, the Orchestrator is wrapped by the legacy Txm, which is the TxManager exposed to
+// callers; that wrapper carries the dualBroadcastEnabled flag derived from the node config.
 func (o *Orchestrator[BLOCK_HASH, HEAD]) SupportsDualBroadcast() bool {
-	return o.dualBroadcastEnabled
+	return false
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) Start(ctx context.Context) error {

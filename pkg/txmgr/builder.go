@@ -46,6 +46,7 @@ func NewTxm(
 	estimator gas.EvmFeeEstimator,
 	headTracker latestAndFinalizedBlockHeadTracker,
 	txmv2wrapper TxManager,
+	dualBroadcastEnabled bool,
 ) (txm TxManager,
 	err error,
 ) {
@@ -78,7 +79,7 @@ func NewTxm(
 	if txConfig.ResendAfterThreshold() > 0 {
 		evmResender = NewEvmResender(lggr, txStore, txmClient, evmTracker, keyStore, txmgr.DefaultResenderPollInterval, chainConfig, txConfig)
 	}
-	txm = NewEvmTxm(chainID, txmCfg, txConfig, keyStore, lggr, checker, fwdMgr, txAttemptBuilder, txStore, evmBroadcaster, evmConfirmer, evmResender, evmTracker, evmFinalizer, txmv2wrapper)
+	txm = NewEvmTxm(chainID, txmCfg, txConfig, keyStore, lggr, checker, fwdMgr, txAttemptBuilder, txStore, evmBroadcaster, evmConfirmer, evmResender, evmTracker, evmFinalizer, txmv2wrapper, dualBroadcastEnabled)
 	return txm, nil
 }
 
@@ -99,8 +100,9 @@ func NewEvmTxm(
 	tracker *Tracker,
 	finalizer Finalizer,
 	txmv2wrapper TxManager,
+	dualBroadcastEnabled bool,
 ) *Txm {
-	return txmgr.NewTxm(chainID, cfg, txCfg, keyStore, lggr, checkerFactory, fwdMgr, txAttemptBuilder, txStore, broadcaster, confirmer, resender, tracker, finalizer, client.NewTxError, txmv2wrapper)
+	return txmgr.NewTxm(chainID, cfg, txCfg, keyStore, lggr, checkerFactory, fwdMgr, txAttemptBuilder, txStore, broadcaster, confirmer, resender, tracker, finalizer, client.NewTxError, txmv2wrapper, dualBroadcastEnabled)
 }
 
 func NewTxmV2(
@@ -162,9 +164,6 @@ func NewTxmV2(
 	}
 	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
 	o := txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder)
-	if dualBroadcast {
-		o.WithDualBroadcast()
-	}
 	return o, nil
 }
 
