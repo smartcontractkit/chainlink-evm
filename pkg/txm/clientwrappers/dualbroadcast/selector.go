@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
@@ -13,13 +14,13 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 )
 
-func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, url *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool) (txm.Client, txm.ErrorHandler, error) {
+func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, url *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
 	urlString := url.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
 		return NewFlashbotsClient(lggr, clientwrappers.NewChainClient(lggr, client, true), keyStore, url, txStore, bundles), nil, nil
 	default:
-		mc, err := NewMetaClient(lggr, clientwrappers.NewChainClient(lggr, client, true), keyStore, url, chainID, txStore)
+		mc, err := NewMetaClient(lggr, clientwrappers.NewChainClient(lggr, client, true), keyStore, url, chainID, txStore, auctionRequestTimeout)
 		if err != nil {
 			return nil, nil, err
 		}
