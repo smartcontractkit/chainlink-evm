@@ -107,7 +107,7 @@ func NewOCR2FeedsTransmitter(
 			return nil, fmt.Errorf("key %s is used as a primary transmitter in another job. primary and secondary transmitters cannot be mixed", effectiveTransmitterAddress.String())
 		}
 		if !txm.SupportsDualBroadcast() {
-			return nil, fmt.Errorf("job uses a secondary EOA (%s) for dual transmission but TransactionManagerV2 does not have DualBroadcast enabled; secondary transactions would be sent to the public mempool. Enable TransactionManagerV2 with DualBroadcast=true in the node config", dualTransmissionConfig.TransmitterAddress.String())
+			return nil, fmt.Errorf("job uses a secondary EOA (%s) for dual transmission but txm does not have DualBroadcast enabled, can't run this job", dualTransmissionConfig.TransmitterAddress.String())
 		}
 		return &ocr2FeedsDualTransmission{
 			ocr2Aggregator:                     ocr2Aggregator,
