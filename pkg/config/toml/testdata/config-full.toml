@@ -47,6 +47,7 @@ Enabled = false
 BlockTime = '42s'
 CustomURL = 'http://txs.org'
 DualBroadcast = true
+MultiCall = true
 Bundles = false
 FastlaneAuctionRequestTimeout = '15s'
 

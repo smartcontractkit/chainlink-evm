@@ -18,7 +18,7 @@ import (
 
 // MultiCallMaxTimeout is the maximum timeout for the multi-call operation.
 // Given how frequently reads are made, we're making a tradeoff between latency and read availability.
-const MultiCallMaxTimeout = 1 * time.Second
+const MultiCallMaxTimeout = 1500 * time.Millisecond
 
 type ChainClient struct {
 	lggr      logger.SugaredLogger

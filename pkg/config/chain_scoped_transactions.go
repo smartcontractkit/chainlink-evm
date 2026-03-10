@@ -64,6 +64,10 @@ func (t *transactionManagerV2Config) DualBroadcast() *bool {
 	return t.c.DualBroadcast
 }
 
+func (t *transactionManagerV2Config) MultiCall() *bool {
+	return t.c.MultiCall
+}
+
 func (t *transactionManagerV2Config) Bundles() *bool {
 	return t.c.Bundles
 }

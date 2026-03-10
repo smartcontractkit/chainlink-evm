@@ -141,6 +141,10 @@ func NewTxmV2(
 
 	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer())
 	inMemoryStoreManager := storage.NewInMemoryStoreManager(lggr, chainID)
+	multiCall := true
+	if cfgMultiCall := txmV2Config.MultiCall(); cfgMultiCall != nil {
+		multiCall = *cfgMultiCall
+	}
 	config := txm.Config{
 		EIP1559:   fCfg.EIP1559DynamicFees(),
 		BlockTime: *txmV2Config.BlockTime(),
@@ -152,12 +156,12 @@ func NewTxmV2(
 	var c txm.Client
 	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
 		var err error
-		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout())
+		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, multiCall, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}
 	} else {
-		c = clientwrappers.NewChainClient(lggr, client, true) // TODO: make multiplexing configurable
+		c = clientwrappers.NewChainClient(lggr, client, multiCall)
 	}
 	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
 	return txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder), nil
