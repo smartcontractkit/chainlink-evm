@@ -86,6 +86,7 @@ NodeIsSyncingEnabled = false
 FinalizedBlockPollInterval = '5s'
 HistoricalBalanceCheckEnabled = false
 HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000'
+FinalizedStateCheckFailureThreshold = 0
 EnforceRepeatableRead = true
 DeathDeclarationDelay = '1m'
 NewHeadsPollInterval = '0s'
