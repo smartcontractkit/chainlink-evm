@@ -141,9 +141,9 @@ func NewTxmV2(
 
 	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer())
 	inMemoryStoreManager := storage.NewInMemoryStoreManager(lggr, chainID)
-	multiCall := true
-	if cfgMultiCall := txmV2Config.MultiCall(); cfgMultiCall != nil {
-		multiCall = *cfgMultiCall
+	multiCall := false
+	if txmV2Config.MultiCall() != nil && *txmV2Config.MultiCall() {
+		multiCall = true
 	}
 	config := txm.Config{
 		EIP1559:   fCfg.EIP1559DynamicFees(),

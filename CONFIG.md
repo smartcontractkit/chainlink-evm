@@ -390,6 +390,7 @@ Enabled = false # Default
 BlockTime = '10s' # Example
 CustomURL = 'https://example.api.io' # Example
 DualBroadcast = false # Example
+MultiCall = false # Example
 Bundles = false # Example
 FastlaneAuctionRequestTimeout = '5s' # Example
 ```
@@ -418,6 +419,12 @@ CustomURL configures the base url of a custom endpoint used by the ChainDualBroa
 DualBroadcast = false # Example
 ```
 DualBroadcast enables DualBroadcast functionality.
+
+### MultiCall
+```toml
+MultiCall = false # Example
+```
+MultiCall controls whether txm chain client reads use multiplexed calls.
 
 ### Bundles
 ```toml

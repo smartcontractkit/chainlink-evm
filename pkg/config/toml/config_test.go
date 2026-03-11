@@ -162,6 +162,7 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.BlockTime = nil
 		docDefaults.Transactions.TransactionManagerV2.CustomURL = nil
 		docDefaults.Transactions.TransactionManagerV2.DualBroadcast = nil
+		docDefaults.Transactions.TransactionManagerV2.MultiCall = nil
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
 		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
 
@@ -288,7 +289,7 @@ var fullConfig = EVMConfig{
 			TransactionManagerV2: TransactionManagerV2Config{
 				Enabled:                       ptr(false),
 				DualBroadcast:                 ptr(true),
-				MultiCall:                     ptr(true),
+				MultiCall:                     ptr(false),
 				Bundles:                       ptr(false),
 				BlockTime:                     config.MustNewDuration(42 * time.Second),
 				CustomURL:                     config.MustParseURL("http://txs.org"),

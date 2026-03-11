@@ -35,7 +35,6 @@ Enabled = false
 
 [Transactions.TransactionManagerV2]
 Enabled = false
-MultiCall = true
 
 [BalanceMonitor]
 Enabled = true
