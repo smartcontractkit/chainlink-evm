@@ -79,9 +79,9 @@ func NewTxmOrchestrator[BLOCK_HASH chains.Hashable, HEAD chains.Head[BLOCK_HASH]
 	}
 }
 
-// SupportsDualBroadcast always returns false for the Orchestrator (TXMv2). When dual-broadcast is
-// enabled, the Orchestrator is wrapped by the legacy Txm, which is the TxManager exposed to
-// callers; that wrapper carries the dualBroadcastEnabled flag derived from the node config.
+// SupportsDualBroadcast always returns false for the Orchestrator. When dual-broadcast is
+// enabled, the Orchestrator is wrapped by the legacy Txm. The wrapper returns dualBroadcastEnabled
+// based on the node config.
 func (o *Orchestrator[BLOCK_HASH, HEAD]) SupportsDualBroadcast() bool {
 	return false
 }

@@ -49,16 +49,16 @@ func newEvmTxm(
 	if opts.GenTxManager == nil {
 		var txmv2 txmgr.TxManager
 		txV2Cfg := cfg.Transactions().TransactionManagerV2()
-		dualBroadcastEnabled := txV2Cfg.Enabled() &&
-			txV2Cfg.DualBroadcast() != nil && *txV2Cfg.DualBroadcast() &&
-			txV2Cfg.CustomURL() != nil
+		dualBroadcastEnabled := txV2Cfg.Enabled() && txV2Cfg.DualBroadcast() != nil &&
+			*txV2Cfg.DualBroadcast() && txV2Cfg.CustomURL() != nil
+
 		if txV2Cfg.Enabled() {
 			txmv2, err = txmgr.NewTxmV2(
 				ds,
 				cfg,
 				txmgr.NewEvmTxmFeeConfig(cfg.GasEstimator()),
 				cfg.Transactions(),
-				txV2Cfg,
+				cfg.Transactions().TransactionManagerV2(),
 				client,
 				lggr,
 				logPoller,
