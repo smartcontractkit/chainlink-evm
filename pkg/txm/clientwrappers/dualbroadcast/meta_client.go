@@ -385,7 +385,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 			a.metrics.RecordStatusCode(ctx, 0)
 		}
 
-		return nil, fmt.Errorf("failed to send POST request: %w", err)
+		return nil, fmt.Errorf("failed to send POST request with latency %s: %w", latency, err)
 	}
 
 	defer resp.Body.Close()
