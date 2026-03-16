@@ -316,9 +316,6 @@ type Metacalldata struct {
 }
 
 func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams string, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
-	ctx, cancel := context.WithTimeout(parentCtx, a.auctionRequestTimeout)
-	defer cancel()
-
 	m := []byte{97, 116, 108, 97, 115, 95, 111, 101, 118, 65, 117, 99, 116, 105, 111, 110}
 
 	cid := hexutil.Uint64(a.chainID.Uint64())
@@ -357,22 +354,40 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		return nil, fmt.Errorf("failed to marshal signed params: %w", err)
 	}
 	body := fmt.Appendf(nil, `{"jsonrpc":"2.0","method":"%s","params":[%s], "id":1}`, string(m), marshalledParamsExtended)
+
+	// Start timing for endpoint latency measurement
+	// Latency should be > than the context timer to query context-timeout requests
+	// (opt to overcount rather than undercount reqs with timeout)
+	startTime := time.Now()
+	ctx, cancel := context.WithTimeout(parentCtx, a.auctionRequestTimeout)
+	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.customURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create POST request: %w", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
 
-	// Start timing for endpoint latency measurement
-	startTime := time.Now()
 	resp, err := http.DefaultClient.Do(req)
+
 	latency := time.Since(startTime)
 
 	// Record latency
 	a.metrics.RecordLatency(ctx, latency)
+
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			a.lggr.Info("Auction Request Context Deadline Exceeded")
+			// mark status code "7" as context deadline exceeded
+			// definitive source of context-exceeded requests
+			a.metrics.RecordStatusCode(ctx, 7)
+		} else {
+			// mark status code "0" as all other errors to track the # of attempts
+			a.metrics.RecordStatusCode(ctx, 0)
+		}
+
 		return nil, fmt.Errorf("failed to send POST request: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	// Record status code
