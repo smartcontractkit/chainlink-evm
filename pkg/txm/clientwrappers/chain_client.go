@@ -21,13 +21,13 @@ import (
 const MultiCallMaxTimeout = 1500 * time.Millisecond
 
 type ChainClient struct {
-	lggr      logger.SugaredLogger
-	c         client.Client
-	multiCall bool
+	lggr                        logger.SugaredLogger
+	c                           client.Client
+	readRequestsToMultipleNodes bool
 }
 
-func NewChainClient(lggr logger.Logger, client client.Client, multiCall bool) *ChainClient {
-	return &ChainClient{lggr: logger.Sugared(logger.Named(lggr, "Txm.ChainClient")), c: client, multiCall: multiCall}
+func NewChainClient(lggr logger.Logger, client client.Client, readRequestsToMultipleNodes bool) *ChainClient {
+	return &ChainClient{lggr: logger.Sugared(logger.Named(lggr, "Txm.ChainClient")), c: client, readRequestsToMultipleNodes: readRequestsToMultipleNodes}
 }
 
 func (c *ChainClient) BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error) {
@@ -35,19 +35,19 @@ func (c *ChainClient) BlockByNumber(ctx context.Context, number *big.Int) (*evmt
 }
 
 func (c *ChainClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
-	if c.multiCall {
+	if c.readRequestsToMultipleNodes {
 		blockTag := "latest"
 		if blockNumber != nil {
 			blockTag = hexutil.EncodeBig(blockNumber)
 		}
-		return GetTransactionCountMultiCall(ctx, c.c, c.lggr, address, blockTag)
+		return getTransactionCountMultiCall(ctx, c.c, c.lggr, address, blockTag)
 	}
 	return c.c.NonceAt(ctx, address, blockNumber)
 }
 
 func (c *ChainClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	if c.multiCall {
-		return GetTransactionCountMultiCall(ctx, c.c, c.lggr, address, "pending")
+	if c.readRequestsToMultipleNodes {
+		return getTransactionCountMultiCall(ctx, c.c, c.lggr, address, "pending")
 	}
 	return c.c.PendingNonceAt(ctx, address)
 }
@@ -56,14 +56,14 @@ func (c *ChainClient) SendTransaction(ctx context.Context, _ *types.Transaction,
 	return c.c.SendTransaction(ctx, attempt.SignedTransaction)
 }
 
-type DecodeMultiplexedResultFunc[T any] func(raw json.RawMessage) (T, error)
+type decodeMultiplexedResultFunc[T any] func(raw json.RawMessage) (T, error)
 
 func multiCallSequential[T any](
 	parentCtx context.Context,
 	c client.Client,
 	method string,
-	args []interface{},
-	decode DecodeMultiplexedResultFunc[T],
+	args []any,
+	decode decodeMultiplexedResultFunc[T],
 ) (result T, callDuration time.Duration, err error) {
 	ctx, cancel := context.WithTimeout(parentCtx, MultiCallMaxTimeout)
 	defer cancel()
@@ -83,12 +83,12 @@ func multiCallSequential[T any](
 	return decoded, callDuration, nil
 }
 
-func GetTransactionCountMultiCall(parentCtx context.Context, c client.Client, lggr logger.SugaredLogger, address common.Address, blockTag string) (uint64, error) {
+func getTransactionCountMultiCall(parentCtx context.Context, c client.Client, lggr logger.SugaredLogger, address common.Address, blockTag string) (uint64, error) {
 	nonce, callDuration, err := multiCallSequential(
 		parentCtx,
 		c,
 		"eth_getTransactionCount",
-		[]interface{}{address, blockTag},
+		[]any{address, blockTag},
 		func(raw json.RawMessage) (uint64, error) {
 			var nonce hexutil.Uint64
 			if unmarshalErr := json.Unmarshal(raw, &nonce); unmarshalErr != nil {
@@ -102,6 +102,6 @@ func GetTransactionCountMultiCall(parentCtx context.Context, c client.Client, lg
 		return 0, err
 	}
 
-	lggr.Debugw("TransactionCount", "address", address, "nonce", nonce, "callDuration", callDuration)
+	lggr.Debugw("eth_getTransactionCount", "address", address, "nonce", nonce, "callDuration", callDuration)
 	return nonce, nil
 }

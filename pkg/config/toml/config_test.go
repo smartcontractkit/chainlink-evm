@@ -64,7 +64,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.TransactionManagerV2.BlockTime = new(config.Duration)
 	unknown.Transactions.TransactionManagerV2.CustomURL = new(config.URL)
 	unknown.Transactions.TransactionManagerV2.DualBroadcast = ptr(false)
-	unknown.Transactions.TransactionManagerV2.MultiCall = ptr(false)
+	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
 	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
 	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
 	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
@@ -162,7 +162,7 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.BlockTime = nil
 		docDefaults.Transactions.TransactionManagerV2.CustomURL = nil
 		docDefaults.Transactions.TransactionManagerV2.DualBroadcast = nil
-		docDefaults.Transactions.TransactionManagerV2.MultiCall = nil
+		docDefaults.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = nil
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
 		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
 
@@ -289,7 +289,7 @@ var fullConfig = EVMConfig{
 			TransactionManagerV2: TransactionManagerV2Config{
 				Enabled:                       ptr(false),
 				DualBroadcast:                 ptr(true),
-				MultiCall:                     ptr(false),
+				ReadRequestsToMultipleNodes:   ptr(false),
 				Bundles:                       ptr(false),
 				BlockTime:                     config.MustNewDuration(42 * time.Second),
 				CustomURL:                     config.MustParseURL("http://txs.org"),

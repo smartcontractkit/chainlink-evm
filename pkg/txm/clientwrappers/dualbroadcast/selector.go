@@ -14,13 +14,13 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 )
 
-func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, url *url.URL, chainID *big.Int, txStore txm.TxStore, multiCall bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
+func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, url *url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
 	urlString := url.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
-		return NewFlashbotsClient(lggr, clientwrappers.NewChainClient(lggr, client, multiCall), keyStore, url, txStore, bundles), nil, nil
+		return NewFlashbotsClient(lggr, clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes), keyStore, url, txStore, bundles), nil, nil
 	default:
-		mc, err := NewMetaClient(lggr, clientwrappers.NewChainClient(lggr, client, multiCall), keyStore, url, chainID, txStore, auctionRequestTimeout)
+		mc, err := NewMetaClient(lggr, clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes), keyStore, url, chainID, txStore, auctionRequestTimeout)
 		if err != nil {
 			return nil, nil, err
 		}

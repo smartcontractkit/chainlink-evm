@@ -390,7 +390,7 @@ Enabled = false # Default
 BlockTime = '10s' # Example
 CustomURL = 'https://example.api.io' # Example
 DualBroadcast = false # Example
-MultiCall = false # Example
+ReadRequestsToMultipleNodes = false # Example
 Bundles = false # Example
 FastlaneAuctionRequestTimeout = '5s' # Example
 ```
@@ -420,11 +420,11 @@ DualBroadcast = false # Example
 ```
 DualBroadcast enables DualBroadcast functionality.
 
-### MultiCall
+### ReadRequestsToMultipleNodes
 ```toml
-MultiCall = false # Example
+ReadRequestsToMultipleNodes = false # Example
 ```
-MultiCall controls whether txm chain client reads use multiplexed calls.
+ReadRequestsToMultipleNodes controls whether txm chain client reads use multiplexed calls.
 
 ### Bundles
 ```toml

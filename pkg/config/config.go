@@ -133,7 +133,7 @@ type TransactionManagerV2 interface {
 	BlockTime() *time.Duration
 	CustomURL() *url.URL
 	DualBroadcast() *bool
-	MultiCall() *bool
+	ReadRequestsToMultipleNodes() *bool
 	Bundles() *bool
 	FastlaneAuctionRequestTimeout() *time.Duration
 }

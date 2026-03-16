@@ -63,7 +63,7 @@ func TestGetTransactionCountMultiplexed_ReturnsNonce(t *testing.T) {
 
 	m.On("CallContextAllSequential", mock.Anything, "eth_getTransactionCount", address, "latest").Return(json.RawMessage(`"0xa"`), nil).Once()
 
-	nonce, err := GetTransactionCountMultiCall(context.Background(), m, logger.Sugared(logger.Test(t)), address, "latest")
+	nonce, err := getTransactionCountMultiCall(context.Background(), m, logger.Sugared(logger.Test(t)), address, "latest")
 	require.NoError(t, err)
 	require.Equal(t, uint64(10), nonce)
 }
@@ -76,6 +76,6 @@ func TestGetTransactionCountMultiplexed_ErrorsWhenNoSuccessfulResults(t *testing
 
 	m.On("CallContextAllSequential", mock.Anything, "eth_getTransactionCount", address, "pending").Return(json.RawMessage(nil), errors.New("all nodes failed for method: eth_getTransactionCount")).Once()
 
-	_, err := GetTransactionCountMultiCall(context.Background(), m, logger.Sugared(logger.Test(t)), address, "pending")
+	_, err := getTransactionCountMultiCall(context.Background(), m, logger.Sugared(logger.Test(t)), address, "pending")
 	require.ErrorContains(t, err, "all nodes failed")
 }
