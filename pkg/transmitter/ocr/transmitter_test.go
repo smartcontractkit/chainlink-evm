@@ -256,5 +256,5 @@ func Test_DualTransmitter_DualBroadcastNotEnabled_ReturnsError(t *testing.T) {
 		keys.NewStore(memoryKeystore),
 		dualTransmissionConfig,
 	)
-	require.ErrorContains(t, err, "TransactionManagerV2 does not have DualBroadcast enabled")
+	require.ErrorContains(t, err, "txm does not have DualBroadcast enabled")
 }
