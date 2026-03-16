@@ -66,8 +66,12 @@ func newEvmTxm(
 				estimator,
 				cfg.GasEstimator(),
 			)
+			if err != nil {
+				return nil, err
+			}
+
 			if !dualBroadcastEnabled {
-				return txmv2, err
+				return txmv2, nil
 			}
 		}
 		txm, err = txmgr.NewTxm(

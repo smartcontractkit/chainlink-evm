@@ -104,7 +104,7 @@ func NewOCR2FeedsTransmitter(
 
 	if dualTransmissionConfig != nil {
 		if keyHasLock(ks, dualTransmissionConfig.TransmitterAddress, keys.TXMv1) {
-			return nil, fmt.Errorf("key %s is used as a primary transmitter in another job. primary and secondary transmitters cannot be mixed", effectiveTransmitterAddress.String())
+			return nil, fmt.Errorf("key %s is used as a primary transmitter in another job. primary and secondary transmitters cannot be mixed", dualTransmissionConfig.TransmitterAddress.String())
 		}
 		if !txm.SupportsDualBroadcast() {
 			return nil, fmt.Errorf("job uses a secondary EOA (%s) for dual transmission but txm does not have DualBroadcast enabled, can't run this job", dualTransmissionConfig.TransmitterAddress.String())
