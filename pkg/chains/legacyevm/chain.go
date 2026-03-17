@@ -100,6 +100,8 @@ func (c *LegacyChains) Get(id string) (types.ChainService, error) {
 
 type chain struct {
 	services.StateMachine
+
+	types.UnimplementedChainService
 	id              *big.Int
 	cfg             *config.ChainScoped
 	client          client.Client
