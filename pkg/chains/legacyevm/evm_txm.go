@@ -58,7 +58,7 @@ func newEvmTxm(
 				cfg,
 				txmgr.NewEvmTxmFeeConfig(cfg.GasEstimator()),
 				cfg.Transactions(),
-				cfg.Transactions().TransactionManagerV2(),
+				txV2Cfg,
 				client,
 				lggr,
 				logPoller,
