@@ -444,22 +444,6 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 	probeAddress := "0x0000000000000000000000000000000000000001"
 	expectedAddress := common.HexToAddress(probeAddress).String()
 
-	t.Run("returns nil when historical balance check is disabled", func(t *testing.T) {
-		t.Parallel()
-		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
-			HTTP: &url.URL{Scheme: "http", Host: "localhost:8545"},
-			Cfg: &TestNodePoolConfig{
-				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckEnabledVal: false,
-			},
-			FinalityTagsEnabled: true,
-			ChainID:             chainID,
-		})
-
-		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
-		require.NoError(t, err)
-	})
-
 	t.Run("uses finalized tag when enabled", func(t *testing.T) {
 		t.Parallel()
 		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
@@ -478,7 +462,6 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckEnabledVal: true,
 				HistoricalBalanceCheckAddressVal: probeAddress,
 			},
 			FinalityTagsEnabled: true,
@@ -509,7 +492,6 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckEnabledVal: true,
 				HistoricalBalanceCheckAddressVal: probeAddress,
 			},
 			FinalityTagsEnabled: false,
@@ -540,7 +522,6 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckEnabledVal: true,
 				HistoricalBalanceCheckAddressVal: probeAddress,
 				NodeErrors:                       &clientErrors,
 			},
@@ -572,7 +553,6 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckEnabledVal: true,
 				HistoricalBalanceCheckAddressVal: probeAddress,
 				NodeErrors:                       &clientErrors,
 			},

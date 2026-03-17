@@ -1089,15 +1089,14 @@ type NodePool struct {
 	LeaseDuration                  *commonconfig.Duration
 	NodeIsSyncingEnabled           *bool
 	FinalizedBlockPollInterval     *commonconfig.Duration
-	HistoricalBalanceCheckEnabled  *bool
-	HistoricalBalanceCheckAddress  *types.EIP55Address
+	HistoricalBalanceCheckAddress       *types.EIP55Address
+	FinalizedStateCheckFailureThreshold *uint32
 	Errors                              ClientErrors `toml:",omitempty"`
 	EnforceRepeatableRead               *bool
 	DeathDeclarationDelay               *commonconfig.Duration
 	NewHeadsPollInterval                *commonconfig.Duration
 	VerifyChainID                       *bool
 	ExternalRequestMaxResponseSize      *uint32
-	FinalizedStateCheckFailureThreshold *uint32
 }
 
 func (p *NodePool) setFrom(f *NodePool) {
@@ -1121,9 +1120,6 @@ func (p *NodePool) setFrom(f *NodePool) {
 	}
 	if v := f.FinalizedBlockPollInterval; v != nil {
 		p.FinalizedBlockPollInterval = v
-	}
-	if v := f.HistoricalBalanceCheckEnabled; v != nil {
-		p.HistoricalBalanceCheckEnabled = v
 	}
 	if v := f.HistoricalBalanceCheckAddress; v != nil {
 		p.HistoricalBalanceCheckAddress = v
@@ -1166,9 +1162,6 @@ func (p *NodePool) ValidateConfig(finalityTagEnabled *bool) (err error) {
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "FinalizedBlockPollInterval", Value: p.FinalizedBlockPollInterval,
 				Msg: "must be greater than 0"})
 		}
-	}
-	if p.HistoricalBalanceCheckEnabled != nil && *p.HistoricalBalanceCheckEnabled && p.HistoricalBalanceCheckAddress == nil {
-		err = multierr.Append(err, commonconfig.ErrMissing{Name: "HistoricalBalanceCheckAddress", Msg: "required when HistoricalBalanceCheckEnabled is true"})
 	}
 	return
 }

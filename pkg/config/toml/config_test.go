@@ -99,6 +99,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		ServiceUnavailable:                ptr("unavailable"),
 		TooManyResults:                    ptr("too-many"),
 		MissingBlocks:                     ptr("missing"),
+		FinalizedStateUnavailable:         ptr("finalized-unavailable"),
 	}
 
 	configtest.AssertFieldsNotNil(t, unknown)
@@ -306,13 +307,13 @@ var fullConfig = EVMConfig{
 			LeaseDuration:                  config.MustNewDuration(0),
 			NodeIsSyncingEnabled:           ptr(true),
 			FinalizedBlockPollInterval:     config.MustNewDuration(time.Second),
-			HistoricalBalanceCheckEnabled:  ptr(true),
 			HistoricalBalanceCheckAddress:  ptr(types.MustEIP55Address("0x0000000000000000000000000000000000000001")),
 			EnforceRepeatableRead:          ptr(true),
 			DeathDeclarationDelay:          config.MustNewDuration(time.Minute),
 			VerifyChainID:                  ptr(true),
 			NewHeadsPollInterval:           config.MustNewDuration(0),
-			ExternalRequestMaxResponseSize: ptr[uint32](10),
+			ExternalRequestMaxResponseSize:      ptr[uint32](10),
+			FinalizedStateCheckFailureThreshold: ptr[uint32](3),
 			Errors: ClientErrors{
 				NonceTooLow:                       ptr[string]("(: |^)nonce too low"),
 				NonceTooHigh:                      ptr[string]("(: |^)nonce too high"),
@@ -330,6 +331,7 @@ var fullConfig = EVMConfig{
 				ServiceUnavailable:                ptr[string]("(: |^)service unavailable"),
 				TooManyResults:                    ptr[string]("(: |^)too many results"),
 				MissingBlocks:                     ptr[string]("(: |^)invalid block range"),
+				FinalizedStateUnavailable:         ptr[string]("(: |^)missing trie node"),
 			},
 		},
 		OCR: OCR{

@@ -106,7 +106,6 @@ type RPCClient struct {
 	finalityTagEnabled             bool
 	finalityDepth                  uint32
 	safeDepth                      uint32
-	historicalBalanceCheckEnabled  bool
 	historicalBalanceCheckAddress  common.Address
 	externalRequestMaxResponseSize uint32
 
@@ -145,7 +144,6 @@ func NewRPCClient(
 		finalityTagEnabled:             supportsFinalityTags,
 		finalityDepth:                  finalityDepth,
 		safeDepth:                      safeDepth,
-		historicalBalanceCheckEnabled:  cfg.HistoricalBalanceCheckEnabled(),
 		historicalBalanceCheckAddress:  common.HexToAddress(cfg.HistoricalBalanceCheckAddress()),
 		externalRequestMaxResponseSize: externalRequestMaxResponseSize,
 	}
@@ -191,13 +189,9 @@ func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err erro
 
 // CheckFinalizedStateAvailability verifies if the RPC can serve historical state at the finalized block.
 // This is used to detect non-archive nodes that cannot serve state queries for older blocks.
-// Returns nil immediately if historical balance check is not enabled.
 // Returns multinode.ErrFinalizedStateUnavailable if the error matches the FinalizedStateUnavailable pattern.
+// The decision to call this method is made by multinode based on its configuration.
 func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context) error {
-	if !r.historicalBalanceCheckEnabled {
-		return nil
-	}
-
 	var blockNumber *big.Int
 	if r.finalityTagEnabled {
 		blockNumber = big.NewInt(rpc.FinalizedBlockNumber.Int64())
@@ -231,6 +225,7 @@ func (r *RPCClient) isFinalizedStateUnavailableError(err error) bool {
 	}
 	re, compileErr := regexp.Compile(pattern)
 	if compileErr != nil {
+		r.rpcLog.Criticalw("FinalizedStateUnavailable regex pattern is invalid; finalized state availability check is effectively disabled", "pattern", pattern, "err", compileErr)
 		return false
 	}
 	return re.MatchString(err.Error())

@@ -38,11 +38,10 @@ func (n *NodePoolConfig) FinalizedBlockPollInterval() time.Duration {
 	return n.C.FinalizedBlockPollInterval.Duration()
 }
 
-func (n *NodePoolConfig) HistoricalBalanceCheckEnabled() bool {
-	return *n.C.HistoricalBalanceCheckEnabled
-}
-
 func (n *NodePoolConfig) HistoricalBalanceCheckAddress() string {
+	if n.C.HistoricalBalanceCheckAddress == nil {
+		return ""
+	}
 	return n.C.HistoricalBalanceCheckAddress.String()
 }
 

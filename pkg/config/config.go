@@ -209,7 +209,6 @@ type NodePool interface {
 	LeaseDuration() time.Duration
 	NodeIsSyncingEnabled() bool
 	FinalizedBlockPollInterval() time.Duration
-	HistoricalBalanceCheckEnabled() bool
 	HistoricalBalanceCheckAddress() string
 	Errors() ClientErrors
 	EnforceRepeatableRead() bool

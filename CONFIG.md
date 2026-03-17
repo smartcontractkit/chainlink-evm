@@ -911,7 +911,6 @@ SyncThreshold = 5 # Default
 LeaseDuration = '0s' # Default
 NodeIsSyncingEnabled = false # Default
 FinalizedBlockPollInterval = '5s' # Default
-HistoricalBalanceCheckEnabled = false # Default
 HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000' # Default
 EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
@@ -991,22 +990,16 @@ reported based on latest block and finality depth.
 
 Set to 0 to disable.
 
-### HistoricalBalanceCheckEnabled
-```toml
-HistoricalBalanceCheckEnabled = false # Default
-```
-HistoricalBalanceCheckEnabled controls whether NodePool health polling also verifies historical state availability
-by executing `eth_getBalance` for HistoricalBalanceCheckAddress at the latest finalized block.
-Finalized block selection follows chain finality settings:
-- `FinalityTagEnabled = true`: use `finalized` tag
-- `FinalityTagEnabled = false`: use `latest - FinalityDepth`
-
 ### HistoricalBalanceCheckAddress
 ```toml
 HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000' # Default
 ```
 HistoricalBalanceCheckAddress is the probe account used by the historical balance health check.
-This check is only active when `HistoricalBalanceCheckEnabled = true`.
+The check executes `eth_getBalance` for this address at the latest finalized block.
+Finalized block selection follows chain finality settings:
+- `FinalityTagEnabled = true`: use `finalized` tag
+- `FinalityTagEnabled = false`: use `latest - FinalityDepth`
+The check is only active when `FinalizedStateCheckFailureThreshold > 0`.
 
 ### EnforceRepeatableRead
 ```toml
