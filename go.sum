@@ -658,14 +658,8 @@ github.com/smartcontractkit/chainlink-data-streams v0.1.12-0.20260227110503-42b2
 github.com/smartcontractkit/chainlink-data-streams v0.1.12-0.20260227110503-42b236799872/go.mod h1:5jROIH/4cgHBQn875A+E2DCqvkBtrkHs+ciedcGTjNI=
 github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20251022073203-7d8ae8cf67c1 h1:NTODgwAil7BLoijS7y6KnEuNbQ9v60VUhIR9FcAzIhg=
 github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20251022073203-7d8ae8cf67c1/go.mod h1:oyfOm4k0uqmgZIfxk1elI/59B02shbbJQiiUdPdbMgI=
-github.com/smartcontractkit/chainlink-framework v0.0.0-20260312132640-34fd167e51e5 h1:CBL6mX/lsJ7MJVBufQl1MqxGHGuAaiicNgSCj0A3cWs=
-github.com/smartcontractkit/chainlink-framework v0.0.0-20260312132640-34fd167e51e5/go.mod h1:fFupTKernSf+WA5skA3ULEA5WQhmOXFfVOOEFU/4LiY=
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250818175541-3389ac08a563 h1:ACpDbAxG4fa4sA83dbtYcrnlpE/y7thNIZfHxTv2ZLs=
 github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250818175541-3389ac08a563/go.mod h1:jP5mrOLFEYZZkl7EiCHRRIMSSHCQsYypm1OZSus//iI=
-github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20251210101658-1c5c8e4c4f15 h1:Mf+IRvrXutcKAKpuOxq5Ae+AAw4Z5vc66q1xI7qimZQ=
-github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20251210101658-1c5c8e4c4f15/go.mod h1:kGprqyjsz6qFNVszOQoHc24wfvCjyipNZFste/3zcbs=
-github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20260312132640-34fd167e51e5 h1:pcRTX0u7DaL9iK9LzQhNQlR8lCmiYj5f+KDGUhauYmM=
-github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20260312132640-34fd167e51e5/go.mod h1:kGprqyjsz6qFNVszOQoHc24wfvCjyipNZFste/3zcbs=
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20260317132927-e8bc2c7b01f1 h1:aUdjMnHpriMkEwsgeqQ/ZuNBjrWw6c46HG57TuPPEbE=
 github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20260317132927-e8bc2c7b01f1/go.mod h1:kGprqyjsz6qFNVszOQoHc24wfvCjyipNZFste/3zcbs=
 github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20251020150604-8ab84f7bad1a h1:pr0VFI7AWlDVJBEkcvzXWd97V8w8QMNjRdfPVa/IQLk=
