@@ -390,6 +390,8 @@ Enabled = false # Default
 BlockTime = '10s' # Example
 CustomURL = 'https://example.api.io' # Example
 DualBroadcast = false # Example
+Bundles = false # Example
+FastlaneAuctionRequestTimeout = '5s' # Example
 ```
 
 
@@ -416,6 +418,18 @@ CustomURL configures the base url of a custom endpoint used by the ChainDualBroa
 DualBroadcast = false # Example
 ```
 DualBroadcast enables DualBroadcast functionality.
+
+### Bundles
+```toml
+Bundles = false # Example
+```
+Bundles enables sending bundles for auctioning (not compatible with all OFAs).
+
+### FastlaneAuctionRequestTimeout
+```toml
+FastlaneAuctionRequestTimeout = '5s' # Example
+```
+FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
 
 ## BalanceMonitor
 ```toml

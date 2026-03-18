@@ -7,13 +7,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/lib/pq"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 )
 
 // Block represents an unfinalized block
 // used for reorg detection when polling.
 type Block struct {
-	EVMChainID *big.Big
+	EVMChainID *sqlutil.Big
 	BlockHash  common.Hash
 	// Note geth uses int64 internally https://github.com/ethereum/go-ethereum/blob/f66f1a16b3c480d3a43ac7e8a09ab3e362e96ae4/eth/filters/api.go#L340
 	BlockNumber          int64
@@ -25,7 +25,7 @@ type Block struct {
 
 // Log represents an EVM log.
 type Log struct {
-	EVMChainID     *big.Big
+	EVMChainID     *sqlutil.Big
 	LogIndex       int64
 	BlockHash      common.Hash
 	BlockNumber    int64

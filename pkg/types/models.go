@@ -19,6 +19,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	"github.com/ugorji/go/codec"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	chainagnostictypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/hex"
 
@@ -28,20 +29,18 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types/blocks"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 type Header Head
 
 // Head represents a BlockNumber, BlockHash.
 type Head struct {
-	ID               uint64
 	Hash             common.Hash
 	Number           int64
 	L1BlockNumber    sql.NullInt64
 	ParentHash       common.Hash
 	Parent           atomic.Pointer[Head]
-	EVMChainID       *ubig.Big
+	EVMChainID       *sqlutil.Big
 	Timestamp        time.Time
 	CreatedAt        time.Time
 	BaseFeePerGas    *assets.Wei
@@ -57,7 +56,7 @@ var _ chains.Head[common.Hash] = &Head{}
 var _ heads.Head[common.Hash, *big.Int] = &Head{}
 
 // NewHead returns a Head instance.
-func NewHead(number *big.Int, blockHash common.Hash, parentHash common.Hash, chainID *ubig.Big) Head {
+func NewHead(number *big.Int, blockHash common.Hash, parentHash common.Hash, chainID *sqlutil.Big) Head {
 	return Head{
 		Number:     number.Int64(),
 		Hash:       blockHash,

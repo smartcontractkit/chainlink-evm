@@ -27,6 +27,7 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
@@ -36,7 +37,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 var (
@@ -109,6 +109,8 @@ type RPCClient struct {
 	historicalBalanceCheckAddress  common.Address
 	externalRequestMaxResponseSize uint32
 
+	beholderMetrics *rpcClientMetrics
+
 	ws        atomic.Pointer[rawclient]
 	limitedWS atomic.Pointer[rawclient] // ws client with limited response size
 	http      atomic.Pointer[rawclient]
@@ -169,6 +171,13 @@ func NewRPCClient(
 		"evmChainID", chainID,
 	)
 	r.rpcLog = logger.Sugared(lggr).Named("RPC")
+
+	bm, bmErr := newRPCClientMetrics()
+	if bmErr != nil {
+		lggr.Warnw("Failed to initialize beholder metrics for RPC client", "err", bmErr)
+	} else {
+		r.beholderMetrics = bm
+	}
 
 	if httpuri == nil && externalRequestMaxResponseSize > 0 {
 		lggr.Error("RPC client is configured with only WebSocket URL. If this CL Node serves external requests, it must also have an HTTP URL configured. Otherwise, there is a serious DDoS risk.")
@@ -318,6 +327,7 @@ func (r *RPCClient) String() string {
 }
 
 func (r *RPCClient) logResult(
+	ctx context.Context,
 	lggr logger.Logger,
 	err error,
 	callDuration time.Duration,
@@ -326,16 +336,26 @@ func (r *RPCClient) logResult(
 	results ...interface{},
 ) {
 	lggr = logger.With(lggr, "duration", callDuration, "rpcDomain", rpcDomain, "callName", callName)
-	promEVMPoolRPCNodeCalls.WithLabelValues(r.chainID.String(), r.name).Inc()
+	chainID := r.chainID.String()
+	promEVMPoolRPCNodeCalls.WithLabelValues(chainID, r.name).Inc()
 	if err == nil {
-		promEVMPoolRPCNodeCallsSuccess.WithLabelValues(r.chainID.String(), r.name).Inc()
+		promEVMPoolRPCNodeCallsSuccess.WithLabelValues(chainID, r.name).Inc()
 		logger.Sugared(lggr).Tracew(fmt.Sprintf("evmclient.Client#%s RPC call success", callName), results...)
 	} else {
-		promEVMPoolRPCNodeCallsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
+		promEVMPoolRPCNodeCallsFailed.WithLabelValues(chainID, r.name).Inc()
 		lggr.Debugw(
 			fmt.Sprintf("evmclient.Client#%s RPC call failure", callName),
 			append(results, "err", err)...,
 		)
+	}
+
+	if r.beholderMetrics != nil {
+		r.beholderMetrics.IncrementTotal(ctx, chainID, r.name, rpcDomain, callName)
+		if err == nil {
+			r.beholderMetrics.IncrementSuccess(ctx, chainID, r.name, rpcDomain, callName)
+		} else {
+			r.beholderMetrics.IncrementFailed(ctx, chainID, r.name, rpcDomain, callName)
+		}
 	}
 
 	metrics.RPCCallLatency.
@@ -390,7 +410,7 @@ func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method 
 	err := r.wrapRPCClientError(client.rpc.CallContext(ctx, result, method, args...))
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "CallContext")
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "CallContext")
 
 	return err
 }
@@ -429,7 +449,7 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 	err := r.wrapRPCClientError(client.rpc.BatchCallContext(ctx, b))
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "BatchCallContext")
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "BatchCallContext")
 	if err != nil {
 		return err
 	}
@@ -505,13 +525,13 @@ func (r *RPCClient) SubscribeToHeads(ctx context.Context) (ch <-chan *evmtypes.H
 	lggr.Debug("RPC call: evmclient.Client#EthSubscribe")
 	defer func() {
 		duration := time.Since(start)
-		r.logResult(lggr, err, duration, r.getRPCDomain(), "EthSubscribe")
+		r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "EthSubscribe")
 		err = r.wrapRPCClientError(err)
 	}()
 
 	channel := make(chan *evmtypes.Head)
 	forwarder := newSubForwarder(channel, func(head *evmtypes.Head) (*evmtypes.Head, error) {
-		head.EVMChainID = ubig.New(r.chainID)
+		head.EVMChainID = sqlutil.New(r.chainID)
 		r.OnNewHead(ctx, chStopInFlight, head)
 		return head, nil
 	}, r.wrapRPCClientError)
@@ -556,7 +576,7 @@ func (r *RPCClient) TransactionReceiptGethWithOpts(ctx context.Context, txHash c
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "TransactionReceipt",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "TransactionReceipt",
 		"receipt", receipt,
 	)
 
@@ -584,7 +604,7 @@ func (r *RPCClient) TransactionByHashWithOpts(ctx context.Context, txHash common
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "TransactionByHash",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "TransactionByHash",
 		"receipt", tx,
 	)
 
@@ -602,7 +622,7 @@ func (r *RPCClient) HeaderByNumber(ctx context.Context, number *big.Int) (header
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "HeaderByNumber", "header", header)
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "HeaderByNumber", "header", header)
 
 	return
 }
@@ -618,7 +638,7 @@ func (r *RPCClient) HeaderByHash(ctx context.Context, hash common.Hash) (header 
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "HeaderByHash",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "HeaderByHash",
 		"header", header,
 	)
 
@@ -638,7 +658,7 @@ func (r *RPCClient) LatestSafeBlock(ctx context.Context) (head *evmtypes.Head, e
 		return
 	}
 
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 
 	return
 }
@@ -666,7 +686,7 @@ func (r *RPCClient) latestFinalizedBlock(ctx context.Context) (head *evmtypes.He
 		err = r.wrapRPCClientError(ethereum.NotFound)
 		return
 	}
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 	return
 }
 
@@ -711,7 +731,7 @@ func (r *RPCClient) BlockByNumber(ctx context.Context, number *big.Int) (head *e
 		return
 	}
 
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 
 	if hexNumber == rpc.LatestBlockNumber.String() {
 		r.OnNewHead(ctx, chStopInFlight, head)
@@ -757,7 +777,7 @@ func (r *RPCClient) HeaderByNumberWithOpts(ctx context.Context, blockNumber *big
 		return nil, r.wrapRPCClientError(ethereum.NotFound)
 	}
 
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 	return (*evmtypes.Header)(head), nil
 }
 
@@ -776,7 +796,7 @@ func (r *RPCClient) ethGetBlockByNumber(ctx context.Context, number string, resu
 	err = r.wrapRPCClientError(client.rpc.CallContext(ctx, result, method, args...))
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "CallContext")
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "CallContext")
 	return err
 }
 
@@ -789,7 +809,7 @@ func (r *RPCClient) BlockByHash(ctx context.Context, hash common.Hash) (head *ev
 		err = r.wrapRPCClientError(ethereum.NotFound)
 		return
 	}
-	head.EVMChainID = ubig.New(r.chainID)
+	head.EVMChainID = sqlutil.New(r.chainID)
 	return
 }
 
@@ -804,7 +824,7 @@ func (r *RPCClient) BlockByHashGeth(ctx context.Context, hash common.Hash) (bloc
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "BlockByHash",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "BlockByHash",
 		"block", block,
 	)
 
@@ -822,7 +842,7 @@ func (r *RPCClient) BlockByNumberGeth(ctx context.Context, number *big.Int) (blo
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "BlockByNumber",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "BlockByNumber",
 		"block", block,
 	)
 
@@ -844,7 +864,7 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 	err := r.wrapRPCClientError(client.geth.SendTransaction(ctx, tx))
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "SendTransaction")
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "SendTransaction")
 
 	return struct{}{}, ClassifySendError(err, r.clientErrors, logger.Sugared(logger.Nop()), tx, common.Address{}, r.chainType.IsL2()), err
 }
@@ -888,7 +908,7 @@ func (r *RPCClient) PendingSequenceAt(ctx context.Context, account common.Addres
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "PendingNonceAt",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "PendingNonceAt",
 		"nonce", nonce,
 	)
 
@@ -916,7 +936,7 @@ func (r *RPCClient) NonceAt(ctx context.Context, account common.Address, blockNu
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "NonceAt",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "NonceAt",
 		"nonce", nonce,
 	)
 
@@ -934,7 +954,7 @@ func (r *RPCClient) PendingCodeAt(ctx context.Context, account common.Address) (
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "PendingCodeAt",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "PendingCodeAt",
 		"code", code,
 	)
 
@@ -952,7 +972,7 @@ func (r *RPCClient) CodeAt(ctx context.Context, account common.Address, blockNum
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "CodeAt",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "CodeAt",
 		"code", code,
 	)
 
@@ -977,7 +997,7 @@ func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64,
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "EstimateGas",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "EstimateGas",
 		"gas", gas,
 	)
 
@@ -995,7 +1015,7 @@ func (r *RPCClient) SuggestGasPrice(ctx context.Context) (price *big.Int, err er
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "SuggestGasPrice",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "SuggestGasPrice",
 		"price", price,
 	)
 
@@ -1018,7 +1038,7 @@ func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumb
 	}
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "CallContract",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "CallContract",
 		"val", val,
 	)
 
@@ -1072,7 +1092,7 @@ func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (v
 	}
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "PendingCallContract",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "PendingCallContract",
 		"val", val,
 	)
 
@@ -1096,7 +1116,7 @@ func (r *RPCClient) BlockNumber(ctx context.Context) (height uint64, err error) 
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "BlockNumber",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "BlockNumber",
 		"height", height,
 	)
 
@@ -1114,7 +1134,7 @@ func (r *RPCClient) BalanceAt(ctx context.Context, account common.Address, block
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "BalanceAt",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "BalanceAt",
 		"balance", balance,
 	)
 
@@ -1162,7 +1182,7 @@ func (r *RPCClient) FeeHistory(ctx context.Context, blockCount uint64, lastBlock
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "FeeHistory",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "FeeHistory",
 		"feeHistory", feeHistory,
 	)
 
@@ -1232,7 +1252,7 @@ func (r *RPCClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (l [
 		err = r.makeLogsValid(l)
 	}
 	duration := time.Since(start)
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "FilterLogs",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "FilterLogs",
 		"log", l,
 	)
 
@@ -1280,7 +1300,7 @@ func (r *RPCClient) SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQu
 	start := time.Now()
 	defer func() {
 		duration := time.Since(start)
-		r.logResult(lggr, err, duration, r.getRPCDomain(), "SubscribeFilterLogs")
+		r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "SubscribeFilterLogs")
 		err = r.wrapRPCClientError(err)
 	}()
 	sub := newSubForwarder(ch, r.makeLogValid, r.wrapRPCClientError)
@@ -1308,7 +1328,7 @@ func (r *RPCClient) SuggestGasTipCap(ctx context.Context) (tipCap *big.Int, err 
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "SuggestGasTipCap",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "SuggestGasTipCap",
 		"tipCap", tipCap,
 	)
 
@@ -1397,7 +1417,7 @@ func (r *RPCClient) IsSyncing(ctx context.Context) (bool, error) {
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(lggr, err, duration, r.getRPCDomain(), "BlockNumber",
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "BlockNumber",
 		"syncProgress", syncProgress,
 	)
 
@@ -1507,7 +1527,7 @@ func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem,
 
 	defer func() {
 		duration := time.Since(start)
-		r.logResult(lggr, err, duration, r.getRPCDomain(), request.Method+"WithConfidence",
+		r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), request.Method+"WithConfidence",
 			"result", request.Result,
 		)
 	}()

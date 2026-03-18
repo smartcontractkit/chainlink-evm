@@ -8,11 +8,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/ethereum/go-ethereum/rpc"
+
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers/dualbroadcast"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 type SimulationMode string
@@ -157,7 +158,7 @@ func (s *backendSimulatedClient) HeadByNumber(ctx context.Context, n *big.Int) (
 	if err != nil {
 		return nil, err
 	}
-	head := &evmtypes.Head{EVMChainID: ubig.New(chainID)}
+	head := &evmtypes.Head{EVMChainID: sqlutil.New(chainID)}
 	head.SetFromHeader(header)
 	return head, nil
 }

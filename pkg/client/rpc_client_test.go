@@ -27,6 +27,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
@@ -34,7 +35,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func makeNewWSMessage[T any](v T) string {
@@ -1262,7 +1262,7 @@ func TestRPCClient_HeaderByNumberWithOpts(t *testing.T) {
 		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{WS: wsURL, FinalityTagsEnabled: true, ChainID: chainID})
 		result, err := rpcClient.HeaderByNumberWithOpts(t.Context(), big.NewInt(10), evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized})
 		require.NoError(t, err)
-		head.EVMChainID = ubig.New(chainID)
+		head.EVMChainID = sqlutil.New(chainID)
 		require.Equal(t, (*evmtypes.Header)(head), result)
 	})
 }

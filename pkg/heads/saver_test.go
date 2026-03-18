@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
 	evmheads "github.com/smartcontractkit/chainlink-evm/pkg/heads"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
@@ -126,7 +126,7 @@ func TestHeadSaver_Load(t *testing.T) {
 	//           H2Uncle
 	//
 	newHead := func(num int, parent common.Hash) *evmtypes.Head {
-		h := evmtypes.NewHead(big.NewInt(int64(num)), utils.NewHash(), parent, ubig.New(testutils.FixtureChainID))
+		h := evmtypes.NewHead(big.NewInt(int64(num)), utils.NewHash(), parent, sqlutil.New(testutils.FixtureChainID))
 		return &h
 	}
 	h0 := newHead(0, utils.NewHash())

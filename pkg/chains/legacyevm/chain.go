@@ -33,7 +33,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	"github.com/smartcontractkit/chainlink-evm/pkg/monitor"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 	trontxm "github.com/smartcontractkit/chainlink-tron/relayer/txm"
 )
 
@@ -101,6 +100,8 @@ func (c *LegacyChains) Get(id string) (types.ChainService, error) {
 
 type chain struct {
 	services.StateMachine
+
+	types.UnimplementedChainService
 	id              *big.Int
 	cfg             *config.ChainScoped
 	client          client.Client
@@ -118,7 +119,7 @@ type chain struct {
 }
 
 type errChainDisabled struct {
-	ChainID *ubig.Big
+	ChainID *sqlutil.Big
 }
 
 func (e errChainDisabled) Error() string {
@@ -417,6 +418,9 @@ func (c *chain) Ready() (merr error) {
 	if c.balanceMonitor != nil {
 		merr = multierr.Combine(merr, c.balanceMonitor.Ready())
 	}
+	if c.logPoller != logpoller.LogPollerDisabled {
+		merr = multierr.Combine(merr, c.logPoller.Ready())
+	}
 	return
 }
 
@@ -433,6 +437,10 @@ func (c *chain) HealthReport() map[string]error {
 
 	if c.balanceMonitor != nil {
 		services.CopyHealth(report, c.balanceMonitor.HealthReport())
+	}
+
+	if c.logPoller != logpoller.LogPollerDisabled {
+		services.CopyHealth(report, c.logPoller.HealthReport())
 	}
 
 	return report
@@ -482,7 +490,10 @@ func (c *chain) GetChainStatus(ctx context.Context) (types.ChainStatus, error) {
 func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
 	chainID := c.cfg.EVM().ChainID()
 
-	chainSelector := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	chainSelector, ok := chainselectors.EvmChainIdToChainSelector()[chainID.Uint64()]
+	if !ok {
+		return types.ChainInfo{}, fmt.Errorf("evm chain selector not found for chain ID: %d", chainID)
+	}
 	chainFamily, err := chainselectors.GetSelectorFamily(chainSelector)
 	if err != nil {
 		return types.ChainInfo{}, fmt.Errorf("failed to get chain family for selector %d: %w", chainSelector, err)
@@ -493,15 +504,10 @@ func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
 		return types.ChainInfo{}, fmt.Errorf("failed to get chain details for chain %d and family %s: %w", chainID, chainFamily, err)
 	}
 
-	envName, err := chainselectors.ExtractNetworkEnvName(chainDetails.ChainName)
-	if err != nil {
-		return types.ChainInfo{}, fmt.Errorf("failed to get network name for chain %d: %w", chainID, err)
-	}
-
 	return types.ChainInfo{
 		FamilyName:      chainFamily,
 		ChainID:         chainID.String(),
-		NetworkName:     envName,
+		NetworkName:     string(chainDetails.NetworkType),
 		NetworkNameFull: chainDetails.ChainName,
 	}, nil
 }

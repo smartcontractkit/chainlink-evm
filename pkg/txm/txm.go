@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/jpillora/backoff"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -38,9 +39,11 @@ type TxStore interface {
 	AppendAttemptToTransaction(context.Context, uint64, common.Address, *types.Attempt) (attempts []*types.Attempt, err error)
 	CreateEmptyUnconfirmedTransaction(context.Context, common.Address, uint64, uint64) (*types.Transaction, error)
 	CreateTransaction(context.Context, *types.TxRequest) (*types.Transaction, error)
+	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
 	FetchUnconfirmedTransactionAtNonceWithCount(context.Context, uint64, common.Address) (*types.Transaction, int, error)
 	MarkConfirmedAndReorgedTransactions(context.Context, uint64, common.Address) ([]*types.Transaction, []uint64, error)
 	MarkUnconfirmedTransactionPurgeable(context.Context, uint64, common.Address) error
+	UpdateSignedAttempt(context.Context, uint64, uint64, *evmtypes.Transaction, common.Address) error
 	UpdateTransactionBroadcast(context.Context, uint64, uint64, common.Hash, common.Address) error
 	UpdateUnstartedTransactionWithNonce(context.Context, common.Address, uint64) (*types.Transaction, error)
 

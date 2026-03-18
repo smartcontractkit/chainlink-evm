@@ -16,12 +16,11 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	"gopkg.in/guregu/null.v4"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
+	"github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/types"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 func init() {
@@ -39,7 +38,7 @@ type Configs interface {
 
 type Node struct {
 	Name              string
-	EVMChainID        ubig.Big
+	EVMChainID        sqlutil.Big
 	WSURL             null.String
 	HTTPURL           null.String
 	SendOnly          bool

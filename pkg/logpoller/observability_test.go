@@ -18,7 +18,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
 )
 
@@ -156,7 +155,7 @@ func generateRandomLogs(chainID, count int) []Log {
 	logs := make([]Log, count)
 	for i := range logs {
 		logs[i] = Log{
-			EVMChainID:     ubig.NewI(int64(chainID)),
+			EVMChainID:     sqlutil.NewI(int64(chainID)),
 			LogIndex:       int64(i + 1),
 			BlockHash:      utils.RandomBytes32(),
 			BlockNumber:    int64(i + 1),

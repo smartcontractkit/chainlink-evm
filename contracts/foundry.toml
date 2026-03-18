@@ -22,7 +22,8 @@ tab_width = 2
 multiline_func_header = "params_first"
 sort_imports = true
 single_line_statement_blocks = "preserve"
-ignore = ["src/v0.8/vendor/**/*.sol"]
+# v0.6 contracts are excluded to preserve exact source matching with audited originals
+ignore = ["src/v0.8/vendor/**/*.sol", "src/v0.6/**/*.sol"]
 number_underscore = "thousands"
 wrap_comments = true
 
@@ -124,6 +125,12 @@ src = 'src/v0.8/data-feeds'
 test = 'src/v0.8/data-feeds/test'
 solc_version = '0.8.26'
 evm_version = 'paris'
+deny_warnings = false
+
+[profile.data-feeds-v0_6]
+optimizer_runs = 1_000_000
+src = 'src/v0.6/data-feeds'
+solc_version = '0.6.6'
 deny_warnings = false
 
 [profile.shared]

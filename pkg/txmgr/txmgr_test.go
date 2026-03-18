@@ -22,6 +22,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	commonutils "github.com/smartcontractkit/chainlink-common/pkg/utils"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
@@ -45,7 +46,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr/txmgrtest"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 
 	txmgrcommon "github.com/smartcontractkit/chainlink-framework/chains/txmgr"
 	txmgrtypes "github.com/smartcontractkit/chainlink-framework/chains/txmgr/types"
@@ -88,7 +88,8 @@ func makeTestEvmTxm(
 		keyStore,
 		estimator,
 		ht,
-		nil)
+		nil,
+		false)
 }
 
 func TestTxm_SendNativeToken_DoesNotSendToZero(t *testing.T) {
@@ -314,7 +315,7 @@ func TestTxm_CreateTransaction(t *testing.T) {
 		// Create mock forwarder, mock authorizedsenders call.
 		form := forwarders.NewORM(db)
 		fwdrAddr := testutils.NewAddress()
-		fwdr, err := form.CreateForwarder(tests.Context(t), fwdrAddr, ubig.Big(*testutils.FixtureChainID))
+		fwdr, err := form.CreateForwarder(tests.Context(t), fwdrAddr, sqlutil.Big(*testutils.FixtureChainID))
 		require.NoError(t, err)
 		require.Equal(t, fwdr.Address, fwdrAddr)
 
@@ -1244,6 +1245,6 @@ func txRequestWithIdempotencyKey(idempotencyKey string) func(*txmgr.TxRequest) {
 }
 
 func makeHead(num int64) *evmtypes.Head {
-	h := evmtypes.NewHead(big.NewInt(num), evmtestutils.NewHash(), evmtestutils.NewHash(), ubig.New(evmtestutils.FixtureChainID))
+	h := evmtypes.NewHead(big.NewInt(num), evmtestutils.NewHash(), evmtestutils.NewHash(), sqlutil.New(evmtestutils.FixtureChainID))
 	return &h
 }

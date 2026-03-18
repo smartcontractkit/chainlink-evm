@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
-	ubig "github.com/smartcontractkit/chainlink-evm/pkg/utils/big"
 )
 
 type ORM interface {
@@ -31,8 +30,10 @@ type ORM interface {
 
 var _ ORM = &DbORM{}
 
+var headsSelectBase = `SELECT "hash", "number", "parent_hash", "created_at", "timestamp", "l1_block_number", "evm_chain_id", "base_fee_per_gas" FROM evm.heads`
+
 type DbORM struct {
-	chainID                ubig.Big
+	chainID                sqlutil.Big
 	ds                     sqlutil.DataSource
 	lastTrimmedBlockNumber int64            // the last block number that was trimmed
 	headsBatch             []*evmtypes.Head // used to batch insert heads
@@ -43,7 +44,7 @@ type DbORM struct {
 // NewORM creates an ORM scoped to chainID.
 func NewORM(chainID big.Int, ds sqlutil.DataSource, batchSize int64) *DbORM {
 	return &DbORM{
-		chainID:                ubig.Big(chainID),
+		chainID:                sqlutil.Big(chainID),
 		ds:                     ds,
 		lastTrimmedBlockNumber: -1,
 		headsBatch:             make([]*evmtypes.Head, 0),
@@ -127,7 +128,7 @@ func (orm *DbORM) TrimOldHeads(ctx context.Context, minBlockNumber int64) (err e
 
 func (orm *DbORM) LatestHead(ctx context.Context) (head *evmtypes.Head, err error) {
 	head = new(evmtypes.Head)
-	err = orm.ds.GetContext(ctx, head, `SELECT * FROM evm.heads WHERE evm_chain_id = $1 ORDER BY number DESC, created_at DESC, id DESC LIMIT 1`, orm.chainID)
+	err = orm.ds.GetContext(ctx, head, headsSelectBase+` WHERE evm_chain_id = $1 ORDER BY number DESC LIMIT 1`, orm.chainID)
 	if pkgerrors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -136,18 +137,30 @@ func (orm *DbORM) LatestHead(ctx context.Context) (head *evmtypes.Head, err erro
 }
 
 func (orm *DbORM) LatestHeads(ctx context.Context, minBlockNumer int64) (heads []*evmtypes.Head, err error) {
-	err = orm.ds.SelectContext(ctx, &heads, `SELECT * FROM evm.heads WHERE evm_chain_id = $1 AND number >= $2 ORDER BY number DESC, created_at DESC, id DESC`, orm.chainID, minBlockNumer)
+	err = orm.ds.SelectContext(ctx, &heads, headsSelectBase+` WHERE evm_chain_id = $1 AND number >= $2 ORDER BY number DESC`, orm.chainID, minBlockNumer)
 	err = pkgerrors.Wrap(err, "LatestHeads failed")
 	return
 }
 
 func (orm *DbORM) HeadByHash(ctx context.Context, hash common.Hash) (head *evmtypes.Head, err error) {
 	head = new(evmtypes.Head)
-	err = orm.ds.GetContext(ctx, head, `SELECT * FROM evm.heads WHERE evm_chain_id = $1 AND hash = $2`, orm.chainID, hash)
+	err = orm.ds.GetContext(ctx, head, headsSelectBase+` WHERE evm_chain_id = $1 AND hash = $2`, orm.chainID, hash)
 	if pkgerrors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return head, err
+}
+
+func (orm *DbORM) FirstHead(ctx context.Context) (*evmtypes.Head, error) {
+	head := new(evmtypes.Head)
+	err := orm.ds.GetContext(ctx, head, headsSelectBase+` WHERE evm_chain_id = $1 ORDER BY number ASC LIMIT 1`, orm.chainID)
+	if err != nil {
+		if pkgerrors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return head, nil
 }
 
 type nullORM struct{}
