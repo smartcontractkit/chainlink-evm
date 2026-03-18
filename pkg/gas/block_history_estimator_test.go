@@ -854,15 +854,15 @@ func TestBlockHistoryEstimator_Recalculate_NoEIP1559(t *testing.T) {
 
 		blocks := []evmtypes.Block{}
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		blocks = []evmtypes.Block{{}}
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		blocks = []evmtypes.Block{{Transactions: []evmtypes.Transaction{}}}
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 	})
 
 	t.Run("sets gas price to EVM.GasEstimator.PriceMax if the calculation would otherwise exceed it", func(t *testing.T) {
@@ -895,7 +895,7 @@ func TestBlockHistoryEstimator_Recalculate_NoEIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		price := gas.GetGasPrice(bhe)
 		require.Equal(t, maxGasPrice, price)
@@ -931,7 +931,7 @@ func TestBlockHistoryEstimator_Recalculate_NoEIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		price := gas.GetGasPrice(bhe)
 		require.Equal(t, minGasPrice, price)
@@ -978,7 +978,7 @@ func TestBlockHistoryEstimator_Recalculate_NoEIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(2))
+		bhe.Recalculate(t.Context(), testutils.Head(2))
 
 		price := gas.GetGasPrice(bhe)
 		require.Equal(t, assets.NewWeiI(70), price)
@@ -1012,7 +1012,7 @@ func TestBlockHistoryEstimator_Recalculate_NoEIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(0))
+		bhe.Recalculate(t.Context(), testutils.Head(0))
 
 		price := gas.GetGasPrice(bhe)
 		require.Equal(t, assets.NewWeiI(25), price)
@@ -1046,21 +1046,21 @@ func TestBlockHistoryEstimator_Recalculate_NoEIP1559(t *testing.T) {
 		gas.SetRollingBlockHistory(bhe, blocks)
 
 		// chainType is not set - GasEstimator should not ignore zero priced transactions and instead default to PriceMin==11
-		bhe.Recalculate(testutils.Head(0))
+		bhe.Recalculate(t.Context(), testutils.Head(0))
 		require.Equal(t, assets.NewWeiI(11), gas.GetGasPrice(bhe))
 
 		// Set chainType to Gnosis - GasEstimator should now ignore zero priced transactions
 		ibhe = newBlockHistoryEstimator(t, ethClient, chaintype.ChainGnosis, geCfg, bhCfg, l1Oracle)
 		bhe = gas.BlockHistoryEstimatorFromInterface(ibhe)
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(0))
+		bhe.Recalculate(t.Context(), testutils.Head(0))
 		require.Equal(t, assets.NewWeiI(80), gas.GetGasPrice(bhe))
 
 		// And for X Layer
 		ibhe = newBlockHistoryEstimator(t, ethClient, chaintype.ChainXLayer, geCfg, bhCfg, l1Oracle)
 		bhe = gas.BlockHistoryEstimatorFromInterface(ibhe)
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(0))
+		bhe.Recalculate(t.Context(), testutils.Head(0))
 		require.Equal(t, assets.NewWeiI(80), gas.GetGasPrice(bhe))
 	})
 
@@ -1108,7 +1108,7 @@ func TestBlockHistoryEstimator_Recalculate_NoEIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(0))
+		bhe.Recalculate(t.Context(), testutils.Head(0))
 
 		price := gas.GetGasPrice(bhe)
 		require.Equal(t, reasonablyHugeGasPrice, price)
@@ -1145,7 +1145,7 @@ func TestBlockHistoryEstimator_Recalculate_NoEIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(0))
+		bhe.Recalculate(t.Context(), testutils.Head(0))
 
 		price := gas.GetGasPrice(bhe)
 		require.Equal(t, assets.NewWeiI(100), price)
@@ -1176,27 +1176,27 @@ func TestBlockHistoryEstimator_Recalculate_EIP1559(t *testing.T) {
 
 		blocks := []evmtypes.Block{}
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		blocks = []evmtypes.Block{{}} // No base fee (doesn't crash)
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		blocks = []evmtypes.Block{newBlockWithBaseFee()}
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		empty := newBlockWithBaseFee()
 		empty.Transactions = []evmtypes.Transaction{}
 		blocks = []evmtypes.Block{empty}
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		withOnlyLegacyTransactions := newBlockWithBaseFee()
 		withOnlyLegacyTransactions.Transactions = legacyTransactionsFromGasPrices(9001)
 		blocks = []evmtypes.Block{withOnlyLegacyTransactions}
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 	})
 
 	t.Run("does not set tip higher than EVM.GasEstimator.PriceMax", func(t *testing.T) {
@@ -1232,7 +1232,7 @@ func TestBlockHistoryEstimator_Recalculate_EIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		tipCap := gas.GetTipCap(bhe)
 		require.Equal(t, tipCap.Int64(), maxGasPrice.Int64())
@@ -1271,7 +1271,7 @@ func TestBlockHistoryEstimator_Recalculate_EIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(1))
+		bhe.Recalculate(t.Context(), testutils.Head(1))
 
 		price := gas.GetTipCap(bhe)
 		require.Equal(t, assets.NewWeiI(10), price)
@@ -1320,7 +1320,7 @@ func TestBlockHistoryEstimator_Recalculate_EIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(2))
+		bhe.Recalculate(t.Context(), testutils.Head(2))
 
 		price := gas.GetTipCap(bhe)
 		require.Equal(t, assets.NewWeiI(60), price)
@@ -1356,7 +1356,7 @@ func TestBlockHistoryEstimator_Recalculate_EIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(0))
+		bhe.Recalculate(t.Context(), testutils.Head(0))
 
 		price := gas.GetTipCap(bhe)
 		assert.Equal(t, assets.NewWeiI(1), price)
@@ -1393,7 +1393,7 @@ func TestBlockHistoryEstimator_Recalculate_EIP1559(t *testing.T) {
 
 		gas.SetRollingBlockHistory(bhe, blocks)
 
-		bhe.Recalculate(testutils.Head(0))
+		bhe.Recalculate(t.Context(), testutils.Head(0))
 
 		price := gas.GetTipCap(bhe)
 		require.Equal(t, assets.NewWeiI(0), price)
@@ -1945,7 +1945,7 @@ func TestBlockHistoryEstimator_GetLegacyGas(t *testing.T) {
 	}
 
 	gas.SetRollingBlockHistory(bhe, blocks)
-	bhe.Recalculate(testutils.Head(1))
+	bhe.Recalculate(t.Context(), testutils.Head(1))
 	gas.SimulateStart(t, bhe)
 
 	t.Run("if gas price is lower than global max and user specified max gas price", func(t *testing.T) {
@@ -1973,7 +1973,7 @@ func TestBlockHistoryEstimator_GetLegacyGas(t *testing.T) {
 
 	bhe = newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
 	gas.SetRollingBlockHistory(bhe, blocks)
-	bhe.Recalculate(testutils.Head(1))
+	bhe.Recalculate(t.Context(), testutils.Head(1))
 	gas.SimulateStart(t, bhe)
 
 	t.Run("if gas price is higher than global max", func(t *testing.T) {
@@ -2067,7 +2067,7 @@ func TestBlockHistoryEstimator_GetMaxLegacyGas(t *testing.T) {
 		}
 
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(3))
+		bhe.Recalculate(t.Context(), testutils.Head(3))
 		gas.SimulateStart(t, bhe)
 
 		// Set initialFetch to true to simulate successful start
@@ -2170,7 +2170,7 @@ func TestBlockHistoryEstimator_GetMaxDynamicFee(t *testing.T) {
 		}
 
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(3))
+		bhe.Recalculate(t.Context(), testutils.Head(3))
 		gas.SimulateStart(t, bhe)
 		gas.SetInitialFetch(bhe, true)
 
@@ -2208,7 +2208,7 @@ func TestBlockHistoryEstimator_GetMaxDynamicFee(t *testing.T) {
 		}
 
 		gas.SetRollingBlockHistory(bhe, blocks)
-		bhe.Recalculate(testutils.Head(3))
+		bhe.Recalculate(t.Context(), testutils.Head(3))
 		gas.SimulateStart(t, bhe)
 		gas.SetInitialFetch(bhe, true)
 
@@ -2252,7 +2252,7 @@ func TestBlockHistoryEstimator_GetMaxDynamicFee(t *testing.T) {
 		gas.SetRollingBlockHistory(bhe, blocks)
 		h := testutils.Head(3)
 		h.BaseFeePerGas = assets.NewWeiI(100000)
-		bhe.Recalculate(h)
+		bhe.Recalculate(t.Context(), h)
 		gas.SimulateStart(t, bhe)
 		gas.SetInitialFetch(bhe, true)
 		bhe.OnNewLongestChain(t.Context(), h)
@@ -2418,7 +2418,7 @@ func TestBlockHistoryEstimator_GetDynamicFee(t *testing.T) {
 	}
 	gas.SetRollingBlockHistory(bhe, blocks)
 
-	bhe.Recalculate(testutils.Head(1))
+	bhe.Recalculate(t.Context(), testutils.Head(1))
 	gas.SimulateStart(t, bhe)
 
 	t.Run("if estimator is missing base fee and gas bumping is enabled", func(t *testing.T) {
@@ -2557,7 +2557,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 		Transactions: legacyTransactionsFromGasPrices(90, 100),
 	}
 	gas.SetRollingBlockHistory(bhe, []evmtypes.Block{b0, b1, b2, b3})
-	bhe.Recalculate(testutils.Head(3))
+	bhe.Recalculate(t.Context(), testutils.Head(3))
 
 	t.Run("skips halt bumping check if attempts is nil or empty", func(t *testing.T) {
 		err := bhe.HaltBumping(nil)
@@ -2621,7 +2621,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 		t.Run("passes check if all attempt gas prices are lower than or equal to percentile price", func(t *testing.T) {
 			bhCfg.CheckInclusionBlocksF = 3
 			bhCfg.CheckInclusionPercentileF = 80 // percentile price is 7 wei
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			err := bhe.HaltBumping(attempts)
 			require.NoError(t, err)
@@ -2629,7 +2629,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 		t.Run("fails check if any attempt price is higher than percentile price", func(t *testing.T) {
 			bhCfg.CheckInclusionBlocksF = 3
 			bhCfg.CheckInclusionPercentileF = 40 // percentile price is 5 wei
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			err := bhe.HaltBumping(attempts)
 			require.Error(t, err)
@@ -2655,7 +2655,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 		t.Run("passes check if both transactions are ok", func(t *testing.T) {
 			bhCfg.CheckInclusionBlocksF = 1
 			bhCfg.CheckInclusionPercentileF = 90 // percentile price is 5 wei
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			err := bhe.HaltBumping(attempts)
 			require.NoError(t, err)
@@ -2663,7 +2663,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 		t.Run("fails check if legacy transaction fails", func(t *testing.T) {
 			bhCfg.CheckInclusionBlocksF = 1
 			bhCfg.CheckInclusionPercentileF = 60
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			err := bhe.HaltBumping(attempts)
 			require.Error(t, err)
@@ -2681,7 +2681,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 			geCfg.TipCapMinF = assets.NewWeiI(1)
 			bhCfg.CheckInclusionBlocksF = 1
 			bhCfg.CheckInclusionPercentileF = 60
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			err := bhe.HaltBumping(attempts)
 			require.Error(t, err)
@@ -2731,7 +2731,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 		t.Run("passes check if 90th percentile price higher than highest transaction tip cap", func(t *testing.T) {
 			bhCfg.CheckInclusionBlocksF = 3
 			bhCfg.CheckInclusionPercentileF = 80
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			err := bhe.HaltBumping(attempts)
 			require.NoError(t, err)
@@ -2740,7 +2740,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 		t.Run("fails check if percentile tip cap higher than any transaction tip cap, and base fee higher than the block base fee", func(t *testing.T) {
 			bhCfg.CheckInclusionBlocksF = 3
 			bhCfg.CheckInclusionPercentileF = 20
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			err := bhe.HaltBumping(attempts)
 			require.Error(t, err)
@@ -2749,7 +2749,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 
 			bhCfg.CheckInclusionBlocksF = 3
 			bhCfg.CheckInclusionPercentileF = 2
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			err = bhe.HaltBumping(attempts)
 			require.Error(t, err)
@@ -2760,7 +2760,7 @@ func TestBlockHistoryEstimator_HaltBumping(t *testing.T) {
 		t.Run("passes check if, for at least one block, feecap < tipcap+basefee, even if percentile is not reached", func(t *testing.T) {
 			bhCfg.CheckInclusionBlocksF = 3
 			bhCfg.CheckInclusionPercentileF = 5
-			bhe.Recalculate(testutils.Head(3))
+			bhe.Recalculate(t.Context(), testutils.Head(3))
 
 			attempts = []gas.EvmPriorAttempt{
 				{TxType: 0x2, TxHash: NewEvmHash(), DynamicFee: gas.DynamicFee{GasFeeCap: assets.NewWeiI(4), GasTipCap: assets.NewWeiI(7)}, BroadcastBeforeBlockNum: ptr(int64(1))},

@@ -15,7 +15,10 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox"
@@ -116,13 +119,18 @@ type BlockHistoryEstimator struct {
 	logger logger.SugaredLogger
 
 	l1Oracle rollups.L1Oracle
+
+	// Optional Beholder OTel gauges for gas_updater_set_gas_price / gas_updater_set_tip_cap (nil if registration failed)
+	gasPriceGauge metric.Float64Gauge
+	tipCapGauge   metric.Float64Gauge
 }
 
 // NewBlockHistoryEstimator returns a new BlockHistoryEstimator that listens
 // for new heads and updates the base gas price dynamically based on the
 // configured percentile of gas prices in that block
 func NewBlockHistoryEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype chaintype.ChainType, eCfg BlockHistoryEstimatorConfig, bhCfg evmconfig.BlockHistory, chainID *big.Int, l1Oracle rollups.L1Oracle) EvmEstimator {
-	return &BlockHistoryEstimator{
+	l := logger.Sugared(logger.Named(lggr, "BlockHistoryEstimator"))
+	b := &BlockHistoryEstimator{
 		ethClient: ethClient,
 		chainID:   chainID,
 		chaintype: chaintype,
@@ -134,9 +142,21 @@ func NewBlockHistoryEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, 
 		mb:       mailbox.NewSingle[*evmtypes.Head](),
 		wg:       new(sync.WaitGroup),
 		stopCh:   make(chan struct{}),
-		logger:   logger.Sugared(logger.Named(lggr, "BlockHistoryEstimator")),
+		logger:   l,
 		l1Oracle: l1Oracle,
 	}
+	if g, err := beholder.GetMeter().Float64Gauge("gas_updater_set_gas_price"); err != nil {
+		l.Errorw("Failed to register Beholder gas_updater_set_gas_price gauge", "err", err)
+	} else {
+		b.gasPriceGauge = g
+	}
+	if g, err := beholder.GetMeter().Float64Gauge("gas_updater_set_tip_cap"); err != nil {
+		l.Errorw("Failed to register Beholder gas_updater_set_tip_cap gauge", "err", err)
+	} else {
+		b.tipCapGauge = g
+	}
+
+	return b
 }
 
 // OnNewLongestChain recalculates and sets global gas price if a sampled new head comes
@@ -539,11 +559,11 @@ func (b *BlockHistoryEstimator) FetchBlocksAndRecalculate(ctx context.Context, h
 		return
 	}
 	b.initialFetch.Store(true)
-	b.Recalculate(head)
+	b.Recalculate(ctx, head)
 }
 
 // Recalculate adds the given heads to the history and recalculates gas price.
-func (b *BlockHistoryEstimator) Recalculate(head *evmtypes.Head) {
+func (b *BlockHistoryEstimator) Recalculate(ctx context.Context, head *evmtypes.Head) {
 	lggr := b.logger.With("head", head)
 
 	blockHistory := b.getBlocks()
@@ -553,13 +573,13 @@ func (b *BlockHistoryEstimator) Recalculate(head *evmtypes.Head) {
 	}
 
 	// Calculate and set the TransactionPercentile gas price and tip cap to use during gas estimation
-	b.calculateGasPriceTipCap(lggr, blockHistory, head)
+	b.calculateGasPriceTipCap(ctx, lggr, blockHistory, head)
 
 	// Calculate and set the CheckInclusionPercentile gas price and tip cap to halt excessive bumping
 	b.calculateMaxPercentileGasPriceTipCap(lggr, blockHistory, head)
 }
 
-func (b *BlockHistoryEstimator) calculateGasPriceTipCap(lggr logger.SugaredLogger, blockHistory []evmtypes.Block, head *evmtypes.Head) {
+func (b *BlockHistoryEstimator) calculateGasPriceTipCap(ctx context.Context, lggr logger.SugaredLogger, blockHistory []evmtypes.Block, head *evmtypes.Head) {
 	percentile := int(b.bhConfig.TransactionPercentile())
 	eip1559 := b.eConfig.EIP1559DynamicFees()
 
@@ -602,7 +622,16 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(lggr logger.SugaredLogge
 		"priceBlocks", numsForPrice,
 	}
 	b.setPercentileGasPrice(percentileGasPrice)
-	promBlockHistoryEstimatorSetGasPrice.WithLabelValues(fmt.Sprintf("%v%%", percentile), b.chainID.String()).Set(float64(percentileGasPrice.Int64()))
+
+	percentileLabel := fmt.Sprintf("%v%%", percentile)
+	chainIDStr := b.chainID.String()
+	promBlockHistoryEstimatorSetGasPrice.WithLabelValues(percentileLabel, chainIDStr).Set(float64(percentileGasPrice.Int64()))
+	if b.gasPriceGauge != nil {
+		b.gasPriceGauge.Record(ctx, float64(percentileGasPrice.Int64()), metric.WithAttributes(
+			attribute.String("evmChainID", chainIDStr),
+			attribute.String("percentile", percentileLabel),
+		))
+	}
 
 	if !eip1559 {
 		lggr.Debugw(fmt.Sprintf("Setting new default GasPrice: %v Gwei", gasPriceGwei), lggrFields...)
@@ -616,7 +645,13 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(lggr logger.SugaredLogge
 	}...)
 	lggr.Debugw(fmt.Sprintf("Setting new default prices, GasPrice: %v Gwei, TipCap: %v Gwei", gasPriceGwei, tipCapGwei), lggrFields...)
 	b.setPercentileTipCap(percentileTipCap)
-	promBlockHistoryEstimatorSetTipCap.WithLabelValues(fmt.Sprintf("%v%%", percentile), b.chainID.String()).Set(float64(percentileTipCap.Int64()))
+	promBlockHistoryEstimatorSetTipCap.WithLabelValues(percentileLabel, chainIDStr).Set(float64(percentileTipCap.Int64()))
+	if b.tipCapGauge != nil {
+		b.tipCapGauge.Record(ctx, float64(percentileTipCap.Int64()), metric.WithAttributes(
+			attribute.String("evmChainID", chainIDStr),
+			attribute.String("percentile", percentileLabel),
+		))
+	}
 }
 
 func (b *BlockHistoryEstimator) calculateMaxPercentileGasPriceTipCap(lggr logger.SugaredLogger, blockHistory []evmtypes.Block, head *evmtypes.Head) {
