@@ -105,18 +105,18 @@ func NewBlockHistoryEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, 
 
 // OnNewLongestChain recalculates and sets global gas price if a sampled new head comes
 // in and we are not currently fetching
-func (b *BlockHistoryEstimator) OnNewLongestChain(_ context.Context, head *evmtypes.Head) {
+func (b *BlockHistoryEstimator) OnNewLongestChain(ctx context.Context, head *evmtypes.Head) {
 	// set latest base fee here to avoid potential lag introduced by block delay
 	// it is really important that base fee be as up-to-date as possible
-	b.setLatest(head)
+	b.setLatest(ctx, head)
 	b.mb.Deliver(head)
 }
 
 // setLatest assumes that head won't be mutated
-func (b *BlockHistoryEstimator) setLatest(head *evmtypes.Head) {
+func (b *BlockHistoryEstimator) setLatest(ctx context.Context, head *evmtypes.Head) {
 	// Non-eip1559 blocks don't include base fee
 	if baseFee := head.BaseFeePerGas; baseFee != nil {
-		b.metrics.RecordCurrentBaseFee(float64(baseFee.Int64()))
+		b.metrics.RecordCurrentBaseFee(ctx, float64(baseFee.Int64()))
 	}
 
 	b.logger.Debugw("Set latest block", "blockNum", head.Number, "blockHash", head.Hash, "baseFee", head.BaseFeePerGas, "baseFeeWei", head.BaseFeePerGas.ToInt())
@@ -162,7 +162,7 @@ func (b *BlockHistoryEstimator) Start(ctx context.Context) error {
 			b.logger.Warnw("initial check for latest head failed, head was unexpectedly nil")
 		} else {
 			b.logger.Debugw("Got latest head", "number", latestHead.Number, "blockHash", latestHead.Hash.Hex())
-			b.setLatest(latestHead)
+			b.setLatest(fetchCtx, latestHead)
 			b.FetchBlocksAndRecalculate(fetchCtx, latestHead)
 		}
 

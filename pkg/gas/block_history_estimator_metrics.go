@@ -133,10 +133,10 @@ func (m *blockHistoryEstimatorMetrics) RecordAllTipCapPercentile(ctx context.Con
 	}
 }
 
-func (m *blockHistoryEstimatorMetrics) RecordCurrentBaseFee(value float64) {
+func (m *blockHistoryEstimatorMetrics) RecordCurrentBaseFee(ctx context.Context, value float64) {
 	promBlockHistoryEstimatorCurrentBaseFee.WithLabelValues(m.chainID).Set(value)
 	if m.currentBaseFeeGauge != nil {
-		m.currentBaseFeeGauge.Record(context.Background(), value, metric.WithAttributes(
+		m.currentBaseFeeGauge.Record(ctx, value, metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 		))
 	}
