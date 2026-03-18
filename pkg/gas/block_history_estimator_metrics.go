@@ -13,6 +13,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
+// Prometheus metrics, exported locally but not sent through Beholder
 var (
 	promBlockHistoryEstimatorAllGasPricePercentiles = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "gas_updater_all_gas_price_percentiles",
@@ -45,14 +46,6 @@ var (
 type blockHistoryEstimatorMetrics struct {
 	chainID string
 
-	// Prometheus metrics, exported locally but not sent through Beholder
-	promBlockHistoryEstimatorAllGasPricePercentiles   *prometheus.GaugeVec
-	promBlockHistoryEstimatorAllTipCapPercentiles     *prometheus.GaugeVec
-	promBlockHistoryEstimatorSetGasPrice              *prometheus.GaugeVec
-	promBlockHistoryEstimatorSetTipCap                *prometheus.GaugeVec
-	promBlockHistoryEstimatorCurrentBaseFee           *prometheus.GaugeVec
-	promBlockHistoryEstimatorConnectivityFailureCount *prometheus.CounterVec
-
 	// otel metrics, exported through Beholder
 	gasPriceGauge                   metric.Float64Gauge
 	tipCapGauge                     metric.Float64Gauge
@@ -64,32 +57,6 @@ type blockHistoryEstimatorMetrics struct {
 
 func newBlockHistoryEstimatorMetrics(lggr logger.SugaredLogger, chainID *big.Int) *blockHistoryEstimatorMetrics {
 	m := &blockHistoryEstimatorMetrics{chainID: chainID.String()}
-
-	// prom
-	m.promBlockHistoryEstimatorAllGasPricePercentiles = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_all_gas_price_percentiles",
-		Help: "Gas price at given percentile",
-	}, []string{"percentile", "evmChainID"})
-	m.promBlockHistoryEstimatorAllTipCapPercentiles = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_all_tip_cap_percentiles",
-		Help: "Tip cap at given percentile",
-	}, []string{"percentile", "evmChainID"})
-	m.promBlockHistoryEstimatorSetGasPrice = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_set_gas_price",
-		Help: "Gas updater set gas price (in Wei)",
-	}, []string{"percentile", "evmChainID"})
-	m.promBlockHistoryEstimatorSetTipCap = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_set_tip_cap",
-		Help: "Gas updater set gas tip cap (in Wei)",
-	}, []string{"percentile", "evmChainID"})
-	m.promBlockHistoryEstimatorCurrentBaseFee = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_current_base_fee",
-		Help: "Gas updater current block base fee in Wei",
-	}, []string{"evmChainID"})
-	m.promBlockHistoryEstimatorConnectivityFailureCount = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "block_history_estimator_connectivity_failure_count",
-		Help: "Counter is incremented every time a gas bump is prevented due to a detected network propagation/connectivity issue",
-	}, []string{"evmChainID", "mode"})
 
 	// otel
 	if g, err := beholder.GetMeter().Float64Gauge("gas_updater_set_gas_price"); err != nil {
