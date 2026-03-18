@@ -628,7 +628,7 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(ctx context.Context, lgg
 	promBlockHistoryEstimatorSetGasPrice.WithLabelValues(percentileLabel, chainIDStr).Set(float64(percentileGasPrice.Int64()))
 	if b.gasPriceGauge != nil {
 		b.gasPriceGauge.Record(ctx, float64(percentileGasPrice.Int64()), metric.WithAttributes(
-			attribute.String("evmChainID", chainIDStr),
+			attribute.String("chainID", chainIDStr),
 			attribute.String("percentile", percentileLabel),
 		))
 	}
