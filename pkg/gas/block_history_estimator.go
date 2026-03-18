@@ -120,9 +120,13 @@ type BlockHistoryEstimator struct {
 
 	l1Oracle rollups.L1Oracle
 
-	// Optional Beholder OTel gauges for gas_updater_set_gas_price / gas_updater_set_tip_cap (nil if registration failed)
-	gasPriceGauge metric.Float64Gauge
-	tipCapGauge   metric.Float64Gauge
+	// Optional Beholder OTel metrics (nil if registration failed); same names as Prometheus for consistency
+	gasPriceGauge                   metric.Float64Gauge
+	tipCapGauge                     metric.Float64Gauge
+	allGasPricePercentilesGauge     metric.Float64Gauge
+	allTipCapPercentilesGauge       metric.Float64Gauge
+	currentBaseFeeGauge             metric.Float64Gauge
+	connectivityFailureCountCounter metric.Int64Counter
 }
 
 // NewBlockHistoryEstimator returns a new BlockHistoryEstimator that listens
@@ -155,7 +159,26 @@ func NewBlockHistoryEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, 
 	} else {
 		b.tipCapGauge = g
 	}
-
+	if g, err := beholder.GetMeter().Float64Gauge("gas_updater_all_gas_price_percentiles"); err != nil {
+		l.Warnw("Failed to register Beholder gas_updater_all_gas_price_percentiles gauge", "err", err)
+	} else {
+		b.allGasPricePercentilesGauge = g
+	}
+	if g, err := beholder.GetMeter().Float64Gauge("gas_updater_all_tip_cap_percentiles"); err != nil {
+		l.Warnw("Failed to register Beholder gas_updater_all_tip_cap_percentiles gauge", "err", err)
+	} else {
+		b.allTipCapPercentilesGauge = g
+	}
+	if g, err := beholder.GetMeter().Float64Gauge("gas_updater_current_base_fee"); err != nil {
+		l.Warnw("Failed to register Beholder gas_updater_current_base_fee gauge", "err", err)
+	} else {
+		b.currentBaseFeeGauge = g
+	}
+	if c, err := beholder.GetMeter().Int64Counter("block_history_estimator_connectivity_failure_count"); err != nil {
+		l.Warnw("Failed to register Beholder block_history_estimator_connectivity_failure_count counter", "err", err)
+	} else {
+		b.connectivityFailureCountCounter = c
+	}
 	return b
 }
 
@@ -172,8 +195,15 @@ func (b *BlockHistoryEstimator) OnNewLongestChain(_ context.Context, head *evmty
 func (b *BlockHistoryEstimator) setLatest(head *evmtypes.Head) {
 	// Non-eip1559 blocks don't include base fee
 	if baseFee := head.BaseFeePerGas; baseFee != nil {
-		promBlockHistoryEstimatorCurrentBaseFee.WithLabelValues(b.chainID.String()).Set(float64(baseFee.Int64()))
+		chainIDStr := b.chainID.String()
+		promBlockHistoryEstimatorCurrentBaseFee.WithLabelValues(chainIDStr).Set(float64(baseFee.Int64()))
+		if b.currentBaseFeeGauge != nil {
+			b.currentBaseFeeGauge.Record(context.Background(), float64(baseFee.Int64()), metric.WithAttributes(
+				attribute.String("chainID", chainIDStr),
+			))
+		}
 	}
+
 	b.logger.Debugw("Set latest block", "blockNum", head.Number, "blockHash", head.Hash, "baseFee", head.BaseFeePerGas, "baseFeeWei", head.BaseFeePerGas.ToInt())
 	b.latestMu.Lock()
 	defer b.latestMu.Unlock()
@@ -338,13 +368,21 @@ func (b *BlockHistoryEstimator) setMaxPercentileTipCap(tipCap *assets.Wei) {
 	b.maxPercentileTipCap = tipCap
 }
 
-func (b *BlockHistoryEstimator) BumpLegacyGas(_ context.Context, originalGasPrice *assets.Wei, gasLimit uint64, maxGasPriceWei *assets.Wei, attempts []EvmPriorAttempt) (bumpedGasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+func (b *BlockHistoryEstimator) BumpLegacyGas(ctx context.Context, originalGasPrice *assets.Wei, gasLimit uint64, maxGasPriceWei *assets.Wei, attempts []EvmPriorAttempt) (bumpedGasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
 	if b.bhConfig.CheckInclusionBlocks() > 0 {
 		if err = b.haltBumping(attempts); err != nil {
 			if errors.Is(err, fees.ErrConnectivity) {
 				b.logger.Criticalw(BumpingHaltedLabel, "err", err)
 				b.SvcErrBuffer.Append(err)
-				promBlockHistoryEstimatorConnectivityFailureCount.WithLabelValues(b.chainID.String(), "legacy").Inc()
+
+				chainIDStr := b.chainID.String()
+				promBlockHistoryEstimatorConnectivityFailureCount.WithLabelValues(chainIDStr, "legacy").Inc()
+				if b.connectivityFailureCountCounter != nil {
+					b.connectivityFailureCountCounter.Add(ctx, 1, metric.WithAttributes(
+						attribute.String("chainID", chainIDStr),
+						attribute.String("mode", "legacy"),
+					))
+				}
 			}
 			return nil, 0, err
 		}
@@ -518,13 +556,21 @@ func calcFeeCap(latestAvailableBaseFeePerGas *assets.Wei, bufferBlocks int, tipC
 	return feeCap
 }
 
-func (b *BlockHistoryEstimator) BumpDynamicFee(_ context.Context, originalFee DynamicFee, maxGasPriceWei *assets.Wei, attempts []EvmPriorAttempt) (bumped DynamicFee, err error) {
+func (b *BlockHistoryEstimator) BumpDynamicFee(ctx context.Context, originalFee DynamicFee, maxGasPriceWei *assets.Wei, attempts []EvmPriorAttempt) (bumped DynamicFee, err error) {
 	if b.bhConfig.CheckInclusionBlocks() > 0 {
 		if err = b.haltBumping(attempts); err != nil {
 			if errors.Is(err, fees.ErrConnectivity) {
 				b.logger.Criticalw(BumpingHaltedLabel, "err", err)
 				b.SvcErrBuffer.Append(err)
-				promBlockHistoryEstimatorConnectivityFailureCount.WithLabelValues(b.chainID.String(), "eip1559").Inc()
+
+				chainIDStr := b.chainID.String()
+				promBlockHistoryEstimatorConnectivityFailureCount.WithLabelValues(chainIDStr, "eip1559").Inc()
+				if b.connectivityFailureCountCounter != nil {
+					b.connectivityFailureCountCounter.Add(ctx, 1, metric.WithAttributes(
+						attribute.String("chainID", chainIDStr),
+						attribute.String("mode", "eip1559"),
+					))
+				}
 			}
 			return bumped, err
 		}
@@ -587,16 +633,33 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(ctx context.Context, lgg
 	startIdx := len(blockHistory) - blockRange
 	blocks := blockHistory[startIdx:]
 
+	chainIDStr := b.chainID.String()
 	percentileGasPrice, percentileTipCap, err := b.calculatePercentilePrices(blocks, percentile, eip1559,
 		func(gasPrices []*assets.Wei) {
 			for i := 0; i <= 100; i += 5 {
 				jdx := ((len(gasPrices) - 1) * i) / 100
-				promBlockHistoryEstimatorAllGasPricePercentiles.WithLabelValues(fmt.Sprintf("%v%%", i), b.chainID.String()).Set(float64(gasPrices[jdx].Int64()))
+				percentileLabel := fmt.Sprintf("%v%%", i)
+				val := float64(gasPrices[jdx].Int64())
+				promBlockHistoryEstimatorAllGasPricePercentiles.WithLabelValues(percentileLabel, chainIDStr).Set(val)
+				if b.allGasPricePercentilesGauge != nil {
+					b.allGasPricePercentilesGauge.Record(ctx, val, metric.WithAttributes(
+						attribute.String("chainID", chainIDStr),
+						attribute.String("percentile", percentileLabel),
+					))
+				}
 			}
 		}, func(tipCaps []*assets.Wei) {
 			for i := 0; i <= 100; i += 5 {
 				jdx := ((len(tipCaps) - 1) * i) / 100
-				promBlockHistoryEstimatorAllTipCapPercentiles.WithLabelValues(fmt.Sprintf("%v%%", i), b.chainID.String()).Set(float64(tipCaps[jdx].Int64()))
+				percentileLabel := fmt.Sprintf("%v%%", i)
+				val := float64(tipCaps[jdx].Int64())
+				promBlockHistoryEstimatorAllTipCapPercentiles.WithLabelValues(percentileLabel, chainIDStr).Set(val)
+				if b.allTipCapPercentilesGauge != nil {
+					b.allTipCapPercentilesGauge.Record(ctx, val, metric.WithAttributes(
+						attribute.String("chainID", chainIDStr),
+						attribute.String("percentile", percentileLabel),
+					))
+				}
 			}
 		})
 	if err != nil {
@@ -624,7 +687,6 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(ctx context.Context, lgg
 	b.setPercentileGasPrice(percentileGasPrice)
 
 	percentileLabel := fmt.Sprintf("%v%%", percentile)
-	chainIDStr := b.chainID.String()
 	promBlockHistoryEstimatorSetGasPrice.WithLabelValues(percentileLabel, chainIDStr).Set(float64(percentileGasPrice.Int64()))
 	if b.gasPriceGauge != nil {
 		b.gasPriceGauge.Record(ctx, float64(percentileGasPrice.Int64()), metric.WithAttributes(
@@ -649,7 +711,7 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(ctx context.Context, lgg
 	promBlockHistoryEstimatorSetTipCap.WithLabelValues(percentileLabel, chainIDStr).Set(float64(percentileTipCap.Int64()))
 	if b.tipCapGauge != nil {
 		b.tipCapGauge.Record(ctx, float64(percentileTipCap.Int64()), metric.WithAttributes(
-			attribute.String("evmChainID", chainIDStr),
+			attribute.String("chainID", chainIDStr),
 			attribute.String("percentile", percentileLabel),
 		))
 	}
