@@ -645,6 +645,7 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(ctx context.Context, lgg
 	}...)
 	lggr.Debugw(fmt.Sprintf("Setting new default prices, GasPrice: %v Gwei, TipCap: %v Gwei", gasPriceGwei, tipCapGwei), lggrFields...)
 	b.setPercentileTipCap(percentileTipCap)
+
 	promBlockHistoryEstimatorSetTipCap.WithLabelValues(percentileLabel, chainIDStr).Set(float64(percentileTipCap.Int64()))
 	if b.tipCapGauge != nil {
 		b.tipCapGauge.Record(ctx, float64(percentileTipCap.Int64()), metric.WithAttributes(
