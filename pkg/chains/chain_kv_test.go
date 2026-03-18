@@ -57,6 +57,7 @@ func Test_ChainKV(t *testing.T) {
 }
 
 type testChainService struct {
+	types.UnimplementedChainService
 	name string
 }
 
