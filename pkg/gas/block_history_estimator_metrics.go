@@ -13,7 +13,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 )
 
-// Prometheus metrics, exported locally but not sent through Beholder
 var (
 	promBlockHistoryEstimatorAllGasPricePercentiles = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "gas_updater_all_gas_price_percentiles",
@@ -46,7 +45,6 @@ var (
 type blockHistoryEstimatorMetrics struct {
 	chainID string
 
-	// otel metrics, exported through Beholder
 	gasPriceGauge                   metric.Float64Gauge
 	tipCapGauge                     metric.Float64Gauge
 	allGasPricePercentilesGauge     metric.Float64Gauge
