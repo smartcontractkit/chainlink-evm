@@ -100,6 +100,8 @@ func (c *LegacyChains) Get(id string) (types.ChainService, error) {
 
 type chain struct {
 	services.StateMachine
+
+	types.UnimplementedChainService
 	id              *big.Int
 	cfg             *config.ChainScoped
 	client          client.Client
@@ -502,15 +504,10 @@ func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
 		return types.ChainInfo{}, fmt.Errorf("failed to get chain details for chain %d and family %s: %w", chainID, chainFamily, err)
 	}
 
-	envName, err := chainselectors.ExtractNetworkEnvName(chainDetails.ChainName)
-	if err != nil {
-		return types.ChainInfo{}, fmt.Errorf("failed to get network name for chain %d: %w", chainID, err)
-	}
-
 	return types.ChainInfo{
 		FamilyName:      chainFamily,
 		ChainID:         chainID.String(),
-		NetworkName:     envName,
+		NetworkName:     string(chainDetails.NetworkType),
 		NetworkNameFull: chainDetails.ChainName,
 	}, nil
 }
