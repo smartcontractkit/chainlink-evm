@@ -46,7 +46,8 @@ type Client interface {
 	// Wrapped RPC methods
 	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
 	// CallContextAllSequential calls CallContext for every single node sequentially and returns the first successful result (excluding sendonlys)
-	CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, error)
+	// along with the number of node calls attempted.
+	CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, int, error)
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	// BatchCallContextAll calls BatchCallContext for every single node including
 	// sendonlys.
@@ -264,15 +265,17 @@ func (c *chainClient) CallContext(ctx context.Context, result interface{}, metho
 	return r.CallContext(ctx, result, method, args...)
 }
 
-func (c *chainClient) CallContextAllSequential(parentCtx context.Context, method string, args ...interface{}) (json.RawMessage, error) {
+func (c *chainClient) CallContextAllSequential(parentCtx context.Context, method string, args ...interface{}) (json.RawMessage, int, error) {
 	var result json.RawMessage
 	foundSuccess := false
+	attempts := 0
 
 	doFunc := func(ctx context.Context, rpc *RPCClient, isSendOnly bool) {
 		// Short circuit if the node is a sendonly or if we've already found a successful result
 		if isSendOnly || foundSuccess {
 			return
 		}
+		attempts++
 
 		var raw json.RawMessage
 		err := rpc.CallContext(ctx, &raw, method, args...)
@@ -287,14 +290,14 @@ func (c *chainClient) CallContextAllSequential(parentCtx context.Context, method
 
 	err := c.multiNode.DoAll(parentCtx, doFunc)
 	if foundSuccess {
-		return result, nil
+		return result, attempts, nil
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, attempts, err
 	}
 
-	return nil, errors.New("all nodes failed for method: " + method)
+	return nil, attempts, errors.New("all nodes failed for method: " + method)
 }
 
 func (c *chainClient) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {

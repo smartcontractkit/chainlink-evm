@@ -61,9 +61,9 @@ func (nc *NullClient) CallContext(ctx context.Context, result interface{}, metho
 	return nil
 }
 
-func (nc *NullClient) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, error) {
+func (nc *NullClient) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, int, error) {
 	nc.lggr.Debug("CallContextAllSequential")
-	return nil, nil
+	return nil, 0, nil
 }
 
 func (nc *NullClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error) {

@@ -161,7 +161,11 @@ func NewTxmV2(
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}
 	} else {
-		c = clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes)
+		var err error
+		c, err = clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create chain client wrapper: %w", err)
+		}
 	}
 	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
 	return txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder), nil

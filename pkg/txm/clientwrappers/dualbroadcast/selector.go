@@ -15,12 +15,17 @@ import (
 )
 
 func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, url *url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
+	chainClient, err := clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	urlString := url.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
-		return NewFlashbotsClient(lggr, clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes), keyStore, url, txStore, bundles), nil, nil
+		return NewFlashbotsClient(lggr, chainClient, keyStore, url, txStore, bundles), nil, nil
 	default:
-		mc, err := NewMetaClient(lggr, clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes), keyStore, url, chainID, txStore, auctionRequestTimeout)
+		mc, err := NewMetaClient(lggr, chainClient, keyStore, url, chainID, txStore, auctionRequestTimeout)
 		if err != nil {
 			return nil, nil, err
 		}

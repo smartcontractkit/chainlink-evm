@@ -24,10 +24,26 @@ type ChainClient struct {
 	lggr                        logger.SugaredLogger
 	c                           client.Client
 	readRequestsToMultipleNodes bool
+	metrics                     *chainClientMetrics
 }
 
-func NewChainClient(lggr logger.Logger, client client.Client, readRequestsToMultipleNodes bool) *ChainClient {
-	return &ChainClient{lggr: logger.Sugared(logger.Named(lggr, "Txm.ChainClient")), c: client, readRequestsToMultipleNodes: readRequestsToMultipleNodes}
+func NewChainClient(lggr logger.Logger, client client.Client, readRequestsToMultipleNodes bool) (*ChainClient, error) {
+	chainClientLogger := logger.Sugared(logger.Named(lggr, "Txm.ChainClient"))
+
+	metrics, err := newChainClientMetrics(client.ConfiguredChainID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize chain client metrics: %w", err)
+	}
+	if metrics == nil {
+		return nil, fmt.Errorf("failed to initialize chain client metrics: nil metrics recorder")
+	}
+
+	return &ChainClient{
+		lggr:                        chainClientLogger,
+		c:                           client,
+		readRequestsToMultipleNodes: readRequestsToMultipleNodes,
+		metrics:                     metrics,
+	}, nil
 }
 
 func (c *ChainClient) BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error) {
@@ -40,14 +56,14 @@ func (c *ChainClient) NonceAt(ctx context.Context, address common.Address, block
 		if blockNumber != nil {
 			blockTag = hexutil.EncodeBig(blockNumber)
 		}
-		return getTransactionCountMultiCall(ctx, c.c, c.lggr, address, blockTag)
+		return getTransactionCountMultiCall(ctx, c.c, c.lggr, c.metrics, address, blockTag)
 	}
 	return c.c.NonceAt(ctx, address, blockNumber)
 }
 
 func (c *ChainClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
 	if c.readRequestsToMultipleNodes {
-		return getTransactionCountMultiCall(ctx, c.c, c.lggr, address, "pending")
+		return getTransactionCountMultiCall(ctx, c.c, c.lggr, c.metrics, address, "pending")
 	}
 	return c.c.PendingNonceAt(ctx, address)
 }
@@ -64,27 +80,27 @@ func multiCallSequential[T any](
 	method string,
 	args []any,
 	decode decodeMultiplexedResultFunc[T],
-) (result T, callDuration time.Duration, err error) {
+) (result T, callDuration time.Duration, callCount int, err error) {
 	ctx, cancel := context.WithTimeout(parentCtx, MultiCallMaxTimeout)
 	defer cancel()
 
 	startedAt := time.Now()
-	raw, err := c.CallContextAllSequential(ctx, method, args...)
+	raw, callCount, err := c.CallContextAllSequential(ctx, method, args...)
 	callDuration = time.Since(startedAt)
 	if err != nil {
-		return result, callDuration, fmt.Errorf("error calling %s: %w", method, err)
+		return result, callDuration, callCount, fmt.Errorf("error calling %s: %w", method, err)
 	}
 
 	decoded, decodeErr := decode(raw)
 	if decodeErr != nil {
-		return result, callDuration, fmt.Errorf("error decoding %s result: %w", method, decodeErr)
+		return result, callDuration, callCount, fmt.Errorf("error decoding %s result: %w", method, decodeErr)
 	}
 
-	return decoded, callDuration, nil
+	return decoded, callDuration, callCount, nil
 }
 
-func getTransactionCountMultiCall(parentCtx context.Context, c client.Client, lggr logger.SugaredLogger, address common.Address, blockTag string) (uint64, error) {
-	nonce, callDuration, err := multiCallSequential(
+func getTransactionCountMultiCall(parentCtx context.Context, c client.Client, lggr logger.SugaredLogger, metrics *chainClientMetrics, address common.Address, blockTag string) (uint64, error) {
+	nonce, callDuration, callCount, err := multiCallSequential(
 		parentCtx,
 		c,
 		"eth_getTransactionCount",
@@ -98,6 +114,7 @@ func getTransactionCountMultiCall(parentCtx context.Context, c client.Client, lg
 			return uint64(nonce), nil
 		},
 	)
+	metrics.recordMultiCallDuration(parentCtx, "eth_getTransactionCount", blockTag, callDuration, callCount, err)
 	if err != nil {
 		return 0, err
 	}

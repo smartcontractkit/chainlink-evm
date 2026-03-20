@@ -434,7 +434,7 @@ func (_c *Client_CallContext_Call) RunAndReturn(run func(context.Context, interf
 }
 
 // CallContextAllSequential provides a mock function with given fields: ctx, method, args
-func (_m *Client) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, error) {
+func (_m *Client) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, int, error) {
 	var _ca []interface{}
 	_ca = append(_ca, ctx, method)
 	_ca = append(_ca, args...)
@@ -445,8 +445,9 @@ func (_m *Client) CallContextAllSequential(ctx context.Context, method string, a
 	}
 
 	var r0 json.RawMessage
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (json.RawMessage, error)); ok {
+	var r1 int
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (json.RawMessage, int, error)); ok {
 		return rf(ctx, method, args...)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) json.RawMessage); ok {
@@ -457,13 +458,30 @@ func (_m *Client) CallContextAllSequential(ctx context.Context, method string, a
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, ...interface{}) error); ok {
-		r1 = rf(ctx, method, args...)
-	} else {
-		r1 = ret.Error(1)
+	if len(ret) == 2 {
+		if rf, ok := ret.Get(1).(func(context.Context, string, ...interface{}) error); ok {
+			r2 = rf(ctx, method, args...)
+		} else {
+			r2 = ret.Error(1)
+		}
+		return r0, r1, r2
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(1).(func(context.Context, string, ...interface{}) int); ok {
+		r1 = rf(ctx, method, args...)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(int)
+		}
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, string, ...interface{}) error); ok {
+		r2 = rf(ctx, method, args...)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // Client_CallContextAllSequential_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CallContextAllSequential'
@@ -493,12 +511,12 @@ func (_c *Client_CallContextAllSequential_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *Client_CallContextAllSequential_Call) Return(_a0 json.RawMessage, _a1 error) *Client_CallContextAllSequential_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *Client_CallContextAllSequential_Call) Return(_a0 json.RawMessage, _a1 int, _a2 error) *Client_CallContextAllSequential_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *Client_CallContextAllSequential_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (json.RawMessage, error)) *Client_CallContextAllSequential_Call {
+func (_c *Client_CallContextAllSequential_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (json.RawMessage, int, error)) *Client_CallContextAllSequential_Call {
 	_c.Call.Return(run)
 	return _c
 }

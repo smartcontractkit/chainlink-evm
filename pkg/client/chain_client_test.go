@@ -991,7 +991,7 @@ func TestChainClient_CallContextAllSequential(t *testing.T) {
 
 		ethClient := mustNewChainClient(t, wsURL)
 
-		_, err := ethClient.CallContextAllSequential(tests.Context(t), "eth_blockNumber")
+		_, _, err := ethClient.CallContextAllSequential(t.Context(), "eth_blockNumber")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "all nodes failed for method: eth_blockNumber")
 	})
@@ -1013,9 +1013,10 @@ func TestChainClient_CallContextAllSequential(t *testing.T) {
 
 		ethClient := mustNewChainClient(t, wsURL)
 
-		result, err := ethClient.CallContextAllSequential(tests.Context(t), "eth_getTransactionCount", testutils.NewAddress(), "latest")
+		result, attempts, err := ethClient.CallContextAllSequential(t.Context(), "eth_getTransactionCount", testutils.NewAddress(), "latest")
 		require.NoError(t, err)
 		require.Equal(t, json.RawMessage(expectedResult), result)
+		require.Equal(t, 1, attempts)
 		require.Equal(t, int32(1), callCount.Load())
 	})
 
@@ -1028,7 +1029,7 @@ func TestChainClient_CallContextAllSequential(t *testing.T) {
 		wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, standardHandler).WSURL().String()
 		ethClient := mustNewChainClient(t, wsURL)
 
-		_, err := ethClient.CallContextAllSequential(ctx, "eth_blockNumber")
+		_, _, err := ethClient.CallContextAllSequential(ctx, "eth_blockNumber")
 		require.Error(t, err)
 		require.ErrorIs(t, err, context.Canceled)
 	})
@@ -1049,9 +1050,10 @@ func TestChainClient_CallContextAllSequential(t *testing.T) {
 
 		ethClient := mustNewChainClient(t, wsURL)
 
-		result, err := ethClient.CallContextAllSequential(tests.Context(t), "eth_getTransactionCount", address, "latest")
+		result, callCount, err := ethClient.CallContextAllSequential(t.Context(), "eth_getTransactionCount", address, "latest")
 		require.NoError(t, err)
 		require.Equal(t, json.RawMessage(expectedNonce), result)
+		require.Equal(t, 1, callCount)
 	})
 }
 
