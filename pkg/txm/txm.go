@@ -188,7 +188,10 @@ func (t *Txm) Trigger(address common.Address) {
 		if !exists {
 			return
 		}
-		triggerCh <- struct{}{}
+		select {
+		case triggerCh <- struct{}{}:
+		default:
+		}
 	}) {
 		t.lggr.Error("Txm unstarted")
 	}
@@ -333,7 +336,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	}
 	start := time.Now()
 	txErr := t.client.SendTransaction(ctx, tx, attempt)
-	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "duration", time.Since(start), "txErr: ", txErr)
+	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "tracingID", tx.GetTracingID(t.lggr), "duration", time.Since(start), "txErr: ", txErr)
 	if txErr != nil && t.errorHandler != nil {
 		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.SetNonce, false); err != nil {
 			return
@@ -440,6 +443,7 @@ func (t *Txm) extractMetrics(ctx context.Context, txs []*types.Transaction) []ui
 		if tx.InitialBroadcastAt != nil {
 			t.Metrics.RecordTimeUntilTxConfirmed(ctx, float64(time.Since(*tx.InitialBroadcastAt)))
 		}
+		t.lggr.Infow("Confirmed transaction", "txID", tx.ID, "tracingID", tx.GetTracingID(t.lggr))
 	}
 	return confirmedTxIDs
 }
