@@ -595,6 +595,6 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 		return fmt.Errorf("failed to update signed attempt for txID: %v, err: %w", tx.ID, err)
 	}
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
-		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
+		"TipCap", tip, "FeeCap", meta.MaxFeePerGas, "tracingID", tx.GetTracingID(a.lggr))
 	return a.c.SendTransaction(ctx, signedTx)
 }

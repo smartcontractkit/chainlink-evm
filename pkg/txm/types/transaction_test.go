@@ -104,6 +104,19 @@ func TestTransaction_GetMeta(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, got)
+			str := tx.String()
+			if tt.meta == nil {
+				assert.Contains(t, str, "Meta:null")
+			} else {
+				assert.Contains(t, str, "Meta:{")
+				assert.NotContains(t, str, `\"`)
+
+				// Simulate structured log JSON encoding where tx is emitted as a string field.
+				encoded, encErr := json.Marshal(map[string]string{"tx": str})
+				require.NoError(t, encErr)
+				assert.Contains(t, string(encoded), "FailOnRevert")
+				assert.NotContains(t, string(encoded), `\\\"FailOnRevert\\\"`)
+			}
 		})
 	}
 }

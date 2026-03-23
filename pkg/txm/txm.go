@@ -336,7 +336,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	}
 	start := time.Now()
 	txErr := t.client.SendTransaction(ctx, tx, attempt)
-	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "tracingID", tx.GetTracingID(t.lggr), "duration", time.Since(start), "txErr: ", txErr)
+	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "tracingID", tx.GetTracingID(t.lggr), "duration", time.Since(start), "txErr", txErr)
 	if txErr != nil && t.errorHandler != nil {
 		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.SetNonce, false); err != nil {
 			return
