@@ -54,23 +54,10 @@ type Transaction struct {
 func (t *Transaction) String() string {
 	return fmt.Sprintf(`{txID:%d, IdempotencyKey:%v, ChainID:%v, Nonce:%s, FromAddress:%v, ToAddress:%v, Value:%v, `+
 		`Data:%s, SpecifiedGasLimit:%d, CreatedAt:%v, InitialBroadcastAt:%v, LastBroadcastAt:%v, State:%v, IsPurgeable:%v, AttemptCount:%d, `+
-		`Meta:%s, Subject:%v}`,
+		`Meta:%v, Subject:%v}`,
 		t.ID, stringOrNull(t.IdempotencyKey), t.ChainID, stringOrNull(t.Nonce), t.FromAddress, t.ToAddress, t.Value,
 		base64.StdEncoding.EncodeToString(t.Data), t.SpecifiedGasLimit, t.CreatedAt, stringOrNull(t.InitialBroadcastAt), stringOrNull(t.LastBroadcastAt),
-		t.State, t.IsPurgeable, t.AttemptCount, t.metaString(), t.Subject)
-}
-
-func (t *Transaction) metaString() string {
-	if t.Meta == nil {
-		return "null"
-	}
-
-	meta, err := t.GetMeta()
-	if err == nil && meta != nil {
-		return fmt.Sprintf("%+v", *meta)
-	}
-
-	return t.Meta.String()
+		t.State, t.IsPurgeable, t.AttemptCount, t.Meta, t.Subject)
 }
 
 func stringOrNull[T any](t *T) string {
