@@ -177,7 +177,7 @@ func (t *Txm) HealthReport() map[string]error {
 func (t *Txm) CreateTransaction(ctx context.Context, txRequest *types.TxRequest) (tx *types.Transaction, err error) {
 	tx, err = t.txStore.CreateTransaction(ctx, txRequest)
 	if err == nil {
-		t.lggr.Infow("Created transaction", "tx", tx)
+		t.lggr.Infow("Created transaction", "txID", tx.ID, "tx", tx, "tracingID", tx.GetTracingID(t.lggr))
 	}
 	return
 }
