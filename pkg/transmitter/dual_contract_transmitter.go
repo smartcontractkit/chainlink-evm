@@ -123,7 +123,7 @@ func (oc *dualContractTransmitter) Transmit(ctx context.Context, reportCtx ocrty
 	if txMeta == nil {
 		txMeta = &txmgr.TxMeta{}
 	}
-	tracingID := generateTracingIDForOCR2(reportCtx.ReportTimestamp.ConfigDigest, reportCtx.ReportTimestamp.Epoch, reportCtx.ReportTimestamp.Round)
+	tracingID := generateTracingIDForOCR2(reportCtx.ReportTimestamp)
 	txMeta.TracingID = &tracingID
 	oc.lggr.Infow("Transmitting report", "configDigest", reportCtx.ReportTimestamp.ConfigDigest, "epoch", reportCtx.ReportTimestamp.Epoch, "round", reportCtx.ReportTimestamp.Round, "contractAddress", oc.contractAddress, "txMeta", txMeta, "tracingID", tracingID)
 
@@ -254,8 +254,8 @@ func (oc *dualContractTransmitter) lockSecondary(ctx context.Context) error {
 	return nil
 }
 
-func generateTracingIDForOCR2(configDigest ocrtypes.ConfigDigest, epoch uint32, round uint8) string {
-	return fmt.Sprintf("0x%s:%d:%d", configDigest.Hex(), epoch, round)
+func generateTracingIDForOCR2(reportTimestamp ocrtypes.ReportTimestamp) string {
+	return fmt.Sprintf("0x%s:%d:%d", reportTimestamp.ConfigDigest.Hex(), reportTimestamp.Epoch, reportTimestamp.Round)
 }
 
 func (oc *dualContractTransmitter) Start(ctx context.Context) error {
