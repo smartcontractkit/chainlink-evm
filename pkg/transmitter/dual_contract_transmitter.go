@@ -125,7 +125,7 @@ func (oc *dualContractTransmitter) Transmit(ctx context.Context, reportCtx ocrty
 	}
 	tracingID := generateTracingIDForOCR2(reportCtx.ReportTimestamp)
 	txMeta.TracingID = &tracingID
-	oc.lggr.Infow("Transmitting report", "configDigest", reportCtx.ReportTimestamp.ConfigDigest, "epoch", reportCtx.ReportTimestamp.Epoch, "round", reportCtx.ReportTimestamp.Round, "contractAddress", oc.contractAddress, "txMeta", txMeta, "tracingID", tracingID)
+	oc.lggr.Infow("Transmitting report", "configDigest", reportCtx.ReportTimestamp.ConfigDigest.Hex(), "epoch", reportCtx.ReportTimestamp.Epoch, "round", reportCtx.ReportTimestamp.Round, "contractAddress", oc.contractAddress, "txMeta", txMeta, "tracingID", tracingID)
 
 	// Primary transmission
 	payload, err := oc.contractABI.Pack("transmit", rawReportCtx, []byte(report), rs, ss, vs)
