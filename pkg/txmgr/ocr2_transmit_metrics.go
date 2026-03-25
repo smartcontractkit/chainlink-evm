@@ -1,6 +1,7 @@
 package txmgr
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -8,7 +9,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/ocr2transmit"
 )
 
-func recordOCR2TransmitOutcomeV1(chainID *big.Int, tx *Tx, outcome string) {
+func recordOCR2TransmitOutcomeV1(ctx context.Context, chainID *big.Int, tx *Tx, outcome string) {
 	if tx == nil {
 		return
 	}
@@ -20,5 +21,5 @@ func recordOCR2TransmitOutcomeV1(chainID *big.Int, tx *Tx, outcome string) {
 	if cid == nil {
 		cid = tx.ChainID
 	}
-	ocr2transmit.RecordOutcome(cid, tx.FromAddress, tx.ToAddress, tx.EncodedPayload, fwdr, outcome)
+	ocr2transmit.RecordOutcome(ctx, cid, tx.FromAddress, tx.ToAddress, tx.EncodedPayload, fwdr, outcome)
 }

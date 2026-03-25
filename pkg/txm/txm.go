@@ -448,7 +448,7 @@ func (t *Txm) extractMetrics(ctx context.Context, txs []*types.Transaction) []ui
 		if meta, err := tx.GetMeta(); err == nil && meta != nil && meta.FwdrDestAddress != nil {
 			fwdr = meta.FwdrDestAddress
 		}
-		ocr2transmit.RecordOutcome(t.chainID, tx.FromAddress, tx.ToAddress, tx.Data, fwdr, "confirmed")
+		ocr2transmit.RecordOutcome(ctx, t.chainID, tx.FromAddress, tx.ToAddress, tx.Data, fwdr, "confirmed")
 	}
 	return confirmedTxIDs
 }
