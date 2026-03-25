@@ -10,6 +10,7 @@ import (
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-evm/pkg/ocr2transmit"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -127,6 +128,7 @@ func (m *InMemoryStoreManager) DeleteAttemptForUnconfirmedTx(_ context.Context, 
 }
 
 func (m *InMemoryStoreManager) MarkTxFatal(_ context.Context, tx *types.Transaction, fromAddress common.Address) error {
+	// Add metric here to emit tx has failed
 	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
 		return store.MarkTxFatal(tx)
 	}
@@ -138,6 +140,15 @@ func (m *InMemoryStoreManager) UpdateSignedAttempt(_ context.Context, txID uint6
 		return store.UpdateSignedAttempt(txID, attemptID, signedTransaction)
 	}
 	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
+}
+
+// RefreshOCR2UnconfirmedGauges updates ocr2_transmit_unconfirmed_tx_count for every managed from_address (TXM v2).
+func (m *InMemoryStoreManager) RefreshOCR2UnconfirmedGauges() {
+	ctx := context.Background()
+	for addr, store := range m.InMemoryStoreMap {
+		n := store.CountOCR2UnconfirmedTransmit()
+		ocr2transmit.SetUnconfirmedGauge(ctx, m.chainID, addr, n)
+	}
 }
 
 func (m *InMemoryStoreManager) FindTxWithIdempotencyKey(_ context.Context, idempotencyKey string) (*types.Transaction, error) {

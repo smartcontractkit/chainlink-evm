@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sort"
@@ -11,6 +12,7 @@ import (
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-evm/pkg/ocr2transmit"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	"github.com/smartcontractkit/chainlink-framework/chains/txmgr"
 )
@@ -395,6 +397,12 @@ func (m *InMemoryStore) MarkTxFatal(txToMark *types.Transaction) error {
 	m.Lock()
 	defer m.Unlock()
 
+	var fwdr *common.Address
+	if meta, err := txToMark.GetMeta(); err == nil && meta != nil && meta.FwdrDestAddress != nil {
+		fwdr = meta.FwdrDestAddress
+	}
+	ocr2transmit.RecordOutcome(context.Background(), m.chainID, txToMark.FromAddress, txToMark.ToAddress, txToMark.Data, fwdr, "fatal")
+
 	// TODO: for now do the simple thing and drop the transaction instead of adding it to the fatal queue.
 	delete(m.UnconfirmedTransactions, *txToMark.Nonce)
 	delete(m.Transactions, txToMark.ID)
@@ -418,6 +426,19 @@ func (m *InMemoryStore) UpdateSignedAttempt(txID uint64, attemptID uint64, signe
 		}
 	}
 	return fmt.Errorf("attempt was not found for attemptID: %v", attemptID)
+}
+
+// CountOCR2UnconfirmedTransmit returns how many unconfirmed txs look like OCR2 transmit calls.
+func (m *InMemoryStore) CountOCR2UnconfirmedTransmit() int {
+	m.RLock()
+	defer m.RUnlock()
+	n := 0
+	for _, tx := range m.UnconfirmedTransactions {
+		if ocr2transmit.IsTransmitCalldata(tx.Data) {
+			n++
+		}
+	}
+	return n
 }
 
 // Orchestrator

@@ -504,8 +504,10 @@ func (f *evmFinalizer) validateReceipt(ctx context.Context, receipt *types.Recei
 		}
 		// This might increment more than once e.g. in case of re-orgs going back and forth we might re-fetch the same receipt
 		f.metrics.IncrementNumRevertedTxs(ctx)
+		recordOCR2TransmitOutcomeV1(f.chainID, &attempt.Tx, "reverted")
 	} else {
 		f.metrics.IncrementNumSuccessfulTxs(ctx)
+		recordOCR2TransmitOutcomeV1(f.chainID, &attempt.Tx, "confirmed")
 	}
 
 	// This is only recording forwarded tx that were mined and have a status.
@@ -600,6 +602,8 @@ func (f *evmFinalizer) ProcessOldTxsWithoutReceipts(ctx context.Context, oldTxID
 		oldTx.Error = null.StringFrom(ErrCouldNotGetReceipt)
 		if err = f.txStore.UpdateTxFatalErrorAndDeleteAttempts(ctx, oldTx); err != nil {
 			errorList = append(errorList, fmt.Errorf("failed to mark tx with ID %d as fatal: %w", oldTx.ID, err))
+		} else {
+			recordOCR2TransmitOutcomeV1(f.chainID, oldTx, "fatal")
 		}
 	}
 	if len(errorList) > 0 {

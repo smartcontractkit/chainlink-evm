@@ -15,6 +15,8 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
+	"github.com/smartcontractkit/chainlink-evm/pkg/ocr2transmit"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm/storage"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -357,6 +359,8 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 }
 
 func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) error {
+	defer t.refreshOCR2UnconfirmedGauges()
+
 	latestNonce, err := t.client.NonceAt(ctx, address, nil)
 	if err != nil {
 		return err
@@ -440,6 +444,17 @@ func (t *Txm) extractMetrics(ctx context.Context, txs []*types.Transaction) []ui
 		if tx.InitialBroadcastAt != nil {
 			t.Metrics.RecordTimeUntilTxConfirmed(ctx, float64(time.Since(*tx.InitialBroadcastAt)))
 		}
+		var fwdr *common.Address
+		if meta, err := tx.GetMeta(); err == nil && meta != nil && meta.FwdrDestAddress != nil {
+			fwdr = meta.FwdrDestAddress
+		}
+		ocr2transmit.RecordOutcome(t.chainID, tx.FromAddress, tx.ToAddress, tx.Data, fwdr, "confirmed")
 	}
 	return confirmedTxIDs
+}
+
+func (t *Txm) refreshOCR2UnconfirmedGauges() {
+	if mgr, ok := t.txStore.(*storage.InMemoryStoreManager); ok {
+		mgr.RefreshOCR2UnconfirmedGauges()
+	}
 }
