@@ -33,45 +33,52 @@ var (
 	}, []string{"chain_id", "from_address"})
 )
 
-type ocr2TransmitOtelInstruments struct {
-	confirmed   metric.Int64Counter
-	reverted    metric.Int64Counter
-	fatal       metric.Int64Counter
-	unconfirmed metric.Int64Gauge
+// OCR2TransmitMetrics records OCR2 transmit outcomes to Prometheus and OpenTelemetry (Beholder), following the same pattern as txmMetrics (package-level Prom vecs, OTel instruments on the metrics type).
+type OCR2TransmitMetrics struct {
+	promConfirmed   *prometheus.CounterVec
+	promReverted    *prometheus.CounterVec
+	promFatal       *prometheus.CounterVec
+	promUnconfirmed *prometheus.GaugeVec
+
+	otelConfirmed   metric.Int64Counter
+	otelReverted    metric.Int64Counter
+	otelFatal       metric.Int64Counter
+	otelUnconfirmed metric.Int64Gauge
 }
 
 var (
-	ocr2TransmitOtelInst *ocr2TransmitOtelInstruments
-	ocr2TransmitOtelOnce sync.Once
+	ocr2TransmitMetrics     *OCR2TransmitMetrics
+	ocr2TransmitMetricsOnce sync.Once
 )
 
-func loadOCR2TransmitOtel() *ocr2TransmitOtelInstruments {
-	ocr2TransmitOtelOnce.Do(func() {
-		m := beholder.GetMeter()
-		confirmed, err := m.Int64Counter("ocr2_transmit_tx_confirmed_total")
-		if err != nil {
-			return
-		}
-		reverted, err := m.Int64Counter("ocr2_transmit_tx_reverted_total")
-		if err != nil {
-			return
-		}
-		fatal, err := m.Int64Counter("ocr2_transmit_tx_fatal_total")
-		if err != nil {
-			return
-		}
-		unconfirmed, err := m.Int64Gauge("ocr2_transmit_unconfirmed_tx_count")
-		if err != nil {
-			return
-		}
-		ocr2TransmitOtelInst = &ocr2TransmitOtelInstruments{
-			confirmed:   confirmed,
-			reverted:    reverted,
-			fatal:       fatal,
-			unconfirmed: unconfirmed,
-		}
+func newOCR2TransmitMetrics() *OCR2TransmitMetrics {
+	m := &OCR2TransmitMetrics{
+		promConfirmed:   promTransmitConfirmed,
+		promReverted:    promTransmitReverted,
+		promFatal:       promTransmitFatal,
+		promUnconfirmed: promTransmitUnconfirmed,
+	}
+	meter := beholder.GetMeter()
+	if c, err := meter.Int64Counter("ocr2_transmit_tx_confirmed_total"); err == nil {
+		m.otelConfirmed = c
+	}
+	if c, err := meter.Int64Counter("ocr2_transmit_tx_reverted_total"); err == nil {
+		m.otelReverted = c
+	}
+	if c, err := meter.Int64Counter("ocr2_transmit_tx_fatal_total"); err == nil {
+		m.otelFatal = c
+	}
+	if g, err := meter.Int64Gauge("ocr2_transmit_unconfirmed_tx_count"); err == nil {
+		m.otelUnconfirmed = g
+	}
+	return m
+}
+
+func ocr2TransmitMetricsInstance() *OCR2TransmitMetrics {
+	ocr2TransmitMetricsOnce.Do(func() {
+		ocr2TransmitMetrics = newOCR2TransmitMetrics()
 	})
-	return ocr2TransmitOtelInst
+	return ocr2TransmitMetrics
 }
 
 func transmitAttrs(chainID *big.Int, contract, from string) metric.MeasurementOption {
@@ -90,42 +97,51 @@ func unconfirmedAttrs(chainID *big.Int, from string) metric.MeasurementOption {
 }
 
 // RecordOutcome increments confirmed / reverted / fatal counters when calldata matches OCR2 transmit.
-func RecordOutcome(ctx context.Context, chainID *big.Int, from, to common.Address, encodedPayload []byte, fwdrDest *common.Address, outcome string) {
+func (m *OCR2TransmitMetrics) RecordOutcome(ctx context.Context, chainID *big.Int, from, to common.Address, encodedPayload []byte, fwdrDest *common.Address, outcome string) {
 	if chainID == nil || !IsTransmitCalldata(encodedPayload) {
 		return
 	}
 	contract := ContractLabel(to, fwdrDest)
 	labels := []string{chainID.String(), contract, from.Hex()}
+	opts := transmitAttrs(chainID, contract, from.Hex())
 	switch outcome {
 	case "confirmed":
-		promTransmitConfirmed.WithLabelValues(labels...).Inc()
+		m.promConfirmed.WithLabelValues(labels...).Inc()
+		if m.otelConfirmed != nil {
+			m.otelConfirmed.Add(ctx, 1, opts)
+		}
 	case "reverted":
-		promTransmitReverted.WithLabelValues(labels...).Inc()
+		m.promReverted.WithLabelValues(labels...).Inc()
+		if m.otelReverted != nil {
+			m.otelReverted.Add(ctx, 1, opts)
+		}
 	case "fatal":
-		promTransmitFatal.WithLabelValues(labels...).Inc()
+		m.promFatal.WithLabelValues(labels...).Inc()
+		if m.otelFatal != nil {
+			m.otelFatal.Add(ctx, 1, opts)
+		}
 	default:
 		return
-	}
-	if ot := loadOCR2TransmitOtel(); ot != nil {
-		opts := transmitAttrs(chainID, contract, from.Hex())
-		switch outcome {
-		case "confirmed":
-			ot.confirmed.Add(ctx, 1, opts)
-		case "reverted":
-			ot.reverted.Add(ctx, 1, opts)
-		case "fatal":
-			ot.fatal.Add(ctx, 1, opts)
-		}
 	}
 }
 
 // SetUnconfirmedGauge sets the gauge for OCR2-shaped unconfirmed txs for TXM v2 (optional / phase 3).
-func SetUnconfirmedGauge(ctx context.Context, chainID *big.Int, from common.Address, n int) {
+func (m *OCR2TransmitMetrics) SetUnconfirmedGauge(ctx context.Context, chainID *big.Int, from common.Address, n int) {
 	if chainID == nil {
 		return
 	}
-	promTransmitUnconfirmed.WithLabelValues(chainID.String(), from.Hex()).Set(float64(n))
-	if ot := loadOCR2TransmitOtel(); ot != nil {
-		ot.unconfirmed.Record(ctx, int64(n), unconfirmedAttrs(chainID, from.Hex()))
+	m.promUnconfirmed.WithLabelValues(chainID.String(), from.Hex()).Set(float64(n))
+	if m.otelUnconfirmed != nil {
+		m.otelUnconfirmed.Record(ctx, int64(n), unconfirmedAttrs(chainID, from.Hex()))
 	}
+}
+
+// RecordOutcome increments confirmed / reverted / fatal counters when calldata matches OCR2 transmit.
+func RecordOutcome(ctx context.Context, chainID *big.Int, from, to common.Address, encodedPayload []byte, fwdrDest *common.Address, outcome string) {
+	ocr2TransmitMetricsInstance().RecordOutcome(ctx, chainID, from, to, encodedPayload, fwdrDest, outcome)
+}
+
+// SetUnconfirmedGauge sets the gauge for OCR2-shaped unconfirmed txs for TXM v2 (optional / phase 3).
+func SetUnconfirmedGauge(ctx context.Context, chainID *big.Int, from common.Address, n int) {
+	ocr2TransmitMetricsInstance().SetUnconfirmedGauge(ctx, chainID, from, n)
 }
