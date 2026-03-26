@@ -230,6 +230,7 @@ func (r *RPCClient) isFinalizedStateUnavailableError(err error) bool {
 	}
 	pattern := r.clientErrors.FinalizedStateUnavailable()
 	if pattern == "" {
+		r.rpcLog.Criticalw("FinalizedStateUnavailable regex pattern is empty; finalized state availability check is effectively disabled")
 		return false
 	}
 	re, compileErr := regexp.Compile(pattern)

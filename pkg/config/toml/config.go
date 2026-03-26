@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"slices"
 	"strconv"
 	"time"
@@ -1164,11 +1165,19 @@ func (p *NodePool) ValidateConfig(finalityTagEnabled *bool) (err error) {
 	if finalityTagEnabled != nil && *finalityTagEnabled {
 		if p.FinalizedBlockPollInterval == nil {
 			err = multierr.Append(err, commonconfig.ErrMissing{Name: "FinalizedBlockPollInterval", Msg: "required when FinalityTagEnabled is true"})
-			return
-		}
-		if p.FinalizedBlockPollInterval.Duration() <= 0 {
+		} else if p.FinalizedBlockPollInterval.Duration() <= 0 {
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "FinalizedBlockPollInterval", Value: p.FinalizedBlockPollInterval,
 				Msg: "must be greater than 0"})
+		}
+	}
+	if p.FinalizedStateCheckFailureThreshold != nil && *p.FinalizedStateCheckFailureThreshold > 0 {
+		if p.Errors.FinalizedStateUnavailable == nil || *p.Errors.FinalizedStateUnavailable == "" {
+			err = multierr.Append(err, commonconfig.ErrMissing{Name: "Errors.FinalizedStateUnavailable", Msg: "required when FinalizedStateCheckFailureThreshold is greater than 0"})
+		} else {
+			_, compileErr := regexp.Compile(*p.Errors.FinalizedStateUnavailable)
+			if compileErr != nil {
+				err = multierr.Append(err, commonconfig.ErrInvalid{Name: "Errors.FinalizedStateUnavailable", Value: *p.Errors.FinalizedStateUnavailable, Msg: "must be a valid regular expression"})
+			}
 		}
 	}
 	return
