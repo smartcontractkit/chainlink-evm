@@ -107,14 +107,14 @@ func (t *Transaction) GetMeta() (*TxMeta, error) {
 	return &m, nil
 }
 
-func (t *Transaction) GetTracingID(lggr logger.SugaredLogger) string {
+func (t *Transaction) GetTransactionLifecycleID(lggr logger.SugaredLogger) string {
 	meta, err := t.GetMeta()
 	if err != nil {
 		lggr.Errorw("failed to get meta of the transaction", "err", err)
 		return ""
 	}
-	if meta != nil && meta.TracingID != nil {
-		return *meta.TracingID
+	if meta != nil && meta.TransactionLifecycleID != nil {
+		return *meta.TransactionLifecycleID
 	}
 	return ""
 }
@@ -198,8 +198,8 @@ type TxMeta struct {
 	DualBroadcast       *bool   `json:"DualBroadcast,omitempty"`
 	DualBroadcastParams *string `json:"DualBroadcastParams,omitempty"`
 
-	// TracingID is used for tracing the entire lifecycle of a transaction from OCR Transmit to confirmation on-chain.
-	TracingID *string `json:"TracingID,omitempty"`
+	// TransactionLifecycleID is used for tracing the entire lifecycle of a transaction from OCR Transmit to confirmation on-chain.
+	TransactionLifecycleID *string `json:"TransactionLifecycleID,omitempty"`
 }
 
 type QueueingTxStrategy struct {

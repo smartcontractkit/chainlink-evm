@@ -123,9 +123,11 @@ func (oc *dualContractTransmitter) Transmit(ctx context.Context, reportCtx ocrty
 	if txMeta == nil {
 		txMeta = &txmgr.TxMeta{}
 	}
-	tracingID := generateTracingIDForOCR2(reportCtx.ReportTimestamp)
-	txMeta.TracingID = &tracingID
-	oc.lggr.Infow("Transmitting report", "configDigest", "0x"+reportCtx.ReportTimestamp.ConfigDigest.Hex(), "epoch", reportCtx.ReportTimestamp.Epoch, "round", reportCtx.ReportTimestamp.Round, "contractAddress", oc.contractAddress, "txMeta", txMeta, "tracingID", tracingID)
+	transactionLifecycleID := generateTransactionLifecycleIDForOCR2(reportCtx.ReportTimestamp)
+	txMeta.TransactionLifecycleID = &transactionLifecycleID
+	oc.lggr.Infow("Transmitting report", "configDigest", "0x"+reportCtx.ReportTimestamp.ConfigDigest.Hex(), "epoch", reportCtx.ReportTimestamp.Epoch, "round", reportCtx.ReportTimestamp.Round, "contractAddress",
+	oc.contractAddress, "txMeta", txMeta, "transactionLifecycleID", transactionLifecycleID)
+
 
 	// Primary transmission
 	payload, err := oc.contractABI.Pack("transmit", rawReportCtx, []byte(report), rs, ss, vs)
@@ -135,9 +137,9 @@ func (oc *dualContractTransmitter) Transmit(ctx context.Context, reportCtx ocrty
 
 	transactionErr := errors.Wrap(oc.transmitter.CreateEthTransaction(ctx, oc.contractAddress, payload, txMeta), "failed to send primary Eth transaction")
 	if transactionErr != nil {
-		oc.lggr.Errorw("Failed to create primary Eth transaction", "error", transactionErr, "tracingID", tracingID)
+		oc.lggr.Errorw("Failed to create primary Eth transaction", "error", transactionErr, "transactionLifecycleID", transactionLifecycleID)
 	} else {
-		oc.lggr.Debugw("Created primary transaction", "tracingID", tracingID)
+		oc.lggr.Debugw("Created primary transaction", "transactionLifecycleID", transactionLifecycleID)
 	}
 
 	// Secondary transmission
@@ -148,9 +150,9 @@ func (oc *dualContractTransmitter) Transmit(ctx context.Context, reportCtx ocrty
 
 	err = errors.Wrap(oc.transmitter.CreateSecondaryEthTransaction(ctx, secondaryPayload, txMeta), "failed to send secondary Eth transaction")
 	if err != nil {
-		oc.lggr.Errorw("Failed to create secondary Eth transaction", "error", err, "tracingID", tracingID)
+		oc.lggr.Errorw("Failed to create secondary Eth transaction", "error", err, "transactionLifecycleID", transactionLifecycleID)
 	} else {
-		oc.lggr.Debugw("Created secondary transaction", "tracingID", tracingID)
+		oc.lggr.Debugw("Created secondary transaction", "transactionLifecycleID", transactionLifecycleID)
 	}
 	return stderrors.Join(transactionErr, err)
 }
@@ -254,7 +256,7 @@ func (oc *dualContractTransmitter) lockSecondary(ctx context.Context) error {
 	return nil
 }
 
-func generateTracingIDForOCR2(reportTimestamp ocrtypes.ReportTimestamp) string {
+func generateTransactionLifecycleIDForOCR2(reportTimestamp ocrtypes.ReportTimestamp) string {
 	return fmt.Sprintf("0x%s:%d:%d", reportTimestamp.ConfigDigest.Hex(), reportTimestamp.Epoch, reportTimestamp.Round)
 }
 
