@@ -157,6 +157,9 @@ func (t *Txm) initializeNonce(ctx context.Context, address common.Address) {
 			continue
 		}
 		t.SetNonce(address, pendingNonce)
+		if t.Metrics != nil {
+			t.Metrics.SetRPCNonce(ctxWithTimeout, address, pendingNonce, "pending")
+		}
 		t.lggr.Debugf("Set initial nonce for address: %v to %d", address, pendingNonce)
 		return
 	}
@@ -210,6 +213,9 @@ func (t *Txm) SetNonce(address common.Address, nonce uint64) {
 	t.nonceMapMu.Lock()
 	defer t.nonceMapMu.Unlock()
 	t.nonceMap[address] = nonce
+	if t.Metrics != nil {
+		t.Metrics.SetLocalNonce(context.Background(), address, nonce)
+	}
 }
 
 func newBackoff(minDuration time.Duration) backoff.Backoff {
@@ -284,6 +290,7 @@ func (t *Txm) BroadcastTransaction(ctx context.Context, address common.Address) 
 			if e != nil {
 				return false, e
 			}
+			t.Metrics.SetRPCNonce(ctx, address, pendingNonce, "pending")
 			nonce := t.GetNonce(address)
 			if nonce > pendingNonce {
 				t.lggr.Warnf("Reached transaction limit. LocalNonce: %d, PendingNonce %d, unconfirmedCount: %d",
@@ -343,6 +350,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 		if pErr != nil {
 			return pErr
 		}
+		t.Metrics.SetRPCNonce(ctx, fromAddress, pendingNonce, "pending")
 		if pendingNonce <= *tx.Nonce {
 			return fmt.Errorf("pending nonce for txID: %v didn't increase. PendingNonce: %d, TxNonce: %d. TxErr: %w", tx.ID, pendingNonce, *tx.Nonce, txErr)
 		}
@@ -361,6 +369,7 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 	if err != nil {
 		return err
 	}
+	t.Metrics.SetRPCNonce(ctx, address, latestNonce, "latest")
 
 	confirmedTransactions, unconfirmedTransactionIDs, err := t.txStore.MarkConfirmedAndReorgedTransactions(ctx, latestNonce, address)
 	if err != nil {

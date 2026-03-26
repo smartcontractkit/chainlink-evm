@@ -132,3 +132,41 @@ func TestReachedMaxAttempts(t *testing.T) {
 	value = testutil.ToFloat64(promReachedMaxAttempts.WithLabelValues(testutils.FixtureChainID.String()))
 	require.InDelta(t, float64(0), value, 0.00001)
 }
+
+func TestSetLocalNonce(t *testing.T) {
+	ctx := t.Context()
+	chainID := testutils.FixtureChainID
+	address := testutils.NewAddress()
+
+	m, err := NewTxmMetrics(chainID)
+	require.NoError(t, err)
+
+	m.SetLocalNonce(ctx, address, 42)
+	value := testutil.ToFloat64(promLocalNonce.WithLabelValues(chainID.String(), address.String()))
+	assert.InDelta(t, float64(42), value, 0.00001)
+
+	m.SetLocalNonce(ctx, address, 100)
+	value = testutil.ToFloat64(promLocalNonce.WithLabelValues(chainID.String(), address.String()))
+	assert.InDelta(t, float64(100), value, 0.00001)
+}
+
+func TestSetRPCNonce(t *testing.T) {
+	ctx := t.Context()
+	chainID := testutils.FixtureChainID
+	address := testutils.NewAddress()
+
+	m, err := NewTxmMetrics(chainID)
+	require.NoError(t, err)
+
+	m.SetRPCNonce(ctx, address, 10, "pending")
+	value := testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String(), "pending"))
+	assert.InDelta(t, float64(10), value, 0.00001)
+
+	m.SetRPCNonce(ctx, address, 5, "latest")
+	value = testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String(), "latest"))
+	assert.InDelta(t, float64(5), value, 0.00001)
+
+	// Pending and latest are independent gauges
+	value = testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String(), "pending"))
+	assert.InDelta(t, float64(10), value, 0.00001)
+}
