@@ -2,7 +2,6 @@ package clientwrappers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"time"
@@ -56,69 +55,47 @@ func (c *ChainClient) NonceAt(ctx context.Context, address common.Address, block
 		if blockNumber != nil {
 			blockTag = hexutil.EncodeBig(blockNumber)
 		}
-		return getTransactionCountMultiCall(ctx, c.c, c.lggr, c.metrics, address, blockTag)
+
+		ctx, cancel := context.WithTimeout(ctx, MultiCallMaxTimeout)
+		defer cancel()
+
+		startedAt := time.Now()
+		nonce, err := c.c.NonceAtWithFallback(ctx, address, blockNumber)
+		callDuration := time.Since(startedAt)
+		if err != nil {
+			err = fmt.Errorf("error calling NonceAtWithFallback: %w", err)
+			c.metrics.recordMultiCallDuration(ctx, "eth_getTransactionCount", blockTag, callDuration, err)
+			return 0, err
+		}
+
+		c.metrics.recordMultiCallDuration(ctx, "eth_getTransactionCount", blockTag, callDuration, nil)
+		c.lggr.Debugw("eth_getTransactionCount", "address", address, "nonce", nonce, "callDuration", callDuration)
+		return nonce, nil
 	}
 	return c.c.NonceAt(ctx, address, blockNumber)
 }
 
 func (c *ChainClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
 	if c.readRequestsToMultipleNodes {
-		return getTransactionCountMultiCall(ctx, c.c, c.lggr, c.metrics, address, "pending")
+		ctx, cancel := context.WithTimeout(ctx, MultiCallMaxTimeout)
+		defer cancel()
+
+		startedAt := time.Now()
+		nonce, err := c.c.PendingNonceAtWithFallback(ctx, address)
+		callDuration := time.Since(startedAt)
+		if err != nil {
+			err = fmt.Errorf("error calling PendingNonceAtWithFallback: %w", err)
+			c.metrics.recordMultiCallDuration(ctx, "eth_getTransactionCount", "pending", callDuration, err)
+			return 0, err
+		}
+
+		c.metrics.recordMultiCallDuration(ctx, "eth_getTransactionCount", "pending", callDuration, nil)
+		c.lggr.Debugw("eth_getTransactionCount", "address", address, "blockTag", "pending", "nonce", nonce, "callDuration", callDuration)
+		return nonce, nil
 	}
 	return c.c.PendingNonceAt(ctx, address)
 }
 
 func (c *ChainClient) SendTransaction(ctx context.Context, _ *types.Transaction, attempt *types.Attempt) error {
 	return c.c.SendTransaction(ctx, attempt.SignedTransaction)
-}
-
-type decodeMultiplexedResultFunc[T any] func(raw json.RawMessage) (T, error)
-
-func multiCallSequential[T any](
-	parentCtx context.Context,
-	c client.Client,
-	method string,
-	args []any,
-	decode decodeMultiplexedResultFunc[T],
-) (result T, callDuration time.Duration, callCount int, err error) {
-	ctx, cancel := context.WithTimeout(parentCtx, MultiCallMaxTimeout)
-	defer cancel()
-
-	startedAt := time.Now()
-	raw, callCount, err := c.CallContextAllSequential(ctx, method, args...)
-	callDuration = time.Since(startedAt)
-	if err != nil {
-		return result, callDuration, callCount, fmt.Errorf("error calling %s: %w", method, err)
-	}
-
-	decoded, decodeErr := decode(raw)
-	if decodeErr != nil {
-		return result, callDuration, callCount, fmt.Errorf("error decoding %s result: %w", method, decodeErr)
-	}
-
-	return decoded, callDuration, callCount, nil
-}
-
-func getTransactionCountMultiCall(parentCtx context.Context, c client.Client, lggr logger.SugaredLogger, metrics *chainClientMetrics, address common.Address, blockTag string) (uint64, error) {
-	nonce, callDuration, callCount, err := multiCallSequential(
-		parentCtx,
-		c,
-		"eth_getTransactionCount",
-		[]any{address, blockTag},
-		func(raw json.RawMessage) (uint64, error) {
-			var nonce hexutil.Uint64
-			if unmarshalErr := json.Unmarshal(raw, &nonce); unmarshalErr != nil {
-				return 0, unmarshalErr
-			}
-
-			return uint64(nonce), nil
-		},
-	)
-	metrics.recordMultiCallDuration(parentCtx, "eth_getTransactionCount", blockTag, callDuration, callCount, err)
-	if err != nil {
-		return 0, err
-	}
-
-	lggr.Debugw("eth_getTransactionCount", "address", address, "nonce", nonce, "callDuration", callDuration)
-	return nonce, nil
 }

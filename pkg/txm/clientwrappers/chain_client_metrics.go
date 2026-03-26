@@ -35,7 +35,7 @@ func newChainClientMetrics(chainID *big.Int) (*chainClientMetrics, error) {
 	}, nil
 }
 
-func (m *chainClientMetrics) recordMultiCallDuration(ctx context.Context, method, blockTag string, duration time.Duration, callCount int, err error) {
+func (m *chainClientMetrics) recordMultiCallDuration(ctx context.Context, method, blockTag string, duration time.Duration, err error) {
 	success := err == nil
 	timedOut := errors.Is(err, context.DeadlineExceeded)
 
@@ -43,7 +43,6 @@ func (m *chainClientMetrics) recordMultiCallDuration(ctx context.Context, method
 		attribute.String("chainID", m.chainID),
 		attribute.String("method", method),
 		attribute.String("blockTag", blockTag),
-		attribute.Int("callCount", callCount),
 		attribute.Bool("success", success),
 		attribute.Bool("timedOut", timedOut),
 	))

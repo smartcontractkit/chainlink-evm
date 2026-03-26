@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -59,11 +58,6 @@ func (nc *NullClient) LINKBalance(ctx context.Context, address common.Address, l
 func (nc *NullClient) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
 	nc.lggr.Debug("CallContext")
 	return nil
-}
-
-func (nc *NullClient) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, int, error) {
-	nc.lggr.Debug("CallContextAllSequential")
-	return nil, 0, nil
 }
 
 func (nc *NullClient) HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error) {
@@ -155,8 +149,18 @@ func (nc *NullClient) PendingNonceAt(ctx context.Context, account common.Address
 	return 0, nil
 }
 
+func (nc *NullClient) PendingNonceAtWithFallback(ctx context.Context, account common.Address) (uint64, error) {
+	nc.lggr.Debug("PendingNonceAtWithFallback")
+	return 0, nil
+}
+
 func (nc *NullClient) NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
 	nc.lggr.Debug("NonceAt")
+	return 0, nil
+}
+
+func (nc *NullClient) NonceAtWithFallback(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
+	nc.lggr.Debug("NonceAtWithFallback")
 	return 0, nil
 }
 

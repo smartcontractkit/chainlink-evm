@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -131,10 +130,14 @@ func (c *SimulatedBackendClient) CallContext(ctx context.Context, result interfa
 	}
 }
 
-func (c *SimulatedBackendClient) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, int, error) {
-	var raw json.RawMessage
-	err := c.CallContext(ctx, &raw, method, args...)
-	return raw, 1, err
+func (c *SimulatedBackendClient) PendingNonceAtWithFallback(ctx context.Context, account common.Address) (uint64, error) {
+	nonce, err := c.PendingNonceAt(ctx, account)
+	return nonce, err
+}
+
+func (c *SimulatedBackendClient) NonceAtWithFallback(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
+	nonce, err := c.NonceAt(ctx, account, blockNumber)
+	return nonce, err
 }
 
 // FilterLogs returns all logs that respect the passed filter query.

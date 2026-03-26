@@ -17,8 +17,6 @@ import (
 
 	ethereum "github.com/ethereum/go-ethereum"
 
-	json "encoding/json"
-
 	mock "github.com/stretchr/testify/mock"
 
 	multinode "github.com/smartcontractkit/chainlink-framework/multinode"
@@ -433,79 +431,60 @@ func (_c *Client_CallContext_Call) RunAndReturn(run func(context.Context, interf
 	return _c
 }
 
-// CallContextAllSequential provides a mock function with given fields: ctx, method, args
-func (_m *Client) CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, int, error) {
-	var _ca []interface{}
-	_ca = append(_ca, ctx, method)
-	_ca = append(_ca, args...)
-	ret := _m.Called(_ca...)
+// NonceAtWithFallback provides a mock function with given fields: ctx, account, blockNumber
+func (_m *Client) NonceAtWithFallback(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
+	ret := _m.Called(ctx, account, blockNumber)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CallContextAllSequential")
+		panic("no return value specified for NonceAtWithFallback")
 	}
 
-	var r0 json.RawMessage
-	var r1 int
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (json.RawMessage, int, error)); ok {
-		return rf(ctx, method, args...)
+	var r0 uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address, *big.Int) (uint64, error)); ok {
+		return rf(ctx, account, blockNumber)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) json.RawMessage); ok {
-		r0 = rf(ctx, method, args...)
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address, *big.Int) uint64); ok {
+		r0 = rf(ctx, account, blockNumber)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(json.RawMessage)
-		}
+		r0 = ret.Get(0).(uint64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, ...interface{}) int); ok {
-		r1 = rf(ctx, method, args...)
+	if rf, ok := ret.Get(1).(func(context.Context, common.Address, *big.Int) error); ok {
+		r1 = rf(ctx, account, blockNumber)
 	} else {
-		r1 = ret.Get(1).(int)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, ...interface{}) error); ok {
-		r2 = rf(ctx, method, args...)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
-// Client_CallContextAllSequential_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CallContextAllSequential'
-type Client_CallContextAllSequential_Call struct {
+// Client_NonceAtWithFallback_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NonceAtWithFallback'
+type Client_NonceAtWithFallback_Call struct {
 	*mock.Call
 }
 
-// CallContextAllSequential is a helper method to define mock.On call
+// NonceAtWithFallback is a helper method to define mock.On call
 //   - ctx context.Context
-//   - method string
-//   - args ...interface{}
-func (_e *Client_Expecter) CallContextAllSequential(ctx interface{}, method interface{}, args ...interface{}) *Client_CallContextAllSequential_Call {
-	return &Client_CallContextAllSequential_Call{Call: _e.mock.On("CallContextAllSequential",
-		append([]interface{}{ctx, method}, args...)...)}
+//   - account common.Address
+//   - blockNumber *big.Int
+func (_e *Client_Expecter) NonceAtWithFallback(ctx interface{}, account interface{}, blockNumber interface{}) *Client_NonceAtWithFallback_Call {
+	return &Client_NonceAtWithFallback_Call{Call: _e.mock.On("NonceAtWithFallback", ctx, account, blockNumber)}
 }
 
-func (_c *Client_CallContextAllSequential_Call) Run(run func(ctx context.Context, method string, args ...interface{})) *Client_CallContextAllSequential_Call {
+func (_c *Client_NonceAtWithFallback_Call) Run(run func(ctx context.Context, account common.Address, blockNumber *big.Int)) *Client_NonceAtWithFallback_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]interface{}, len(args)-2)
-		for i, a := range args[2:] {
-			if a != nil {
-				variadicArgs[i] = a.(interface{})
-			}
-		}
-		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+		run(args[0].(context.Context), args[1].(common.Address), args[2].(*big.Int))
 	})
 	return _c
 }
 
-func (_c *Client_CallContextAllSequential_Call) Return(_a0 json.RawMessage, _a1 int, _a2 error) *Client_CallContextAllSequential_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *Client_NonceAtWithFallback_Call) Return(_a0 uint64, _a1 error) *Client_NonceAtWithFallback_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Client_CallContextAllSequential_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (json.RawMessage, int, error)) *Client_CallContextAllSequential_Call {
+func (_c *Client_NonceAtWithFallback_Call) RunAndReturn(run func(context.Context, common.Address, *big.Int) (uint64, error)) *Client_NonceAtWithFallback_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1955,6 +1934,63 @@ func (_c *Client_PendingNonceAt_Call) Return(_a0 uint64, _a1 error) *Client_Pend
 }
 
 func (_c *Client_PendingNonceAt_Call) RunAndReturn(run func(context.Context, common.Address) (uint64, error)) *Client_PendingNonceAt_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PendingNonceAtWithFallback provides a mock function with given fields: ctx, account
+func (_m *Client) PendingNonceAtWithFallback(ctx context.Context, account common.Address) (uint64, error) {
+	ret := _m.Called(ctx, account)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PendingNonceAtWithFallback")
+	}
+
+	var r0 uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address) (uint64, error)); ok {
+		return rf(ctx, account)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address) uint64); ok {
+		r0 = rf(ctx, account)
+	} else {
+		r0 = ret.Get(0).(uint64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, common.Address) error); ok {
+		r1 = rf(ctx, account)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_PendingNonceAtWithFallback_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PendingNonceAtWithFallback'
+type Client_PendingNonceAtWithFallback_Call struct {
+	*mock.Call
+}
+
+// PendingNonceAtWithFallback is a helper method to define mock.On call
+//   - ctx context.Context
+//   - account common.Address
+func (_e *Client_Expecter) PendingNonceAtWithFallback(ctx interface{}, account interface{}) *Client_PendingNonceAtWithFallback_Call {
+	return &Client_PendingNonceAtWithFallback_Call{Call: _e.mock.On("PendingNonceAtWithFallback", ctx, account)}
+}
+
+func (_c *Client_PendingNonceAtWithFallback_Call) Run(run func(ctx context.Context, account common.Address)) *Client_PendingNonceAtWithFallback_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Address))
+	})
+	return _c
+}
+
+func (_c *Client_PendingNonceAtWithFallback_Call) Return(_a0 uint64, _a1 error) *Client_PendingNonceAtWithFallback_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_PendingNonceAtWithFallback_Call) RunAndReturn(run func(context.Context, common.Address) (uint64, error)) *Client_PendingNonceAtWithFallback_Call {
 	_c.Call.Return(run)
 	return _c
 }

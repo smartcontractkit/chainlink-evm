@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -45,9 +45,6 @@ type Client interface {
 
 	// Wrapped RPC methods
 	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
-	// CallContextAllSequential calls CallContext for every single node sequentially and returns the first successful result (excluding sendonlys)
-	// along with the number of node calls attempted.
-	CallContextAllSequential(ctx context.Context, method string, args ...interface{}) (json.RawMessage, int, error)
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	// BatchCallContextAll calls BatchCallContext for every single node including
 	// sendonlys.
@@ -79,7 +76,9 @@ type Client interface {
 	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
 	PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error)
 	PendingNonceAt(ctx context.Context, account common.Address) (uint64, error)
+	PendingNonceAtWithFallback(ctx context.Context, account common.Address) (uint64, error)
 	NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error)
+	NonceAtWithFallback(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error)
 	TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, error)
 	TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error)
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
@@ -265,39 +264,84 @@ func (c *chainClient) CallContext(ctx context.Context, result interface{}, metho
 	return r.CallContext(ctx, result, method, args...)
 }
 
-func (c *chainClient) CallContextAllSequential(parentCtx context.Context, method string, args ...interface{}) (json.RawMessage, int, error) {
-	var result json.RawMessage
-	foundSuccess := false
-	attempts := 0
+func (c *chainClient) PendingNonceAtWithFallback(parentCtx context.Context, account common.Address) (uint64, error) {
+	return c.nonceAtWithFallback(parentCtx, func(ctx context.Context, rpc *RPCClient) (uint64, error) {
+		n, err := rpc.PendingSequenceAt(ctx, account)
+		return uint64(n), err
+	})
+}
+
+func (c *chainClient) NonceAtWithFallback(parentCtx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
+	return c.nonceAtWithFallback(parentCtx, func(ctx context.Context, rpc *RPCClient) (uint64, error) {
+		return rpc.NonceAt(ctx, account, blockNumber)
+	})
+}
+
+// nonceAtWithFallback is a helper function that makes a call to the main node and if it fails, it makes a call to all other alive nodes in parallel.
+func (c *chainClient) nonceAtWithFallback(parentCtx context.Context, call func(context.Context, *RPCClient) (uint64, error)) (uint64, error) {
+	// try main node
+	main, err := c.multiNode.SelectRPC(parentCtx)
+	if err != nil {
+		return 0, err
+	}
+
+	nonce, err := call(parentCtx, main)
+	if err == nil {
+		return nonce, nil
+	}
+	// if main node fails, collect the error and continue with the fallback calls
+	mainErr := fmt.Errorf("%s: %w", main.Name(), err)
+
+	ctx, cancel := context.WithCancel(parentCtx)
+	defer cancel()
+
+	type result struct {
+		nonce uint64
+		err   error
+	}
+	results := make(chan result)
+	scheduled := 0
 
 	doFunc := func(ctx context.Context, rpc *RPCClient, isSendOnly bool) {
-		// Short circuit if the node is a sendonly or if we've already found a successful result
-		if isSendOnly || foundSuccess {
+		if isSendOnly || rpc == main {
 			return
 		}
-		attempts++
 
-		var raw json.RawMessage
-		err := rpc.CallContext(ctx, &raw, method, args...)
+		scheduled++
+		go func(rpc *RPCClient) {
+			nonce, err := call(ctx, rpc)
+			if err != nil {
+				err = fmt.Errorf("%s: %w", rpc.Name(), err)
+				c.logger.Debugw("Fallback nonce call failed", "rpc", rpc.Name(), "err", err)
+			} else {
+				c.logger.Debugw("Fallback nonce call succeeded", "rpc", rpc.Name(), "nonce", nonce)
+			}
 
-		if err != nil {
-			c.logger.Debugw("RPC call CallContextAllSequential failed", "method", method, "rpc", rpc.Name(), "err", err)
-		} else {
-			result = raw
-			foundSuccess = true
+			select {
+			case results <- result{nonce: nonce, err: err}:
+			case <-ctx.Done():
+			}
+		}(rpc)
+	}
+
+	if doErr := c.multiNode.DoAll(ctx, doFunc); doErr != nil {
+		return 0, doErr
+	}
+
+	errs := []error{mainErr}
+	for range scheduled {
+		select {
+		case <-ctx.Done():
+			return 0, errors.Join(append(errs, ctx.Err())...)
+		case res := <-results:
+			if res.err == nil {
+				return res.nonce, nil
+			}
+			errs = append(errs, res.err)
 		}
 	}
 
-	err := c.multiNode.DoAll(parentCtx, doFunc)
-	if foundSuccess {
-		return result, attempts, nil
-	}
-
-	if err != nil {
-		return nil, attempts, err
-	}
-
-	return nil, attempts, errors.New("all nodes failed for method: " + method)
+	return 0, errors.Join(errs...)
 }
 
 func (c *chainClient) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
