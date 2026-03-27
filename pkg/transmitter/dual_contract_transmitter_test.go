@@ -147,6 +147,20 @@ func Test_dualContractTransmitter_Transmit_SignaturesAreTransmitted(t *testing.T
 	require.Equal(t, transmitter.lastSecondaryPayload, withSignaturesPayloadSecondary, "secondary payload not equal")
 }
 
+func Test_generateTracingIDForOCR2(t *testing.T) {
+	t.Parallel()
+
+	digestBytes, err := hex.DecodeString("000130da6b9315bd59af6b0a3f5463c0d0a39e92eaa34cbcbdbace7b3bfcc776")
+	require.NoError(t, err)
+
+	reportTimestamp := types.ReportTimestamp{Epoch: 42, Round: 7}
+	copy(reportTimestamp.ConfigDigest[:], digestBytes)
+
+	transactionLifecycleID := generateTransactionLifecycleIDForOCR2(reportTimestamp)
+
+	assert.Equal(t, "0x000130da6b9315bd59af6b0a3f5463c0d0a39e92eaa34cbcbdbace7b3bfcc776:42:7", transactionLifecycleID)
+}
+
 func createDualContractTransmitter(ctx context.Context, t *testing.T, transmitter Transmitter, ops ...OCRTransmitterOption) *dualContractTransmitter {
 	contractABI, err := abi.JSON(strings.NewReader(ocr2aggregator.OCR2AggregatorMetaData.ABI))
 	require.NoError(t, err)
