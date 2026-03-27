@@ -596,6 +596,6 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	}
 	attempt.SignedTransaction = signedTx
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
-		"TipCap", tip, "FeeCap", meta.MaxFeePerGas)
+		"TipCap", tip, "FeeCap", meta.MaxFeePerGas, "transactionLifecycleID", tx.GetTransactionLifecycleID(a.lggr))
 	return a.c.SendTransaction(ctx, nil, attempt)
 }
