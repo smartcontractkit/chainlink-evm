@@ -25,9 +25,6 @@ importers:
       '@eth-optimism/contracts':
         specifier: 0.6.0
         version: 0.6.0(ethers@5.8.0)
-      '@openzeppelin/contracts-4.7.3':
-        specifier: npm:@openzeppelin/contracts@4.7.3
-        version: '@openzeppelin/contracts@4.7.3'
       '@openzeppelin/contracts-4.8.3':
         specifier: npm:@openzeppelin/contracts@4.8.3
         version: '@openzeppelin/contracts@4.8.3'
@@ -632,9 +629,6 @@ packages:
 
   '@openzeppelin/contracts-upgradeable@4.9.6':
     resolution: {integrity: sha512-m4iHazOsOCv1DgM7eD7GupTJ+NFVujRZt1wzddDPSVGpWdKq1SKkla5htKG7+IS4d2XOCtzkUNwRZ7Vq5aEUMA==}
-
-  '@openzeppelin/contracts@4.7.3':
-    resolution: {integrity: sha512-dGRS0agJzu8ybo44pCIf3xBaPQN/65AIXNgK8+4gzKd5kbvlqyxryUYVLJv7fK98Seyd2hDZzVEHSWAh0Bt1Yw==}
 
   '@openzeppelin/contracts@4.8.3':
     resolution: {integrity: sha512-bQHV8R9Me8IaJoJ2vPG4rXcL7seB7YVuskr4f+f5RyOStSZetwzkWtoqDMl5erkBJy0lDRUnIR2WIkPiC0GJlg==}
@@ -3042,8 +3036,6 @@ snapshots:
       '@openzeppelin/contracts-upgradeable': 4.9.6
 
   '@openzeppelin/contracts-upgradeable@4.9.6': {}
-
-  '@openzeppelin/contracts@4.7.3': {}
 
   '@openzeppelin/contracts@4.8.3': {}
 
