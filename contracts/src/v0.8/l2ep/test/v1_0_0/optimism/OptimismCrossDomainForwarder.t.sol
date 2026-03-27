@@ -41,7 +41,7 @@ contract OptimismCrossDomainForwarder_Constructor is OptimismCrossDomainForwarde
     assertEq(s_optimismCrossDomainForwarder.crossDomainMessenger(), address(s_mockOptimismCrossDomainMessenger));
 
     // it should set the typeAndVersion correctly
-    assertEq(s_optimismCrossDomainForwarder.typeAndVersion(), "OptimismCrossDomainForwarder 1.0.0");
+    assertEq(s_optimismCrossDomainForwarder.typeAndVersion(), "OptimismCrossDomainForwarder 1.1.0-dev");
   }
 }
 

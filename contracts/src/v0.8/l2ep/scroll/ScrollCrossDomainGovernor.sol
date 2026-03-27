@@ -9,7 +9,7 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 import {CrossDomainForwarder} from "../CrossDomainForwarder.sol";
 import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 
 /// @title ScrollCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Scroll
@@ -18,7 +18,7 @@ import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenge
 /// @dev Any other L2 contract which uses this contract's address as a privileged position,
 /// can be considered to be simultaneously owned by the `l1Owner` and L2 `owner`
 contract ScrollCrossDomainGovernor is IDelegateForwarder, ITypeAndVersion, CrossDomainForwarder {
-  string public constant override typeAndVersion = "ScrollCrossDomainGovernor 1.0.0";
+  string public constant override typeAndVersion = "ScrollCrossDomainGovernor 1.1.0-dev";
 
   address internal immutable i_scrollCrossDomainMessenger;
 
@@ -33,13 +33,13 @@ contract ScrollCrossDomainGovernor is IDelegateForwarder, ITypeAndVersion, Cross
   /// @inheritdoc IForwarder
   /// @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
   function forward(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
-    Address.functionCall(target, data, "Governor call reverted");
+    Address.functionCall(target, data);
   }
 
   /// @inheritdoc IDelegateForwarder
   /// @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
   function forwardDelegate(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
-    Address.functionDelegateCall(target, data, "Governor delegatecall reverted");
+    Address.functionDelegateCall(target, data);
   }
 
   /// @notice The address of the Scroll Cross Domain Messenger contract
