@@ -40,14 +40,10 @@ var (
 		Name: "txm_time_until_tx_confirmed",
 		Help: "The amount of time elapsed from a transaction being broadcast to being included in a block.",
 	}, []string{"chainID"})
-	promLocalNonce = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "txm_local_nonce",
-		Help: "The next nonce to be assigned by the TXM for a given address.",
-	}, []string{"chainID", "address"})
 	promRPCNonce = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "txm_rpc_nonce",
-		Help: "The latest nonce reported by the RPC node for a given address.",
-	}, []string{"chainID", "address", "source"})
+		Help: "The latest confirmed nonce reported by the RPC node for a given address.",
+	}, []string{"chainID", "address"})
 )
 
 type txmMetrics struct {
@@ -58,7 +54,6 @@ type txmMetrics struct {
 	numNonceGaps         metric.Int64Counter
 	reachedMaxAttempts   metric.Int64Gauge
 	timeUntilTxConfirmed metric.Float64Histogram
-	localNonce           metric.Int64Gauge
 	rpcNonce             metric.Int64Gauge
 }
 
@@ -88,11 +83,6 @@ func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
 		return nil, fmt.Errorf("failed to register max attempts indicator: %w", err)
 	}
 
-	localNonce, err := beholder.GetMeter().Int64Gauge("txm_local_nonce")
-	if err != nil {
-		return nil, fmt.Errorf("failed to register local nonce gauge: %w", err)
-	}
-
 	rpcNonce, err := beholder.GetMeter().Int64Gauge("txm_rpc_nonce")
 	if err != nil {
 		return nil, fmt.Errorf("failed to register rpc nonce gauge: %w", err)
@@ -106,7 +96,6 @@ func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
 		numNonceGaps:         numNonceGaps,
 		reachedMaxAttempts:   reachedMaxAttempts,
 		timeUntilTxConfirmed: timeUntilTxConfirmed,
-		localNonce:           localNonce,
 		rpcNonce:             rpcNonce,
 	}, nil
 }
@@ -140,13 +129,8 @@ func (m *txmMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration fl
 	m.timeUntilTxConfirmed.Record(ctx, duration)
 }
 
-func (m *txmMetrics) SetLocalNonce(ctx context.Context, address common.Address, nonce uint64) {
-	promLocalNonce.WithLabelValues(m.chainID.String(), address.String()).Set(float64(nonce))
-	m.localNonce.Record(ctx, int64(nonce))
-}
-
-func (m *txmMetrics) SetRPCNonce(ctx context.Context, address common.Address, nonce uint64, source string) {
-	promRPCNonce.WithLabelValues(m.chainID.String(), address.String(), source).Set(float64(nonce))
+func (m *txmMetrics) SetRPCNonce(ctx context.Context, address common.Address, nonce uint64) {
+	promRPCNonce.WithLabelValues(m.chainID.String(), address.String()).Set(float64(nonce))
 	m.rpcNonce.Record(ctx, int64(nonce))
 }
 
