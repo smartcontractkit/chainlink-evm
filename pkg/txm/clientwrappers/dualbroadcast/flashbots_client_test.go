@@ -33,7 +33,7 @@ func (m *testFlashbotsRPC) NonceAt(context.Context, common.Address, *big.Int) (u
 	return 0, nil
 }
 
-func (m *testFlashbotsRPC) SendTransaction(context.Context, *evmtypes.Transaction) error {
+func (m *testFlashbotsRPC) SendTransaction(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
 	return nil
 }
 

@@ -37,7 +37,7 @@ type FlashbotsTxStore interface {
 type FlashbotsClientRPC interface {
 	BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error)
 	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
-	SendTransaction(context.Context, *evmtypes.Transaction) error
+	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
 }
 
 type FlashbotsClient struct {
@@ -116,7 +116,7 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		return nil
 	}
 
-	return d.c.SendTransaction(ctx, attempt.SignedTransaction)
+	return d.c.SendTransaction(ctx, nil, attempt)
 }
 
 func (d *FlashbotsClient) signAndPostMessage(ctx context.Context, address common.Address, body []byte, urlParams string) (json.RawMessage, error) {

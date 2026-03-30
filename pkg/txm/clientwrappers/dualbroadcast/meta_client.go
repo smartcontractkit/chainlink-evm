@@ -132,7 +132,7 @@ type MetaClientKeystore interface {
 type MetaClientRPC interface {
 	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
 	PendingNonceAt(context.Context, common.Address) (uint64, error)
-	SendTransaction(context.Context, *evmtypes.Transaction) error
+	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
 }
 
 type MetaClient struct {
@@ -215,13 +215,13 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		first := tx.Attempts[0]
 		if first.SignedTransaction != nil {
 			a.lggr.Infow("Intercepted attempt for tx(rebroadcasting first attempt)", "txID", tx.ID, "attempt", first)
-			return a.c.SendTransaction(ctx, first.SignedTransaction)
+			return a.c.SendTransaction(ctx, nil, first)
 		}
 	}
 
 	// #3
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
-	return a.c.SendTransaction(ctx, attempt.SignedTransaction)
+	return a.c.SendTransaction(ctx, nil, attempt)
 }
 
 type Parameters struct {
@@ -594,7 +594,8 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	if err := a.txStore.UpdateSignedAttempt(ctx, tx.ID, attempt.ID, signedTx, tx.FromAddress); err != nil {
 		return fmt.Errorf("failed to update signed attempt for txID: %v, err: %w", tx.ID, err)
 	}
+	attempt.SignedTransaction = signedTx
 	a.lggr.Infow("Intercepted attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", meta.ToAddress, "gasLimit", meta.GasLimit,
 		"TipCap", tip, "FeeCap", meta.MaxFeePerGas, "transactionLifecycleID", tx.GetTransactionLifecycleID(a.lggr))
-	return a.c.SendTransaction(ctx, signedTx)
+	return a.c.SendTransaction(ctx, nil, attempt)
 }
