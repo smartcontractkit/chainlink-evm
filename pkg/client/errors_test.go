@@ -163,9 +163,11 @@ func Test_Eth_Errors(t *testing.T) {
 
 		tests := []errorCase{
 			{"transaction underpriced", true, "geth"},
+			{"transaction gas price below minimum: gas tip cap 25000000000 wei, minimum needed 26000000000 wei", true, "geth"},
 			{"replacement transaction underpriced", false, "geth"},
 			{"Gas price below configured minimum gas price", true, "Besu"},
 			{"transaction underpriced", true, "Erigon"},
+			{"transaction gas price below minimum: gas tip cap 1 gwei, minimum needed 25 gwei", true, "Erigon"},
 			{"There are too many transactions in the queue. Your transaction was dropped due to limit. Try increasing the fee.", false, "Parity"},
 			{"Transaction gas price is too low. It does not satisfy your node's minimal gas price (minimal: 100 got: 50). Try increasing the gas price.", true, "Parity"},
 			{"gas price too low", true, "Arbitrum"},

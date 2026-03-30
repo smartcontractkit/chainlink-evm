@@ -110,7 +110,8 @@ var geth = ClientErrors{
 	NonceTooHigh:                      regexp.MustCompile(`(: |^)nonce too high$`),
 	ReplacementTransactionUnderpriced: regexp.MustCompile(`(: |^)replacement transaction underpriced$`),
 	TransactionAlreadyInMempool:       regexp.MustCompile(`(: |^)(?i)(known transaction|already known)`),
-	TerminallyUnderpriced:             regexp.MustCompile(`(: |^)transaction underpriced$`),
+	// Bor/Polygon may use "transaction gas price below minimum" instead of stock geth "transaction underpriced".
+	TerminallyUnderpriced:             regexp.MustCompile(`(: |^)(transaction underpriced$|transaction gas price below minimum)`),
 	InsufficientEth:                   regexp.MustCompile(`(: |^)(insufficient funds for transfer|insufficient funds for gas \* price \+ value|insufficient balance for transfer|transaction would cause overdraft)$`),
 	TxFeeExceedsCap:                   regexp.MustCompile(`(: |^)tx fee \([0-9\.]+ [a-zA-Z]+\) exceeds the configured cap \([0-9\.]+ [a-zA-Z]+\)$`),
 	Fatal:                             gethFatal,
@@ -142,7 +143,7 @@ var erigon = ClientErrors{
 	NonceTooHigh:                      regexp.MustCompile(`(: |^)nonce too high$`),
 	ReplacementTransactionUnderpriced: regexp.MustCompile(`(: |^)replacement transaction underpriced$`),
 	TransactionAlreadyInMempool:       regexp.MustCompile(`(: |^)(block already known|already known)`),
-	TerminallyUnderpriced:             regexp.MustCompile(`(: |^)transaction underpriced$`),
+	TerminallyUnderpriced:             regexp.MustCompile(`(: |^)(transaction underpriced$|transaction gas price below minimum)`),
 	InsufficientEth:                   regexp.MustCompile(`(: |^)(insufficient funds for transfer|insufficient funds for gas \* price \+ value|insufficient balance for transfer)$`),
 	TxFeeExceedsCap:                   regexp.MustCompile(`(: |^)tx fee \([0-9\.]+ [a-zA-Z]+\) exceeds the configured cap \([0-9\.]+ [a-zA-Z]+\)$`),
 	Fatal:                             erigonFatal,
