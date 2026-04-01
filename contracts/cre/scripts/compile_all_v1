@@ -15,12 +15,22 @@ compileContract () {
 
   local src_rel="$1"
   local contract=$(basename "$src_rel")
+  local dir="$CONTRACTS_DIR/solc/$PROJECT/$src_rel"
   echo "Compiling" "$contract"
 
   forge build "$CONTRACTS_DIR/src/$PROJECT/$src_rel.sol" \
   --root "$CONTRACTS_DIR" \
-  --extra-output-files bin abi \
-  -o "$CONTRACTS_DIR/solc/$PROJECT/$src_rel"
+  --extra-output-files bin abi metadata \
+  --build-info \
+  --build-info-path "$dir/build" \
+  -o "$dir"
+
+  # Rename the hash-named build info file to build.json for GenWrapper compatibility
+  local build_info_file
+  build_info_file=$(find "$dir/build" -name '*.json' -not -name 'build.json' | head -1)
+  if [[ -n "$build_info_file" ]]; then
+    mv "$build_info_file" "$dir/build/build.json"
+  fi
 }
 
 compileContract WorkflowRegistry
