@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -435,4 +436,133 @@ func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
 
 func ptr[T any](v T) *T {
 	return &v
+}
+
+func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
+	t.Parallel()
+	chainID := big.NewInt(1337)
+	probeAddress := "0x0000000000000000000000000000000000000001"
+	expectedAddress := common.HexToAddress(probeAddress).String()
+
+	t.Run("uses finalized tag when enabled", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				require.Equal(t, expectedAddress, params.Array()[0].String())
+				require.Equal(t, "finalized", params.Array()[1].String())
+				resp.Result = `"0x0"`
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: probeAddress,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.NoError(t, err)
+	})
+
+	t.Run("uses latest-finalityDepth when finality tags disabled", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_blockNumber":
+				resp.Result = `"0x14"` // 20
+			case "eth_getBalance":
+				require.Equal(t, expectedAddress, params.Array()[0].String())
+				require.Equal(t, "0x10", params.Array()[1].String()) // 20 - 4
+				resp.Result = `"0x0"`
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: probeAddress,
+			},
+			FinalityTagsEnabled: false,
+			FinalityDepth:       4,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.NoError(t, err)
+	})
+
+	t.Run("returns ErrFinalizedStateUnavailable when error matches regex", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				resp.Error.Message = "missing trie node"
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		clientErrors := NewTestClientErrors()
+		clientErrors.finalizedStateUnavailable = "missing trie node"
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: probeAddress,
+				NodeErrors:                       &clientErrors,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.Error(t, err)
+		require.ErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
+	})
+
+	t.Run("returns generic error when error does not match regex", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				resp.Error.Message = "connection reset"
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		clientErrors := NewTestClientErrors()
+		clientErrors.finalizedStateUnavailable = "missing trie node"
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: probeAddress,
+				NodeErrors:                       &clientErrors,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.Error(t, err)
+		require.ErrorContains(t, err, "fetching balance")
+		require.NotErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
+	})
 }

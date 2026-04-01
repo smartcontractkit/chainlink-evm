@@ -107,6 +107,7 @@ type ClientErrors interface {
 	ServiceUnavailable() string
 	TooManyResults() string
 	MissingBlocks() string
+	FinalizedStateUnavailable() string
 }
 
 type Transactions interface {
@@ -211,12 +212,14 @@ type NodePool interface {
 	LeaseDuration() time.Duration
 	NodeIsSyncingEnabled() bool
 	FinalizedBlockPollInterval() time.Duration
+	HistoricalBalanceCheckAddress() string
 	Errors() ClientErrors
 	EnforceRepeatableRead() bool
 	DeathDeclarationDelay() time.Duration
 	NewHeadsPollInterval() time.Duration
 	VerifyChainID() bool
 	ExternalRequestMaxResponseSize() uint32
+	FinalizedStateCheckFailureThreshold() uint32
 }
 
 type ChainScopedConfig interface {

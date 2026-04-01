@@ -932,6 +932,8 @@ SyncThreshold = 5 # Default
 LeaseDuration = '0s' # Default
 NodeIsSyncingEnabled = false # Default
 FinalizedBlockPollInterval = '5s' # Default
+HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000' # Default
+FinalizedStateCheckFailureThreshold = 0 # Default
 EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
@@ -1010,6 +1012,25 @@ reported based on latest block and finality depth.
 
 Set to 0 to disable.
 
+### HistoricalBalanceCheckAddress
+```toml
+HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000000' # Default
+```
+HistoricalBalanceCheckAddress is the probe account used by the historical balance health check.
+The check executes `eth_getBalance` for this address at the latest finalized block.
+Finalized block selection follows chain finality settings:
+- `FinalityTagEnabled = true`: use `finalized` tag
+- `FinalityTagEnabled = false`: use `latest - FinalityDepth`
+The check is only active when `FinalizedStateCheckFailureThreshold > 0`.
+
+### FinalizedStateCheckFailureThreshold
+```toml
+FinalizedStateCheckFailureThreshold = 0 # Default
+```
+FinalizedStateCheckFailureThreshold is the number of consecutive failures of the finalized state availability check
+before the node is marked as FinalizedStateNotAvailable.
+Set to 0 to disable the check.
+
 ### EnforceRepeatableRead
 ```toml
 EnforceRepeatableRead = true # Default
@@ -1075,6 +1096,7 @@ Fatal = '(: |^)fatal' # Example
 ServiceUnavailable = '(: |^)service unavailable' # Example
 TooManyResults = '(: |^)too many results' # Example
 MissingBlocks = '(: |^)invalid block range' # Example
+FinalizedStateUnavailable = '(missing trie node|state not available|historical state unavailable)' # Example
 ```
 Errors enable the node to provide custom regex patterns to match against error messages from RPCs.
 
@@ -1173,6 +1195,12 @@ TooManyResults is a regex pattern to match an eth_getLogs error indicating the r
 MissingBlocks = '(: |^)invalid block range' # Example
 ```
 MissingBlocks is a regex pattern to match an eth_getLogs error indicating the rpc server is permanently missing some blocks in the requested block range
+
+### FinalizedStateUnavailable
+```toml
+FinalizedStateUnavailable = '(missing trie node|state not available|historical state unavailable)' # Example
+```
+FinalizedStateUnavailable is a regex pattern to match errors indicating the RPC cannot serve historical state at the finalized block (e.g., pruned/non-archive node)
 
 ## OCR
 ```toml

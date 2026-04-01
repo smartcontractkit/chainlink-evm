@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"slices"
 	"strconv"
 	"time"
@@ -1035,6 +1036,7 @@ type ClientErrors struct {
 	ServiceUnavailable                *string `toml:",omitempty"`
 	TooManyResults                    *string `toml:",omitempty"`
 	MissingBlocks                     *string `toml:",omitempty"`
+	FinalizedStateUnavailable         *string `toml:",omitempty"`
 }
 
 func (r *ClientErrors) setFrom(f *ClientErrors) bool {
@@ -1086,6 +1088,9 @@ func (r *ClientErrors) setFrom(f *ClientErrors) bool {
 	if v := f.MissingBlocks; v != nil {
 		r.MissingBlocks = v
 	}
+	if v := f.FinalizedStateUnavailable; v != nil {
+		r.FinalizedStateUnavailable = v
+	}
 	return true
 }
 
@@ -1097,12 +1102,14 @@ type NodePool struct {
 	LeaseDuration                  *commonconfig.Duration
 	NodeIsSyncingEnabled           *bool
 	FinalizedBlockPollInterval     *commonconfig.Duration
-	Errors                         ClientErrors `toml:",omitempty"`
-	EnforceRepeatableRead          *bool
-	DeathDeclarationDelay          *commonconfig.Duration
-	NewHeadsPollInterval           *commonconfig.Duration
-	VerifyChainID                  *bool
-	ExternalRequestMaxResponseSize *uint32
+	HistoricalBalanceCheckAddress       *types.EIP55Address
+	FinalizedStateCheckFailureThreshold *uint32
+	Errors                              ClientErrors `toml:",omitempty"`
+	EnforceRepeatableRead               *bool
+	DeathDeclarationDelay               *commonconfig.Duration
+	NewHeadsPollInterval                *commonconfig.Duration
+	VerifyChainID                       *bool
+	ExternalRequestMaxResponseSize      *uint32
 }
 
 func (p *NodePool) setFrom(f *NodePool) {
@@ -1127,6 +1134,9 @@ func (p *NodePool) setFrom(f *NodePool) {
 	if v := f.FinalizedBlockPollInterval; v != nil {
 		p.FinalizedBlockPollInterval = v
 	}
+	if v := f.HistoricalBalanceCheckAddress; v != nil {
+		p.HistoricalBalanceCheckAddress = v
+	}
 
 	if v := f.EnforceRepeatableRead; v != nil {
 		p.EnforceRepeatableRead = v
@@ -1148,6 +1158,10 @@ func (p *NodePool) setFrom(f *NodePool) {
 		p.ExternalRequestMaxResponseSize = v
 	}
 
+	if v := f.FinalizedStateCheckFailureThreshold; v != nil {
+		p.FinalizedStateCheckFailureThreshold = v
+	}
+
 	p.Errors.setFrom(&f.Errors)
 }
 
@@ -1155,11 +1169,19 @@ func (p *NodePool) ValidateConfig(finalityTagEnabled *bool) (err error) {
 	if finalityTagEnabled != nil && *finalityTagEnabled {
 		if p.FinalizedBlockPollInterval == nil {
 			err = multierr.Append(err, commonconfig.ErrMissing{Name: "FinalizedBlockPollInterval", Msg: "required when FinalityTagEnabled is true"})
-			return
-		}
-		if p.FinalizedBlockPollInterval.Duration() <= 0 {
+		} else if p.FinalizedBlockPollInterval.Duration() <= 0 {
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "FinalizedBlockPollInterval", Value: p.FinalizedBlockPollInterval,
 				Msg: "must be greater than 0"})
+		}
+	}
+	if p.FinalizedStateCheckFailureThreshold != nil && *p.FinalizedStateCheckFailureThreshold > 0 {
+		if p.Errors.FinalizedStateUnavailable == nil || *p.Errors.FinalizedStateUnavailable == "" {
+			err = multierr.Append(err, commonconfig.ErrMissing{Name: "Errors.FinalizedStateUnavailable", Msg: "required when FinalizedStateCheckFailureThreshold is greater than 0"})
+		} else {
+			_, compileErr := regexp.Compile(*p.Errors.FinalizedStateUnavailable)
+			if compileErr != nil {
+				err = multierr.Append(err, commonconfig.ErrInvalid{Name: "Errors.FinalizedStateUnavailable", Value: *p.Errors.FinalizedStateUnavailable, Msg: "must be a valid regular expression"})
+			}
 		}
 	}
 	return
