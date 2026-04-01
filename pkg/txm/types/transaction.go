@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	clnull "github.com/smartcontractkit/chainlink-common/pkg/utils/null"
 
@@ -106,6 +107,18 @@ func (t *Transaction) GetMeta() (*TxMeta, error) {
 	return &m, nil
 }
 
+func (t *Transaction) GetTransactionLifecycleID(lggr logger.SugaredLogger) string {
+	meta, err := t.GetMeta()
+	if err != nil {
+		lggr.Errorw("failed to get meta of the transaction", "err", err)
+		return ""
+	}
+	if meta != nil && meta.TransactionLifecycleID != nil {
+		return *meta.TransactionLifecycleID
+	}
+	return ""
+}
+
 type Attempt struct {
 	ID                uint64
 	TxID              uint64
@@ -184,6 +197,9 @@ type TxMeta struct {
 	// Dual Broadcast
 	DualBroadcast       *bool   `json:"DualBroadcast,omitempty"`
 	DualBroadcastParams *string `json:"DualBroadcastParams,omitempty"`
+
+	// TransactionLifecycleID is used for tracing the entire lifecycle of a transaction from OCR Transmit to confirmation on-chain.
+	TransactionLifecycleID *string `json:"TransactionLifecycleID,omitempty"`
 }
 
 type QueueingTxStrategy struct {

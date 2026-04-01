@@ -867,7 +867,7 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 
 	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "SendTransaction")
 
-	return struct{}{}, ClassifySendError(err, r.clientErrors, logger.Sugared(logger.Nop()), tx, common.Address{}, r.chainType.IsL2()), err
+	return struct{}{}, ClassifySendError(err, r.clientErrors, lggr, tx, common.Address{}, r.chainType.IsL2()), err
 }
 
 func (r *RPCClient) SimulateTransaction(ctx context.Context, tx *types.Transaction) error {

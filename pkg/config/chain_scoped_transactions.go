@@ -64,6 +64,10 @@ func (t *transactionManagerV2Config) DualBroadcast() *bool {
 	return t.c.DualBroadcast
 }
 
+func (t *transactionManagerV2Config) ReadRequestsToMultipleNodes() *bool {
+	return t.c.ReadRequestsToMultipleNodes
+}
+
 func (t *transactionManagerV2Config) Bundles() *bool {
 	return t.c.Bundles
 }

@@ -94,10 +94,10 @@ func NewEvmTxm(
 	fwdMgr FwdMgr,
 	txAttemptBuilder TxAttemptBuilder,
 	txStore TxStore,
-	broadcaster *Broadcaster,
-	confirmer *Confirmer,
+	broadcaster BroadcasterI,
+	confirmer ConfirmerI,
 	resender *Resender,
-	tracker *Tracker,
+	tracker TrackerI,
 	finalizer Finalizer,
 	txmv2wrapper TxManager,
 	dualBroadcastEnabled bool,
@@ -143,6 +143,10 @@ func NewTxmV2(
 
 	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer())
 	inMemoryStoreManager := storage.NewInMemoryStoreManager(lggr, chainID)
+	readRequestsToMultipleNodes := false
+	if txmV2Config.ReadRequestsToMultipleNodes() != nil && *txmV2Config.ReadRequestsToMultipleNodes() {
+		readRequestsToMultipleNodes = true
+	}
 	config := txm.Config{
 		EIP1559:   fCfg.EIP1559DynamicFees(),
 		BlockTime: *txmV2Config.BlockTime(),
@@ -154,12 +158,16 @@ func NewTxmV2(
 	var c txm.Client
 	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
 		var err error
-		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout())
+		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, readRequestsToMultipleNodes, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}
 	} else {
-		c = clientwrappers.NewChainClient(client)
+		var err error
+		c, err = clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create chain client wrapper: %w", err)
+		}
 	}
 	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
 	return txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder), nil

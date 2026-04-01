@@ -177,7 +177,7 @@ func (t *Txm) HealthReport() map[string]error {
 func (t *Txm) CreateTransaction(ctx context.Context, txRequest *types.TxRequest) (tx *types.Transaction, err error) {
 	tx, err = t.txStore.CreateTransaction(ctx, txRequest)
 	if err == nil {
-		t.lggr.Infow("Created transaction", "tx", tx)
+		t.lggr.Infow("Created transaction", "txID", tx.ID, "tx", tx, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr))
 	}
 	return
 }
@@ -188,7 +188,10 @@ func (t *Txm) Trigger(address common.Address) {
 		if !exists {
 			return
 		}
-		triggerCh <- struct{}{}
+		select {
+		case triggerCh <- struct{}{}:
+		default:
+		}
 	}) {
 		t.lggr.Error("Txm unstarted")
 	}
@@ -333,7 +336,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	}
 	start := time.Now()
 	txErr := t.client.SendTransaction(ctx, tx, attempt)
-	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "duration", time.Since(start), "txErr: ", txErr)
+	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr), "duration", time.Since(start), "txErr", txErr)
 	if txErr != nil && t.errorHandler != nil {
 		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.SetNonce, false); err != nil {
 			return
@@ -440,6 +443,7 @@ func (t *Txm) extractMetrics(ctx context.Context, txs []*types.Transaction) []ui
 		if tx.InitialBroadcastAt != nil {
 			t.Metrics.RecordTimeUntilTxConfirmed(ctx, float64(time.Since(*tx.InitialBroadcastAt)))
 		}
+		t.lggr.Infow("Confirmed transaction", "txID", tx.ID, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr))
 	}
 	return confirmedTxIDs
 }
