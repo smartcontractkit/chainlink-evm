@@ -7,8 +7,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
@@ -21,6 +23,7 @@ func TestMetaErrorHandler(t *testing.T) {
 	require.NotNil(t, errorHandler)
 
 	t.Run("handles no bids error for first attempt", func(t *testing.T) {
+		lggr, observedLogs := logger.TestObserved(t, zap.InfoLevel)
 		nonce := uint64(1)
 		address := testutils.NewAddress()
 		txRequest := &types.TxRequest{
@@ -29,7 +32,7 @@ func TestMetaErrorHandler(t *testing.T) {
 			ToAddress:   testutils.NewAddress(),
 		}
 		setNonce := func(address common.Address, nonce uint64) {}
-		txStoreManager := storage.NewInMemoryStoreManager(logger.Test(t), testutils.FixtureChainID)
+		txStoreManager := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
 		require.NoError(t, txStoreManager.Add(address))
 		txStore := txStoreManager.InMemoryStoreMap[address]
 		_ = txStore.CreateTransaction(txRequest)
@@ -44,9 +47,10 @@ func TestMetaErrorHandler(t *testing.T) {
 		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
 		require.NoError(t, err)
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
-		err = errorHandler.HandleError(t.Context(), tx, ErrNoBids, txStoreManager, setNonce, false)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "transaction with txID: 0 marked as fatal")
+		noTransmission, err := errorHandler.HandleError(t.Context(), lggr, tx, ErrNoBids, txStoreManager, setNonce, false)
+		require.NoError(t, err)
+		require.True(t, noTransmission)
+		tests.AssertLogEventually(t, observedLogs, "transaction with txID: 0 marked as fatal")
 		_, unconfirmedCount := txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		assert.Equal(t, 0, unconfirmedCount)
 	})
@@ -78,14 +82,15 @@ func TestMetaErrorHandler(t *testing.T) {
 		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
 		require.NoError(t, err)
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
-		err = errorHandler.HandleError(t.Context(), tx, txErr, txStoreManager, setNonce, false)
-		require.Error(t, err)
-		require.ErrorIs(t, err, txErr)
+		noTransmission, err := errorHandler.HandleError(t.Context(), logger.Test(t), tx, txErr, txStoreManager, setNonce, false)
+		require.NoError(t, err)
+		require.False(t, noTransmission)
 		_, unconfirmedCount := txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		assert.Equal(t, 1, unconfirmedCount)
 	})
 
 	t.Run("handles auction error for first attempt", func(t *testing.T) {
+		lggr, observedLogs := logger.TestObserved(t, zap.InfoLevel)
 		nonce := uint64(1)
 		address := testutils.NewAddress()
 		txRequest := &types.TxRequest{
@@ -95,7 +100,7 @@ func TestMetaErrorHandler(t *testing.T) {
 		}
 		txErr := ErrAuction
 		setNonce := func(address common.Address, nonce uint64) {}
-		txStoreManager := storage.NewInMemoryStoreManager(logger.Test(t), testutils.FixtureChainID)
+		txStoreManager := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
 		require.NoError(t, txStoreManager.Add(address))
 		txStore := txStoreManager.InMemoryStoreMap[address]
 		_ = txStore.CreateTransaction(txRequest)
@@ -110,9 +115,10 @@ func TestMetaErrorHandler(t *testing.T) {
 		_, err = txStore.AppendAttemptToTransaction(*tx.Nonce, attempt)
 		require.NoError(t, err)
 		tx, _ = txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
-		err = errorHandler.HandleError(t.Context(), tx, txErr, txStoreManager, setNonce, false)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "transaction with txID: 0 marked as fatal")
+		noTransmission, err := errorHandler.HandleError(t.Context(), lggr, tx, txErr, txStoreManager, setNonce, false)
+		require.NoError(t, err)
+		require.True(t, noTransmission)
+		tests.AssertLogEventually(t, observedLogs, "transaction with txID: 0 marked as fatal")
 		_, unconfirmedCount := txStore.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		assert.Equal(t, 0, unconfirmedCount)
 	})

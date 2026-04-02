@@ -3,10 +3,10 @@ package dualbroadcast
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -17,15 +17,25 @@ func NewErrorHandler() *errorHandler {
 	return &errorHandler{}
 }
 
-func (e *errorHandler) HandleError(ctx context.Context, tx *types.Transaction, txErr error, txStore txm.TxStore, setNonce func(common.Address, uint64), isFromBroadcastMethod bool) error {
+func (e *errorHandler) HandleError(
+	ctx context.Context,
+	lggr logger.Logger,
+	tx *types.Transaction,
+	txErr error,
+	txStore txm.TxStore,
+	setNonce func(common.Address, uint64),
+	isFromBroadcastMethod bool,
+) (noTransmission bool, err error) {
 	// Mark the tx as fatal only if this is the first broadcast. In any other case, other txs might be included on-chain.
 	if (errors.Is(txErr, ErrNoBids) || errors.Is(txErr, ErrAuction)) && tx.AttemptCount == 1 {
 		if err := txStore.MarkTxFatal(ctx, tx, tx.FromAddress); err != nil {
-			return err
+			return false, err
 		}
 		setNonce(tx.FromAddress, *tx.Nonce)
-		return fmt.Errorf("transaction with txID: %d marked as fatal", tx.ID)
+		lggr.Infof("transaction with txID: %d marked as fatal", tx.ID)
+		return true, nil
 	}
 
-	return txErr
+	// If the error message is not recognized, we don't know if we didn't transmit so return false and continue with the standard execution path.
+	return false, nil
 }
