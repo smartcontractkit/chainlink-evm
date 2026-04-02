@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {VRFTypes} from "../../VRFTypes.sol";
 import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
+import {VRFTypes} from "../VRFTypes.sol";
 import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 contract ExposedVRFCoordinatorV2_5 is VRFCoordinatorV2_5 {

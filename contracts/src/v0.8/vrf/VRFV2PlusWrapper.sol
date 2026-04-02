@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
 
-import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interface.sol";
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
+import {AggregatorV3Interface} from "../shared/interfaces/AggregatorV3Interface.sol";
+import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
+import {LinkTokenInterface} from "../shared/interfaces/LinkTokenInterface.sol";
 import {VRFConsumerBaseV2Plus} from "./VRFConsumerBaseV2Plus.sol";
 
 import {VRFV2PlusWrapperConsumerBase} from "./VRFV2PlusWrapperConsumerBase.sol";

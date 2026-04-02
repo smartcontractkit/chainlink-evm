@@ -1,27 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ChainSpecificUtil} from "../../../shared/util/ChainSpecificUtil.sol";
-import {VRF} from "../../../vrf/VRF.sol";
-import {VRFTypes} from "../../VRFTypes.sol";
-import {BlockhashStoreInterface} from "../../interfaces/BlockhashStoreInterface.sol";
-import {SubscriptionAPI} from "../SubscriptionAPI.sol";
-import {IVRFMigratableConsumerV2Plus, VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
+import {VRF} from "./VRF.sol";
+import {VRFTypes} from "./VRFTypes.sol";
+import {BlockhashStoreInterface} from "./interfaces/BlockhashStoreInterface.sol";
+
+import {SubscriptionAPI} from "./SubscriptionAPI.sol";
+import {IVRFMigratableConsumerV2Plus, VRFConsumerBaseV2Plus} from "./VRFConsumerBaseV2Plus.sol";
+
+import {IVRFCoordinatorV2PlusMigration} from "./interfaces/IVRFCoordinatorV2PlusMigration.sol";
+import {VRFV2PlusClient} from "./libraries/VRFV2PlusClient.sol";
 // solhint-disable-next-line no-unused-import
-import {IVRFCoordinatorV2Plus, IVRFSubscriptionV2Plus} from "../interfaces/IVRFCoordinatorV2Plus.sol";
-import {IVRFCoordinatorV2PlusMigration} from "../interfaces/IVRFCoordinatorV2PlusMigration.sol";
-import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
+import {IVRFCoordinatorV2Plus, IVRFSubscriptionV2Plus} from "./interfaces/IVRFCoordinatorV2Plus.sol";
 
-contract VRFCoordinatorV2PlusUpgradedVersion is
-  VRF,
-  SubscriptionAPI,
-  IVRFCoordinatorV2PlusMigration,
-  IVRFCoordinatorV2Plus
-{
-  using EnumerableSet for EnumerableSet.UintSet;
+contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
   /// @dev should always be available
-
   // solhint-disable-next-line chainlink-solidity/prefix-immutable-variables-with-i
   BlockhashStoreInterface public immutable BLOCKHASH_STORE;
 
@@ -50,11 +43,6 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
   error PaymentTooLarge();
   error InvalidExtraArgsTag();
   error GasPriceExceeded(uint256 gasPrice, uint256 maxGas);
-  /// @notice emitted when version in the request doesn't match expected version
-  error InvalidVersion(uint8 requestVersion, uint8 expectedVersion);
-  /// @notice emitted when transferred balance (msg.value) does not match the metadata in V1MigrationData
-  error InvalidNativeBalance(uint256 transferredValue, uint96 expectedValue);
-  error SubscriptionIDCollisionFound();
 
   struct ProvingKey {
     bool exists; // proving key exists
@@ -66,6 +54,7 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
   mapping(uint256 => bytes32) /* requestID */ /* commitment */ public s_requestCommitments;
 
   event ProvingKeyRegistered(bytes32 keyHash, uint64 maxGas);
+  event ProvingKeyDeregistered(bytes32 keyHash, uint64 maxGas);
 
   event RandomWordsRequested(
     bytes32 indexed keyHash,
@@ -88,6 +77,8 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
     bool success,
     bool onlyPremium
   );
+
+  event L1GasFee(uint256 fee);
 
   int256 public s_fallbackWeiPerUnitLink;
 
@@ -126,11 +117,36 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
   }
 
   /**
+   * @notice Deregisters a proving key.
+   * @param publicProvingKey key that oracle can use to submit vrf fulfillments
+   */
+  function deregisterProvingKey(
+    uint256[2] calldata publicProvingKey
+  ) external onlyOwner {
+    bytes32 kh = hashOfKey(publicProvingKey);
+    ProvingKey memory key = s_provingKeys[kh];
+    if (!key.exists) {
+      revert NoSuchProvingKey(kh);
+    }
+    delete s_provingKeys[kh];
+    uint256 s_provingKeyHashesLength = s_provingKeyHashes.length;
+    for (uint256 i = 0; i < s_provingKeyHashesLength; ++i) {
+      if (s_provingKeyHashes[i] == kh) {
+        // Copy last element and overwrite kh to be deleted with it
+        s_provingKeyHashes[i] = s_provingKeyHashes[s_provingKeyHashesLength - 1];
+        s_provingKeyHashes.pop();
+        break;
+      }
+    }
+    emit ProvingKeyDeregistered(kh, key.maxGas);
+  }
+
+  /**
    * @notice Returns the proving key hash key associated with this public key
    * @param publicKey the key to return the hash of
    */
   function hashOfKey(
-    uint256[2] memory publicKey
+    uint256[2] calldata publicKey
   ) public pure returns (bytes32) {
     return keccak256(abi.encode(publicKey));
   }
@@ -200,16 +216,6 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
     );
   }
 
-  /**
-   * @notice Get configuration relevant for making requests
-   * @return minimumRequestConfirmations global min for request confirmations
-   * @return maxGasLimit global max for request gas limit
-   * @return s_provingKeyHashes list of registered key hashes
-   */
-  function getRequestConfig() external view returns (uint16, uint32, bytes32[] memory) {
-    return (s_config.minimumRequestConfirmations, s_config.maxGasLimit, s_provingKeyHashes);
-  }
-
   /// @dev Convert the extra args bytes into a struct
   /// @param extraArgs The extra args bytes
   /// @return The extra args struct
@@ -255,9 +261,7 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
   ) external override nonReentrant returns (uint256 requestId) {
     // Input validation using the subscription storage.
     uint256 subId = req.subId;
-    if (s_subscriptionConfigs[subId].owner == address(0)) {
-      revert InvalidSubscription();
-    }
+    _requireValidSubscription(s_subscriptionConfigs[subId].owner);
     // Its important to ensure that the consumer is in fact who they say they
     // are, otherwise they could use someone else's subscription balance.
     mapping(uint256 => ConsumerConfig) storage consumerConfigs = s_consumers[msg.sender];
@@ -294,15 +298,7 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
 
     bytes memory extraArgsBytes = VRFV2PlusClient._argsToBytes(_fromBytes(req.extraArgs));
     s_requestCommitments[requestId] = keccak256(
-      abi.encode(
-        requestId,
-        ChainSpecificUtil._getBlockNumber(),
-        subId,
-        req.callbackGasLimit,
-        req.numWords,
-        msg.sender,
-        extraArgsBytes
-      )
+      abi.encode(requestId, _getBlockNumber(), subId, req.callbackGasLimit, req.numWords, msg.sender, extraArgsBytes)
     );
     emit RandomWordsRequested(
       req.keyHash,
@@ -387,7 +383,7 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
       revert IncorrectCommitment();
     }
 
-    bytes32 blockHash = ChainSpecificUtil._getBlockhash(rc.blockNum);
+    bytes32 blockHash = _getBlockhash(rc.blockNum);
     if (blockHash == bytes32(0)) {
       blockHash = BLOCKHASH_STORE.getBlockhash(rc.blockNum);
       if (blockHash == bytes32(0)) {
@@ -523,16 +519,12 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
     Subscription storage subcription = s_subscriptions[subId];
     if (nativePayment) {
       uint96 prevBal = subcription.nativeBalance;
-      if (prevBal < payment) {
-        revert InsufficientBalance();
-      }
+      _requireSufficientBalance(prevBal >= payment);
       subcription.nativeBalance = prevBal - payment;
       s_withdrawableNative += payment;
     } else {
       uint96 prevBal = subcription.balance;
-      if (prevBal < payment) {
-        revert InsufficientBalance();
-      }
+      _requireSufficientBalance(prevBal >= payment);
       subcription.balance = prevBal - payment;
       s_withdrawableTokens += payment;
     }
@@ -543,7 +535,7 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
     uint256 weiPerUnitGas,
     bool nativePayment,
     bool onlyPremium
-  ) internal view returns (uint96, bool) {
+  ) internal returns (uint96, bool) {
     if (nativePayment) {
       return (_calculatePaymentAmountNative(startGas, weiPerUnitGas, onlyPremium), false);
     }
@@ -554,13 +546,17 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
     uint256 startGas,
     uint256 weiPerUnitGas,
     bool onlyPremium
-  ) internal view returns (uint96) {
+  ) internal returns (uint96) {
     // Will return non-zero on chains that have this enabled
-    uint256 l1CostWei = ChainSpecificUtil._getCurrentTxL1GasFees(msg.data);
+    uint256 l1CostWei = _getL1CostWei(msg.data);
     // calculate the payment without the premium
     uint256 baseFeeWei = weiPerUnitGas * (s_config.gasAfterPaymentCalculation + startGas - gasleft());
     // calculate flat fee in native
     uint256 flatFeeWei = 1e12 * uint256(s_config.fulfillmentFlatFeeNativePPM);
+    // emit this event only if this is an L2 chain that needs to cover for L1 gas fees
+    if (l1CostWei > 0) {
+      emit L1GasFee(l1CostWei);
+    }
     if (onlyPremium) {
       return uint96((((l1CostWei + baseFeeWei) * (s_config.nativePremiumPercentage)) / 100) + flatFeeWei);
     } else {
@@ -573,13 +569,13 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
     uint256 startGas,
     uint256 weiPerUnitGas,
     bool onlyPremium
-  ) internal view returns (uint96, bool) {
+  ) internal returns (uint96, bool) {
     (int256 weiPerUnitLink, bool isFeedStale) = _getFeedData();
     if (weiPerUnitLink <= 0) {
       revert InvalidLinkWeiPrice(weiPerUnitLink);
     }
     // Will return non-zero on chains that have this enabled
-    uint256 l1CostWei = ChainSpecificUtil._getCurrentTxL1GasFees(msg.data);
+    uint256 l1CostWei = _getL1CostWei(msg.data);
     // (1e18 juels/link) ((wei/gas * gas) + l1wei) / (wei/link) = juels
     uint256 paymentNoFee = (
       1e18 * (weiPerUnitGas * (s_config.gasAfterPaymentCalculation + startGas - gasleft()) + l1CostWei)
@@ -588,6 +584,10 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
     uint256 flatFeeWei =
       1e12 * uint256(s_config.fulfillmentFlatFeeNativePPM - s_config.fulfillmentFlatFeeLinkDiscountPPM);
     uint256 flatFeeJuels = (1e18 * flatFeeWei) / uint256(weiPerUnitLink);
+    // emit this event only if this is an L2 chain that needs to cover for L1 gas fees
+    if (l1CostWei > 0) {
+      emit L1GasFee(l1CostWei);
+    }
     uint256 payment;
     if (onlyPremium) {
       payment = ((paymentNoFee * (s_config.linkPremiumPercentage)) / 100 + flatFeeJuels);
@@ -613,6 +613,35 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
   }
 
   /**
+   * @notice Returns the block number of the current block by using specific opcode.
+   * @notice Override this function in chain specific way if needed (L2 chains).
+   */
+  function _getBlockNumber() internal view virtual returns (uint256) {
+    return block.number;
+  }
+
+  /**
+   * @notice Returns the blockhash for the given blockNumber by using specific opcode.
+   * @notice If the blockNumber is more than 256 blocks in the past, returns the empty string.
+   * @notice Override this function in chain specific way if needed (L2 chains).
+   */
+  function _getBlockhash(
+    uint64 blockNumber
+  ) internal view virtual returns (bytes32) {
+    return blockhash(blockNumber);
+  }
+
+  /**
+   * @notice Returns the L1 fee for the calldata payload (always return 0 on L1 chains).
+   * @notice Override this function in chain specific way for L2 chains.
+   */
+  function _getL1CostWei(
+    bytes calldata /* data */
+  ) internal view virtual returns (uint256) {
+    return 0;
+  }
+
+  /**
    * @inheritdoc IVRFSubscriptionV2Plus
    */
   function pendingRequestExists(
@@ -620,9 +649,6 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
   ) public view override returns (bool) {
     address[] storage consumers = s_subscriptionConfigs[subId].consumers;
     uint256 consumersLength = consumers.length;
-    if (consumersLength == 0) {
-      return false;
-    }
     for (uint256 i = 0; i < consumersLength; ++i) {
       if (s_consumers[consumers[i]][subId].pendingReqCount > 0) {
         return true;
@@ -642,15 +668,14 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
       revert InvalidConsumer(subId, consumer);
     }
     // Note bounded by MAX_CONSUMERS
-    address[] memory consumers = s_subscriptionConfigs[subId].consumers;
-    uint256 lastConsumerIndex = consumers.length - 1;
-    for (uint256 i = 0; i < consumers.length; ++i) {
-      if (consumers[i] == consumer) {
-        address last = consumers[lastConsumerIndex];
+    address[] storage s_subscriptionConsumers = s_subscriptionConfigs[subId].consumers;
+    uint256 consumersLength = s_subscriptionConsumers.length;
+    for (uint256 i = 0; i < consumersLength; ++i) {
+      if (s_subscriptionConsumers[i] == consumer) {
         // Storage write to preserve last element
-        s_subscriptionConfigs[subId].consumers[i] = last;
+        s_subscriptionConsumers[i] = s_subscriptionConsumers[consumersLength - 1];
         // Storage remove last element
-        s_subscriptionConfigs[subId].consumers.pop();
+        s_subscriptionConsumers.pop();
         break;
       }
     }
@@ -677,6 +702,9 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
 
   /// @dev Emitted when new coordinator is registered as migratable target
   event CoordinatorRegistered(address coordinatorAddress);
+
+  /// @dev Emitted when new coordinator is deregistered
+  event CoordinatorDeregistered(address coordinatorAddress);
 
   /// @notice emitted when migration to new coordinator completes successfully
   /// @param newCoordinator coordinator address after migration
@@ -722,15 +750,32 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
     emit CoordinatorRegistered(target);
   }
 
+  function deregisterMigratableCoordinator(
+    address target
+  ) external onlyOwner {
+    uint256 nTargets = s_migrationTargets.length;
+    for (uint256 i = 0; i < nTargets; ++i) {
+      if (s_migrationTargets[i] == target) {
+        s_migrationTargets[i] = s_migrationTargets[nTargets - 1];
+        s_migrationTargets.pop();
+        emit CoordinatorDeregistered(target);
+        return;
+      }
+    }
+    revert CoordinatorNotRegistered(target);
+  }
+
   function migrate(uint256 subId, address newCoordinator) external nonReentrant {
     if (!_isTargetRegistered(newCoordinator)) {
       revert CoordinatorNotRegistered(newCoordinator);
     }
     (uint96 balance, uint96 nativeBalance,, address subOwner, address[] memory consumers) = getSubscription(subId);
-    // solhint-disable-next-line gas-custom-errors
-    require(subOwner == msg.sender, "Not subscription owner");
-    // solhint-disable-next-line gas-custom-errors
-    require(!pendingRequestExists(subId), "Pending request exists");
+    if (subOwner != msg.sender) {
+      revert MustBeSubOwner(subOwner);
+    }
+    if (pendingRequestExists(subId)) {
+      revert PendingRequestExists();
+    }
 
     V1MigrationData memory migrationData = V1MigrationData({
       fromVersion: 1,
@@ -746,69 +791,18 @@ contract VRFCoordinatorV2PlusUpgradedVersion is
 
     // Only transfer LINK if the token is active and there is a balance.
     if (address(LINK) != address(0) && balance != 0) {
-      // solhint-disable-next-line gas-custom-errors
-      require(LINK.transfer(address(newCoordinator), balance), "insufficient funds");
+      _requireSufficientBalance(LINK.transfer(address(newCoordinator), balance));
     }
 
     // despite the fact that we follow best practices this is still probably safest
     // to prevent any re-entrancy possibilities.
     s_config.reentrancyLock = true;
-    for (uint256 i = 0; i < consumers.length; ++i) {
+    uint256 consumersLength = consumers.length;
+    for (uint256 i = 0; i < consumersLength; ++i) {
       IVRFMigratableConsumerV2Plus(consumers[i]).setCoordinator(newCoordinator);
     }
     s_config.reentrancyLock = false;
 
     emit MigrationCompleted(newCoordinator, subId);
-  }
-
-  function migrationVersion() public pure returns (uint8 version) {
-    return 2;
-  }
-
-  /**
-   * @inheritdoc IVRFCoordinatorV2PlusMigration
-   */
-  function onMigration(
-    bytes calldata encodedData
-  ) external payable override {
-    V1MigrationData memory migrationData = abi.decode(encodedData, (V1MigrationData));
-
-    if (migrationData.fromVersion != 1) {
-      revert InvalidVersion(migrationData.fromVersion, 1);
-    }
-
-    if (msg.value != uint256(migrationData.nativeBalance)) {
-      revert InvalidNativeBalance(msg.value, migrationData.nativeBalance);
-    }
-
-    // it should be impossible to have a subscription id collision, for two reasons:
-    // 1. the subscription ID is calculated using inputs that cannot be replicated under different
-    // conditions.
-    // 2. once a subscription is migrated it is deleted from the previous coordinator, so it cannot
-    // be migrated again.
-    // however, we should have this check here in case the `migrate` function on
-    // future coordinators "forgets" to delete subscription data allowing re-migration of the same
-    // subscription.
-    if (s_subscriptionConfigs[migrationData.subId].owner != address(0)) {
-      revert SubscriptionIDCollisionFound();
-    }
-
-    for (uint256 i = 0; i < migrationData.consumers.length; i++) {
-      s_consumers[migrationData.consumers[i]][migrationData.subId] =
-        ConsumerConfig({active: true, nonce: 0, pendingReqCount: 0});
-    }
-
-    s_subscriptions[migrationData.subId] =
-      Subscription({nativeBalance: migrationData.nativeBalance, balance: migrationData.linkBalance, reqCount: 0});
-    s_subscriptionConfigs[migrationData.subId] = SubscriptionConfig({
-      owner: migrationData.subOwner,
-      consumers: migrationData.consumers,
-      requestedOwner: address(0)
-    });
-
-    s_totalBalance += uint96(migrationData.linkBalance);
-    s_totalNativeBalance += uint96(migrationData.nativeBalance);
-
-    s_subIds.add(migrationData.subId);
   }
 }

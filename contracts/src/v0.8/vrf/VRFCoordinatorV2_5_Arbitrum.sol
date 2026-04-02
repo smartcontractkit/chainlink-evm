@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
+import {ArbSys} from "../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
 
 import {ArbitrumL1Fees} from "./ArbitrumL1Fees.sol";
 import {VRFCoordinatorV2_5} from "./VRFCoordinatorV2_5.sol";
