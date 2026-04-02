@@ -1,8 +1,8 @@
 pragma solidity 0.8.19;
 
+import {BatchVRFCoordinatorV2Plus} from "../BatchVRFCoordinatorV2Plus.sol";
 import {VRF} from "../VRF.sol";
 import {VRFTypes} from "../VRFTypes.sol";
-import {BatchVRFCoordinatorV2Plus} from "../BatchVRFCoordinatorV2Plus.sol";
 
 import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
