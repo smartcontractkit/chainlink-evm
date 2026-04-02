@@ -3,11 +3,11 @@
 pragma solidity 0.8.6;
 
 import {AutomationCompatibleInterface as KeeperCompatibleInterface} from
-  "../../automation/interfaces/AutomationCompatibleInterface.sol";
-import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+  "../automation/interfaces/AutomationCompatibleInterface.sol";
+import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
 
-import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
+import {LinkTokenInterface} from "../shared/interfaces/LinkTokenInterface.sol";
+import {VRFCoordinatorV2Interface} from "./interfaces/VRFCoordinatorV2Interface.sol";
 import {Pausable} from "@openzeppelin/contracts@4.9.6/security/Pausable.sol";
 
 /**

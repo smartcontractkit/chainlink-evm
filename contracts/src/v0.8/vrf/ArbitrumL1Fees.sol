@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
+import {ArbGasInfo} from "../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 
 /// @dev An abstract contract that provides Arbitrum specific L1 fee calculations.
 abstract contract ArbitrumL1Fees {

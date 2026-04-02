@@ -2,13 +2,13 @@ pragma solidity 0.8.19;
 
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
-import {VRFCoordinatorV2_5} from "../dev/VRFCoordinatorV2_5.sol";
-import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
-import {VRFCoordinatorV2Plus_V2Example} from "../dev/testhelpers/VRFCoordinatorV2Plus_V2Example.sol";
+import {SubscriptionAPI} from "../SubscriptionAPI.sol";
+import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
+import {ExposedVRFCoordinatorV2_5} from "../testhelpers/ExposedVRFCoordinatorV2_5.sol";
+import {VRFCoordinatorV2Plus_V2Example} from "../testhelpers/VRFCoordinatorV2Plus_V2Example.sol";
 
-import {VRFV2PlusConsumerExample} from "../dev/testhelpers/VRFV2PlusConsumerExample.sol";
-import {VRFV2PlusMaliciousMigrator} from "../dev/testhelpers/VRFV2PlusMaliciousMigrator.sol";
+import {VRFV2PlusConsumerExample} from "../testhelpers/VRFV2PlusConsumerExample.sol";
+import {VRFV2PlusMaliciousMigrator} from "../testhelpers/VRFV2PlusMaliciousMigrator.sol";
 import "./BaseTest.t.sol";
 
 contract VRFCoordinatorV2Plus_Migration is BaseTest {

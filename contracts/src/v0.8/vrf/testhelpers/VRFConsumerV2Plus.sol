@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
-import {VRFConsumerBaseV2Plus} from "../dev/VRFConsumerBaseV2Plus.sol";
-import {IVRFCoordinatorV2Plus, IVRFSubscriptionV2Plus} from "../dev/interfaces/IVRFCoordinatorV2Plus.sol";
-import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
+import {VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
+import {IVRFCoordinatorV2Plus, IVRFSubscriptionV2Plus} from "../interfaces/IVRFCoordinatorV2Plus.sol";
+import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 
 contract VRFConsumerV2Plus is VRFConsumerBaseV2Plus {
   uint256[] public s_randomWords;

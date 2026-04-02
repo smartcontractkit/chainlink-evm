@@ -1,27 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {LinkTokenInterface} from "../../../shared/interfaces/LinkTokenInterface.sol";
+import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
 import {VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 
-// VRFV2RevertingExample will always revert. Used for testing only, useless in prod.
-contract VRFV2PlusRevertingExample is VRFConsumerBaseV2Plus {
+contract VRFMaliciousConsumerV2Plus is VRFConsumerBaseV2Plus {
   uint256[] public s_randomWords;
   uint256 public s_requestId;
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   LinkTokenInterface internal LINKTOKEN;
-  uint256 public s_subId;
   uint256 public s_gasAvailable;
+  uint256 internal s_subId;
+  bytes32 internal s_keyHash;
 
   constructor(address vrfCoordinator, address link) VRFConsumerBaseV2Plus(vrfCoordinator) {
     LINKTOKEN = LinkTokenInterface(link);
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256, uint256[] calldata) internal pure override {
-    // solhint-disable-next-line gas-custom-errors, reason-string
-    revert();
+  function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+    s_gasAvailable = gasleft();
+    s_randomWords = randomWords;
+    s_requestId = requestId;
+    VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
+      keyHash: s_keyHash,
+      subId: s_subId,
+      requestConfirmations: 1,
+      callbackGasLimit: 200_000,
+      numWords: 1,
+      extraArgs: "" // empty extraArgs defaults to link payment
+    });
+    // Should revert
+    s_vrfCoordinator.requestRandomWords(req);
   }
 
   function createSubscriptionAndFund(
@@ -31,15 +42,6 @@ contract VRFV2PlusRevertingExample is VRFConsumerBaseV2Plus {
       s_subId = s_vrfCoordinator.createSubscription();
       s_vrfCoordinator.addConsumer(s_subId, address(this));
     }
-    // Approve the link transfer.
-    LINKTOKEN.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_subId));
-  }
-
-  function topUpSubscription(
-    uint96 amount
-  ) external {
-    // solhint-disable-next-line gas-custom-errors
-    require(s_subId != 0, "sub not set");
     // Approve the link transfer.
     LINKTOKEN.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_subId));
   }
@@ -55,21 +57,17 @@ contract VRFV2PlusRevertingExample is VRFConsumerBaseV2Plus {
   }
 
   function requestRandomness(
-    bytes32 keyHash,
-    uint256 subId,
-    uint16 minReqConfs,
-    uint32 callbackGasLimit,
-    uint32 numWords
+    bytes32 keyHash
   ) external returns (uint256) {
+    s_keyHash = keyHash;
     VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
       keyHash: keyHash,
-      subId: subId,
-      requestConfirmations: minReqConfs,
-      callbackGasLimit: callbackGasLimit,
-      numWords: numWords,
+      subId: s_subId,
+      requestConfirmations: 1,
+      callbackGasLimit: 500_000,
+      numWords: 1,
       extraArgs: "" // empty extraArgs defaults to link payment
     });
-    s_requestId = s_vrfCoordinator.requestRandomWords(req);
-    return s_requestId;
+    return s_vrfCoordinator.requestRandomWords(req);
   }
 }

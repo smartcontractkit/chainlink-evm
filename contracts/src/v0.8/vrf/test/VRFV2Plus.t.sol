@@ -5,15 +5,15 @@ import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 import {VRF} from "../VRF.sol";
 
 import {VRFTypes} from "../VRFTypes.sol";
-import {BlockhashStore} from "../dev/BlockhashStore.sol";
-import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
-import {VRFCoordinatorV2_5} from "../dev/VRFCoordinatorV2_5.sol";
+import {BlockhashStore} from "../BlockhashStore.sol";
+import {SubscriptionAPI} from "../SubscriptionAPI.sol";
+import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
 
-import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
-import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
-import {VRFV2PlusConsumerExample} from "../dev/testhelpers/VRFV2PlusConsumerExample.sol";
+import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
+import {ExposedVRFCoordinatorV2_5} from "../testhelpers/ExposedVRFCoordinatorV2_5.sol";
+import {VRFV2PlusConsumerExample} from "../testhelpers/VRFV2PlusConsumerExample.sol";
 
-import {VRFV2PlusLoadTestWithMetrics} from "../dev/testhelpers/VRFV2PlusLoadTestWithMetrics.sol";
+import {VRFV2PlusLoadTestWithMetrics} from "../testhelpers/VRFV2PlusLoadTestWithMetrics.sol";
 import "./BaseTest.t.sol";
 import "@openzeppelin/contracts@4.9.6/utils/math/Math.sol";
 import {VmSafe} from "forge-std/Vm.sol";
