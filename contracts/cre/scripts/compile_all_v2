@@ -18,6 +18,8 @@ compileContract () {
   local dir="$CONTRACTS_DIR/solc/$PROJECT/$src_rel"
   echo "Compiling" "$contract"
 
+  rm -rf "$dir"
+
   forge build "$CONTRACTS_DIR/src/$PROJECT/$src_rel.sol" \
   --root "$CONTRACTS_DIR" \
   --extra-output-files bin abi metadata \
