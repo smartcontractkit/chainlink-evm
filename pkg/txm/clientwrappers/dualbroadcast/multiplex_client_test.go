@@ -51,7 +51,7 @@ func TestMultiplexClient_SendTransaction_BothSucceed(t *testing.T) {
 	primary := &mockClient{}
 	secondary := &mockClient{sendCalled: secondaryCalled}
 
-	mc := NewMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), primary, secondary)
 	err := mc.SendTransaction(context.Background(), &types.Transaction{}, &types.Attempt{})
 	require.NoError(t, err)
 
@@ -71,7 +71,7 @@ func TestMultiplexClient_SendTransaction_PrimaryFails(t *testing.T) {
 	}
 	secondary := &mockClient{sendCalled: make(chan struct{}, 1)}
 
-	mc := NewMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), primary, secondary)
 	err := mc.SendTransaction(context.Background(), &types.Transaction{}, &types.Attempt{})
 	require.ErrorIs(t, err, primaryErr)
 }
@@ -86,7 +86,7 @@ func TestMultiplexClient_SendTransaction_SecondaryFails(t *testing.T) {
 		sendCalled: secondaryCalled,
 	}
 
-	mc := NewMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), primary, secondary)
 	err := mc.SendTransaction(context.Background(), &types.Transaction{}, &types.Attempt{})
 	require.NoError(t, err)
 
@@ -110,7 +110,7 @@ func TestMultiplexClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
 		},
 	}
 
-	mc := NewMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), primary, secondary)
 	nonce, err := mc.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(42), nonce)
@@ -129,7 +129,7 @@ func TestMultiplexClient_NonceAt_RoutesToPrimary(t *testing.T) {
 		},
 	}
 
-	mc := NewMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), primary, secondary)
 	nonce, err := mc.NonceAt(context.Background(), common.HexToAddress("0x123"), big.NewInt(100))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(99), nonce)

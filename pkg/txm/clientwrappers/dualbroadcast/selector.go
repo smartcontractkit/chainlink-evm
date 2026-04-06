@@ -36,7 +36,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 		return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", secondaryURL.Redacted(), err)
 	}
 
-	return NewMultiplexClient(lggr, primary, secondary), errHandler, nil
+	return newMultiplexClient(lggr, primary, secondary), errHandler, nil
 }
 
 func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainClient, keyStore keys.ChainStore, u *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {

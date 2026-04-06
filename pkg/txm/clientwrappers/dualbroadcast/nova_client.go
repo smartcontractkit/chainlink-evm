@@ -53,7 +53,7 @@ func (n *novaClient) NonceAt(ctx context.Context, address common.Address, blockN
 
 // TODO(gg): maybe use `eth_getTransactionCount` (https://docs.novarpc.xyz/rpc-api-specification/eth_gettransactioncount) instead? Check when this is being called
 func (n *novaClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	// In a multiplex setup, MultiplexClient routes PendingNonceAt to the primary (Flashbots).
+	// In a multiplex setup, multiplexClient routes PendingNonceAt to the primary (Flashbots).
 	// This fallback queries the chain RPC directly via NonceAt with nil block (latest).
 	return n.c.NonceAt(ctx, address, nil)
 }
