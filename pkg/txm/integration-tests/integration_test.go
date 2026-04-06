@@ -32,6 +32,8 @@ import (
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
+// TODO(gg): is there any test to be updated to use the MultiplexClient?
+
 const (
 	SimulatedChainID     = 1337
 	NumberOfTransactions = 20

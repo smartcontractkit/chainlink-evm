@@ -169,6 +169,8 @@ Enabled = false # Default
 BlockTime = '10s' # Example
 # CustomURL configures the base url of a custom endpoint used by the ChainDualBroadcast chain type.
 CustomURL = 'https://example.api.io' # Example
+# CustomURLSecondary configures an optional secondary OFA endpoint for multiplexed dual broadcast. When set alongside CustomURL, transactions are sent to both endpoints simultaneously. The primary (CustomURL) determines success/failure; the secondary is fire-and-forget.
+CustomURLSecondary = 'https://example-secondary.api.io' # Example
 # DualBroadcast enables DualBroadcast functionality.
 DualBroadcast = false # Example
 # ReadRequestsToMultipleNodes controls whether txm chain client reads use multiplexed calls.

@@ -46,6 +46,7 @@ DetectionApiUrl = 'http://example.net'
 Enabled = false
 BlockTime = '42s'
 CustomURL = 'http://txs.org'
+CustomURLSecondary = 'http://txs-secondary.org'
 DualBroadcast = true
 ReadRequestsToMultipleNodes = false
 Bundles = false

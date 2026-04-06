@@ -60,6 +60,13 @@ func (t *transactionManagerV2Config) CustomURL() *url.URL {
 	return t.c.CustomURL.URL()
 }
 
+func (t *transactionManagerV2Config) CustomURLSecondary() *url.URL {
+	if t.c.CustomURLSecondary == nil {
+		return nil
+	}
+	return t.c.CustomURLSecondary.URL()
+}
+
 func (t *transactionManagerV2Config) DualBroadcast() *bool {
 	return t.c.DualBroadcast
 }

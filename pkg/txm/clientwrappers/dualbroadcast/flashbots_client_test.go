@@ -45,6 +45,8 @@ func (s *testFlashbotsTxStore) FetchUnconfirmedTransactions(context.Context, com
 	return s.txs, nil
 }
 
+// TODO(gg): add/update tests to validate OFAMetrics
+
 func TestParseURLParams(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -207,7 +209,7 @@ func TestSendBundle_UsesLatestAttemptPerTransaction(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
-	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil)
+	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, nil)
 
 	err = client.SendBundle(context.Background(), fromAddress, "")
 	require.NoError(t, err)
@@ -268,7 +270,7 @@ func TestSendBundle_SucceedsOnIncreasingNonces(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
-	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil)
+	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, nil)
 	err = client.SendBundle(context.Background(), fromAddress, "")
 	require.NoError(t, err)
 
@@ -308,7 +310,7 @@ func TestSendBundle_ReturnsErrorOnNonceGap(t *testing.T) {
 	customURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
 
-	client := NewFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, keystest.MessageSigner(nil), customURL, txStore, nil)
+	client := NewFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, keystest.MessageSigner(nil), customURL, txStore, nil, nil)
 	err = client.SendBundle(context.Background(), fromAddress, "")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must be contiguous and strictly increasing")

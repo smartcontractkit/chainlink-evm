@@ -133,6 +133,7 @@ type TransactionManagerV2 interface {
 	Enabled() bool
 	BlockTime() *time.Duration
 	CustomURL() *url.URL
+	CustomURLSecondary() *url.URL
 	DualBroadcast() *bool
 	ReadRequestsToMultipleNodes() *bool
 	Bundles() *bool
