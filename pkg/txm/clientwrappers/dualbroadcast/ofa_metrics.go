@@ -53,10 +53,5 @@ func (m *ofaMetrics) RecordSendTx(ctx context.Context, duration time.Duration, e
 		attribute.String("status", status),
 	)
 	m.sendTxStatus.Add(ctx, 1, attrs)
-
-	latencyAttrs := metric.WithAttributes( // TODO(gg): have separate success/error latency histograms
-		attribute.String("chainID", m.chainID),
-		attribute.String("backend", m.backend),
-	)
-	m.sendTxLatency.Record(ctx, duration.Milliseconds(), latencyAttrs)
+	m.sendTxLatency.Record(ctx, duration.Milliseconds(), attrs)
 }
