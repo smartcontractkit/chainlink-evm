@@ -40,7 +40,7 @@ func (m *MultiplexClient) SendTransaction(ctx context.Context, tx *types.Transac
 		sCtx, cancel := context.WithTimeout(context.Background(), secondarySendTimeout)
 		defer cancel()
 		if err := m.secondary.SendTransaction(sCtx, tx, attempt); err != nil {
-			m.lggr.Errorw("Secondary backend send failed", "err", err)
+			m.lggr.Errorw("Secondary backend send failed", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
 		}
 	}()
 	return m.primary.SendTransaction(ctx, tx, attempt)

@@ -65,14 +65,14 @@ func (n *novaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	}
 
 	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable {
-		return n.sendToNova(ctx, attempt)
+		return n.sendToNova(ctx, tx, attempt)
 	}
 
 	// fallback to chain client if not dual-broadcast
 	return n.c.SendTransaction(ctx, nil, attempt)
 }
 
-func (n *novaClient) sendToNova(ctx context.Context, attempt *types.Attempt) error {
+func (n *novaClient) sendToNova(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	data, err := attempt.SignedTransaction.MarshalBinary()
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func (n *novaClient) sendToNova(ctx context.Context, attempt *types.Attempt) err
 	if err != nil {
 		return err
 	}
-	n.lggr.Debugw("Sent transaction to Nova", "txHash", attempt.Hash) // TODO(gg): add the transactionLifecycleID here and in other log messages?
+	n.lggr.Debugw("Sent transaction to Nova", "txHash", attempt.Hash, "transactionLifecycleID", tx.GetTransactionLifecycleID(n.lggr))
 	return nil
 }
 

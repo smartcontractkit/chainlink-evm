@@ -116,7 +116,7 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		// Don't act on a bundle error - this is a fire and forget operation but we do want to log the error.
 		if d.bundles {
 			if err := d.SendBundle(ctx, tx.FromAddress, params); err != nil {
-				d.lggr.Errorw("error sending bundle", "err", err)
+				d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
 			}
 		}
 		return nil
