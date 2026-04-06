@@ -45,8 +45,6 @@ func (s *testFlashbotsTxStore) FetchUnconfirmedTransactions(context.Context, com
 	return s.txs, nil
 }
 
-// TODO(gg): add/update tests to validate OFAMetrics
-
 func TestParseURLParams(t *testing.T) {
 	tests := []struct {
 		name           string
