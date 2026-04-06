@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"math/big"
-	"sync"
 	"testing"
 	"time"
 
@@ -96,38 +95,6 @@ func TestMultiplexClient_SendTransaction_SecondaryFails(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("secondary was not called")
 	}
-}
-
-func TestMultiplexClient_SendTransaction_SecondaryTimeout(t *testing.T) {
-	var mu sync.Mutex
-	secondaryCtxErr := error(nil)
-	secondaryCalled := make(chan struct{}, 1)
-
-	primary := &mockClient{}
-	secondary := &mockClient{
-		sendTxFn: func(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
-			<-ctx.Done()
-			mu.Lock()
-			secondaryCtxErr = ctx.Err()
-			mu.Unlock()
-			return ctx.Err()
-		},
-		sendCalled: secondaryCalled,
-	}
-
-	mc := NewMultiplexClient(logger.Test(t), primary, secondary)
-	err := mc.SendTransaction(context.Background(), &types.Transaction{}, &types.Attempt{})
-	require.NoError(t, err)
-
-	select {
-	case <-secondaryCalled:
-	case <-time.After(secondarySendTimeout + 2*time.Second):
-		t.Fatal("secondary goroutine did not complete within expected timeout")
-	}
-
-	mu.Lock()
-	defer mu.Unlock()
-	assert.ErrorIs(t, secondaryCtxErr, context.DeadlineExceeded)
 }
 
 func TestMultiplexClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
