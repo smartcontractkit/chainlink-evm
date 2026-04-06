@@ -47,12 +47,12 @@ type FlashbotsClient struct {
 	customURL *url.URL
 	txStore   FlashbotsTxStore
 	bundles   bool
-	metrics   OFAMetrics
+	metrics   ofaMetrics
 }
 
 var _ txm.Client = (*FlashbotsClient)(nil)
 
-func NewFlashbotsClient(lggr logger.Logger, c FlashbotsClientRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics OFAMetrics) *FlashbotsClient {
+func NewFlashbotsClient(lggr logger.Logger, c FlashbotsClientRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics ofaMetrics) *FlashbotsClient {
 	b := bundles != nil && *bundles
 	return &FlashbotsClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),

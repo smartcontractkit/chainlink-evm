@@ -10,31 +10,31 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 )
 
-// OFAMetrics provides unified OFA (Order Flow Auction) metrics for all dual-broadcast
+// ofaMetrics provides unified OFA (Order Flow Auction) metrics for all dual-broadcast
 // backends. The "backend" label differentiates between providers (e.g. "flashbots", "nova").
-type OFAMetrics struct { // TODO(gg): unexport?
+type ofaMetrics struct {
 	chainID       string
 	backend       string
 	sendTxStatus  metric.Int64Counter
 	sendTxLatency metric.Int64Histogram
 }
 
-func NewOFAMetrics(chainID, backend string) (OFAMetrics, error) {
+func newOFAMetrics(chainID, backend string) (ofaMetrics, error) {
 	sendTxStatus, err := beholder.GetMeter().Int64Counter("ofa_send_tx_status")
 	if err != nil {
-		return OFAMetrics{}, err
+		return ofaMetrics{}, err
 	}
 
 	sendTxLatency, err := beholder.GetMeter().Int64Histogram("ofa_send_tx_latency",
 		metric.WithUnit("ms"),
 		metric.WithDescription("Latency of OFA send transaction requests"),
-		metric.WithExplicitBucketBoundaries(100, 250, 500, 1000, 2000, 3000, 5000, 7500, 10000), //	TODO(gg): double-check buckets, could we use the default instead?
+		metric.WithExplicitBucketBoundaries(100, 250, 500, 1000, 2000, 3000, 5000, 7500, 10000),
 	)
 	if err != nil {
-		return OFAMetrics{}, err
+		return ofaMetrics{}, err
 	}
 
-	return OFAMetrics{
+	return ofaMetrics{
 		chainID:       chainID,
 		backend:       backend,
 		sendTxStatus:  sendTxStatus,
@@ -42,7 +42,7 @@ func NewOFAMetrics(chainID, backend string) (OFAMetrics, error) {
 	}, nil
 }
 
-func (m *OFAMetrics) RecordSendTx(ctx context.Context, duration time.Duration, err error) {
+func (m *ofaMetrics) RecordSendTx(ctx context.Context, duration time.Duration, err error) {
 	status := "success"
 	if err != nil {
 		status = "error"

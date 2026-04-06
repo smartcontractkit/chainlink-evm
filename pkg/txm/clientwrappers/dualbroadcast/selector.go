@@ -30,7 +30,11 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 		return primary, errHandler, nil
 	}
 
-	// TODO(gg): hardcode this to nova instead to prevent accidental use of flashbots/meta as secondary
+	// secondary must be a Nova RPC endpoint
+	if !strings.Contains(secondaryURL.String(), "novarpc") {
+		return nil, nil, fmt.Errorf("secondary URL must be a Nova RPC endpoint, got: %s", secondaryURL.Redacted())
+	}
+
 	secondary, _, err := selectSingleClient(lggr, chainClient, keyStore, secondaryURL, chainID, txStore, bundles, auctionRequestTimeout)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", secondaryURL.Redacted(), err)
@@ -43,13 +47,13 @@ func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainCli
 	urlString := u.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
-		metrics, err := NewOFAMetrics(chainID.String(), "flashbots")
+		metrics, err := newOFAMetrics(chainID.String(), "flashbots")
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for flashbots: %w", err)
 		}
 		return NewFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundles, metrics), nil, nil
 	case strings.Contains(urlString, "novarpc"):
-		metrics, err := NewOFAMetrics(chainID.String(), "nova")
+		metrics, err := newOFAMetrics(chainID.String(), "nova")
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
 		}

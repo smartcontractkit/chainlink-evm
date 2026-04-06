@@ -20,8 +20,6 @@ import (
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-// TODO(gg): add test for TestParseURLParams? Similar to flashbots_client_test.go
-
 type testNovaRPC struct {
 	nonceAtCalls    []nonceAtCall
 	nonceAtNonce    uint64
@@ -50,9 +48,9 @@ func (m *testNovaRPC) SendTransaction(_ context.Context, tx *txmtypes.Transactio
 	return m.sendTxErr
 }
 
-func testOFAMetrics(t *testing.T) OFAMetrics {
+func testOFAMetrics(t *testing.T) ofaMetrics {
 	t.Helper()
-	m, err := NewOFAMetrics("1", "nova")
+	m, err := newOFAMetrics("1", "nova")
 	require.NoError(t, err)
 	return m
 }

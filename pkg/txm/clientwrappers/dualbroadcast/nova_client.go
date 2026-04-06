@@ -33,12 +33,12 @@ type novaClient struct {
 	lggr      logger.SugaredLogger
 	c         novaClientRPC
 	customURL *url.URL
-	metrics   OFAMetrics
+	metrics   ofaMetrics
 }
 
 var _ txm.Client = (*novaClient)(nil)
 
-func newNovaClient(lggr logger.Logger, c novaClientRPC, customURL *url.URL, metrics OFAMetrics) *novaClient {
+func newNovaClient(lggr logger.Logger, c novaClientRPC, customURL *url.URL, metrics ofaMetrics) *novaClient {
 	return &novaClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,

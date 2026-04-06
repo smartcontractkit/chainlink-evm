@@ -209,7 +209,7 @@ func TestSendBundle_UsesLatestAttemptPerTransaction(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
-	metrics, mErr := NewOFAMetrics("1", "flashbots")
+	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
 	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
 
@@ -272,7 +272,7 @@ func TestSendBundle_SucceedsOnIncreasingNonces(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
-	metrics, mErr := NewOFAMetrics("1", "flashbots")
+	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
 	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
 	err = client.SendBundle(context.Background(), fromAddress, "")
@@ -314,7 +314,7 @@ func TestSendBundle_ReturnsErrorOnNonceGap(t *testing.T) {
 	customURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
 
-	metrics, mErr := NewOFAMetrics("1", "flashbots")
+	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
 	client := NewFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
 	err = client.SendBundle(context.Background(), fromAddress, "")
