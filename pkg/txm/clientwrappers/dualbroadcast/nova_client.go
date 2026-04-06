@@ -24,9 +24,14 @@ import (
 
 const novaRPCTimeout = 10 * time.Second
 
+type novaClientRPC interface {
+	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
+	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
+}
+
 type NovaClient struct {
 	lggr      logger.SugaredLogger
-	c         FlashbotsClientRPC // TODO(gg): duplicate to NovaClientRPC to prevent confusion?
+	c         novaClientRPC
 	customURL *url.URL
 	metrics   OFAMetrics
 }
@@ -34,7 +39,7 @@ type NovaClient struct {
 var _ txm.Client = (*NovaClient)(nil)
 
 // TODO(gg): unexport?
-func NewNovaClient(lggr logger.Logger, c FlashbotsClientRPC, customURL *url.URL, metrics OFAMetrics) *NovaClient {
+func NewNovaClient(lggr logger.Logger, c novaClientRPC, customURL *url.URL, metrics OFAMetrics) *NovaClient {
 	return &NovaClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,

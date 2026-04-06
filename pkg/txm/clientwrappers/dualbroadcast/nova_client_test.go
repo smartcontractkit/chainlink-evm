@@ -23,6 +23,34 @@ import (
 // TODO(gg): add/update tests to validate OFAMetrics
 // TODO(gg): add test for TestParseURLParams? Similar to flashbots_client_test.go
 
+type testNovaRPC struct {
+	nonceAtCalls    []nonceAtCall
+	nonceAtNonce    uint64
+	nonceAtErr      error
+	sendTxCalls     []sendTxCall
+	sendTxErr       error
+}
+
+type nonceAtCall struct {
+	Address     common.Address
+	BlockNumber *big.Int
+}
+
+type sendTxCall struct {
+	Tx      *txmtypes.Transaction
+	Attempt *txmtypes.Attempt
+}
+
+func (m *testNovaRPC) NonceAt(_ context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
+	m.nonceAtCalls = append(m.nonceAtCalls, nonceAtCall{Address: address, BlockNumber: blockNumber})
+	return m.nonceAtNonce, m.nonceAtErr
+}
+
+func (m *testNovaRPC) SendTransaction(_ context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
+	m.sendTxCalls = append(m.sendTxCalls, sendTxCall{Tx: tx, Attempt: attempt})
+	return m.sendTxErr
+}
+
 func testOFAMetrics(t *testing.T) OFAMetrics {
 	t.Helper()
 	m, err := NewOFAMetrics("1", "nova")
@@ -76,7 +104,7 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	customURL, err := url.Parse(server.URL + "?api_key=test_key")
 	require.NoError(t, err)
 
-	rpc := &testFlashbotsRPC{}
+	rpc := &testNovaRPC{}
 	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 42)
@@ -91,11 +119,13 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	assert.Equal(t, "eth_sendRawTransaction", req.Method)
 	assert.Len(t, req.Params, 1)
 	assert.Contains(t, req.Params[0], "0x") // hex-encoded RLP
+
+	assert.Empty(t, rpc.sendTxCalls, "dual-broadcast tx should go to Nova, not chain RPC fallback")
 }
 
 func TestNovaClient_SendTransaction_NonDual(t *testing.T) {
-	rpc := &testFlashbotsRPC{}
-	customURL, err := url.Parse("https://eth.novarpc.xyz?api_key=test") // TODO(gg): use localhost instead
+	rpc := &testNovaRPC{}
+	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
 	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
@@ -117,11 +147,15 @@ func TestNovaClient_SendTransaction_NonDual(t *testing.T) {
 
 	err = client.SendTransaction(context.Background(), tx, attempt)
 	require.NoError(t, err)
+
+	require.Len(t, rpc.sendTxCalls, 1)
+	assert.Nil(t, rpc.sendTxCalls[0].Tx, "fallback should pass nil tx to chain RPC")
+	assert.Equal(t, attempt, rpc.sendTxCalls[0].Attempt)
 }
 
 func TestNovaClient_SendTransaction_Purgeable(t *testing.T) {
-	rpc := &testFlashbotsRPC{}
-	customURL, err := url.Parse("https://eth.novarpc.xyz?api_key=test")
+	rpc := &testNovaRPC{}
+	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
 	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
@@ -131,6 +165,10 @@ func TestNovaClient_SendTransaction_Purgeable(t *testing.T) {
 
 	err = client.SendTransaction(context.Background(), tx, attempt)
 	require.NoError(t, err)
+
+	require.Len(t, rpc.sendTxCalls, 1)
+	assert.Nil(t, rpc.sendTxCalls[0].Tx, "purgeable tx should fallback to chain RPC with nil tx")
+	assert.Equal(t, attempt, rpc.sendTxCalls[0].Attempt)
 }
 
 func TestNovaClient_SendTransaction_ServerError(t *testing.T) {
@@ -143,7 +181,7 @@ func TestNovaClient_SendTransaction_ServerError(t *testing.T) {
 	customURL, err := url.Parse(server.URL + "?api_key=test")
 	require.NoError(t, err)
 
-	rpc := &testFlashbotsRPC{}
+	rpc := &testNovaRPC{}
 	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 1)
@@ -162,7 +200,7 @@ func TestNovaClient_SendTransaction_RPCError(t *testing.T) {
 	customURL, err := url.Parse(server.URL + "?api_key=test")
 	require.NoError(t, err)
 
-	rpc := &testFlashbotsRPC{}
+	rpc := &testNovaRPC{}
 	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 1)
@@ -172,25 +210,36 @@ func TestNovaClient_SendTransaction_RPCError(t *testing.T) {
 }
 
 func TestNovaClient_PendingNonceAt(t *testing.T) {
-	rpc := &testFlashbotsRPC{}
-	customURL, err := url.Parse("https://eth.novarpc.xyz?api_key=test")
+	rpc := &testNovaRPC{nonceAtNonce: 42}
+	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
 	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
-	nonce, err := client.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
+	addr := common.HexToAddress("0x123")
+	nonce, err := client.PendingNonceAt(context.Background(), addr)
 	require.NoError(t, err)
-	assert.Equal(t, uint64(0), nonce)
+	assert.Equal(t, uint64(42), nonce)
+
+	require.Len(t, rpc.nonceAtCalls, 1)
+	assert.Equal(t, addr, rpc.nonceAtCalls[0].Address)
+	assert.Nil(t, rpc.nonceAtCalls[0].BlockNumber, "PendingNonceAt should delegate to NonceAt with nil block (latest)")
 }
 
 func TestNovaClient_NonceAt(t *testing.T) {
-	rpc := &testFlashbotsRPC{}
-	customURL, err := url.Parse("https://eth.novarpc.xyz?api_key=test")
+	rpc := &testNovaRPC{nonceAtNonce: 7}
+	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
 	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
-	nonce, err := client.NonceAt(context.Background(), common.HexToAddress("0x123"), big.NewInt(100))
+	addr := common.HexToAddress("0x123")
+	blockNum := big.NewInt(100)
+	nonce, err := client.NonceAt(context.Background(), addr, blockNum)
 	require.NoError(t, err)
-	assert.Equal(t, uint64(0), nonce)
+	assert.Equal(t, uint64(7), nonce)
+
+	require.Len(t, rpc.nonceAtCalls, 1)
+	assert.Equal(t, addr, rpc.nonceAtCalls[0].Address)
+	assert.Equal(t, blockNum, rpc.nonceAtCalls[0].BlockNumber)
 }
