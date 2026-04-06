@@ -28,13 +28,13 @@ type NovaClient struct {
 	lggr      logger.SugaredLogger
 	c         FlashbotsClientRPC // TODO(gg): duplicate to NovaClientRPC to prevent confusion?
 	customURL *url.URL
-	metrics   *OFAMetrics // TODO(gg): can this be a non-pointer?
+	metrics   OFAMetrics
 }
 
 var _ txm.Client = (*NovaClient)(nil)
 
 // TODO(gg): unexport?
-func NewNovaClient(lggr logger.Logger, c FlashbotsClientRPC, customURL *url.URL, metrics *OFAMetrics) *NovaClient {
+func NewNovaClient(lggr logger.Logger, c FlashbotsClientRPC, customURL *url.URL, metrics OFAMetrics) *NovaClient {
 	return &NovaClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,
@@ -78,9 +78,7 @@ func (n *NovaClient) sendToNova(ctx context.Context, attempt *types.Attempt) err
 
 	start := time.Now()
 	err = n.postToNova(ctx, body)
-	if n.metrics != nil {
-		n.metrics.RecordSendTx(ctx, time.Since(start), err)
-	}
+	n.metrics.RecordSendTx(ctx, time.Since(start), err)
 	if err != nil {
 		return err
 	}

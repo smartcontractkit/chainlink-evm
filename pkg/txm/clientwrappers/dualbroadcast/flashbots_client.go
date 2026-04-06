@@ -47,12 +47,12 @@ type FlashbotsClient struct {
 	customURL *url.URL
 	txStore   FlashbotsTxStore
 	bundles   bool
-	metrics   *OFAMetrics // TODO(gg): can this be a non-pointer?
+	metrics   OFAMetrics
 }
 
 var _ txm.Client = (*FlashbotsClient)(nil)
 
-func NewFlashbotsClient(lggr logger.Logger, c FlashbotsClientRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics *OFAMetrics) *FlashbotsClient {
+func NewFlashbotsClient(lggr logger.Logger, c FlashbotsClientRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics OFAMetrics) *FlashbotsClient {
 	b := bundles != nil && *bundles
 	return &FlashbotsClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
@@ -107,9 +107,7 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
 		start := time.Now()
 		_, err = d.signAndPostMessage(ctx, tx.FromAddress, body, params)
-		if d.metrics != nil {
-			d.metrics.RecordSendTx(ctx, time.Since(start), err)
-		}
+		d.metrics.RecordSendTx(ctx, time.Since(start), err)
 		if err != nil {
 			return err
 		}

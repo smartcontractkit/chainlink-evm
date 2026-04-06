@@ -19,10 +19,10 @@ type OFAMetrics struct { // TODO(gg): unexport?
 	sendTxLatency metric.Int64Histogram
 }
 
-func NewOFAMetrics(chainID, backend string) (*OFAMetrics, error) {
+func NewOFAMetrics(chainID, backend string) (OFAMetrics, error) {
 	sendTxStatus, err := beholder.GetMeter().Int64Counter("ofa_send_tx_status")
 	if err != nil {
-		return nil, err
+		return OFAMetrics{}, err
 	}
 
 	sendTxLatency, err := beholder.GetMeter().Int64Histogram("ofa_send_tx_latency",
@@ -31,10 +31,10 @@ func NewOFAMetrics(chainID, backend string) (*OFAMetrics, error) {
 		metric.WithExplicitBucketBoundaries(100, 250, 500, 1000, 2000, 3000, 5000, 7500, 10000), //	TODO(gg): double-check buckets, could we use the default instead?
 	)
 	if err != nil {
-		return nil, err
+		return OFAMetrics{}, err
 	}
 
-	return &OFAMetrics{
+	return OFAMetrics{
 		chainID:       chainID,
 		backend:       backend,
 		sendTxStatus:  sendTxStatus,

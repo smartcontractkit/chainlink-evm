@@ -23,6 +23,13 @@ import (
 // TODO(gg): add/update tests to validate OFAMetrics
 // TODO(gg): add test for TestParseURLParams? Similar to flashbots_client_test.go
 
+func testOFAMetrics(t *testing.T) OFAMetrics {
+	t.Helper()
+	m, err := NewOFAMetrics("1", "nova")
+	require.NoError(t, err)
+	return m
+}
+
 func newDualBroadcastTx(t *testing.T, nonce uint64) (*txmtypes.Transaction, *txmtypes.Attempt) {
 	t.Helper()
 	toAddress := common.HexToAddress("0x456")
@@ -70,7 +77,7 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testFlashbotsRPC{}
-	client := NewNovaClient(logger.Test(t), rpc, customURL, nil)
+	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 42)
 	err = client.SendTransaction(context.Background(), tx, attempt)
@@ -91,7 +98,7 @@ func TestNovaClient_SendTransaction_NonDual(t *testing.T) {
 	customURL, err := url.Parse("https://eth.novarpc.xyz?api_key=test") // TODO(gg): use localhost instead
 	require.NoError(t, err)
 
-	client := NewNovaClient(logger.Test(t), rpc, customURL, nil)
+	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	nonce := uint64(1)
 	toAddress := common.HexToAddress("0x456")
@@ -117,7 +124,7 @@ func TestNovaClient_SendTransaction_Purgeable(t *testing.T) {
 	customURL, err := url.Parse("https://eth.novarpc.xyz?api_key=test")
 	require.NoError(t, err)
 
-	client := NewNovaClient(logger.Test(t), rpc, customURL, nil)
+	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 1)
 	tx.IsPurgeable = true
@@ -137,7 +144,7 @@ func TestNovaClient_SendTransaction_ServerError(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testFlashbotsRPC{}
-	client := NewNovaClient(logger.Test(t), rpc, customURL, nil)
+	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 1)
 	err = client.SendTransaction(context.Background(), tx, attempt)
@@ -156,7 +163,7 @@ func TestNovaClient_SendTransaction_RPCError(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testFlashbotsRPC{}
-	client := NewNovaClient(logger.Test(t), rpc, customURL, nil)
+	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 1)
 	err = client.SendTransaction(context.Background(), tx, attempt)
@@ -169,7 +176,7 @@ func TestNovaClient_PendingNonceAt(t *testing.T) {
 	customURL, err := url.Parse("https://eth.novarpc.xyz?api_key=test")
 	require.NoError(t, err)
 
-	client := NewNovaClient(logger.Test(t), rpc, customURL, nil)
+	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	nonce, err := client.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
 	require.NoError(t, err)
@@ -181,7 +188,7 @@ func TestNovaClient_NonceAt(t *testing.T) {
 	customURL, err := url.Parse("https://eth.novarpc.xyz?api_key=test")
 	require.NoError(t, err)
 
-	client := NewNovaClient(logger.Test(t), rpc, customURL, nil)
+	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	nonce, err := client.NonceAt(context.Background(), common.HexToAddress("0x123"), big.NewInt(100))
 	require.NoError(t, err)
