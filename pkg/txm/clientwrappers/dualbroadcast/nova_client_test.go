@@ -20,7 +20,6 @@ import (
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-// TODO(gg): add/update tests to validate OFAMetrics
 // TODO(gg): add test for TestParseURLParams? Similar to flashbots_client_test.go
 
 type testNovaRPC struct {
