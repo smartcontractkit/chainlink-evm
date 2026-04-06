@@ -105,7 +105,7 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 42)
 	err = client.SendTransaction(context.Background(), tx, attempt)
@@ -128,7 +128,7 @@ func TestNovaClient_SendTransaction_NonDual(t *testing.T) {
 	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
-	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	nonce := uint64(1)
 	toAddress := common.HexToAddress("0x456")
@@ -158,7 +158,7 @@ func TestNovaClient_SendTransaction_Purgeable(t *testing.T) {
 	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
-	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 1)
 	tx.IsPurgeable = true
@@ -182,7 +182,7 @@ func TestNovaClient_SendTransaction_ServerError(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 1)
 	err = client.SendTransaction(context.Background(), tx, attempt)
@@ -201,7 +201,7 @@ func TestNovaClient_SendTransaction_RPCError(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	tx, attempt := newDualBroadcastTx(t, 1)
 	err = client.SendTransaction(context.Background(), tx, attempt)
@@ -214,7 +214,7 @@ func TestNovaClient_PendingNonceAt(t *testing.T) {
 	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
-	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	addr := common.HexToAddress("0x123")
 	nonce, err := client.PendingNonceAt(context.Background(), addr)
@@ -231,7 +231,7 @@ func TestNovaClient_NonceAt(t *testing.T) {
 	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
-	client := NewNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	addr := common.HexToAddress("0x123")
 	blockNum := big.NewInt(100)

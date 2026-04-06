@@ -53,7 +53,7 @@ func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainCli
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
 		}
-		return NewNovaClient(lggr, chainClient, u, metrics), nil, nil
+		return newNovaClient(lggr, chainClient, u, metrics), nil, nil
 	default:
 		mc, err := NewMetaClient(lggr, chainClient, keyStore, u, chainID, txStore, auctionRequestTimeout)
 		if err != nil {

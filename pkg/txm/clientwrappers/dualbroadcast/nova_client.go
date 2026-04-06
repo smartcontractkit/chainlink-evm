@@ -29,18 +29,17 @@ type novaClientRPC interface {
 	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
 }
 
-type NovaClient struct {
+type novaClient struct {
 	lggr      logger.SugaredLogger
 	c         novaClientRPC
 	customURL *url.URL
 	metrics   OFAMetrics
 }
 
-var _ txm.Client = (*NovaClient)(nil)
+var _ txm.Client = (*novaClient)(nil)
 
-// TODO(gg): unexport?
-func NewNovaClient(lggr logger.Logger, c novaClientRPC, customURL *url.URL, metrics OFAMetrics) *NovaClient {
-	return &NovaClient{
+func newNovaClient(lggr logger.Logger, c novaClientRPC, customURL *url.URL, metrics OFAMetrics) *novaClient {
+	return &novaClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,
 		customURL: customURL,
@@ -48,18 +47,18 @@ func NewNovaClient(lggr logger.Logger, c novaClientRPC, customURL *url.URL, metr
 	}
 }
 
-func (n *NovaClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
+func (n *novaClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
 	return n.c.NonceAt(ctx, address, blockNumber)
 }
 
 // TODO(gg): maybe use `eth_getTransactionCount` (https://docs.novarpc.xyz/rpc-api-specification/eth_gettransactioncount) instead? Check when this is being called
-func (n *NovaClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
+func (n *novaClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
 	// In a multiplex setup, MultiplexClient routes PendingNonceAt to the primary (Flashbots).
 	// This fallback queries the chain RPC directly via NonceAt with nil block (latest).
 	return n.c.NonceAt(ctx, address, nil)
 }
 
-func (n *NovaClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+func (n *novaClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return err
@@ -73,7 +72,7 @@ func (n *NovaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	return n.c.SendTransaction(ctx, nil, attempt)
 }
 
-func (n *NovaClient) sendToNova(ctx context.Context, attempt *types.Attempt) error {
+func (n *novaClient) sendToNova(ctx context.Context, attempt *types.Attempt) error {
 	data, err := attempt.SignedTransaction.MarshalBinary()
 	if err != nil {
 		return err
@@ -91,7 +90,7 @@ func (n *NovaClient) sendToNova(ctx context.Context, attempt *types.Attempt) err
 	return nil
 }
 
-func (n *NovaClient) postToNova(ctx context.Context, body []byte) error {
+func (n *novaClient) postToNova(ctx context.Context, body []byte) error {
 	ctx, cancel := context.WithTimeout(ctx, novaRPCTimeout)
 	defer cancel()
 
