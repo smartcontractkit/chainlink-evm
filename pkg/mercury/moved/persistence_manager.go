@@ -1,4 +1,4 @@
-package mercury
+package moved
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
-
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc/pb"
 )
 

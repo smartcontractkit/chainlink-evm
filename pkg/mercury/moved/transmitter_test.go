@@ -1,4 +1,4 @@
-package mercury
+package moved
 
 import (
 	"context"
@@ -19,8 +19,8 @@ import (
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc/mocks"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc/pb"
-	mercurytypes "github.com/smartcontractkit/chainlink-evm/pkg/mercury/types"
-	mercuryutils "github.com/smartcontractkit/chainlink-evm/pkg/mercury/utils"
+	mercurytypes "github.com/smartcontractkit/chainlink-evm/pkg/mercury/moved/types"
+	mercuryutils "github.com/smartcontractkit/chainlink-evm/pkg/mercury/moved/utils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 )

@@ -1,4 +1,4 @@
-package mercury
+package moved
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc/pb"
-	"github.com/smartcontractkit/chainlink-evm/pkg/mercury/utils"
+	"github.com/smartcontractkit/chainlink-evm/pkg/mercury/moved/utils"
 )
 
 type ORM interface {

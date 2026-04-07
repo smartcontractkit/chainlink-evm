@@ -1,4 +1,4 @@
-package mercury
+package moved
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc/pb"
-	mercuryutils "github.com/smartcontractkit/chainlink-evm/pkg/mercury/utils"
+	mercuryutils "github.com/smartcontractkit/chainlink-evm/pkg/mercury/moved/utils"
 )
 
 const (

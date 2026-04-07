@@ -14,7 +14,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/verifier"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
-	"github.com/smartcontractkit/chainlink-evm/pkg/mercury/utils"
 )
 
 // FeedScopedConfigSet ConfigSet with FeedID for use with mercury (and multi-config DON)
@@ -39,7 +38,7 @@ func init() {
 // FullConfigFromLog defines the contract config with the feedID
 type FullConfigFromLog struct {
 	ocrtypes.ContractConfig
-	feedID utils.FeedID
+	feedID common.Hash
 }
 
 func unpackLogData(d []byte) (*verifier.VerifierConfigSet, error) {

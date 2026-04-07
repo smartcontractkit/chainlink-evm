@@ -1,4 +1,4 @@
-package mercury
+package moved
 
 import (
 	"sync"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc/pb"
-	"github.com/smartcontractkit/chainlink-evm/pkg/mercury/mocks"
+	"github.com/smartcontractkit/chainlink-evm/pkg/mercury/moved/mocks"
 )
 
 type TestTransmissionWithReport struct {

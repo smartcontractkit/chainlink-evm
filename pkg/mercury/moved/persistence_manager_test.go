@@ -1,4 +1,4 @@
-package mercury
+package moved
 
 import (
 	"math/rand/v2"
