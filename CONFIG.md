@@ -393,6 +393,7 @@ DualBroadcast = false # Example
 ReadRequestsToMultipleNodes = false # Example
 Bundles = false # Example
 FastlaneAuctionRequestTimeout = '5s' # Example
+TransactionPercentile = 60 # Example
 ```
 
 
@@ -437,6 +438,16 @@ Bundles enables sending bundles for auctioning (not compatible with all OFAs).
 FastlaneAuctionRequestTimeout = '5s' # Example
 ```
 FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
+
+### TransactionPercentile
+```toml
+TransactionPercentile = 60 # Example
+```
+TransactionPercentile overrides the RewardPercentile used by the TxM v2 FeeHistory estimator.
+TxM v2 always uses a FeeHistory estimator regardless of the GasEstimator.Mode setting.
+If not set, falls back to GasEstimator.BlockHistory.TransactionPercentile.
+Note: this setting has no effect when EIP1559DynamicFees is false, because in legacy mode
+the FeeHistory estimator uses eth_gasPrice which does not use percentiles.
 
 ## BalanceMonitor
 ```toml
