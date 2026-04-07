@@ -152,6 +152,16 @@ func newTxmV2FeeHistoryEstimator(
 		rewardPercentile = float64(*txmV2Cfg.TransactionPercentile())
 	}
 
+	// Validate that RewardPercentile doesn't exceed ConnectivityPercentile (85) when using EIP-1559.
+	// FeeHistoryEstimator.Start() will reject this, but catching it here gives a clearer config error —
+	// especially on the fallback path where BlockHistory.TransactionPercentile (which can be >85) is used.
+	if geCfg.EIP1559DynamicFees() && rewardPercentile > gas.ConnectivityPercentile {
+		return nil, fmt.Errorf(
+			"TxM v2 FeeHistory estimator RewardPercentile (%.0f) exceeds maximum allowed ConnectivityPercentile (%d) for EIP-1559 mode; "+
+				"set [EVM.Transactions.TransactionManagerV2] TransactionPercentile to a value <= %d",
+			rewardPercentile, gas.ConnectivityPercentile, gas.ConnectivityPercentile)
+	}
+
 	l1Oracle, err := rollups.NewL1GasOracle(lggr, client, cfg.ChainType(), geCfg.DAOracle(), clientsByChainID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize L1 oracle for TxM v2: %w", err)
