@@ -29,7 +29,7 @@ func TestMercuryConfigPoller(t *testing.T) {
 	assert.Empty(t, notify)
 
 	// Should have no config to begin with.
-	_, config, err := th.configPoller.LatestConfigDetails(testutils.Context(t))
+	_, config, err := th.configPoller.LatestConfigDetails(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, ocrtypes2.ConfigDigest{}, config)
 
@@ -84,23 +84,23 @@ func TestMercuryConfigPoller(t *testing.T) {
 	require.NoError(t, err, "failed to setConfig with feed ID")
 	th.backend.Commit()
 
-	latest, err := th.backend.Client().BlockByNumber(testutils.Context(t), nil)
+	latest, err := th.backend.Client().BlockByNumber(t.Context(), nil)
 	require.NoError(t, err)
 	// Ensure we capture this config set log.
-	require.NoError(t, th.logPoller.Replay(testutils.Context(t), latest.Number().Int64()-1))
+	require.NoError(t, th.logPoller.Replay(t.Context(), latest.Number().Int64()-1))
 
 	// Send blocks until we see the config updated.
 	var configBlock uint64
 	var digest [32]byte
 	gomega.NewGomegaWithT(t).Eventually(func() bool {
 		th.backend.Commit()
-		configBlock, digest, err = th.configPoller.LatestConfigDetails(testutils.Context(t))
+		configBlock, digest, err = th.configPoller.LatestConfigDetails(t.Context())
 		require.NoError(t, err)
 		return ocrtypes2.ConfigDigest{} != digest
 	}, testutils.WaitTimeout(t), 100*time.Millisecond).Should(gomega.BeTrue())
 
 	// Assert the config returned is the one we configured.
-	newConfig, err := th.configPoller.LatestConfig(testutils.Context(t), configBlock)
+	newConfig, err := th.configPoller.LatestConfig(t.Context(), configBlock)
 	require.NoError(t, err)
 	// Note we don't check onchainConfig, as that is populated in the contract itself.
 	assert.Equal(t, digest, [32]byte(newConfig.ConfigDigest))
