@@ -25,7 +25,7 @@ func TestPersistenceManager(t *testing.T) {
 	jobID1 := rand.Int32()
 	jobID2 := jobID1 + 1
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 	testutils.MustExec(t, db, `SET CONSTRAINTS mercury_transmit_requests_job_id_fkey DEFERRED`)
 	testutils.MustExec(t, db, `SET CONSTRAINTS feed_latest_reports_job_id_fkey DEFERRED`)
@@ -64,7 +64,7 @@ func TestPersistenceManager(t *testing.T) {
 }
 
 func TestPersistenceManagerAsyncDelete(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	jobID := rand.Int32()
 	db := testutils.NewSqlxDB(t)
 	testutils.MustExec(t, db, `SET CONSTRAINTS mercury_transmit_requests_job_id_fkey DEFERRED`)
@@ -118,7 +118,7 @@ func TestPersistenceManagerPrune(t *testing.T) {
 	testutils.MustExec(t, db, `SET CONSTRAINTS mercury_transmit_requests_job_id_fkey DEFERRED`)
 	testutils.MustExec(t, db, `SET CONSTRAINTS feed_latest_reports_job_id_fkey DEFERRED`)
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	reports := make([][]byte, 25)
 	for i := range 25 {
@@ -144,7 +144,7 @@ func TestPersistenceManagerPrune(t *testing.T) {
 	require.NoError(t, err)
 
 	testutils.RequireEventually(t, func() bool {
-		requests, err2 := pm.Load(testutils.Context(t))
+		requests, err2 := pm.Load(t.Context())
 		require.NoError(t, err2)
 		return len(requests) == pm.maxTransmitQueueSize
 	})
