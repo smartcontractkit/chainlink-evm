@@ -364,6 +364,9 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 	if err != nil {
 		return err
 	}
+	if t.Metrics != nil {
+		t.Metrics.SetRPCNonce(ctx, address, latestNonce)
+	}
 
 	confirmedTransactions, unconfirmedTransactionIDs, err := t.txStore.MarkConfirmedAndReorgedTransactions(ctx, latestNonce, address)
 	if err != nil {
