@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/protobuf/proto"
 
@@ -42,7 +43,9 @@ var (
 	}, []string{"chainID"})
 )
 
-type txmMetrics struct {
+// TxmMetrics is the single metrics type for the TXMv2 transaction lifecycle.
+// It records both general TXM operational metrics and lifecycle metrics.
+type TxmMetrics struct {
 	metrics.Labeler
 	chainID              *big.Int
 	numBroadcastedTxs    metric.Int64Counter
@@ -50,9 +53,10 @@ type txmMetrics struct {
 	numNonceGaps         metric.Int64Counter
 	reachedMaxAttempts   metric.Int64Gauge
 	timeUntilTxConfirmed metric.Float64Histogram
+	lifecycleFailure     metric.Int64Counter
 }
 
-func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
+func NewTxmMetrics(chainID *big.Int) (*TxmMetrics, error) {
 	numBroadcastedTxs, err := beholder.GetMeter().Int64Counter("txm_num_broadcasted_transactions")
 	if err != nil {
 		return nil, fmt.Errorf("failed to register broadcasted txs number: %w", err)
@@ -78,7 +82,12 @@ func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
 		return nil, fmt.Errorf("failed to register max attempts indicator: %w", err)
 	}
 
-	return &txmMetrics{
+	lifecycleFailure, err := beholder.GetMeter().Int64Counter("txm_transaction_lifecycle_failure_total")
+	if err != nil {
+		return nil, fmt.Errorf("failed to register lifecycle failure counter: %w", err)
+	}
+
+	return &TxmMetrics{
 		chainID:              chainID,
 		Labeler:              metrics.NewLabeler().With("chainID", chainID.String()),
 		numBroadcastedTxs:    numBroadcastedTxs,
@@ -86,25 +95,51 @@ func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
 		numNonceGaps:         numNonceGaps,
 		reachedMaxAttempts:   reachedMaxAttempts,
 		timeUntilTxConfirmed: timeUntilTxConfirmed,
+		lifecycleFailure:     lifecycleFailure,
 	}, nil
 }
 
-func (m *txmMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
+// LifecycleFailureStage represents a stage in the transaction lifecycle where a failure can occur.
+type LifecycleFailureStage string
+
+const (
+	StageCreate         LifecycleFailureStage = "create"
+	StageInFlightSubset LifecycleFailureStage = "in_flight_subset"
+	StageMaxInFlight    LifecycleFailureStage = "max_in_flight"
+	StageBroadcast      LifecycleFailureStage = "broadcast"
+	StageNonceAt        LifecycleFailureStage = "nonce_at"
+
+	// SVR-specific stages.
+	StageCreatePrimary LifecycleFailureStage = "create_primary"
+	StageAuction       LifecycleFailureStage = "auction"
+)
+
+// IncrementLifecycleFailure increments the lifecycle failure counter for the given stage.
+func (m *TxmMetrics) IncrementLifecycleFailure(ctx context.Context, stage LifecycleFailureStage) {
+	m.lifecycleFailure.Add(ctx, 1,
+		metric.WithAttributes(
+			attribute.String("chainID", m.chainID.String()),
+			attribute.String("stage", string(stage)),
+		),
+	)
+}
+
+func (m *TxmMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
 	promNumBroadcastedTxs.WithLabelValues(m.chainID.String()).Add(float64(1))
 	m.numBroadcastedTxs.Add(ctx, 1)
 }
 
-func (m *txmMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int) {
+func (m *TxmMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int) {
 	promNumConfirmedTxs.WithLabelValues(m.chainID.String()).Add(float64(confirmedTransactions))
 	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions))
 }
 
-func (m *txmMetrics) IncrementNumNonceGaps(ctx context.Context) {
+func (m *TxmMetrics) IncrementNumNonceGaps(ctx context.Context) {
 	promNumNonceGaps.WithLabelValues(m.chainID.String()).Add(float64(1))
 	m.numNonceGaps.Add(ctx, 1)
 }
 
-func (m *txmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
+func (m *TxmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
 	var value float64
 	if reached {
 		value = 1
@@ -113,12 +148,12 @@ func (m *txmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
 	m.reachedMaxAttempts.Record(ctx, int64(value))
 }
 
-func (m *txmMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
+func (m *TxmMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID.String()).Observe(duration)
 	m.timeUntilTxConfirmed.Record(ctx, duration)
 }
 
-func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
+func (m *TxmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return fmt.Errorf("failed to get meta for tx %s: %w", txHash, err)

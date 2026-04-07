@@ -127,8 +127,11 @@ func setupTestnetTXM(
 		errorHandler = dualbroadcast.NewErrorHandler()
 	}
 
+	metrics, err := txm.NewTxmMetrics(chainID)
+	require.NoError(t, err)
+
 	// TXM
-	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler)
+	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler, metrics)
 	require.NotNil(t, txm)
 	servicetest.Run(t, txm)
 	return txm, store, client
@@ -182,8 +185,11 @@ func setupDevnetTXM(
 		errorHandler = dualbroadcast.NewErrorHandler()
 	}
 
+	metrics, err := txm.NewTxmMetrics(chainID)
+	require.NoError(t, err)
+
 	// TXM
-	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler)
+	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler, metrics)
 	require.NotNil(t, txm)
 	servicetest.Run(t, txm)
 

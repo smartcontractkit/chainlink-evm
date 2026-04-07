@@ -142,11 +142,12 @@ type MetaClient struct {
 	customURL             *url.URL
 	chainID               *big.Int
 	metrics               *MetaMetrics
+	lifecycleMetrics      *txm.TxmMetrics
 	txStore               MetaClientTxStore
 	auctionRequestTimeout time.Duration
 }
 
-func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore, auctionRequestTimeout *time.Duration) (*MetaClient, error) {
+func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore, auctionRequestTimeout *time.Duration, lifecycleMetrics *txm.TxmMetrics) (*MetaClient, error) {
 	metrics, err := NewMetaMetrics(chainID.String(), lggr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
@@ -164,6 +165,7 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 		customURL:             customURL,
 		chainID:               chainID,
 		metrics:               metrics,
+		lifecycleMetrics:      lifecycleMetrics,
 		txStore:               txStore,
 		auctionRequestTimeout: t,
 	}, nil
@@ -196,6 +198,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		if err != nil {
 			a.metrics.RecordSendRequestError(ctx)
 			a.metrics.emitAtlasError(ctx, "send_request", a.customURL, err, tx)
+			a.lifecycleMetrics.IncrementLifecycleFailure(ctx, txm.StageAuction)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, errors.Join(err, ErrAuction))
 		}
 		// Send Metacall

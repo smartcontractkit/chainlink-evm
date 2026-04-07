@@ -68,7 +68,7 @@ func TestDualContractTransmitter(t *testing.T) {
 	reportToEvmTxMeta := func(b []byte) (*txmgr.TxMeta, error) {
 		return &txmgr.TxMeta{}, nil
 	}
-	ot, err := NewOCRDualContractTransmitter(ctx, gethcommon.Address{}, c, contractABI, &mockDualTransmitter{}, lp, lggr, &keystest.FakeChainStore{}, WithReportToEthMetadata(reportToEvmTxMeta))
+	ot, err := NewOCRDualContractTransmitter(ctx, gethcommon.Address{}, c, contractABI, &mockDualTransmitter{}, lp, lggr, &keystest.FakeChainStore{}, testutils.FixtureChainID, WithReportToEthMetadata(reportToEvmTxMeta))
 	require.NoError(t, err)
 	digest, epoch, err := ot.LatestConfigDigestAndEpoch(testutils.Context(t))
 	require.NoError(t, err)
@@ -175,6 +175,7 @@ func createDualContractTransmitter(ctx context.Context, t *testing.T, transmitte
 		lp,
 		logger.Test(t),
 		&keystest.FakeChainStore{},
+		testutils.FixtureChainID,
 		ops...,
 	)
 	require.NoError(t, err)

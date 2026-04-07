@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	stderrors "errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"sync"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
 )
 
@@ -37,6 +39,7 @@ type dualContractTransmitter struct {
 	lp                  logpoller.LogPoller
 	lggr                logger.Logger
 	ks                  keys.Locker
+	lifecycleMetrics    *txm.TxmMetrics
 	// Options
 	transmitterOptions *transmitterOps
 }
@@ -58,11 +61,20 @@ func NewOCRDualContractTransmitter(
 	lp logpoller.LogPoller,
 	lggr logger.Logger,
 	ethKeystore keys.Locker,
+	chainID *big.Int,
 	opts ...OCRTransmitterOption,
 ) (*dualContractTransmitter, error) {
 	transmitted, ok := contractABI.Events["Transmitted"]
 	if !ok {
 		return nil, errors.New("invalid ABI, missing transmitted")
+	}
+
+	var lifecycleMetrics *txm.TxmMetrics
+	lm, mErr := txm.NewTxmMetrics(chainID)
+	if mErr != nil {
+		return nil, fmt.Errorf("failed to create transaction lifecycle metrics: %w", mErr)
+	} else {
+		lifecycleMetrics = lm
 	}
 
 	newContractTransmitter := &dualContractTransmitter{
@@ -75,6 +87,7 @@ func NewOCRDualContractTransmitter(
 		contractReader:      caller,
 		lggr:                logger.Named(lggr, "OCR2DualContractTransmitter"),
 		ks:                  ethKeystore,
+		lifecycleMetrics:    lifecycleMetrics,
 		transmitterOptions: &transmitterOps{
 			reportToEvmTxMeta: reportToEvmTxMetaNoop,
 			excludeSigs:       false,
@@ -126,8 +139,7 @@ func (oc *dualContractTransmitter) Transmit(ctx context.Context, reportCtx ocrty
 	transactionLifecycleID := generateTransactionLifecycleIDForOCR2(reportCtx.ReportTimestamp)
 	txMeta.TransactionLifecycleID = &transactionLifecycleID
 	oc.lggr.Infow("Transmitting report", "configDigest", "0x"+reportCtx.ReportTimestamp.ConfigDigest.Hex(), "epoch", reportCtx.ReportTimestamp.Epoch, "round", reportCtx.ReportTimestamp.Round, "contractAddress",
-	oc.contractAddress, "txMeta", txMeta, "transactionLifecycleID", transactionLifecycleID)
-
+		oc.contractAddress, "txMeta", txMeta, "transactionLifecycleID", transactionLifecycleID)
 
 	// Primary transmission
 	payload, err := oc.contractABI.Pack("transmit", rawReportCtx, []byte(report), rs, ss, vs)
@@ -138,6 +150,7 @@ func (oc *dualContractTransmitter) Transmit(ctx context.Context, reportCtx ocrty
 	transactionErr := errors.Wrap(oc.transmitter.CreateEthTransaction(ctx, oc.contractAddress, payload, txMeta), "failed to send primary Eth transaction")
 	if transactionErr != nil {
 		oc.lggr.Errorw("Failed to create primary Eth transaction", "error", transactionErr, "transactionLifecycleID", transactionLifecycleID)
+		oc.lifecycleMetrics.IncrementLifecycleFailure(ctx, txm.StageCreatePrimary)
 	} else {
 		oc.lggr.Debugw("Created primary transaction", "transactionLifecycleID", transactionLifecycleID)
 	}
@@ -151,6 +164,7 @@ func (oc *dualContractTransmitter) Transmit(ctx context.Context, reportCtx ocrty
 	err = errors.Wrap(oc.transmitter.CreateSecondaryEthTransaction(ctx, secondaryPayload, txMeta), "failed to send secondary Eth transaction")
 	if err != nil {
 		oc.lggr.Errorw("Failed to create secondary Eth transaction", "error", err, "transactionLifecycleID", transactionLifecycleID)
+		oc.lifecycleMetrics.IncrementLifecycleFailure(ctx, txm.StageCreate)
 	} else {
 		oc.lggr.Debugw("Created secondary transaction", "transactionLifecycleID", transactionLifecycleID)
 	}
