@@ -273,7 +273,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 	} else if !cfg.EVM().Transactions().Enabled() {
 		txm = &txmgr.NullTxManager{ErrMsg: fmt.Sprintf("TXM disabled for chain %d", chainID)}
 	} else {
-		txm, err = newEvmTxm(opts.DS, cfg.EVM(), opts.DatabaseConfig, opts.ListenerConfig, cl, l, logPoller, opts, headTracker, gasEstimator)
+		txm, err = newEvmTxm(opts.DS, cfg.EVM(), opts.DatabaseConfig, opts.ListenerConfig, cl, l, logPoller, opts, headTracker, gasEstimator, clientsByChainID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to instantiate EvmTxm for chain with ID %s: %w", chainID, err)
 		}

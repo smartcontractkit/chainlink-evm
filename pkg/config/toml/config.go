@@ -593,6 +593,10 @@ type TransactionManagerV2Config struct {
 	ReadRequestsToMultipleNodes   *bool                  `toml:",omitempty"`
 	Bundles                       *bool                  `toml:",omitempty"`
 	FastlaneAuctionRequestTimeout *commonconfig.Duration `toml:",omitempty"`
+	// TransactionPercentile overrides the RewardPercentile used by TxM v2's FeeHistory estimator.
+	// When nil, falls back to GasEstimator.BlockHistory.TransactionPercentile.
+	// Has no effect when EIP1559DynamicFees is false (legacy mode uses eth_gasPrice, not percentiles).
+	TransactionPercentile *uint16 `toml:",omitempty"`
 }
 
 func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
@@ -616,6 +620,9 @@ func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
 	}
 	if v := f.FastlaneAuctionRequestTimeout; v != nil {
 		t.FastlaneAuctionRequestTimeout = f.FastlaneAuctionRequestTimeout
+	}
+	if v := f.TransactionPercentile; v != nil {
+		t.TransactionPercentile = f.TransactionPercentile
 	}
 }
 

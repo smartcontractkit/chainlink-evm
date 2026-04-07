@@ -137,6 +137,9 @@ type TransactionManagerV2 interface {
 	ReadRequestsToMultipleNodes() *bool
 	Bundles() *bool
 	FastlaneAuctionRequestTimeout() *time.Duration
+	// TransactionPercentile returns the TxM v2-specific percentile override for the FeeHistory estimator.
+	// Returns nil if not set, meaning the shared GasEstimator.BlockHistory.TransactionPercentile should be used.
+	TransactionPercentile() *uint16
 }
 
 type GasEstimator interface {

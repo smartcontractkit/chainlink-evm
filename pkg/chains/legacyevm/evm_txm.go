@@ -27,6 +27,7 @@ func newEvmTxm(
 	opts ChainRelayOpts,
 	headTracker evmheads.Tracker,
 	estimator gas.EvmFeeEstimator,
+	clientsByChainID map[string]rollups.DAClient,
 ) (txm txmgr.TxManager,
 	err error,
 ) {
@@ -53,6 +54,12 @@ func newEvmTxm(
 			*txV2Cfg.DualBroadcast() && txV2Cfg.CustomURL() != nil
 
 		if txV2Cfg.Enabled() {
+			// TxM v2 gets its own FeeHistory estimator with a potentially different TransactionPercentile,
+			// allowing SVR transactions to target a different gas price aggressiveness than primary transactions.
+			txmV2Estimator, estErr := newTxmV2FeeHistoryEstimator(cfg, client, lggr, clientsByChainID)
+			if estErr != nil {
+				return nil, fmt.Errorf("failed to initialize TxM v2 FeeHistory estimator: %w", estErr)
+			}
 			txmv2, err = txmgr.NewTxmV2(
 				ds,
 				cfg,
@@ -63,7 +70,7 @@ func newEvmTxm(
 				lggr,
 				logPoller,
 				opts.KeyStore,
-				estimator,
+				txmV2Estimator,
 				cfg.GasEstimator(),
 			)
 			if err != nil {
@@ -123,4 +130,50 @@ func newGasEstimator(
 		estimator = opts.GenGasEstimator(chainID)
 	}
 	return
+}
+
+// newTxmV2FeeHistoryEstimator creates a FeeHistory estimator for TxM v2.
+// It derives all config from the shared GasEstimator config, except RewardPercentile
+// which is overridden by TransactionManagerV2.TransactionPercentile if set.
+func newTxmV2FeeHistoryEstimator(
+	cfg evmconfig.EVM,
+	client evmclient.Client,
+	lggr logger.Logger,
+	clientsByChainID map[string]rollups.DAClient,
+) (gas.EvmFeeEstimator, error) {
+	lggr = logger.Named(lggr, "Txm")
+	chainID := cfg.ChainID()
+	geCfg := cfg.GasEstimator()
+	txmV2Cfg := cfg.Transactions().TransactionManagerV2()
+
+	// Determine the RewardPercentile: use TxM v2 override if set, otherwise fall back to the shared config
+	rewardPercentile := float64(geCfg.BlockHistory().TransactionPercentile())
+	if txmV2Cfg.TransactionPercentile() != nil {
+		rewardPercentile = float64(*txmV2Cfg.TransactionPercentile())
+	}
+
+	l1Oracle, err := rollups.NewL1GasOracle(lggr, client, cfg.ChainType(), geCfg.DAOracle(), clientsByChainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize L1 oracle for TxM v2: %w", err)
+	}
+
+	fhCfg := gas.FeeHistoryEstimatorConfig{
+		BumpPercent:      geCfg.BumpPercent(),
+		CacheTimeout:     geCfg.FeeHistory().CacheTimeout(),
+		EIP1559:          geCfg.EIP1559DynamicFees(),
+		BlockHistorySize: uint64(geCfg.BlockHistory().BlockHistorySize()),
+		RewardPercentile: rewardPercentile,
+	}
+
+	lggr.Infow("Initializing TxM v2 FeeHistory gas estimator",
+		"rewardPercentile", rewardPercentile,
+		"blockHistorySize", fhCfg.BlockHistorySize,
+		"eip1559DynamicFees", fhCfg.EIP1559,
+		"bumpPercent", fhCfg.BumpPercent,
+	)
+
+	newEstimator := func(l logger.Logger) gas.EvmEstimator {
+		return gas.NewFeeHistoryEstimator(lggr, client, fhCfg, chainID, l1Oracle)
+	}
+	return gas.NewEvmFeeEstimator(lggr, newEstimator, geCfg.EIP1559DynamicFees(), geCfg, client), nil
 }

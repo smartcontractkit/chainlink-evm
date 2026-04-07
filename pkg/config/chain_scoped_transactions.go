@@ -80,6 +80,10 @@ func (t *transactionManagerV2Config) FastlaneAuctionRequestTimeout() *time.Durat
 	return &d
 }
 
+func (t *transactionManagerV2Config) TransactionPercentile() *uint16 {
+	return t.c.TransactionPercentile
+}
+
 func (t *transactionsConfig) AutoPurge() AutoPurgeConfig {
 	return &autoPurgeConfig{c: t.c.AutoPurge}
 }
