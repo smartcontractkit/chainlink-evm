@@ -157,7 +157,7 @@ func (t *Txm) initializeNonce(ctx context.Context, address common.Address) {
 			continue
 		}
 		t.SetNonce(address, pendingNonce)
-		t.lggr.Debugf("Set initial nonce for address: %v to %d", address, pendingNonce)
+		t.lggr.Infof("Set initial nonce for address: %v to %d", address, pendingNonce)
 		return
 	}
 }
@@ -267,6 +267,9 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 	}
 }
 
+// BroadcastTransaction broadcasts a transaction for the given address.
+// It returns true if the transaction was broadcasted successfully, false otherwise.
+// It returns an error if the transaction could not be broadcasted.
 func (t *Txm) BroadcastTransaction(ctx context.Context, address common.Address) (bool, error) {
 	for {
 		_, unconfirmedCount, err := t.txStore.FetchUnconfirmedTransactionAtNonceWithCount(ctx, 0, address)

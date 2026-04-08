@@ -13,6 +13,7 @@ import (
 )
 
 // multiplexClient sends a transaction to the primary OFA client and also fires a fire-and-forget request to the secondary OFA client.
+// It delegates nonce queries to the primary, ignoring the secondary.
 type multiplexClient struct {
 	lggr      logger.SugaredLogger
 	primary   txm.Client
