@@ -100,7 +100,7 @@ func (n *novaClient) postToNova(ctx context.Context, body []byte) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req) // TODO(gg): double-check if it's fine to use the default client here
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("nova request failed: %w", err)
 	}

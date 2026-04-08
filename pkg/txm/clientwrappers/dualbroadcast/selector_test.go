@@ -19,6 +19,19 @@ func mustParseURL(t *testing.T, raw string) *url.URL {
 	return u
 }
 
+func TestRedactURLForLog(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "", redactURLForLog(nil))
+
+	u := mustParseURL(t, "https://eth.novarpc.xyz?api_key=secret&foo=bar")
+	assert.Equal(t, "https://eth.novarpc.xyz?api_key=xxxxx&foo=bar", redactURLForLog(u))
+	assert.Equal(t, "secret", u.Query().Get("api_key"), "must not mutate original URL")
+
+	uPass := mustParseURL(t, "https://user:pass@eth.novarpc.xyz?api_key=secret")
+	assert.Equal(t, "https://user:xxxxx@eth.novarpc.xyz?api_key=xxxxx", redactURLForLog(uPass))
+}
+
 func TestSelectClient_FlashbotsPrimaryOnly(t *testing.T) {
 	mockClient := clienttest.NewClient(t)
 	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))

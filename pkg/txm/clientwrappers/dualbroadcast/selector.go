@@ -23,7 +23,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 
 	primary, errHandler, err := selectSingleClient(lggr, chainClient, keyStore, primaryURL, chainID, txStore, bundles, auctionRequestTimeout)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", primaryURL.Redacted(), err)
+		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(primaryURL), err)
 	}
 
 	if secondaryURL == nil {
@@ -32,12 +32,12 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 
 	// secondary must be a Nova RPC endpoint
 	if !strings.Contains(secondaryURL.String(), "novarpc") {
-		return nil, nil, fmt.Errorf("secondary URL must be a Nova RPC endpoint, got: %s", secondaryURL.Redacted())
+		return nil, nil, fmt.Errorf("secondary URL must be a Nova RPC endpoint, got: %s", redactURL(secondaryURL))
 	}
 
 	secondary, _, err := selectSingleClient(lggr, chainClient, keyStore, secondaryURL, chainID, txStore, bundles, auctionRequestTimeout)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", secondaryURL.Redacted(), err)
+		return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", redactURL(secondaryURL), err)
 	}
 
 	return newMultiplexClient(lggr, primary, secondary), errHandler, nil
@@ -65,4 +65,18 @@ func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainCli
 		}
 		return mc, NewErrorHandler(), nil
 	}
+}
+
+// redactURL returns u as a string safe for logs: same redaction as url.URL.Redacted for userinfo, and api_key query values are replaced with "xxxxx". It does not mutate the original URL.
+func redactURL(u *url.URL) string {
+	if u == nil {
+		return ""
+	}
+	cp := *u
+	q := cp.Query()
+	if _, has := q["api_key"]; has {
+		q.Set("api_key", "xxxxx")
+		cp.RawQuery = q.Encode()
+	}
+	return cp.Redacted()
 }
