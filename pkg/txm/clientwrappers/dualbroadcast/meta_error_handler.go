@@ -24,7 +24,6 @@ func (e *errorHandler) HandleError(
 	txErr error,
 	txStore txm.TxStore,
 	setNonce func(common.Address, uint64),
-	isFromBroadcastMethod bool,
 ) (noTransmission bool, err error) {
 	// Mark the tx as fatal only if this is the first broadcast. In any other case, other txs might be included on-chain.
 	if (errors.Is(txErr, ErrNoBids) || errors.Is(txErr, ErrAuction)) && tx.AttemptCount == 1 {
@@ -32,7 +31,8 @@ func (e *errorHandler) HandleError(
 			return false, err
 		}
 		setNonce(tx.FromAddress, *tx.Nonce)
-		lggr.Infof("transaction with txID: %d marked as fatal", tx.ID)
+		l := logger.Sugared(logger.Named(lggr, "Txm.MetaErrorHandler"))
+		l.Infow("transaction marked as fatal", "txID", tx.ID, "transactionLifecycleID", tx.GetTransactionLifecycleID(l))
 		return true, nil
 	}
 

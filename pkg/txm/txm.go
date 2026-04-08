@@ -59,7 +59,7 @@ type AttemptBuilder interface {
 type ErrorHandler interface {
 	// HandleError tries to decide if there was a successful transmission by parsing the error message. If it can't decide, it returns control to
 	// the standard execution path.
-	HandleError(context.Context, logger.Logger, *types.Transaction, error, TxStore, func(common.Address, uint64), bool) (noTransmission bool, err error)
+	HandleError(context.Context, logger.Logger, *types.Transaction, error, TxStore, func(common.Address, uint64)) (noTransmission bool, err error)
 }
 
 type StuckTxDetector interface {
@@ -342,7 +342,7 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	if txErr != nil {
 		// If ErrorHandler is set, try to decide if there was a successful transmission by parsing the error message. If there wasn't, we return early.
 		if t.errorHandler != nil {
-			noTransmission, hErr := t.errorHandler.HandleError(ctx, t.lggr, tx, txErr, t.txStore, t.SetNonce, false)
+			noTransmission, hErr := t.errorHandler.HandleError(ctx, t.lggr, tx, txErr, t.txStore, t.SetNonce)
 			if hErr != nil {
 				return hErr
 			}
