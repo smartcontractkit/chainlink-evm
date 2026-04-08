@@ -29,7 +29,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
-	"github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
@@ -172,7 +171,7 @@ func NewRPCClient(
 	)
 	r.rpcLog = logger.Sugared(lggr).Named("RPC")
 
-	bm, bmErr := newRPCClientMetrics()
+	bm, bmErr := newRPCClientMetrics(chainID)
 	if bmErr != nil {
 		lggr.Warnw("Failed to initialize beholder metrics for RPC client", "err", bmErr)
 	} else {
@@ -357,18 +356,8 @@ func (r *RPCClient) logResult(
 		} else {
 			r.beholderMetrics.IncrementFailed(ctx, chainID, r.name, rpcDomain, callName)
 		}
+		r.beholderMetrics.RecordLatency(ctx, rpcDomain, callName, false, callDuration, err)
 	}
-
-	metrics.RPCCallLatency.
-		WithLabelValues(
-			metrics.EVM,                    // chain family
-			r.chainID.String(),             // chain id
-			rpcDomain,                      // rpc url
-			"false",                        // is send only
-			strconv.FormatBool(err == nil), // is successful
-			callName,                       // rpc call name
-		).
-		Observe(float64(callDuration))
 
 	// TODO: Remove deprecated metric
 	promEVMPoolRPCCallTiming.

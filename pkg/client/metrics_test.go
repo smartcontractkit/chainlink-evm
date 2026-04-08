@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestNewRPCClientMetrics(t *testing.T) {
-	m, err := newRPCClientMetrics()
+	m, err := newRPCClientMetrics(big.NewInt(1))
 	require.NoError(t, err)
 	require.NotNil(t, m)
 	assert.NotNil(t, m.callsTotal)
@@ -18,7 +19,7 @@ func TestNewRPCClientMetrics(t *testing.T) {
 }
 
 func TestRPCClientMetrics_Increment(t *testing.T) {
-	m, err := newRPCClientMetrics()
+	m, err := newRPCClientMetrics(big.NewInt(1))
 	require.NoError(t, err)
 
 	ctx := context.Background()
