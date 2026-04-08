@@ -34,7 +34,7 @@ type FlashbotsTxStore interface {
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
 }
 
-type FlashbotsClientRPC interface {
+type publicMempoolRPC interface {
 	BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error)
 	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
 	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
@@ -42,7 +42,7 @@ type FlashbotsClientRPC interface {
 
 type FlashbotsClient struct {
 	lggr      logger.SugaredLogger
-	c         FlashbotsClientRPC
+	c         publicMempoolRPC
 	keystore  keys.MessageSigner
 	customURL *url.URL
 	txStore   FlashbotsTxStore
@@ -52,7 +52,7 @@ type FlashbotsClient struct {
 
 var _ txm.Client = (*FlashbotsClient)(nil)
 
-func NewFlashbotsClient(lggr logger.Logger, c FlashbotsClientRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics ofaMetrics) *FlashbotsClient {
+func NewFlashbotsClient(lggr logger.Logger, c publicMempoolRPC, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics ofaMetrics) *FlashbotsClient {
 	b := bundles != nil && *bundles
 	return &FlashbotsClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
@@ -95,34 +95,35 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		return err
 	}
 
-	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable {
-		data, err := attempt.SignedTransaction.MarshalBinary()
-		if err != nil {
-			return err
-		}
-		params := ""
-		if meta.DualBroadcastParams != nil {
-			params = *meta.DualBroadcastParams
-		}
-		body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
-		start := time.Now()
-		_, err = d.signAndPostMessage(ctx, tx.FromAddress, body, params)
-		d.metrics.RecordSendTx(ctx, time.Since(start), err)
-		if err != nil {
-			return err
-		}
-
-		// After successfully sending the transaction, send a bundle with all unconfirmed transactions
-		// Don't act on a bundle error - this is a fire and forget operation but we do want to log the error.
-		if d.bundles {
-			if err := d.SendBundle(ctx, tx.FromAddress, params); err != nil {
-				d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
-			}
-		}
-		return nil
+	// If not dual-broadcast, fallback to sending the transaction to the chain RPC directly
+	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
+		return d.c.SendTransaction(ctx, nil, attempt)
 	}
 
-	return d.c.SendTransaction(ctx, nil, attempt)
+	data, err := attempt.SignedTransaction.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	params := ""
+	if meta.DualBroadcastParams != nil {
+		params = *meta.DualBroadcastParams
+	}
+	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
+	start := time.Now()
+	_, err = d.signAndPostMessage(ctx, tx.FromAddress, body, params)
+	d.metrics.RecordSendTx(ctx, time.Since(start), err)
+	if err != nil {
+		return err
+	}
+
+	// After successfully sending the transaction, send a bundle with all unconfirmed transactions
+	// Don't act on a bundle error - this is a fire and forget operation but we do want to log the error.
+	if d.bundles {
+		if err := d.SendBundle(ctx, tx.FromAddress, params); err != nil {
+			d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
+		}
+	}
+	return nil
 }
 
 func (d *FlashbotsClient) signAndPostMessage(ctx context.Context, address common.Address, body []byte, urlParams string) (json.RawMessage, error) {

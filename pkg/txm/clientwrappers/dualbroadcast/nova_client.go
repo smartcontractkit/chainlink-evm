@@ -24,21 +24,16 @@ import (
 
 const novaRPCTimeout = 10 * time.Second
 
-type novaClientRPC interface {
-	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
-	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
-}
-
 type novaClient struct {
 	lggr      logger.SugaredLogger
-	c         novaClientRPC
+	c         publicMempoolRPC
 	customURL *url.URL
 	metrics   ofaMetrics
 }
 
 var _ txm.Client = (*novaClient)(nil)
 
-func newNovaClient(lggr logger.Logger, c novaClientRPC, customURL *url.URL, metrics ofaMetrics) *novaClient {
+func newNovaClient(lggr logger.Logger, c publicMempoolRPC, customURL *url.URL, metrics ofaMetrics) *novaClient {
 	return &novaClient{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,
@@ -52,12 +47,7 @@ func (n *novaClient) NonceAt(ctx context.Context, address common.Address, blockN
 }
 
 func (n *novaClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	body := []byte(fmt.Sprintf(
-		`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"],"id":1}`,
-		address.Hex(),
-	))
-
-	result, err := n.postToNovaWithResult(ctx, body)
+	result, err := n.rpcCall(ctx, "eth_getTransactionCount", fmt.Sprintf(`"%s","pending"`, address.Hex()))
 	if err != nil {
 		return 0, fmt.Errorf("nova eth_getTransactionCount failed: %w", err)
 	}
@@ -75,38 +65,31 @@ func (n *novaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		return err
 	}
 
-	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast && !tx.IsPurgeable {
-		return n.sendToNova(ctx, tx, attempt)
+	// If not dual-broadcast, fallback to sending the transaction to the chain RPC directly
+	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
+		return n.c.SendTransaction(ctx, nil, attempt)
 	}
 
-	// fallback to chain client if not dual-broadcast
-	return n.c.SendTransaction(ctx, nil, attempt)
-}
-
-func (n *novaClient) sendToNova(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	data, err := attempt.SignedTransaction.MarshalBinary()
 	if err != nil {
 		return err
 	}
 
-	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"],"id":1}`, hexutil.Encode(data)))
-
 	start := time.Now()
-	err = n.postToNova(ctx, body)
+	_, err = n.rpcCall(ctx, "eth_sendRawTransaction", fmt.Sprintf(`"%s"`, hexutil.Encode(data)))
 	n.metrics.RecordSendTx(ctx, time.Since(start), err)
 	if err != nil {
 		return err
 	}
+
 	n.lggr.Debugw("Sent transaction to Nova", "txHash", attempt.Hash, "transactionLifecycleID", tx.GetTransactionLifecycleID(n.lggr))
 	return nil
 }
 
-func (n *novaClient) postToNova(ctx context.Context, body []byte) error {
-	_, err := n.postToNovaWithResult(ctx, body)
-	return err
-}
+// rpcCall makes a JSON-RPC POST to the Nova endpoint and returns the result.
+func (n *novaClient) rpcCall(ctx context.Context, method string, params string) (json.RawMessage, error) {
+	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"%s","params":[%s],"id":1}`, method, params))
 
-func (n *novaClient) postToNovaWithResult(ctx context.Context, body []byte) (json.RawMessage, error) {
 	ctx, cancel := context.WithTimeout(ctx, novaRPCTimeout)
 	defer cancel()
 
@@ -138,5 +121,6 @@ func (n *novaClient) postToNovaWithResult(ctx context.Context, body []byte) (jso
 	if response.Error.Message != "" {
 		return nil, errors.New(response.Error.Message)
 	}
+
 	return response.Result, nil
 }
