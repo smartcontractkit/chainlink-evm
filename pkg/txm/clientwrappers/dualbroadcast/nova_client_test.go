@@ -21,11 +21,11 @@ import (
 )
 
 type testNovaRPC struct {
-	nonceAtCalls    []nonceAtCall
-	nonceAtNonce    uint64
-	nonceAtErr      error
-	sendTxCalls     []sendTxCall
-	sendTxErr       error
+	nonceAtCalls []nonceAtCall
+	nonceAtNonce uint64
+	nonceAtErr   error
+	sendTxCalls  []sendTxCall
+	sendTxErr    error
 }
 
 type nonceAtCall struct {
@@ -46,6 +46,10 @@ func (m *testNovaRPC) NonceAt(_ context.Context, address common.Address, blockNu
 func (m *testNovaRPC) SendTransaction(_ context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
 	m.sendTxCalls = append(m.sendTxCalls, sendTxCall{Tx: tx, Attempt: attempt})
 	return m.sendTxErr
+}
+
+func (m *testNovaRPC) BlockByNumber(_ context.Context, number *big.Int) (*evmtypes.Block, error) {
+	return nil, nil
 }
 
 func testOFAMetrics(t *testing.T) ofaMetrics {
