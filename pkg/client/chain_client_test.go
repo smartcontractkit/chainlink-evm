@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"net/http/httptest"
 	"net/url"
@@ -370,8 +371,10 @@ func TestEthClient_LatestSafeBlock(t *testing.T) {
 			arr := params.Array()
 			if arr[0].String() == "safe" {
 				resp.Result = rpcResp
+				return
 			}
 		}
+		resp.Result = "null"
 		return
 	}).WSURL().String()
 
