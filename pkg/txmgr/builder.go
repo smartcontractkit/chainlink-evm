@@ -141,7 +141,8 @@ func NewTxmV2(
 		stuckTxDetector = txm.NewStuckTxDetector(lggr, chainConfig.ChainType(), stuckTxDetectorConfig)
 	}
 
-	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer())
+	feeBoost := txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.FeeBoost()
+	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer(), feeBoost)
 	inMemoryStoreManager := storage.NewInMemoryStoreManager(lggr, chainID)
 	readRequestsToMultipleNodes := false
 	if txmV2Config.ReadRequestsToMultipleNodes() != nil && *txmV2Config.ReadRequestsToMultipleNodes() {

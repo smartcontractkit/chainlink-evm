@@ -50,6 +50,7 @@ DualBroadcast = true
 ReadRequestsToMultipleNodes = false
 Bundles = false
 FastlaneAuctionRequestTimeout = '15s'
+FeeBoost = true
 
 [BalanceMonitor]
 Enabled = true

@@ -23,14 +23,16 @@ type attemptBuilder struct {
 	priceMaxKey         func(common.Address) *assets.Wei
 	keystore            keys.TxSigner
 	emptyTxLimitDefault uint64
+	feeBoost            bool
 }
 
-func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, emptyTxLimitDefault uint64) *attemptBuilder {
+func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, emptyTxLimitDefault uint64, feeBoost bool) *attemptBuilder {
 	return &attemptBuilder{
 		priceMaxKey:         priceMaxKey,
 		EvmFeeEstimator:     estimator,
 		keystore:            keystore,
 		emptyTxLimitDefault: emptyTxLimitDefault,
+		feeBoost:            feeBoost,
 	}
 }
 
@@ -38,7 +40,7 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 	var fee gas.EvmFee
 	var estimatedGasLimit uint64
 	var err error
-	if tx.IsPurgeable {
+	if tx.IsPurgeable || a.feeBoost {
 		fee, estimatedGasLimit, err = a.EvmFeeEstimator.GetMaxFee(ctx, tx.Data, a.emptyTxLimitDefault, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
 		if err != nil {
 			return nil, err
@@ -69,9 +71,9 @@ func (a *attemptBuilder) NewBumpAttempt(ctx context.Context, lggr logger.Logger,
 }
 
 func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, dynamic bool) (attempt *types.Attempt, err error) {
-	// if the transaction is purgeable, NewAttempt will return the max fee instantly, so there is no need to bump
+	// if the transaction is purgeable or feeBoost is enabled, NewAttempt will return the max fee instantly, so there is no need to bump
 	attempt, err = a.NewAttempt(ctx, lggr, tx, dynamic)
-	if tx.IsPurgeable || err != nil {
+	if tx.IsPurgeable || a.feeBoost || err != nil {
 		return
 	}
 

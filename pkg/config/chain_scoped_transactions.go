@@ -80,6 +80,10 @@ func (t *transactionManagerV2Config) FastlaneAuctionRequestTimeout() *time.Durat
 	return &d
 }
 
+func (t *transactionManagerV2Config) FeeBoost() bool {
+	return t.c.FeeBoost != nil && *t.c.FeeBoost
+}
+
 func (t *transactionsConfig) AutoPurge() AutoPurgeConfig {
 	return &autoPurgeConfig{c: t.c.AutoPurge}
 }

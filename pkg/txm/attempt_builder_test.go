@@ -22,7 +22,7 @@ import (
 )
 
 func TestAttemptBuilder_newLegacyAttempt(t *testing.T) {
-	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil), 100)
+	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil), 100, false)
 	address := testutils.NewAddress()
 	lggr := logger.Test(t)
 	var gasLimit uint64 = 100
@@ -57,7 +57,7 @@ func TestAttemptBuilder_newLegacyAttempt(t *testing.T) {
 }
 
 func TestAttemptBuilder_newDynamicFeeAttempt(t *testing.T) {
-	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil), 100)
+	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil), 100, false)
 	address := testutils.NewAddress()
 
 	lggr := logger.Test(t)
@@ -100,7 +100,7 @@ func TestAttemptBuilder_NewAttempt(t *testing.T) {
 	var nonce uint64 = 1
 	var specifiedGasLimit uint64 = 200
 	var emptyGasLimit uint64 = 100
-	ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), emptyGasLimit)
+	ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), emptyGasLimit, false)
 	address := testutils.NewAddress()
 	lggr := logger.Test(t)
 
@@ -172,7 +172,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("returns original attempt when AttemptCount is 0", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100)
+		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -196,7 +196,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("bumps once when AttemptCount is 1", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100)
+		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -222,7 +222,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("bumps N times when AttemptCount is N", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100)
+		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -253,7 +253,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("returns last valid attempt when BumpFee fails", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100)
+		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -282,7 +282,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("caps bumps at maxBumpThreshold", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100)
+		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -307,7 +307,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("returns max percentile attempt when transaction is purgeable", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100)
+		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
 
 		tx := &types.Transaction{
 			ID:           10,

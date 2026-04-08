@@ -177,6 +177,8 @@ ReadRequestsToMultipleNodes = false # Example
 Bundles = false # Example
 # FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
 FastlaneAuctionRequestTimeout = '5s' # Example
+# FeeBoost enables using GetMaxFee instead of GetFee for all TxM v2 transaction attempts. This makes SVR transactions as aggressive as possible with gas pricing. Only active when DualBroadcast is also enabled.
+FeeBoost = false # Example
 
 [BalanceMonitor]
 # Enabled balance monitoring for all keys.

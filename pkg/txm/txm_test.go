@@ -442,7 +442,7 @@ func TestFlow_ResendTransaction(t *testing.T) {
 	mockEstimator := mocks.NewEvmFeeEstimator(t)
 	defaultGasLimit := uint64(100000)
 	keystore := &keystest.FakeChainStore{}
-	attemptBuilder := txm.NewAttemptBuilder(func(address common.Address) *assets.Wei { return assets.NewWeiI(1) }, mockEstimator, keystore, 22000)
+	attemptBuilder := txm.NewAttemptBuilder(func(address common.Address) *assets.Wei { return assets.NewWeiI(1) }, mockEstimator, keystore, 22000, false)
 	stuckTxDetector := txm.NewStuckTxDetector(logger.Test(t), "", txm.StuckTxDetectorConfig{BlockTime: config.BlockTime, StuckTxBlockThreshold: uint32(config.RetryBlockThreshold + 1)})
 	tm := txm.NewTxm(logger.Test(t), testutils.FixtureChainID, client, attemptBuilder, txStoreManager, stuckTxDetector, config, keystore, nil)
 	metrics, err := txm.NewTxmMetrics(testutils.FixtureChainID)
@@ -518,7 +518,7 @@ func TestFlow_ErrorHandler(t *testing.T) {
 	config := txm.Config{EIP1559: true, EmptyTxLimitDefault: 22000, RetryBlockThreshold: 0, BlockTime: 2 * time.Second}
 	mockEstimator := mocks.NewEvmFeeEstimator(t)
 	keystore := &keystest.FakeChainStore{}
-	attemptBuilder := txm.NewAttemptBuilder(func(address common.Address) *assets.Wei { return assets.NewWeiI(1) }, mockEstimator, keystore, 22000)
+	attemptBuilder := txm.NewAttemptBuilder(func(address common.Address) *assets.Wei { return assets.NewWeiI(1) }, mockEstimator, keystore, 22000, false)
 	stuckTxDetector := txm.NewStuckTxDetector(logger.Test(t), "", txm.StuckTxDetectorConfig{BlockTime: config.BlockTime, StuckTxBlockThreshold: uint32(config.RetryBlockThreshold + 1)})
 	errorHandler := dualbroadcast.NewErrorHandler()
 	tm := txm.NewTxm(logger.Test(t), testutils.FixtureChainID, client, attemptBuilder, txStoreManager, stuckTxDetector, config, keystore, errorHandler)
