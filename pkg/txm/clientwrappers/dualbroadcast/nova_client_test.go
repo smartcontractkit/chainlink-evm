@@ -207,10 +207,21 @@ func TestNovaClient_SendTransaction_RPCError(t *testing.T) {
 }
 
 func TestNovaClient_PendingNonceAt(t *testing.T) {
-	rpc := &testNovaRPC{nonceAtNonce: 42}
-	customURL, err := url.Parse("http://localhost?api_key=test")
+	var receivedBody []byte
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		receivedBody, err = io.ReadAll(r.Body)
+		require.NoError(t, err)
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0x2a"}`))
+		require.NoError(t, err)
+	}))
+	defer server.Close()
+
+	customURL, err := url.Parse(server.URL + "?api_key=test")
 	require.NoError(t, err)
 
+	rpc := &testNovaRPC{}
 	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
 
 	addr := common.HexToAddress("0x123")
@@ -218,9 +229,51 @@ func TestNovaClient_PendingNonceAt(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, uint64(42), nonce)
 
-	require.Len(t, rpc.nonceAtCalls, 1)
-	assert.Equal(t, addr, rpc.nonceAtCalls[0].Address)
-	assert.Nil(t, rpc.nonceAtCalls[0].BlockNumber, "PendingNonceAt should delegate to NonceAt with nil block (latest)")
+	var req struct {
+		Method string   `json:"method"`
+		Params []string `json:"params"`
+	}
+	require.NoError(t, json.Unmarshal(receivedBody, &req))
+	assert.Equal(t, "eth_getTransactionCount", req.Method)
+	assert.Equal(t, []string{addr.Hex(), "pending"}, req.Params)
+
+	assert.Empty(t, rpc.nonceAtCalls, "PendingNonceAt should call Nova directly, not chain RPC")
+}
+
+func TestNovaClient_PendingNonceAt_ServerError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`internal server error`))
+	}))
+	defer server.Close()
+
+	customURL, err := url.Parse(server.URL + "?api_key=test")
+	require.NoError(t, err)
+
+	rpc := &testNovaRPC{}
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+
+	_, err = client.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "nova eth_getTransactionCount failed")
+}
+
+func TestNovaClient_PendingNonceAt_RPCError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"error":{"message":"unknown address"}}`))
+	}))
+	defer server.Close()
+
+	customURL, err := url.Parse(server.URL + "?api_key=test")
+	require.NoError(t, err)
+
+	rpc := &testNovaRPC{}
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+
+	_, err = client.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown address")
 }
 
 func TestNovaClient_NonceAt(t *testing.T) {
