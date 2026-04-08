@@ -22,7 +22,7 @@ type rpcClientMetrics struct {
 
 func newRPCClientMetrics(chainID *big.Int) (*rpcClientMetrics, error) {
 	baseRPCMetrics, err := metrics.NewRPCClientMetrics(metrics.RPCClientMetricsConfig{
-		ChainFamily: "EVM",
+		ChainFamily: metrics.EVM,
 		ChainID:     chainID.String(),
 	})
 	if err != nil {
@@ -54,7 +54,7 @@ func newRPCClientMetrics(chainID *big.Int) (*rpcClientMetrics, error) {
 
 func (m *rpcClientMetrics) IncrementTotal(ctx context.Context, chainID, nodeName, rpcDomain, callName string) {
 	m.callsTotal.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainFamily", "EVM"),
+		attribute.String("chainFamily", metrics.EVM),
 		attribute.String("chainID", chainID),
 		attribute.String("nodeName", nodeName),
 		attribute.String("rpcDomain", rpcDomain),
@@ -64,7 +64,7 @@ func (m *rpcClientMetrics) IncrementTotal(ctx context.Context, chainID, nodeName
 
 func (m *rpcClientMetrics) IncrementSuccess(ctx context.Context, chainID, nodeName, rpcDomain, callName string) {
 	m.callsSuccess.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainFamily", "EVM"),
+		attribute.String("chainFamily", metrics.EVM),
 		attribute.String("chainID", chainID),
 		attribute.String("nodeName", nodeName),
 		attribute.String("rpcDomain", rpcDomain),
@@ -74,7 +74,7 @@ func (m *rpcClientMetrics) IncrementSuccess(ctx context.Context, chainID, nodeNa
 
 func (m *rpcClientMetrics) IncrementFailed(ctx context.Context, chainID, nodeName, rpcDomain, callName string) {
 	m.callsFailed.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainFamily", "EVM"),
+		attribute.String("chainFamily", metrics.EVM),
 		attribute.String("chainID", chainID),
 		attribute.String("nodeName", nodeName),
 		attribute.String("rpcDomain", rpcDomain),
