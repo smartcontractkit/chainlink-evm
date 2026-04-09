@@ -75,11 +75,11 @@ func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger
 	attempt, err = a.NewAttempt(ctx, lggr, tx, dynamic)
 
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	if tx.IsPurgeable || a.feeBoost {
-		return nil, nil
+		return
 	}
 
 	bumps := min(maxBumpThreshold, tx.AttemptCount)
