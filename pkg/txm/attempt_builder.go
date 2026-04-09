@@ -73,8 +73,13 @@ func (a *attemptBuilder) NewBumpAttempt(ctx context.Context, lggr logger.Logger,
 func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, dynamic bool) (attempt *types.Attempt, err error) {
 	// if the transaction is purgeable or feeBoost is enabled, NewAttempt will return the max fee instantly, so there is no need to bump
 	attempt, err = a.NewAttempt(ctx, lggr, tx, dynamic)
-	if tx.IsPurgeable || a.feeBoost || err != nil {
-		return
+
+	if err != nil {
+		return nil, err
+	}
+
+	if tx.IsPurgeable || a.feeBoost {
+		return nil, nil
 	}
 
 	bumps := min(maxBumpThreshold, tx.AttemptCount)
