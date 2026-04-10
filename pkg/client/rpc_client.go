@@ -9,7 +9,6 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -106,7 +105,6 @@ type RPCClient struct {
 	finalityTagEnabled             bool
 	finalityDepth                  uint32
 	safeDepth                      uint32
-	historicalBalanceCheckAddress  common.Address
 	externalRequestMaxResponseSize uint32
 
 	beholderMetrics *rpcClientMetrics
@@ -146,7 +144,6 @@ func NewRPCClient(
 		finalityTagEnabled:             supportsFinalityTags,
 		finalityDepth:                  finalityDepth,
 		safeDepth:                      safeDepth,
-		historicalBalanceCheckAddress:  common.HexToAddress(cfg.HistoricalBalanceCheckAddress()),
 		externalRequestMaxResponseSize: externalRequestMaxResponseSize,
 	}
 	r.cfg = cfg
@@ -205,51 +202,6 @@ func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err erro
 	}
 	r.rpcLog.Debugf("client version: %s", version)
 	return version, nil
-}
-
-// CheckFinalizedStateAvailability verifies if the RPC can serve historical state at the finalized block.
-// This is used to detect non-archive nodes that cannot serve state queries for older blocks.
-// Returns multinode.ErrFinalizedStateUnavailable if the error matches the FinalizedStateUnavailable pattern.
-// The decision to call this method is made by multinode based on its configuration.
-func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context) error {
-	var blockNumber *big.Int
-	if r.finalityTagEnabled {
-		blockNumber = big.NewInt(rpc.FinalizedBlockNumber.Int64())
-	} else {
-		latestBlock, err := r.BlockNumber(ctx)
-		if err != nil {
-			return fmt.Errorf("fetching latest block number failed: %w", err)
-		}
-		latest := int64(latestBlock)
-		finalizedHeight := max(int64(0), latest-int64(r.finalityDepth))
-		blockNumber = big.NewInt(finalizedHeight)
-	}
-	_, err := r.BalanceAt(ctx, r.historicalBalanceCheckAddress, blockNumber)
-	if err != nil {
-		if r.isFinalizedStateUnavailableError(err) {
-			return fmt.Errorf("%w: %w", multinode.ErrFinalizedStateUnavailable, err)
-		}
-		return fmt.Errorf("fetching balance for address %s at block %s failed: %w", r.historicalBalanceCheckAddress.String(), blockNumber.String(), err)
-	}
-	return nil
-}
-
-// isFinalizedStateUnavailableError checks if the error matches the FinalizedStateUnavailable regex pattern.
-func (r *RPCClient) isFinalizedStateUnavailableError(err error) bool {
-	if err == nil {
-		return false
-	}
-	pattern := r.clientErrors.FinalizedStateUnavailable()
-	if pattern == "" {
-		r.rpcLog.Critical("FinalizedStateUnavailable regex pattern is empty; finalized state availability check is effectively disabled")
-		return false
-	}
-	re, compileErr := regexp.Compile(pattern)
-	if compileErr != nil {
-		r.rpcLog.Criticalw("FinalizedStateUnavailable regex pattern is invalid; finalized state availability check is effectively disabled", "pattern", pattern, "err", compileErr)
-		return false
-	}
-	return re.MatchString(err.Error())
 }
 
 func (r *RPCClient) Dial(callerCtx context.Context) error {
