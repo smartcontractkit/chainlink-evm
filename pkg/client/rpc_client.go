@@ -28,6 +28,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
+	frameworkmetrics "github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
@@ -179,7 +180,18 @@ func NewRPCClient(
 		lggr.Error("RPC client is configured with only WebSocket URL. If this CL Node serves external requests, it must also have an HTTP URL configured. Otherwise, there is a serious DDoS risk.")
 	}
 
-	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock)
+	var rpcURL string
+	if wsuri != nil {
+		rpcURL = wsuri.String()
+	} else if httpuri != nil {
+		rpcURL = httpuri.String()
+	}
+	isSendOnly := tier == multinode.Secondary
+	var rpcBaseMetrics frameworkmetrics.RPCClientMetrics
+	if r.beholderMetrics != nil {
+		rpcBaseMetrics = r.beholderMetrics.rpcClientMetrics
+	}
+	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock, rpcURL, isSendOnly, rpcBaseMetrics)
 	return r
 }
 
