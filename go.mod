@@ -33,8 +33,8 @@ require (
 	github.com/smartcontractkit/chainlink-evm/gethwrappers v0.0.0-20251022073203-7d8ae8cf67c1
 	github.com/smartcontractkit/chainlink-framework/capabilities v0.0.0-20250818175541-3389ac08a563
 	github.com/smartcontractkit/chainlink-framework/chains v0.0.0-20260326122810-b657beadfb57
-	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20260326154442-19321a900915
-	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20260401162955-be2bc6b5264b
+	github.com/smartcontractkit/chainlink-framework/metrics v0.0.0-20260401162955-be2bc6b5264b
+	github.com/smartcontractkit/chainlink-framework/multinode v0.0.0-20260410140123-c3b9c6693ea3
 	github.com/smartcontractkit/chainlink-protos/cre/go v0.0.0-20260326111235-8c09d1a4491f
 	github.com/smartcontractkit/chainlink-protos/svr v1.1.1-0.20260203131522-bb8bc5c423b3
 	github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20250815105909-75499abc4335
