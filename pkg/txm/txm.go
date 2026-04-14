@@ -380,6 +380,9 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 		t.metrics.IncrementLifecycleFailure(ctx, StageNonceAt)
 		return err
 	}
+	if t.metrics != nil {
+		t.metrics.SetRPCNonce(ctx, address, latestNonce)
+	}
 
 	confirmedTransactions, unconfirmedTransactionIDs, err := t.txStore.MarkConfirmedAndReorgedTransactions(ctx, latestNonce, address)
 	if err != nil {

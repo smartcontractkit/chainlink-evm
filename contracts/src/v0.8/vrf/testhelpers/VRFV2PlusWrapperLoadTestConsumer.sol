@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {ConfirmedOwner} from "../../../shared/access/ConfirmedOwner.sol";
-import {ChainSpecificUtil} from "../../../shared/util/ChainSpecificUtil.sol";
+import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {ChainSpecificUtil} from "../../shared/util/ChainSpecificUtil.sol";
 import {VRFV2PlusWrapperConsumerBase} from "../VRFV2PlusWrapperConsumerBase.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 

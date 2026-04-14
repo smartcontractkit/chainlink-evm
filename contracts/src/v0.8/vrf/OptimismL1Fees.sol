@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
+import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
 import {GasPriceOracle as OVM_GasPriceOracle} from
-  "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
+  "../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
 
 /// @dev An abstract contract that provides Optimism specific L1 fee calculations.
 abstract contract OptimismL1Fees is ConfirmedOwner {

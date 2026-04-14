@@ -20,7 +20,7 @@ var (
 )
 
 func TestORM(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 
 	jobID := rand.Int32() // foreign key constraints disabled so value doesn't matter
@@ -42,7 +42,7 @@ func TestORM(t *testing.T) {
 		}
 	}
 
-	l, err := orm.LatestReport(testutils.Context(t), feedID)
+	l, err := orm.LatestReport(t.Context(), feedID)
 	require.NoError(t, err)
 	assert.Nil(t, l)
 
@@ -72,7 +72,7 @@ func TestORM(t *testing.T) {
 		{Req: &pb.TransmitRequest{Payload: reports[3]}, ReportCtx: reportContexts[0]},
 	}, transmissions)
 
-	l, err = orm.LatestReport(testutils.Context(t), feedID)
+	l, err = orm.LatestReport(t.Context(), feedID)
 	require.NoError(t, err)
 	assert.NotEqual(t, reports[0], l)
 	assert.Equal(t, reports[2], l)
@@ -88,7 +88,7 @@ func TestORM(t *testing.T) {
 		{Req: &pb.TransmitRequest{Payload: reports[0]}, ReportCtx: reportContexts[0]},
 	}, transmissions)
 
-	l, err = orm.LatestReport(testutils.Context(t), feedID)
+	l, err = orm.LatestReport(t.Context(), feedID)
 	require.NoError(t, err)
 	assert.Equal(t, reports[2], l)
 
@@ -110,7 +110,7 @@ func TestORM(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	l, err = orm.LatestReport(testutils.Context(t), feedID)
+	l, err = orm.LatestReport(t.Context(), feedID)
 	require.NoError(t, err)
 	assert.Equal(t, reports[2], l)
 
@@ -140,7 +140,7 @@ func TestORM(t *testing.T) {
 		{Req: &pb.TransmitRequest{Payload: reports[3]}, ReportCtx: reportContexts[3]},
 	}, transmissions)
 
-	l, err = orm.LatestReport(testutils.Context(t), feedID)
+	l, err = orm.LatestReport(t.Context(), feedID)
 	require.NoError(t, err)
 	assert.Equal(t, reports[3], l)
 
@@ -151,7 +151,7 @@ func TestORM(t *testing.T) {
 }
 
 func TestORM_InsertTransmitRequest_MultipleServerURLs(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 
 	jobID := rand.Int32() // foreign key constraints disabled so value doesn't matter
@@ -190,13 +190,13 @@ func TestORM_InsertTransmitRequest_MultipleServerURLs(t *testing.T) {
 	require.Len(t, transmissions, 1)
 	assert.Equal(t, &Transmission{Req: &pb.TransmitRequest{Payload: reports[0]}, ReportCtx: reportContexts[0]}, transmissions[0])
 
-	l, err := orm.LatestReport(testutils.Context(t), feedID)
+	l, err := orm.LatestReport(t.Context(), feedID)
 	require.NoError(t, err)
 	assert.Equal(t, reports[0], l)
 }
 
 func TestORM_PruneTransmitRequests(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 	jobID := rand.Int32() // foreign key constraints disabled so value doesn't matter
 	testutils.MustExec(t, db, `SET CONSTRAINTS mercury_transmit_requests_job_id_fkey DEFERRED`)
@@ -289,7 +289,7 @@ func TestORM_PruneTransmitRequests(t *testing.T) {
 }
 
 func TestORM_InsertTransmitRequest_LatestReport(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 	jobID := rand.Int32() // foreign key constraints disabled so value doesn't matter
 	testutils.MustExec(t, db, `SET CONSTRAINTS mercury_transmit_requests_job_id_fkey DEFERRED`)
@@ -322,7 +322,7 @@ func TestORM_InsertTransmitRequest_LatestReport(t *testing.T) {
 	))
 	require.NoError(t, err)
 
-	l, err := orm.LatestReport(testutils.Context(t), feedID)
+	l, err := orm.LatestReport(t.Context(), feedID)
 	require.NoError(t, err)
 	assert.Equal(t, reports[0], l)
 
@@ -330,7 +330,7 @@ func TestORM_InsertTransmitRequest_LatestReport(t *testing.T) {
 		err = orm.InsertTransmitRequest(ctx, []string{"foo"}, &pb.TransmitRequest{Payload: reports[1]}, jobID, makeReportContext(1, 1))
 		require.NoError(t, err)
 
-		l, err = orm.LatestReport(testutils.Context(t), feedID)
+		l, err = orm.LatestReport(t.Context(), feedID)
 		require.NoError(t, err)
 		assert.Equal(t, reports[1], l)
 	})
@@ -338,7 +338,7 @@ func TestORM_InsertTransmitRequest_LatestReport(t *testing.T) {
 		err = orm.InsertTransmitRequest(ctx, []string{sURL}, &pb.TransmitRequest{Payload: reports[2]}, jobID, makeReportContext(1, 2))
 		require.NoError(t, err)
 
-		l, err = orm.LatestReport(testutils.Context(t), feedID)
+		l, err = orm.LatestReport(t.Context(), feedID)
 		require.NoError(t, err)
 		assert.Equal(t, reports[2], l)
 	})
@@ -346,7 +346,7 @@ func TestORM_InsertTransmitRequest_LatestReport(t *testing.T) {
 		err = orm.InsertTransmitRequest(ctx, []string{"bar"}, &pb.TransmitRequest{Payload: reports[3]}, jobID, makeReportContext(2, 1))
 		require.NoError(t, err)
 
-		l, err = orm.LatestReport(testutils.Context(t), feedID)
+		l, err = orm.LatestReport(t.Context(), feedID)
 		require.NoError(t, err)
 		assert.Equal(t, reports[3], l)
 	})
@@ -354,7 +354,7 @@ func TestORM_InsertTransmitRequest_LatestReport(t *testing.T) {
 		err = orm.InsertTransmitRequest(ctx, []string{sURL}, &pb.TransmitRequest{Payload: reports[0]}, jobID, makeReportContext(2, 1))
 		require.NoError(t, err)
 
-		l, err = orm.LatestReport(testutils.Context(t), feedID)
+		l, err = orm.LatestReport(t.Context(), feedID)
 		require.NoError(t, err)
 		assert.Equal(t, reports[3], l)
 	})

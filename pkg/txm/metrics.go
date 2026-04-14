@@ -41,6 +41,10 @@ var (
 		Name: "txm_time_until_tx_confirmed",
 		Help: "The amount of time elapsed from a transaction being broadcast to being included in a block.",
 	}, []string{"chainID"})
+	promRPCNonce = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "txm_rpc_nonce",
+		Help: "The latest confirmed nonce reported by the RPC node for a given address.",
+	}, []string{"chainID", "address"})
 )
 
 // TxmMetrics is the single metrics type for the TXMv2 transaction lifecycle.
@@ -53,6 +57,7 @@ type TxmMetrics struct {
 	numNonceGaps         metric.Int64Counter
 	reachedMaxAttempts   metric.Int64Gauge
 	timeUntilTxConfirmed metric.Float64Histogram
+	rpcNonce             metric.Int64Gauge
 	lifecycleFailure     metric.Int64Counter
 }
 
@@ -82,6 +87,11 @@ func NewTxmMetrics(chainID *big.Int) (*TxmMetrics, error) {
 		return nil, fmt.Errorf("failed to register max attempts indicator: %w", err)
 	}
 
+	rpcNonce, err := beholder.GetMeter().Int64Gauge("txm_rpc_nonce")
+	if err != nil {
+		return nil, fmt.Errorf("failed to register rpc nonce gauge: %w", err)
+	}
+
 	lifecycleFailure, err := beholder.GetMeter().Int64Counter("txm_transaction_lifecycle_failure_total")
 	if err != nil {
 		return nil, fmt.Errorf("failed to register lifecycle failure counter: %w", err)
@@ -95,6 +105,7 @@ func NewTxmMetrics(chainID *big.Int) (*TxmMetrics, error) {
 		numNonceGaps:         numNonceGaps,
 		reachedMaxAttempts:   reachedMaxAttempts,
 		timeUntilTxConfirmed: timeUntilTxConfirmed,
+		rpcNonce:             rpcNonce,
 		lifecycleFailure:     lifecycleFailure,
 	}, nil
 }
@@ -151,6 +162,11 @@ func (m *TxmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
 func (m *TxmMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID.String()).Observe(duration)
 	m.timeUntilTxConfirmed.Record(ctx, duration)
+}
+
+func (m *TxmMetrics) SetRPCNonce(ctx context.Context, address common.Address, nonce uint64) {
+	promRPCNonce.WithLabelValues(m.chainID.String(), address.String()).Set(float64(nonce))
+	m.rpcNonce.Record(ctx, int64(nonce))
 }
 
 func (m *TxmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
