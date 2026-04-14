@@ -1013,20 +1013,39 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 	}
 	// We will not have the previous currentBlock on initial poll.
 	havePreviousBlock := err1 == nil
-	if !havePreviousBlock {
-		lp.lggr.Infow("Do not have previous block, first poll ever on new chain", "currentBlockNumber", currentBlockNumber)
-		return currentBlock, nil
-	}
-	// Check for reorg.
-	if currentBlock.ParentHash != expectedParent.BlockHash {
-		return lp.handleReorg(ctx, currentBlock)
+	if havePreviousBlock {
+		// Check for reorg.
+		if currentBlock.ParentHash != expectedParent.BlockHash {
+			return lp.handleReorg(ctx, currentBlock)
+		}
+
+		if !isReplay {
+			// During normal polling DB does not have any blocks after currentBlockNumber, so no reorg is possible. We can skip extra checks and just return currentBlock.
+			return currentBlock, nil
+		}
+	} else {
+		// previous block is not present, it could only in case of initial poll or replay.
+		// If that's not a replay, let's double-check that it's an initial poll by verifying that the DB is empty.
+		if !isReplay {
+			_, err := lp.orm.SelectLatestBlock(ctx)
+			if err == nil {
+				err = fmt.Errorf("unexpected state: no previous block found for block number %d, but db is not empty", currentBlockNumber)
+				lp.lggr.Criticalw("Invariant violation: expected to always have previous block except replay and first poll for a new chain", "currentBlockNumber", currentBlockNumber, "err", err)
+				return nil, err
+			}
+
+			if !errors.Is(err, sql.ErrNoRows) {
+				// Real DB error
+				return nil, fmt.Errorf("failed to check for first poll ever on new chain: %w", err)
+			}
+
+			// This is expected, we just don't have any blocks in the DB yet.
+			lp.lggr.Infow("Do not have previous block, first poll ever on new chain", "currentBlockNumber", currentBlockNumber)
+			return currentBlock, nil
+		}
 	}
 
-	if !isReplay {
-		// During normal polling DB does not have any blocks after currentBlockNumber, so no reorg is possible. We can skip extra checks and just return currentBlock.
-		return currentBlock, nil
-	}
-
+	// In case of replay currentBlock may be in the middle of DB range, lets do additional checks to handle possible reorgs. 
 	// Ensure that if DB contains current block it matches the current block from RPC.
 	currentBlockDB, err := lp.orm.SelectBlockByNumber(ctx, currentBlockNumber)
 	if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
