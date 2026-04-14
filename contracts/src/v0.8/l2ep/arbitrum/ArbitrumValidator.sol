@@ -14,7 +14,7 @@ import {AddressAliasHelper} from "../../vendor/arb-bridge-eth/v0.8.0-custom/cont
 import {IArbitrumDelayedInbox} from "../interfaces/IArbitrumDelayedInbox.sol";
 import {ISequencerUptimeFeed} from "../interfaces/ISequencerUptimeFeed.sol";
 
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 
 /**
  * @title ArbitrumValidator - makes xDomain L2 Flags contract call (using L2 xDomain Forwarder contract)
@@ -134,7 +134,7 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    * @inheritdoc ITypeAndVersion
    */
   function typeAndVersion() external pure virtual override returns (string memory) {
-    return "ArbitrumValidator 2.0.0";
+    return "ArbitrumValidator 2.1.0-dev";
   }
 
   /// @return stored PaymentStrategy
