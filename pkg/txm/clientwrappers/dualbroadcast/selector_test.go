@@ -79,7 +79,7 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 func TestRedactURL(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "", redactURL(nil))
+	assert.Empty(t, redactURL(nil))
 
 	u := mustParseURL(t, "https://eth.novarpc.xyz?api_key=secret&foo=bar")
 	assert.Equal(t, "https://eth.novarpc.xyz?api_key=xxxxx&foo=bar", redactURL(u))

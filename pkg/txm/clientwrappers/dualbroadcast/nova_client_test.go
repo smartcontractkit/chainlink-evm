@@ -92,13 +92,13 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		receivedBody, err = io.ReadAll(r.Body)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 		// Verify no Flashbots signature header
 		assert.Empty(t, r.Header.Get("X-Flashbots-signature"))
 		w.WriteHeader(http.StatusOK)
 		_, err = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0xabc"}`))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}))
 	defer server.Close()
 
@@ -150,7 +150,7 @@ func TestNovaClient_SendTransaction_NonDual_doesNothing(t *testing.T) {
 	err = client.SendTransaction(context.Background(), tx, attempt)
 	require.NoError(t, err)
 
-	require.Len(t, rpc.sendTxCalls, 0)
+	assert.Empty(t, rpc.sendTxCalls)
 }
 
 func TestNovaClient_SendTransaction_Purgeable_doesNothing(t *testing.T) {
@@ -166,7 +166,7 @@ func TestNovaClient_SendTransaction_Purgeable_doesNothing(t *testing.T) {
 	err = client.SendTransaction(context.Background(), tx, attempt)
 	require.NoError(t, err)
 
-	require.Len(t, rpc.sendTxCalls, 0)
+	assert.Empty(t, rpc.sendTxCalls)
 }
 
 func TestNovaClient_SendTransaction_ServerError(t *testing.T) {
@@ -212,10 +212,10 @@ func TestNovaClient_PendingNonceAt(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		receivedBody, err = io.ReadAll(r.Body)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		w.WriteHeader(http.StatusOK)
 		_, err = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0x2a"}`))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}))
 	defer server.Close()
 

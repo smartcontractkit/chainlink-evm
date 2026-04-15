@@ -84,11 +84,15 @@ func (r *ofaClient) PendingNonceAt(ctx context.Context, address common.Address) 
 		return 0, fmt.Errorf("%s eth_getTransactionCount failed: %w", r.errHTTPPrefix, err)
 	}
 
-	var nonce hexutil.Uint64
-	if err = json.Unmarshal(raw, (*hexutil.Uint64)(&nonce)); err != nil {
-		return 0, fmt.Errorf("failed to parse nonce from relay response: %w: %s", err, string(raw))
+	var resultStr string
+	if err := json.Unmarshal(raw, &resultStr); err != nil {
+		return 0, fmt.Errorf("failed to unmarshal response %s into string: %w", string(raw), err)
 	}
-	return uint64(nonce), nil
+	nonce, err := hexutil.DecodeUint64(resultStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to decode response %v into uint64: %w", resultStr, err)
+	}
+	return nonce, nil
 }
 
 // sendDualBroadcastTx sends a dual-broadcast transaction to the OFA relay.
@@ -120,7 +124,7 @@ func (r *ofaClient) postJSONRPC(ctx context.Context, from common.Address, body [
 	if err != nil {
 		return nil, err
 	}
-	if err := r.auth.apply(ctx, req, body, from); err != nil {
+	if err = r.auth.apply(ctx, req, body, from); err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
