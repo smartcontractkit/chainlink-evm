@@ -21,8 +21,8 @@ import (
 
 const rpcTimeout = 10 * time.Second
 
-// publicMempoolRPC is the chain RPC surface used when a transaction is not sent to the relay.
-type publicMempoolRPC interface {
+// ofaRpcClient is the RPC used to interact with the public mempool.
+type ofaRpcClient interface {
 	BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error)
 	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
 	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
@@ -48,7 +48,7 @@ func (noAuth) apply(context.Context, *http.Request, []byte, common.Address) erro
 // ofaClient performs JSON-RPC over HTTP to OFA relays (Flashbots, Nova, …). Signing and
 // URL rules are injected via ofaHTTPAuth.
 type ofaClient struct {
-	c             publicMempoolRPC
+	c             ofaRpcClient
 	customURL     *url.URL
 	auth          ofaHTTPAuth
 	metrics       ofaMetrics
@@ -56,7 +56,7 @@ type ofaClient struct {
 }
 
 func newOFAClient(
-	c publicMempoolRPC,
+	c ofaRpcClient,
 	customURL *url.URL,
 	auth ofaHTTPAuth,
 	metrics ofaMetrics,
