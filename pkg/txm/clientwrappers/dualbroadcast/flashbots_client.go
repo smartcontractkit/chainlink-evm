@@ -287,51 +287,51 @@ func (d *FlashbotsClient) SendBundle(ctx context.Context, fromAddress common.Add
 	return nil
 }
 
-func parseURLParams(params string) (Privacy, RefundConfig, error) {
+func parseURLParams(params string) (privacy, refundConfig, error) {
 	values, err := url.ParseQuery(params)
 	if err != nil {
-		return Privacy{}, RefundConfig{}, fmt.Errorf("unable to parse params: %w", err)
+		return privacy{}, refundConfig{}, fmt.Errorf("unable to parse params: %w", err)
 	}
 
-	privacy := Privacy{}
+	pvc := privacy{}
 	if timeout, err := strconv.Atoi(values.Get("auctionTimeout")); err == nil {
-		privacy.AuctionTimeout = timeout
+		pvc.AuctionTimeout = timeout
 	}
 
-	privacy.Builders = append(privacy.Builders, values["builder"]...)
+	pvc.Builders = append(pvc.Builders, values["builder"]...)
 
-	privacy.Hints = append(privacy.Hints, values["hint"]...)
+	pvc.Hints = append(pvc.Hints, values["hint"]...)
 
-	refundConfig := RefundConfig{}
+	refundCfg := refundConfig{}
 	refundRaw := values.Get("refund")
 	if refundRaw != "" {
 		parts := strings.Split(refundRaw, ":")
 		if len(parts) != 2 {
-			return Privacy{}, RefundConfig{}, fmt.Errorf("unable to parse refund: %s. Expected format: address:percent", refundRaw)
+			return privacy{}, refundConfig{}, fmt.Errorf("unable to parse refund: %s. Expected format: address:percent", refundRaw)
 		}
 		address := parts[0]
 		percentVal, err := strconv.Atoi(parts[1])
 		if err != nil {
-			return Privacy{}, RefundConfig{}, fmt.Errorf("unable to parse percentage: %w", err)
+			return privacy{}, refundConfig{}, fmt.Errorf("unable to parse percentage: %w", err)
 		}
 
-		privacy.WantRefund = percentVal
-		refundConfig = RefundConfig{
+		pvc.WantRefund = percentVal
+		refundCfg = refundConfig{
 			Address: address,
 			Percent: 100, // wantRefund is an absolute percent of the refund, and refundConfig.percent=100 means entire refund goes to this address (no longer supported)
 		}
 	}
-	return privacy, refundConfig, nil
+	return pvc, refundCfg, nil
 }
 
-type Privacy struct {
+type privacy struct {
 	WantRefund     int      `json:"wantRefund"`
 	AuctionTimeout int      `json:"auctionTimeout"`
 	Builders       []string `json:"builders"`
 	Hints          []string `json:"hints"`
 }
 
-type RefundConfig struct {
+type refundConfig struct {
 	Address string `json:"address"`
 	Percent int    `json:"percent"`
 }

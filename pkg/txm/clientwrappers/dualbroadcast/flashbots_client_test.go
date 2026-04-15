@@ -49,58 +49,58 @@ func TestParseURLParams(t *testing.T) {
 	tests := []struct {
 		name           string
 		params         string
-		wantPrivacy    Privacy
-		wantRefund     RefundConfig
+		wantPrivacy    privacy
+		wantRefund     refundConfig
 		wantErr        bool
 		wantErrContain string
 	}{
 		{
 			name:        "empty params",
 			params:      "",
-			wantPrivacy: Privacy{},
-			wantRefund:  RefundConfig{},
+			wantPrivacy: privacy{},
+			wantRefund:  refundConfig{},
 		},
 		{
 			name:        "auctionTimeout",
 			params:      "auctionTimeout=60",
-			wantPrivacy: Privacy{AuctionTimeout: 60},
-			wantRefund:  RefundConfig{},
+			wantPrivacy: privacy{AuctionTimeout: 60},
+			wantRefund:  refundConfig{},
 		},
 		{
 			name:        "auctionTimeout invalid ignored",
 			params:      "auctionTimeout=notanint",
-			wantPrivacy: Privacy{},
-			wantRefund:  RefundConfig{},
+			wantPrivacy: privacy{},
+			wantRefund:  refundConfig{},
 		},
 		{
 			name:        "single builder",
 			params:      "builder=test_builder",
-			wantPrivacy: Privacy{Builders: []string{"test_builder"}},
-			wantRefund:  RefundConfig{},
+			wantPrivacy: privacy{Builders: []string{"test_builder"}},
+			wantRefund:  refundConfig{},
 		},
 		{
 			name:        "multiple builders",
 			params:      "builder=test_builder_1&builder=test_builder_2",
-			wantPrivacy: Privacy{Builders: []string{"test_builder_1", "test_builder_2"}},
-			wantRefund:  RefundConfig{},
+			wantPrivacy: privacy{Builders: []string{"test_builder_1", "test_builder_2"}},
+			wantRefund:  refundConfig{},
 		},
 		{
 			name:        "single hint",
 			params:      "hint=calldata",
-			wantPrivacy: Privacy{Hints: []string{"calldata"}},
-			wantRefund:  RefundConfig{},
+			wantPrivacy: privacy{Hints: []string{"calldata"}},
+			wantRefund:  refundConfig{},
 		},
 		{
 			name:        "multiple hints",
 			params:      "hint=calldata&hint=hash",
-			wantPrivacy: Privacy{Hints: []string{"calldata", "hash"}},
-			wantRefund:  RefundConfig{},
+			wantPrivacy: privacy{Hints: []string{"calldata", "hash"}},
+			wantRefund:  refundConfig{},
 		},
 		{
 			name:        "refund valid",
 			params:      "refund=0xRefundAddr:50",
-			wantPrivacy: Privacy{WantRefund: 50},
-			wantRefund:  RefundConfig{Address: "0xRefundAddr", Percent: 100},
+			wantPrivacy: privacy{WantRefund: 50},
+			wantRefund:  refundConfig{Address: "0xRefundAddr", Percent: 100},
 		},
 		{
 			name:           "refund invalid percent",
@@ -129,13 +129,13 @@ func TestParseURLParams(t *testing.T) {
 		{
 			name:   "combined params",
 			params: "auctionTimeout=120&builder=test_builder_1&builder=test_builder_2&hint=h1&refund=0xR:75",
-			wantPrivacy: Privacy{
+			wantPrivacy: privacy{
 				AuctionTimeout: 120,
 				Builders:       []string{"test_builder_1", "test_builder_2"},
 				Hints:          []string{"h1"},
 				WantRefund:     75,
 			},
-			wantRefund: RefundConfig{Address: "0xR", Percent: 100},
+			wantRefund: refundConfig{Address: "0xR", Percent: 100},
 		},
 	}
 	for _, tt := range tests {
@@ -211,7 +211,7 @@ func TestSendBundle_UsesLatestAttemptPerTransaction(t *testing.T) {
 	require.NoError(t, mErr)
 	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
 
-	err = client.SendBundle(context.Background(), fromAddress, "")
+	err = client.sendBundle(context.Background(), fromAddress, "")
 	require.NoError(t, err)
 
 	var req struct {
@@ -273,7 +273,7 @@ func TestSendBundle_SucceedsOnIncreasingNonces(t *testing.T) {
 	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
 	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
-	err = client.SendBundle(context.Background(), fromAddress, "")
+	err = client.sendBundle(context.Background(), fromAddress, "")
 	require.NoError(t, err)
 
 	var req struct {
@@ -315,7 +315,7 @@ func TestSendBundle_ReturnsErrorOnNonceGap(t *testing.T) {
 	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
 	client := NewFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
-	err = client.SendBundle(context.Background(), fromAddress, "")
+	err = client.sendBundle(context.Background(), fromAddress, "")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must be contiguous and strictly increasing")
 }
