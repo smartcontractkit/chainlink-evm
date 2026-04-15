@@ -91,16 +91,16 @@ func (r *ofaClient) PendingNonceAt(ctx context.Context, address common.Address) 
 	return uint64(nonce), nil
 }
 
-// sendDualBroadcastTx sends a dual-broadcast transaction to the OFA. It returns URL-encoded params from meta (for Flashbots bundle follow-up).
-func (r *ofaClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) (params string, err error) {
+// sendDualBroadcastTx sends a dual-broadcast transaction to the OFA relay.
+func (r *ofaClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	data, err := attempt.SignedTransaction.MarshalBinary()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
@@ -108,7 +108,7 @@ func (r *ofaClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transacti
 	_, err = r.postJSONRPC(ctx, tx.FromAddress, body, meta)
 	r.metrics.RecordSendTx(ctx, time.Since(start), err)
 
-	return params, err
+	return err
 }
 
 func (r *ofaClient) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {

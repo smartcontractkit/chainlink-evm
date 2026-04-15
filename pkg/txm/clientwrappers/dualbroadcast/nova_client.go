@@ -48,6 +48,5 @@ func (n *novaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		return nil
 	}
 
-	_, err2 := n.ofaClient.sendDualBroadcastTx(ctx, tx, attempt)
-	return err2
+	return n.ofaClient.sendDualBroadcastTx(ctx, tx, attempt)
 }

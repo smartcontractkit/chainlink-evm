@@ -68,13 +68,12 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		return d.ofaClient.c.SendTransaction(ctx, nil, attempt)
 	}
 
-	params, err := d.ofaClient.sendDualBroadcastTx(ctx, tx, attempt)
-	if err != nil {
+	if err := d.ofaClient.sendDualBroadcastTx(ctx, tx, attempt); err != nil {
 		return err
 	}
 
 	if d.bundles {
-		if err := d.sendBundle(ctx, tx.FromAddress, params); err != nil {
+		if err := d.sendBundle(ctx, tx.FromAddress, meta); err != nil {
 			d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
 		}
 	}
@@ -111,7 +110,11 @@ func (a *flashbotsHTTPAuth) apply(ctx context.Context, req *http.Request, body [
 }
 
 // sendBundle sends a bundle of all the in-flight transactions.
-func (d *FlashbotsClient) sendBundle(ctx context.Context, fromAddress common.Address, urlParams string) error {
+func (d *FlashbotsClient) sendBundle(ctx context.Context, fromAddress common.Address, meta *types.TxMeta) error {
+	var urlParams string
+	if meta != nil && meta.DualBroadcastParams != nil {
+		urlParams = *meta.DualBroadcastParams
+	}
 	unconfirmedTxs, err := d.txStore.FetchUnconfirmedTransactions(ctx, fromAddress)
 	if err != nil {
 		return fmt.Errorf("failed to fetch unconfirmed transactions: %w", err)
