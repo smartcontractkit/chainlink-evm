@@ -15,9 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -30,40 +28,20 @@ type publicMempoolRPC interface {
 	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
 }
 
-// ofaHTTPAuth configures how JSON-RPC POSTs are addressed and authenticated per OFA provider.
-type ofaHTTPAuth interface { // TODO(gg): simplify
-	requestURL(base *url.URL, extraQuery string) string
+// ofaHTTPAuth configures how JSON-RPC POSTs are addressed and authenticated.
+type ofaHTTPAuth interface {
+	requestURL(base *url.URL, meta *types.TxMeta) string
 	apply(ctx context.Context, req *http.Request, body []byte, from common.Address) error
 }
 
-type flashbotsHTTPAuth struct {
-	keystore keys.MessageSigner
-}
+// noAuth does not add any additional URL parameters or signing.
+type noAuth struct{}
 
-func (a *flashbotsHTTPAuth) requestURL(base *url.URL, extraQuery string) string {
-	return base.String() + "?" + extraQuery
-}
-
-func (a *flashbotsHTTPAuth) apply(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
-	hashedBody := crypto.Keccak256Hash(body).Hex()
-	signedMessage, err := a.keystore.SignMessage(ctx, from, []byte(hashedBody))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("X-Flashbots-signature", from.String()+":"+hexutil.Encode(signedMessage))
-	req.Header.Add("X-Flashbots-Origin", "chainlink")
-	return nil
-}
-
-// novaHTTPAuth posts to the configured base URL (API key lives in the URL query). No signing.
-type novaHTTPAuth struct{}
-
-func (novaHTTPAuth) requestURL(base *url.URL, extraQuery string) string {
-	_ = extraQuery // dual-broadcast URL params are Flashbots-specific; Nova uses the configured URL only
+func (noAuth) requestURL(base *url.URL, _ *types.TxMeta) string {
 	return base.String()
 }
 
-func (novaHTTPAuth) apply(context.Context, *http.Request, []byte, common.Address) error {
+func (noAuth) apply(context.Context, *http.Request, []byte, common.Address) error {
 	return nil
 }
 
@@ -101,7 +79,7 @@ func (r *ofaClient) PendingNonceAt(ctx context.Context, address common.Address) 
 	ctx, cancel := context.WithTimeout(ctx, rpcTimeout)
 	defer cancel()
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex()))
-	raw, err := r.postJSONRPC(ctx, address, body, "")
+	raw, err := r.postJSONRPC(ctx, address, body, nil)
 	if err != nil {
 		return 0, fmt.Errorf("%s eth_getTransactionCount failed: %w", r.errHTTPPrefix, err)
 	}
@@ -125,24 +103,19 @@ func (r *ofaClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transacti
 		return "", err
 	}
 
-	params = ""
-	if meta.DualBroadcastParams != nil {
-		params = *meta.DualBroadcastParams
-	}
-
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
 	start := time.Now()
-	_, err = r.postJSONRPC(ctx, tx.FromAddress, body, params)
+	_, err = r.postJSONRPC(ctx, tx.FromAddress, body, meta)
 	r.metrics.RecordSendTx(ctx, time.Since(start), err)
 
 	return params, err
 }
 
-func (r *ofaClient) postJSONRPC(ctx context.Context, from common.Address, body []byte, urlParams string) (json.RawMessage, error) {
+func (r *ofaClient) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {
 	ctx, cancel := context.WithTimeout(ctx, rpcTimeout)
 	defer cancel()
 
-	postURL := r.auth.requestURL(r.customURL, urlParams)
+	postURL := r.auth.requestURL(r.customURL, meta)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, postURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, err

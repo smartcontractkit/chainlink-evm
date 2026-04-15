@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
@@ -77,6 +79,34 @@ func (d *FlashbotsClient) SendTransaction(ctx context.Context, tx *types.Transac
 		}
 	}
 
+	return nil
+}
+
+type flashbotsHTTPAuth struct {
+	keystore keys.MessageSigner
+}
+
+var _ ofaHTTPAuth = (*flashbotsHTTPAuth)(nil)
+
+// requestURL returns the base URL with the extra Flashbots query parameters.
+func (a *flashbotsHTTPAuth) requestURL(base *url.URL, meta *types.TxMeta) string {
+	var params string
+	if meta != nil && meta.DualBroadcastParams != nil {
+		params = *meta.DualBroadcastParams
+	}
+
+	return base.String() + "?" + params
+}
+
+// apply signs the body and adds the Flashbots headers.
+func (a *flashbotsHTTPAuth) apply(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
+	hashedBody := crypto.Keccak256Hash(body).Hex()
+	signedMessage, err := a.keystore.SignMessage(ctx, from, []byte(hashedBody))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("X-Flashbots-signature", from.String()+":"+hexutil.Encode(signedMessage))
+	req.Header.Add("X-Flashbots-Origin", "chainlink")
 	return nil
 }
 
@@ -173,7 +203,7 @@ func (d *FlashbotsClient) sendBundle(ctx context.Context, fromAddress common.Add
 		return fmt.Errorf("failed to marshal bundle request: %w", err)
 	}
 
-	raw, err := d.ofaClient.postJSONRPC(ctx, fromAddress, bodyBytes, "")
+	raw, err := d.ofaClient.postJSONRPC(ctx, fromAddress, bodyBytes, nil)
 	if err != nil {
 		return err
 	}

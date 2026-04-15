@@ -21,7 +21,7 @@ var _ txm.Client = (*novaClient)(nil)
 
 func newNovaClient(lggr logger.Logger, c publicMempoolRPC, customURL *url.URL, metrics ofaMetrics) *novaClient {
 	log := logger.Sugared(logger.Named(lggr, "Txm.NovaClient"))
-	ofaClient := newOFAClient(c, customURL, novaHTTPAuth{}, metrics, "nova")
+	ofaClient := newOFAClient(c, customURL, noAuth{}, metrics, "nova")
 
 	return &novaClient{
 		lggr:      log,
