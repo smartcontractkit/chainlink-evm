@@ -40,7 +40,7 @@ contract ScrollCrossDomainForwarder_Constructor is ScrollCrossDomainForwarderTes
     assertEq(s_scrollCrossDomainForwarder.crossDomainMessenger(), address(s_mockScrollCrossDomainMessenger));
 
     // it should set the typeAndVersion correctly
-    assertEq(s_scrollCrossDomainForwarder.typeAndVersion(), "ScrollCrossDomainForwarder 1.0.0");
+    assertEq(s_scrollCrossDomainForwarder.typeAndVersion(), "ScrollCrossDomainForwarder 1.1.0-dev");
   }
 }
 

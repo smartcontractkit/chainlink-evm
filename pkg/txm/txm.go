@@ -57,7 +57,9 @@ type AttemptBuilder interface {
 }
 
 type ErrorHandler interface {
-	HandleError(context.Context, *types.Transaction, error, TxStore, func(common.Address, uint64), bool) (err error)
+	// HandleError tries to decide if there was a successful transmission by parsing the error message. If it can't decide, it returns control to
+	// the standard execution path.
+	HandleError(context.Context, logger.Logger, *types.Transaction, error, TxStore, func(common.Address, uint64)) (noTransmission bool, err error)
 }
 
 type StuckTxDetector interface {
@@ -337,11 +339,17 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	start := time.Now()
 	txErr := t.client.SendTransaction(ctx, tx, attempt)
 	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr), "duration", time.Since(start), "txErr", txErr)
-	if txErr != nil && t.errorHandler != nil {
-		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.SetNonce, false); err != nil {
-			return
+	if txErr != nil {
+		// If ErrorHandler is set, try to decide if there was a successful transmission by parsing the error message. If there wasn't, we return early.
+		if t.errorHandler != nil {
+			noTransmission, hErr := t.errorHandler.HandleError(ctx, t.lggr, tx, txErr, t.txStore, t.SetNonce)
+			if hErr != nil {
+				return hErr
+			}
+			if noTransmission {
+				return nil
+			}
 		}
-	} else if txErr != nil {
 		pendingNonce, pErr := t.client.PendingNonceAt(ctx, fromAddress)
 		if pErr != nil {
 			return pErr
@@ -363,6 +371,9 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 	latestNonce, err := t.client.NonceAt(ctx, address, nil)
 	if err != nil {
 		return err
+	}
+	if t.Metrics != nil {
+		t.Metrics.SetRPCNonce(ctx, address, latestNonce)
 	}
 
 	confirmedTransactions, unconfirmedTransactionIDs, err := t.txStore.MarkConfirmedAndReorgedTransactions(ctx, latestNonce, address)

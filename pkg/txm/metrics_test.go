@@ -132,3 +132,20 @@ func TestReachedMaxAttempts(t *testing.T) {
 	value = testutil.ToFloat64(promReachedMaxAttempts.WithLabelValues(testutils.FixtureChainID.String()))
 	require.InDelta(t, float64(0), value, 0.00001)
 }
+
+func TestSetRPCNonce(t *testing.T) {
+	ctx := t.Context()
+	chainID := testutils.FixtureChainID
+	address := testutils.NewAddress()
+
+	m, err := NewTxmMetrics(chainID)
+	require.NoError(t, err)
+
+	m.SetRPCNonce(ctx, address, 10)
+	value := testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String()))
+	assert.InDelta(t, float64(10), value, 0.00001)
+
+	m.SetRPCNonce(ctx, address, 25)
+	value = testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String()))
+	assert.InDelta(t, float64(25), value, 0.00001)
+}

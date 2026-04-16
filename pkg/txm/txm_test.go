@@ -512,16 +512,17 @@ func TestFlow_ErrorHandler(t *testing.T) {
 	t.Parallel()
 
 	client := txm.NewMockClient(t)
-	txStoreManager := storage.NewInMemoryStoreManager(logger.Test(t), testutils.FixtureChainID)
+	lggr, observedLogs := logger.TestObserved(t, zap.InfoLevel)
+	txStoreManager := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
 	address := testutils.NewAddress()
 	require.NoError(t, txStoreManager.Add(address))
 	config := txm.Config{EIP1559: true, EmptyTxLimitDefault: 22000, RetryBlockThreshold: 0, BlockTime: 2 * time.Second}
 	mockEstimator := mocks.NewEvmFeeEstimator(t)
 	keystore := &keystest.FakeChainStore{}
 	attemptBuilder := txm.NewAttemptBuilder(func(address common.Address) *assets.Wei { return assets.NewWeiI(1) }, mockEstimator, keystore, 22000)
-	stuckTxDetector := txm.NewStuckTxDetector(logger.Test(t), "", txm.StuckTxDetectorConfig{BlockTime: config.BlockTime, StuckTxBlockThreshold: uint32(config.RetryBlockThreshold + 1)})
+	stuckTxDetector := txm.NewStuckTxDetector(lggr, "", txm.StuckTxDetectorConfig{BlockTime: config.BlockTime, StuckTxBlockThreshold: uint32(config.RetryBlockThreshold + 1)})
 	errorHandler := dualbroadcast.NewErrorHandler()
-	tm := txm.NewTxm(logger.Test(t), testutils.FixtureChainID, client, attemptBuilder, txStoreManager, stuckTxDetector, config, keystore, errorHandler)
+	tm := txm.NewTxm(lggr, testutils.FixtureChainID, client, attemptBuilder, txStoreManager, stuckTxDetector, config, keystore, errorHandler)
 	metrics, err := txm.NewTxmMetrics(testutils.FixtureChainID)
 	require.NoError(t, err)
 	tm.Metrics = metrics
@@ -544,8 +545,11 @@ func TestFlow_ErrorHandler(t *testing.T) {
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(5), GasFeeCap: assets.NewWeiI(10)}}, defaultGasLimit, nil).Once()
 	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(dualbroadcast.ErrNoBids).Once()
 	_, err = tm.BroadcastTransaction(t.Context(), address)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "transaction with txID: 0 marked as fatal")
+	require.NoError(t, err)
+	tests.AssertLogEventually(t, observedLogs, "transaction marked as fatal")
+	_, count, err := txStoreManager.FetchUnconfirmedTransactionAtNonceWithCount(t.Context(), 0, address)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
 
 	// Create transaction 2
 	IDK2 := "IDK2"
@@ -575,9 +579,11 @@ func TestFlow_ErrorHandler(t *testing.T) {
 	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
 	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(dualbroadcast.ErrNoBids).Once()
+	client.On("PendingNonceAt", mock.Anything, address).Return(initialNonce, nil).Once()
 	err = tm.BackfillTransactions(t.Context(), address) // retry
 	require.Error(t, err)
-	require.ErrorContains(t, err, dualbroadcast.ErrNoBids.Error())
+	require.ErrorContains(t, err, "pending nonce for txID: 1 didn't increase")
+	require.ErrorIs(t, err, dualbroadcast.ErrNoBids)
 	tx, count, err = txStoreManager.FetchUnconfirmedTransactionAtNonceWithCount(t.Context(), 0, address) // same transaction is still in the store
 	require.NoError(t, err)
 	require.Equal(t, 1, count)

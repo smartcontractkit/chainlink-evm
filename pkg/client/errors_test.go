@@ -51,6 +51,7 @@ func Test_Eth_Errors(t *testing.T) {
 			{"client error nonce too low", true, "tomlConfig"},
 			{"[Request ID: 2e952947-ffad-408b-aed9-35f3ed152001] Nonce too low. Provided nonce: 15, current nonce: 15", true, "hedera"},
 			{"failed to forward tx to sequencer, please try again. Error message: 'nonce too low'", true, "Mantle"},
+			{"RPC call failed: TX_REPLAY_ATTACK", true, "Jovay"},
 		}
 
 		for _, test := range tests {

@@ -20,15 +20,13 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
-	reportcodecv2 "github.com/smartcontractkit/chainlink-evm/pkg/mercury/v2/reportcodec"
-	reportcodecv3 "github.com/smartcontractkit/chainlink-evm/pkg/mercury/v3/reportcodec"
-
+	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/verifier"
+	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/verifier_proxy"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/heads/headstest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
-
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/verifier"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/verifier_proxy"
+	reportcodecv2 "github.com/smartcontractkit/chainlink-evm/pkg/mercury/v2/reportcodec"
+	reportcodecv3 "github.com/smartcontractkit/chainlink-evm/pkg/mercury/v3/reportcodec"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 )
 
@@ -160,7 +158,7 @@ func SetupTH(t *testing.T, feedID common.Hash) TestHarness {
 	lp := logpoller.NewLogPoller(lorm, ethClient, lggr, ht, lpOpts)
 	servicetest.Run(t, lp)
 
-	configPoller, err := NewConfigPoller(testutils.Context(t), lggr, lp, verifierAddress, feedID)
+	configPoller, err := NewConfigPoller(t.Context(), lggr, lp, verifierAddress, feedID)
 	require.NoError(t, err)
 
 	configPoller.Start()

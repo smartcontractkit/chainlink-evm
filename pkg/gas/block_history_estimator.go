@@ -834,13 +834,13 @@ func (b *BlockHistoryEstimator) getPricesFromBlocks(blocks []evmtypes.Block, eip
 	tipCaps = make([]*assets.Wei, 0)
 	for _, block := range blocks {
 		if err := verifyBlock(block, eip1559); err != nil {
-			b.logger.Warnw(fmt.Sprintf("Block %v is not usable, %s", block.Number, err.Error()), "block", block, "err", err)
+			b.logger.Warnw(fmt.Sprintf("Block %v is not usable, %s", block.Number, err.Error()), "blockNum", block.Number, "blockHash", block.Hash, "err", err)
 		}
 		for _, tx := range block.Transactions {
 			if b.IsUsable(tx, block, b.chaintype, b.eConfig.PriceMin(), b.logger) {
 				gp := b.EffectiveGasPrice(block, tx)
 				if gp == nil {
-					b.logger.Warnw("Unable to get gas price for tx", "tx", tx, "block", block)
+					b.logger.Warnw("Unable to get gas price for tx", "tx", tx, "blockNum", block.Number, "blockHash", block.Hash)
 					continue
 				}
 				gasPrices = append(gasPrices, gp)
@@ -849,7 +849,7 @@ func (b *BlockHistoryEstimator) getPricesFromBlocks(blocks []evmtypes.Block, eip
 				}
 				tc := b.EffectiveTipCap(block, tx)
 				if tc == nil {
-					b.logger.Warnw("Unable to get tip cap for tx", "tx", tx, "block", block)
+					b.logger.Warnw("Unable to get tip cap for tx", "tx", tx, "blockNum", block.Number, "blockHash", block.Hash)
 					continue
 				}
 				tipCaps = append(tipCaps, tc)
@@ -931,14 +931,14 @@ func (b *BlockHistoryEstimator) EffectiveGasPrice(block evmtypes.Block, tx evmty
 	case 0x2, 0x3, 0x4:
 		return b.getEffectiveGasPrice(block, tx)
 	default:
-		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "block", block, "tx", tx)
+		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return nil
 	}
 }
 
 func (b *BlockHistoryEstimator) getEffectiveGasPrice(block evmtypes.Block, tx evmtypes.Transaction) *assets.Wei {
 	if block.BaseFeePerGas == nil || tx.MaxPriorityFeePerGas == nil || tx.MaxFeePerGas == nil {
-		b.logger.Warnw(fmt.Sprintf("Got transaction type %v but one of the required EIP1559 fields was missing, falling back to gasPrice", tx.Type), "block", block, "tx", tx)
+		b.logger.Warnw(fmt.Sprintf("Got transaction type %v but one of the required EIP1559 fields was missing, falling back to gasPrice", tx.Type), "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return tx.GasPrice
 	}
 	if tx.GasPrice != nil {
@@ -946,11 +946,11 @@ func (b *BlockHistoryEstimator) getEffectiveGasPrice(block evmtypes.Block, tx ev
 		return tx.GasPrice
 	}
 	if tx.MaxFeePerGas.Cmp(block.BaseFeePerGas) < 0 {
-		b.logger.AssumptionViolationw("MaxFeePerGas >= BaseFeePerGas", "block", block, "tx", tx)
+		b.logger.AssumptionViolationw("MaxFeePerGas >= BaseFeePerGas", "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return nil
 	}
 	if tx.MaxFeePerGas.Cmp(tx.MaxPriorityFeePerGas) < 0 {
-		b.logger.AssumptionViolationw("MaxFeePerGas >= MaxPriorityFeePerGas", "block", block, "tx", tx)
+		b.logger.AssumptionViolationw("MaxFeePerGas >= MaxPriorityFeePerGas", "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return nil
 	}
 
@@ -977,12 +977,12 @@ func (b *BlockHistoryEstimator) EffectiveTipCap(block evmtypes.Block, tx evmtype
 		}
 		effectiveTipCap := tx.GasPrice.Sub(block.BaseFeePerGas)
 		if effectiveTipCap.IsNegative() {
-			b.logger.AssumptionViolationw("GasPrice - BaseFeePerGas may not be negative", "block", block, "tx", tx)
+			b.logger.AssumptionViolationw("GasPrice - BaseFeePerGas may not be negative", "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 			return nil
 		}
 		return effectiveTipCap
 	default:
-		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "block", block, "tx", tx)
+		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return nil
 	}
 }
