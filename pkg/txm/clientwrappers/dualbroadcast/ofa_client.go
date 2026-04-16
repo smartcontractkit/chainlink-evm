@@ -19,10 +19,10 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-const defaultRpcTimeout = 10 * time.Second
+const defaultRPCTimeout = 10 * time.Second
 
-// ofaRpcClient is the RPC used to interact with the public mempool.
-type ofaRpcClient interface {
+// ofaRPCClient is the RPC used to interact with the public mempool.
+type ofaRPCClient interface {
 	BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error)
 	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
 	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
@@ -48,7 +48,7 @@ func (noAuth) apply(context.Context, *http.Request, []byte, common.Address) erro
 // ofaClient performs JSON-RPC over HTTP to OFA relays (Flashbots, Nova, …). Signing and
 // URL rules are injected via ofaHTTPAuth.
 type ofaClient struct {
-	c             ofaRpcClient
+	c             ofaRPCClient
 	customURL     *url.URL
 	auth          ofaHTTPAuth
 	metrics       ofaMetrics
@@ -56,7 +56,7 @@ type ofaClient struct {
 }
 
 func newOFAClient(
-	c ofaRpcClient,
+	c ofaRPCClient,
 	customURL *url.URL,
 	auth ofaHTTPAuth,
 	metrics ofaMetrics,
@@ -83,7 +83,7 @@ func (r *ofaClient) PendingNonceAt(ctx context.Context, address common.Address) 
 	}
 
 	var resultStr string
-	if err := json.Unmarshal(raw, &resultStr); err != nil {
+	if err = json.Unmarshal(raw, &resultStr); err != nil {
 		return 0, fmt.Errorf("failed to unmarshal response %s into string: %w", string(raw), err)
 	}
 	nonce, err := hexutil.DecodeUint64(resultStr)
@@ -117,7 +117,7 @@ func (r *ofaClient) postJSONRPC(ctx context.Context, from common.Address, body [
 	// set timeout if not set yet
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, defaultRpcTimeout)
+		ctx, cancel = context.WithTimeout(ctx, defaultRPCTimeout)
 		defer cancel()
 	}
 

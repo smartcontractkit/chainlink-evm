@@ -35,7 +35,7 @@ type FlashbotsClient struct {
 
 var _ txm.Client = (*FlashbotsClient)(nil)
 
-func NewFlashbotsClient(lggr logger.Logger, c ofaRpcClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics ofaMetrics) *FlashbotsClient {
+func NewFlashbotsClient(lggr logger.Logger, c ofaRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics ofaMetrics) *FlashbotsClient {
 	log := logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient"))
 	ofaClient := newOFAClient(c, customURL, &flashbotsHTTPAuth{keystore: keystore}, metrics, "flashbots")
 	b := bundles != nil && *bundles
