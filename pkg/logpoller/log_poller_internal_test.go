@@ -468,8 +468,11 @@ func TestLogPoller_Replay(t *testing.T) {
 	ec.EXPECT().HeadByHash(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, hash common.Hash) (*evmtypes.Head, error) {
 		return &evmtypes.Head{Number: hash.Big().Int64(), Hash: hash}, nil
 	}).Maybe()
-	ec.On("HeadByNumber", mock.Anything, mock.Anything).Return(func(context.Context, *big.Int) (*evmtypes.Head, error) {
-		return head.Load(), nil
+	ec.On("HeadByNumber", mock.Anything, mock.Anything).Return(func(_ context.Context, num *big.Int) (*evmtypes.Head, error) {
+		if num == nil {
+			return head.Load(), nil
+		}
+		return newHead(num.Int64()), nil
 	})
 	ec.On("FilterLogs", mock.Anything, mock.Anything).Return([]types.Log{log1}, nil).Once()
 	ec.On("ConfiguredChainID").Return(chainID, nil)
@@ -511,7 +514,7 @@ func TestLogPoller_Replay(t *testing.T) {
 		assert.ErrorIs(t, err, ErrReplayRequestAborted)
 	})
 
-	recvStartReplay := func(ctx context.Context, block int64) {
+	recvStartReplay := func(t *testing.T, ctx context.Context, block int64) {
 		select {
 		case fromBlock := <-lp.replayStart:
 			assert.Equal(t, block, fromBlock)
@@ -529,7 +532,7 @@ func TestLogPoller_Replay(t *testing.T) {
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			recvStartReplay(ctx, 2)
+			recvStartReplay(t, ctx, 2)
 			lp.replayComplete <- anyErr
 		}()
 		assert.ErrorIs(t, lp.Replay(ctx, 1), anyErr)
@@ -542,7 +545,7 @@ func TestLogPoller_Replay(t *testing.T) {
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			recvStartReplay(cancelCtx, 4)
+			recvStartReplay(t, cancelCtx, 4)
 			cancel()
 		}()
 		assert.ErrorIs(t, lp.Replay(cancelCtx, 4), ErrReplayInProgress)
@@ -563,7 +566,7 @@ func TestLogPoller_Replay(t *testing.T) {
 		var wg sync.WaitGroup
 		defer func() { wg.Wait() }()
 		ec.On("FilterLogs", mock.Anything, mock.Anything).Once().Return([]types.Log{log1}, nil).Run(func(args mock.Arguments) {
-			head.Store(&evmtypes.Head{Number: 4})
+			head.Store(newHead(4))
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -652,27 +655,27 @@ func TestLogPoller_Replay(t *testing.T) {
 	t.Run("ReplayAsync success", func(t *testing.T) {
 		t.Cleanup(lp.reset)
 
-		head.Store(&evmtypes.Head{Number: 5})
+		head.Store(newHead(5))
 		ec.On("FilterLogs", mock.Anything, mock.Anything).Return([]types.Log{log1}, nil)
 		mockBatchCallContext(t, ec)
 		servicetest.Run(t, lp)
 
 		lp.ReplayAsync(1)
 
-		recvStartReplay(testutils.Context(t), 4)
+		recvStartReplay(t, testutils.Context(t), 4)
 	})
 
 	t.Run("ReplayAsync error", func(t *testing.T) {
 		ctx := testutils.Context(t)
 		t.Cleanup(lp.reset)
 		servicetest.Run(t, lp)
-		head.Store(&evmtypes.Head{Number: 4})
+		head.Store(newHead(4))
 
 		anyErr := pkgerrors.New("async error")
 		observedLogs.TakeAll()
 
 		lp.ReplayAsync(4)
-		recvStartReplay(testutils.Context(t), 4)
+		recvStartReplay(t, testutils.Context(t), 4)
 
 		select {
 		case lp.replayComplete <- anyErr:
@@ -690,7 +693,7 @@ func TestLogPoller_Replay(t *testing.T) {
 		require.NoError(t, err)
 
 		lp.ReplayAsync(1)
-		recvStartReplay(testutils.Context(t), 1)
+		recvStartReplay(t, testutils.Context(t), 1)
 	})
 
 	t.Run("run only backfill when everything is finalized", func(t *testing.T) {
