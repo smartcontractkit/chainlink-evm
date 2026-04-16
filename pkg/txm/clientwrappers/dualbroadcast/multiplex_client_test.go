@@ -76,6 +76,35 @@ func TestMultiplexClient_SendTransaction_PrimaryFails(t *testing.T) {
 	require.ErrorIs(t, err, primaryErr)
 }
 
+func TestMultiplexClient_SecondarySendRespectsTimeout(t *testing.T) {
+	secondaryDone := make(chan struct{}, 1)
+	primary := &mockClient{}
+	secondary := &mockClient{
+		sendTxFn: func(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+			<-ctx.Done()
+			secondaryDone <- struct{}{}
+			return ctx.Err()
+		},
+		sendCalled: make(chan struct{}, 1),
+	}
+
+	mc := newMultiplexClient(logger.Test(t), primary, secondary)
+	mc.secondarySendTimeout = 150 * time.Millisecond
+	err := mc.SendTransaction(context.Background(), &types.Transaction{}, &types.Attempt{})
+	require.NoError(t, err)
+
+	select {
+	case <-secondaryDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("secondary goroutine did not finish after context timeout")
+	}
+	select {
+	case <-secondary.sendCalled:
+	case <-time.After(2 * time.Second):
+		t.Fatal("secondary SendTransaction did not return")
+	}
+}
+
 func TestMultiplexClient_SendTransaction_SecondaryFails(t *testing.T) {
 	secondaryCalled := make(chan struct{}, 1)
 	primary := &mockClient{}

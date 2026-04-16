@@ -19,7 +19,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-const rpcTimeout = 10 * time.Second
+const defaultRpcTimeout = 10 * time.Second
 
 // ofaRpcClient is the RPC used to interact with the public mempool.
 type ofaRpcClient interface {
@@ -76,8 +76,6 @@ func (r *ofaClient) NonceAt(ctx context.Context, address common.Address, blockNu
 }
 
 func (r *ofaClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	ctx, cancel := context.WithTimeout(ctx, rpcTimeout)
-	defer cancel()
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex()))
 	raw, err := r.postJSONRPC(ctx, address, body, nil)
 	if err != nil {
@@ -116,8 +114,12 @@ func (r *ofaClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transacti
 }
 
 func (r *ofaClient) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {
-	ctx, cancel := context.WithTimeout(ctx, rpcTimeout)
-	defer cancel()
+	// set timeout if not set yet
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, defaultRpcTimeout)
+		defer cancel()
+	}
 
 	postURL := r.auth.requestURL(r.customURL, meta)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, postURL, bytes.NewReader(body))
