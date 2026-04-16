@@ -15,8 +15,9 @@ import (
 
 const rpcTimeout = 10 * time.Second
 
-// multiplexClient sends a transaction to the primary OFA client and also fires a fire-and-forget request to the secondary OFA client.
-// It delegates nonce queries to the primary, ignoring the secondary.
+// multiplexClient implements txm.Client by sending each broadcast to two OFA backends. The primary
+// decides success or failure for TXM; the secondary runs in parallel and only logs errors. Nonce reads
+// use the primary so nonce state stays aligned with TXM.
 type multiplexClient struct {
 	lggr                 logger.SugaredLogger
 	primary              txm.Client
@@ -26,7 +27,7 @@ type multiplexClient struct {
 
 var _ txm.Client = (*multiplexClient)(nil)
 
-// newMultiplexClient wires primary + secondary OFA clients
+// newMultiplexClient returns a client that multiplexes sends to primary and secondary OFA implementations.
 func newMultiplexClient(lggr logger.Logger, primary, secondary txm.Client) *multiplexClient {
 	return &multiplexClient{
 		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiplexClient")),
