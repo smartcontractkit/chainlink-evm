@@ -346,7 +346,7 @@ func TestLogPoller_BackupPollerStartup(t *testing.T) {
 func assertBackupPollerStartup(t *testing.T, head *evmtypes.Head, finalizedHead *evmtypes.Head, safeHead *evmtypes.Head, finalityDepth int64, expectedSafeBlockNumber int64) {
 	addr := common.HexToAddress("0x2ab9a2dc53736b361b72d900cdf9f78f9406fbbc")
 	lggr, observedLogs := logger.TestObserved(t, zapcore.WarnLevel)
-	chainID := testutils.FixtureChainID
+	chainID := testutils.NewRandomEVMChainID()
 	db := testutils.NewSqlxDB(t)
 	orm := NewORM(chainID, db, lggr)
 
@@ -446,7 +446,7 @@ func TestLogPoller_Replay(t *testing.T) {
 	addr := common.HexToAddress("0x2ab9a2dc53736b361b72d900cdf9f78f9406fbbc")
 
 	lggr, observedLogs := logger.TestObserved(t, zapcore.ErrorLevel)
-	chainID := testutils.FixtureChainID
+	chainID := testutils.NewRandomEVMChainID()
 	db := testutils.NewSqlxDB(t)
 	orm := NewORM(chainID, db, lggr)
 
@@ -885,7 +885,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		KeepFinalizedBlocksDepth: 20,
 		BackupPollerBlockDelay:   0,
 	}
-	t.Run("Finalized DB block is not present in RPC's chain", func(t *testing.T) {
+	t.Run("Finalized DB block is not present in RPC's chain - detected in getCurrentBlockMaybeHandleReorg", func(t *testing.T) {
 		lggr, _ := logger.TestObserved(t, zapcore.ErrorLevel)
 		orm := NewORM(testutils.NewRandomEVMChainID(), db, lggr)
 		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
@@ -899,13 +899,26 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, number *big.Int) (*evmtypes.Head, error) {
 			return newHead(number.Int64()), nil
 		})
-		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5}}, nil).Once()
-		mockBatchCallContext(t, ec)
 		// insert finalized block with different hash than in RPC
+		require.NoError(t, orm.InsertBlock(t.Context(), common.HexToHash("0x124"), 3, time.Unix(10, 0), 2, 2))
 		require.NoError(t, orm.InsertBlock(t.Context(), common.HexToHash("0x123"), 2, time.Unix(10, 0), 2, 2))
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
 		lp.PollAndSaveLogs(t.Context(), 4, false)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
+	})
+	t.Run("Finalized DB block is not present in RPC's chain - detected during backfill", func(t *testing.T) {
+		lggr, _ := logger.TestObserved(t, zapcore.ErrorLevel)
+		orm := NewORM(testutils.NewRandomEVMChainID(), db, lggr)
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		ec := clienttest.NewClient(t)
+		mockBatchCallContext(t, ec)
+		// insert finalized block with different hash than in RPC
+		require.NoError(t, orm.InsertBlock(t.Context(), common.HexToHash("0x124"), 3, time.Unix(10, 0), 2, 2))
+		require.NoError(t, orm.InsertBlock(t.Context(), common.HexToHash("0x123"), 2, time.Unix(10, 0), 2, 2))
+		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return(nil, nil).Once()
+		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
+		err := lp.backfill(t.Context(), 3, 5)
+		require.ErrorIs(t, err, commontypes.ErrFinalityViolated)
 	})
 	t.Run("RPCs contradict each other and return different finalized blocks", func(t *testing.T) {
 		lggr, _ := logger.TestObserved(t, zapcore.ErrorLevel)
