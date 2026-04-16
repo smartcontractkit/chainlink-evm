@@ -267,9 +267,6 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 	}
 }
 
-// BroadcastTransaction broadcasts a transaction for the given address.
-// It returns true if the transaction was broadcasted successfully, false otherwise.
-// It returns an error if the transaction could not be broadcasted.
 func (t *Txm) BroadcastTransaction(ctx context.Context, address common.Address) (bool, error) {
 	for {
 		_, unconfirmedCount, err := t.txStore.FetchUnconfirmedTransactionAtNonceWithCount(ctx, 0, address)
