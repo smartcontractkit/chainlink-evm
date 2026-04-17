@@ -156,10 +156,7 @@ func NewTxmV2(
 	}
 	var eh txm.ErrorHandler
 	var c txm.Client
-	txmMetrics, err := txm.NewTxmMetrics(chainID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create txm metrics: %w", err)
-	}
+	txmMetrics := txm.NewTxmMetrics(lggr, chainID)
 	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
 		var err error
 		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, readRequestsToMultipleNodes, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout(), txmMetrics)

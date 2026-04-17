@@ -39,7 +39,7 @@ type dualContractTransmitter struct {
 	lp                  logpoller.LogPoller
 	lggr                logger.Logger
 	ks                  keys.Locker
-	lifecycleMetrics    *txm.TxmMetrics
+	lifecycleMetrics    txm.TxmMetrics
 	// Options
 	transmitterOptions *transmitterOps
 }
@@ -69,13 +69,7 @@ func NewOCRDualContractTransmitter(
 		return nil, errors.New("invalid ABI, missing transmitted")
 	}
 
-	var lifecycleMetrics *txm.TxmMetrics
-	lm, mErr := txm.NewTxmMetrics(chainID)
-	if mErr != nil {
-		return nil, fmt.Errorf("failed to create transaction lifecycle metrics: %w", mErr)
-	} else {
-		lifecycleMetrics = lm
-	}
+	lifecycleMetrics := txm.NewTxmMetrics(lggr, chainID)
 
 	newContractTransmitter := &dualContractTransmitter{
 		contractAddress:     address,

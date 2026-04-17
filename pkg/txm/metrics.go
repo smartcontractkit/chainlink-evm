@@ -2,6 +2,7 @@ package txm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/metrics"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
@@ -47,9 +49,20 @@ var (
 	}, []string{"chainID", "address"})
 )
 
-// TxmMetrics is the single metrics type for the TXMv2 transaction lifecycle.
-// It records both general TXM operational metrics and lifecycle metrics.
-type TxmMetrics struct {
+// TxmMetrics is the metrics contract for the TXMv2 transaction lifecycle.
+type TxmMetrics interface {
+	IncrementLifecycleFailure(context.Context, LifecycleFailureStage)
+	IncrementNumBroadcastedTxs(context.Context)
+	IncrementNumConfirmedTxs(context.Context, int)
+	IncrementNumNonceGaps(context.Context)
+	ReachedMaxAttempts(context.Context, bool)
+	RecordTimeUntilTxConfirmed(context.Context, float64)
+	SetRPCNonce(context.Context, common.Address, uint64)
+	EmitTxMessage(context.Context, common.Hash, common.Address, *types.Transaction) error
+}
+
+// txmMetrics is the default metrics recorder for the TXMv2 transaction lifecycle.
+type txmMetrics struct {
 	metrics.Labeler
 	chainID              *big.Int
 	numBroadcastedTxs    metric.Int64Counter
@@ -61,43 +74,51 @@ type TxmMetrics struct {
 	lifecycleFailure     metric.Int64Counter
 }
 
-func NewTxmMetrics(chainID *big.Int) (*TxmMetrics, error) {
+func NewTxmMetrics(lggr logger.Logger, chainID *big.Int) TxmMetrics {
+	var initErr error
 	numBroadcastedTxs, err := beholder.GetMeter().Int64Counter("txm_num_broadcasted_transactions")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register broadcasted txs number: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_num_broadcasted_transactions: %w", err))
 	}
 
 	numConfirmedTxs, err := beholder.GetMeter().Int64Counter("txm_num_confirmed_transactions")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register confirmed txs number: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_num_confirmed_transactions: %w", err))
 	}
 
 	numNonceGaps, err := beholder.GetMeter().Int64Counter("txm_num_nonce_gaps")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register nonce gaps number: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_num_nonce_gaps: %w", err))
 	}
 
 	timeUntilTxConfirmed, err := beholder.GetMeter().Float64Histogram("txm_time_until_tx_confirmed")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register time until tx confirmed: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_time_until_tx_confirmed: %w", err))
 	}
 
 	reachedMaxAttempts, err := beholder.GetMeter().Int64Gauge("txm_reached_max_attempts")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register max attempts indicator: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_reached_max_attempts: %w", err))
 	}
 
 	rpcNonce, err := beholder.GetMeter().Int64Gauge("txm_rpc_nonce")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register rpc nonce gauge: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_rpc_nonce: %w", err))
 	}
 
 	lifecycleFailure, err := beholder.GetMeter().Int64Counter("txm_transaction_lifecycle_failure_total")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register lifecycle failure counter: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_transaction_lifecycle_failure_total: %w", err))
 	}
 
-	return &TxmMetrics{
+	// It is very unlikely that another metric will be initialized correctly if there is even a single failure,
+	// so it's safer if we use a NOOP metric struct for everything and log an error instead.
+	if initErr != nil {
+		lggr.Errorw("Failed to initialize TXM metrics; using noop metrics", "err", initErr)
+		return NewNoopTxmMetrics()
+	}
+
+	return &txmMetrics{
 		chainID:              chainID,
 		Labeler:              metrics.NewLabeler().With("chainID", chainID.String()),
 		numBroadcastedTxs:    numBroadcastedTxs,
@@ -107,7 +128,11 @@ func NewTxmMetrics(chainID *big.Int) (*TxmMetrics, error) {
 		timeUntilTxConfirmed: timeUntilTxConfirmed,
 		rpcNonce:             rpcNonce,
 		lifecycleFailure:     lifecycleFailure,
-	}, nil
+	}
+}
+
+func NewNoopTxmMetrics() TxmMetrics {
+	return noopTxmMetrics{}
 }
 
 // LifecycleFailureStage represents a stage in the transaction lifecycle where a failure can occur.
@@ -126,7 +151,7 @@ const (
 )
 
 // IncrementLifecycleFailure increments the lifecycle failure counter for the given stage.
-func (m *TxmMetrics) IncrementLifecycleFailure(ctx context.Context, stage LifecycleFailureStage) {
+func (m *txmMetrics) IncrementLifecycleFailure(ctx context.Context, stage LifecycleFailureStage) {
 	m.lifecycleFailure.Add(ctx, 1,
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID.String()),
@@ -135,22 +160,22 @@ func (m *TxmMetrics) IncrementLifecycleFailure(ctx context.Context, stage Lifecy
 	)
 }
 
-func (m *TxmMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
+func (m *txmMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
 	promNumBroadcastedTxs.WithLabelValues(m.chainID.String()).Add(float64(1))
 	m.numBroadcastedTxs.Add(ctx, 1)
 }
 
-func (m *TxmMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int) {
+func (m *txmMetrics) IncrementNumConfirmedTxs(ctx context.Context, confirmedTransactions int) {
 	promNumConfirmedTxs.WithLabelValues(m.chainID.String()).Add(float64(confirmedTransactions))
 	m.numConfirmedTxs.Add(ctx, int64(confirmedTransactions))
 }
 
-func (m *TxmMetrics) IncrementNumNonceGaps(ctx context.Context) {
+func (m *txmMetrics) IncrementNumNonceGaps(ctx context.Context) {
 	promNumNonceGaps.WithLabelValues(m.chainID.String()).Add(float64(1))
 	m.numNonceGaps.Add(ctx, 1)
 }
 
-func (m *TxmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
+func (m *txmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
 	var value float64
 	if reached {
 		value = 1
@@ -159,17 +184,17 @@ func (m *TxmMetrics) ReachedMaxAttempts(ctx context.Context, reached bool) {
 	m.reachedMaxAttempts.Record(ctx, int64(value))
 }
 
-func (m *TxmMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
+func (m *txmMetrics) RecordTimeUntilTxConfirmed(ctx context.Context, duration float64) {
 	promTimeUntilTxConfirmed.WithLabelValues(m.chainID.String()).Observe(duration)
 	m.timeUntilTxConfirmed.Record(ctx, duration)
 }
 
-func (m *TxmMetrics) SetRPCNonce(ctx context.Context, address common.Address, nonce uint64) {
+func (m *txmMetrics) SetRPCNonce(ctx context.Context, address common.Address, nonce uint64) {
 	promRPCNonce.WithLabelValues(m.chainID.String(), address.String()).Set(float64(nonce))
 	m.rpcNonce.Record(ctx, int64(nonce))
 }
 
-func (m *TxmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
+func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return fmt.Errorf("failed to get meta for tx %s: %w", txHash, err)
@@ -207,4 +232,26 @@ func (m *TxmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, from
 		"beholder_entity", "svr.v1.TxMessage",
 		"beholder_data_schema", "/beholder-tx-message/versions/2",
 	)
+}
+
+// noopTxmMetrics is a no-op implementation of the TxmMetrics interface.
+// It allows the app to run without being blocked in case of metrics initialization errors.
+type noopTxmMetrics struct{}
+
+func (noopTxmMetrics) IncrementLifecycleFailure(context.Context, LifecycleFailureStage) {}
+
+func (noopTxmMetrics) IncrementNumBroadcastedTxs(context.Context) {}
+
+func (noopTxmMetrics) IncrementNumConfirmedTxs(context.Context, int) {}
+
+func (noopTxmMetrics) IncrementNumNonceGaps(context.Context) {}
+
+func (noopTxmMetrics) ReachedMaxAttempts(context.Context, bool) {}
+
+func (noopTxmMetrics) RecordTimeUntilTxConfirmed(context.Context, float64) {}
+
+func (noopTxmMetrics) SetRPCNonce(context.Context, common.Address, uint64) {}
+
+func (noopTxmMetrics) EmitTxMessage(context.Context, common.Hash, common.Address, *types.Transaction) error {
+	return nil
 }

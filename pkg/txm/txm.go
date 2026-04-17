@@ -88,7 +88,7 @@ type Txm struct {
 	txStore         TxStore
 	keystore        keys.AddressLister
 	config          Config
-	metrics         *TxmMetrics
+	metrics         TxmMetrics
 
 	nonceMapMu sync.RWMutex
 	nonceMap   map[common.Address]uint64
@@ -98,7 +98,7 @@ type Txm struct {
 	wg        sync.WaitGroup
 }
 
-func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler, metrics *TxmMetrics) *Txm {
+func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler, metrics TxmMetrics) *Txm {
 	return &Txm{
 		lggr:            logger.Sugared(logger.Named(lggr, "Txm")),
 		keystore:        keystore,
@@ -117,10 +117,6 @@ func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder 
 
 func (t *Txm) Start(ctx context.Context) error {
 	return t.StartOnce("Txm", func() error {
-		if t.metrics == nil {
-			return fmt.Errorf("txm metrics are required")
-		}
-
 		t.stopCh = make(chan struct{})
 
 		addresses, err := t.keystore.EnabledAddresses(ctx)
@@ -380,9 +376,7 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 		t.metrics.IncrementLifecycleFailure(ctx, StageNonceAt)
 		return err
 	}
-	if t.metrics != nil {
-		t.metrics.SetRPCNonce(ctx, address, latestNonce)
-	}
+	t.metrics.SetRPCNonce(ctx, address, latestNonce)
 
 	confirmedTransactions, unconfirmedTransactionIDs, err := t.txStore.MarkConfirmedAndReorgedTransactions(ctx, latestNonce, address)
 	if err != nil {

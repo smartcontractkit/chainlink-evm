@@ -142,12 +142,12 @@ type MetaClient struct {
 	customURL             *url.URL
 	chainID               *big.Int
 	metrics               *MetaMetrics
-	lifecycleMetrics      *txm.TxmMetrics
+	lifecycleMetrics      txm.TxmMetrics
 	txStore               MetaClientTxStore
 	auctionRequestTimeout time.Duration
 }
 
-func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore, auctionRequestTimeout *time.Duration, lifecycleMetrics *txm.TxmMetrics) (*MetaClient, error) {
+func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore, auctionRequestTimeout *time.Duration, lifecycleMetrics txm.TxmMetrics) (*MetaClient, error) {
 	metrics, err := NewMetaMetrics(chainID.String(), lggr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
