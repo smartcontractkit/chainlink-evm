@@ -88,7 +88,7 @@ type Txm struct {
 	txStore         TxStore
 	keystore        keys.AddressLister
 	config          Config
-	metrics         TxmMetrics
+	metrics         Metrics
 
 	nonceMapMu sync.RWMutex
 	nonceMap   map[common.Address]uint64
@@ -98,7 +98,7 @@ type Txm struct {
 	wg        sync.WaitGroup
 }
 
-func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler, metrics TxmMetrics) *Txm {
+func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler, metrics Metrics) *Txm {
 	return &Txm{
 		lggr:            logger.Sugared(logger.Named(lggr, "Txm")),
 		keystore:        keystore,

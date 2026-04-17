@@ -49,8 +49,8 @@ var (
 	}, []string{"chainID", "address"})
 )
 
-// TxmMetrics is the metrics contract for the TXMv2 transaction lifecycle.
-type TxmMetrics interface {
+// Metrics is the metrics contract for the TXMv2 transaction lifecycle.
+type Metrics interface {
 	IncrementLifecycleFailure(context.Context, LifecycleFailureStage)
 	IncrementNumBroadcastedTxs(context.Context)
 	IncrementNumConfirmedTxs(context.Context, int)
@@ -74,7 +74,7 @@ type txmMetrics struct {
 	lifecycleFailure     metric.Int64Counter
 }
 
-func NewTxmMetrics(lggr logger.Logger, chainID *big.Int) TxmMetrics {
+func NewTxmMetrics(lggr logger.Logger, chainID *big.Int) Metrics {
 	var initErr error
 	numBroadcastedTxs, err := beholder.GetMeter().Int64Counter("txm_num_broadcasted_transactions")
 	if err != nil {
@@ -131,7 +131,7 @@ func NewTxmMetrics(lggr logger.Logger, chainID *big.Int) TxmMetrics {
 	}
 }
 
-func NewNoopTxmMetrics() TxmMetrics {
+func NewNoopTxmMetrics() Metrics {
 	return noopTxmMetrics{}
 }
 
@@ -234,7 +234,7 @@ func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, from
 	)
 }
 
-// noopTxmMetrics is a no-op implementation of the TxmMetrics interface.
+// noopTxmMetrics is a no-op implementation of the Metrics interface.
 // It allows the app to run without being blocked in case of metrics initialization errors.
 type noopTxmMetrics struct{}
 

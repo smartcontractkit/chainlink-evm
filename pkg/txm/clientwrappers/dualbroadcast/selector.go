@@ -24,7 +24,7 @@ func SelectClient(
 	readRequestsToMultipleNodes bool,
 	bundles *bool,
 	auctionRequestTimeout *time.Duration,
-	lifecycleMetrics txm.TxmMetrics,
+	lifecycleMetrics txm.Metrics,
 ) (txm.Client, txm.ErrorHandler, error) {
 	chainClient, err := clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes)
 	if err != nil {

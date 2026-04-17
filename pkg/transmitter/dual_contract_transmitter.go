@@ -39,7 +39,7 @@ type dualContractTransmitter struct {
 	lp                  logpoller.LogPoller
 	lggr                logger.Logger
 	ks                  keys.Locker
-	lifecycleMetrics    txm.TxmMetrics
+	lifecycleMetrics    txm.Metrics
 	// Options
 	transmitterOptions *transmitterOps
 }
