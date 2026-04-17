@@ -452,6 +452,11 @@ func (c *Chain) ValidateConfig() (err error) {
 			Msg: "must be greater than or equal to FinalizedBlockOffset"})
 	}
 
+	if *c.LogBackfillBatchSize == 0 {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "LogBackfillBatchSize", Value: 0,
+			Msg: "must be greater than 0"})
+	}
+
 	// AutoPurge configs depend on ChainType so handling validation on per chain basis
 	if c.Transactions.AutoPurge.Enabled != nil && *c.Transactions.AutoPurge.Enabled {
 		chainType := c.ChainType.ChainType()
