@@ -1051,6 +1051,114 @@ func Test_getUnfinalizedLogs_includes_empty_finalized_when_skip_empty(t *testing
 	assertContains(t, blocks, latestBlock)
 }
 
+// Test_PollAndSaveLogs_FinalityViolation_reorgedFinalizedEmpty covers the case where the first poll
+// persists an empty finalized checkpoint (SkipEmptyBlocks) and a later poll sees a new canonical chain
+// that replaces only the finalized tail (blocks through 9 still match). The reorg handler must surface
+// ErrFinalityViolated instead of silently truncating past finality.
+func Test_PollAndSaveLogs_FinalityViolation_reorgedFinalizedEmpty(t *testing.T) {
+	t.Parallel()
+
+	ctx := testutils.Context(t)
+	db := testutils.NewSqlxDB(t)
+	chainID := testutils.NewRandomEVMChainID()
+	lggr := logger.Test(t)
+	orm := NewORM(chainID, db, lggr)
+	ht := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+	ec := clienttest.NewClient(t)
+
+	const finalizedNum int64 = 10
+	const latestBlock int64 = 12
+
+	forkChain := make(map[int64]*evmtypes.Head)
+	for n := int64(1); n < finalizedNum; n++ {
+		forkChain[n] = newHead(n)
+	}
+	finalizedReorgHash := common.HexToHash("0x00000000000000000000000000000000000000000000000000000000badf00d")
+	forkChain[finalizedNum] = &evmtypes.Head{
+		Number:     finalizedNum,
+		Hash:       finalizedReorgHash,
+		ParentHash: hashOf(finalizedNum - 1),
+		Timestamp:  time.Unix(finalizedNum, 0),
+	}
+	for n := finalizedNum + 1; n <= 20; n++ {
+		p := forkChain[n-1]
+		forkChain[n] = &evmtypes.Head{
+			Number:     n,
+			Hash:       common.BigToHash(big.NewInt(700000 + n)),
+			ParentHash: p.Hash,
+			Timestamp:  time.Unix(n, 0),
+		}
+	}
+
+	var onForkChain atomic.Bool
+	ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+		num := n.Int64()
+		if onForkChain.Load() {
+			h := forkChain[num]
+			require.NotNil(t, h, "missing fork head for %d", num)
+			return h, nil
+		}
+		return newHead(num), nil
+	})
+
+	// called during backfill only on initial poll
+	ec.On("BatchCallContext", mock.Anything, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
+		elems := args.Get(1).([]rpc.BatchElem)
+		for i, e := range elems {
+			var num int64
+			block := e.Args[0].(string)
+			switch block {
+			case "latest":
+				num = latestBlock
+			case "finalized":
+				num = finalizedNum
+			default:
+				n, err := hexutil.DecodeUint64(block)
+				require.NoError(t, err)
+				num = int64(n)
+				if num == 0 {
+					elems[i].Error = errors.New("block 0 is not available")
+					continue
+				}
+			}
+			result := e.Result.(*evmtypes.Head)
+			*result = newHeadVal(num)
+		}
+	})
+
+	// One backfill FilterLogs for [1,9] plus one unfinalized query per block 10..12.
+	ec.EXPECT().ConfiguredChainID().Return(chainID).Times(4)
+	ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return(nil, nil).Times(4)
+
+	lpOpts := Opts{
+		PollPeriod:               time.Hour,
+		FinalityDepth:            3,
+		BackfillBatchSize:        10,
+		RPCBatchSize:             10,
+		KeepFinalizedBlocksDepth: 50,
+		BackupPollerBlockDelay:   0,
+		SkipEmptyBlocks:          true,
+	}
+	lp := NewLogPoller(orm, ec, lggr, ht, lpOpts)
+
+	finalizedA := newHead(finalizedNum)
+	latestA := newHead(latestBlock)
+	ht.EXPECT().LatestAndFinalizedBlock(mock.Anything).Return(latestA, finalizedA, nil).Once()
+	ht.EXPECT().LatestSafeBlock(mock.Anything).Return(finalizedA, nil).Once()
+
+	lp.PollAndSaveLogs(ctx, 1, false)
+	require.NoError(t, lp.HealthReport()[lp.Name()])
+
+	onForkChain.Store(true)
+	latestB := forkChain[latestBlock+1]
+	finalizedB := forkChain[finalizedNum]
+	ht.EXPECT().LatestAndFinalizedBlock(mock.Anything).Return(latestB, finalizedB, nil).Once()
+	ht.EXPECT().LatestSafeBlock(mock.Anything).Return(finalizedB, nil).Once()
+
+	lp.PollAndSaveLogs(ctx, latestBlock+1, false)
+	require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
+}
+
 // Test_PollAndSaveLogs_FinalityViolationSurvivesTransient documents that
 // PollAndSaveLogs only clears finalityViolated after a successful verification that DB's latest block belongs to the canonical chain.
 func Test_PollAndSaveLogs_FinalityViolationSurvivesTransient(t *testing.T) {
