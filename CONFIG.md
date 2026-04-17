@@ -394,6 +394,7 @@ DualBroadcast = false # Example
 ReadRequestsToMultipleNodes = false # Example
 Bundles = false # Example
 FastlaneAuctionRequestTimeout = '5s' # Example
+Tier2Feeds = ['0x0000000000000000000000000000000000000001', '0x0000000000000000000000000000000000000002'] # Example
 ```
 
 
@@ -444,6 +445,12 @@ Bundles enables sending bundles for auctioning (not compatible with all OFAs).
 FastlaneAuctionRequestTimeout = '5s' # Example
 ```
 FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
+
+### Tier2Feeds
+```toml
+Tier2Feeds = ['0x0000000000000000000000000000000000000001', '0x0000000000000000000000000000000000000002'] # Example
+```
+Tier2Feeds is a list of feed contract addresses whose transactions use Value=2 when sent via Nova. All other feeds use Value=1.
 
 ## BalanceMonitor
 ```toml

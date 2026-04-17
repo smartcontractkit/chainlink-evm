@@ -4,6 +4,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
 )
 
@@ -85,6 +87,14 @@ func (t *transactionManagerV2Config) FastlaneAuctionRequestTimeout() *time.Durat
 	}
 	d := t.c.FastlaneAuctionRequestTimeout.Duration()
 	return &d
+}
+
+func (t *transactionManagerV2Config) Tier2Feeds() []common.Address {
+	addrs := make([]common.Address, len(t.c.Tier2Feeds))
+	for i, a := range t.c.Tier2Feeds {
+		addrs[i] = common.HexToAddress(string(a))
+	}
+	return addrs
 }
 
 func (t *transactionsConfig) AutoPurge() AutoPurgeConfig {

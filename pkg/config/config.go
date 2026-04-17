@@ -137,6 +137,7 @@ type TransactionManagerV2 interface {
 	ReadRequestsToMultipleNodes() *bool
 	Bundles() *bool
 	FastlaneAuctionRequestTimeout() *time.Duration
+	Tier2Feeds() []gethcommon.Address
 }
 
 type GasEstimator interface {

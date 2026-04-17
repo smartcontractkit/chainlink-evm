@@ -25,7 +25,7 @@ func TestSelectClient_FlashbotsPrimaryOnly(t *testing.T) {
 
 	primaryURL := mustParseURL(t, "https://relay.flashbots.net")
 
-	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, nil, big.NewInt(1), nil, false, nil, nil)
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, nil, big.NewInt(1), nil, false, nil, nil, nil)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.Nil(t, eh)
@@ -41,7 +41,7 @@ func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
 	primaryURL := mustParseURL(t, "https://relay.flashbots.net")
 	secondaryURL := mustParseURL(t, "https://eth.novarpc.xyz?api_key=test")
 
-	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, secondaryURL, big.NewInt(1), nil, false, nil, nil)
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, secondaryURL, big.NewInt(1), nil, false, nil, nil, nil)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.Nil(t, eh)
@@ -57,7 +57,7 @@ func TestSelectClient_RejectsNonNovaSecondary(t *testing.T) {
 	primaryURL := mustParseURL(t, "https://relay.flashbots.net")
 	secondaryURL := mustParseURL(t, "https://relay.flashbots.net")
 
-	_, _, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, secondaryURL, big.NewInt(1), nil, false, nil, nil)
+	_, _, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, secondaryURL, big.NewInt(1), nil, false, nil, nil, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "secondary URL must be a Nova RPC endpoint")
 }
@@ -68,7 +68,7 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 
 	primaryURL := mustParseURL(t, "https://eth.novarpc.xyz?api_key=test")
 
-	c, _, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, nil, big.NewInt(1), nil, false, nil, nil)
+	c, _, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, nil, big.NewInt(1), nil, false, nil, nil, nil)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 

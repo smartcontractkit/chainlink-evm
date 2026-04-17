@@ -68,6 +68,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
 	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
 	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
+	unknown.Transactions.TransactionManagerV2.Tier2Feeds = []types.EIP55Address{}
 	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
@@ -167,6 +168,7 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = nil
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
 		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
+		docDefaults.Transactions.TransactionManagerV2.Tier2Feeds = nil
 
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
@@ -297,6 +299,10 @@ var fullConfig = EVMConfig{
 				CustomURL:                     config.MustParseURL("http://txs.org"),
 				CustomURLSecondary:            config.MustParseURL("http://txs-secondary.org"),
 				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
+				Tier2Feeds: []types.EIP55Address{
+					types.MustEIP55Address("0x0000000000000000000000000000000000000001"),
+					types.MustEIP55Address("0x0000000000000000000000000000000000000002"),
+				},
 			},
 		},
 

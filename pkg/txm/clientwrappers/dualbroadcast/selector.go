@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
@@ -14,13 +16,13 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 )
 
-func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, primaryURL *url.URL, secondaryURL *url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
+func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, primaryURL *url.URL, secondaryURL *url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration, tier2Feeds []common.Address) (txm.Client, txm.ErrorHandler, error) {
 	chainClient, err := clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	primary, errHandler, err := selectSingleClient(lggr, chainClient, keyStore, primaryURL, chainID, txStore, bundles, auctionRequestTimeout)
+	primary, errHandler, err := selectSingleClient(lggr, chainClient, keyStore, primaryURL, chainID, txStore, bundles, auctionRequestTimeout, tier2Feeds)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(primaryURL), err)
 	}
@@ -34,7 +36,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 		return nil, nil, fmt.Errorf("secondary URL must be a Nova RPC endpoint, got: %s", redactURL(secondaryURL))
 	}
 
-	secondary, _, err := selectSingleClient(lggr, chainClient, keyStore, secondaryURL, chainID, txStore, bundles, auctionRequestTimeout)
+	secondary, _, err := selectSingleClient(lggr, chainClient, keyStore, secondaryURL, chainID, txStore, bundles, auctionRequestTimeout, tier2Feeds)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", redactURL(secondaryURL), err)
 	}
@@ -42,7 +44,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	return newMultiplexClient(lggr, primary, secondary), errHandler, nil
 }
 
-func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainClient, keyStore keys.ChainStore, u *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
+func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainClient, keyStore keys.ChainStore, u *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool, auctionRequestTimeout *time.Duration, tier2Feeds []common.Address) (txm.Client, txm.ErrorHandler, error) {
 	urlString := u.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
@@ -56,7 +58,7 @@ func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainCli
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
 		}
-		return newNovaClient(lggr, chainClient, u, metrics), nil, nil
+		return newNovaClient(lggr, chainClient, u, metrics, keyStore, tier2Feeds), nil, nil
 	default:
 		mc, err := NewMetaClient(lggr, chainClient, keyStore, u, chainID, txStore, auctionRequestTimeout)
 		if err != nil {

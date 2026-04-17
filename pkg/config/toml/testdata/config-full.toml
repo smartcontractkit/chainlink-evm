@@ -47,6 +47,7 @@ Enabled = false
 BlockTime = '42s'
 CustomURL = 'http://txs.org'
 CustomURLSecondary = 'http://txs-secondary.org'
+Tier2Feeds = ['0x0000000000000000000000000000000000000001', '0x0000000000000000000000000000000000000002']
 DualBroadcast = true
 ReadRequestsToMultipleNodes = false
 Bundles = false

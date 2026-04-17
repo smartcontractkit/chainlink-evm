@@ -179,6 +179,8 @@ ReadRequestsToMultipleNodes = false # Example
 Bundles = false # Example
 # FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
 FastlaneAuctionRequestTimeout = '5s' # Example
+# Tier2Feeds is a list of feed contract addresses whose transactions use Value=2 when sent via Nova. All other feeds use Value=1.
+Tier2Feeds = ['0x0000000000000000000000000000000000000001', '0x0000000000000000000000000000000000000002'] # Example
 
 [BalanceMonitor]
 # Enabled balance monitoring for all keys.
