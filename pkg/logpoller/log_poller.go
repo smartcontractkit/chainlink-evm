@@ -1141,11 +1141,6 @@ func (lp *logPoller) PollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		lp.lggr.Errorw("Failed to poll and save logs, retrying later", "err", err)
 		return
 	}
-
-	if lp.finalityViolated.Load() {
-		lp.lggr.Info("PollAndSaveLogs completed successfully - removing finality violation flag")
-		lp.finalityViolated.Store(false)
-	}
 }
 
 func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int64, isReplay bool) (err error) {
@@ -1185,6 +1180,11 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		return fmt.Errorf("unable to get current block: %w", err)
 	}
 	currentBlockNumber = currentBlock.Number
+	// getCurrentBlockMaybeHandleReorg ensured that DB's state matches RPC's, so it's safe to remove finality violation flag if it was set.
+	if lp.finalityViolated.Load() {
+		lp.lggr.Info("getCurrentBlockMaybeHandleReorg completed successfully - removing finality violation flag")
+		lp.finalityViolated.Store(false)
+	}
 
 	// backfill finalized blocks if we can for performance. If we crash during backfill, we
 	// may reprocess logs.  Log insertion is idempotent so this is ok.
