@@ -377,20 +377,26 @@ func (c *chain) Close() error {
 	return c.StopOnce("Chain", func() (merr error) {
 		c.logger.Debug("Chain: stopping")
 
+		// Stop event sources before consumers to prevent late delivery
+		// (e.g. headBroadcaster calling balanceMonitor.OnNewLongestChain
+		// after the balance monitor has stopped, causing a data race).
+
 		if c.logPoller != logpoller.LogPollerDisabled {
 			merr = multierr.Append(merr, c.logPoller.Close())
 		}
 
-		if c.balanceMonitor != nil {
-			c.logger.Debug("Chain: stopping balance monitor")
-			merr = c.balanceMonitor.Close()
-		}
 		c.logger.Debug("Chain: stopping logBroadcaster")
 		merr = multierr.Combine(merr, c.logBroadcaster.Close())
 		c.logger.Debug("Chain: stopping headTracker")
 		merr = multierr.Combine(merr, c.headTracker.Close())
 		c.logger.Debug("Chain: stopping headBroadcaster")
 		merr = multierr.Combine(merr, c.headBroadcaster.Close())
+
+		if c.balanceMonitor != nil {
+			c.logger.Debug("Chain: stopping balance monitor")
+			merr = multierr.Combine(merr, c.balanceMonitor.Close())
+		}
+
 		c.logger.Debug("Chain: stopping evmTxm")
 		merr = multierr.Combine(merr, c.txm.Close())
 

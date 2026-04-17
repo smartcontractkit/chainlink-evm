@@ -534,7 +534,7 @@ func TestFlow_ErrorHandler(t *testing.T) {
 	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(dualbroadcast.ErrNoBids).Once()
 	_, err = tm.BroadcastTransaction(t.Context(), address)
 	require.NoError(t, err)
-	tests.AssertLogEventually(t, observedLogs, "transaction with txID: 0 marked as fatal")
+	tests.AssertLogEventually(t, observedLogs, "transaction marked as fatal")
 	_, count, err := txStoreManager.FetchUnconfirmedTransactionAtNonceWithCount(t.Context(), 0, address)
 	require.NoError(t, err)
 	require.Equal(t, 0, count)
