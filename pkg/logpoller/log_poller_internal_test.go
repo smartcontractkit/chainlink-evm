@@ -1001,6 +1001,56 @@ func newMockedLP(t *testing.T, opts Opts) *mockedLP {
 	}
 }
 
+// Test_getUnfinalizedLogs_includes_empty_finalized_when_skip_empty ensures the finalized
+// block is still present in the returned block slice when SkipEmptyBlocks is on and that
+// block has no logs. Without that, only the trailing block from the defer would be kept,
+// and the finalized checkpoint block would be missing from the middle of the range.
+func Test_getUnfinalizedLogs_includes_empty_finalized_when_skip_empty(t *testing.T) {
+	t.Parallel()
+
+	const (
+		latestBlock    int64 = 12
+		finalizedBlock int64 = 10
+		startBlock           = finalizedBlock - 1
+	)
+
+	opts := Opts{
+		PollPeriod:        time.Hour,
+		FinalityDepth:     2,
+		BackfillBatchSize: 10,
+		RPCBatchSize:      10,
+		SkipEmptyBlocks:   true,
+	}
+	m := newMockedLP(t, opts)
+
+	chainID := testutils.NewRandomEVMChainID()
+	filterCalls := int(latestBlock-startBlock) + 1
+	m.Client.EXPECT().ConfiguredChainID().Return(chainID).Times(filterCalls)
+
+	m.Client.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+		return newHead(n.Int64()), nil
+	}).Times(int(latestBlock - startBlock))
+
+	m.Client.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return(nil, nil).Times(filterCalls)
+
+	blocks, logs, err := m.LP.getUnfinalizedLogs(t.Context(), newHead(startBlock), latestBlock, latestBlock, finalizedBlock, false)
+	require.NoError(t, err)
+	require.Empty(t, logs)
+
+	assertContains := func(t *testing.T, blocks []Block, expected int64) {
+		t.Helper()
+		for _, b := range blocks {
+			if b.BlockNumber == expected {
+				return
+			}
+		}
+		t.Fatalf("expected block number %d in blocks slice: %#v", expected, blocks)
+	}
+
+	assertContains(t, blocks, finalizedBlock)
+	assertContains(t, blocks, latestBlock)
+}
+
 // Test_PollAndSaveLogs_FinalityViolationSurvivesTransient documents that
 // PollAndSaveLogs only clears finalityViolated after a successful verification that DB's latest block belongs to the canonical chain.
 func Test_PollAndSaveLogs_FinalityViolationSurvivesTransient(t *testing.T) {

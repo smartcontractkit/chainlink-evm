@@ -1278,7 +1278,9 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 		}
 		logs = append(logs, convertLogs(rpcLogs, []Block{*block}, lp.lggr, lp.ec.ConfiguredChainID())...)
 		// Skip empty blocks if configured to do so.
-		if len(rpcLogs) > 0 || !lp.skipEmptyBlocks {
+		// Ensure that even if latest finalized block is empty, we still save it to the db.
+		// This is important to detect finality violations.
+		if len(rpcLogs) > 0 || !lp.skipEmptyBlocks || currentBlock.Number == finalized {
 			blocks = append(blocks, *block)
 		}
 
