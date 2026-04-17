@@ -48,6 +48,32 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 	}
 }
 
+func TestEVMConfig_ValidateInvalidConfig(t *testing.T) {
+	testCases := []struct {
+		Name          string
+		MakeInvalid   func(cfg *Chain)
+		ExpectedError string
+	}{
+		{
+			Name: "LogBackfillBatchSize must be > 0",
+			MakeInvalid: func(cfg *Chain) {
+				cfg.LogBackfillBatchSize = ptr[uint32](0)
+			},
+			ExpectedError: "LogBackfillBatchSize: invalid value (0): must be greater than 0",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			var cfg Chain
+			cfg.SetFrom(&fallback)
+			tc.MakeInvalid(&cfg)
+			err := cfg.ValidateConfig()
+			require.Error(t, err)
+			require.ErrorContains(t, err, tc.ExpectedError)
+		})
+	}
+}
+
 func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown := Defaults(nil)
 
