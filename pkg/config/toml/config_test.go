@@ -328,6 +328,7 @@ var fullConfig = EVMConfig{
 
 		NodePool: NodePool{
 			PollFailureThreshold:           ptr[uint32](5),
+			PollSuccessThreshold:           ptr[uint32](0),
 			PollInterval:                   config.MustNewDuration(time.Minute),
 			SelectionMode:                  ptr(multinode.NodeSelectionModeHighestHead),
 			SyncThreshold:                  ptr[uint32](13),

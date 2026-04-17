@@ -934,6 +934,7 @@ GasEstimator.PriceMax overrides the maximum gas price for this key. See EVM.GasE
 ```toml
 [NodePool]
 PollFailureThreshold = 5 # Default
+PollSuccessThreshold = 0 # Default
 PollInterval = '10s' # Default
 SelectionMode = 'HighestHead' # Default
 SyncThreshold = 5 # Default
@@ -957,6 +958,14 @@ PollFailureThreshold = 5 # Default
 PollFailureThreshold indicates how many consecutive polls must fail in order to mark a node as unreachable.
 
 Set to zero to disable poll checking.
+
+### PollSuccessThreshold
+```toml
+PollSuccessThreshold = 0 # Default
+```
+PollSuccessThreshold indicates how many consecutive polls must succeed in order to mark a node as alive once it has been marked as unreachable.
+
+Set to zero to require no successful polls (previous behavior).
 
 ### PollInterval
 ```toml
