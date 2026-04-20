@@ -83,6 +83,7 @@ func newOnChainDualContractTransmitter(ctx context.Context, lggr logger.Logger, 
 		chain.LogPoller(),
 		lggr,
 		ethKeystore,
+		chain.ID(),
 		ocrTransmitterOpts...,
 	)
 }
