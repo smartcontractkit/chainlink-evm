@@ -234,6 +234,11 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 		if opts.GenLogPoller != nil {
 			logPoller = opts.GenLogPoller(chainID)
 		} else {
+			metrics, err := logpoller.NewPromBeholderMetrics(chainID.String(), chainselectors.FamilyEVM)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create log poller metrics: %w", err)
+			}
+
 			lpOpts := logpoller.Opts{
 				PollPeriod:               cfg.EVM().LogPollInterval(),
 				UseFinalityTag:           cfg.EVM().FinalityTagEnabled(),
@@ -245,6 +250,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 				BackupPollerBlockDelay:   int64(cfg.EVM().BackupLogPollerBlockDelay()),
 				ClientErrors:             cfg.EVM().NodePool().Errors(),
 				SkipEmptyBlocks:          cfg.EVM().LogPollerSkipEmptyBlocks(),
+				Metrics:                  metrics,
 			}
 
 			lpORM, err := logpoller.NewObservedORM(chainID, opts.DS, l)
