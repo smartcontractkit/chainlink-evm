@@ -713,6 +713,22 @@ func TestLogPoller_Replay(t *testing.T) {
 	})
 }
 
+func TestLogPoller_Replay_nilLatestHead(t *testing.T) {
+	t.Parallel()
+	lggr := logger.Test(t)
+	ec := clienttest.NewClient(t)
+	ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).Return(nil, nil).Once()
+	// Nil ORM is sufficient: Replay returns after HeadByNumber before touching the database.
+	lp := NewLogPoller(nil, ec, lggr, nil, Opts{
+		PollPeriod:               time.Hour,
+		BackfillBatchSize:        1,
+		RPCBatchSize:             1,
+		KeepFinalizedBlocksDepth: 20,
+	})
+	err := lp.Replay(testutils.Context(t), 1)
+	require.ErrorContains(t, err, "expected latest block to be non-nil")
+}
+
 func (lp *logPoller) reset() {
 	lp.StateMachine = services.StateMachine{}
 	lp.stopCh = make(chan struct{})
@@ -750,6 +766,24 @@ func Test_latestBlockAndFinalityDepth(t *testing.T) {
 		require.NotNil(t, latestBlock)
 		assert.Equal(t, head.BlockNumber(), latestBlock.BlockNumber())
 		assert.Equal(t, finalizedBlock.Number, finalizedBlockNumber)
+	})
+	t.Run("headTracker returns nil latest with nil error", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		finalizedBlock := &evmtypes.Head{Number: 1}
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(nil, finalizedBlock, nil)
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		_, _, err := lp.latestBlocks(t.Context())
+		require.ErrorContains(t, err, "expected non-nil latest block from HeadTracker")
+	})
+	t.Run("headTracker returns nil finalized with nil error", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		head := &evmtypes.Head{Number: 10}
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, nil, nil)
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		_, _, err := lp.latestBlocks(t.Context())
+		require.ErrorContains(t, err, "expected non-nil finalized block from HeadTracker")
 	})
 }
 
@@ -792,6 +826,14 @@ func Test_latestSafeBlocks(t *testing.T) {
 		safeBlockNumber, err := lp.latestSafeBlock(t.Context(), latestFinalizedBlockNumber)
 		require.NoError(t, err)
 		assert.Equal(t, latestFinalizedBlockNumber, safeBlockNumber)
+	})
+	t.Run("headTracker returns nil safe with nil error", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(nil, nil)
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		_, err := lp.latestSafeBlock(t.Context(), 1)
+		require.ErrorContains(t, err, "expected non-nil safe block from HeadTracker")
 	})
 }
 
