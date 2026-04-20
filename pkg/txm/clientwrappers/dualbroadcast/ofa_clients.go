@@ -26,7 +26,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-// TODO(gg): add tests
 // TODO(gg): maybe put bundles into its own file?
 
 const (
