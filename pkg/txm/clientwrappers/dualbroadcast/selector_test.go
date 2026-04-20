@@ -64,7 +64,7 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 
 	nc, isOFA := c.(*ofaTXClient)
 	assert.True(t, isOFA, "nova URL should create an OFA client")
-	assert.Equal(t, ofaKindNova, nc.ofa.kind)
+	assert.Equal(t, ofaKindNova, nc.kind)
 }
 
 func TestRedactURL(t *testing.T) {

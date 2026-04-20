@@ -27,7 +27,7 @@ import (
 )
 
 // TODO(gg): add tests
-// TODO(gg): simplify httpOFA and ofaTXClient
+// TODO(gg): maybe put bundles into its own file?
 
 const (
 	defaultRPCTimeout = 10 * time.Second
@@ -60,142 +60,6 @@ type chainRPCClient interface {
 	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
 }
 
-// httpOFA performs JSON-RPC over HTTP to OFA endpoints (Flashbots, Nova, …).
-type httpOFA struct {
-	c             chainRPCClient
-	customURL     *url.URL
-	kind          ofaKind
-	keystore      keys.MessageSigner // Set only if signing is required
-	metrics       ofaMetrics
-	errHTTPPrefix string
-}
-
-func newHTTPOFA(
-	c chainRPCClient,
-	customURL *url.URL,
-	kind ofaKind,
-	keystore keys.MessageSigner,
-	metrics ofaMetrics,
-	errHTTPPrefix string,
-) *httpOFA {
-	return &httpOFA{
-		c:             c,
-		customURL:     customURL,
-		kind:          kind,
-		keystore:      keystore,
-		metrics:       metrics,
-		errHTTPPrefix: errHTTPPrefix,
-	}
-}
-
-func (h *httpOFA) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
-	return h.c.NonceAt(ctx, address, blockNumber)
-}
-
-func (h *httpOFA) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex()))
-	raw, err := h.postJSONRPC(ctx, address, body, nil)
-	if err != nil {
-		return 0, fmt.Errorf("%s eth_getTransactionCount failed: %w", h.errHTTPPrefix, err)
-	}
-
-	var resultStr string
-	if err = json.Unmarshal(raw, &resultStr); err != nil {
-		return 0, fmt.Errorf("failed to unmarshal response %s into string: %w", string(raw), err)
-	}
-	nonce, err := hexutil.DecodeUint64(resultStr)
-	if err != nil {
-		return 0, fmt.Errorf("failed to decode response %v into uint64: %w", resultStr, err)
-	}
-	return nonce, nil
-}
-
-func (h *httpOFA) postURL(meta *types.TxMeta) string {
-	switch h.kind {
-	case ofaKindFlashbots:
-		var params string
-		if meta != nil && meta.DualBroadcastParams != nil {
-			params = *meta.DualBroadcastParams
-		}
-		return h.customURL.String() + "?" + params
-	default:
-		return h.customURL.String()
-	}
-}
-
-func (h *httpOFA) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
-	if h.kind != ofaKindFlashbots || h.keystore == nil {
-		return nil
-	}
-	hashedBody := crypto.Keccak256Hash(body).Hex()
-	signedMessage, err := h.keystore.SignMessage(ctx, from, []byte(hashedBody))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("X-Flashbots-signature", from.String()+":"+hexutil.Encode(signedMessage))
-	req.Header.Add("X-Flashbots-Origin", "chainlink")
-	return nil
-}
-
-func (h *httpOFA) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
-	meta, err := tx.GetMeta()
-	if err != nil {
-		return err
-	}
-
-	data, err := attempt.SignedTransaction.MarshalBinary()
-	if err != nil {
-		return err
-	}
-
-	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
-	start := time.Now()
-	_, err = h.postJSONRPC(ctx, tx.FromAddress, body, meta)
-	h.metrics.RecordSendTx(ctx, time.Since(start), err)
-
-	return err
-}
-
-func (h *httpOFA) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {
-	if _, ok := ctx.Deadline(); !ok {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, defaultRPCTimeout)
-		defer cancel()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, h.postURL(meta), bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-	if err = h.signRequest(ctx, req, body, from); err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("%s request failed: %w", h.errHTTPPrefix, err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s request failed with status %d: %s", h.errHTTPPrefix, resp.StatusCode, string(respBody))
-	}
-
-	var response ofaPostResponse
-	if err = json.Unmarshal(respBody, &response); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal OFA response: %w: %s", err, string(respBody))
-	}
-	if response.Error.Message != "" {
-		return nil, errors.New(response.Error.Message)
-	}
-	return response.Result, nil
-}
-
 type ofaPostResponse struct {
 	Result json.RawMessage `json:"result,omitempty"`
 	Error  ofaPostError
@@ -211,40 +75,153 @@ type FlashbotsTxStore interface {
 
 // ofaTXClient implements txm.Client for HTTP JSON-RPC OFA backends (Flashbots MEV-Share, Nova RPC, …).
 type ofaTXClient struct {
-	lggr    logger.SugaredLogger
-	ofa     *httpOFA
-	txStore FlashbotsTxStore
-	bundles bool
+	lggr          logger.SugaredLogger
+	c             chainRPCClient
+	customURL     *url.URL
+	kind          ofaKind
+	keystore      keys.MessageSigner // Flashbots signing only; nil for Nova
+	metrics       ofaMetrics
+	errHTTPPrefix string
+	txStore       FlashbotsTxStore
+	bundles       bool
 }
 
 var _ txm.Client = (*ofaTXClient)(nil)
 
 func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics ofaMetrics) *ofaTXClient {
+	k := ofaKindFlashbots
 	b := bundles != nil && *bundles
-	ofa := newHTTPOFA(c, customURL, ofaKindFlashbots, keystore, metrics, "flashbots")
-	return newOFATXClient(logger.Sugared(logger.Named(lggr, ofa.kind.loggerName())), ofa, txStore, b)
+	return &ofaTXClient{
+		lggr:          logger.Sugared(logger.Named(lggr, k.loggerName())),
+		c:             c,
+		customURL:     customURL,
+		kind:          k,
+		keystore:      keystore,
+		metrics:       metrics,
+		errHTTPPrefix: "flashbots",
+		txStore:       txStore,
+		bundles:       b,
+	}
 }
 
 func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, metrics ofaMetrics) *ofaTXClient {
-	ofa := newHTTPOFA(c, customURL, ofaKindNova, nil, metrics, "nova")
-	return newOFATXClient(logger.Sugared(logger.Named(lggr, ofa.kind.loggerName())), ofa, nil, false)
-}
-
-func newOFATXClient(log logger.SugaredLogger, ofa *httpOFA, txStore FlashbotsTxStore, bundles bool) *ofaTXClient {
+	k := ofaKindNova
 	return &ofaTXClient{
-		lggr:    log,
-		ofa:     ofa,
-		txStore: txStore,
-		bundles: bundles,
+		lggr:          logger.Sugared(logger.Named(lggr, k.loggerName())),
+		c:             c,
+		customURL:     customURL,
+		kind:          k,
+		metrics:       metrics,
+		errHTTPPrefix: "nova",
 	}
 }
 
 func (d *ofaTXClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
-	return d.ofa.NonceAt(ctx, address, blockNumber)
+	return d.c.NonceAt(ctx, address, blockNumber)
 }
 
 func (d *ofaTXClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	return d.ofa.PendingNonceAt(ctx, address)
+	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex()))
+	raw, err := d.postJSONRPC(ctx, address, body, nil)
+	if err != nil {
+		return 0, fmt.Errorf("%s eth_getTransactionCount failed: %w", d.errHTTPPrefix, err)
+	}
+
+	var resultStr string
+	if err = json.Unmarshal(raw, &resultStr); err != nil {
+		return 0, fmt.Errorf("failed to unmarshal response %s into string: %w", string(raw), err)
+	}
+	nonce, err := hexutil.DecodeUint64(resultStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to decode response %v into uint64: %w", resultStr, err)
+	}
+	return nonce, nil
+}
+
+func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
+	switch d.kind {
+	case ofaKindFlashbots:
+		var params string
+		if meta != nil && meta.DualBroadcastParams != nil {
+			params = *meta.DualBroadcastParams
+		}
+		return d.customURL.String() + "?" + params
+	default:
+		return d.customURL.String()
+	}
+}
+
+func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
+	if d.kind != ofaKindFlashbots || d.keystore == nil {
+		return nil
+	}
+	hashedBody := crypto.Keccak256Hash(body).Hex()
+	signedMessage, err := d.keystore.SignMessage(ctx, from, []byte(hashedBody))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("X-Flashbots-signature", from.String()+":"+hexutil.Encode(signedMessage))
+	req.Header.Add("X-Flashbots-Origin", "chainlink")
+	return nil
+}
+
+func (d *ofaTXClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+	meta, err := tx.GetMeta()
+	if err != nil {
+		return err
+	}
+
+	data, err := attempt.SignedTransaction.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
+	start := time.Now()
+	_, err = d.postJSONRPC(ctx, tx.FromAddress, body, meta)
+	d.metrics.RecordSendTx(ctx, time.Since(start), err)
+
+	return err
+}
+
+func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, defaultRPCTimeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.postURL(meta), bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	if err = d.signRequest(ctx, req, body, from); err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("%s request failed: %w", d.errHTTPPrefix, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%s request failed with status %d: %s", d.errHTTPPrefix, resp.StatusCode, string(respBody))
+	}
+
+	var response ofaPostResponse
+	if err = json.Unmarshal(respBody, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal OFA response: %w: %s", err, string(respBody))
+	}
+	if response.Error.Message != "" {
+		return nil, errors.New(response.Error.Message)
+	}
+	return response.Result, nil
 }
 
 func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
@@ -254,19 +231,19 @@ func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction
 	}
 
 	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
-		switch d.ofa.kind {
+		switch d.kind {
 		case ofaKindFlashbots:
-			return d.ofa.c.SendTransaction(ctx, nil, attempt)
+			return d.c.SendTransaction(ctx, nil, attempt)
 		case ofaKindNova:
 			return nil
 		}
 	}
 
-	if err := d.ofa.sendDualBroadcastTx(ctx, tx, attempt); err != nil {
+	if err := d.sendDualBroadcastTx(ctx, tx, attempt); err != nil {
 		return err
 	}
 
-	if d.ofa.kind == ofaKindFlashbots && d.bundles {
+	if d.kind == ofaKindFlashbots && d.bundles {
 		if err := d.sendBundle(ctx, tx.FromAddress, meta); err != nil {
 			d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
 		}
@@ -314,7 +291,7 @@ func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address
 		prevNonce = nonce
 	}
 
-	currentBlock, err := d.ofa.c.BlockByNumber(ctx, nil)
+	currentBlock, err := d.c.BlockByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get current block height: %w", err)
 	}
@@ -364,7 +341,7 @@ func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address
 		return fmt.Errorf("failed to marshal bundle request: %w", err)
 	}
 
-	raw, err := d.ofa.postJSONRPC(ctx, fromAddress, bodyBytes, nil)
+	raw, err := d.postJSONRPC(ctx, fromAddress, bodyBytes, nil)
 	if err != nil {
 		return err
 	}
