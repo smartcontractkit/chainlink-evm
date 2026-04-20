@@ -26,6 +26,9 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	}
 
 	if secondaryURL == nil {
+		lggr.Infow("TransactionManagerV2 OFA: single client selected",
+			"url", redactURL(primaryURL),
+		)
 		return primary, errHandler, nil
 	}
 
@@ -38,6 +41,11 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", redactURL(secondaryURL), err)
 	}
+
+	lggr.Infow("TransactionManagerV2 OFA: multiplex clients selected (primary determines broadcast outcome; secondary is best-effort)",
+		"primaryURL", redactURL(primaryURL),
+		"secondaryURL", redactURL(secondaryURL),
+	)
 
 	return newMultiplexClient(lggr, primary, secondary), errHandler, nil
 }
