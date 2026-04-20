@@ -14,40 +14,51 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 )
 
-func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, primaryURL *url.URL, secondaryURL *url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
+// SelectClient builds the txm.Client for dual broadcast. ofaURLs must be non-empty; index 0 is the
+// primary (determines broadcast outcome and nonce queries). Additional URLs are multiplexed as
+// secondaries (fire-and-forget with timeout).
+func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, ofaURLs []*url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
+	if len(ofaURLs) == 0 {
+		return nil, nil, fmt.Errorf("ofaURLs must not be empty")
+	}
+
 	chainClient, err := clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	primary, errHandler, err := selectSingleClient(lggr, chainClient, keyStore, primaryURL, chainID, txStore, bundles, auctionRequestTimeout)
+	primary, errHandler, err := selectSingleClient(lggr, chainClient, keyStore, ofaURLs[0], chainID, txStore, bundles, auctionRequestTimeout)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(primaryURL), err)
+		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(ofaURLs[0]), err)
 	}
 
-	if secondaryURL == nil {
+	if len(ofaURLs) == 1 {
 		lggr.Infow("TransactionManagerV2 OFA: single client selected",
-			"url", redactURL(primaryURL),
+			"url", redactURL(ofaURLs[0]),
 		)
 		return primary, errHandler, nil
 	}
 
-	// secondary must be a Nova RPC endpoint
-	if !strings.Contains(secondaryURL.String(), "novarpc") {
-		return nil, nil, fmt.Errorf("secondary URL must be a Nova RPC endpoint, got: %s", redactURL(secondaryURL))
+	secondaries := make([]txm.Client, 0, len(ofaURLs)-1)
+	for _, u := range ofaURLs[1:] {
+		sec, _, err := selectSingleClient(lggr, chainClient, keyStore, u, chainID, txStore, bundles, auctionRequestTimeout)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", redactURL(u), err)
+		}
+		secondaries = append(secondaries, sec)
 	}
 
-	secondary, _, err := selectSingleClient(lggr, chainClient, keyStore, secondaryURL, chainID, txStore, bundles, auctionRequestTimeout)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", redactURL(secondaryURL), err)
+	urlStrs := make([]string, len(ofaURLs))
+	for i, u := range ofaURLs {
+		urlStrs[i] = redactURL(u)
 	}
 
-	lggr.Infow("TransactionManagerV2 OFA: multiplex clients selected (primary determines broadcast outcome; secondary is best-effort)",
-		"primaryURL", redactURL(primaryURL),
-		"secondaryURL", redactURL(secondaryURL),
+	lggr.Infow("TransactionManagerV2 OFA: multiplex clients selected (primary determines broadcast outcome; secondaries are best-effort)",
+		"primaryURL", urlStrs[0],
+		"secondaryURLs", urlStrs[1:],
 	)
 
-	return newMultiplexClient(lggr, primary, secondary), errHandler, nil
+	return newMultiplexClient(lggr, primary, secondaries...), errHandler, nil
 }
 
 func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainClient, keyStore keys.ChainStore, u *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
@@ -58,7 +69,7 @@ func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainCli
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for flashbots: %w", err)
 		}
-		return NewFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundles, metrics), nil, nil
+		return newFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundles, metrics), nil, nil
 	case strings.Contains(urlString, "novarpc"):
 		metrics, err := newOFAMetrics(chainID.String(), "nova")
 		if err != nil {

@@ -132,7 +132,9 @@ type TransactionManagerV2 interface {
 	Enabled() bool
 	BlockTime() *time.Duration
 	CustomURL() *url.URL
-	CustomURLSecondary() *url.URL
+	// CustomOFAURLs returns the ordered OFA endpoints: index 0 is primary; additional indices are multiplexed secondaries.
+	// If CustomURLs is configured, it wins; otherwise a single legacy CustomURL is returned as a one-element slice.
+	CustomOFAURLs() []*url.URL
 	DualBroadcast() *bool
 	ReadRequestsToMultipleNodes() *bool
 	Bundles() *bool

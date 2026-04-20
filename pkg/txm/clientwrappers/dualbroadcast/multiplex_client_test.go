@@ -46,6 +46,29 @@ func (m *mockClient) NonceAt(ctx context.Context, address common.Address, blockN
 	return 0, nil
 }
 
+func TestMultiplexClient_SendTransaction_TwoSecondaries(t *testing.T) {
+	sec1 := make(chan struct{}, 1)
+	sec2 := make(chan struct{}, 1)
+	primary := &mockClient{}
+	mc := newMultiplexClient(logger.Test(t), primary,
+		&mockClient{sendCalled: sec1},
+		&mockClient{sendCalled: sec2},
+	)
+	err := mc.SendTransaction(context.Background(), &types.Transaction{}, &types.Attempt{})
+	require.NoError(t, err)
+
+	select {
+	case <-sec1:
+	case <-time.After(2 * time.Second):
+		t.Fatal("secondary 1 was not called")
+	}
+	select {
+	case <-sec2:
+	case <-time.After(2 * time.Second):
+		t.Fatal("secondary 2 was not called")
+	}
+}
+
 func TestMultiplexClient_SendTransaction_BothSucceed(t *testing.T) {
 	secondaryCalled := make(chan struct{}, 1)
 	primary := &mockClient{}

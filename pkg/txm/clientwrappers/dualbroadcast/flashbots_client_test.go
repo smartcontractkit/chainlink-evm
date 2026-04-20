@@ -209,7 +209,7 @@ func TestSendBundle_UsesLatestAttemptPerTransaction(t *testing.T) {
 	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
 	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
-	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
+	client := newFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
 
 	err = client.sendBundle(context.Background(), fromAddress, nil)
 	require.NoError(t, err)
@@ -272,7 +272,7 @@ func TestSendBundle_SucceedsOnIncreasingNonces(t *testing.T) {
 	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
 	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
-	client := NewFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
+	client := newFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
 	err = client.sendBundle(context.Background(), fromAddress, nil)
 	require.NoError(t, err)
 
@@ -314,7 +314,7 @@ func TestSendBundle_ReturnsErrorOnNonceGap(t *testing.T) {
 
 	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
-	client := NewFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
+	client := newFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, keystest.MessageSigner(nil), customURL, txStore, nil, metrics)
 	err = client.sendBundle(context.Background(), fromAddress, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must be contiguous and strictly increasing")

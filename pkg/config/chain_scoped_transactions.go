@@ -60,11 +60,20 @@ func (t *transactionManagerV2Config) CustomURL() *url.URL {
 	return t.c.CustomURL.URL()
 }
 
-func (t *transactionManagerV2Config) CustomURLSecondary() *url.URL {
-	if t.c.CustomURLSecondary == nil {
-		return nil
+func (t *transactionManagerV2Config) CustomOFAURLs() []*url.URL {
+	if len(t.c.CustomURLs) > 0 {
+		out := make([]*url.URL, 0, len(t.c.CustomURLs))
+		for _, u := range t.c.CustomURLs {
+			if u != nil {
+				out = append(out, u.URL())
+			}
+		}
+		return out
 	}
-	return t.c.CustomURLSecondary.URL()
+	if t.c.CustomURL != nil {
+		return []*url.URL{t.c.CustomURL.URL()}
+	}
+	return nil
 }
 
 func (t *transactionManagerV2Config) DualBroadcast() *bool {

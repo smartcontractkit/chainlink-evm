@@ -23,9 +23,9 @@ func TestSelectClient_FlashbotsPrimaryOnly(t *testing.T) {
 	mockClient := clienttest.NewClient(t)
 	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
 
-	primaryURL := mustParseURL(t, "https://relay.flashbots.net")
-
-	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, nil, big.NewInt(1), nil, false, nil, nil)
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil,
+		[]*url.URL{mustParseURL(t, "https://relay.flashbots.net")},
+		big.NewInt(1), nil, false, nil, nil)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.Nil(t, eh)
@@ -38,42 +38,33 @@ func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
 	mockClient := clienttest.NewClient(t)
 	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
 
-	primaryURL := mustParseURL(t, "https://relay.flashbots.net")
-	secondaryURL := mustParseURL(t, "https://eth.novarpc.xyz?api_key=test")
+	urls := []*url.URL{
+		mustParseURL(t, "https://relay.flashbots.net"),
+		mustParseURL(t, "https://eth.novarpc.xyz?api_key=test"),
+	}
 
-	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, secondaryURL, big.NewInt(1), nil, false, nil, nil)
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.Nil(t, eh)
 
 	_, isMultiplex := c.(*multiplexClient)
-	assert.True(t, isMultiplex, "should return a multiplexClient when secondary URL is provided")
-}
-
-func TestSelectClient_RejectsNonNovaSecondary(t *testing.T) {
-	mockClient := clienttest.NewClient(t)
-	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
-
-	primaryURL := mustParseURL(t, "https://relay.flashbots.net")
-	secondaryURL := mustParseURL(t, "https://relay.flashbots.net")
-
-	_, _, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, secondaryURL, big.NewInt(1), nil, false, nil, nil)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "secondary URL must be a Nova RPC endpoint")
+	assert.True(t, isMultiplex, "should return a multiplexClient when more than one URL is provided")
 }
 
 func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 	mockClient := clienttest.NewClient(t)
 	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
 
-	primaryURL := mustParseURL(t, "https://eth.novarpc.xyz?api_key=test")
-
-	c, _, err := SelectClient(logger.Test(t), mockClient, nil, primaryURL, nil, big.NewInt(1), nil, false, nil, nil)
+	c, _, err := SelectClient(logger.Test(t), mockClient, nil,
+		[]*url.URL{mustParseURL(t, "https://eth.novarpc.xyz?api_key=test")},
+		big.NewInt(1), nil, false, nil, nil)
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 
-	_, isNova := c.(*novaClient)
-	assert.True(t, isNova, "nova URL should create a novaClient")
+	nc, isOFA := c.(*ofaTXClient)
+	assert.True(t, isOFA, "nova URL should create an OFA client")
+	assert.Equal(t, ofaKindNova, nc.ofa.kind)
 }
 
 func TestRedactURL(t *testing.T) {

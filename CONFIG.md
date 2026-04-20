@@ -389,7 +389,7 @@ MinAttempts configures the minimum number of broadcasted attempts a transaction 
 Enabled = false # Default
 BlockTime = '10s' # Example
 CustomURL = 'https://example.api.io' # Example
-CustomURLSecondary = 'https://example-secondary.api.io' # Example
+CustomURLs = ['https://relay.example/api', 'https://ofa-secondary.example/api'] # Example
 DualBroadcast = false # Example
 ReadRequestsToMultipleNodes = false # Example
 Bundles = false # Example
@@ -413,13 +413,13 @@ BlockTime controls the frequency of the backfill loop of TransactionManagerV2.
 ```toml
 CustomURL = 'https://example.api.io' # Example
 ```
-CustomURL configures the base url of a custom endpoint used by the ChainDualBroadcast chain type.
+CustomURL configures the base url of a custom endpoint used by the ChainDualBroadcast chain type (legacy single endpoint).
 
-### CustomURLSecondary
+### CustomURLs
 ```toml
-CustomURLSecondary = 'https://example-secondary.api.io' # Example
+CustomURLs = ['https://relay.example/api', 'https://ofa-secondary.example/api'] # Example
 ```
-CustomURLSecondary configures an optional secondary OFA endpoint for multiplexed dual broadcast. When set alongside CustomURL, transactions are sent to both endpoints simultaneously. The primary (CustomURL) determines success/failure; the secondary is fire-and-forget.
+CustomURLs configures an ordered list of OFA relay URLs: the first entry is primary (determines broadcast outcome); additional entries are multiplexed as secondaries (fire-and-forget). Cannot be used together with CustomURL in the same configuration.
 
 ### DualBroadcast
 ```toml
