@@ -492,8 +492,11 @@ func TestLogPoller_Replay(t *testing.T) {
 		finalized := newHead(h.Number - lpOpts.FinalityDepth)
 		return h, finalized, nil
 	})
-	safe := newHead(5)
-	headTracker.EXPECT().LatestSafeBlock(mock.Anything).Return(safe, nil)
+	headTracker.EXPECT().LatestSafeBlock(mock.Anything).RunAndReturn(func(ctx context.Context) (*evmtypes.Head, error) {
+		h := head.Load()
+		safe := newHead(h.Number - lpOpts.FinalityDepth)
+		return safe, nil
+	})
 	lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
 
 	{
@@ -750,7 +753,7 @@ func Test_latestBlockAndFinalityDepth(t *testing.T) {
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(&evmtypes.Head{}, &evmtypes.Head{}, errors.New(expectedError))
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, _, err := lp.latestBlocks(t.Context())
+		_, _, err := lp.latestAndFinalizedBlocks(t.Context())
 		require.ErrorContains(t, err, expectedError)
 	})
 	t.Run("headTracker returns valid chain", func(t *testing.T) {
@@ -761,11 +764,26 @@ func Test_latestBlockAndFinalityDepth(t *testing.T) {
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalizedBlock, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		latestBlock, finalizedBlockNumber, err := lp.latestBlocks(t.Context())
+		latestBlock, finalizedBlockNumber, err := lp.latestAndFinalizedBlocks(t.Context())
 		require.NoError(t, err)
 		require.NotNil(t, latestBlock)
 		assert.Equal(t, head.BlockNumber(), latestBlock.BlockNumber())
 		assert.Equal(t, finalizedBlock.Number, finalizedBlockNumber)
+	})
+	t.Run("finalized ahead of latest", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		head := &evmtypes.Head{Number: 5, Hash: common.Hash{0x01}}
+		finalized := &evmtypes.Head{Number: 12, Hash: common.Hash{0x02}}
+		finalized.IsFinalized.Store(true)
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil)
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		latestBlock, finalizedBlockNumber, err := lp.latestAndFinalizedBlocks(t.Context())
+		require.NoError(t, err)
+		// Since finalized >= latest, we should return the finalized block as the latest.
+		require.Same(t, finalized, latestBlock)
+		assert.Equal(t, int64(12), finalizedBlockNumber)
+		assert.Equal(t, finalized.BlockNumber(), latestBlock.BlockNumber())
 	})
 	t.Run("headTracker returns nil latest with nil error", func(t *testing.T) {
 		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
@@ -773,7 +791,7 @@ func Test_latestBlockAndFinalityDepth(t *testing.T) {
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(nil, finalizedBlock, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, _, err := lp.latestBlocks(t.Context())
+		_, _, err := lp.latestAndFinalizedBlocks(t.Context())
 		require.ErrorContains(t, err, "expected non-nil latest block from HeadTracker")
 	})
 	t.Run("headTracker returns nil finalized with nil error", func(t *testing.T) {
@@ -782,12 +800,12 @@ func Test_latestBlockAndFinalityDepth(t *testing.T) {
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, nil, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, _, err := lp.latestBlocks(t.Context())
+		_, _, err := lp.latestAndFinalizedBlocks(t.Context())
 		require.ErrorContains(t, err, "expected non-nil finalized block from HeadTracker")
 	})
 }
 
-func Test_latestSafeBlocks(t *testing.T) {
+func Test_latestBlocks(t *testing.T) {
 	lggr := logger.Test(t)
 
 	lpOpts := Opts{
@@ -800,40 +818,90 @@ func Test_latestSafeBlocks(t *testing.T) {
 	t.Run("headTracker returns an error", func(t *testing.T) {
 		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
 		const expectedError = "safe block is not available yet"
+		head := &evmtypes.Head{Number: 10}
+		finalized := &evmtypes.Head{Number: 1}
+		finalized.IsFinalized.Store(true)
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil)
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(&evmtypes.Head{}, errors.New(expectedError))
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, err := lp.latestSafeBlock(t.Context(), 0)
+		_, _, _, err := lp.latestBlocks(t.Context())
 		require.ErrorContains(t, err, expectedError)
 	})
 	t.Run("headTracker returns valid chain", func(t *testing.T) {
 		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		head := &evmtypes.Head{Number: 10}
+		finalized := &evmtypes.Head{Number: 1}
+		finalized.IsFinalized.Store(true)
 		safeBlock := &evmtypes.Head{Number: 2}
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil)
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(safeBlock, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		safeBlockNumber, err := lp.latestSafeBlock(t.Context(), 1)
+		_, safeBlockNumber, finalizedBlockNumber, err := lp.latestBlocks(t.Context())
 		require.NoError(t, err)
+		assert.Equal(t, finalized.Number, finalizedBlockNumber)
 		assert.Equal(t, safeBlock.Number, safeBlockNumber)
 	})
 	t.Run("headTracker returns valid chain but safe is lower than finalized", func(t *testing.T) {
 		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		head := &evmtypes.Head{Number: 10}
+		finalized := &evmtypes.Head{Number: 3}
+		finalized.IsFinalized.Store(true)
 		safeBlock := &evmtypes.Head{Number: 2}
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil)
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(safeBlock, nil)
 		latestFinalizedBlockNumber := int64(3)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		safeBlockNumber, err := lp.latestSafeBlock(t.Context(), latestFinalizedBlockNumber)
+		_, safeBlockNumber, finalizedBN, err := lp.latestBlocks(t.Context())
 		require.NoError(t, err)
+		assert.Equal(t, latestFinalizedBlockNumber, finalizedBN)
 		assert.Equal(t, latestFinalizedBlockNumber, safeBlockNumber)
 	})
 	t.Run("headTracker returns nil safe with nil error", func(t *testing.T) {
 		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		head := &evmtypes.Head{Number: 10}
+		finalized := &evmtypes.Head{Number: 1}
+		finalized.IsFinalized.Store(true)
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil)
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(nil, nil)
 
 		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
-		_, err := lp.latestSafeBlock(t.Context(), 1)
+		_, _, _, err := lp.latestBlocks(t.Context())
 		require.ErrorContains(t, err, "expected non-nil safe block from HeadTracker")
+	})
+	t.Run("safe ahead of latest bumps returned latest to safe head", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		head := &evmtypes.Head{Number: 8, Hash: common.Hash{0x11}}
+		finalized := &evmtypes.Head{Number: 2}
+		finalized.IsFinalized.Store(true)
+		safe := &evmtypes.Head{Number: 15, Hash: common.Hash{0x22}}
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil)
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(safe, nil)
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		latestHead, safeBlockNumber, finalizedBN, err := lp.latestBlocks(t.Context())
+		require.NoError(t, err)
+		require.Same(t, safe, latestHead)
+		assert.Equal(t, int64(15), safeBlockNumber)
+		assert.Equal(t, finalized.Number, finalizedBN)
+	})
+	t.Run("finalized ahead of latest then safe ahead of adjusted latest", func(t *testing.T) {
+		headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+		head := &evmtypes.Head{Number: 3}
+		finalized := &evmtypes.Head{Number: 20, Hash: common.Hash{0xaa}}
+		finalized.IsFinalized.Store(true)
+		safe := &evmtypes.Head{Number: 25, Hash: common.Hash{0xbb}}
+		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil)
+		headTracker.On("LatestSafeBlock", mock.Anything).Return(safe, nil)
+
+		lp := NewLogPoller(nil, nil, lggr, headTracker, lpOpts)
+		latestHead, safeBlockNumber, finalizedBN, err := lp.latestBlocks(t.Context())
+		require.NoError(t, err)
+		require.Same(t, safe, latestHead)
+		assert.Equal(t, int64(25), safeBlockNumber)
+		assert.Equal(t, finalized.Number, finalizedBN)
 	})
 }
 
