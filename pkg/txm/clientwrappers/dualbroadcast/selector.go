@@ -15,8 +15,9 @@ import (
 )
 
 // SelectClient builds the txm.Client for dual broadcast. ofaURLs must be non-empty; index 0 is the
-// primary (determines broadcast outcome and nonce queries). Additional URLs are multiplexed as
-// secondaries (fire-and-forget with separate timeout).
+// primary (determines broadcast outcome and nonce queries). The client is always a multiplexClient:
+// with one URL it has no secondaries; with more, additional URLs are best-effort secondaries
+// (fire-and-forget with a separate timeout).
 func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, ofaURLs []*url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
 	if len(ofaURLs) == 0 {
 		return nil, nil, fmt.Errorf("ofaURLs must not be empty")
@@ -32,11 +33,6 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(ofaURLs[0]), err)
 	}
 
-	if len(ofaURLs) == 1 {
-		lggr.Infow("TransactionManagerV2 OFA: single client selected", "url", redactURL(ofaURLs[0]))
-		return primary, errHandler, nil
-	}
-
 	secondaries := make([]txm.Client, 0, len(ofaURLs)-1)
 	for _, u := range ofaURLs[1:] {
 		sec, _, err := selectSingleClient(lggr, chainClient, keyStore, u, chainID, txStore, bundles, auctionRequestTimeout)
@@ -50,10 +46,10 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	for i, u := range ofaURLs {
 		urlStrs[i] = redactURL(u)
 	}
-	lggr.Infow("TransactionManagerV2 OFA: multiplex clients selected (primary determines broadcast outcome; secondaries are best-effort)",
+
+	lggr.Infow("TransactionManagerV2 OFA client created",
 		"primaryURL", urlStrs[0],
-		"secondaryURLs", urlStrs[1:],
-	)
+		"secondaryURLs", urlStrs[1:])
 
 	return newMultiplexClient(lggr, primary, secondaries...), errHandler, nil
 }
@@ -62,13 +58,14 @@ func selectSingleClient(lggr logger.Logger, chainClient *clientwrappers.ChainCli
 	urlString := u.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
-		metrics, err := newOFAMetrics(chainID.String(), "flashbots")
+		metrics, err := newOFAMetrics(chainID.String(), ofaKindFlashbots.name())
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for flashbots: %w", err)
 		}
-		return newFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundles, metrics), nil, nil
+		bundlesEnabled := bundles != nil && *bundles
+		return newFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundlesEnabled, metrics), nil, nil
 	case strings.Contains(urlString, "novarpc"):
-		metrics, err := newOFAMetrics(chainID.String(), "nova")
+		metrics, err := newOFAMetrics(chainID.String(), ofaKindNova.name())
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
 		}

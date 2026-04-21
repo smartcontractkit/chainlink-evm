@@ -30,8 +30,12 @@ func TestSelectClient_FlashbotsPrimaryOnly(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.Nil(t, eh)
 
-	_, isMultiplex := c.(*multiplexClient)
-	assert.False(t, isMultiplex, "should return FlashbotsClient directly, not wrapped in multiplexClient")
+	mux, ok := c.(*multiplexClient)
+	require.True(t, ok, "single flashbots URL should still use multiplexClient as the outer shell")
+	assert.Empty(t, mux.secondaries)
+	fb, ok := mux.primary.(*ofaTXClient)
+	require.True(t, ok)
+	assert.Equal(t, ofaKindFlashbots, fb.kind)
 }
 
 func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
@@ -48,8 +52,15 @@ func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.Nil(t, eh)
 
-	_, isMultiplex := c.(*multiplexClient)
-	assert.True(t, isMultiplex, "should return a multiplexClient when more than one URL is provided")
+	mux, ok := c.(*multiplexClient)
+	require.True(t, ok)
+	pri, ok := mux.primary.(*ofaTXClient)
+	require.True(t, ok)
+	assert.Equal(t, ofaKindFlashbots, pri.kind)
+	require.Len(t, mux.secondaries, 1)
+	sec, ok := mux.secondaries[0].(*ofaTXClient)
+	require.True(t, ok)
+	assert.Equal(t, ofaKindNova, sec.kind)
 }
 
 func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
@@ -62,9 +73,30 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 
-	nc, isOFA := c.(*ofaTXClient)
-	assert.True(t, isOFA, "nova URL should create an OFA client")
+	mux, ok := c.(*multiplexClient)
+	require.True(t, ok)
+	assert.Empty(t, mux.secondaries)
+	nc, ok := mux.primary.(*ofaTXClient)
+	require.True(t, ok, "nova URL should use OFA primary inside multiplex shell")
 	assert.Equal(t, ofaKindNova, nc.kind)
+}
+
+func TestSelectClient_MetaPrimaryOnly(t *testing.T) {
+	mockClient := clienttest.NewClient(t)
+	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
+
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil,
+		[]*url.URL{mustParseURL(t, "https://custom-auction.example.com")},
+		big.NewInt(1), nil, false, nil, nil)
+	require.NoError(t, err)
+	assert.NotNil(t, c)
+	assert.NotNil(t, eh)
+
+	mux, ok := c.(*multiplexClient)
+	require.True(t, ok)
+	assert.Empty(t, mux.secondaries)
+	_, isMeta := mux.primary.(*MetaClient)
+	require.True(t, isMeta)
 }
 
 func TestRedactURL(t *testing.T) {
