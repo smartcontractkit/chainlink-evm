@@ -157,9 +157,10 @@ func NewTxmV2(
 	}
 	var eh txm.ErrorHandler
 	var c txm.Client
+	txmMetrics := txm.NewTxmMetrics(lggr, chainID)
 	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
 		var err error
-		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, readRequestsToMultipleNodes, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout())
+		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, readRequestsToMultipleNodes, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout(), txmMetrics)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}
@@ -170,7 +171,7 @@ func NewTxmV2(
 			return nil, fmt.Errorf("failed to create chain client wrapper: %w", err)
 		}
 	}
-	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
+	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh, txmMetrics)
 	return txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder), nil
 }
 

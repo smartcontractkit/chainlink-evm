@@ -9,7 +9,7 @@ import {OptimismCrossDomainForwarder} from "./OptimismCrossDomainForwarder.sol";
 
 import {iOVM_CrossDomainMessenger} from
   "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 
 /**
  * @title OptimismCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Optimism
@@ -36,7 +36,7 @@ contract OptimismCrossDomainGovernor is IDelegateForwarder, OptimismCrossDomainF
    * - OptimismCrossDomainForwarder 1.0.0: initial release
    */
   function typeAndVersion() external pure virtual override returns (string memory) {
-    return "OptimismCrossDomainGovernor 1.0.0";
+    return "OptimismCrossDomainGovernor 1.1.0-dev";
   }
 
   /**
@@ -44,7 +44,7 @@ contract OptimismCrossDomainGovernor is IDelegateForwarder, OptimismCrossDomainF
    * @inheritdoc IForwarder
    */
   function forward(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
-    Address.functionCall(target, data, "Governor call reverted");
+    Address.functionCall(target, data);
   }
 
   /**
@@ -52,7 +52,7 @@ contract OptimismCrossDomainGovernor is IDelegateForwarder, OptimismCrossDomainF
    * @inheritdoc IDelegateForwarder
    */
   function forwardDelegate(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
-    Address.functionDelegateCall(target, data, "Governor delegatecall reverted");
+    Address.functionDelegateCall(target, data);
   }
 
   /**

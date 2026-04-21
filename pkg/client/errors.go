@@ -307,6 +307,10 @@ var monad = ClientErrors{
 	InsufficientEth: regexp.MustCompile("Signer had insufficient balance"),
 }
 
+var jovay = ClientErrors{
+	NonceTooLow: regexp.MustCompile(`TX_REPLAY_ATTACK`), // Jovay returns for nonce-too-low (already-confirmed nonce)
+}
+
 const TerminallyStuckMsg = "transaction terminally stuck"
 
 // Tx.Error messages that are set internally so they are not chain or client specific
@@ -314,7 +318,7 @@ var internal = ClientErrors{
 	TerminallyStuck: regexp.MustCompile(TerminallyStuckMsg),
 }
 
-var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, internal}
+var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, jovay, internal}
 
 // ClientErrorRegexes returns a map of compiled regexes for each error type
 func ClientErrorRegexes(errsRegex config.ClientErrors) *ClientErrors {

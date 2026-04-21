@@ -57,7 +57,9 @@ type AttemptBuilder interface {
 }
 
 type ErrorHandler interface {
-	HandleError(context.Context, *types.Transaction, error, TxStore, func(common.Address, uint64), bool) (err error)
+	// HandleError tries to decide if there was a successful transmission by parsing the error message. If it can't decide, it returns control to
+	// the standard execution path.
+	HandleError(context.Context, logger.Logger, *types.Transaction, error, TxStore, func(common.Address, uint64)) (noTransmission bool, err error)
 }
 
 type StuckTxDetector interface {
@@ -86,7 +88,7 @@ type Txm struct {
 	txStore         TxStore
 	keystore        keys.AddressLister
 	config          Config
-	Metrics         *txmMetrics
+	metrics         Metrics
 
 	nonceMapMu sync.RWMutex
 	nonceMap   map[common.Address]uint64
@@ -96,7 +98,7 @@ type Txm struct {
 	wg        sync.WaitGroup
 }
 
-func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler) *Txm {
+func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler, metrics Metrics) *Txm {
 	return &Txm{
 		lggr:            logger.Sugared(logger.Named(lggr, "Txm")),
 		keystore:        keystore,
@@ -107,6 +109,7 @@ func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder 
 		stuckTxDetector: stuckTxDetector,
 		config:          config,
 		errorHandler:    errorHandler,
+		metrics:         metrics,
 		nonceMap:        make(map[common.Address]uint64),
 		triggerCh:       make(map[common.Address]chan struct{}),
 	}
@@ -114,11 +117,6 @@ func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder 
 
 func (t *Txm) Start(ctx context.Context) error {
 	return t.StartOnce("Txm", func() error {
-		tm, err := NewTxmMetrics(t.chainID)
-		if err != nil {
-			return err
-		}
-		t.Metrics = tm
 		t.stopCh = make(chan struct{})
 
 		addresses, err := t.keystore.EnabledAddresses(ctx)
@@ -157,7 +155,7 @@ func (t *Txm) initializeNonce(ctx context.Context, address common.Address) {
 			continue
 		}
 		t.SetNonce(address, pendingNonce)
-		t.lggr.Debugf("Set initial nonce for address: %v to %d", address, pendingNonce)
+		t.lggr.Infof("Set initial nonce for address: %v to %d", address, pendingNonce)
 		return
 	}
 }
@@ -280,6 +278,7 @@ func (t *Txm) BroadcastTransaction(ctx context.Context, address common.Address) 
 		// RPC calls. The upper limit is always MaxInFlightTransactions regardless of the pending nonce.
 		if unconfirmedCount >= MaxInFlightSubset {
 			if unconfirmedCount > MaxInFlightTransactions {
+				t.metrics.IncrementLifecycleFailure(ctx, StageMaxInFlight)
 				t.lggr.Warnf("Reached transaction limit: %d for unconfirmed transactions", MaxInFlightTransactions)
 				return true, nil
 			}
@@ -289,6 +288,7 @@ func (t *Txm) BroadcastTransaction(ctx context.Context, address common.Address) 
 			}
 			nonce := t.GetNonce(address)
 			if nonce > pendingNonce {
+				t.metrics.IncrementLifecycleFailure(ctx, StageInFlightSubset)
 				t.lggr.Warnf("Reached transaction limit. LocalNonce: %d, PendingNonce %d, unconfirmedCount: %d",
 					nonce, pendingNonce, unconfirmedCount)
 				return true, nil
@@ -337,22 +337,33 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 	start := time.Now()
 	txErr := t.client.SendTransaction(ctx, tx, attempt)
 	t.lggr.Infow("Broadcasted attempt", "tx", tx, "attempt", attempt, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr), "duration", time.Since(start), "txErr", txErr)
-	if txErr != nil && t.errorHandler != nil {
-		if err = t.errorHandler.HandleError(ctx, tx, txErr, t.txStore, t.SetNonce, false); err != nil {
-			return
+	if txErr != nil {
+		// If ErrorHandler is set, try to decide if there was a successful transmission by parsing the error message. If there wasn't, we return early.
+		if t.errorHandler != nil {
+			noTransmission, hErr := t.errorHandler.HandleError(ctx, t.lggr, tx, txErr, t.txStore, t.SetNonce)
+			if hErr != nil {
+				return hErr
+			}
+			if noTransmission {
+				return nil
+			}
 		}
-	} else if txErr != nil {
 		pendingNonce, pErr := t.client.PendingNonceAt(ctx, fromAddress)
 		if pErr != nil {
 			return pErr
 		}
 		if pendingNonce <= *tx.Nonce {
+			if tx.AttemptCount == 1 {
+				// We increment the failure counter only during the first attempt to avoid overcounting. After the first attempt, there is no guarantee
+				// there isn't an in-flight transaction in the mempool that would prevent the nonce from increasing, i.e. transaction already known.
+				t.metrics.IncrementLifecycleFailure(ctx, StageBroadcast)
+			}
 			return fmt.Errorf("pending nonce for txID: %v didn't increase. PendingNonce: %d, TxNonce: %d. TxErr: %w", tx.ID, pendingNonce, *tx.Nonce, txErr)
 		}
 	}
 
-	t.Metrics.IncrementNumBroadcastedTxs(ctx)
-	if err = t.Metrics.EmitTxMessage(ctx, attempt.Hash, fromAddress, tx); err != nil {
+	t.metrics.IncrementNumBroadcastedTxs(ctx)
+	if err = t.metrics.EmitTxMessage(ctx, attempt.Hash, fromAddress, tx); err != nil {
 		t.lggr.Errorw("Beholder error emitting tx message", "err", err)
 	}
 
@@ -362,18 +373,17 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) error {
 	latestNonce, err := t.client.NonceAt(ctx, address, nil)
 	if err != nil {
+		t.metrics.IncrementLifecycleFailure(ctx, StageNonceAt)
 		return err
 	}
-	if t.Metrics != nil {
-		t.Metrics.SetRPCNonce(ctx, address, latestNonce)
-	}
+	t.metrics.SetRPCNonce(ctx, address, latestNonce)
 
 	confirmedTransactions, unconfirmedTransactionIDs, err := t.txStore.MarkConfirmedAndReorgedTransactions(ctx, latestNonce, address)
 	if err != nil {
 		return err
 	}
 	if len(confirmedTransactions) > 0 || len(unconfirmedTransactionIDs) > 0 {
-		t.Metrics.IncrementNumConfirmedTxs(ctx, len(confirmedTransactions))
+		t.metrics.IncrementNumConfirmedTxs(ctx, len(confirmedTransactions))
 		confirmedTransactionIDs := t.extractMetrics(ctx, confirmedTransactions)
 		t.lggr.Infof("Confirmed transaction IDs: %v . Re-orged transaction IDs: %v", confirmedTransactionIDs, unconfirmedTransactionIDs)
 	}
@@ -384,13 +394,13 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 	}
 	if unconfirmedCount == 0 {
 		t.lggr.Debugf("All transactions confirmed for address: %v", address)
-		t.Metrics.ReachedMaxAttempts(ctx, false)
+		t.metrics.ReachedMaxAttempts(ctx, false)
 		return nil
 	}
 
 	if tx == nil || *tx.Nonce != latestNonce {
 		t.lggr.Warnf("Nonce gap at nonce: %d - address: %v. Creating a new transaction\n", latestNonce, address)
-		t.Metrics.IncrementNumNonceGaps(ctx)
+		t.metrics.IncrementNumNonceGaps(ctx)
 		return t.createAndSendEmptyTx(ctx, latestNonce, address)
 	} else { //nolint:revive //easier to read
 		if !tx.IsPurgeable && t.stuckTxDetector != nil {
@@ -410,13 +420,13 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 		}
 
 		if tx.AttemptCount >= maxAttemptsThreshold {
-			t.Metrics.ReachedMaxAttempts(ctx, true)
+			t.metrics.ReachedMaxAttempts(ctx, true)
 			t.lggr.Warnf("Reached max attempts threshold for txID: %d. TXM will broadcast more attempts  but if this"+
 				" error persists, it means the transaction won't likely be confirmed and there is an issue with the transaction."+
 				"Look for any error messages from previous broadcasted attempts that may indicate why this happened, i.e. wallet is out of funds. Tx: %v", tx.ID,
 				tx.PrintWithAttempts())
 		} else {
-			t.Metrics.ReachedMaxAttempts(ctx, false)
+			t.metrics.ReachedMaxAttempts(ctx, false)
 		}
 
 		// Rebroadcast if at least one of the following conditions is met:
@@ -444,7 +454,7 @@ func (t *Txm) extractMetrics(ctx context.Context, txs []*types.Transaction) []ui
 	for _, tx := range txs {
 		confirmedTxIDs = append(confirmedTxIDs, tx.ID)
 		if tx.InitialBroadcastAt != nil {
-			t.Metrics.RecordTimeUntilTxConfirmed(ctx, float64(time.Since(*tx.InitialBroadcastAt)))
+			t.metrics.RecordTimeUntilTxConfirmed(ctx, float64(time.Since(*tx.InitialBroadcastAt)))
 		}
 		t.lggr.Infow("Confirmed transaction", "txID", tx.ID, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr))
 	}

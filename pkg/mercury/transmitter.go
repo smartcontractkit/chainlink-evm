@@ -330,7 +330,7 @@ func NewTransmitter(lggr logger.Logger, cfg TransmitterConfig, clients map[strin
 	}
 }
 
-func (mt *mercuryTransmitter) Start(ctx context.Context) (err error) {
+func (mt *mercuryTransmitter) Start(ctx context.Context) error {
 	return mt.StartOnce("MercuryTransmitter", func() error {
 		mt.lggr.Debugw("Loading transmit requests from database")
 
@@ -350,12 +350,18 @@ func (mt *mercuryTransmitter) Start(ctx context.Context) (err error) {
 				go s.runQueueLoop(mt.stopCh, mt.wg, mt.feedID.Hex())
 			}
 			if err := (&services.MultiStart{}).Start(ctx, startClosers...); err != nil {
+				mt.stopAndWait() // halt spawned goroutines
 				return err
 			}
 		}
 
 		return nil
 	})
+}
+
+func (mt *mercuryTransmitter) stopAndWait() {
+	close(mt.stopCh)
+	mt.wg.Wait()
 }
 
 func (mt *mercuryTransmitter) Close() error {
@@ -369,8 +375,7 @@ func (mt *mercuryTransmitter) Close() error {
 			return err
 		}
 
-		close(mt.stopCh)
-		mt.wg.Wait()
+		mt.stopAndWait()
 
 		// Close all the persistence managers
 		// Close all the clients

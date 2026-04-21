@@ -2,6 +2,7 @@ package txm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -10,10 +11,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/metrics"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
@@ -46,6 +49,19 @@ var (
 	}, []string{"chainID", "address"})
 )
 
+// Metrics is the metrics contract for the TXMv2 transaction lifecycle.
+type Metrics interface {
+	IncrementLifecycleFailure(context.Context, LifecycleFailureStage)
+	IncrementNumBroadcastedTxs(context.Context)
+	IncrementNumConfirmedTxs(context.Context, int)
+	IncrementNumNonceGaps(context.Context)
+	ReachedMaxAttempts(context.Context, bool)
+	RecordTimeUntilTxConfirmed(context.Context, float64)
+	SetRPCNonce(context.Context, common.Address, uint64)
+	EmitTxMessage(context.Context, common.Hash, common.Address, *types.Transaction) error
+}
+
+// txmMetrics is the default metrics recorder for the TXMv2 transaction lifecycle.
 type txmMetrics struct {
 	metrics.Labeler
 	chainID              *big.Int
@@ -55,37 +71,51 @@ type txmMetrics struct {
 	reachedMaxAttempts   metric.Int64Gauge
 	timeUntilTxConfirmed metric.Float64Histogram
 	rpcNonce             metric.Int64Gauge
+	lifecycleFailure     metric.Int64Counter
 }
 
-func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
+func NewTxmMetrics(lggr logger.Logger, chainID *big.Int) Metrics {
+	var initErr error
 	numBroadcastedTxs, err := beholder.GetMeter().Int64Counter("txm_num_broadcasted_transactions")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register broadcasted txs number: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_num_broadcasted_transactions: %w", err))
 	}
 
 	numConfirmedTxs, err := beholder.GetMeter().Int64Counter("txm_num_confirmed_transactions")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register confirmed txs number: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_num_confirmed_transactions: %w", err))
 	}
 
 	numNonceGaps, err := beholder.GetMeter().Int64Counter("txm_num_nonce_gaps")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register nonce gaps number: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_num_nonce_gaps: %w", err))
 	}
 
 	timeUntilTxConfirmed, err := beholder.GetMeter().Float64Histogram("txm_time_until_tx_confirmed")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register time until tx confirmed: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_time_until_tx_confirmed: %w", err))
 	}
 
 	reachedMaxAttempts, err := beholder.GetMeter().Int64Gauge("txm_reached_max_attempts")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register max attempts indicator: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_reached_max_attempts: %w", err))
 	}
 
 	rpcNonce, err := beholder.GetMeter().Int64Gauge("txm_rpc_nonce")
 	if err != nil {
-		return nil, fmt.Errorf("failed to register rpc nonce gauge: %w", err)
+		initErr = errors.Join(initErr, fmt.Errorf("txm_rpc_nonce: %w", err))
+	}
+
+	lifecycleFailure, err := beholder.GetMeter().Int64Counter("txm_transaction_lifecycle_failure_total")
+	if err != nil {
+		initErr = errors.Join(initErr, fmt.Errorf("txm_transaction_lifecycle_failure_total: %w", err))
+	}
+
+	// It is very unlikely that another metric will be initialized correctly if there is even a single failure,
+	// so it's safer if we use a NOOP metric struct for everything and log an error instead.
+	if initErr != nil {
+		lggr.Errorw("Failed to initialize TXM metrics; using noop metrics", "err", initErr)
+		return NewNoopTxmMetrics()
 	}
 
 	return &txmMetrics{
@@ -97,7 +127,37 @@ func NewTxmMetrics(chainID *big.Int) (*txmMetrics, error) {
 		reachedMaxAttempts:   reachedMaxAttempts,
 		timeUntilTxConfirmed: timeUntilTxConfirmed,
 		rpcNonce:             rpcNonce,
-	}, nil
+		lifecycleFailure:     lifecycleFailure,
+	}
+}
+
+func NewNoopTxmMetrics() Metrics {
+	return noopTxmMetrics{}
+}
+
+// LifecycleFailureStage represents a stage in the transaction lifecycle where a failure can occur.
+type LifecycleFailureStage string
+
+const (
+	StageCreate         LifecycleFailureStage = "create"
+	StageInFlightSubset LifecycleFailureStage = "in_flight_subset"
+	StageMaxInFlight    LifecycleFailureStage = "max_in_flight"
+	StageBroadcast      LifecycleFailureStage = "broadcast"
+	StageNonceAt        LifecycleFailureStage = "nonce_at"
+
+	// SVR-specific stages.
+	StageCreatePrimary LifecycleFailureStage = "create_primary"
+	StageAuction       LifecycleFailureStage = "auction"
+)
+
+// IncrementLifecycleFailure increments the lifecycle failure counter for the given stage.
+func (m *txmMetrics) IncrementLifecycleFailure(ctx context.Context, stage LifecycleFailureStage) {
+	m.lifecycleFailure.Add(ctx, 1,
+		metric.WithAttributes(
+			attribute.String("chainID", m.chainID.String()),
+			attribute.String("stage", string(stage)),
+		),
+	)
 }
 
 func (m *txmMetrics) IncrementNumBroadcastedTxs(ctx context.Context) {
@@ -172,4 +232,26 @@ func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, from
 		"beholder_entity", "svr.v1.TxMessage",
 		"beholder_data_schema", "/beholder-tx-message/versions/2",
 	)
+}
+
+// noopTxmMetrics is a no-op implementation of the Metrics interface.
+// It allows the app to run without being blocked in case of metrics initialization errors.
+type noopTxmMetrics struct{}
+
+func (noopTxmMetrics) IncrementLifecycleFailure(context.Context, LifecycleFailureStage) {}
+
+func (noopTxmMetrics) IncrementNumBroadcastedTxs(context.Context) {}
+
+func (noopTxmMetrics) IncrementNumConfirmedTxs(context.Context, int) {}
+
+func (noopTxmMetrics) IncrementNumNonceGaps(context.Context) {}
+
+func (noopTxmMetrics) ReachedMaxAttempts(context.Context, bool) {}
+
+func (noopTxmMetrics) RecordTimeUntilTxConfirmed(context.Context, float64) {}
+
+func (noopTxmMetrics) SetRPCNonce(context.Context, common.Address, uint64) {}
+
+func (noopTxmMetrics) EmitTxMessage(context.Context, common.Hash, common.Address, *types.Transaction) error {
+	return nil
 }
