@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -42,7 +41,7 @@ func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transac
 		sec := secondary
 		go func() {
 			// Derive timeout from background so completing the primary path does not cancel secondary work early.
-			secondaryCtx, cancel := context.WithTimeout(context.Background(), m.secondarySendTimeout)
+			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
 			if err := sec.SendTransaction(secondaryCtx, tx, attempt); err != nil {

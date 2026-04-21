@@ -16,9 +16,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
-
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
@@ -41,17 +40,6 @@ const (
 	ofaKindNova
 )
 
-func (k ofaKind) loggerName() string {
-	switch k {
-	case ofaKindFlashbots:
-		return "Txm.FlashbotsClient"
-	case ofaKindNova:
-		return "Txm.NovaClient"
-	default:
-		return "Txm.OFAClient"
-	}
-}
-
 // chainRPCClient is used for public mempool fallback and reads shared by OFA implementations.
 type chainRPCClient interface {
 	BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error)
@@ -72,13 +60,14 @@ type FlashbotsTxStore interface {
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
 }
 
-// ofaTXClient implements txm.Client for HTTP JSON-RPC OFA backends (Flashbots MEV-Share, Nova RPC, …).
+// TODO(gg): maybe put in internal package?
+// ofaTXClient implements txm.Client for HTTP JSON-RPC OFA backends (Flashbots MEV-Share, Nova RPC).
 type ofaTXClient struct {
 	lggr          logger.SugaredLogger
 	c             chainRPCClient
 	customURL     *url.URL
 	kind          ofaKind
-	keystore      keys.MessageSigner // Flashbots signing only; nil for Nova
+	keystore      keys.MessageSigner // Only if authentication is required
 	metrics       ofaMetrics
 	errHTTPPrefix string
 	txStore       FlashbotsTxStore
@@ -88,13 +77,12 @@ type ofaTXClient struct {
 var _ txm.Client = (*ofaTXClient)(nil)
 
 func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundles *bool, metrics ofaMetrics) *ofaTXClient {
-	k := ofaKindFlashbots
 	b := bundles != nil && *bundles
 	return &ofaTXClient{
-		lggr:          logger.Sugared(logger.Named(lggr, k.loggerName())),
+		lggr:          logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
 		c:             c,
 		customURL:     customURL,
-		kind:          k,
+		kind:          ofaKindFlashbots,
 		keystore:      keystore,
 		metrics:       metrics,
 		errHTTPPrefix: "flashbots",
@@ -104,12 +92,11 @@ func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.Mess
 }
 
 func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, metrics ofaMetrics) *ofaTXClient {
-	k := ofaKindNova
 	return &ofaTXClient{
-		lggr:          logger.Sugared(logger.Named(lggr, k.loggerName())),
+		lggr:          logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:             c,
 		customURL:     customURL,
-		kind:          k,
+		kind:          ofaKindNova,
 		metrics:       metrics,
 		errHTTPPrefix: "nova",
 	}
@@ -137,30 +124,32 @@ func (d *ofaTXClient) PendingNonceAt(ctx context.Context, address common.Address
 	return nonce, nil
 }
 
-func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
-	switch d.kind {
-	case ofaKindFlashbots:
-		var params string
-		if meta != nil && meta.DualBroadcastParams != nil {
-			params = *meta.DualBroadcastParams
-		}
-		return d.customURL.String() + "?" + params
-	default:
-		return d.customURL.String()
-	}
-}
-
-func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
-	if d.kind != ofaKindFlashbots || d.keystore == nil {
-		return nil
-	}
-	hashedBody := crypto.Keccak256Hash(body).Hex()
-	signedMessage, err := d.keystore.SignMessage(ctx, from, []byte(hashedBody))
+func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+	meta, err := tx.GetMeta()
 	if err != nil {
 		return err
 	}
-	req.Header.Add("X-Flashbots-signature", from.String()+":"+hexutil.Encode(signedMessage))
-	req.Header.Add("X-Flashbots-Origin", "chainlink")
+
+	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
+		switch d.kind {
+		case ofaKindFlashbots:
+			// If not dual-broadcast, fall back to sending the transaction to the chain RPC directly
+			return d.c.SendTransaction(ctx, nil, attempt)
+		case ofaKindNova:
+			return nil // assume we only use Nova for secondary broadcast, don't fall back to chain RPC
+		}
+	}
+
+	if err := d.sendDualBroadcastTx(ctx, tx, attempt); err != nil {
+		return err
+	}
+
+	if d.kind == ofaKindFlashbots && d.bundles {
+		if err := d.sendBundle(ctx, tx.FromAddress, meta); err != nil {
+			d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
+		}
+	}
+
 	return nil
 }
 
@@ -223,32 +212,33 @@ func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body
 	return response.Result, nil
 }
 
-func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
-	meta, err := tx.GetMeta()
+func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
+	if d.kind != ofaKindFlashbots || d.keystore == nil {
+		// signing is only required for Flashbots
+		return nil
+	}
+
+	hashedBody := crypto.Keccak256Hash(body).Hex()
+	signedMessage, err := d.keystore.SignMessage(ctx, from, []byte(hashedBody))
 	if err != nil {
 		return err
 	}
-
-	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
-		switch d.kind {
-		case ofaKindFlashbots:
-			return d.c.SendTransaction(ctx, nil, attempt)
-		case ofaKindNova:
-			return nil
-		}
-	}
-
-	if err := d.sendDualBroadcastTx(ctx, tx, attempt); err != nil {
-		return err
-	}
-
-	if d.kind == ofaKindFlashbots && d.bundles {
-		if err := d.sendBundle(ctx, tx.FromAddress, meta); err != nil {
-			d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
-		}
-	}
-
+	req.Header.Add("X-Flashbots-signature", from.String()+":"+hexutil.Encode(signedMessage))
+	req.Header.Add("X-Flashbots-Origin", "chainlink")
 	return nil
+}
+
+func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
+	// Only Flashbots needs URL parameters
+	if d.kind != ofaKindFlashbots {
+		return d.customURL.String()
+	}
+
+	var params string
+	if meta != nil && meta.DualBroadcastParams != nil {
+		params = *meta.DualBroadcastParams
+	}
+	return d.customURL.String() + "?" + params
 }
 
 func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address, meta *types.TxMeta) error {

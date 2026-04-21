@@ -16,7 +16,7 @@ import (
 
 // SelectClient builds the txm.Client for dual broadcast. ofaURLs must be non-empty; index 0 is the
 // primary (determines broadcast outcome and nonce queries). Additional URLs are multiplexed as
-// secondaries (fire-and-forget with timeout).
+// secondaries (fire-and-forget with separate timeout).
 func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, ofaURLs []*url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
 	if len(ofaURLs) == 0 {
 		return nil, nil, fmt.Errorf("ofaURLs must not be empty")
@@ -33,9 +33,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	}
 
 	if len(ofaURLs) == 1 {
-		lggr.Infow("TransactionManagerV2 OFA: single client selected",
-			"url", redactURL(ofaURLs[0]),
-		)
+		lggr.Infow("TransactionManagerV2 OFA: single client selected", "url", redactURL(ofaURLs[0]))
 		return primary, errHandler, nil
 	}
 
@@ -52,7 +50,6 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	for i, u := range ofaURLs {
 		urlStrs[i] = redactURL(u)
 	}
-
 	lggr.Infow("TransactionManagerV2 OFA: multiplex clients selected (primary determines broadcast outcome; secondaries are best-effort)",
 		"primaryURL", urlStrs[0],
 		"secondaryURLs", urlStrs[1:],
