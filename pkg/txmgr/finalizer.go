@@ -36,8 +36,8 @@ var (
 
 // processHeadTimeout represents a sanity limit on how long ProcessHead should take to complete
 const (
-	processHeadTimeout                 = 10 * time.Minute
-	attemptsCacheRefreshThreshold      = 5
+	processHeadTimeout                = 10 * time.Minute
+	attemptsCacheRefreshThreshold     = 5
 	receiptBatchRPCEnvelopeRetryDelay = 250 * time.Millisecond
 )
 
@@ -99,7 +99,7 @@ type evmFinalizer struct {
 	attemptsCache         []TxAttempt
 	attemptsCacheHitCount int
 
-	receiptEffectiveBatchSize atomic.Int32
+	receiptEffectiveBatchSize atomic.Int64
 }
 
 func NewEvmFinalizer(
@@ -414,9 +414,9 @@ func (f *evmFinalizer) setReceiptEffectiveBatchSize(n int) {
 	if f.rpcBatchSize > 0 && n > f.rpcBatchSize {
 		n = f.rpcBatchSize
 	}
-	prev := int(f.receiptEffectiveBatchSize.Load())
-	if prev == 0 || n < prev {
-		f.receiptEffectiveBatchSize.Store(int32(n))
+	prev := f.receiptEffectiveBatchSize.Load()
+	if prev == 0 || int64(n) < prev {
+		f.receiptEffectiveBatchSize.Store(int64(n))
 	}
 }
 
@@ -486,8 +486,8 @@ func (f *evmFinalizer) FetchAndStoreReceipts(ctx context.Context, head, latestFi
 					}
 					subBatch = max(1, subBatch/2)
 					f.setReceiptEffectiveBatchSize(subBatch)
-					if err := sleepCtx(ctx, receiptBatchRPCEnvelopeRetryDelay); err != nil {
-						return err
+					if sleepErr := sleepCtx(ctx, receiptBatchRPCEnvelopeRetryDelay); sleepErr != nil {
+						return sleepErr
 					}
 					f.lggr.Warnw("RPC returned a batch response envelope instead of a result array; reducing receipt fetch batch size and retrying after delay",
 						"newSubBatch", subBatch, "err", fetchErr)

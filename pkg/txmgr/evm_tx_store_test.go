@@ -1522,7 +1522,7 @@ func TestORM_CountNonTerminalTransactions(t *testing.T) {
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	fromAddress := testutils.NewAddress()
 
-	count, err := txStore.CountNonTerminalTransactions(tests.Context(t), testutils.FixtureChainID)
+	count, err := txStore.CountNonTerminalTransactions(t.Context(), testutils.FixtureChainID)
 	require.NoError(t, err)
 	assert.Equal(t, uint32(0), count)
 
@@ -1530,7 +1530,7 @@ func TestORM_CountNonTerminalTransactions(t *testing.T) {
 	txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 1, fromAddress)
 	mustInsertFatalErrorEthTx(t, txStore, fromAddress)
 
-	count, err = txStore.CountNonTerminalTransactions(tests.Context(t), testutils.FixtureChainID)
+	count, err = txStore.CountNonTerminalTransactions(t.Context(), testutils.FixtureChainID)
 	require.NoError(t, err)
 	assert.Equal(t, uint32(2), count, "fatal_error and finalized txs must be excluded from non-terminal count")
 }
