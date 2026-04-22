@@ -12,8 +12,6 @@ HistoryDepth = 1250
 
 [GasEstimator]
 PriceMax = '120 gwei'
-# Limit values are high as Mantle's GasPrice is in native token (MNT) instead of ETH. Their proprietary TokenRatio parameter is used to adjust fees
-LimitDefault = 50_000_000
 BumpMin = '100 wei'
 BumpPercent = 20
 BumpThreshold = 60
