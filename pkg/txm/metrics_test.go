@@ -184,7 +184,7 @@ func TestEmitTxMessage(t *testing.T) {
 		}
 
 		// WHEN
-		err = txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx)
+		err := txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx)
 		require.NoError(t, err)
 
 		// THEN
