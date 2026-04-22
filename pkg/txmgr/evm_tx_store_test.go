@@ -1515,6 +1515,26 @@ func TestORM_CountTransactionsByState(t *testing.T) {
 	assert.Equal(t, int(count), 3)
 }
 
+func TestORM_CountNonTerminalTransactions(t *testing.T) {
+	t.Parallel()
+
+	db := testutils.NewSqlxDB(t)
+	txStore := txmgrtest.NewTestTxStore(t, db)
+	fromAddress := testutils.NewAddress()
+
+	count, err := txStore.CountNonTerminalTransactions(tests.Context(t), testutils.FixtureChainID)
+	require.NoError(t, err)
+	assert.Equal(t, uint32(0), count)
+
+	txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 0, fromAddress)
+	txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 1, fromAddress)
+	mustInsertFatalErrorEthTx(t, txStore, fromAddress)
+
+	count, err = txStore.CountNonTerminalTransactions(tests.Context(t), testutils.FixtureChainID)
+	require.NoError(t, err)
+	assert.Equal(t, uint32(2), count, "fatal_error and finalized txs must be excluded from non-terminal count")
+}
+
 func TestORM_CountUnstartedTransactions(t *testing.T) {
 	t.Parallel()
 

@@ -50,6 +50,7 @@ type EvmTxStore interface {
 	FindTxesByIDs(ctx context.Context, etxIDs []int64, chainID *big.Int) (etxs []*Tx, err error)
 	SaveFetchedReceipts(ctx context.Context, r []*types.Receipt) (err error)
 	UpdateTxStatesToFinalizedUsingTxHashes(ctx context.Context, txHashes []common.Hash, chainID *big.Int) error
+	CountNonTerminalTransactions(ctx context.Context, chainID *big.Int) (count uint32, err error)
 }
 
 // TxStoreWebApi encapsulates the methods that are not used by the txmgr and only used by the various web controllers, readers, or evm specific components
@@ -1631,6 +1632,20 @@ func (o *evmTxStore) CountTransactionsByState(ctx context.Context, state txmgrty
 		state, chainID.String())
 	if err != nil {
 		return 0, fmt.Errorf("failed to CountTransactionsByState: %w", err)
+	}
+	return count, nil
+}
+
+// CountNonTerminalTransactions returns the number of transactions for the chain that are not in a
+// terminal state (finalized or fatal_error). Used for observability of backlog and stuck workflows.
+func (o *evmTxStore) CountNonTerminalTransactions(ctx context.Context, chainID *big.Int) (count uint32, err error) {
+	var cancel context.CancelFunc
+	ctx, cancel = o.stopCh.Ctx(ctx)
+	defer cancel()
+	err = o.q.GetContext(ctx, &count, `SELECT count(*) FROM evm.txes WHERE evm_chain_id = $1 AND state NOT IN ('finalized', 'fatal_error')`,
+		chainID.String())
+	if err != nil {
+		return 0, fmt.Errorf("failed to CountNonTerminalTransactions: %w", err)
 	}
 	return count, nil
 }

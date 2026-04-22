@@ -39,6 +39,10 @@ var (
 		Name: "txm_pending_tx_queue_utilization",
 		Help: "Queue utilization in [0,1] = depth/capacity.",
 	}, []string{"chainID"})
+	promNonTerminalTxCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "tx_manager_transactions_non_terminal",
+		Help: "Current count of transactions not in a terminal state (finalized or fatal_error).",
+	}, []string{"chainID"})
 )
 
 type evmTxmMetrics struct {
@@ -50,6 +54,7 @@ type evmTxmMetrics struct {
 	txAttemptCount            metric.Float64Gauge
 	numFinalizedTxs           metric.Int64Counter
 	pendingTxQueueUtilization metric.Float64Gauge
+	nonTerminalTxCount        metric.Float64Gauge
 }
 
 func NewEVMTxmMetrics(chainID string) (*evmTxmMetrics, error) {
@@ -88,6 +93,11 @@ func NewEVMTxmMetrics(chainID string) (*evmTxmMetrics, error) {
 		return nil, fmt.Errorf("failed to register pending tx queue utilization: %w", err)
 	}
 
+	nonTerminalTxCount, err := beholder.GetMeter().Float64Gauge("tx_manager_transactions_non_terminal")
+	if err != nil {
+		return nil, fmt.Errorf("failed to register non-terminal transaction count metric: %w", err)
+	}
+
 	return &evmTxmMetrics{
 		chainID:                   chainID,
 		GenericTXMMetrics:         genericTXMMetrics,
@@ -97,6 +107,7 @@ func NewEVMTxmMetrics(chainID string) (*evmTxmMetrics, error) {
 		txAttemptCount:            txAttemptCount,
 		numFinalizedTxs:           numFinalizedTxs,
 		pendingTxQueueUtilization: pendingTxQueueUtilization,
+		nonTerminalTxCount:        nonTerminalTxCount,
 	}, nil
 }
 
@@ -125,7 +136,15 @@ func (m *evmTxmMetrics) RecordTxAttemptCount(ctx context.Context, value float64)
 	m.txAttemptCount.Record(ctx, value, metric.WithAttributes(attribute.String("chainID", m.chainID)))
 }
 
-func (m *evmTxmMetrics) IncrementNumFinalizedTxs(ctx context.Context) {
-	promNumFinalizedTxs.WithLabelValues(m.chainID).Add(float64(1))
-	m.numFinalizedTxs.Add(ctx, 1, metric.WithAttributes(attribute.String("chainID", m.chainID)))
+func (m *evmTxmMetrics) AddNumFinalizedTxs(ctx context.Context, n int64) {
+	if n <= 0 {
+		return
+	}
+	promNumFinalizedTxs.WithLabelValues(m.chainID).Add(float64(n))
+	m.numFinalizedTxs.Add(ctx, n, metric.WithAttributes(attribute.String("chainID", m.chainID)))
+}
+
+func (m *evmTxmMetrics) RecordNonTerminalTxCount(ctx context.Context, count float64) {
+	promNonTerminalTxCount.WithLabelValues(m.chainID).Set(count)
+	m.nonTerminalTxCount.Record(ctx, count, metric.WithAttributes(attribute.String("chainID", m.chainID)))
 }
