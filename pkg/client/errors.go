@@ -272,7 +272,7 @@ var aStar = ClientErrors{
 
 var mantle = ClientErrors{
 	InsufficientEth:                   regexp.MustCompile(`(: |^)'*insufficient funds for gas \* price \+ value`),
-	Fatal:                             regexp.MustCompile(`(: |^)'*invalid sender`),
+	Fatal:                             regexp.MustCompile(`(: |^)'*(invalid sender|intrinsic gas too low)`),
 	NonceTooLow:                       regexp.MustCompile(`(: |^)'*nonce too low`),
 	ReplacementTransactionUnderpriced: regexp.MustCompile(`(: |^)'*replacement transaction underpriced`),
 	TransactionAlreadyInMempool:       regexp.MustCompile(`(: |^)'*already known`),
