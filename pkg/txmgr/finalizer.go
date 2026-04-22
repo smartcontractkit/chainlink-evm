@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -52,7 +51,7 @@ type finalizerTxStore interface {
 	UpdateTxCallbackCompleted(ctx context.Context, pipelineTaskRunID uuid.UUID, chainID *big.Int) error
 	UpdateTxFatalErrorAndDeleteAttempts(ctx context.Context, etx *Tx) error
 	UpdateTxStatesToFinalizedUsingTxHashes(ctx context.Context, txHashes []common.Hash, chainID *big.Int) error
-	CountNonTerminalTransactions(ctx context.Context, chainID *big.Int) (count uint32, err error)
+	OldestNonTerminalTxAgeSeconds(ctx context.Context, chainID *big.Int) (seconds float64, err error)
 }
 
 type finalizerChainClient interface {
@@ -71,7 +70,7 @@ type finalizerMetrics interface {
 	IncrementFwdTxCount(ctx context.Context, successful bool)
 	RecordTxAttemptCount(ctx context.Context, value float64)
 	AddNumFinalizedTxs(ctx context.Context, n int64)
-	RecordNonTerminalTxCount(ctx context.Context, count float64)
+	RecordOldestNonTerminalTxAgeSeconds(ctx context.Context, seconds float64)
 }
 
 type resumeCallback = func(context.Context, uuid.UUID, interface{}, error) error
@@ -98,8 +97,6 @@ type evmFinalizer struct {
 
 	attemptsCache         []TxAttempt
 	attemptsCacheHitCount int
-
-	receiptEffectiveBatchSize atomic.Int64
 }
 
 func NewEvmFinalizer(
@@ -116,7 +113,7 @@ func NewEvmFinalizer(
 	return &evmFinalizer{
 		lggr:                  logger.Sugared(lggr),
 		chainID:               chainID,
-		rpcBatchSize:          int(rpcBatchSize),
+		rpcBatchSize:          int(rpcBatchSize), //nolint:gosec // G115 -- RPC batch size is a small config value
 		forwardersEnabled:     forwardersEnabled,
 		txStore:               txStore,
 		client:                client,
@@ -212,17 +209,17 @@ func (f *evmFinalizer) ProcessHead(ctx context.Context, head *types.Head) error 
 		f.lggr.Errorf("failed to resume pending task runs: %s", err.Error())
 	}
 	err = f.processFinalizedHead(ctx, latestFinalizedHead)
-	f.observeNonTerminalTxCount(ctx)
+	f.observeOldestNonTerminalTxAge(ctx)
 	return err
 }
 
-func (f *evmFinalizer) observeNonTerminalTxCount(ctx context.Context) {
-	count, err := f.txStore.CountNonTerminalTransactions(ctx, f.chainID)
+func (f *evmFinalizer) observeOldestNonTerminalTxAge(ctx context.Context) {
+	age, err := f.txStore.OldestNonTerminalTxAgeSeconds(ctx, f.chainID)
 	if err != nil {
-		f.lggr.Errorw("Failed to count non-terminal transactions for metrics", "err", err)
+		f.lggr.Errorw("Failed to load oldest non-terminal transaction age for metrics", "err", err)
 		return
 	}
-	f.metrics.RecordNonTerminalTxCount(ctx, float64(count))
+	f.metrics.RecordOldestNonTerminalTxAgeSeconds(ctx, age)
 }
 
 // processFinalizedHead determines if any confirmed transactions can be marked as finalized by comparing their receipts against the latest finalized block
@@ -388,42 +385,6 @@ func (f *evmFinalizer) batchCheckReceiptHashesOnchain(ctx context.Context, block
 	return finalizedReceipts
 }
 
-// receiptOuterBatchCap returns the max number of receipt RPCs to bundle for the given number of
-// attempts remaining, respecting rpcBatchSize config and any lowered effective size.
-func (f *evmFinalizer) receiptOuterBatchCap(remaining int) int {
-	if remaining < 1 {
-		return 1
-	}
-	v := int(f.receiptEffectiveBatchSize.Load())
-	if v > 0 {
-		if f.rpcBatchSize > 0 {
-			return min(v, f.rpcBatchSize, remaining)
-		}
-		return min(v, remaining)
-	}
-	if f.rpcBatchSize == 0 {
-		return remaining
-	}
-	return min(f.rpcBatchSize, remaining)
-}
-
-func (f *evmFinalizer) setReceiptEffectiveBatchSize(n int) {
-	if n < 1 {
-		n = 1
-	}
-	if f.rpcBatchSize > 0 && n > f.rpcBatchSize {
-		n = f.rpcBatchSize
-	}
-	prev := f.receiptEffectiveBatchSize.Load()
-	if prev == 0 || int64(n) < prev {
-		f.receiptEffectiveBatchSize.Store(int64(n))
-	}
-}
-
-func (f *evmFinalizer) resetReceiptEffectiveBatchSize() {
-	f.receiptEffectiveBatchSize.Store(0)
-}
-
 func sleepCtx(ctx context.Context, d time.Duration) error {
 	if d <= 0 {
 		return nil
@@ -453,26 +414,10 @@ func (f *evmFinalizer) FetchAndStoreReceipts(ctx context.Context, head, latestFi
 	allReceipts := make([]*types.Receipt, 0, len(attempts))
 	errorList := make([]error, 0, len(attempts))
 	for i := 0; i < len(attempts); {
-		remaining := len(attempts) - i
-		outerCap := f.receiptOuterBatchCap(remaining)
-		j := i + outerCap
-		if j > len(attempts) {
-			j = len(attempts)
-		}
-		batch := attempts[i:j]
-
-		offset := 0
-		subBatch := outerCap
-		if subBatch < 1 {
-			subBatch = 1
-		}
-		for offset < len(batch) {
-			chunkEnd := offset + subBatch
-			if chunkEnd > len(batch) {
-				chunkEnd = len(batch)
-			}
-			chunk := batch[offset:chunkEnd]
-
+		maxChunk := min(f.rpcBatchSize, len(attempts)-i)
+		chunkSize := maxChunk
+		for {
+			chunk := attempts[i : i+chunkSize]
 			receipts, fetchErr := f.batchFetchReceipts(ctx, chunk)
 			if fetchErr != nil {
 				if evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(fetchErr) {
@@ -481,43 +426,37 @@ func (f *evmFinalizer) FetchAndStoreReceipts(ctx context.Context, head, latestFi
 						f.lggr.Criticalw("Receipt batch fetch failed with batch response envelope error at batch size 1; RPC may be misconfigured or overloaded",
 							"err", fetchErr, "txHash", chunk[0].Hash)
 						errorList = append(errorList, fetchErr)
-						offset = chunkEnd
-						continue
+						i++
+						break
 					}
-					subBatch = max(1, subBatch/2)
-					f.setReceiptEffectiveBatchSize(subBatch)
+					chunkSize = max(1, chunkSize/2)
 					if sleepErr := sleepCtx(ctx, receiptBatchRPCEnvelopeRetryDelay); sleepErr != nil {
 						return sleepErr
 					}
-					f.lggr.Warnw("RPC returned a batch response envelope instead of a result array; reducing receipt fetch batch size and retrying after delay",
-						"newSubBatch", subBatch, "err", fetchErr)
+					f.lggr.Warnw("RPC returned a batch response envelope instead of a result array; reducing receipt fetch chunk size for this batch and retrying after delay",
+						"newChunkSize", chunkSize, "err", fetchErr)
 					continue
 				}
 				errorList = append(errorList, fetchErr)
-				offset = chunkEnd
-				continue
+				i += chunkSize
+				break
 			}
 
 			allReceipts = append(allReceipts, receipts...)
 
 			if err = f.txStore.SaveFetchedReceipts(ctx, receipts); err != nil {
 				errorList = append(errorList, err)
-				offset = chunkEnd
-				continue
+				i += chunkSize
+				break
 			}
 			f.filterAttemptsCache(receipts)
-			offset = chunkEnd
-			subBatch = f.receiptOuterBatchCap(len(batch) - offset)
-			if subBatch < 1 {
-				subBatch = 1
-			}
+			i += chunkSize
+			break
 		}
-		i = j
 	}
 	if len(errorList) > 0 {
 		return errors.Join(errorList...)
 	}
-	f.resetReceiptEffectiveBatchSize()
 
 	oldTxIDs := findOldTxIDsWithoutReceipts(attempts, allReceipts, latestFinalizedHead)
 	// Process old transactions that never received receipts and need to be marked as fatal

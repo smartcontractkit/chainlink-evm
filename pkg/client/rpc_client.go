@@ -418,11 +418,12 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(rootCtx, r.largePayloadRPCTimeout)
 	defer cancel()
-	lggr := r.newRqLggr().With("nBatchElems", len(b))
 
 	logElems := batchElemsForLog(b)
 
-	lggr.Tracew("RPC call: evmclient.Client#BatchCallContext", "batchElems", logElems)
+	lggr := r.newRqLggr().With("nBatchElems", len(b), "batchElems", logElems)
+
+	lggr.Tracew("RPC call: evmclient.Client#BatchCallContext")
 	start := time.Now()
 	err := r.wrapRPCClientError(client.rpc.BatchCallContext(ctx, b))
 	duration := time.Since(start)
