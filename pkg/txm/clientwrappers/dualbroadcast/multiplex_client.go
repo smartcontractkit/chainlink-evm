@@ -17,34 +17,27 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-// multiplexPrimary is the authoritative backend: broadcast outcome and all nonce reads.
-type multiplexPrimary interface {
+// ofaBackend is used to broadcast to an OFA and read nonces.
+type ofaBackend interface {
 	PendingNonceAt(ctx context.Context, address common.Address) (uint64, error)
 	NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error)
 	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
-}
-
-// multiplexSecondary is only used for best-effort duplicate sends; multiplex never queries nonces from it.
-type multiplexSecondary interface {
-	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
+	Label() string
 }
 
 // multiplexClient implements txm.Client: it owns the OFA URL list, constructs one backend per URL,
 // fans out sends to secondaries (best-effort), and delegates nonce queries to the primary only.
 type multiplexClient struct {
 	lggr                 logger.SugaredLogger
-	primaryBackend       string
-	primary              multiplexPrimary
-	secondaries          []multiplexSecondary
+	primary              ofaBackend
+	secondaries          []ofaBackend
 	secondarySendTimeout time.Duration
 }
 
 var (
-	_ txm.Client         = (*multiplexClient)(nil)
-	_ multiplexPrimary   = (*ofaTXClient)(nil)
-	_ multiplexSecondary = (*ofaTXClient)(nil)
-	_ multiplexPrimary   = (*MetaClient)(nil)
-	_ multiplexSecondary = (*MetaClient)(nil)
+	_ txm.Client = (*multiplexClient)(nil)
+	_ ofaBackend = (*ofaTXClient)(nil)
+	_ ofaBackend = (*MetaClient)(nil)
 )
 
 // newMultiplexClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
@@ -67,7 +60,7 @@ func newMultiplexClient(
 		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(ofaURLs[0]), err)
 	}
 
-	secondaries := make([]multiplexSecondary, 0, len(ofaURLs)-1)
+	secondaries := make([]ofaBackend, 0, len(ofaURLs)-1)
 	for _, u := range ofaURLs[1:] {
 		sec, _, err := newClientForOFAURL(lggr, chainClient, keyStore, u, chainID, txStore, bundles, auctionRequestTimeout)
 		if err != nil {
@@ -81,15 +74,13 @@ func newMultiplexClient(
 		urlStrs[i] = redactURL(u)
 	}
 
-	primaryLabel := backendLabel(primary)
 	lggr.Infow("TransactionManagerV2 OFA client created",
 		"primaryURL", urlStrs[0],
 		"secondaryURLs", urlStrs[1:],
-		"primaryBackend", primaryLabel)
+		"primaryBackend", primary.Label())
 
 	return &multiplexClient{
 		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiplexClient")),
-		primaryBackend:       primaryLabel,
 		primary:              primary,
 		secondaries:          secondaries,
 		secondarySendTimeout: rpcTimeout,
@@ -99,7 +90,6 @@ func newMultiplexClient(
 func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	for _, secondary := range m.secondaries {
 		sec := secondary
-		secLabel := backendLabel(sec)
 		go func() {
 			// Inherit cancellation from the caller so shutdown (ctx done) stops secondary work; timeout caps wall time.
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
@@ -108,8 +98,8 @@ func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transac
 			if err := sec.SendTransaction(secondaryCtx, tx, attempt); err != nil {
 				m.lggr.Errorw("Secondary backend send failed",
 					"err", err,
-					"primaryBackend", m.primaryBackend,
-					"secondaryBackend", secLabel,
+					"primaryBackend", m.primary.Label(),
+					"secondaryBackend", sec.Label(),
 					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
 			}
 		}()
@@ -128,19 +118,16 @@ func (m *multiplexClient) NonceAt(ctx context.Context, address common.Address, b
 	return m.primary.NonceAt(ctx, address, blockNumber)
 }
 
-// TODO(gg): needed, maybe we can put the labels in the multiplexClient struct?
-func backendLabel(c any) string {
-	switch x := c.(type) {
-	case *ofaTXClient:
-		return x.kind.name()
-	case *MetaClient:
-		return "meta"
-	default:
-		return fmt.Sprintf("%T", c)
-	}
-}
+func newClientForOFAURL(
+	lggr logger.Logger,
+	chainClient *clientwrappers.ChainClient,
+	keyStore keys.ChainStore,
+	u *url.URL,
+	chainID *big.Int,
+	txStore txm.TxStore,
+	bundles *bool,
+	auctionRequestTimeout *time.Duration) (ofaBackend, txm.ErrorHandler, error) {
 
-func newClientForOFAURL(lggr logger.Logger, chainClient *clientwrappers.ChainClient, keyStore keys.ChainStore, u *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool, auctionRequestTimeout *time.Duration) (multiplexPrimary, txm.ErrorHandler, error) {
 	urlString := u.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):

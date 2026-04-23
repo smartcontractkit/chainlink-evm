@@ -224,6 +224,10 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	return a.c.SendTransaction(ctx, nil, attempt)
 }
 
+func (a *MetaClient) Label() string {
+	return "meta"
+}
+
 type Parameters struct {
 	ChainID      *hexutil.Uint64 `json:"chainId"`
 	ToAddress    common.Address  `json:"adapter"`

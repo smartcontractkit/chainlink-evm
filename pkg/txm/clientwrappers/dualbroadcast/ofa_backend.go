@@ -159,6 +159,10 @@ func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction
 	return nil
 }
 
+func (d *ofaTXClient) Label() string {
+	return d.kind.name()
+}
+
 func (d *ofaTXClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta *types.TxMeta) error {
 	data, err := attempt.SignedTransaction.MarshalBinary()
 	if err != nil {

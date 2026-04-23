@@ -32,7 +32,7 @@ func TestSelectClient_FlashbotsPrimaryOnly(t *testing.T) {
 
 	mux, ok := c.(*multiplexClient)
 	require.True(t, ok, "single flashbots URL should still use multiplexClient as the outer shell")
-	assert.Equal(t, "flashbots", mux.primaryBackend)
+	assert.Equal(t, "flashbots", mux.primary.Label())
 	assert.Empty(t, mux.secondaries)
 	fb, ok := mux.primary.(*ofaTXClient)
 	require.True(t, ok)
@@ -55,11 +55,12 @@ func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
 
 	mux, ok := c.(*multiplexClient)
 	require.True(t, ok)
-	assert.Equal(t, "flashbots", mux.primaryBackend)
+	assert.Equal(t, "flashbots", mux.primary.Label())
 	pri, ok := mux.primary.(*ofaTXClient)
 	require.True(t, ok)
 	assert.Equal(t, ofaKindFlashbots, pri.kind)
 	require.Len(t, mux.secondaries, 1)
+	assert.Equal(t, "nova", mux.secondaries[0].Label())
 	sec, ok := mux.secondaries[0].(*ofaTXClient)
 	require.True(t, ok)
 	assert.Equal(t, ofaKindNova, sec.kind)
@@ -77,7 +78,7 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 
 	mux, ok := c.(*multiplexClient)
 	require.True(t, ok)
-	assert.Equal(t, "nova", mux.primaryBackend)
+	assert.Equal(t, "nova", mux.primary.Label())
 	assert.Empty(t, mux.secondaries)
 	nc, ok := mux.primary.(*ofaTXClient)
 	require.True(t, ok, "nova URL should use OFA primary inside multiplex shell")
@@ -97,16 +98,10 @@ func TestSelectClient_MetaPrimaryOnly(t *testing.T) {
 
 	mux, ok := c.(*multiplexClient)
 	require.True(t, ok)
-	assert.Equal(t, "meta", mux.primaryBackend)
+	assert.Equal(t, "meta", mux.primary.Label())
 	assert.Empty(t, mux.secondaries)
 	_, isMeta := mux.primary.(*MetaClient)
 	require.True(t, isMeta)
-}
-
-func TestBackendLabel(t *testing.T) {
-	assert.Equal(t, "flashbots", backendLabel(&ofaTXClient{kind: ofaKindFlashbots}))
-	assert.Equal(t, "nova", backendLabel(&ofaTXClient{kind: ofaKindNova}))
-	assert.Equal(t, "meta", backendLabel(&MetaClient{}))
 }
 
 func TestRedactURL(t *testing.T) {
