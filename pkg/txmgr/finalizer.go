@@ -35,9 +35,8 @@ var (
 
 // processHeadTimeout represents a sanity limit on how long ProcessHead should take to complete
 const (
-	processHeadTimeout                = 10 * time.Minute
-	attemptsCacheRefreshThreshold     = 5
-	receiptBatchRPCEnvelopeRetryDelay = 250 * time.Millisecond
+	processHeadTimeout            = 10 * time.Minute
+	attemptsCacheRefreshThreshold = 5
 )
 
 type finalizerTxStore interface {
@@ -385,20 +384,6 @@ func (f *evmFinalizer) batchCheckReceiptHashesOnchain(ctx context.Context, block
 	return finalizedReceipts
 }
 
-func sleepCtx(ctx context.Context, d time.Duration) error {
-	if d <= 0 {
-		return nil
-	}
-	t := time.NewTimer(d)
-	defer t.Stop()
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-t.C:
-		return nil
-	}
-}
-
 func (f *evmFinalizer) FetchAndStoreReceipts(ctx context.Context, head, latestFinalizedHead *types.Head) error {
 	attempts, err := f.fetchAttemptsRequiringReceiptFetch(ctx)
 	if err != nil {
@@ -423,17 +408,10 @@ func (f *evmFinalizer) FetchAndStoreReceipts(ctx context.Context, head, latestFi
 				if evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(fetchErr) {
 					chunkLen := len(chunk)
 					if chunkLen <= 1 {
-						f.lggr.Criticalw("Receipt batch fetch failed with batch response envelope error at batch size 1; RPC may be misconfigured or overloaded",
-							"err", fetchErr, "txHash", chunk[0].Hash)
-						errorList = append(errorList, fetchErr)
-						i++
-						break
+						return fmt.Errorf("receipt batch fetch failed with batch response envelope error at batch size 1 (RPC may be misconfigured or overloaded): %w", fetchErr)
 					}
 					chunkSize = max(1, chunkSize/2)
-					if sleepErr := sleepCtx(ctx, receiptBatchRPCEnvelopeRetryDelay); sleepErr != nil {
-						return sleepErr
-					}
-					f.lggr.Warnw("RPC returned a batch response envelope instead of a result array; reducing receipt fetch chunk size for this batch and retrying after delay. If this issue persists, consider adjusting RPCDefaultBatchSize in the node config",
+					f.lggr.Warnw("RPC returned a batch response envelope instead of a result array; reducing receipt fetch chunk size for this batch and retrying. If this issue persists, consider adjusting RPCDefaultBatchSize in the node config",
 						"newChunkSize", chunkSize, "err", fetchErr)
 					continue
 				}
