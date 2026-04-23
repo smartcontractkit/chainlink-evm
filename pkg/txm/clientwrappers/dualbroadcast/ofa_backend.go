@@ -70,8 +70,8 @@ type FlashbotsTxStore interface {
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
 }
 
-// ofaTXClient is an HTTP JSON-RPC OFA backend (Flashbots MEV-Share, Nova RPC). Multiplex uses it as a
-// multiplexPrimary (when authoritative) or multiplexSecondary (best-effort duplicate send only).
+// ofaTXClient is an HTTP JSON-RPC OFA backend (Flashbots MEV-Share, Nova RPC). Multiplex uses it as an
+// ofaBackend (primary or secondary).
 type ofaTXClient struct {
 	lggr      logger.SugaredLogger
 	c         chainRPCClient
