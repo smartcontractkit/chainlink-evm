@@ -39,62 +39,13 @@ type multiplexClient struct {
 	secondarySendTimeout time.Duration
 }
 
-var _ txm.Client = (*multiplexClient)(nil)
-
-func backendLabel(c any) string {
-	switch x := c.(type) {
-	case *ofaTXClient:
-		return x.kind.name()
-	case *MetaClient:
-		return "meta"
-	default:
-		return fmt.Sprintf("%T", c)
-	}
-}
-
-// newMultiplexClient wires an already-built primary and optional secondaries. Tests use this;
-// production uses newMultiplexClientFromOFAURLs.
-func newMultiplexClient(lggr logger.Logger, primaryBackend string, primary multiplexPrimary, secondaries ...multiplexSecondary) *multiplexClient {
-	return &multiplexClient{
-		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiplexClient")),
-		primaryBackend:       primaryBackend,
-		primary:              primary,
-		secondaries:          secondaries,
-		secondarySendTimeout: rpcTimeout,
-	}
-}
-
-func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
-	for _, secondary := range m.secondaries {
-		sec := secondary
-		secLabel := backendLabel(sec)
-		go func() {
-			// Inherit cancellation from the caller so shutdown (ctx done) stops secondary work; timeout caps wall time.
-			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
-			defer cancel()
-
-			if err := sec.SendTransaction(secondaryCtx, tx, attempt); err != nil {
-				m.lggr.Errorw("Secondary backend send failed",
-					"err", err,
-					"primaryBackend", m.primaryBackend,
-					"secondaryBackend", secLabel,
-					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
-			}
-		}()
-	}
-
-	primaryCtx, cancel := context.WithTimeout(ctx, rpcTimeout)
-	defer cancel()
-	return m.primary.SendTransaction(primaryCtx, tx, attempt)
-}
-
-func (m *multiplexClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	return m.primary.PendingNonceAt(ctx, address)
-}
-
-func (m *multiplexClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
-	return m.primary.NonceAt(ctx, address, blockNumber)
-}
+var (
+	_ txm.Client         = (*multiplexClient)(nil)
+	_ multiplexPrimary   = (*ofaTXClient)(nil)
+	_ multiplexSecondary = (*ofaTXClient)(nil)
+	_ multiplexPrimary   = (*MetaClient)(nil)
+	_ multiplexSecondary = (*MetaClient)(nil)
+)
 
 // newMultiplexClientFromOFAURLs builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
 func newMultiplexClientFromOFAURLs(
@@ -136,7 +87,67 @@ func newMultiplexClientFromOFAURLs(
 		"secondaryURLs", urlStrs[1:],
 		"primaryBackend", primaryLabel)
 
-	return newMultiplexClient(lggr, primaryLabel, primary, secondaries...), errHandler, nil
+	return newMultiplexClientFromBackends(lggr, primaryLabel, primary, secondaries...), errHandler, nil
+}
+
+// TODO(gg): can we do thus construction directly in tests?
+
+// newMultiplexClientFromBackends builds a multiplex client from backends that are already constructed.
+// newMultiplexClientFromOFAURLs calls this after classifying URLs. Unit tests call this constructor
+// directly with mock multiplexPrimary / multiplexSecondary values: newMultiplexClientFromOFAURLs always
+// instantiates concrete *ofaTXClient / *MetaClient via newClientForOFAURL and cannot inject test doubles.
+func newMultiplexClientFromBackends(lggr logger.Logger, primaryBackend string, primary multiplexPrimary, secondaries ...multiplexSecondary) *multiplexClient {
+	return &multiplexClient{
+		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiplexClient")),
+		primaryBackend:       primaryBackend,
+		primary:              primary,
+		secondaries:          secondaries,
+		secondarySendTimeout: rpcTimeout,
+	}
+}
+
+func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+	for _, secondary := range m.secondaries {
+		sec := secondary
+		secLabel := backendLabel(sec)
+		go func() {
+			// Inherit cancellation from the caller so shutdown (ctx done) stops secondary work; timeout caps wall time.
+			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
+			defer cancel()
+
+			if err := sec.SendTransaction(secondaryCtx, tx, attempt); err != nil {
+				m.lggr.Errorw("Secondary backend send failed",
+					"err", err,
+					"primaryBackend", m.primaryBackend,
+					"secondaryBackend", secLabel,
+					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
+			}
+		}()
+	}
+
+	primaryCtx, cancel := context.WithTimeout(ctx, rpcTimeout)
+	defer cancel()
+	return m.primary.SendTransaction(primaryCtx, tx, attempt)
+}
+
+func (m *multiplexClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
+	return m.primary.PendingNonceAt(ctx, address)
+}
+
+func (m *multiplexClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
+	return m.primary.NonceAt(ctx, address, blockNumber)
+}
+
+// TODO(gg): needed, maybe we can put the labels in the multiplexClient struct?
+func backendLabel(c any) string {
+	switch x := c.(type) {
+	case *ofaTXClient:
+		return x.kind.name()
+	case *MetaClient:
+		return "meta"
+	default:
+		return fmt.Sprintf("%T", c)
+	}
 }
 
 func newClientForOFAURL(lggr logger.Logger, chainClient *clientwrappers.ChainClient, keyStore keys.ChainStore, u *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool, auctionRequestTimeout *time.Duration) (multiplexPrimary, txm.ErrorHandler, error) {
@@ -163,10 +174,3 @@ func newClientForOFAURL(lggr logger.Logger, chainClient *clientwrappers.ChainCli
 		return mc, NewErrorHandler(), nil
 	}
 }
-
-var (
-	_ multiplexPrimary   = (*ofaTXClient)(nil)
-	_ multiplexSecondary = (*ofaTXClient)(nil)
-	_ multiplexPrimary   = (*MetaClient)(nil)
-	_ multiplexSecondary = (*MetaClient)(nil)
-)
