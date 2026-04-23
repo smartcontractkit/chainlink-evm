@@ -1364,9 +1364,9 @@ func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNu
 // Thus, this functional will return block 90.
 // That's an expected behavior and conscious decision to avoid having to store all empty blocks in the DB for the sake of reducing the number of RPC calls in case of reorgs.
 func (lp *logPoller) findBlockAfterLCA(ctx context.Context, currentHeadNumber int64, dbLatestFinalizedBlockNumber int64) (*evmtypes.Head, error) {
-	if currentHeadNumber < dbLatestFinalizedBlockNumber {
-		lp.lggr.Criticalw("Unexpected state. Current head number is lower than latest finalized block number", "currentHeadNumber", currentHeadNumber, "dbLatestFinalizedBlockNumber", dbLatestFinalizedBlockNumber)
-		return nil, fmt.Errorf("current head number %d is lower than latest finalized block number %d: %w", currentHeadNumber, dbLatestFinalizedBlockNumber, commontypes.ErrFinalityViolated)
+	if currentHeadNumber <= dbLatestFinalizedBlockNumber {
+		lp.lggr.Criticalw("Finality violation detected. Requested to find block after LCA starting from block that is finalized", "currentHeadNumber", currentHeadNumber, "dbLatestFinalizedBlockNumber", dbLatestFinalizedBlockNumber)
+		return nil, fmt.Errorf("finality violation detected. Requested to find block after LCA starting from block %d that is finalized (dbLatestFinalized %d): %w", currentHeadNumber, dbLatestFinalizedBlockNumber, commontypes.ErrFinalityViolated)
 	}
 
 	// We expect reorgs up to the block after latestFinalizedBlock
