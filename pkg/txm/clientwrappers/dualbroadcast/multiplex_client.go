@@ -47,8 +47,8 @@ var (
 	_ multiplexSecondary = (*MetaClient)(nil)
 )
 
-// newMultiplexClientFromOFAURLs builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
-func newMultiplexClientFromOFAURLs(
+// newMultiplexClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
+func newMultiplexClient(
 	lggr logger.Logger,
 	chainClient *clientwrappers.ChainClient,
 	keyStore keys.ChainStore,
@@ -87,23 +87,13 @@ func newMultiplexClientFromOFAURLs(
 		"secondaryURLs", urlStrs[1:],
 		"primaryBackend", primaryLabel)
 
-	return newMultiplexClientFromBackends(lggr, primaryLabel, primary, secondaries...), errHandler, nil
-}
-
-// TODO(gg): can we do thus construction directly in tests?
-
-// newMultiplexClientFromBackends builds a multiplex client from backends that are already constructed.
-// newMultiplexClientFromOFAURLs calls this after classifying URLs. Unit tests call this constructor
-// directly with mock multiplexPrimary / multiplexSecondary values: newMultiplexClientFromOFAURLs always
-// instantiates concrete *ofaTXClient / *MetaClient via newClientForOFAURL and cannot inject test doubles.
-func newMultiplexClientFromBackends(lggr logger.Logger, primaryBackend string, primary multiplexPrimary, secondaries ...multiplexSecondary) *multiplexClient {
 	return &multiplexClient{
 		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiplexClient")),
-		primaryBackend:       primaryBackend,
+		primaryBackend:       primaryLabel,
 		primary:              primary,
 		secondaries:          secondaries,
 		secondarySendTimeout: rpcTimeout,
-	}
+	}, errHandler, nil
 }
 
 func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {

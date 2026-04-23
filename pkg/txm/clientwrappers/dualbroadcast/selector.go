@@ -27,7 +27,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 		return nil, nil, err
 	}
 
-	return newMultiplexClientFromOFAURLs(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles, auctionRequestTimeout)
+	return newMultiplexClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles, auctionRequestTimeout)
 }
 
 // redactURL returns u as a string safe for logs: same redaction as url.URL.Redacted for userinfo, and api_key query values are replaced with "xxxxx". It does not mutate the original URL.
