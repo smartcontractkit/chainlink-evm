@@ -60,7 +60,7 @@ func TestMultiplexClient_SendTransaction_TwoSecondaries(t *testing.T) {
 	sec1 := make(chan struct{}, 1)
 	sec2 := make(chan struct{}, 1)
 	primary := &mockClient{}
-	mc := newMultiplexClient(logger.Test(t), primary,
+	mc := newMultiplexClient(logger.Test(t), "primary", primary,
 		&mockClient{sendCalled: sec1},
 		&mockClient{sendCalled: sec2},
 	)
@@ -84,7 +84,7 @@ func TestMultiplexClient_SendTransaction_BothSucceed(t *testing.T) {
 	primary := &mockClient{}
 	secondary := &mockClient{sendCalled: secondaryCalled}
 
-	mc := newMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), "primary", primary, secondary)
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.NoError(t, err)
 
@@ -104,7 +104,7 @@ func TestMultiplexClient_SendTransaction_PrimaryFails(t *testing.T) {
 	}
 	secondary := &mockClient{sendCalled: make(chan struct{}, 1)}
 
-	mc := newMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), "primary", primary, secondary)
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.ErrorIs(t, err, primaryErr)
 }
@@ -121,7 +121,7 @@ func TestMultiplexClient_SecondarySendRespectsTimeout(t *testing.T) {
 		sendCalled: make(chan struct{}, 1),
 	}
 
-	mc := newMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), "primary", primary, secondary)
 	mc.secondarySendTimeout = 150 * time.Millisecond
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.NoError(t, err)
@@ -148,7 +148,7 @@ func TestMultiplexClient_SendTransaction_SecondaryFails(t *testing.T) {
 		sendCalled: secondaryCalled,
 	}
 
-	mc := newMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), "primary", primary, secondary)
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.NoError(t, err)
 
@@ -172,7 +172,7 @@ func TestMultiplexClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
 		},
 	}
 
-	mc := newMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), "primary", primary, secondary)
 	nonce, err := mc.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(42), nonce)
@@ -191,7 +191,7 @@ func TestMultiplexClient_NonceAt_RoutesToPrimary(t *testing.T) {
 		},
 	}
 
-	mc := newMultiplexClient(logger.Test(t), primary, secondary)
+	mc := newMultiplexClient(logger.Test(t), "primary", primary, secondary)
 	nonce, err := mc.NonceAt(context.Background(), common.HexToAddress("0x123"), big.NewInt(100))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(99), nonce)

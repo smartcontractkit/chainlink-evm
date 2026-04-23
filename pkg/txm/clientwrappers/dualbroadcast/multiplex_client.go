@@ -1,53 +1,63 @@
 package dualbroadcast
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"math/big"
-	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	evmtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-// TODO(gg): maybe put bundles into its own file?
+// multiplexPrimary is the authoritative backend: broadcast outcome and all nonce reads.
+type multiplexPrimary interface {
+	PendingNonceAt(ctx context.Context, address common.Address) (uint64, error)
+	NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error)
+	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
+}
 
-const (
-	rpcTimeout   = 10 * time.Second
-	maxBlockDiff = 24
-)
+// multiplexSecondary is only used for best-effort duplicate sends; multiplex never queries nonces from it.
+type multiplexSecondary interface {
+	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
+}
 
-// multiplexClient implements txm.Client by sending each broadcast to multiple backends.
-// The primary decides success or failure for TXM; additional backends run in parallel (best-effort).
-// Nonce reads use the primary so nonce state stays aligned with TXM.
+// multiplexClient implements txm.Client: it owns the OFA URL list, constructs one backend per URL,
+// fans out sends to secondaries (best-effort), and delegates nonce queries to the primary only.
 type multiplexClient struct {
 	lggr                 logger.SugaredLogger
-	primary              txm.Client
-	secondaries          []txm.Client
+	primaryBackend       string
+	primary              multiplexPrimary
+	secondaries          []multiplexSecondary
 	secondarySendTimeout time.Duration
 }
 
 var _ txm.Client = (*multiplexClient)(nil)
 
-// newMultiplexClient multiplexes sends to primary (outcome authority) and one or more secondaries.
-func newMultiplexClient(lggr logger.Logger, primary txm.Client, secondaries ...txm.Client) *multiplexClient {
+func backendLabel(c any) string {
+	switch x := c.(type) {
+	case *ofaTXClient:
+		return x.kind.name()
+	case *MetaClient:
+		return "meta"
+	default:
+		return fmt.Sprintf("%T", c)
+	}
+}
+
+// newMultiplexClient wires an already-built primary and optional secondaries. Tests use this;
+// production uses newMultiplexClientFromOFAURLs.
+func newMultiplexClient(lggr logger.Logger, primaryBackend string, primary multiplexPrimary, secondaries ...multiplexSecondary) *multiplexClient {
 	return &multiplexClient{
 		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiplexClient")),
+		primaryBackend:       primaryBackend,
 		primary:              primary,
 		secondaries:          secondaries,
 		secondarySendTimeout: rpcTimeout,
@@ -57,13 +67,18 @@ func newMultiplexClient(lggr logger.Logger, primary txm.Client, secondaries ...t
 func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	for _, secondary := range m.secondaries {
 		sec := secondary
+		secLabel := backendLabel(sec)
 		go func() {
-			// Derive timeout from background so completing the primary path does not cancel secondary work early.
+			// Inherit cancellation from the caller so shutdown (ctx done) stops secondary work; timeout caps wall time.
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
 			if err := sec.SendTransaction(secondaryCtx, tx, attempt); err != nil {
-				m.lggr.Errorw("Secondary backend send failed", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
+				m.lggr.Errorw("Secondary backend send failed",
+					"err", err,
+					"primaryBackend", m.primaryBackend,
+					"secondaryBackend", secLabel,
+					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
 			}
 		}()
 	}
@@ -81,368 +96,77 @@ func (m *multiplexClient) NonceAt(ctx context.Context, address common.Address, b
 	return m.primary.NonceAt(ctx, address, blockNumber)
 }
 
-// ofaKind selects URL shape, signing headers, logger name, non-dual fallback, and bundle behavior.
-type ofaKind uint8
+// newMultiplexClientFromOFAURLs builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
+func newMultiplexClientFromOFAURLs(
+	lggr logger.Logger,
+	chainClient *clientwrappers.ChainClient,
+	keyStore keys.ChainStore,
+	ofaURLs []*url.URL,
+	chainID *big.Int,
+	txStore txm.TxStore,
+	bundles *bool,
+	auctionRequestTimeout *time.Duration,
+) (*multiplexClient, txm.ErrorHandler, error) {
+	if len(ofaURLs) == 0 {
+		return nil, nil, fmt.Errorf("ofaURLs must not be empty")
+	}
 
-const (
-	ofaKindFlashbots ofaKind = iota
-	ofaKindNova
-)
+	primary, errHandler, err := newClientForOFAURL(lggr, chainClient, keyStore, ofaURLs[0], chainID, txStore, bundles, auctionRequestTimeout)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(ofaURLs[0]), err)
+	}
 
-func (k ofaKind) name() string {
-	switch k {
-	case ofaKindFlashbots:
-		return "flashbots"
-	case ofaKindNova:
-		return "nova"
+	secondaries := make([]multiplexSecondary, 0, len(ofaURLs)-1)
+	for _, u := range ofaURLs[1:] {
+		sec, _, err := newClientForOFAURL(lggr, chainClient, keyStore, u, chainID, txStore, bundles, auctionRequestTimeout)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", redactURL(u), err)
+		}
+		secondaries = append(secondaries, sec)
+	}
+
+	urlStrs := make([]string, len(ofaURLs))
+	for i, u := range ofaURLs {
+		urlStrs[i] = redactURL(u)
+	}
+
+	primaryLabel := backendLabel(primary)
+	lggr.Infow("TransactionManagerV2 OFA client created",
+		"primaryURL", urlStrs[0],
+		"secondaryURLs", urlStrs[1:],
+		"primaryBackend", primaryLabel)
+
+	return newMultiplexClient(lggr, primaryLabel, primary, secondaries...), errHandler, nil
+}
+
+func newClientForOFAURL(lggr logger.Logger, chainClient *clientwrappers.ChainClient, keyStore keys.ChainStore, u *url.URL, chainID *big.Int, txStore txm.TxStore, bundles *bool, auctionRequestTimeout *time.Duration) (multiplexPrimary, txm.ErrorHandler, error) {
+	urlString := u.String()
+	switch {
+	case strings.Contains(urlString, "flashbots"):
+		metrics, err := newOFAMetrics(chainID.String(), ofaKindFlashbots.name())
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create OFA metrics for flashbots: %w", err)
+		}
+		bundlesEnabled := bundles != nil && *bundles
+		return newFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundlesEnabled, metrics), nil, nil
+	case strings.Contains(urlString, "novarpc"):
+		metrics, err := newOFAMetrics(chainID.String(), ofaKindNova.name())
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
+		}
+		return newNovaClient(lggr, chainClient, u, metrics), nil, nil
 	default:
-		return "unknown"
-	}
-}
-
-// chainRPCClient is used for public mempool fallback and reads shared by OFA implementations.
-type chainRPCClient interface {
-	BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error)
-	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
-	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
-}
-
-type ofaPostResponse struct {
-	Result json.RawMessage `json:"result,omitempty"`
-	Error  ofaPostError
-}
-
-type ofaPostError struct {
-	Message string `json:"message,omitempty"`
-}
-
-type FlashbotsTxStore interface {
-	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
-}
-
-// TODO(gg): maybe put in internal package?
-// ofaTXClient implements txm.Client for HTTP JSON-RPC OFA backends (Flashbots MEV-Share, Nova RPC).
-type ofaTXClient struct {
-	lggr      logger.SugaredLogger
-	c         chainRPCClient
-	customURL *url.URL
-	kind      ofaKind
-	keystore  keys.MessageSigner // Only if authentication is required
-	metrics   ofaMetrics
-	txStore   FlashbotsTxStore
-	bundles   bool
-}
-
-var _ txm.Client = (*ofaTXClient)(nil)
-
-func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundlesEnabled bool, metrics ofaMetrics) *ofaTXClient {
-	return &ofaTXClient{
-		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
-		c:         c,
-		customURL: customURL,
-		kind:      ofaKindFlashbots,
-		keystore:  keystore,
-		metrics:   metrics,
-		txStore:   txStore,
-		bundles:   bundlesEnabled,
-	}
-}
-
-func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, metrics ofaMetrics) *ofaTXClient {
-	return &ofaTXClient{
-		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
-		c:         c,
-		customURL: customURL,
-		kind:      ofaKindNova,
-		metrics:   metrics,
-	}
-}
-
-func (d *ofaTXClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
-	return d.c.NonceAt(ctx, address, blockNumber)
-}
-
-func (d *ofaTXClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex()))
-	raw, err := d.postJSONRPC(ctx, address, body, nil)
-	if err != nil {
-		return 0, fmt.Errorf("%s eth_getTransactionCount failed: %w", d.kind.name(), err)
-	}
-
-	var resultStr string
-	if err = json.Unmarshal(raw, &resultStr); err != nil {
-		return 0, fmt.Errorf("failed to unmarshal response %s into string: %w", string(raw), err)
-	}
-	nonce, err := hexutil.DecodeUint64(resultStr)
-	if err != nil {
-		return 0, fmt.Errorf("failed to decode response %v into uint64: %w", resultStr, err)
-	}
-	return nonce, nil
-}
-
-func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
-	meta, err := tx.GetMeta()
-	if err != nil {
-		return err
-	}
-
-	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
-		switch d.kind {
-		case ofaKindFlashbots:
-			// If not dual-broadcast, fall back to sending the transaction to the chain RPC directly
-			return d.c.SendTransaction(ctx, nil, attempt)
-		case ofaKindNova:
-			return nil // assume we only use Nova for secondary broadcast, don't fall back to chain RPC
-		default:
-			return fmt.Errorf("ofaTXClient: unsupported OFA backend %q for dual-broadcast routing", d.kind.name())
-		}
-	}
-
-	if err := d.sendDualBroadcastTx(ctx, tx, attempt, meta); err != nil {
-		return err
-	}
-
-	if d.kind == ofaKindFlashbots && d.bundles {
-		if err := d.sendBundle(ctx, tx.FromAddress, meta); err != nil {
-			d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
-		}
-	}
-
-	return nil
-}
-
-func (d *ofaTXClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta *types.TxMeta) error {
-	data, err := attempt.SignedTransaction.MarshalBinary()
-	if err != nil {
-		return err
-	}
-
-	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
-	start := time.Now()
-	_, err = d.postJSONRPC(ctx, tx.FromAddress, body, meta)
-	d.metrics.RecordSendTx(ctx, time.Since(start), err)
-
-	return err
-}
-
-func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {
-	if _, ok := ctx.Deadline(); !ok {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, rpcTimeout)
-		defer cancel()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.postURL(meta), bytes.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-	if err = d.signRequest(ctx, req, body, from); err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("%s request failed: %w", d.kind.name(), err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s request failed with status %d: %s", d.kind.name(), resp.StatusCode, string(respBody))
-	}
-
-	var response ofaPostResponse
-	if err = json.Unmarshal(respBody, &response); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal OFA response: %w: %s", err, string(respBody))
-	}
-	if response.Error.Message != "" {
-		return nil, errors.New(response.Error.Message)
-	}
-	return response.Result, nil
-}
-
-func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
-	if d.kind != ofaKindFlashbots || d.keystore == nil {
-		// signing is only required for Flashbots
-		return nil
-	}
-
-	hashedBody := crypto.Keccak256Hash(body).Hex()
-	signedMessage, err := d.keystore.SignMessage(ctx, from, []byte(hashedBody))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("X-Flashbots-signature", from.String()+":"+hexutil.Encode(signedMessage))
-	req.Header.Add("X-Flashbots-Origin", "chainlink")
-	return nil
-}
-
-func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
-	// Only Flashbots needs URL parameters
-	if d.kind != ofaKindFlashbots {
-		return d.customURL.String()
-	}
-
-	var params string
-	if meta != nil && meta.DualBroadcastParams != nil {
-		params = *meta.DualBroadcastParams
-	}
-	return d.customURL.String() + "?" + params
-}
-
-func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address, meta *types.TxMeta) error {
-	var urlParams string
-	if meta != nil && meta.DualBroadcastParams != nil {
-		urlParams = *meta.DualBroadcastParams
-	}
-	unconfirmedTxs, err := d.txStore.FetchUnconfirmedTransactions(ctx, fromAddress)
-	if err != nil {
-		return fmt.Errorf("failed to fetch unconfirmed transactions: %w", err)
-	}
-
-	attempts := make([]*types.Attempt, 0, len(unconfirmedTxs))
-	attemptIDs := make([]uint64, 0, len(unconfirmedTxs))
-	nonces := make([]uint64, 0, len(unconfirmedTxs))
-	ids := make([]uint64, 0, len(unconfirmedTxs))
-	for _, unconfirmedTx := range unconfirmedTxs {
-		if len(unconfirmedTx.Attempts) > 0 && unconfirmedTx.Nonce != nil && unconfirmedTx.Attempts[len(unconfirmedTx.Attempts)-1].SignedTransaction != nil {
-			latestAttempt := unconfirmedTx.Attempts[len(unconfirmedTx.Attempts)-1]
-			attempts = append(attempts, latestAttempt)
-			attemptIDs = append(attemptIDs, latestAttempt.ID)
-			ids = append(ids, unconfirmedTx.ID)
-		}
-	}
-
-	if len(attempts) < 2 {
-		return nil
-	}
-
-	prevNonce := attempts[0].SignedTransaction.Nonce()
-	nonces = append(nonces, prevNonce)
-	for _, attempt := range attempts[1:] {
-		nonce := attempt.SignedTransaction.Nonce()
-		nonces = append(nonces, nonce)
-		expectedNonce := prevNonce + 1
-		if nonce != expectedNonce {
-			return fmt.Errorf("bundle attempts must be contiguous and strictly increasing: expected nonce %d, got nonce %d", expectedNonce, nonce)
-		}
-		prevNonce = nonce
-	}
-
-	currentBlock, err := d.c.BlockByNumber(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to get current block height: %w", err)
-	}
-	maxBlock := currentBlock.NumberU64() + maxBlockDiff
-
-	bodyItems := make([]map[string]any, 0, len(attempts))
-	for _, attempt := range attempts {
-		txData, err := attempt.SignedTransaction.MarshalBinary()
+		mc, err := NewMetaClient(lggr, chainClient, keyStore, u, chainID, txStore, auctionRequestTimeout)
 		if err != nil {
-			return fmt.Errorf("failed to marshal transaction for attempt ID %d: %w", attempt.ID, err)
+			return nil, nil, err
 		}
-
-		bodyItems = append(bodyItems, map[string]any{
-			"tx":         hexutil.Encode(txData),
-			"revertMode": "allow",
-		})
+		return mc, NewErrorHandler(), nil
 	}
-	privacy, refundConfig, err := parseURLParams(urlParams)
-	if err != nil {
-		return err
-	}
-
-	bundleParams := map[string]any{
-		"body": bodyItems,
-		"inclusion": map[string]any{
-			"block":    hexutil.EncodeBig(new(big.Int).SetUint64(currentBlock.NumberU64())),
-			"maxBlock": hexutil.EncodeBig(new(big.Int).SetUint64(maxBlock)),
-		},
-		"privacy": privacy,
-		"version": "v0.1",
-	}
-	if refundConfig.Address != "" {
-		bundleParams["validity"] = map[string]any{
-			"refundConfig": []any{refundConfig},
-		}
-	}
-
-	requestBody := map[string]any{
-		"jsonrpc": "2.0",
-		"id":      1,
-		"method":  "mev_sendBundle",
-		"params":  []any{bundleParams},
-	}
-
-	bodyBytes, err := json.Marshal(requestBody)
-	if err != nil {
-		return fmt.Errorf("failed to marshal bundle request: %w", err)
-	}
-
-	raw, err := d.postJSONRPC(ctx, fromAddress, bodyBytes, nil)
-	if err != nil {
-		return err
-	}
-
-	var bundleResult struct {
-		BundleHash string `json:"bundleHash"`
-	}
-	if err := json.Unmarshal(raw, &bundleResult); err != nil {
-		return fmt.Errorf("failed to decode response %s into bundle result: %w", string(raw), err)
-	}
-	d.lggr.Infow("Broadcasted transaction bundle", "txIDs", ids, "attemptIDs", attemptIDs, "nonces", nonces, "bundleHash", bundleResult.BundleHash)
-	return nil
 }
 
-func parseURLParams(params string) (privacy, refundConfig, error) {
-	values, err := url.ParseQuery(params)
-	if err != nil {
-		return privacy{}, refundConfig{}, fmt.Errorf("unable to parse params: %w", err)
-	}
-
-	pvc := privacy{}
-	if timeout, err := strconv.Atoi(values.Get("auctionTimeout")); err == nil {
-		pvc.AuctionTimeout = timeout
-	}
-
-	pvc.Builders = append(pvc.Builders, values["builder"]...)
-
-	pvc.Hints = append(pvc.Hints, values["hint"]...)
-
-	refundCfg := refundConfig{}
-	refundRaw := values.Get("refund")
-	if refundRaw != "" {
-		parts := strings.Split(refundRaw, ":")
-		if len(parts) != 2 {
-			return privacy{}, refundConfig{}, fmt.Errorf("unable to parse refund: %s. Expected format: address:percent", refundRaw)
-		}
-		address := parts[0]
-		percentVal, err := strconv.Atoi(parts[1])
-		if err != nil {
-			return privacy{}, refundConfig{}, fmt.Errorf("unable to parse percentage: %w", err)
-		}
-
-		pvc.WantRefund = percentVal
-		refundCfg = refundConfig{
-			Address: address,
-			Percent: 100,
-		}
-	}
-	return pvc, refundCfg, nil
-}
-
-type privacy struct {
-	WantRefund     int      `json:"wantRefund"`
-	AuctionTimeout int      `json:"auctionTimeout"`
-	Builders       []string `json:"builders"`
-	Hints          []string `json:"hints"`
-}
-
-type refundConfig struct {
-	Address string `json:"address"`
-	Percent int    `json:"percent"`
-}
+var (
+	_ multiplexPrimary   = (*ofaTXClient)(nil)
+	_ multiplexSecondary = (*ofaTXClient)(nil)
+	_ multiplexPrimary   = (*MetaClient)(nil)
+	_ multiplexSecondary = (*MetaClient)(nil)
+)
