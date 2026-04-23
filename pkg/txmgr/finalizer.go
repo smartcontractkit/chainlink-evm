@@ -433,7 +433,7 @@ func (f *evmFinalizer) FetchAndStoreReceipts(ctx context.Context, head, latestFi
 					if sleepErr := sleepCtx(ctx, receiptBatchRPCEnvelopeRetryDelay); sleepErr != nil {
 						return sleepErr
 					}
-					f.lggr.Warnw("RPC returned a batch response envelope instead of a result array; reducing receipt fetch chunk size for this batch and retrying after delay",
+					f.lggr.Warnw("RPC returned a batch response envelope instead of a result array; reducing receipt fetch chunk size for this batch and retrying after delay. If this issue persists, consider adjusting RPCDefaultBatchSize in the node config",
 						"newChunkSize", chunkSize, "err", fetchErr)
 					continue
 				}
