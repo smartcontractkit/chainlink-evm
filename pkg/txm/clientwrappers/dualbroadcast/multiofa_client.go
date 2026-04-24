@@ -29,6 +29,7 @@ type ofaBackend interface {
 // fans out sends to secondaries (best-effort), and delegates nonce queries to the primary only.
 type multiOfaClient struct {
 	lggr                 logger.SugaredLogger
+	chainClient          chainRPCClient
 	primary              ofaBackend
 	secondaries          []ofaBackend
 	secondarySendTimeout time.Duration
@@ -74,32 +75,56 @@ func newMultiOfaClient(
 		urlStrs[i] = redactURL(u)
 	}
 
+	secondaryLabels := make([]string, len(secondaries))
+	for i, secondary := range secondaries {
+		secondaryLabels[i] = secondary.Label()
+	}
+
 	lggr.Infow("TransactionManagerV2 OFA client created",
+		"primaryBackend", primary.Label(),
 		"primaryURL", urlStrs[0],
-		"secondaryURLs", urlStrs[1:],
-		"primaryBackend", primary.Label())
+		"secondaryBackends", secondaryLabels,
+		"secondaryURLs", urlStrs[1:])
 
 	return &multiOfaClient{
 		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiOfaClient")),
+		chainClient:          chainClient,
 		primary:              primary,
 		secondaries:          secondaries,
 		secondarySendTimeout: rpcTimeout,
 	}, errHandler, nil
 }
 
+// SendTransaction sends the transaction to the primary and secondaries, unless it is a non-dual-broadcast transaction.
+// In that case, it falls back to sending the transaction to the chain RPC directly.
 func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+	meta, err := tx.GetMeta()
+	if err != nil {
+		return err
+	}
+
+	// TODO(gg): check that this is the correct behavior for meta_client as well
+	// If not dual-broadcast, fall back to sending the transaction to the chain RPC directly
+	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
+		return m.chainClient.SendTransaction(ctx, tx, attempt)
+	}
+
+	// send to secondaries in parallel, fire-and-forget: in case of error, log and continue
 	for _, secondary := range m.secondaries {
 		sec := secondary
 		go func() {
-			// Inherit cancellation from the caller so shutdown (ctx done) stops secondary work; timeout caps wall time.
+
+			// TODO(gg): add waitgroup
+
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
 			if err := sec.SendTransaction(secondaryCtx, tx, attempt); err != nil {
 				m.lggr.Errorw("Secondary backend send failed",
 					"err", err,
-					"primaryBackend", m.primary.Label(),
-					"secondaryBackend", sec.Label(),
+					"backend", sec.Label(),
+					"txID", tx.ID,
+					"attemptHash", attempt.Hash,
 					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
 			}
 		}()

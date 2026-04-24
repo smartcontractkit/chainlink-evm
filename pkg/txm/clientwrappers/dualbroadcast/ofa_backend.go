@@ -30,7 +30,7 @@ import (
 // rpcTimeout bounds OFA HTTP JSON-RPC calls. The multiOfaClient reuses this for secondary fan-out deadlines.
 const rpcTimeout = 10 * time.Second
 
-// ofa selects URL shape, signing headers, logger name, non-dual fallback, and bundle behavior.
+// ofa selects URL shape, signing headers, logger name, and bundle behavior.
 type ofa uint8
 
 const (
@@ -75,7 +75,7 @@ type ofaTXClient struct {
 	lggr      logger.SugaredLogger
 	c         chainRPCClient
 	customURL *url.URL
-	kind      ofa
+	ofa       ofa
 	keystore  keys.MessageSigner // Only if authentication is required
 	metrics   ofaMetrics
 	txStore   FlashbotsTxStore
@@ -87,7 +87,7 @@ func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.Mess
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
 		c:         c,
 		customURL: customURL,
-		kind:      ofaFlashbots,
+		ofa:       ofaFlashbots,
 		keystore:  keystore,
 		metrics:   metrics,
 		txStore:   txStore,
@@ -100,7 +100,7 @@ func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, met
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,
 		customURL: customURL,
-		kind:      ofaNova,
+		ofa:       ofaNova,
 		metrics:   metrics,
 	}
 }
@@ -113,7 +113,7 @@ func (d *ofaTXClient) PendingNonceAt(ctx context.Context, address common.Address
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex()))
 	raw, err := d.postJSONRPC(ctx, address, body, nil)
 	if err != nil {
-		return 0, fmt.Errorf("%s eth_getTransactionCount failed: %w", d.kind.name(), err)
+		return 0, fmt.Errorf("%s eth_getTransactionCount failed: %w", d.ofa.name(), err)
 	}
 
 	var resultStr string
@@ -134,22 +134,15 @@ func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction
 	}
 
 	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
-		switch d.kind {
-		case ofaFlashbots:
-			// If not dual-broadcast, fall back to sending the transaction to the chain RPC directly
-			return d.c.SendTransaction(ctx, nil, attempt)
-		case ofaNova:
-			return nil // assume we only use Nova for secondary broadcast, don't fall back to chain RPC
-		default:
-			return fmt.Errorf("ofaTXClient: unsupported OFA backend %q for dual-broadcast routing", d.kind.name())
-		}
+		return fmt.Errorf("ofaTXClient: SendTransaction called for a non-dual-broadcast transaction")
 	}
 
+	// TODO(gg): set different gas limit if Nova
 	if err := d.sendDualBroadcastTx(ctx, tx, attempt, meta); err != nil {
 		return err
 	}
 
-	if d.kind == ofaFlashbots && d.bundles {
+	if d.ofa == ofaFlashbots && d.bundles {
 		if err := d.sendBundle(ctx, tx.FromAddress, meta); err != nil {
 			d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
 		}
@@ -159,7 +152,7 @@ func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction
 }
 
 func (d *ofaTXClient) Label() string {
-	return d.kind.name()
+	return d.ofa.name()
 }
 
 func (d *ofaTXClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta *types.TxMeta) error {
@@ -194,7 +187,7 @@ func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%s request failed: %w", d.kind.name(), err)
+		return nil, fmt.Errorf("%s request failed: %w", d.ofa.name(), err)
 	}
 	defer resp.Body.Close()
 
@@ -203,7 +196,7 @@ func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s request failed with status %d: %s", d.kind.name(), resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("%s request failed with status %d: %s", d.ofa.name(), resp.StatusCode, string(respBody))
 	}
 
 	var response ofaPostResponse
@@ -217,7 +210,7 @@ func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body
 }
 
 func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
-	if d.kind != ofaFlashbots || d.keystore == nil {
+	if d.ofa != ofaFlashbots || d.keystore == nil {
 		// signing is only required for Flashbots
 		return nil
 	}
@@ -234,7 +227,7 @@ func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body [
 
 func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
 	// Only Flashbots needs URL parameters
-	if d.kind != ofaFlashbots {
+	if d.ofa != ofaFlashbots {
 		return d.customURL.String()
 	}
 
