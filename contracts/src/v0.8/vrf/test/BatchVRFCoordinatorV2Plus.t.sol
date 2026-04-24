@@ -1,11 +1,11 @@
 pragma solidity 0.8.19;
 
+import {BatchVRFCoordinatorV2Plus} from "../BatchVRFCoordinatorV2Plus.sol";
 import {VRF} from "../VRF.sol";
 import {VRFTypes} from "../VRFTypes.sol";
-import {BatchVRFCoordinatorV2Plus} from "../dev/BatchVRFCoordinatorV2Plus.sol";
 
-import {VRFCoordinatorV2_5} from "../dev/VRFCoordinatorV2_5.sol";
-import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
+import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
+import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 import "./BaseTest.t.sol";
 import {FixtureVRFCoordinatorV2_5} from "./FixtureVRFCoordinatorV2_5.t.sol";
 import {console} from "forge-std/console.sol";

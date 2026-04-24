@@ -56,6 +56,11 @@ wrappers: pnpmdep mockery abigen ## Recompiles solidity contracts and their go w
 	./scripts/compile_all_$(FOUNDRY_PROFILE)
 	cd gobindings; go generate ./$(FOUNDRY_PROFILE)
 
+wrappers-release: export metadata=true
+.PHONY: wrappers-release
+wrappers-release: ## Generate the gethwrappers for release which includes metadata.
+	make wrappers
+
 .PHONY: wrappers-zksync
 wrappers-zksync: pnpmdep forge-zksync
 	go generate ../gethwrappers/zksync/go_generate.go
