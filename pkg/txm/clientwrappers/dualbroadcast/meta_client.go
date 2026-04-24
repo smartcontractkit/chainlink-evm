@@ -240,7 +240,8 @@ type Parameters struct {
 type Response struct {
 	Result *ResponseResult `json:"result"`
 	Error  struct {
-		ErrorMessage string `json:"message,omitempty"`
+		ErrorMessage string      `json:"message,omitempty"`
+		UserOpHash   common.Hash `json:"userOpHash,omitempty"`
 	}
 }
 
@@ -361,7 +362,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	// Start timing for endpoint latency measurement
 	// Latency should be > than the context timer to query context-timeout requests
 	// (opt to overcount rather than undercount reqs with timeout)
-	startTime := time.Now()
+	requestStartTime := time.Now()
 	ctx, cancel := context.WithTimeout(parentCtx, a.auctionRequestTimeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.customURL.String(), bytes.NewBuffer(body))
@@ -371,8 +372,9 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
+	responseReceivedAt := time.Now().UnixMicro()
 
-	latency := time.Since(startTime)
+	latency := time.Since(requestStartTime)
 
 	// Record latency
 	a.metrics.RecordLatency(ctx, latency)
@@ -412,6 +414,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	if response.Error.ErrorMessage != "" {
+		a.metrics.emitAtlasUserOp(ctx, response.Error.UserOpHash, tx, requestStartTime.UnixMicro(), responseReceivedAt)
 		if strings.Contains(response.Error.ErrorMessage, NoSolverOps) || strings.Contains(response.Error.ErrorMessage, NoSolverOpsAfterSimulation) {
 			a.metrics.RecordBidsReceived(ctx, 0)
 			return nil, nil
@@ -425,6 +428,11 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	// Record bid count (number of solver operations received)
 	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS))
+	userOpHash := common.Hash{}
+	if response.Result.DO != nil {
+		userOpHash = response.Result.DO.UserOpHash //
+	}
+	a.metrics.emitAtlasUserOp(ctx, userOpHash, tx, requestStartTime.UnixMicro(), responseReceivedAt)
 
 	if r, err := json.MarshalIndent(response.Result, "", "  "); err == nil {
 		a.lggr.Info("Response: ", string(r))
