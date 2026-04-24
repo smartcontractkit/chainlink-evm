@@ -1263,7 +1263,7 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 			return blocks, logs, fmt.Errorf("unable to query for logs: %w", err)
 		}
 		lp.lggr.Debugw("Unfinalized log query", "logs", len(logs), "currentBlockNumber", currentBlock.Number, "blockHash", currentBlock.Hash, "timestamp", currentBlock.Timestamp)
-		block := Block{
+		block = &Block{
 			BlockHash:            h,
 			BlockNumber:          currentBlock.Number,
 			BlockTimestamp:       currentBlock.Timestamp,
