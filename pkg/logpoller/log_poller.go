@@ -635,11 +635,18 @@ func (lp *logPoller) run() {
 	logPollTicker := services.NewTicker(lp.pollPeriod)
 	defer logPollTicker.Stop()
 	// stagger these somewhat, so they don't all run back-to-back
-	backupLogPollTicker := services.TickerConfig{
-		Initial:   100 * time.Millisecond,
-		JitterPct: services.DefaultJitter,
-	}.NewTicker(time.Duration(lp.backupPollerBlockDelay) * lp.pollPeriod)
-	defer backupLogPollTicker.Stop()
+	var backupLogPollCh <-chan time.Time
+	if lp.backupPollerBlockDelay > 0 {
+		backupLogPollTicker := services.TickerConfig{
+			Initial:   100 * time.Millisecond,
+			JitterPct: services.DefaultJitter,
+		}.NewTicker(time.Duration(lp.backupPollerBlockDelay) * lp.pollPeriod)
+		backupLogPollCh = backupLogPollTicker.C
+		defer backupLogPollTicker.Stop()
+	} else {
+		lp.lggr.Infow("Backup log poller disabled")
+	}
+
 	filtersLoaded := false
 
 	for {
@@ -679,10 +686,7 @@ func (lp *logPoller) run() {
 				start = lastProcessed.BlockNumber + 1
 			}
 			lp.PollAndSaveLogs(ctx, start)
-		case <-backupLogPollTicker.C:
-			if lp.backupPollerBlockDelay == 0 {
-				continue // backup poller is disabled
-			}
+		case <-backupLogPollCh:
 			// Backup log poller:  this serves as an emergency backup to protect against eventual-consistency behavior
 			// of an rpc node (seen occasionally on optimism, but possibly could happen on other chains?).  If the first
 			// time we request a block, no logs or incomplete logs come back, this ensures that every log is eventually
