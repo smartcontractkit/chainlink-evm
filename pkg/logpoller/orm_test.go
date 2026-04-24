@@ -113,13 +113,13 @@ func TestLogPoller_Blocks_Batching(t *testing.T) {
 		logs = append(logs, GenLog(th.ChainID, int64(i), int64(i+1), blockHash.String(), EmitterABI.Events["Log1"].ID.Bytes(), th.EmitterAddress1))
 	}
 	require.NoError(t, th.ORM.InsertLogsWithBlocks(ctx, logs, blocks))
-	lgs, err := th.ORM.SelectLogsByBlockRange(ctx, 1, numBlocks)
+	dbLogs, err := th.ORM.SelectLogsByBlockRange(ctx, 1, numBlocks)
 	require.NoError(t, err)
 	// Make sure all logs are inserted
-	require.Equal(t, len(logs), len(lgs))
+	require.Len(t, dbLogs, len(logs))
 	dbBlocks, err := th.ORM.GetBlocksRange(ctx, 1, numBlocks)
 	require.NoError(t, err)
-	require.Equal(t, numBlocks, len(dbBlocks))
+	require.Len(t, dbBlocks, numBlocks)
 }
 
 func TestORM_GetBlocks_From_Range(t *testing.T) {
