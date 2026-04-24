@@ -36,7 +36,7 @@ func TestSelectClient_FlashbotsPrimaryOnly(t *testing.T) {
 	assert.Empty(t, mux.secondaries)
 	fb, ok := mux.primary.(*ofaTXClient)
 	require.True(t, ok)
-	assert.Equal(t, ofaKindFlashbots, fb.kind)
+	assert.Equal(t, ofaFlashbots, fb.kind)
 }
 
 func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
@@ -58,12 +58,12 @@ func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
 	assert.Equal(t, "flashbots", mux.primary.Label())
 	pri, ok := mux.primary.(*ofaTXClient)
 	require.True(t, ok)
-	assert.Equal(t, ofaKindFlashbots, pri.kind)
+	assert.Equal(t, ofaFlashbots, pri.kind)
 	require.Len(t, mux.secondaries, 1)
 	assert.Equal(t, "nova", mux.secondaries[0].Label())
 	sec, ok := mux.secondaries[0].(*ofaTXClient)
 	require.True(t, ok)
-	assert.Equal(t, ofaKindNova, sec.kind)
+	assert.Equal(t, ofaNova, sec.kind)
 }
 
 func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
@@ -82,7 +82,7 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 	assert.Empty(t, mux.secondaries)
 	nc, ok := mux.primary.(*ofaTXClient)
 	require.True(t, ok, "nova URL should use OFA primary inside multiplex shell")
-	assert.Equal(t, ofaKindNova, nc.kind)
+	assert.Equal(t, ofaNova, nc.kind)
 }
 
 func TestSelectClient_MetaPrimaryOnly(t *testing.T) {

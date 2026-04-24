@@ -131,14 +131,14 @@ func newClientForOFAURL(
 	urlString := u.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
-		metrics, err := newOFAMetrics(chainID.String(), ofaKindFlashbots.name())
+		metrics, err := newOFAMetrics(chainID.String(), ofaFlashbots.name())
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for flashbots: %w", err)
 		}
 		bundlesEnabled := bundles != nil && *bundles
 		return newFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundlesEnabled, metrics), nil, nil
 	case strings.Contains(urlString, "novarpc"):
-		metrics, err := newOFAMetrics(chainID.String(), ofaKindNova.name())
+		metrics, err := newOFAMetrics(chainID.String(), ofaNova.name())
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
 		}

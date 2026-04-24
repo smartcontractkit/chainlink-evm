@@ -30,19 +30,19 @@ import (
 // rpcTimeout bounds OFA HTTP JSON-RPC calls. The multiplex client reuses this for secondary fan-out deadlines.
 const rpcTimeout = 10 * time.Second
 
-// ofaKind selects URL shape, signing headers, logger name, non-dual fallback, and bundle behavior.
-type ofaKind uint8
+// ofa selects URL shape, signing headers, logger name, non-dual fallback, and bundle behavior.
+type ofa uint8
 
 const (
-	ofaKindFlashbots ofaKind = iota
-	ofaKindNova
+	ofaFlashbots ofa = iota
+	ofaNova
 )
 
-func (k ofaKind) name() string {
+func (k ofa) name() string {
 	switch k {
-	case ofaKindFlashbots:
+	case ofaFlashbots:
 		return "flashbots"
-	case ofaKindNova:
+	case ofaNova:
 		return "nova"
 	default:
 		return "unknown"
@@ -76,7 +76,7 @@ type ofaTXClient struct {
 	lggr      logger.SugaredLogger
 	c         chainRPCClient
 	customURL *url.URL
-	kind      ofaKind
+	kind      ofa
 	keystore  keys.MessageSigner // Only if authentication is required
 	metrics   ofaMetrics
 	txStore   FlashbotsTxStore
@@ -88,7 +88,7 @@ func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.Mess
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
 		c:         c,
 		customURL: customURL,
-		kind:      ofaKindFlashbots,
+		kind:      ofaFlashbots,
 		keystore:  keystore,
 		metrics:   metrics,
 		txStore:   txStore,
@@ -101,7 +101,7 @@ func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, met
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,
 		customURL: customURL,
-		kind:      ofaKindNova,
+		kind:      ofaNova,
 		metrics:   metrics,
 	}
 }
@@ -136,10 +136,10 @@ func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction
 
 	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
 		switch d.kind {
-		case ofaKindFlashbots:
+		case ofaFlashbots:
 			// If not dual-broadcast, fall back to sending the transaction to the chain RPC directly
 			return d.c.SendTransaction(ctx, nil, attempt)
-		case ofaKindNova:
+		case ofaNova:
 			return nil // assume we only use Nova for secondary broadcast, don't fall back to chain RPC
 		default:
 			return fmt.Errorf("ofaTXClient: unsupported OFA backend %q for dual-broadcast routing", d.kind.name())
@@ -150,7 +150,7 @@ func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction
 		return err
 	}
 
-	if d.kind == ofaKindFlashbots && d.bundles {
+	if d.kind == ofaFlashbots && d.bundles {
 		if err := d.sendBundle(ctx, tx.FromAddress, meta); err != nil {
 			d.lggr.Errorw("error sending bundle", "err", err, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
 		}
@@ -218,7 +218,7 @@ func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body
 }
 
 func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
-	if d.kind != ofaKindFlashbots || d.keystore == nil {
+	if d.kind != ofaFlashbots || d.keystore == nil {
 		// signing is only required for Flashbots
 		return nil
 	}
@@ -235,7 +235,7 @@ func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body [
 
 func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
 	// Only Flashbots needs URL parameters
-	if d.kind != ofaKindFlashbots {
+	if d.kind != ofaFlashbots {
 		return d.customURL.String()
 	}
 
