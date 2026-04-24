@@ -1005,23 +1005,22 @@ func (lp *logPoller) headerByNumber(ctx context.Context, blockNumber int64) (*ev
 // 2. Delete all logs and blocks after the LCA
 // 3. Return the LCA+1, i.e. our new current (unprocessed) block.
 func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, currentBlockNumber int64, currentBlock *evmtypes.Head, isReplay bool) (head *evmtypes.Head, err error) {
-	var err1 error
 	if currentBlock == nil {
-		currentBlock, err1 = lp.headerByNumber(ctx, currentBlockNumber)
-		if err1 != nil {
-			return nil, fmt.Errorf("unable to get current block header for block number %d: %w", currentBlockNumber, err1)
+		currentBlock, err = lp.headerByNumber(ctx, currentBlockNumber)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get current block header for block number %d: %w", currentBlockNumber, err)
 		}
 	}
 	// Does this currentBlock point to the same parent that we have saved?
 	// If not, there was a reorg, so we need to rewind.
-	expectedParent, err1 := lp.orm.SelectBlockByNumber(ctx, currentBlockNumber-1)
-	if err1 != nil && !pkgerrors.Is(err1, sql.ErrNoRows) {
+	expectedParent, err := lp.orm.SelectBlockByNumber(ctx, currentBlockNumber-1)
+	if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
 		// If err is not a 'no rows' error, assume transient db issue and retry
-		lp.lggr.Warnw("Unable to read latestBlockNumber currentBlock saved", "err", err1, "currentBlockNumber", currentBlockNumber)
+		lp.lggr.Warnw("Unable to read latestBlockNumber currentBlock saved", "err", err, "currentBlockNumber", currentBlockNumber)
 		return nil, pkgerrors.New("Unable to read latestBlockNumber currentBlock saved")
 	}
 	// We will not have the previous currentBlock on initial poll.
-	havePreviousBlock := err1 == nil
+	havePreviousBlock := err == nil
 	if havePreviousBlock {
 		// Check for reorg.
 		if currentBlock.ParentHash != expectedParent.BlockHash {
@@ -1036,7 +1035,7 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 		// previous block is not present, it could only in case of initial poll or replay.
 		// If that's not a replay, let's double-check that it's an initial poll by verifying that the DB is empty.
 		if !isReplay {
-			_, err := lp.orm.SelectLatestBlock(ctx)
+			_, err = lp.orm.SelectLatestBlock(ctx)
 			if err == nil {
 				err = fmt.Errorf("unexpected state: no previous block found for block number %d, but db is not empty", currentBlockNumber)
 				lp.lggr.Criticalw("Invariant violation: expected to always have previous block except replay and first poll for a new chain", "currentBlockNumber", currentBlockNumber, "err", err)
@@ -1054,7 +1053,7 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 		}
 	}
 
-	// In case of replay currentBlock may be in the middle of DB range, lets do additional checks to handle possible reorgs. 
+	// In case of replay currentBlock may be in the middle of DB range, lets do additional checks to handle possible reorgs.
 	// Ensure that if DB contains current block it matches the current block from RPC.
 	currentBlockDB, err := lp.orm.SelectBlockByNumber(ctx, currentBlockNumber)
 	if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
@@ -1066,12 +1065,12 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 	}
 
 	// No reorg for current block, but during replay it's possible that current block is older than the latest block, let's check it too to avoid false positives on finality violation.
-	latestBlockDB, err1 := lp.orm.SelectLatestBlock(ctx)
-	if err1 != nil {
-		if pkgerrors.Is(err1, sql.ErrNoRows) {
-			lp.lggr.Criticalw("Unexpected state. Expected at least one block to be present in the db when checking for reorg during replay, but got no rows", "currentBlockNumber", currentBlockNumber, "err", err1)
+	latestBlockDB, err := lp.orm.SelectLatestBlock(ctx)
+	if err != nil {
+		if pkgerrors.Is(err, sql.ErrNoRows) {
+			lp.lggr.Criticalw("Unexpected state. Expected at least one block to be present in the db when checking for reorg during replay, but got no rows", "currentBlockNumber", currentBlockNumber, "err", err)
 		}
-		return nil, pkgerrors.Wrap(err1, "unable to get latest block")
+		return nil, pkgerrors.Wrap(err, "unable to get latest block")
 	}
 
 	if currentBlock.BlockNumber() >= latestBlockDB.BlockNumber {
