@@ -1515,6 +1515,36 @@ func TestORM_CountTransactionsByState(t *testing.T) {
 	assert.Equal(t, int(count), 3)
 }
 
+func TestORM_OldestNonTerminalTxAgeSeconds(t *testing.T) {
+	t.Parallel()
+
+	db := testutils.NewSqlxDB(t)
+	txStore := txmgrtest.NewTestTxStore(t, db)
+	fromAddress := testutils.NewAddress()
+
+	age, err := txStore.OldestNonTerminalTxAgeSeconds(t.Context(), testutils.FixtureChainID)
+	require.NoError(t, err)
+	assert.InDelta(t, 0.0, age, 0.0001)
+
+	txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 0, fromAddress)
+	txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 1, fromAddress)
+	mustInsertFatalErrorEthTx(t, txStore, fromAddress)
+
+	age, err = txStore.OldestNonTerminalTxAgeSeconds(t.Context(), testutils.FixtureChainID)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, age, 0.0)
+	assert.Less(t, age, 3600.0, "fresh txs should be far below 1h age")
+
+	_, err = db.ExecContext(t.Context(),
+		`UPDATE evm.txes SET created_at = created_at - interval '2 hours' WHERE evm_chain_id = $1 AND state <> 'fatal_error'`,
+		testutils.FixtureChainID.String())
+	require.NoError(t, err)
+
+	age, err = txStore.OldestNonTerminalTxAgeSeconds(t.Context(), testutils.FixtureChainID)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, age, 7000.0, "oldest non-terminal should reflect backdated created_at (~2h in seconds)")
+}
+
 func TestORM_CountUnstartedTransactions(t *testing.T) {
 	t.Parallel()
 

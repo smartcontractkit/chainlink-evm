@@ -446,6 +446,10 @@ func (c *Chain) ValidateConfig() (err error) {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "MinIncomingConfirmations", Value: *c.MinIncomingConfirmations,
 			Msg: "must be greater than or equal to 1"})
 	}
+	if *c.RPCDefaultBatchSize < 1 {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "RPCDefaultBatchSize", Value: *c.RPCDefaultBatchSize,
+			Msg: "must be greater than or equal to 1"})
+	}
 
 	if *c.FinalizedBlockOffset > *c.HeadTracker.HistoryDepth {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "HeadTracker.HistoryDepth", Value: *c.HeadTracker.HistoryDepth,

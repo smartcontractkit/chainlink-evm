@@ -456,6 +456,11 @@ func (c *chain) Transact(ctx context.Context, from, to string, amount *big.Int, 
 	return errors.New("LOOPP not yet supported")
 }
 
+// Replay signals that the poller should resume from a new block. Blocks until the replay is complete.
+// Replay can be used to ensure that filter modification has been applied for all blocks from "fromBlock" up to latest.
+// WARN: nil error does not necessarily mean the replay was successful, clients should monitor logs to identify success.
+// This is a miss from original design, but due to the complexity of fix and the fact that callers generally don't need a strong guarantee of replay success, we choose to just log errors instead of returning them.
+// Reach out, if you think you need a stronger guarantee, and we can discuss options.
 func (c *chain) Replay(ctx context.Context, fromBlock string, args map[string]any) error {
 	block, err := strconv.ParseInt(fromBlock, 10, 64)
 	if err != nil {
