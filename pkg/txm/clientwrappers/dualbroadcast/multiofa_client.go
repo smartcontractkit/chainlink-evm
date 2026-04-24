@@ -114,7 +114,7 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 		sec := secondary
 		go func() {
 
-			// TODO(gg): add waitgroup
+			// TODO(gg): add waitgroup, see this comment: https://github.com/smartcontractkit/chainlink-evm/pull/410#discussion_r3110773136
 
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()

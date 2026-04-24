@@ -10,6 +10,8 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 )
 
+// TODO(gg): validate on Staging if these metrics are needed/helpful, see this review comment: https://github.com/smartcontractkit/chainlink-evm/pull/410#discussion_r3086128820
+
 // ofaMetrics provides unified OFA (Order Flow Auction) metrics for all dual-broadcast
 // backends. The "backend" label differentiates between providers (e.g. "flashbots", "nova").
 type ofaMetrics struct {

@@ -50,7 +50,7 @@ func newEvmTxm(
 		var txmv2 txmgr.TxManager
 		txV2Cfg := cfg.Transactions().TransactionManagerV2()
 		dualBroadcastEnabled := txV2Cfg.Enabled() && txV2Cfg.DualBroadcast() != nil &&
-			*txV2Cfg.DualBroadcast() && len(txV2Cfg.CustomOFAURLs()) > 0
+			*txV2Cfg.DualBroadcast() && len(txV2Cfg.CustomOFAURLs()) > 0 // TODO(gg): double-check backwards-compatible handling of CustomURLs
 
 		if txV2Cfg.Enabled() {
 			txmv2, err = txmgr.NewTxmV2(

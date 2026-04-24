@@ -340,6 +340,9 @@ func TestMultiOfaClient_FromOFAURLs_HTTPServers_DualBroadcast(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return primaryHits.Load() == 1 && secondaryHits.Load() == 1
 	}, 2*time.Second, 5*time.Millisecond, "both OFA backends should receive eth_sendRawTransaction")
+
+	// Dual-broadcast must not use the public mempool path
+	mockEth.AssertNotCalled(t, "SendTransaction", mock.Anything, mock.Anything)
 }
 
 func TestMultiOfaClient_NonDual_NovaPrimary_RoutesToMempool(t *testing.T) {
