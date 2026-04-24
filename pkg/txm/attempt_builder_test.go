@@ -160,6 +160,30 @@ func TestAttemptBuilder_NewAttempt(t *testing.T) {
 		assert.Contains(t, err.Error(), "estimator error")
 		mockEstimator.AssertExpectations(t)
 	})
+
+	t.Run("uses SpecifiedGasLimit when feeBoost is enabled and tx is not purgeable", func(t *testing.T) {
+		boostEstimator := mocks.NewEvmFeeEstimator(t)
+		boostAb := NewAttemptBuilder(priceMaxKey, boostEstimator, keystest.TxSigner(nil), emptyGasLimit, true)
+		tx := &types.Transaction{ID: 10, FromAddress: address, Nonce: &nonce, SpecifiedGasLimit: specifiedGasLimit}
+		boostEstimator.On("GetMaxFee", mock.Anything, mock.Anything, specifiedGasLimit, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, specifiedGasLimit, nil).Once()
+		a, err := boostAb.NewAttempt(t.Context(), lggr, tx, false)
+		require.NoError(t, err)
+		assert.Equal(t, specifiedGasLimit, a.GasLimit)
+		boostEstimator.AssertExpectations(t)
+	})
+
+	t.Run("uses emptyTxLimitDefault when feeBoost is enabled and tx is purgeable", func(t *testing.T) {
+		boostEstimator := mocks.NewEvmFeeEstimator(t)
+		boostAb := NewAttemptBuilder(priceMaxKey, boostEstimator, keystest.TxSigner(nil), emptyGasLimit, true)
+		tx := &types.Transaction{ID: 10, FromAddress: address, IsPurgeable: true, Nonce: &nonce, SpecifiedGasLimit: specifiedGasLimit}
+		boostEstimator.On("GetMaxFee", mock.Anything, mock.Anything, emptyGasLimit, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, emptyGasLimit, nil).Once()
+		a, err := boostAb.NewAttempt(t.Context(), lggr, tx, false)
+		require.NoError(t, err)
+		assert.Equal(t, emptyGasLimit, a.GasLimit)
+		boostEstimator.AssertExpectations(t)
+	})
 }
 
 func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
