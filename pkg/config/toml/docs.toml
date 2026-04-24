@@ -171,6 +171,12 @@ BlockTime = '10s' # Example
 CustomURL = 'https://example.api.io' # Example
 # DualBroadcast enables DualBroadcast functionality.
 DualBroadcast = false # Example
+# ReadRequestsToMultipleNodes controls whether txm chain client reads use multiplexed calls.
+ReadRequestsToMultipleNodes = false # Example
+# Bundles enables sending bundles for auctioning (not compatible with all OFAs).
+Bundles = false # Example
+# FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
+FastlaneAuctionRequestTimeout = '5s' # Example
 
 [BalanceMonitor]
 # Enabled balance monitoring for all keys.

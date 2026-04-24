@@ -133,6 +133,9 @@ type TransactionManagerV2 interface {
 	BlockTime() *time.Duration
 	CustomURL() *url.URL
 	DualBroadcast() *bool
+	ReadRequestsToMultipleNodes() *bool
+	Bundles() *bool
+	FastlaneAuctionRequestTimeout() *time.Duration
 }
 
 type GasEstimator interface {

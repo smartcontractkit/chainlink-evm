@@ -9,10 +9,12 @@ import (
 	"math"
 	"math/big"
 	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jmoiron/sqlx"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -2490,4 +2492,48 @@ func TestSelectLatestFinalizedBlock(t *testing.T) {
 		require.Equal(t, int64(5), result.BlockNumber)
 		require.Equal(t, common.HexToHash("0x1231"), result.BlockHash)
 	})
+}
+
+// execCountingSQLxDB wraps *sqlx.DB as a [sqlutil.DataSource] and counts how many
+// ExecContext calls hit the pool object directly. Executions on a [*sqlx.Tx]
+// returned from BeginTxx do not increment this counter.
+//
+// This guards a regression where [logpoller.DSORM.DeleteLogsAndBlocksAfter]
+// used the outer ORM's DataSource inside a [logpoller.DSORM.Transact] callback
+// instead of the transactional ORM's DataSource, so the two DELETEs were not
+// part of the same database transaction.
+type execCountingSQLxDB struct {
+	*sqlx.DB
+
+	poolExecContext atomic.Int32
+}
+
+func (d *execCountingSQLxDB) PoolExecContextCount() int32 {
+	return d.poolExecContext.Load()
+}
+
+func (d *execCountingSQLxDB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	d.poolExecContext.Add(1)
+	return d.DB.ExecContext(ctx, query, args...)
+}
+
+var _ sqlutil.DataSource = (*execCountingSQLxDB)(nil)
+
+func TestDSORM_DeleteLogsAndBlocksAfter_usesTransactionalDataSource(t *testing.T) {
+	t.Parallel()
+	testutils.SkipShortDB(t)
+
+	ctx := testutils.Context(t)
+	base := testutils.NewSqlxDB(t)
+	require.NotNil(t, base)
+	wrapped := &execCountingSQLxDB{DB: base}
+
+	lggr := logger.Test(t)
+	orm := logpoller.NewORM(testutils.NewRandomEVMChainID(), wrapped, lggr)
+
+	require.NoError(t, orm.DeleteLogsAndBlocksAfter(ctx, 1))
+
+	require.Zero(t, wrapped.PoolExecContextCount(),
+		"DeleteLogsAndBlocksAfter must run DELETEs on the transaction DataSource (orm.ds), not the outer pool; "+
+			"otherwise the two deletes are not atomic and this counter would be 2")
 }

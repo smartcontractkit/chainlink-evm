@@ -40,6 +40,11 @@ import (
 type LogPoller interface {
 	services.Service
 	Healthy() error
+	// Replay signals that the poller should resume from a new block. Blocks until the replay is complete.
+	// Replay can be used to ensure that filter modification has been applied for all blocks from "fromBlock" up to latest.
+	// WARN: nil error does not necessarily mean the replay was successful, clients should monitor logs to identify success.
+	// This is a miss from original design, but due to the complexity of fix and the fact that callers generally don't need a strong guarantee of replay success, we choose to just log errors instead of returning them.
+	// Reach out, if you think you need a stronger guarantee, and we can discuss options.
 	Replay(ctx context.Context, fromBlock int64) error
 	ReplayAsync(fromBlock int64)
 	RegisterFilter(ctx context.Context, filter Filter) error
@@ -630,11 +635,18 @@ func (lp *logPoller) run() {
 	logPollTicker := services.NewTicker(lp.pollPeriod)
 	defer logPollTicker.Stop()
 	// stagger these somewhat, so they don't all run back-to-back
-	backupLogPollTicker := services.TickerConfig{
-		Initial:   100 * time.Millisecond,
-		JitterPct: services.DefaultJitter,
-	}.NewTicker(time.Duration(lp.backupPollerBlockDelay) * lp.pollPeriod)
-	defer backupLogPollTicker.Stop()
+	var backupLogPollCh <-chan time.Time
+	if lp.backupPollerBlockDelay > 0 {
+		backupLogPollTicker := services.TickerConfig{
+			Initial:   100 * time.Millisecond,
+			JitterPct: services.DefaultJitter,
+		}.NewTicker(time.Duration(lp.backupPollerBlockDelay) * lp.pollPeriod)
+		backupLogPollCh = backupLogPollTicker.C
+		defer backupLogPollTicker.Stop()
+	} else {
+		lp.lggr.Infow("Backup log poller disabled")
+	}
+
 	filtersLoaded := false
 
 	for {
@@ -674,10 +686,7 @@ func (lp *logPoller) run() {
 				start = lastProcessed.BlockNumber + 1
 			}
 			lp.PollAndSaveLogs(ctx, start, false)
-		case <-backupLogPollTicker.C:
-			if lp.backupPollerBlockDelay == 0 {
-				continue // backup poller is disabled
-			}
+		case <-backupLogPollCh:
 			// Backup log poller:  this serves as an emergency backup to protect against eventual-consistency behavior
 			// of an rpc node (seen occasionally on optimism, but possibly could happen on other chains?).  If the first
 			// time we request a block, no logs or incomplete logs come back, this ensures that every log is eventually
@@ -955,7 +964,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 			blocks = blocks[:len(blocks)-1]
 		}
 
-		lp.lggr.Debugw("Inserting backfilled logs with batch endblock", "from", from, "to", to, "logs", len(gethLogs), "blocks", blocks)
+		lp.lggr.Debugw("Inserting backfilled logs with batch endblock", "from", from, "to", to, "logs", len(gethLogs))
 		err = lp.orm.InsertLogsWithBlocks(ctx, convertLogs(gethLogs, blocks, lp.lggr, lp.ec.ConfiguredChainID()), []Block{endblock})
 		if err != nil {
 			lp.lggr.Warnw("Unable to insert logs, retrying", "err", err, "from", from, "to", to)
@@ -1188,7 +1197,6 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 	}
 
 	for {
-
 		blocks, logs, err := lp.getUnfinalizedLogs(ctx, currentBlock, latestBlockNumber, safeBlockNumber, latestFinalizedBlockNumber, isReplay)
 		// even if we have an error, we may have partial logs and blocks that can be saved, so we save what we have and then retry.
 		if len(logs) > 0 || len(blocks) > 0 {

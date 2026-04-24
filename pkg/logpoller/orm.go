@@ -408,7 +408,7 @@ func (o *DSORM) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error
 		// If not applied, these queries can become very slow. After some critical number
 		// of logs, Postgres will try to scan all the logs in the index by block_number.
 		// Latency without upper bound filter can be orders of magnitude higher for large number of logs.
-		_, err := o.ds.ExecContext(ctx, `DELETE FROM evm.log_poller_blocks
+		_, err := orm.ds.ExecContext(ctx, `DELETE FROM evm.log_poller_blocks
        						WHERE evm_chain_id = $1
 							AND block_number >= $2
 							AND block_number <= (SELECT MAX(block_number)
@@ -420,10 +420,10 @@ func (o *DSORM) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error
 			return err
 		}
 
-		_, err = o.ds.ExecContext(ctx, `DELETE FROM evm.logs
+		_, err = orm.ds.ExecContext(ctx, `DELETE FROM evm.logs
        						WHERE evm_chain_id = $1
-       						AND block_number >= $2
-       						AND block_number <= (SELECT MAX(block_number) FROM evm.logs WHERE evm_chain_id = $1)`,
+							AND block_number >= $2
+							AND block_number <= (SELECT MAX(block_number) FROM evm.logs WHERE evm_chain_id = $1)`,
 			sqlutil.New(o.chainID), start)
 		if err != nil {
 			o.lggr.Warnw("Unable to clear reorged logs, retrying", "err", err)

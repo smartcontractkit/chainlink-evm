@@ -31,6 +31,7 @@ func run() error {
 	inputDir := flag.String("input", "", "Input directory containing Go wrapper files (required)")
 	bytecodeDir := flag.String("bytecode", "", "Output directory for bytecode files (required)")
 	abiDir := flag.String("abi", "", "Output directory for ABI files (required)")
+	includeLatest := flag.Bool("include-latest", false, "Include 'latest' directories in processing (default: false, excludes 'latest' directories)")
 	flag.Parse()
 
 	// Validate required arguments
@@ -52,9 +53,13 @@ func run() error {
 	fmt.Printf("Input dir: %s\n", *inputDir)
 	fmt.Printf("Bytecode dir: %s\n", *bytecodeDir)
 	fmt.Printf("ABI dir: %s\n", *abiDir)
+	if *includeLatest {
+		fmt.Printf("Including 'latest' directories\n")
+	}
 
-	// Process the input directory (always exclude "latest" directories)
-	return processDirectory(*inputDir, *inputDir, *bytecodeDir, *abiDir, true)
+	// Process the input directory
+	excludeLatest := !*includeLatest
+	return processDirectory(*inputDir, *inputDir, *bytecodeDir, *abiDir, excludeLatest)
 }
 
 // processDirectory processes a directory and all its subdirectories for Go wrapper files

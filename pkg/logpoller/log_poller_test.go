@@ -2219,8 +2219,8 @@ func TestLogPoller_Reorg_On_Replay(t *testing.T) {
 				require.NoError(t, th.LogPoller.Close())
 			}()
 			testutils.RequireEventually(t, func() bool {
-				latest, err := th.LogPoller.LatestBlock(t.Context())
-				return err == nil && latest.BlockNumber == reorgedBlockNumber
+				latest, latestErr := th.LogPoller.LatestBlock(t.Context())
+				return latestErr == nil && latest.BlockNumber == reorgedBlockNumber
 			})
 
 			reorgedBlock, err := th.Client.BlockByNumber(t.Context(), nil)

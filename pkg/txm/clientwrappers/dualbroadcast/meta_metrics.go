@@ -36,7 +36,11 @@ func NewMetaMetrics(chainID string, lggr logger.Logger) (*MetaMetrics, error) {
 		return nil, err
 	}
 
-	latencyHistogram, err := beholder.GetMeter().Int64Histogram("meta_endpoint_latency")
+	latencyHistogram, err := beholder.GetMeter().Int64Histogram("meta_endpoint_latency",
+		metric.WithUnit("ms"),
+		metric.WithDescription("Latency of Meta auction endpoint requests"),
+		metric.WithExplicitBucketBoundaries(500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 7500, 10000),
+	)
 	if err != nil {
 		return nil, err
 	}

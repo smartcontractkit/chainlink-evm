@@ -104,9 +104,7 @@ func TestChainIDSubForwarder(t *testing.T) {
 		err := forwarder.start(sub, nil)
 		assert.NoError(t, err)
 
-		head := &evmtypes.Head{
-			ID: 1,
-		}
+		head := &evmtypes.Head{}
 		forwarder.srcCh <- head
 		receivedHead := <-ch
 		assert.Equal(t, head, receivedHead)
@@ -131,9 +129,7 @@ func TestSubscriptionForwarder(t *testing.T) {
 		mockedSub := NewMockSubscription()
 		require.NoError(t, forwarder.start(mockedSub, nil))
 
-		head := &evmtypes.Head{
-			ID: 1,
-		}
+		head := &evmtypes.Head{}
 		forwarder.srcCh <- head
 		err := <-forwarder.Err()
 		require.ErrorIs(t, err, expectedErr)

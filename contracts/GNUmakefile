@@ -78,6 +78,10 @@ wrappers: pnpmdep mockery abigen ## Recompiles solidity contracts and their go w
 	./scripts/native_solc_compile_all_$(FOUNDRY_PROFILE)
 	cd ../gethwrappers; go generate ./$(FOUNDRY_PROFILE)
 
+wrappers-release: export metadata=true
+.PHONY: wrappers-release
+wrappers-release: ## Generate the gethwrappers for release which includes metadata.
+	 make wrappers
 
 # This call generates all gethwrappers for all products. It does so based on the
 # assumption that native_solc_compile_all contains sub-calls to each product, and
