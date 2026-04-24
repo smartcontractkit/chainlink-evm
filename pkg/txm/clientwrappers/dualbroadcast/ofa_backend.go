@@ -25,9 +25,9 @@ import (
 )
 
 // This file holds HTTP JSON-RPC OFA backends: Flashbots-style signing plus shared send/nonce plumbing,
-// and Nova. Flashbots-only pieces (signing headers, bundle RPC) live here rather than in the multiplex client.
+// and Nova. Flashbots-only pieces (signing headers, bundle RPC) live here rather than in the multiOfaClient.
 
-// rpcTimeout bounds OFA HTTP JSON-RPC calls. The multiplex client reuses this for secondary fan-out deadlines.
+// rpcTimeout bounds OFA HTTP JSON-RPC calls. The multiOfaClient reuses this for secondary fan-out deadlines.
 const rpcTimeout = 10 * time.Second
 
 // ofa selects URL shape, signing headers, logger name, non-dual fallback, and bundle behavior.
@@ -70,8 +70,7 @@ type FlashbotsTxStore interface {
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
 }
 
-// ofaTXClient is an HTTP JSON-RPC OFA backend (Flashbots MEV-Share, Nova RPC). Multiplex uses it as an
-// ofaBackend (primary or secondary).
+// ofaTXClient is an HTTP JSON-RPC OFA backend (Flashbots MEV-Share, Nova RPC)
 type ofaTXClient struct {
 	lggr      logger.SugaredLogger
 	c         chainRPCClient

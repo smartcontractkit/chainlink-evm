@@ -25,9 +25,9 @@ type ofaBackend interface {
 	Label() string
 }
 
-// multiplexClient implements txm.Client: it owns the OFA URL list, constructs one backend per URL,
+// multiOfaClient implements txm.Client: it owns the OFA URL list, constructs one backend per URL,
 // fans out sends to secondaries (best-effort), and delegates nonce queries to the primary only.
-type multiplexClient struct {
+type multiOfaClient struct {
 	lggr                 logger.SugaredLogger
 	primary              ofaBackend
 	secondaries          []ofaBackend
@@ -35,13 +35,13 @@ type multiplexClient struct {
 }
 
 var (
-	_ txm.Client = (*multiplexClient)(nil)
+	_ txm.Client = (*multiOfaClient)(nil)
 	_ ofaBackend = (*ofaTXClient)(nil)
 	_ ofaBackend = (*MetaClient)(nil)
 )
 
-// newMultiplexClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
-func newMultiplexClient(
+// newMultiOfaClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
+func newMultiOfaClient(
 	lggr logger.Logger,
 	chainClient *clientwrappers.ChainClient,
 	keyStore keys.ChainStore,
@@ -50,7 +50,7 @@ func newMultiplexClient(
 	txStore txm.TxStore,
 	bundles *bool,
 	auctionRequestTimeout *time.Duration,
-) (*multiplexClient, txm.ErrorHandler, error) {
+) (*multiOfaClient, txm.ErrorHandler, error) {
 	if len(ofaURLs) == 0 {
 		return nil, nil, fmt.Errorf("ofaURLs must not be empty")
 	}
@@ -79,15 +79,15 @@ func newMultiplexClient(
 		"secondaryURLs", urlStrs[1:],
 		"primaryBackend", primary.Label())
 
-	return &multiplexClient{
-		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiplexClient")),
+	return &multiOfaClient{
+		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiOfaClient")),
 		primary:              primary,
 		secondaries:          secondaries,
 		secondarySendTimeout: rpcTimeout,
 	}, errHandler, nil
 }
 
-func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	for _, secondary := range m.secondaries {
 		sec := secondary
 		go func() {
@@ -110,11 +110,11 @@ func (m *multiplexClient) SendTransaction(ctx context.Context, tx *types.Transac
 	return m.primary.SendTransaction(primaryCtx, tx, attempt)
 }
 
-func (m *multiplexClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
+func (m *multiOfaClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
 	return m.primary.PendingNonceAt(ctx, address)
 }
 
-func (m *multiplexClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
+func (m *multiOfaClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
 	return m.primary.NonceAt(ctx, address, blockNumber)
 }
 

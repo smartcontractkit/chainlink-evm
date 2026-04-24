@@ -14,7 +14,7 @@ import (
 )
 
 // SelectClient builds the txm.Client for dual broadcast. ofaURLs must be non-empty; index 0 is the
-// primary (determines broadcast outcome and nonce queries). The implementation is always a multiplexClient:
+// primary (determines broadcast outcome and nonce queries). The implementation is always a multiOfaClient:
 // it classifies each URL (Flashbots, Nova, Meta, …), builds one backend per entry, and with one URL has
 // no secondaries; with more, additional URLs are best-effort secondaries (fire-and-forget with a separate timeout).
 func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, ofaURLs []*url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
@@ -27,7 +27,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 		return nil, nil, err
 	}
 
-	return newMultiplexClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles, auctionRequestTimeout)
+	return newMultiOfaClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles, auctionRequestTimeout)
 }
 
 // redactURL returns u as a string safe for logs: same redaction as url.URL.Redacted for userinfo, and api_key query values are replaced with "xxxxx". It does not mutate the original URL.

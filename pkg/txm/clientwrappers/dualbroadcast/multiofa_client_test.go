@@ -22,8 +22,8 @@ import (
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-func createMultiplexClient(t *testing.T, primary ofaBackend, secondaries ...ofaBackend) *multiplexClient {
-	return &multiplexClient{
+func createMultiOfaClient(t *testing.T, primary ofaBackend, secondaries ...ofaBackend) *multiOfaClient {
+	return &multiOfaClient{
 		lggr:                 logger.Sugared(logger.Test(t)),
 		primary:              primary,
 		secondaries:          secondaries,
@@ -67,11 +67,11 @@ func (m *mockClient) Label() string {
 	return m.label
 }
 
-func TestMultiplexClient_SendTransaction_TwoSecondaries(t *testing.T) {
+func TestMultiOfaClient_SendTransaction_TwoSecondaries(t *testing.T) {
 	sec1 := make(chan struct{}, 1)
 	sec2 := make(chan struct{}, 1)
 	primary := &mockClient{label: "primary"}
-	mc := createMultiplexClient(t, primary, &mockClient{label: "secondary1", sendCalled: sec1}, &mockClient{label: "secondary2", sendCalled: sec2})
+	mc := createMultiOfaClient(t, primary, &mockClient{label: "secondary1", sendCalled: sec1}, &mockClient{label: "secondary2", sendCalled: sec2})
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.NoError(t, err)
 
@@ -87,12 +87,12 @@ func TestMultiplexClient_SendTransaction_TwoSecondaries(t *testing.T) {
 	}
 }
 
-func TestMultiplexClient_SendTransaction_BothSucceed(t *testing.T) {
+func TestMultiOfaClient_SendTransaction_BothSucceed(t *testing.T) {
 	secondaryCalled := make(chan struct{}, 1)
 	primary := &mockClient{label: "primary"}
 	secondary := &mockClient{label: "secondary", sendCalled: secondaryCalled}
 
-	mc := createMultiplexClient(t, primary, secondary)
+	mc := createMultiOfaClient(t, primary, secondary)
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.NoError(t, err)
 
@@ -103,7 +103,7 @@ func TestMultiplexClient_SendTransaction_BothSucceed(t *testing.T) {
 	}
 }
 
-func TestMultiplexClient_SendTransaction_PrimaryFails(t *testing.T) {
+func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {
 	primaryErr := errors.New("flashbots rejected")
 	primary := &mockClient{
 		sendTxFn: func(ctx context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
@@ -113,12 +113,12 @@ func TestMultiplexClient_SendTransaction_PrimaryFails(t *testing.T) {
 	}
 	secondary := &mockClient{label: "secondary", sendCalled: make(chan struct{}, 1)}
 
-	mc := createMultiplexClient(t, primary, secondary)
+	mc := createMultiOfaClient(t, primary, secondary)
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.ErrorIs(t, err, primaryErr)
 }
 
-func TestMultiplexClient_SecondarySendRespectsTimeout(t *testing.T) {
+func TestMultiOfaClient_SecondarySendRespectsTimeout(t *testing.T) {
 	secondaryDone := make(chan struct{}, 1)
 	primary := &mockClient{label: "primary"}
 	secondary := &mockClient{
@@ -130,7 +130,7 @@ func TestMultiplexClient_SecondarySendRespectsTimeout(t *testing.T) {
 		sendCalled: make(chan struct{}, 1),
 	}
 
-	mc := createMultiplexClient(t, primary, secondary)
+	mc := createMultiOfaClient(t, primary, secondary)
 	mc.secondarySendTimeout = 150 * time.Millisecond
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.NoError(t, err)
@@ -147,7 +147,7 @@ func TestMultiplexClient_SecondarySendRespectsTimeout(t *testing.T) {
 	}
 }
 
-func TestMultiplexClient_SendTransaction_SecondaryFails(t *testing.T) {
+func TestMultiOfaClient_SendTransaction_SecondaryFails(t *testing.T) {
 	secondaryCalled := make(chan struct{}, 1)
 	primary := &mockClient{label: "primary"}
 	secondary := &mockClient{
@@ -157,7 +157,7 @@ func TestMultiplexClient_SendTransaction_SecondaryFails(t *testing.T) {
 		sendCalled: secondaryCalled,
 	}
 
-	mc := createMultiplexClient(t, primary, secondary)
+	mc := createMultiOfaClient(t, primary, secondary)
 	err := mc.SendTransaction(context.Background(), &txmtypes.Transaction{}, &txmtypes.Attempt{})
 	require.NoError(t, err)
 
@@ -168,7 +168,7 @@ func TestMultiplexClient_SendTransaction_SecondaryFails(t *testing.T) {
 	}
 }
 
-func TestMultiplexClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
+func TestMultiOfaClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
 	primary := &mockClient{label: "primary",
 		pendingNonceFn: func(ctx context.Context, address common.Address) (uint64, error) {
 			return 42, nil
@@ -181,13 +181,13 @@ func TestMultiplexClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
 		},
 	}
 
-	mc := createMultiplexClient(t, primary, secondary)
+	mc := createMultiOfaClient(t, primary, secondary)
 	nonce, err := mc.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(42), nonce)
 }
 
-func TestMultiplexClient_NonceAt_RoutesToPrimary(t *testing.T) {
+func TestMultiOfaClient_NonceAt_RoutesToPrimary(t *testing.T) {
 	primary := &mockClient{label: "primary",
 		nonceAtFn: func(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
 			return 99, nil
@@ -200,13 +200,13 @@ func TestMultiplexClient_NonceAt_RoutesToPrimary(t *testing.T) {
 		},
 	}
 
-	mc := createMultiplexClient(t, primary, secondary)
+	mc := createMultiOfaClient(t, primary, secondary)
 	nonce, err := mc.NonceAt(context.Background(), common.HexToAddress("0x123"), big.NewInt(100))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(99), nonce)
 }
 
-func TestMultiplexClient_FromOFAURLs_HTTPServers_DualBroadcast(t *testing.T) {
+func TestMultiOfaClient_FromOFAURLs_HTTPServers_DualBroadcast(t *testing.T) {
 	var primaryHits, secondaryHits atomic.Int32
 
 	primarySrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +236,7 @@ func TestMultiplexClient_FromOFAURLs_HTTPServers_DualBroadcast(t *testing.T) {
 	cc, err := clientwrappers.NewChainClient(logger.Test(t), mockEth, false)
 	require.NoError(t, err)
 
-	mux, eh, err := newMultiplexClient(
+	mux, eh, err := newMultiOfaClient(
 		logger.Test(t),
 		cc,
 		nil,
