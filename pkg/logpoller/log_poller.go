@@ -1209,6 +1209,9 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		}
 
 		if err == nil {
+			if len(blocks) > 0 {
+				latestBlockNumber = blocks[len(blocks)-1].BlockNumber
+			}
 			lp.lggr.Debugw("Finished processing unfinalized blocks", "from", currentBlockNumber, "to", latestBlockNumber)
 			return nil
 		}
@@ -1223,6 +1226,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		if err != nil {
 			return fmt.Errorf("failed to handle reorg: %w", err)
 		}
+		currentBlockNumber = currentBlock.Number
 		lp.lggr.Infow("Finished handling reorg, resuming log processing from new block after LCA", "currentBlockNumber", currentBlock.Number)
 	}
 }
@@ -1248,7 +1252,7 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 		rpcLogs, err := lp.latencyMonitor.FilterLogs(ctx, lp.Filter(nil, nil, &h))
 		if err != nil {
 			lp.lggr.Warnw("Unable to query for logs, retrying on next poll", "err", err, "block", currentBlock.Number)
-			return blocks, logs, nil
+			return blocks, logs, fmt.Errorf("unable to query for logs: %w", err)
 		}
 		lp.lggr.Debugw("Unfinalized log query", "logs", len(logs), "currentBlockNumber", currentBlock.Number, "blockHash", currentBlock.Hash, "timestamp", currentBlock.Timestamp)
 		block := Block{
@@ -1273,7 +1277,7 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 		nextBlock, err := lp.headerByNumber(ctx, currentBlock.Number+1)
 		if err != nil {
 			lp.lggr.Warnw("Unable to get next block header, retrying on next poll", "err", err, "block", currentBlock.Number)
-			return blocks, logs, nil
+			return blocks, logs, fmt.Errorf("unable to get next block: %w", err)
 		}
 
 		if nextBlock.ParentHash != currentBlock.Hash {
@@ -1285,7 +1289,7 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 			nextBlockDB, err := lp.orm.SelectBlockByNumber(ctx, nextBlock.Number)
 			if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
 				lp.lggr.Warnw("Unable to get next block from DB during replay, retrying on next poll", "err", err, "block", nextBlock.Number)
-				return blocks, logs, nil
+				return blocks, logs, fmt.Errorf("failed to get next block from DB during replay: %w", err)
 			}
 
 			if nextBlockDB != nil && nextBlock.Hash != nextBlockDB.BlockHash {
