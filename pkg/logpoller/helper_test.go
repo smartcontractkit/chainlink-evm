@@ -182,7 +182,7 @@ func (th *TestHarness) assertHaveCanonical(t *testing.T, start, end int) {
 		require.NoError(t, err, "block %v", i)
 		chainBlk, err := th.Client.BlockByNumber(testutils.Context(t), big.NewInt(int64(i)))
 		require.NoError(t, err)
-		assert.Equal(t, chainBlk.Hash().Bytes(), blk.BlockHash.Bytes(), "block %v", i)
+		assert.Equal(t, chainBlk.Hash().String(), blk.BlockHash.String(), "block %v", i)
 	}
 }
 
