@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -22,34 +20,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/rollups"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
-)
-
-// metrics are thread safe
-var (
-	promFeeHistoryEstimatorGasPrice = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_price_updater",
-		Help: "Sets latest gas price (in Wei)",
-	},
-		[]string{"evmChainID"},
-	)
-	promFeeHistoryEstimatorBaseFee = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "base_fee_updater",
-		Help: "Sets latest BaseFee (in Wei)",
-	},
-		[]string{"evmChainID"},
-	)
-	promFeeHistoryEstimatorMaxPriorityFeePerGas = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "max_priority_fee_per_gas_updater",
-		Help: "Sets latest MaxPriorityFeePerGas (in Wei)",
-	},
-		[]string{"evmChainID"},
-	)
-	promFeeHistoryEstimatorMaxFeePerGas = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "max_fee_per_gas_updater",
-		Help: "Sets latest MaxFeePerGas (in Wei)",
-	},
-		[]string{"evmChainID"},
-	)
 )
 
 const (
@@ -94,18 +64,22 @@ type FeeHistoryEstimator struct {
 
 	l1Oracle rollups.L1Oracle
 
+	metrics *feeHistoryEstimatorMetrics
+
 	wg        *sync.WaitGroup
 	stopCh    services.StopChan
 	refreshCh chan struct{}
 }
 
 func NewFeeHistoryEstimator(lggr logger.Logger, client feeHistoryEstimatorClient, cfg FeeHistoryEstimatorConfig, chainID *big.Int, l1Oracle rollups.L1Oracle) *FeeHistoryEstimator {
+	l := logger.Sugared(logger.Named(lggr, "FeeHistoryEstimator"))
 	return &FeeHistoryEstimator{
 		client:    client,
-		logger:    logger.Named(lggr, "FeeHistoryEstimator"),
+		logger:    l,
 		config:    cfg,
 		chainID:   chainID,
 		l1Oracle:  l1Oracle,
+		metrics:   newFeeHistoryEstimatorMetrics(l, chainID),
 		wg:        new(sync.WaitGroup),
 		stopCh:    make(chan struct{}),
 		refreshCh: make(chan struct{}),
@@ -195,7 +169,7 @@ func (f *FeeHistoryEstimator) RefreshGasPrice() (*assets.Wei, error) {
 		return nil, err
 	}
 
-	promFeeHistoryEstimatorGasPrice.WithLabelValues(f.chainID.String()).Set(float64(gasPrice.Int64()))
+	f.metrics.RecordGasPrice(ctx, float64(gasPrice.Int64()))
 
 	gasPriceWei := assets.NewWei(gasPrice)
 
@@ -308,9 +282,9 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 	f.nextBaseFee = nextBaseFee
 	f.nextBaseFeeMu.Unlock()
 
-	promFeeHistoryEstimatorBaseFee.WithLabelValues(f.chainID.String()).Set(float64(nextBaseFee.Int64()))
-	promFeeHistoryEstimatorMaxPriorityFeePerGas.WithLabelValues(f.chainID.String()).Set(float64(maxPriorityFeePerGas.Int64()))
-	promFeeHistoryEstimatorMaxFeePerGas.WithLabelValues(f.chainID.String()).Set(float64(maxFeePerGas.Int64()))
+	f.metrics.RecordBaseFee(ctx, float64(nextBaseFee.Int64()))
+	f.metrics.RecordMaxPriorityFeePerGas(ctx, float64(maxPriorityFeePerGas.Int64()))
+	f.metrics.RecordMaxFeePerGas(ctx, float64(maxFeePerGas.Int64()))
 
 	f.logger.Debugf("Fetched new dynamic prices, nextBlock#: %v - oldestBlock#: %v - nextBaseFee: %v - maxFeePerGas: %v - maxPriorityFeePerGas: %v - maxPriorityFeeThreshold: %v",
 		nextBlock, feeHistory.OldestBlock, nextBaseFee, maxFeePerGas, maxPriorityFeePerGas, priorityFeeThresholdWei)

@@ -3,20 +3,32 @@ package client
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 )
 
 type rpcClientMetrics struct {
-	callsTotal   metric.Int64Counter
-	callsSuccess metric.Int64Counter
-	callsFailed  metric.Int64Counter
+	rpcClientMetrics metrics.RPCClientMetrics
+	callsTotal       metric.Int64Counter
+	callsSuccess     metric.Int64Counter
+	callsFailed      metric.Int64Counter
 }
 
-func newRPCClientMetrics() (*rpcClientMetrics, error) {
+func newRPCClientMetrics(chainID *big.Int) (*rpcClientMetrics, error) {
+	baseRPCMetrics, err := metrics.NewRPCClientMetrics(metrics.RPCClientMetricsConfig{
+		ChainFamily: metrics.EVM,
+		ChainID:     chainID.String(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize rpc base metrics: %w", err)
+	}
+
 	callsTotal, err := beholder.GetMeter().Int64Counter("evm_pool_rpc_node_calls_total")
 	if err != nil {
 		return nil, fmt.Errorf("failed to register rpc calls total metric: %w", err)
@@ -33,15 +45,16 @@ func newRPCClientMetrics() (*rpcClientMetrics, error) {
 	}
 
 	return &rpcClientMetrics{
-		callsTotal:   callsTotal,
-		callsSuccess: callsSuccess,
-		callsFailed:  callsFailed,
+		rpcClientMetrics: baseRPCMetrics,
+		callsTotal:       callsTotal,
+		callsSuccess:     callsSuccess,
+		callsFailed:      callsFailed,
 	}, nil
 }
 
 func (m *rpcClientMetrics) IncrementTotal(ctx context.Context, chainID, nodeName, rpcDomain, callName string) {
 	m.callsTotal.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainFamily", "EVM"),
+		attribute.String("chainFamily", metrics.EVM),
 		attribute.String("chainID", chainID),
 		attribute.String("nodeName", nodeName),
 		attribute.String("rpcDomain", rpcDomain),
@@ -51,7 +64,7 @@ func (m *rpcClientMetrics) IncrementTotal(ctx context.Context, chainID, nodeName
 
 func (m *rpcClientMetrics) IncrementSuccess(ctx context.Context, chainID, nodeName, rpcDomain, callName string) {
 	m.callsSuccess.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainFamily", "EVM"),
+		attribute.String("chainFamily", metrics.EVM),
 		attribute.String("chainID", chainID),
 		attribute.String("nodeName", nodeName),
 		attribute.String("rpcDomain", rpcDomain),
@@ -61,10 +74,14 @@ func (m *rpcClientMetrics) IncrementSuccess(ctx context.Context, chainID, nodeNa
 
 func (m *rpcClientMetrics) IncrementFailed(ctx context.Context, chainID, nodeName, rpcDomain, callName string) {
 	m.callsFailed.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("chainFamily", "EVM"),
+		attribute.String("chainFamily", metrics.EVM),
 		attribute.String("chainID", chainID),
 		attribute.String("nodeName", nodeName),
 		attribute.String("rpcDomain", rpcDomain),
 		attribute.String("callName", callName),
 	))
+}
+
+func (m *rpcClientMetrics) RecordLatency(ctx context.Context, rpcDomain, callName string, isSendOnly bool, latency time.Duration, err error) {
+	m.rpcClientMetrics.RecordRequest(ctx, rpcDomain, isSendOnly, callName, latency, err)
 }

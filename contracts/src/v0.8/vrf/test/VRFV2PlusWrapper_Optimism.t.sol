@@ -6,9 +6,9 @@ import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 
 import {GasPriceOracle as OVM_GasPriceOracle} from
   "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
-import {OptimismL1Fees} from "../dev/OptimismL1Fees.sol";
-import {VRFV2PlusWrapper_Optimism} from "../dev/VRFV2PlusWrapper_Optimism.sol";
-import {ExposedVRFCoordinatorV2_5_Optimism} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
+import {OptimismL1Fees} from "../OptimismL1Fees.sol";
+import {VRFV2PlusWrapper_Optimism} from "../VRFV2PlusWrapper_Optimism.sol";
+import {ExposedVRFCoordinatorV2_5_Optimism} from "../testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 
 import {VmSafe} from "forge-std/Vm.sol";

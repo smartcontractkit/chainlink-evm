@@ -7,6 +7,7 @@ import {MockScrollCrossDomainMessenger} from "../../mocks/scroll/MockScrollCross
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 import {MultiSend} from "../../../../vendor/MultiSend.sol";
+import {Errors} from "@openzeppelin/contracts@5.3.0/utils/Errors.sol";
 
 contract ScrollCrossDomainGovernorTest is L2EPTest {
   /// Contracts
@@ -44,7 +45,7 @@ contract ScrollCrossDomainGovernor_Constructor is ScrollCrossDomainGovernorTest 
     assertEq(s_scrollCrossDomainGovernor.crossDomainMessenger(), address(s_mockScrollCrossDomainMessenger));
 
     // it should set the typeAndVersion correctly
-    assertEq(s_scrollCrossDomainGovernor.typeAndVersion(), "ScrollCrossDomainGovernor 1.0.0");
+    assertEq(s_scrollCrossDomainGovernor.typeAndVersion(), "ScrollCrossDomainGovernor 1.1.0-dev");
   }
 }
 
@@ -159,7 +160,7 @@ contract ScrollCrossDomainGovernor_ForwardDelegate is ScrollCrossDomainGovernorT
     vm.startPrank(s_strangerAddr);
 
     // Sends an invalid message (empty transaction data is not allowed)
-    vm.expectRevert("Governor delegatecall reverted");
+    vm.expectRevert(Errors.FailedCall.selector);
     s_mockScrollCrossDomainMessenger.sendMessage(
       address(s_scrollCrossDomainGovernor), // target
       0, // value
