@@ -48,6 +48,9 @@ Enabled = false
 BlockTime = '42s'
 CustomURL = 'http://txs.org'
 DualBroadcast = true
+ReadRequestsToMultipleNodes = false
+Bundles = false
+FastlaneAuctionRequestTimeout = '15s'
 
 [BalanceMonitor]
 Enabled = true

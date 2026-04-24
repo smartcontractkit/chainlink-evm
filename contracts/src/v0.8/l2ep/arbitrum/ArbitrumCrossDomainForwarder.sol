@@ -9,7 +9,7 @@ import {CrossDomainForwarder} from "../CrossDomainForwarder.sol";
 import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
 import {AddressAliasHelper} from "../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 
 /**
  * @title ArbitrumCrossDomainForwarder - L1 xDomain account representation
@@ -37,7 +37,7 @@ contract ArbitrumCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
    * @inheritdoc ITypeAndVersion
    */
   function typeAndVersion() external pure virtual override returns (string memory) {
-    return "ArbitrumCrossDomainForwarder 1.0.0";
+    return "ArbitrumCrossDomainForwarder 1.1.0-dev";
   }
 
   /**
@@ -52,7 +52,7 @@ contract ArbitrumCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
    * @inheritdoc IForwarder
    */
   function forward(address target, bytes memory data) external virtual override onlyL1Owner {
-    Address.functionCall(target, data, "Forwarder call reverted");
+    Address.functionCall(target, data);
   }
 
   /**

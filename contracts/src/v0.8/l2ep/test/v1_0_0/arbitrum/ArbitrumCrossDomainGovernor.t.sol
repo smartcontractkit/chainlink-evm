@@ -6,6 +6,7 @@ import {Greeter} from "../../Greeter.sol";
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 import {MultiSend} from "../../../../vendor/MultiSend.sol";
+import {Errors} from "@openzeppelin/contracts@5.3.0/utils/Errors.sol";
 
 contract ArbitrumCrossDomainGovernorTest is L2EPTest {
   /// Helper variable(s)
@@ -45,7 +46,7 @@ contract ArbitrumCrossDomainGovernor_Constructor is ArbitrumCrossDomainGovernorT
     assertEq(s_arbitrumCrossDomainGovernor.crossDomainMessenger(), s_crossDomainMessengerAddr);
 
     // it should set the typeAndVersion correctly
-    assertEq(s_arbitrumCrossDomainGovernor.typeAndVersion(), "ArbitrumCrossDomainGovernor 1.0.0");
+    assertEq(s_arbitrumCrossDomainGovernor.typeAndVersion(), "ArbitrumCrossDomainGovernor 1.1.0-dev");
   }
 }
 
@@ -154,7 +155,7 @@ contract ArbitrumCrossDomainGovernor_ForwardDelegate is ArbitrumCrossDomainGover
     vm.startPrank(s_crossDomainMessengerAddr);
 
     // Sends an invalid message (empty transaction data is not allowed)
-    vm.expectRevert("Governor delegatecall reverted");
+    vm.expectRevert(Errors.FailedCall.selector);
     s_arbitrumCrossDomainGovernor.forwardDelegate(
       address(s_multiSend),
       abi.encodeWithSelector(

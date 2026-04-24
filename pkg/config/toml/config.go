@@ -447,6 +447,10 @@ func (c *Chain) ValidateConfig() (err error) {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "MinIncomingConfirmations", Value: *c.MinIncomingConfirmations,
 			Msg: "must be greater than or equal to 1"})
 	}
+	if *c.RPCDefaultBatchSize < 1 {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "RPCDefaultBatchSize", Value: *c.RPCDefaultBatchSize,
+			Msg: "must be greater than or equal to 1"})
+	}
 
 	if *c.FinalizedBlockOffset > *c.HeadTracker.HistoryDepth {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "HeadTracker.HistoryDepth", Value: *c.HeadTracker.HistoryDepth,
@@ -586,10 +590,13 @@ func (a *AutoPurgeConfig) setFrom(f *AutoPurgeConfig) {
 }
 
 type TransactionManagerV2Config struct {
-	Enabled       *bool                  `toml:",omitempty"`
-	BlockTime     *commonconfig.Duration `toml:",omitempty"`
-	CustomURL     *commonconfig.URL      `toml:",omitempty"`
-	DualBroadcast *bool                  `toml:",omitempty"`
+	Enabled                       *bool                  `toml:",omitempty"`
+	BlockTime                     *commonconfig.Duration `toml:",omitempty"`
+	CustomURL                     *commonconfig.URL      `toml:",omitempty"`
+	DualBroadcast                 *bool                  `toml:",omitempty"`
+	ReadRequestsToMultipleNodes   *bool                  `toml:",omitempty"`
+	Bundles                       *bool                  `toml:",omitempty"`
+	FastlaneAuctionRequestTimeout *commonconfig.Duration `toml:",omitempty"`
 }
 
 func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
@@ -604,6 +611,15 @@ func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
 	}
 	if v := f.DualBroadcast; v != nil {
 		t.DualBroadcast = f.DualBroadcast
+	}
+	if v := f.ReadRequestsToMultipleNodes; v != nil {
+		t.ReadRequestsToMultipleNodes = f.ReadRequestsToMultipleNodes
+	}
+	if v := f.Bundles; v != nil {
+		t.Bundles = f.Bundles
+	}
+	if v := f.FastlaneAuctionRequestTimeout; v != nil {
+		t.FastlaneAuctionRequestTimeout = f.FastlaneAuctionRequestTimeout
 	}
 }
 
