@@ -676,109 +676,113 @@ func TestLogPoller_BlockTimestamps(t *testing.T) {
 
 func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 	t.Parallel()
-	// The log poller's blocks table should remain synchronized
-	// with the canonical chain of geth's despite arbitrary mixes of mining and reorgs.
-	testParams := gopter.DefaultTestParameters()
-	testParams.MinSuccessfulTests = 100
-	p := gopter.NewProperties(testParams)
-	numChainInserts := 3
-	finalityDepth := 5
-	lggr := logger.Test(t)
-	db := testutils.NewSqlxDB(t)
+	testCases := []struct {
+		name            string
+		skipEmptyBlocks bool
+	}{
+		{
+			name:            "with empty blocks",
+			skipEmptyBlocks: false,
+		},
+		{
+			name:            "without empty blocks",
+			skipEmptyBlocks: true,
+		},
+	}
 
-	owner := testutils.MustNewSimTransactor(t)
-	owner.GasPrice = big.NewInt(10e9)
-	p.Property("synchronized with geth", prop.ForAll(func(mineOrReorg []uint64) bool {
-		// After the set of reorgs, we should have the same canonical blocks that geth does.
-		seed := time.Now().UnixNano()
-		localRand := rand.New(rand.NewSource(seed))
-		t.Log("Starting test", mineOrReorg, "seed", seed)
-		chainID := testutils.NewRandomEVMChainID()
-		// Set up a test chain with a log emitting contract deployed.
-		orm := logpoller.NewORM(chainID, db, lggr)
-		// Note this property test is run concurrently and the sim is not threadsafe.
-		backend := simulated.NewBackend(types.GenesisAlloc{
-			owner.From: {
-				Balance: big.NewInt(0).Mul(big.NewInt(10), big.NewInt(1e18)),
-			},
-		}, simulated.WithBlockGasLimit(10e6))
-		ec := backend.Client()
-		_, _, emitter1, err := log_emitter.DeployLogEmitter(owner, ec)
-		require.NoError(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// The log poller's blocks table should remain synchronized
+			// with the canonical chain of geth's despite arbitrary mixes of mining and reorgs.
+			testParams := gopter.DefaultTestParameters()
+			testParams.MinSuccessfulTests = 100
+			p := gopter.NewProperties(testParams)
+			numChainInserts := 3
+			finalityDepth := 5
+			lggr := logger.Test(t)
+			db := testutils.NewSqlxDB(t)
 
-		lpOpts := logpoller.Opts{
-			PollPeriod:               15 * time.Second,
-			FinalityDepth:            int64(finalityDepth),
-			BackfillBatchSize:        3,
-			RPCBatchSize:             2,
-			KeepFinalizedBlocksDepth: 1000,
-		}
-		simulatedClient := client.NewSimulatedBackendClient(t, backend, chainID)
-		ht := headstest.NewSimulatedHeadTracker(simulatedClient, lpOpts.UseFinalityTag, lpOpts.FinalityDepth)
-		lp := logpoller.NewLogPoller(orm, simulatedClient, lggr, ht, lpOpts)
-		for i := 0; i < finalityDepth; i++ { // Have enough blocks that we could reorg the full finalityDepth-1.
-			backend.Commit()
-		}
-		currentBlockNumber := int64(1)
-		lp.PollAndSaveLogs(testutils.Context(t), currentBlockNumber, false)
-		currentBlock, err := lp.LatestBlock(testutils.Context(t))
-		require.NoError(t, err)
-		matchesGeth := func() bool {
-			// Check every block is identical
-			latest, err1 := ec.BlockByNumber(testutils.Context(t), nil)
-			require.NoError(t, err1)
-			for i := 1; i < int(latest.NumberU64()); i++ {
-				ourBlock, err1 := lp.BlockByNumber(testutils.Context(t), int64(i))
-				require.NoError(t, err1)
-				gethBlock, err1 := ec.BlockByNumber(testutils.Context(t), big.NewInt(int64(i)))
-				require.NoError(t, err1)
-				if ourBlock.BlockHash != gethBlock.Hash() {
-					t.Logf("Initial poll our block differs at height %d got %x want %x\n", i, ourBlock.BlockHash, gethBlock.Hash())
+			owner := testutils.MustNewSimTransactor(t)
+			owner.GasPrice = big.NewInt(10e9)
+			p.Property("synchronized with geth", prop.ForAll(func(mineOrReorg []uint64) bool {
+				// After the set of reorgs, we should have the same canonical blocks that geth does.
+				seed := time.Now().UnixNano()
+				localRand := rand.New(rand.NewSource(seed))
+				t.Log("Starting test", mineOrReorg, "seed", seed)
+				chainID := testutils.NewRandomEVMChainID()
+				// Set up a test chain with a log emitting contract deployed.
+				orm := logpoller.NewORM(chainID, db, lggr)
+				// Note this property test is run concurrently and the sim is not threadsafe.
+				backend := simulated.NewBackend(types.GenesisAlloc{
+					owner.From: {
+						Balance: big.NewInt(0).Mul(big.NewInt(10), big.NewInt(1e18)),
+					},
+				}, simulated.WithBlockGasLimit(10e6))
+				ec := backend.Client()
+				_, _, emitter1, err := log_emitter.DeployLogEmitter(owner, ec)
+				require.NoError(t, err)
+
+				lpOpts := logpoller.Opts{
+					PollPeriod:               15 * time.Second,
+					FinalityDepth:            int64(finalityDepth),
+					BackfillBatchSize:        3,
+					RPCBatchSize:             2,
+					KeepFinalizedBlocksDepth: 1000,
+					SkipEmptyBlocks:          tc.skipEmptyBlocks,
+				}
+				simulatedClient := client.NewSimulatedBackendClient(t, backend, chainID)
+				ht := headstest.NewSimulatedHeadTracker(simulatedClient, lpOpts.UseFinalityTag, lpOpts.FinalityDepth)
+				lp := logpoller.NewLogPoller(orm, simulatedClient, lggr, ht, lpOpts)
+				for i := 0; i < finalityDepth; i++ { // Have enough blocks that we could reorg the full finalityDepth-1.
+					backend.Commit()
+				}
+				currentBlockNumber := int64(1)
+				lp.PollAndSaveLogs(testutils.Context(t), currentBlockNumber, false)
+				currentBlock, err := lp.LatestBlock(testutils.Context(t))
+				require.NoError(t, err)
+				if !checkDBMatchesGeth(t, orm, simulatedClient) {
 					return false
 				}
-			}
-			return true
-		}
-		if !matchesGeth() {
-			return false
-		}
-		// Randomly pick to mine or reorg
-		for i := 0; i < numChainInserts; i++ {
-			if localRand.Int63()%2 == 0 {
-				// Mine blocks
-				for j := 0; j < int(mineOrReorg[i]); j++ {
-					backend.Commit()
-					latest, err1 := ec.BlockByNumber(testutils.Context(t), nil)
-					require.NoError(t, err1)
-					t.Log("mined block", latest.Hash())
-				}
-			} else {
-				// Reorg blocks
-				latest, err1 := ec.BlockByNumber(testutils.Context(t), nil)
-				require.NoError(t, err1)
-				reorgedBlock := big.NewInt(0).Sub(latest.Number(), big.NewInt(int64(mineOrReorg[i])))
-				reorg, err1 := ec.BlockByNumber(testutils.Context(t), reorgedBlock)
-				require.NoError(t, err1)
-				require.NoError(t, backend.Fork(reorg.Hash()))
+				// Randomly pick to mine or reorg
+				for i := 0; i < numChainInserts; i++ {
+					if localRand.Int63()%2 == 0 {
+						// Mine blocks
+						for j := uint64(0); j < mineOrReorg[i]; j++ {
+							backend.Commit()
+							latest, err1 := ec.BlockByNumber(testutils.Context(t), nil)
+							require.NoError(t, err1)
+							t.Log("mined block", latest.Hash())
+						}
+					} else {
+						// Reorg blocks
+						latest, err1 := ec.BlockByNumber(testutils.Context(t), nil)
+						require.NoError(t, err1)
+						reorgedBlock := big.NewInt(0).Sub(latest.Number(), big.NewInt(0).SetUint64(mineOrReorg[i]))
+						reorg, err1 := ec.BlockByNumber(testutils.Context(t), reorgedBlock)
+						require.NoError(t, err1)
+						require.NoError(t, backend.Fork(reorg.Hash()))
 
-				t.Logf("Reorging from (%v, %x) back to (%v, %x)\n", latest.NumberU64(), latest.Hash(), reorgedBlock.Uint64(), reorg.Hash())
-				// Actually need to change the block here to trigger the reorg.
-				_, err1 = emitter1.EmitLog1(owner, []*big.Int{big.NewInt(1)})
-				require.NoError(t, err1)
-				for j := 0; j < int(mineOrReorg[i]+1); j++ { // Need +1 to make it actually longer height so we detect it.
-					backend.Commit()
+						t.Logf("Reorging from (%v, %x) back to (%v, %x)\n", latest.NumberU64(), latest.Hash(), reorgedBlock.Uint64(), reorg.Hash())
+						// Actually need to change the block here to trigger the reorg.
+						_, err1 = emitter1.EmitLog1(owner, []*big.Int{big.NewInt(1)})
+						require.NoError(t, err1)
+						for j := uint64(0); j < mineOrReorg[i]+1; j++ { // Need +1 to make it actually longer height so we detect it.
+							backend.Commit()
+						}
+						latest, err1 = ec.BlockByNumber(testutils.Context(t), nil)
+						require.NoError(t, err1)
+						t.Logf("New latest (%v, %x), latest parent %x)\n", latest.NumberU64(), latest.Hash(), latest.ParentHash())
+					}
+					lp.PollAndSaveLogs(testutils.Context(t), currentBlock.BlockNumber+1, false)
+					currentBlock, err = lp.LatestBlock(testutils.Context(t))
+					require.NoError(t, err)
 				}
-				latest, err1 = ec.BlockByNumber(testutils.Context(t), nil)
-				require.NoError(t, err1)
-				t.Logf("New latest (%v, %x), latest parent %x)\n", latest.NumberU64(), latest.Hash(), latest.ParentHash())
-			}
-			lp.PollAndSaveLogs(testutils.Context(t), currentBlock.BlockNumber+1, false)
-			currentBlock, err = lp.LatestBlock(testutils.Context(t))
-			require.NoError(t, err)
-		}
-		return matchesGeth()
-	}, gen.SliceOfN(numChainInserts, gen.UInt64Range(1, uint64(finalityDepth-1))))) // Max reorg depth is finality depth - 1
-	p.TestingRun(t)
+				return checkDBMatchesGeth(t, orm, simulatedClient)
+				// #nosec G115 // finalityDepth-1 always >= 0
+			}, gen.SliceOfN(numChainInserts, gen.UInt64Range(1, uint64(finalityDepth-1))))) // Max reorg depth is finality depth - 1
+			p.TestingRun(t)
+		})
+	}
 }
 
 func TestLogPoller_PollAndSaveLogs(t *testing.T) {
@@ -841,7 +845,7 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			lgs, err := th.ORM.SelectLogsByBlockRange(testutils.Context(t), 1, 1)
 			require.NoError(t, err)
 			assert.Empty(t, lgs)
-			th.assertHaveCanonical(t, 1, 1)
+			requireDBMatchesGeth(t, th.ORM, th.Client)
 
 			// Polling again should be a noop, since we are at the latest.
 			newStart = th.PollAndSaveLogs(testutils.Context(t), newStart)
@@ -849,7 +853,7 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			latest, err := th.ORM.SelectLatestBlock(testutils.Context(t))
 			require.NoError(t, err)
 			assert.Equal(t, int64(1), latest.BlockNumber)
-			th.assertHaveCanonical(t, 1, 1)
+			requireDBMatchesGeth(t, th.ORM, th.Client)
 
 			// Test scenario: one log 2 block chain.
 			// Chain gen <- 1 <- 2 (L1)
@@ -901,7 +905,7 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, lgs, 1)
 			assert.Equal(t, hexutil.MustDecode(`0x0000000000000000000000000000000000000000000000000000000000000002`), lgs[0].Data)
-			th.assertHaveCanonical(t, 1, 3)
+			requireDBMatchesGeth(t, th.ORM, th.Client)
 
 			parent, err := th.Client.BlockByNumber(testutils.Context(t), big.NewInt(1))
 			require.NoError(t, err)
@@ -936,8 +940,7 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			assert.Equal(t, hexutil.MustDecode(`0x0000000000000000000000000000000000000000000000000000000000000001`), lgs[0].Data)
 			assert.Equal(t, int64(3), lgs[1].BlockNumber)
 			assert.Equal(t, hexutil.MustDecode(`0x0000000000000000000000000000000000000000000000000000000000000003`), lgs[1].Data)
-			th.assertHaveCanonical(t, 1, 1)
-			th.assertHaveCanonical(t, 3, 4)
+			requireDBMatchesGeth(t, th.ORM, th.Client)
 			th.assertDontHave(t, 2, 2) // 2 gets backfilled
 
 			// Test scenario: multiple logs per block for many blocks (also after reorg).
@@ -968,9 +971,7 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			assert.Equal(t, th.EmitterAddress2, lgs[1].Address)
 			assert.Equal(t, hexutil.MustDecode(`0x0000000000000000000000000000000000000000000000000000000000000006`), lgs[2].Data)
 			assert.Equal(t, th.EmitterAddress1, lgs[2].Address)
-			th.assertHaveCanonical(t, 1, 1)
-			th.assertDontHave(t, 2, 2) // 2 gets backfilled
-			th.assertHaveCanonical(t, 3, 6)
+			requireDBMatchesGeth(t, th.ORM, th.Client)
 
 			// Test scenario: node down for exactly finality + 2 blocks
 			// Note we only backfill up to finalized - 1 blocks, because we need to save the
@@ -996,7 +997,7 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			assert.Equal(t, int64(8), lgs[1].BlockNumber)
 			assert.Equal(t, hexutil.MustDecode(`0x0000000000000000000000000000000000000000000000000000000000000009`), lgs[2].Data)
 			assert.Equal(t, int64(9), lgs[2].BlockNumber)
-			th.assertHaveCanonical(t, 8, 10)
+			requireDBMatchesGeth(t, th.ORM, th.Client)
 
 			// Test scenario large backfill (multiple batches)
 			// Chain gen <- 1 <- 2 (L1_1) <- 3' L1_3 <- 4 <- 5 (L1_4, L2_5) <- 6 (L1_6) <- 7 (L1_7) <- 8 (L1_8) <- 9 (L1_9) <- 10..32
@@ -1017,9 +1018,9 @@ func TestLogPoller_PollAndSaveLogs(t *testing.T) {
 			lgs, err = th.ORM.SelectLogsByBlockRange(testutils.Context(t), 11, 36)
 			require.NoError(t, err)
 			assert.Len(t, lgs, 25)
-			th.assertHaveCanonical(t, 32, 36) // Should have last finalized block plus unfinalized blocks
-			th.assertDontHave(t, 11, 13)      // Should not have older finalized blocks
-			th.assertDontHave(t, 14, 16)      // Should not have older finalized blocks
+			requireDBMatchesGeth(t, th.ORM, th.Client)
+			th.assertDontHave(t, 11, 13) // Should not have older finalized blocks
+			th.assertDontHave(t, 14, 16) // Should not have older finalized blocks
 
 			// Verify that a custom block timestamp will get written to db correctly also
 			b, err = th.Client.BlockByNumber(testutils.Context(t), nil)
@@ -1206,9 +1207,8 @@ func TestLogPoller_PollAndSaveLogsDeepReorg(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, lgs, 30)
 			assert.Equal(t, hexutil.MustDecode(`0x0000000000000000000000000000000000000000000000000000000000000002`), lgs[0].Data)
-			th.assertHaveCanonical(t, 1, 2)
-			th.assertDontHave(t, 2, 31) // These blocks are backfilled
-			th.assertHaveCanonical(t, 32, 36)
+			requireLBBlockIsFinalized(t, th.ORM, 30)
+			requireDBMatchesGeth(t, th.ORM, th.Client)
 		})
 	}
 }
@@ -1557,27 +1557,25 @@ func TestTooManyLogResults(t *testing.T) {
 	}
 
 	var filterLogsCall *mock.Call
-	head := &evmtypes.Head{}
-	finalized := &evmtypes.Head{}
 
 	ec.On("HeadByNumber", mock.Anything, mock.Anything).Return(func(ctx context.Context, blockNumber *big.Int) (*evmtypes.Head, error) {
 		if blockNumber == nil {
 			require.FailNow(t, "unexpected call to get current head")
 		}
-		return &evmtypes.Head{Number: blockNumber.Int64(), ParentHash: common.HexToHash(fmt.Sprintf("0x%x", blockNumber.Int64()-1))}, nil
+		return newHead(blockNumber.Int64()), nil
 	})
 
 	t.Run("halves size until small enough, then succeeds", func(t *testing.T) {
 		// Simulate latestBlock = 300
-		head.Number = 300
-		head.Hash = common.HexToHash("0x1234") // needed to satisfy validation in fetchBlocks()
-		finalized.Number = head.Number - lpOpts.FinalityDepth
+		head := newHead(300)
+		finalized := newHead(head.Number - lpOpts.FinalityDepth)
 
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil).Once()
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(finalized, nil).Once()
 
 		headByHash := ec.On("HeadByHash", mock.Anything, mock.Anything).Return(func(ctx context.Context, blockHash common.Hash) (*evmtypes.Head, error) {
-			return &evmtypes.Head{Hash: blockHash}, nil
+			num := new(big.Int).SetBytes(blockHash.Bytes()).Int64()
+			return newHead(num), nil
 		})
 
 		batchCallContext := ec.On("BatchCallContext", mock.Anything, mock.Anything).Return(
@@ -1591,11 +1589,7 @@ func TestTooManyLogResults(t *testing.T) {
 					blockNumber, ok := new(big.Int).SetString(blockNumberHex[2:], 16)
 					require.True(t, ok, blockNumberHex)
 
-					calls[i].Result = &evmtypes.Head{
-						Number:     blockNumber.Int64(),
-						Hash:       common.HexToHash(fmt.Sprintf("0x%x", blockNumber.Int64())),
-						ParentHash: common.HexToHash(fmt.Sprintf("0x%x", blockNumber.Int64()-1)),
-					}
+					calls[i].Result = newHead(blockNumber.Int64())
 				}
 				return nil
 			},
@@ -1629,7 +1623,7 @@ func TestTooManyLogResults(t *testing.T) {
 		lp.PollAndSaveLogs(ctx, 5, false)
 		block, err2 := o.SelectLatestBlock(ctx)
 		require.NoError(t, err2)
-		assert.Equal(t, int64(298), block.BlockNumber)
+		assert.Equal(t, int64(300), block.BlockNumber)
 
 		logs := obs.FilterLevelExact(zapcore.WarnLevel).FilterMessageSnippet("halving block range batch size").FilterFieldKey("newBatchSize").All()
 		// Should have tried again 3 times--first reducing batch size to 10, then 5, then 2
@@ -1647,8 +1641,8 @@ func TestTooManyLogResults(t *testing.T) {
 
 		// Now jump to block 500, but return error no matter how small the block range gets.
 		//  Should exit the loop with a critical error instead of hanging.
-		head.Number = 500
-		finalized.Number = head.Number - lpOpts.FinalityDepth
+		head := newHead(500)
+		finalized := newHead(head.Number - lpOpts.FinalityDepth)
 		headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalized, nil).Once()
 		headTracker.On("LatestSafeBlock", mock.Anything).Return(finalized, nil).Once()
 		filterLogsCall = ec.On("FilterLogs", mock.Anything, mock.Anything).Return(func(ctx context.Context, fq ethereum.FilterQuery) (logs []types.Log, err error) {
@@ -1663,7 +1657,7 @@ func TestTooManyLogResults(t *testing.T) {
 		if err != nil {
 			require.ErrorContains(t, err, "no rows") // In case this subtest is run by itself
 		} else {
-			assert.Equal(t, int64(298), block.BlockNumber)
+			assert.Equal(t, int64(300), block.BlockNumber)
 		}
 		warns := obs.FilterMessageSnippet("halving block range").FilterLevelExact(zapcore.WarnLevel).All()
 		crit := obs.FilterMessageSnippet("failed to retrieve logs").FilterLevelExact(zapcore.DPanicLevel).All()
@@ -1679,8 +1673,8 @@ func TestTooManyLogResults(t *testing.T) {
 
 	t.Run("Unrelated error are retried without adjusting size", func(t *testing.T) {
 		unrelatedError := errors.New("Unrelated to the size of the request")
-		head.Number = 500
-		finalized.Number = head.Number - lpOpts.FinalityDepth
+		head := newHead(500)
+		finalized := newHead(head.Number - lpOpts.FinalityDepth)
 
 		obs.TakeAll()
 		filterLogsCall = ec.On("FilterLogs", mock.Anything, mock.Anything).Return(func(ctx context.Context, fq ethereum.FilterQuery) (logs []types.Log, err error) {
@@ -1697,7 +1691,7 @@ func TestTooManyLogResults(t *testing.T) {
 		if err != nil {
 			require.ErrorContains(t, err, "no rows") // In case this subtest is run by itself
 		} else {
-			assert.Equal(t, int64(298), block.BlockNumber)
+			assert.Equal(t, int64(300), block.BlockNumber)
 		}
 		crit := obs.FilterLevelExact(zapcore.DPanicLevel).All()
 		errors := obs.FilterLevelExact(zapcore.ErrorLevel).All()
@@ -2261,10 +2255,60 @@ func TestLogPoller_Reorg_On_Replay(t *testing.T) {
 			require.Len(t, logs, 1)
 			require.Equal(t, newLogData, big.NewInt(0).SetBytes(logs[0].Data).Int64(), "Log data should match the log from the new block, indicating that the old block's log was properly removed during replay")
 			// Ensure reorged block was replaced by a new one
-			dbBlock, err := th.ORM.SelectBlockByNumber(testutils.Context(t), reorgedBlock.Number().Int64())
-			require.NoError(t, err)
-			require.Equal(t, reorgedBlock.Number().Int64(), dbBlock.BlockNumber)
-			require.NotEqual(t, reorgedBlock.Hash(), dbBlock.BlockHash)
+			requireDBMatchesGeth(t, th.ORM, th.Client)
 		})
+	}
+}
+
+func requireDBMatchesGeth(t *testing.T, orm logpoller.ORM, client logpoller.Client) {
+	require.True(t, checkDBMatchesGeth(t, orm, client), "DB state does not match geth canonical chain")
+}
+
+func checkDBMatchesGeth(t *testing.T, orm logpoller.ORM, client logpoller.Client) bool {
+	// Check every block is identical
+	latest, err := client.HeadByNumber(testutils.Context(t), nil)
+	require.NoError(t, err)
+	dbBlocks, err := orm.SelectLogsByBlockRange(t.Context(), 0, latest.Number)
+	require.NoError(t, err)
+	// ensure all blocks present in db are on geth canonical chain
+	for _, ourBlock := range dbBlocks {
+		var gethBlock *evmtypes.Head
+		gethBlock, err = client.HeadByNumber(testutils.Context(t), big.NewInt(ourBlock.BlockNumber))
+		require.NoError(t, err)
+		if ourBlock.BlockHash != gethBlock.Hash {
+			t.Logf("Initial poll our block differs at height %d got %x want %x\n", ourBlock.BlockNumber, ourBlock.BlockHash, gethBlock.Hash)
+			return false
+		}
+	}
+
+	latestDB, err := orm.SelectLatestBlock(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, latest.Number, latestDB.BlockNumber, "latest block number in db should match geth")
+
+	// ensure all logs present in db are on geth canonical chain
+	logs, err := orm.SelectLogsByBlockRange(t.Context(), 0, latest.Number)
+	require.NoError(t, err)
+	for _, log := range logs {
+		gethBlock, err1 := client.HeadByNumber(testutils.Context(t), big.NewInt(log.BlockNumber))
+		require.NoError(t, err1)
+		if log.BlockHash != gethBlock.Hash {
+			t.Logf("Log present in db, is not present in canonical chain. Log block number %d, Log block Hash: %s, block hash %s\n", log.BlockNumber, log.BlockHash, gethBlock.Hash)
+			return false
+		}
+	}
+	return true
+}
+
+func requireLBBlockIsFinalized(t *testing.T, orm logpoller.ORM, block int64) {
+	latest, err := orm.SelectLatestBlock(t.Context())
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, latest.FinalizedBlockNumber, block, "specified block should be finalized")
+}
+
+func newHead(num int64) *evmtypes.Head {
+	return &evmtypes.Head{
+		Number:     num,
+		Hash:       common.BigToHash(big.NewInt(num)),
+		ParentHash: common.BigToHash(big.NewInt(num - 1)),
 	}
 }

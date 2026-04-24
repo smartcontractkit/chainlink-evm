@@ -246,6 +246,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 				LogPrunePageSize:         int64(cfg.EVM().LogPrunePageSize()),
 				BackupPollerBlockDelay:   int64(cfg.EVM().BackupLogPollerBlockDelay()),
 				ClientErrors:             cfg.EVM().NodePool().Errors(),
+				SkipEmptyBlocks:          cfg.EVM().LogPollerSkipEmptyBlocks(),
 			}
 
 			lpORM, err := logpoller.NewObservedORM(chainID, opts.DS, l)

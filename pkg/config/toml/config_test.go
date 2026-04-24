@@ -276,6 +276,7 @@ var fullConfig = EVMConfig{
 		LinkContractAddress:          ptr(types.MustEIP55Address("0x538aAaB4ea120b2bC2fe5D296852D948F07D849e")),
 		LogBackfillBatchSize:         ptr[uint32](17),
 		LogPollInterval:              config.MustNewDuration(time.Minute),
+		LogPollerSkipEmptyBlocks:     ptr(false),
 		LogKeepBlocksDepth:           ptr[uint32](100000),
 		LogPrunePageSize:             ptr[uint32](0),
 		BackupLogPollerBlockDelay:    ptr[uint64](532),

@@ -403,6 +403,7 @@ type Chain struct {
 	LinkContractAddress          *types.EIP55Address
 	LogBackfillBatchSize         *uint32
 	LogPollInterval              *commonconfig.Duration
+	LogPollerSkipEmptyBlocks     *bool
 	LogKeepBlocksDepth           *uint32
 	LogPrunePageSize             *uint32
 	BackupLogPollerBlockDelay    *uint64
