@@ -103,7 +103,7 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 		return err
 	}
 
-	// TODO(gg): check that this is the correct behavior for meta_client as well
+	// TODO(gg): check that this is the correct behavior for meta_client as well --> seems to not fully be the case, case #2 in meta_client is not handled here!
 	// If not dual-broadcast, fall back to sending the transaction to the chain RPC directly
 	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
 		return m.chainClient.SendTransaction(ctx, tx, attempt)
