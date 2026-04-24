@@ -46,6 +46,7 @@ func NewTxm(
 	estimator gas.EvmFeeEstimator,
 	headTracker latestAndFinalizedBlockHeadTracker,
 	txmv2wrapper TxManager,
+	dualBroadcastEnabled bool,
 ) (txm TxManager,
 	err error,
 ) {
@@ -78,7 +79,7 @@ func NewTxm(
 	if txConfig.ResendAfterThreshold() > 0 {
 		evmResender = NewEvmResender(lggr, txStore, txmClient, evmTracker, keyStore, txmgr.DefaultResenderPollInterval, chainConfig, txConfig)
 	}
-	txm = NewEvmTxm(chainID, txmCfg, txConfig, keyStore, lggr, checker, fwdMgr, txAttemptBuilder, txStore, evmBroadcaster, evmConfirmer, evmResender, evmTracker, evmFinalizer, txmv2wrapper)
+	txm = NewEvmTxm(chainID, txmCfg, txConfig, keyStore, lggr, checker, fwdMgr, txAttemptBuilder, txStore, evmBroadcaster, evmConfirmer, evmResender, evmTracker, evmFinalizer, txmv2wrapper, dualBroadcastEnabled)
 	return txm, nil
 }
 
@@ -93,14 +94,15 @@ func NewEvmTxm(
 	fwdMgr FwdMgr,
 	txAttemptBuilder TxAttemptBuilder,
 	txStore TxStore,
-	broadcaster *Broadcaster,
-	confirmer *Confirmer,
+	broadcaster BroadcasterI,
+	confirmer ConfirmerI,
 	resender *Resender,
-	tracker *Tracker,
+	tracker TrackerI,
 	finalizer Finalizer,
 	txmv2wrapper TxManager,
+	dualBroadcastEnabled bool,
 ) *Txm {
-	return txmgr.NewTxm(chainID, cfg, txCfg, keyStore, lggr, checkerFactory, fwdMgr, txAttemptBuilder, txStore, broadcaster, confirmer, resender, tracker, finalizer, client.NewTxError, txmv2wrapper)
+	return txmgr.NewTxm(chainID, cfg, txCfg, keyStore, lggr, checkerFactory, fwdMgr, txAttemptBuilder, txStore, broadcaster, confirmer, resender, tracker, finalizer, client.NewTxError, txmv2wrapper, dualBroadcastEnabled)
 }
 
 func NewTxmV2(
@@ -141,6 +143,10 @@ func NewTxmV2(
 
 	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer())
 	inMemoryStoreManager := storage.NewInMemoryStoreManager(lggr, chainID)
+	readRequestsToMultipleNodes := false
+	if txmV2Config.ReadRequestsToMultipleNodes() != nil && *txmV2Config.ReadRequestsToMultipleNodes() {
+		readRequestsToMultipleNodes = true
+	}
 	config := txm.Config{
 		EIP1559:   fCfg.EIP1559DynamicFees(),
 		BlockTime: *txmV2Config.BlockTime(),
@@ -150,16 +156,21 @@ func NewTxmV2(
 	}
 	var eh txm.ErrorHandler
 	var c txm.Client
+	txmMetrics := txm.NewTxmMetrics(lggr, chainID)
 	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.CustomURL() != nil {
 		var err error
-		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager)
+		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURL(), chainID, inMemoryStoreManager, readRequestsToMultipleNodes, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout(), txmMetrics)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}
 	} else {
-		c = clientwrappers.NewChainClient(client)
+		var err error
+		c, err = clientwrappers.NewChainClient(lggr, client, readRequestsToMultipleNodes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create chain client wrapper: %w", err)
+		}
 	}
-	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh)
+	t := txm.NewTxm(lggr, chainID, c, attemptBuilder, inMemoryStoreManager, stuckTxDetector, config, keyStore, eh, txmMetrics)
 	return txm.NewTxmOrchestrator(lggr, chainID, t, inMemoryStoreManager, fwdMgr, keyStore, attemptBuilder), nil
 }
 

@@ -48,6 +48,24 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 	}
 }
 
+func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
+	name := "fake"
+	id := DefaultIDs[0]
+	evmCfg := &EVMConfig{
+		ChainID: id,
+		Chain:   Defaults(id),
+		Nodes: EVMNodes{{
+			Name:    &name,
+			WSURL:   config.MustParseURL("wss://foo.test/ws"),
+			HTTPURL: config.MustParseURL("http://foo.test"),
+		}},
+	}
+	evmCfg.RPCDefaultBatchSize = ptr[uint32](0)
+	err := config.Validate(evmCfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "RPCDefaultBatchSize")
+}
+
 func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown := Defaults(nil)
 
@@ -64,6 +82,9 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.TransactionManagerV2.BlockTime = new(config.Duration)
 	unknown.Transactions.TransactionManagerV2.CustomURL = new(config.URL)
 	unknown.Transactions.TransactionManagerV2.DualBroadcast = ptr(false)
+	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
+	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
+	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
 	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
@@ -159,6 +180,9 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.BlockTime = nil
 		docDefaults.Transactions.TransactionManagerV2.CustomURL = nil
 		docDefaults.Transactions.TransactionManagerV2.DualBroadcast = nil
+		docDefaults.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = nil
+		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
+		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
 
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
@@ -282,10 +306,13 @@ var fullConfig = EVMConfig{
 				DetectionApiUrl: config.MustParseURL("http://example.net"),
 			},
 			TransactionManagerV2: TransactionManagerV2Config{
-				Enabled:       ptr(false),
-				DualBroadcast: ptr(true),
-				BlockTime:     config.MustNewDuration(42 * time.Second),
-				CustomURL:     config.MustParseURL("http://txs.org"),
+				Enabled:                       ptr(false),
+				DualBroadcast:                 ptr(true),
+				ReadRequestsToMultipleNodes:   ptr(false),
+				Bundles:                       ptr(false),
+				BlockTime:                     config.MustNewDuration(42 * time.Second),
+				CustomURL:                     config.MustParseURL("http://txs.org"),
+				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
 			},
 		},
 

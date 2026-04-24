@@ -51,6 +51,7 @@ func Test_Eth_Errors(t *testing.T) {
 			{"client error nonce too low", true, "tomlConfig"},
 			{"[Request ID: 2e952947-ffad-408b-aed9-35f3ed152001] Nonce too low. Provided nonce: 15, current nonce: 15", true, "hedera"},
 			{"failed to forward tx to sequencer, please try again. Error message: 'nonce too low'", true, "Mantle"},
+			{"RPC call failed: TX_REPLAY_ATTACK", true, "Jovay"},
 		}
 
 		for _, test := range tests {
@@ -577,6 +578,15 @@ func Test_IsTooManyResultsError(t *testing.T) {
 	t.Run("Context DeadlineExceeded is TooManyResults", func(t *testing.T) {
 		assert.True(t, evmclient.IsTooManyResults(context.DeadlineExceeded, nil))
 	})
+}
+
+func Test_IsBatchRPCResponseEnvelopeUnmarshalError(t *testing.T) {
+	t.Parallel()
+	inner := errors.New(`json: cannot unmarshal object into Go value of type []*rpc.jsonrpcMessage`)
+	assert.True(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(inner))
+	assert.True(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(fmt.Errorf("wrapped: %w", inner)))
+	assert.False(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(nil))
+	assert.False(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(errors.New("RPC call failed: some other failure")))
 }
 
 func Test_IsMissingBlocksError(t *testing.T) {

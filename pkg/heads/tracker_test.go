@@ -13,7 +13,6 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/jmoiron/sqlx"
 	"github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -42,14 +41,6 @@ import (
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 )
-
-func firstHead(t *testing.T, db *sqlx.DB) *evmtypes.Head {
-	h := new(evmtypes.Head)
-	if err := db.Get(h, `SELECT * FROM evm.heads ORDER BY number ASC LIMIT 1`); err != nil {
-		t.Fatal(err)
-	}
-	return h
-}
 
 func TestHeadTracker_New(t *testing.T) {
 	t.Parallel()
@@ -106,7 +97,8 @@ func TestHeadTracker_MarkFinalized_MarksAndTrimsTable(t *testing.T) {
 	require.NoError(t, ht.headSaver.MarkFinalized(tests.Context(t), latest))
 	assert.Equal(t, big.NewInt(201), ht.headSaver.LatestChain().ToInt())
 
-	firstHead := firstHead(t, db)
+	firstHead, err := orm.FirstHead(t.Context())
+	require.NoError(t, err)
 	assert.Equal(t, big.NewInt(101), firstHead.ToInt())
 
 	lastHead, err := orm.LatestHead(tests.Context(t))
