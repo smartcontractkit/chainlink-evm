@@ -428,7 +428,7 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	assert.Empty(t, rpc.sendTxCalls, "dual-broadcast tx should go to Nova, not chain RPC fallback")
 }
 
-func TestNovaClient_SendTransaction_NonDual_doesNothing(t *testing.T) {
+func TestNovaClient_SendTransaction_NonDual_errors(t *testing.T) {
 	rpc := &testNovaRPC{}
 	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
@@ -447,29 +447,13 @@ func TestNovaClient_SendTransaction_NonDual_doesNothing(t *testing.T) {
 		Nonce:       &nonce,
 		FromAddress: common.HexToAddress("0x123"),
 		ToAddress:   toAddress,
-		Meta:        nil, // No meta, so not dual-broadcast
+		Meta:        nil,
 	}
 	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
 
 	err = client.SendTransaction(context.Background(), tx, attempt)
-	require.NoError(t, err)
-
-	assert.Empty(t, rpc.sendTxCalls)
-}
-
-func TestNovaClient_SendTransaction_Purgeable_doesNothing(t *testing.T) {
-	rpc := &testNovaRPC{}
-	customURL, err := url.Parse("http://localhost?api_key=test")
-	require.NoError(t, err)
-
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
-
-	tx, attempt := newDualBroadcastTx(t, 1)
-	tx.IsPurgeable = true
-
-	err = client.SendTransaction(context.Background(), tx, attempt)
-	require.NoError(t, err)
-
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "non-dual-broadcast")
 	assert.Empty(t, rpc.sendTxCalls)
 }
 
