@@ -1148,7 +1148,6 @@ func testFindBlockAfterLCA(t *testing.T, opts Opts) {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 			db := testutils.NewSqlxDB(t)

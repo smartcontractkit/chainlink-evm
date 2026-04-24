@@ -747,7 +747,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 				for i := 0; i < numChainInserts; i++ {
 					if localRand.Int63()%2 == 0 {
 						// Mine blocks
-						for j := 0; j < int(mineOrReorg[i]); j++ {
+						for j := uint64(0); j < mineOrReorg[i]; j++ {
 							backend.Commit()
 							latest, err1 := ec.BlockByNumber(testutils.Context(t), nil)
 							require.NoError(t, err1)
@@ -757,7 +757,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 						// Reorg blocks
 						latest, err1 := ec.BlockByNumber(testutils.Context(t), nil)
 						require.NoError(t, err1)
-						reorgedBlock := big.NewInt(0).Sub(latest.Number(), big.NewInt(int64(mineOrReorg[i])))
+						reorgedBlock := big.NewInt(0).Sub(latest.Number(), big.NewInt(0).SetUint64(mineOrReorg[i]))
 						reorg, err1 := ec.BlockByNumber(testutils.Context(t), reorgedBlock)
 						require.NoError(t, err1)
 						require.NoError(t, backend.Fork(reorg.Hash()))
@@ -766,7 +766,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 						// Actually need to change the block here to trigger the reorg.
 						_, err1 = emitter1.EmitLog1(owner, []*big.Int{big.NewInt(1)})
 						require.NoError(t, err1)
-						for j := 0; j < int(mineOrReorg[i]+1); j++ { // Need +1 to make it actually longer height so we detect it.
+						for j := uint64(0); j < mineOrReorg[i]+1; j++ { // Need +1 to make it actually longer height so we detect it.
 							backend.Commit()
 						}
 						latest, err1 = ec.BlockByNumber(testutils.Context(t), nil)
@@ -778,6 +778,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 					require.NoError(t, err)
 				}
 				return checkDBMatchesGeth(t, orm, simulatedClient)
+				// #nosec G115 // finalityDepth-1 always >= 0
 			}, gen.SliceOfN(numChainInserts, gen.UInt64Range(1, uint64(finalityDepth-1))))) // Max reorg depth is finality depth - 1
 			p.TestingRun(t)
 		})
@@ -2265,14 +2266,15 @@ func requireDBMatchesGeth(t *testing.T, orm logpoller.ORM, client logpoller.Clie
 
 func checkDBMatchesGeth(t *testing.T, orm logpoller.ORM, client logpoller.Client) bool {
 	// Check every block is identical
-	latest, err1 := client.HeadByNumber(testutils.Context(t), nil)
-	require.NoError(t, err1)
+	latest, err := client.HeadByNumber(testutils.Context(t), nil)
+	require.NoError(t, err)
 	dbBlocks, err := orm.SelectLogsByBlockRange(t.Context(), 0, latest.Number)
 	require.NoError(t, err)
 	// ensure all blocks present in db are on geth canonical chain
 	for _, ourBlock := range dbBlocks {
-		gethBlock, err1 := client.HeadByNumber(testutils.Context(t), big.NewInt(ourBlock.BlockNumber))
-		require.NoError(t, err1)
+		var gethBlock *evmtypes.Head
+		gethBlock, err = client.HeadByNumber(testutils.Context(t), big.NewInt(ourBlock.BlockNumber))
+		require.NoError(t, err)
 		if ourBlock.BlockHash != gethBlock.Hash {
 			t.Logf("Initial poll our block differs at height %d got %x want %x\n", ourBlock.BlockNumber, ourBlock.BlockHash, gethBlock.Hash)
 			return false
@@ -2284,8 +2286,8 @@ func checkDBMatchesGeth(t *testing.T, orm logpoller.ORM, client logpoller.Client
 	require.Equal(t, latest.Number, latestDB.BlockNumber, "latest block number in db should match geth")
 
 	// ensure all logs present in db are on geth canonical chain
-	logs, err1 := orm.SelectLogsByBlockRange(t.Context(), 0, latest.Number)
-	require.NoError(t, err1)
+	logs, err := orm.SelectLogsByBlockRange(t.Context(), 0, latest.Number)
+	require.NoError(t, err)
 	for _, log := range logs {
 		gethBlock, err1 := client.HeadByNumber(testutils.Context(t), big.NewInt(log.BlockNumber))
 		require.NoError(t, err1)
