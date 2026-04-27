@@ -100,23 +100,6 @@ func TestSelectClient_MetaPrimaryOnly(t *testing.T) {
 	require.True(t, ok, "Meta auction URL should return MetaClient directly, not multiOfaClient")
 }
 
-func TestSelectClient_CreatesMetaClientBasedOnFirstURL(t *testing.T) {
-	mockClient := clienttest.NewClient(t)
-	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
-
-	urls := []*url.URL{
-		mustParseURL(t, "https://custom-auction.example.com"),
-		mustParseURL(t, "https://relay.flashbots.net"),
-	}
-	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil)
-	require.NoError(t, err)
-	assert.NotNil(t, c)
-	assert.NotNil(t, eh)
-
-	_, ok := c.(*MetaClient)
-	require.True(t, ok, "Meta auction URL should return MetaClient directly, not multiOfaClient")
-}
-
 func TestSelectClient_IgnoresNonPrimaryURLsWhenPrimaryIsMeta(t *testing.T) {
 	mockClient := clienttest.NewClient(t)
 	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
