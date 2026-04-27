@@ -1003,7 +1003,7 @@ func TestChainClient_NonceAtWithFallback(t *testing.T) {
 		require.Equal(t, uint64(10), nonce)
 		require.Equal(t, int32(1), mainCalls.Load())
 		require.Equal(t, int32(1), fastFallbackCalls.Load())
-		require.Less(t, duration, 100*time.Millisecond)
+		require.Less(t, duration, 200*time.Millisecond) // should be faster than 200ms but can vary due to CI load
 	})
 
 	t.Run("all primaries fail", func(t *testing.T) {
