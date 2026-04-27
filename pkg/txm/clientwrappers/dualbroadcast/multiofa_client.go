@@ -2,6 +2,7 @@ package dualbroadcast
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/url"
@@ -48,7 +49,7 @@ func newMultiOfaClient(
 	bundles *bool,
 ) (*multiOfaClient, error) {
 	if len(ofaURLs) == 0 {
-		return nil, fmt.Errorf("ofaURLs must not be empty")
+		return nil, errors.New("ofaURLs must not be empty")
 	}
 
 	primary, err := newClientForRelayOFAURL(lggr, chainClient, keyStore, ofaURLs[0], chainID, txStore, bundles)
@@ -96,9 +97,7 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 	var wg sync.WaitGroup
 	for _, secondary := range m.secondaries {
 		sec := secondary
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
@@ -109,7 +108,7 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 					"attemptHash", attempt.Hash,
 					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
 			}
-		}()
+		})
 	}
 
 	primaryCtx, cancel := context.WithTimeout(ctx, rpcTimeout)

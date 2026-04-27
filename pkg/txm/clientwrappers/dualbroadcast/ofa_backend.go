@@ -137,7 +137,7 @@ func (d *ofaBackend) SendTransaction(ctx context.Context, tx *types.Transaction,
 	}
 
 	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
-		return fmt.Errorf("ofaTXClient: SendTransaction called for a non-dual-broadcast transaction")
+		return errors.New("ofaTXClient: SendTransaction called for a non-dual-broadcast transaction")
 	}
 
 	// TODO(gg): set different gas limit if Nova --> put in separate PR

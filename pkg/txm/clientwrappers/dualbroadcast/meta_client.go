@@ -149,7 +149,7 @@ type MetaClient struct {
 
 func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore, auctionRequestTimeout *time.Duration, lifecycleMetrics txm.Metrics) (*MetaClient, error) {
 	if customURL == nil {
-		return nil, fmt.Errorf("customURL must not be nil")
+		return nil, errors.New("customURL must not be nil")
 	}
 
 	metrics, err := NewMetaMetrics(chainID.String(), lggr)
