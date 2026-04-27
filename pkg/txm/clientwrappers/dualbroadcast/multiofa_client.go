@@ -22,7 +22,6 @@ type multiOfaBackend interface {
 	PendingNonceAt(ctx context.Context, address common.Address) (uint64, error)
 	NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error)
 	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
-	Label() string
 }
 
 // multiOfaClient implements txm.Client: it owns the OFA URL list, constructs one backend per URL,
@@ -65,15 +64,8 @@ func newMultiOfaClient(
 		secondaries = append(secondaries, sec)
 	}
 
-	secondaryLabels := make([]string, len(secondaries))
-	for i, secondary := range secondaries {
-		secondaryLabels[i] = secondary.Label()
-	}
-
 	lggr.Infow("MultiOfaClient created",
-		"primaryBackend", primary.Label(),
 		"primaryURL", redactURL(ofaURLs[0]),
-		"secondaryBackends", secondaryLabels,
 		"secondaryURLs", redactURLs(ofaURLs[1:]),
 	)
 
@@ -112,7 +104,6 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 			if err := sec.SendTransaction(secondaryCtx, tx, attempt); err != nil {
 				m.lggr.Errorw("Secondary backend send failed",
 					"err", err,
-					"backend", sec.Label(),
 					"txID", tx.ID,
 					"attemptHash", attempt.Hash,
 					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
