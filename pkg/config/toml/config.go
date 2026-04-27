@@ -509,12 +509,12 @@ func (c *Chain) ValidateConfig() (err error) {
 func (c *Transactions) ValidateConfig() (err error) {
 	if c.TransactionManagerV2.Enabled != nil && *c.TransactionManagerV2.Enabled &&
 		c.TransactionManagerV2.DualBroadcast != nil && *c.TransactionManagerV2.DualBroadcast {
-		hasLegacy := c.TransactionManagerV2.CustomURL != nil
-		hasSlice := len(c.TransactionManagerV2.CustomURLs) > 0
+		hasSingleURL := c.TransactionManagerV2.CustomURL != nil
+		hasMultipleURLs := len(c.TransactionManagerV2.CustomURLs) > 0
 		switch {
-		case !hasLegacy && !hasSlice:
+		case !hasSingleURL && !hasMultipleURLs:
 			err = multierr.Append(err, commonconfig.ErrMissing{Name: "TransactionManagerV2.CustomURLs", Msg: "must be set if DualBroadcast is enabled"})
-		case hasLegacy && hasSlice:
+		case hasSingleURL && hasMultipleURLs:
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "TransactionManagerV2.CustomURL", Msg: "cannot be set together with CustomURLs — CustomURL is deprecated, use only CustomURLs instead"})
 		}
 		if c.AutoPurge.Enabled != nil && !*c.AutoPurge.Enabled {
