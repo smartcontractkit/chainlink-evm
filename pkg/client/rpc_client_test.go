@@ -1293,6 +1293,45 @@ func TestRPCClient_TransactionReceiptGethWithOpts(t *testing.T) {
 	})
 }
 
+func TestRPCClient_TransactionReceiptWithOpts(t *testing.T) {
+	t.Parallel()
+	t.Run("Populates L1Fee from JSON response", func(t *testing.T) {
+		receiptJSON := `{"status":"0x1","transactionHash":"0x0000000000000000000000000000000000000000000000000000000000000000","blockHash":"0x0000000000000000000000000000000000000000000000000000000000000000","blockNumber":"0x1","gasUsed":"0x5208","effectiveGasPrice":"0x3b9aca00","transactionIndex":"0x0","l1Fee":"0x1388"}`
+		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getTransactionReceipt":
+				resp.Result = receiptJSON
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).URL()
+		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{HTTP: httpURL})
+		receipt, err := rpcClient.TransactionReceiptWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionReceiptOpts{})
+		require.NoError(t, err)
+		require.Equal(t, big.NewInt(5000), receipt.L1Fee)
+	})
+	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
+		receiptJSON := `{"status":"0x1","transactionHash":"0x0000000000000000000000000000000000000000000000000000000000000000","blockHash":"0x0000000000000000000000000000000000000000000000000000000000000000","blockNumber":"0x1","gasUsed":"0x5208","effectiveGasPrice":"0x3b9aca00","transactionIndex":"0x0","l1Fee":"0x1388"}`
+		//nolint:gosec //G115 it's safe to assume that response size fits into uint32
+		responseSize := uint32(len(receiptJSON))
+		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getTransactionReceipt":
+				resp.Result = receiptJSON
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).URL()
+		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{HTTP: httpURL, ExternalRequestMaxResponseSize: responseSize - 1})
+		_, err := rpcClient.TransactionReceiptWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionReceiptOpts{IsExternalRequest: false})
+		require.NoError(t, err)
+		_, err = rpcClient.TransactionReceiptWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionReceiptOpts{IsExternalRequest: true})
+		require.ErrorContains(t, err, "RPC call failed: reached read limit of")
+	})
+}
+
 func TestRPCClient_TransactionByHashWithOpts(t *testing.T) {
 	t.Parallel()
 	t.Run("Returns an error if external request's response size exceeds limit", func(t *testing.T) {
