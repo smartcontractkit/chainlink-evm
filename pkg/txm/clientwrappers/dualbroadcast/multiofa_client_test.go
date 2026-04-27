@@ -2,6 +2,7 @@ package dualbroadcast
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"math/big"
@@ -19,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
@@ -85,6 +87,84 @@ func (m *ofaBackendMock) NonceAt(ctx context.Context, address common.Address, bl
 }
 
 var _ multiOfaBackend = (*ofaBackendMock)(nil)
+
+func TestNewMultiOfaClient_EmptyURLs_Errors(t *testing.T) {
+	t.Parallel()
+
+	_, err := newMultiOfaClient(logger.Test(t), nil, nil, []*url.URL{}, big.NewInt(1), nil, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must not be empty")
+}
+
+func TestMultiOfaClient_SendTransaction_GetMetaError_ReturnsEarly(t *testing.T) {
+	invalidMeta := sqlutil.JSON([]byte(`not-json`))
+	tx := &txmtypes.Transaction{
+		Meta: &invalidMeta,
+	}
+	attempt := &txmtypes.Attempt{}
+
+	chainClient := &chainClientMock{}
+	primary := &ofaBackendMock{
+		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
+			require.FailNow(t, "primary OFA must not run when meta JSON is invalid")
+			return nil
+		},
+	}
+	mc := createMultiOfaClient(t, chainClient, primary)
+
+	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unmarshalling meta")
+	require.Zero(t, chainClient.sendTxCalls.Load(), "chain client must not run when GetMeta fails")
+}
+
+func TestMultiOfaClient_NonDual_DualBroadcastFalse_RoutesOnlyToChainClient(t *testing.T) {
+	chainClient := &chainClientMock{}
+	dualFalse := false
+	metaJSON, err := json.Marshal(txmtypes.TxMeta{DualBroadcast: &dualFalse})
+	require.NoError(t, err)
+	meta := sqlutil.JSON(metaJSON)
+
+	nonce := uint64(1)
+	to := common.HexToAddress("0x456")
+	signedTx := evmtypes.NewTx(&evmtypes.LegacyTx{
+		Nonce:    nonce,
+		To:       &to,
+		Gas:      21000,
+		GasPrice: big.NewInt(1),
+	})
+	tx := &txmtypes.Transaction{
+		Nonce:       &nonce,
+		FromAddress: common.HexToAddress("0x123"),
+		ToAddress:   to,
+		Meta:        &meta,
+	}
+	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
+
+	primary := &ofaBackendMock{
+		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
+			require.FailNow(t, "primary OFA must not receive SendTransaction when DualBroadcast is false")
+			return nil
+		},
+	}
+	secCalled := make(chan struct{}, 1)
+	secondary := &ofaBackendMock{
+		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
+			secCalled <- struct{}{}
+			return nil
+		},
+	}
+
+	mc := createMultiOfaClient(t, chainClient, primary, secondary)
+	require.NoError(t, mc.SendTransaction(testutils.Context(t), tx, attempt))
+	require.Equal(t, int32(1), chainClient.sendTxCalls.Load())
+
+	select {
+	case <-secCalled:
+		require.FailNow(t, "secondaries must not run when DualBroadcast is false")
+	default:
+	}
+}
 
 func TestMultiOfaClient_NonDual_RoutesOnlyToChainClient(t *testing.T) {
 	chainClient := &chainClientMock{}
@@ -204,6 +284,34 @@ func TestMultiOfaClient_SecondarySend_DoesNotBlockReturn(t *testing.T) {
 	}
 
 	close(releaseSecondary)
+}
+
+func TestMultiOfaClient_SecondaryUsesRpcTimeoutWhenSecondarySendTimeoutZero(t *testing.T) {
+	var remainingNs atomic.Int64
+	chainClient := &chainClientMock{}
+	primary := &ofaBackendMock{}
+	secondary := &ofaBackendMock{
+		sendCalled: make(chan struct{}, 1),
+		sendTxFn: func(ctx context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
+			if d, ok := ctx.Deadline(); ok {
+				remainingNs.Store(int64(time.Until(d)))
+			}
+			return nil
+		},
+	}
+
+	mc := createMultiOfaClient(t, chainClient, primary, secondary)
+	mc.secondarySendTimeout = 0
+	tx, attempt := newDualBroadcastTx(t, 1)
+	require.NoError(t, mc.SendTransaction(testutils.Context(t), tx, attempt))
+
+	require.Eventually(t, func() bool {
+		return remainingNs.Load() > 0
+	}, 2*time.Second, 5*time.Millisecond, "secondary should observe a deadline")
+
+	rem := time.Duration(remainingNs.Load())
+	assert.InDelta(t, float64(rpcTimeout), float64(rem), float64(400*time.Millisecond),
+		"secondary context should use rpcTimeout when secondarySendTimeout is unset")
 }
 
 func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {
