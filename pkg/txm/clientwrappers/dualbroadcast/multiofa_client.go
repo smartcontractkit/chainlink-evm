@@ -65,7 +65,7 @@ func newMultiOfaClient(
 		secondaries = append(secondaries, sec)
 	}
 
-	//nolint:gosec using ofaURLs is safe here as we validated that it is not empty above
+	//nolint:gosec // disable G602 // using ofaURLs is safe here as we validated that it is not empty above
 	lggr.Infow("MultiOfaClient created",
 		"primaryURL", redactURL(ofaURLs[0]), "secondaryURLs", redactURLs(ofaURLs[1:]),
 	)
