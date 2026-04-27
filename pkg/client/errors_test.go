@@ -580,6 +580,15 @@ func Test_IsTooManyResultsError(t *testing.T) {
 	})
 }
 
+func Test_IsBatchRPCResponseEnvelopeUnmarshalError(t *testing.T) {
+	t.Parallel()
+	inner := errors.New(`json: cannot unmarshal object into Go value of type []*rpc.jsonrpcMessage`)
+	assert.True(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(inner))
+	assert.True(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(fmt.Errorf("wrapped: %w", inner)))
+	assert.False(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(nil))
+	assert.False(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(errors.New("RPC call failed: some other failure")))
+}
+
 func Test_IsMissingBlocksError(t *testing.T) {
 	customErrors := evmclient.NewTestClientErrors()
 

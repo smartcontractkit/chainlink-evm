@@ -19,6 +19,7 @@ func TestClientConfigBuilder(t *testing.T) {
 	selectionMode := ptr("HighestHead")
 	leaseDuration := 0 * time.Second
 	pollFailureThreshold := ptr(uint32(5))
+	pollSuccessThreshold := ptr(uint32(3))
 	pollInterval := 10 * time.Second
 	syncThreshold := ptr(uint32(5))
 	nodeIsSyncingEnabled := ptr(false)
@@ -42,7 +43,7 @@ func TestClientConfigBuilder(t *testing.T) {
 	noNewHeadsThreshold := time.Second
 	newHeadsPollInterval := 0 * time.Second
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(selectionMode, leaseDuration, chainTypeStr, nodeConfigs,
-		pollFailureThreshold, pollInterval, syncThreshold, nodeIsSyncingEnabled, noNewHeadsThreshold, finalityDepth,
+		pollFailureThreshold, pollSuccessThreshold, pollInterval, syncThreshold, nodeIsSyncingEnabled, noNewHeadsThreshold, finalityDepth,
 		finalityTagEnabled, SafeTagSupported, finalizedBlockOffset, enforceRepeatableRead, deathDeclarationDelay, noNewFinalizedBlocksThreshold,
 		pollInterval, newHeadsPollInterval, confirmationTimeout, safeDepth)
 	require.NoError(t, err)
@@ -51,6 +52,7 @@ func TestClientConfigBuilder(t *testing.T) {
 	require.Equal(t, *selectionMode, nodePool.SelectionMode())
 	require.Equal(t, leaseDuration, nodePool.LeaseDuration())
 	require.Equal(t, *pollFailureThreshold, nodePool.PollFailureThreshold())
+	require.Equal(t, *pollSuccessThreshold, nodePool.PollSuccessThreshold())
 	require.Equal(t, pollInterval, nodePool.PollInterval())
 	require.Equal(t, *syncThreshold, nodePool.SyncThreshold())
 	require.Equal(t, *nodeIsSyncingEnabled, nodePool.NodeIsSyncingEnabled())

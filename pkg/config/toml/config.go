@@ -403,6 +403,7 @@ type Chain struct {
 	LinkContractAddress          *types.EIP55Address
 	LogBackfillBatchSize         *uint32
 	LogPollInterval              *commonconfig.Duration
+	LogPollerSkipEmptyBlocks     *bool
 	LogKeepBlocksDepth           *uint32
 	LogPrunePageSize             *uint32
 	BackupLogPollerBlockDelay    *uint64
@@ -444,6 +445,10 @@ func (c *Chain) ValidateConfig() (err error) {
 	}
 	if *c.MinIncomingConfirmations < 1 {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "MinIncomingConfirmations", Value: *c.MinIncomingConfirmations,
+			Msg: "must be greater than or equal to 1"})
+	}
+	if *c.RPCDefaultBatchSize < 1 {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "RPCDefaultBatchSize", Value: *c.RPCDefaultBatchSize,
 			Msg: "must be greater than or equal to 1"})
 	}
 
@@ -1091,6 +1096,7 @@ func (r *ClientErrors) setFrom(f *ClientErrors) bool {
 
 type NodePool struct {
 	PollFailureThreshold           *uint32
+	PollSuccessThreshold           *uint32
 	PollInterval                   *commonconfig.Duration
 	SelectionMode                  *string
 	SyncThreshold                  *uint32
@@ -1108,6 +1114,9 @@ type NodePool struct {
 func (p *NodePool) setFrom(f *NodePool) {
 	if v := f.PollFailureThreshold; v != nil {
 		p.PollFailureThreshold = v
+	}
+	if v := f.PollSuccessThreshold; v != nil {
+		p.PollSuccessThreshold = v
 	}
 	if v := f.PollInterval; v != nil {
 		p.PollInterval = v

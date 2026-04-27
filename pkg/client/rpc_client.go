@@ -369,6 +369,28 @@ func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method 
 	return err
 }
 
+// batchElemLog is a logging-safe view of rpc.BatchElem that omits Result. After
+// BatchCallContext returns, Result fields may hold large payloads (for example
+// many eth_getTransactionReceipt responses); including them in logger context
+// massively increases log volume even when the batch fails.
+type batchElemLog struct {
+	Method string
+	Args   []interface{}
+	Error  error
+}
+
+func batchElemsForLog(b []rpc.BatchElem) []batchElemLog {
+	out := make([]batchElemLog, len(b))
+	for i := range b {
+		out[i] = batchElemLog{
+			Method: b[i].Method,
+			Args:   b[i].Args,
+			Error:  b[i].Error,
+		}
+	}
+	return out
+}
+
 func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem) error {
 	// Astar's finality tags provide weaker finality guarantees than we require.
 	// Fetch latest finalized block using Astar's custom requests and populate it after batch request completes
@@ -396,7 +418,10 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(rootCtx, r.largePayloadRPCTimeout)
 	defer cancel()
-	lggr := r.newRqLggr().With("nBatchElems", len(b), "batchElems", b)
+
+	logElems := batchElemsForLog(b)
+
+	lggr := r.newRqLggr().With("nBatchElems", len(b), "batchElems", logElems)
 
 	lggr.Trace("RPC call: evmclient.Client#BatchCallContext")
 	start := time.Now()
@@ -809,12 +834,12 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 	lggr := r.newRqLggr().With("tx", tx)
 
 	lggr.Debug("RPC call: evmclient.Client#SendTransaction")
-	start := time.Now()
 	if r.isChainType(chaintype.ChainTron) {
 		err := errors.New("SendTransaction not implemented for Tron, this should never be called")
 		return struct{}{}, multinode.Fatal, err
 	}
 
+	start := time.Now()
 	err := r.wrapRPCClientError(client.geth.SendTransaction(ctx, tx))
 	duration := time.Since(start)
 

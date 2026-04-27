@@ -28,6 +28,7 @@ FlagsContractAddress = '0xae4E781a6218A8031764928E88d457937A954fC3' # Example
 LinkContractAddress = '0x538aAaB4ea120b2bC2fe5D296852D948F07D849e' # Example
 LogBackfillBatchSize = 1000 # Default
 LogPollInterval = '15s' # Default
+LogPollerSkipEmptyBlocks = false # Default
 LogKeepBlocksDepth = 100000 # Default
 LogPrunePageSize = 0 # Default
 BackupLogPollerBlockDelay = 100 # Default
@@ -171,6 +172,13 @@ LogBackfillBatchSize sets the batch size for calling FilterLogs when we backfill
 LogPollInterval = '15s' # Default
 ```
 LogPollInterval works in conjunction with Feature.LogPoller. Controls how frequently the log poller polls for logs. Defaults to the block production rate.
+
+### LogPollerSkipEmptyBlocks
+:warning: **_ADVANCED_**: _Do not change this setting unless you know what you are doing._
+```toml
+LogPollerSkipEmptyBlocks = false # Default
+```
+LogPollerSkipEmptyBlocks works in conjunction with Feature.LogPoller. Controls whether the log poller skips blocks with no logs. Setting this to true can reduce DB load, however it can affect product performance. Consult with specific Chainlink product team before changing this setting.
 
 ### LogKeepBlocksDepth
 :warning: **_ADVANCED_**: _Do not change this setting unless you know what you are doing._
@@ -926,6 +934,7 @@ GasEstimator.PriceMax overrides the maximum gas price for this key. See EVM.GasE
 ```toml
 [NodePool]
 PollFailureThreshold = 5 # Default
+PollSuccessThreshold = 0 # Default
 PollInterval = '10s' # Default
 SelectionMode = 'HighestHead' # Default
 SyncThreshold = 5 # Default
@@ -949,6 +958,14 @@ PollFailureThreshold = 5 # Default
 PollFailureThreshold indicates how many consecutive polls must fail in order to mark a node as unreachable.
 
 Set to zero to disable poll checking.
+
+### PollSuccessThreshold
+```toml
+PollSuccessThreshold = 0 # Default
+```
+PollSuccessThreshold indicates how many consecutive polls must succeed in order to mark a node as alive once it has been marked as unreachable.
+
+Set to zero to require no successful polls (previous behavior).
 
 ### PollInterval
 ```toml
