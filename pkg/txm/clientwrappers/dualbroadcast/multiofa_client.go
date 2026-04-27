@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -92,12 +93,12 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 	}
 
 	// send to secondaries in parallel, fire-and-forget: in case of error, log and continue
+	var wg sync.WaitGroup
 	for _, secondary := range m.secondaries {
 		sec := secondary
+		wg.Add(1)
 		go func() {
-
-			// TODO(gg): add waitgroup, see this comment: https://github.com/smartcontractkit/chainlink-evm/pull/410#discussion_r3110773136
-
+			defer wg.Done()
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
@@ -113,7 +114,9 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 
 	primaryCtx, cancel := context.WithTimeout(ctx, rpcTimeout)
 	defer cancel()
-	return m.primary.SendTransaction(primaryCtx, tx, attempt)
+	err = m.primary.SendTransaction(primaryCtx, tx, attempt)
+	wg.Wait()
+	return err
 }
 
 func (m *multiOfaClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {

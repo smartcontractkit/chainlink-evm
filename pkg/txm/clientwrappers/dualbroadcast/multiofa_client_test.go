@@ -180,6 +180,49 @@ func TestMultiOfaClient_SendTransaction_BothSucceed(t *testing.T) {
 	}
 }
 
+// TestMultiOfaClient_SendTransaction_WaitsForSecondaryBeforeReturn guards the WaitGroup behavior:
+// the call must not return until every secondary SendTransaction has finished (so we do not
+// detach goroutines that may outlive the request).
+func TestMultiOfaClient_SendTransaction_WaitsForSecondaryBeforeReturn(t *testing.T) {
+	releaseSecondary := make(chan struct{})
+	chainClient := &chainClientMock{}
+	primary := &ofaBackendMock{
+		label: "primary",
+		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
+			return nil
+		},
+	}
+	secondary := &ofaBackendMock{
+		label: "secondary",
+		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
+			<-releaseSecondary
+			return nil
+		},
+	}
+	mc := createMultiOfaClient(t, chainClient, primary, secondary)
+	tx, attempt := newDualBroadcastTx(t, 1)
+
+	done := make(chan error, 1)
+	go func() {
+		done <- mc.SendTransaction(testutils.Context(t), tx, attempt)
+	}()
+
+	select {
+	case err := <-done:
+		t.Fatalf("SendTransaction returned before secondary completed: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	close(releaseSecondary)
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("SendTransaction did not return after secondary was released")
+	}
+}
+
 func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {
 	chainClient := &chainClientMock{}
 	primaryErr := errors.New("flashbots rejected")
