@@ -32,7 +32,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 
 	var mc txm.Client
 	// for fastlane atlas we support single URL only
-	if len(ofaURLs) == 1 && strings.Contains(ofaURLs[0].String(), "auctioneer") {
+	if len(ofaURLs) == 1 && strings.Contains(ofaURLs[0].String(), "fastlane") {
 		mc, err = NewMetaClient(lggr, chainClient, keyStore, ofaURLs[0], chainID, txStore, auctionRequestTimeout, lifecycleMetrics)
 		if err != nil {
 			return nil, nil, err
