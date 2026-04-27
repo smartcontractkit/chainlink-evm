@@ -87,34 +87,45 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 	assert.Equal(t, ofaNova, nc.ofa)
 }
 
-func TestSelectClient_MetaPrimaryOnly(t *testing.T) {
+func TestSelectClient_FastlaneSingleAuctioneerURL_ReturnsMetaClient(t *testing.T) {
 	mockClient := clienttest.NewClient(t)
 	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
 
 	c, eh, err := SelectClient(logger.Test(t), mockClient, nil,
-		[]*url.URL{mustParseURL(t, "https://custom-auction.example.com")},
+		[]*url.URL{mustParseURL(t, "https://auctioneer.fastlane.example.com/v1/submit")},
 		big.NewInt(1), nil, false, nil, nil, testTxmMetrics(t))
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.NotNil(t, eh)
 
 	_, ok := c.(*MetaClient)
-	require.True(t, ok, "Meta auction URL should return MetaClient directly, not multiOfaClient")
+	require.True(t, ok)
 }
 
-func TestSelectClient_IgnoresNonPrimaryURLsWhenPrimaryIsMeta(t *testing.T) {
+func TestSelectClient_NonRelaySingleURL_Errors(t *testing.T) {
+	mockClient := clienttest.NewClient(t)
+	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
+
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil,
+		[]*url.URL{mustParseURL(t, "https://custom-auction.example.com")},
+		big.NewInt(1), nil, false, nil, nil, testTxmMetrics(t))
+	require.Error(t, err)
+	require.Nil(t, c)
+	require.Nil(t, eh)
+	assert.Contains(t, err.Error(), "does not support OFA URL")
+}
+
+func TestSelectClient_MultipleURLsWithAuctioneerPrimary_Errors(t *testing.T) {
 	mockClient := clienttest.NewClient(t)
 	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
 
 	urls := []*url.URL{
-		mustParseURL(t, "https://custom-auction-a.example.com"),
-		mustParseURL(t, "https://custom-auction-b.example.com"),
+		mustParseURL(t, "https://auctioneer.fastlane.example.com"),
+		mustParseURL(t, "https://relay.flashbots.net"),
 	}
 	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil, testTxmMetrics(t))
-	require.NoError(t, err)
-	assert.NotNil(t, c)
-	assert.NotNil(t, eh)
-
-	_, ok := c.(*MetaClient)
-	require.True(t, ok, "Meta auction URL should return MetaClient directly, not multiOfaClient")
+	require.Error(t, err)
+	require.Nil(t, c)
+	require.Nil(t, eh)
+	assert.Contains(t, err.Error(), "does not support OFA URL")
 }

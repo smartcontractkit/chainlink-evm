@@ -30,24 +30,20 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 		return nil, nil, err
 	}
 
-	primaryURL := ofaURLs[0].String()
-	switch {
-	case strings.Contains(primaryURL, "flashbots") || strings.Contains(primaryURL, "novarpc"):
-		mc, err := newMultiOfaClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles)
-		return mc, nil, err
-	default:
+	// for fastlane atlas we support single URL only
+	if len(ofaURLs) == 1 && strings.Contains(ofaURLs[0].String(), "auctioneer") {
 		mc, err := NewMetaClient(lggr, chainClient, keyStore, ofaURLs[0], chainID, txStore, auctionRequestTimeout, lifecycleMetrics)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		if len(ofaURLs) > 1 {
-			lggr.Warnw("Created MetaClient for primary OFA URL, ignoring secondary OFA URLs",
-				"primaryURL", redactURL(ofaURLs[0]),
-				"secondaryURLs", redactURLs(ofaURLs[1:]),
-			)
-		}
-
 		return mc, NewErrorHandler(), nil
 	}
+
+	// use multiOfaClient for all other cases
+	mc, err := newMultiOfaClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles)
+	if err != nil {
+		return nil, nil, err
+	}
+	return mc, nil, err
 }
