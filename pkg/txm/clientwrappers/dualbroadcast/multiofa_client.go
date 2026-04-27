@@ -73,7 +73,7 @@ func newMultiOfaClient(
 		secondaryLabels[i] = secondary.Label()
 	}
 
-	lggr.Infow("TransactionManagerV2 OFA client created",
+	lggr.Infow("MultiOfaClient created",
 		"primaryBackend", primary.Label(),
 		"primaryURL", redactURL(ofaURLs[0]),
 		"secondaryBackends", secondaryLabels,

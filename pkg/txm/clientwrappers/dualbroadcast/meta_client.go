@@ -161,7 +161,7 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 		t = *auctionRequestTimeout
 	}
 
-	lggr.Infow("Meta client created",
+	lggr.Infow("MetaClient created",
 		"customURL", redactURL(customURL),
 		"chainID", chainID,
 		"auctionRequestTimeout", t,
