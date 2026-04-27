@@ -542,6 +542,19 @@ func (r *RPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) 
 	return
 }
 
+func (r *RPCClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *evmtypes.Receipt, err error) {
+	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
+	err = r.CallContext(ctx, &receipt, "eth_getTransactionReceipt", txHash, false)
+	if err != nil {
+		return nil, err
+	}
+	if receipt == nil {
+		err = r.wrapRPCClientError(ethereum.NotFound)
+		return
+	}
+	return
+}
+
 func (r *RPCClient) TransactionReceiptGethWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *types.Receipt, err error) {
 	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)

@@ -2582,23 +2582,23 @@ func (_c *Client_TransactionReceipt_Call) RunAndReturn(run func(context.Context,
 }
 
 // TransactionReceiptWithOpts provides a mock function with given fields: ctx, txHash, opts
-func (_m *Client) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts types.TransactionReceiptOpts) (*coretypes.Receipt, error) {
+func (_m *Client) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts types.TransactionReceiptOpts) (*types.Receipt, error) {
 	ret := _m.Called(ctx, txHash, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TransactionReceiptWithOpts")
 	}
 
-	var r0 *coretypes.Receipt
+	var r0 *types.Receipt
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, types.TransactionReceiptOpts) (*coretypes.Receipt, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, types.TransactionReceiptOpts) (*types.Receipt, error)); ok {
 		return rf(ctx, txHash, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, types.TransactionReceiptOpts) *coretypes.Receipt); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, types.TransactionReceiptOpts) *types.Receipt); ok {
 		r0 = rf(ctx, txHash, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*coretypes.Receipt)
+			r0 = ret.Get(0).(*types.Receipt)
 		}
 	}
 
@@ -2631,12 +2631,12 @@ func (_c *Client_TransactionReceiptWithOpts_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *Client_TransactionReceiptWithOpts_Call) Return(_a0 *coretypes.Receipt, _a1 error) *Client_TransactionReceiptWithOpts_Call {
+func (_c *Client_TransactionReceiptWithOpts_Call) Return(_a0 *types.Receipt, _a1 error) *Client_TransactionReceiptWithOpts_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Client_TransactionReceiptWithOpts_Call) RunAndReturn(run func(context.Context, common.Hash, types.TransactionReceiptOpts) (*coretypes.Receipt, error)) *Client_TransactionReceiptWithOpts_Call {
+func (_c *Client_TransactionReceiptWithOpts_Call) RunAndReturn(run func(context.Context, common.Hash, types.TransactionReceiptOpts) (*types.Receipt, error)) *Client_TransactionReceiptWithOpts_Call {
 	_c.Call.Return(run)
 	return _c
 }
