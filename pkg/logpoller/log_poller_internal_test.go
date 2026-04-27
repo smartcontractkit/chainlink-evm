@@ -380,7 +380,7 @@ func assertBackupPollerStartup(t *testing.T, head *evmtypes.Head, finalizedHead 
 	assert.Equal(t, int64(0), lp.backupPollerNextBlock)
 	assert.Equal(t, 1, observedLogs.FilterMessageSnippet("ran before first successful log poller run").Len())
 
-	lp.PollAndSaveLogs(ctx, head.Number)
+	lp.PollAndSaveLogs(ctx, head.Number, false)
 
 	lastProcessed, err := lp.orm.SelectLatestBlock(ctx)
 	require.NoError(t, err)
@@ -489,7 +489,7 @@ func TestLogPoller_Replay(t *testing.T) {
 	{
 		ctx := testutils.Context(t)
 		// process 1 log in block 3
-		lp.PollAndSaveLogs(ctx, 4)
+		lp.PollAndSaveLogs(ctx, 4, false)
 		latest, err := lp.LatestBlock(ctx)
 		require.NoError(t, err)
 		require.Equal(t, int64(4), latest.BlockNumber)
@@ -894,7 +894,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		// insert finalized block with different hash than in RPC
 		require.NoError(t, orm.InsertBlock(t.Context(), common.HexToHash("0x123"), 2, time.Unix(10, 0), 2, 2))
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(t.Context(), 4)
+		lp.PollAndSaveLogs(t.Context(), 4, false)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("RPCs contradict each other and return different finalized blocks", func(t *testing.T) {
@@ -915,7 +915,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 			return evmtypes.Head{Number: num, Hash: utils.NewHash()}
 		})
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(t.Context(), 4)
+		lp.PollAndSaveLogs(t.Context(), 4, false)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("Log's hash does not match block's", func(t *testing.T) {
@@ -933,7 +933,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5, BlockHash: common.HexToHash("0x123")}}, nil).Once()
 		mockBatchCallContext(t, ec)
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(t.Context(), 4)
+		lp.PollAndSaveLogs(t.Context(), 4, false)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("Happy path", func(t *testing.T) {
@@ -953,9 +953,227 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5, BlockHash: common.BigToHash(big.NewInt(5)), Topics: []common.Hash{{}}}}, nil).Once()
 		mockBatchCallContext(t, ec)
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(t.Context(), 4)
+		lp.PollAndSaveLogs(t.Context(), 4, false)
 		require.NoError(t, lp.HealthReport()[lp.Name()])
 	})
+}
+
+func Test_FindBlockAfterLCA(t *testing.T) {
+	testCases := []struct {
+		Name            string
+		SkipEmptyBlocks bool
+	}{
+		{
+			Name:            "Skip empty block",
+			SkipEmptyBlocks: true,
+		},
+		{
+			Name:            "Don't skip empty block",
+			SkipEmptyBlocks: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			lpOpts := Opts{
+				PollPeriod:               time.Second,
+				FinalityDepth:            3,
+				BackfillBatchSize:        3,
+				RPCBatchSize:             3,
+				KeepFinalizedBlocksDepth: 20,
+				BackupPollerBlockDelay:   0,
+				SkipEmptyBlocks:          tc.SkipEmptyBlocks,
+			}
+			testFindBlockAfterLCA(t, lpOpts)
+		})
+	}
+}
+
+func testFindBlockAfterLCA(t *testing.T, opts Opts) {
+	testCases := []struct {
+		Name               string
+		CurrentBlockNumber int64
+		DBLatestFinalized  int64
+		DBBlocks           []int64
+		Setup              func(t *testing.T, ec *clienttest.Client)
+		ExpectedError      error
+		ExpectedHead       *evmtypes.Head
+	}{
+		{
+			Name:               "current head lower than DB finalized",
+			CurrentBlockNumber: 3,
+			DBLatestFinalized:  5,
+			DBBlocks:           nil,
+			Setup:              nil,
+			ExpectedError:      commontypes.ErrFinalityViolated,
+			ExpectedHead:       nil,
+		},
+		{
+			Name:               "no reorg - chains match on first iteration",
+			CurrentBlockNumber: 5,
+			DBLatestFinalized:  3,
+			DBBlocks:           []int64{4},
+			Setup: func(t *testing.T, ec *clienttest.Client) {
+				ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+					return newHead(n.Int64()), nil
+				})
+			},
+			ExpectedError: nil,
+			ExpectedHead:  newHead(5),
+		},
+		{
+			Name:               "reorg - LCA found after walking back",
+			CurrentBlockNumber: 5,
+			DBLatestFinalized:  1,
+			DBBlocks:           []int64{2, 3},
+			Setup: func(t *testing.T, ec *clienttest.Client) {
+				ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+					num := n.Int64()
+					if num == 4 {
+						return &evmtypes.Head{Number: 4, Hash: common.BigToHash(big.NewInt(4)), ParentHash: common.HexToHash("0xdead")}, nil
+					}
+					return newHead(num), nil
+				}).Maybe()
+			},
+			ExpectedError: nil,
+			ExpectedHead:  newHead(3),
+		},
+		{
+			Name:               "reorg too deep",
+			CurrentBlockNumber: 5,
+			DBLatestFinalized:  2,
+			DBBlocks:           []int64{1},
+			Setup: func(t *testing.T, ec *clienttest.Client) {
+				ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+					num := n.Int64()
+					return &evmtypes.Head{Number: num, Hash: common.BigToHash(big.NewInt(num)), ParentHash: common.HexToHash("0xbeef")}, nil
+				})
+			},
+			ExpectedError: commontypes.ErrFinalityViolated,
+			ExpectedHead:  nil,
+		},
+		{
+			Name:               "RPC HeadByNumber returns error",
+			CurrentBlockNumber: 5,
+			DBLatestFinalized:  3,
+			DBBlocks:           []int64{4},
+			Setup: func(t *testing.T, ec *clienttest.Client) {
+				ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+					if n.Int64() == 5 {
+						return nil, errors.New("rpc error")
+					}
+					return newHead(n.Int64()), nil
+				})
+			},
+			ExpectedError: errors.New("rpc error"),
+			ExpectedHead:  nil,
+		},
+		{
+			Name:               "All blocks in DB are on a different chain",
+			CurrentBlockNumber: 100,
+			DBLatestFinalized:  10,
+			DBBlocks:           []int64{90, 80, 55, 20},
+			Setup: func(t *testing.T, ec *clienttest.Client) {
+				ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+					head := newHead(n.Int64())
+					if n.Int64() < 20 {
+						return head, nil
+					}
+					head.ParentHash = common.HexToHash("0xdead")
+					head.Hash = common.HexToHash("0xdead")
+					return head, nil
+				})
+			},
+			ExpectedError: nil,
+			ExpectedHead: &evmtypes.Head{
+				Number:     20,
+				Hash:       common.HexToHash("0xdead"),
+				ParentHash: common.HexToHash("0xdead"),
+			},
+		},
+		{
+			Name:               "Sparse DB blocks - LCA found successfully",
+			CurrentBlockNumber: 100,
+			DBLatestFinalized:  10,
+			DBBlocks:           []int64{90, 80, 55, 20},
+			Setup: func(t *testing.T, ec *clienttest.Client) {
+				ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+					head := newHead(n.Int64())
+					if n.Int64() > 21 {
+						head.ParentHash = common.HexToHash("0xdead")
+						return head, nil
+					}
+					return head, nil
+				})
+			},
+			ExpectedError: nil,
+			ExpectedHead:  newHead(21),
+		},
+		{
+			Name:               "Child of latest finalized is not canonical - finality violation",
+			CurrentBlockNumber: 100,
+			DBLatestFinalized:  80,
+			DBBlocks:           []int64{90, 80, 55, 20},
+			Setup: func(t *testing.T, ec *clienttest.Client) {
+				ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+					head := newHead(n.Int64())
+					if n.Int64() > 80 {
+						head.ParentHash = common.HexToHash("0xdead")
+						return head, nil
+					}
+					return head, nil
+				})
+			},
+			ExpectedError: commontypes.ErrFinalityViolated,
+			ExpectedHead:  nil,
+		},
+		{
+			// Such case is possible, since DBLatestFinalized is defined by FinalizedBlockNumber of the latest block.
+			Name:               "Latest finalized DB block is in canonical but much older than DBLatestFinalized",
+			CurrentBlockNumber: 100,
+			DBLatestFinalized:  80,
+			DBBlocks:           []int64{90, 70, 55, 20},
+			Setup: func(t *testing.T, ec *clienttest.Client) {
+				ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+					head := newHead(n.Int64())
+					if n.Int64() > 80 {
+						head.ParentHash = common.HexToHash("0xdead")
+						return head, nil
+					}
+					return head, nil
+				})
+			},
+			ExpectedError: nil,
+			ExpectedHead:  newHead(71),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			db := testutils.NewSqlxDB(t)
+			lggr, _ := logger.TestObserved(t, zapcore.DebugLevel)
+			orm := NewORM(testutils.NewRandomEVMChainID(), db, lggr)
+			headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+			ec := clienttest.NewClient(t)
+			ctx := testutils.Context(t)
+			for _, blockNum := range tc.DBBlocks {
+				hash := common.BigToHash(big.NewInt(blockNum))
+				require.NoError(t, orm.InsertBlock(ctx, hash, blockNum, time.Now(), blockNum, blockNum))
+			}
+			if tc.Setup != nil {
+				tc.Setup(t, ec)
+			}
+			lp := NewLogPoller(orm, ec, lggr, headTracker, opts)
+			blockAfterLCA, err := lp.findBlockAfterLCA(ctx, tc.CurrentBlockNumber, tc.DBLatestFinalized)
+			if tc.ExpectedError != nil {
+				require.ErrorContains(t, err, tc.ExpectedError.Error())
+				require.Nil(t, blockAfterLCA)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.ExpectedHead, blockAfterLCA)
+			}
+		})
+	}
 }
 
 func benchmarkFilter(b *testing.B, nFilters, nAddresses, nEvents int) {

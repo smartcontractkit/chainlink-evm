@@ -164,7 +164,7 @@ func (th *TestHarness) AdjustTime(t *testing.T, d time.Duration) {
 }
 
 func (th *TestHarness) PollAndSaveLogs(ctx context.Context, currentBlockNumber int64) int64 {
-	th.LogPoller.PollAndSaveLogs(ctx, currentBlockNumber)
+	th.LogPoller.PollAndSaveLogs(ctx, currentBlockNumber, false)
 	latest, _ := th.LogPoller.LatestBlock(ctx)
 	return latest.BlockNumber + 1
 }
@@ -182,7 +182,7 @@ func (th *TestHarness) assertHaveCanonical(t *testing.T, start, end int) {
 		require.NoError(t, err, "block %v", i)
 		chainBlk, err := th.Client.BlockByNumber(testutils.Context(t), big.NewInt(int64(i)))
 		require.NoError(t, err)
-		assert.Equal(t, chainBlk.Hash().Bytes(), blk.BlockHash.Bytes(), "block %v", i)
+		assert.Equal(t, chainBlk.Hash().String(), blk.BlockHash.String(), "block %v", i)
 	}
 }
 

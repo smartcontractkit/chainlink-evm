@@ -10,7 +10,13 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 )
+
+func testTxmMetrics(t *testing.T) txm.Metrics {
+	t.Helper()
+	return txm.NewTxmMetrics(logger.Test(t), big.NewInt(1))
+}
 
 func mustParseURL(t *testing.T, raw string) *url.URL {
 	t.Helper()
@@ -25,7 +31,7 @@ func TestSelectClient_FlashbotsPrimaryOnly(t *testing.T) {
 
 	c, eh, err := SelectClient(logger.Test(t), mockClient, nil,
 		[]*url.URL{mustParseURL(t, "https://relay.flashbots.net")},
-		big.NewInt(1), nil, false, nil, nil)
+		big.NewInt(1), nil, false, nil, nil, testTxmMetrics(t))
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.Nil(t, eh)
@@ -47,7 +53,7 @@ func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
 		mustParseURL(t, "https://eth.novarpc.xyz?api_key=test"),
 	}
 
-	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil)
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil, testTxmMetrics(t))
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.Nil(t, eh)
@@ -69,7 +75,7 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 
 	c, _, err := SelectClient(logger.Test(t), mockClient, nil,
 		[]*url.URL{mustParseURL(t, "https://eth.novarpc.xyz?api_key=test")},
-		big.NewInt(1), nil, false, nil, nil)
+		big.NewInt(1), nil, false, nil, nil, testTxmMetrics(t))
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 
@@ -87,7 +93,7 @@ func TestSelectClient_MetaPrimaryOnly(t *testing.T) {
 
 	c, eh, err := SelectClient(logger.Test(t), mockClient, nil,
 		[]*url.URL{mustParseURL(t, "https://custom-auction.example.com")},
-		big.NewInt(1), nil, false, nil, nil)
+		big.NewInt(1), nil, false, nil, nil, testTxmMetrics(t))
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.NotNil(t, eh)
@@ -104,7 +110,7 @@ func TestSelectClient_IgnoresNonPrimaryURLsWhenPrimaryIsMeta(t *testing.T) {
 		mustParseURL(t, "https://custom-auction-a.example.com"),
 		mustParseURL(t, "https://custom-auction-b.example.com"),
 	}
-	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil)
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil, testTxmMetrics(t))
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.NotNil(t, eh)

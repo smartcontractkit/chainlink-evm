@@ -246,6 +246,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 				LogPrunePageSize:         int64(cfg.EVM().LogPrunePageSize()),
 				BackupPollerBlockDelay:   int64(cfg.EVM().BackupLogPollerBlockDelay()),
 				ClientErrors:             cfg.EVM().NodePool().Errors(),
+				SkipEmptyBlocks:          cfg.EVM().LogPollerSkipEmptyBlocks(),
 			}
 
 			lpORM, err := logpoller.NewObservedORM(chainID, opts.DS, l)
@@ -377,20 +378,26 @@ func (c *chain) Close() error {
 	return c.StopOnce("Chain", func() (merr error) {
 		c.logger.Debug("Chain: stopping")
 
+		// Stop event sources before consumers to prevent late delivery
+		// (e.g. headBroadcaster calling balanceMonitor.OnNewLongestChain
+		// after the balance monitor has stopped, causing a data race).
+
 		if c.logPoller != logpoller.LogPollerDisabled {
 			merr = multierr.Append(merr, c.logPoller.Close())
 		}
 
-		if c.balanceMonitor != nil {
-			c.logger.Debug("Chain: stopping balance monitor")
-			merr = c.balanceMonitor.Close()
-		}
 		c.logger.Debug("Chain: stopping logBroadcaster")
 		merr = multierr.Combine(merr, c.logBroadcaster.Close())
 		c.logger.Debug("Chain: stopping headTracker")
 		merr = multierr.Combine(merr, c.headTracker.Close())
 		c.logger.Debug("Chain: stopping headBroadcaster")
 		merr = multierr.Combine(merr, c.headBroadcaster.Close())
+
+		if c.balanceMonitor != nil {
+			c.logger.Debug("Chain: stopping balance monitor")
+			merr = multierr.Combine(merr, c.balanceMonitor.Close())
+		}
+
 		c.logger.Debug("Chain: stopping evmTxm")
 		merr = multierr.Combine(merr, c.txm.Close())
 
@@ -450,6 +457,11 @@ func (c *chain) Transact(ctx context.Context, from, to string, amount *big.Int, 
 	return errors.New("LOOPP not yet supported")
 }
 
+// Replay signals that the poller should resume from a new block. Blocks until the replay is complete.
+// Replay can be used to ensure that filter modification has been applied for all blocks from "fromBlock" up to latest.
+// WARN: nil error does not necessarily mean the replay was successful, clients should monitor logs to identify success.
+// This is a miss from original design, but due to the complexity of fix and the fact that callers generally don't need a strong guarantee of replay success, we choose to just log errors instead of returning them.
+// Reach out, if you think you need a stronger guarantee, and we can discuss options.
 func (c *chain) Replay(ctx context.Context, fromBlock string, args map[string]any) error {
 	block, err := strconv.ParseInt(fromBlock, 10, 64)
 	if err != nil {

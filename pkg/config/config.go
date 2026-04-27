@@ -42,6 +42,7 @@ type EVM interface {
 	LogKeepBlocksDepth() uint32
 	BackupLogPollerBlockDelay() uint64
 	LogPollInterval() time.Duration
+	LogPollerSkipEmptyBlocks() bool
 	LogPrunePageSize() uint32
 	MinContractPayment() *commonassets.Link
 	MinIncomingConfirmations() uint32
@@ -205,6 +206,7 @@ type Workflow interface {
 
 type NodePool interface {
 	PollFailureThreshold() uint32
+	PollSuccessThreshold() uint32
 	PollInterval() time.Duration
 	SelectionMode() string
 	SyncThreshold() uint32

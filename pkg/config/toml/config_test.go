@@ -48,6 +48,24 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 	}
 }
 
+func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
+	name := "fake"
+	id := DefaultIDs[0]
+	evmCfg := &EVMConfig{
+		ChainID: id,
+		Chain:   Defaults(id),
+		Nodes: EVMNodes{{
+			Name:    &name,
+			WSURL:   config.MustParseURL("wss://foo.test/ws"),
+			HTTPURL: config.MustParseURL("http://foo.test"),
+		}},
+	}
+	evmCfg.RPCDefaultBatchSize = ptr[uint32](0)
+	err := config.Validate(evmCfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "RPCDefaultBatchSize")
+}
+
 func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown := Defaults(nil)
 
@@ -260,6 +278,7 @@ var fullConfig = EVMConfig{
 		LinkContractAddress:          ptr(types.MustEIP55Address("0x538aAaB4ea120b2bC2fe5D296852D948F07D849e")),
 		LogBackfillBatchSize:         ptr[uint32](17),
 		LogPollInterval:              config.MustNewDuration(time.Minute),
+		LogPollerSkipEmptyBlocks:     ptr(false),
 		LogKeepBlocksDepth:           ptr[uint32](100000),
 		LogPrunePageSize:             ptr[uint32](0),
 		BackupLogPollerBlockDelay:    ptr[uint64](532),
@@ -312,6 +331,7 @@ var fullConfig = EVMConfig{
 
 		NodePool: NodePool{
 			PollFailureThreshold:           ptr[uint32](5),
+			PollSuccessThreshold:           ptr[uint32](0),
 			PollInterval:                   config.MustNewDuration(time.Minute),
 			SelectionMode:                  ptr(multinode.NodeSelectionModeHighestHead),
 			SyncThreshold:                  ptr[uint32](13),

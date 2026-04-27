@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder/beholdertest"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
@@ -31,10 +32,10 @@ func TestEmitTxMessage(t *testing.T) {
 		expectedHash := common.Hash{}
 		expectedChain := testutils.FixtureChainID
 		expectedNonce := uint64(256)
+		var err error
 		var actualMessage svrv1.TxMessage
 
-		txmMetrics, err := NewTxmMetrics(expectedChain)
-		require.NoError(t, err)
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
 
 		tx := &types.Transaction{
 			IsPurgeable: true,
@@ -80,10 +81,10 @@ func TestEmitTxMessage(t *testing.T) {
 		expectedHash := common.Hash{}
 		expectedChain := testutils.FixtureChainID
 		expectedNonce := uint64(256)
+		var err error
 		var actualMessage svrv1.TxMessage
 
-		txmMetrics, err := NewTxmMetrics(expectedChain)
-		require.NoError(t, err)
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
 
 		tx := &types.Transaction{
 			IsPurgeable: false,
@@ -121,8 +122,7 @@ func TestReachedMaxAttempts(t *testing.T) {
 	ctx := t.Context()
 
 	expectedChain := testutils.FixtureChainID
-	txmMetrics, err := NewTxmMetrics(expectedChain)
-	require.NoError(t, err)
+	txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
 
 	txmMetrics.ReachedMaxAttempts(ctx, true)
 	value := testutil.ToFloat64(promReachedMaxAttempts.WithLabelValues(testutils.FixtureChainID.String()))
@@ -138,8 +138,7 @@ func TestSetRPCNonce(t *testing.T) {
 	chainID := testutils.FixtureChainID
 	address := testutils.NewAddress()
 
-	m, err := NewTxmMetrics(chainID)
-	require.NoError(t, err)
+	m := NewTxmMetrics(logger.Test(t), chainID)
 
 	m.SetRPCNonce(ctx, address, 10)
 	value := testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String()))
@@ -148,4 +147,22 @@ func TestSetRPCNonce(t *testing.T) {
 	m.SetRPCNonce(ctx, address, 25)
 	value = testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String()))
 	assert.InDelta(t, float64(25), value, 0.00001)
+}
+
+func TestNoopTxmMetrics(t *testing.T) {
+	ctx := t.Context()
+	address := testutils.NewAddress()
+	nonce := uint64(1)
+	m := NewNoopTxmMetrics()
+
+	assert.NotPanics(t, func() {
+		m.IncrementLifecycleFailure(ctx, StageBroadcast)
+		m.IncrementNumBroadcastedTxs(ctx)
+		m.IncrementNumConfirmedTxs(ctx, 1)
+		m.IncrementNumNonceGaps(ctx)
+		m.ReachedMaxAttempts(ctx, true)
+		m.RecordTimeUntilTxConfirmed(ctx, 1)
+		m.SetRPCNonce(ctx, address, nonce)
+	})
+	assert.NoError(t, m.EmitTxMessage(ctx, common.Hash{}, address, &types.Transaction{Nonce: &nonce}))
 }
