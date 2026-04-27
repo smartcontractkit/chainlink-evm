@@ -834,12 +834,12 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 	lggr := r.newRqLggr().With("tx", tx)
 
 	lggr.Debug("RPC call: evmclient.Client#SendTransaction")
-	start := time.Now()
 	if r.isChainType(chaintype.ChainTron) {
 		err := errors.New("SendTransaction not implemented for Tron, this should never be called")
 		return struct{}{}, multinode.Fatal, err
 	}
 
+	start := time.Now()
 	err := r.wrapRPCClientError(client.geth.SendTransaction(ctx, tx))
 	duration := time.Since(start)
 
