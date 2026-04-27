@@ -245,16 +245,21 @@ func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
 
 const maxBlockDiff = 24
 
+// sendBundle sends a bundle of all the in-flight transactions.
 func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address, meta *types.TxMeta) error {
 	var urlParams string
 	if meta != nil && meta.DualBroadcastParams != nil {
 		urlParams = *meta.DualBroadcastParams
 	}
+
 	unconfirmedTxs, err := d.txStore.FetchUnconfirmedTransactions(ctx, fromAddress)
 	if err != nil {
 		return fmt.Errorf("failed to fetch unconfirmed transactions: %w", err)
 	}
 
+	// We fetch all the unconfirmed transactions in an ascending nonce order.
+	// For the bundle we need a signed transaction so we get the last attempt from each transaction.
+	// TODO: Implement a more sophisticated attempt selection logic if necessary.
 	attempts := make([]*types.Attempt, 0, len(unconfirmedTxs))
 	attemptIDs := make([]uint64, 0, len(unconfirmedTxs))
 	nonces := make([]uint64, 0, len(unconfirmedTxs))
@@ -268,6 +273,7 @@ func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address
 		}
 	}
 
+	// Need at least 2 transactions to send a bundle
 	if len(attempts) < 2 {
 		return nil
 	}
@@ -284,12 +290,15 @@ func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address
 		prevNonce = nonce
 	}
 
+	// We make an RPC call to get the current block height. Some async caching may help with the overhead.
 	currentBlock, err := d.c.BlockByNumber(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get current block height: %w", err)
 	}
 	maxBlock := currentBlock.NumberU64() + maxBlockDiff
 
+	// For reference, Flashbots Bundle definition can be found here: https://docs.flashbots.net/flashbots-mev-share/searchers/understanding-bundles#bundle-definition
+	// Keep in mind the docs might be outdated and latest features might not be documented.
 	bodyItems := make([]map[string]any, 0, len(attempts))
 	for _, attempt := range attempts {
 		txData, err := attempt.SignedTransaction.MarshalBinary()
@@ -299,7 +308,7 @@ func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address
 
 		bodyItems = append(bodyItems, map[string]any{
 			"tx":         hexutil.Encode(txData),
-			"revertMode": "allow",
+			"revertMode": "allow", // we always want to allow reverts so bundles are valid even if a single transaction within the bundle goes through
 		})
 	}
 	privacy, refundConfig, err := parseURLParams(urlParams)
@@ -380,7 +389,7 @@ func parseURLParams(params string) (privacy, refundConfig, error) {
 		pvc.WantRefund = percentVal
 		refundCfg = refundConfig{
 			Address: address,
-			Percent: 100,
+			Percent: 100, // wantRefund is an absolute percent of the refund, and refundConfig.percent=100 means entire refund goes to this address (no longer supported)
 		}
 	}
 	return pvc, refundCfg, nil
