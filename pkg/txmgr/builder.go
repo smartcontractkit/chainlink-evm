@@ -156,9 +156,9 @@ func NewTxmV2(
 	}
 	var eh txm.ErrorHandler
 	var c txm.Client
-	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && len(txmV2Config.CustomOFAURLs()) > 0 {
+	if txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && len(txmV2Config.CustomURLs()) > 0 {
 		var err error
-		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomOFAURLs(), chainID, inMemoryStoreManager, readRequestsToMultipleNodes, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout())
+		c, eh, err = dualbroadcast.SelectClient(lggr, client, keyStore, txmV2Config.CustomURLs(), chainID, inMemoryStoreManager, readRequestsToMultipleNodes, txmV2Config.Bundles(), txmV2Config.FastlaneAuctionRequestTimeout())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create dual broadcast client: %w", err)
 		}

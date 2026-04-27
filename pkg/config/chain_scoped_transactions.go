@@ -56,11 +56,7 @@ func (t *transactionManagerV2Config) BlockTime() *time.Duration {
 	return &d
 }
 
-func (t *transactionManagerV2Config) CustomURL() *url.URL {
-	return t.c.CustomURL.URL()
-}
-
-func (t *transactionManagerV2Config) CustomOFAURLs() []*url.URL {
+func (t *transactionManagerV2Config) CustomURLs() []*url.URL {
 	if len(t.c.CustomURLs) > 0 {
 		out := make([]*url.URL, 0, len(t.c.CustomURLs))
 		for _, u := range t.c.CustomURLs {
@@ -70,6 +66,7 @@ func (t *transactionManagerV2Config) CustomOFAURLs() []*url.URL {
 		}
 		return out
 	}
+	// fall back to deprecated CustomURL if no CustomURLs are configured
 	if t.c.CustomURL != nil {
 		return []*url.URL{t.c.CustomURL.URL()}
 	}

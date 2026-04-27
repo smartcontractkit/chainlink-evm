@@ -508,9 +508,9 @@ func (c *Transactions) ValidateConfig() (err error) {
 		hasSlice := len(c.TransactionManagerV2.CustomURLs) > 0
 		switch {
 		case !hasLegacy && !hasSlice:
-			err = multierr.Append(err, commonconfig.ErrMissing{Name: "TransactionManagerV2.CustomURL", Msg: "must be set if DualBroadcast is enabled (or configure CustomURLs instead)"})
+			err = multierr.Append(err, commonconfig.ErrMissing{Name: "TransactionManagerV2.CustomURLs", Msg: "must be set if DualBroadcast is enabled"})
 		case hasLegacy && hasSlice:
-			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "TransactionManagerV2.CustomURLs", Msg: "cannot be set together with CustomURL — use one style: legacy CustomURL or ordered CustomURLs (primary first)"})
+			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "TransactionManagerV2.CustomURL", Msg: "cannot be set together with CustomURLs — CustomURL is deprecated, use only CustomURLs instead"})
 		}
 		if c.AutoPurge.Enabled != nil && !*c.AutoPurge.Enabled {
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "AutoPurge.Enabled", Value: false, Msg: "cannot be false if DualBroadcast is enabled"})
