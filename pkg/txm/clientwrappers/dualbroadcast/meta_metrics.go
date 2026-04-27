@@ -162,7 +162,7 @@ func (m *MetaMetrics) emitAtlasError(ctx context.Context, errType string, custom
 		UseProtoNames:   true,
 		EmitUnpopulated: true,
 	}.Format(msg)
-	m.lggr.Infow("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
+	m.lggr.Debugw("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
 
 	if emitErr := m.emitter.Emit(ctx, messageBytes, attrKVs...); emitErr != nil {
 		m.lggr.Errorw("Failed to emit Atlas error event", "err", emitErr)
@@ -221,7 +221,7 @@ func (m *MetaMetrics) emitAtlasUserOp(ctx context.Context, userOpHash common.Has
 		UseProtoNames:   true,
 		EmitUnpopulated: true,
 	}.Format(msg)
-	m.lggr.Infow("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
+	m.lggr.Debugw("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
 
 	if emitErr := m.emitter.Emit(ctx, messageBytes, attrKVs...); emitErr != nil {
 		m.lggr.Errorw("Failed to emit Atlas user op event", "err", emitErr)

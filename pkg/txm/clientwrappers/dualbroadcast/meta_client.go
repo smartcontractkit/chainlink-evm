@@ -432,7 +432,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS))
 	userOpHash := common.Hash{}
 	if response.Result.DO != nil {
-		userOpHash = response.Result.DO.UserOpHash //
+		userOpHash = response.Result.DO.UserOpHash
 	}
 	a.metrics.emitAtlasUserOp(ctx, userOpHash, tx, requestStartTime.UnixMicro(), responseReceivedAt)
 
