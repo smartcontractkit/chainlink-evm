@@ -120,6 +120,8 @@ var ErrAuction = errors.New("auction error")
 
 var _ txm.Client = &MetaClient{}
 
+var _ ofaBackend = (*MetaClient)(nil)
+
 type MetaClientTxStore interface {
 	UpdateSignedAttempt(_ context.Context, txID uint64, attemptID uint64, signedTransaction *evmtypes.Transaction, fromAddress common.Address) error
 }

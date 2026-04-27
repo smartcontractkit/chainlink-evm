@@ -2,6 +2,7 @@ package dualbroadcast
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -20,7 +21,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
+	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
+	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
+	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -128,7 +134,7 @@ func TestMultiOfaClient_NonDual_RoutesOnlyToChainClient(t *testing.T) {
 	}
 	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
 
-	err := mc.SendTransaction(context.Background(), tx, attempt)
+	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 	require.Equal(t, int32(1), chainClient.sendTxCalls.Load(), "non-dual path must use chainClient only")
 
@@ -146,7 +152,7 @@ func TestMultiOfaClient_SendTransaction_TwoSecondaries(t *testing.T) {
 	primary := &ofaBackendMock{label: "primary"}
 	mc := createMultiOfaClient(t, chainClient, primary, &ofaBackendMock{label: "secondary1", sendCalled: sec1}, &ofaBackendMock{label: "secondary2", sendCalled: sec2})
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(context.Background(), tx, attempt)
+	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 
 	select {
@@ -169,7 +175,7 @@ func TestMultiOfaClient_SendTransaction_BothSucceed(t *testing.T) {
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(context.Background(), tx, attempt)
+	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 
 	select {
@@ -192,7 +198,7 @@ func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(context.Background(), tx, attempt)
+	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
 	require.ErrorIs(t, err, primaryErr)
 }
 
@@ -212,7 +218,7 @@ func TestMultiOfaClient_SecondarySendRespectsTimeout(t *testing.T) {
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	mc.secondarySendTimeout = 150 * time.Millisecond
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(context.Background(), tx, attempt)
+	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 
 	select {
@@ -240,7 +246,7 @@ func TestMultiOfaClient_SendTransaction_SecondaryFails(t *testing.T) {
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(context.Background(), tx, attempt)
+	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 
 	select {
@@ -265,7 +271,7 @@ func TestMultiOfaClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
 	}
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
-	nonce, err := mc.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
+	nonce, err := mc.PendingNonceAt(testutils.Context(t), common.HexToAddress("0x123"))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(42), nonce)
 }
@@ -285,7 +291,7 @@ func TestMultiOfaClient_NonceAt_RoutesToPrimary(t *testing.T) {
 	}
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
-	nonce, err := mc.NonceAt(context.Background(), common.HexToAddress("0x123"), big.NewInt(100))
+	nonce, err := mc.NonceAt(testutils.Context(t), common.HexToAddress("0x123"), big.NewInt(100))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(99), nonce)
 }
@@ -334,7 +340,7 @@ func TestMultiOfaClient_FromOFAURLs_HTTPServers_DualBroadcast(t *testing.T) {
 	require.Nil(t, eh)
 
 	tx, attempt := newDualBroadcastTx(t, 7)
-	err = mux.SendTransaction(context.Background(), tx, attempt)
+	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -385,7 +391,7 @@ func TestMultiOfaClient_NonDual_NovaPrimary_RoutesToMempool(t *testing.T) {
 	}
 	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
 
-	err = mux.SendTransaction(context.Background(), tx, attempt)
+	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 	require.Equal(t, int32(0), relayHits.Load(), "Nova relay must not receive sends when not dual-broadcasting")
 }
@@ -448,7 +454,7 @@ func TestMultiOfaClient_NonDual_FlashbotsPrimaryNovaSecondary_NoOFAHTTPHits(t *t
 	}
 	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
 
-	err = mux.SendTransaction(context.Background(), tx, attempt)
+	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 	require.Equal(t, int32(0), primaryHits.Load())
 	require.Equal(t, int32(0), secondaryHits.Load())
@@ -481,7 +487,152 @@ func TestMultiOfaClient_Purgeable_NovaPrimary_RoutesToMempool(t *testing.T) {
 	tx, attempt := newDualBroadcastTx(t, 1)
 	tx.IsPurgeable = true
 
-	err = mux.SendTransaction(context.Background(), tx, attempt)
+	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
 	require.Equal(t, int32(0), relayHits.Load(), "purgeable txs must not hit the Nova relay")
+}
+
+// metaClientMock counts calls to SendTransaction while delegating to the embedded MetaClient.
+type metaClientMock struct {
+	sends atomic.Int32
+}
+
+func (s *metaClientMock) SendTransaction(ctx context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
+	s.sends.Add(1)
+	return nil
+}
+
+func (s *metaClientMock) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
+	return 0, nil
+}
+
+func (s *metaClientMock) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
+	return 0, nil
+}
+
+func (s *metaClientMock) Label() string {
+	return "meta"
+}
+
+var _ txm.Client = &metaClientMock{}
+var _ ofaBackend = &metaClientMock{}
+
+func TestMultiOfaClient_MetaPrimary_DualBroadcast_Case1_AuctionPath_DelegatesToMetaSendTransaction(t *testing.T) {
+	chainClient := &chainClientMock{}
+	metaClient := &metaClientMock{}
+	mux := createMultiOfaClient(t, chainClient, metaClient)
+
+	dual := true
+	params := "destination=0x1b4cb47622705f0f67b6b18bbd1aa1a91fc77d37&dapp=0xc38d38333687ea295753c214744e839eddc7aebb"
+	fwdr := common.HexToAddress("0x8ae79bb7cce2dc3d132c288971b0f74af02a3b4a")
+	metaJSON, err := json.Marshal(txmtypes.TxMeta{
+		DualBroadcast:       &dual,
+		DualBroadcastParams: &params,
+		FwdrDestAddress:     &fwdr,
+	})
+	require.NoError(t, err)
+	meta := sqlutil.JSON(metaJSON)
+
+	to := common.HexToAddress("0x1b4cb47622705f0f67b6b18bbd1aa1a91fc77d37")
+	nonce := uint64(3)
+	signedTx := evmtypes.NewTx(&evmtypes.LegacyTx{
+		Nonce:    nonce,
+		To:       &to,
+		Gas:      21000,
+		GasPrice: big.NewInt(1),
+		Data:     []byte{0xab},
+	})
+
+	tx := &txmtypes.Transaction{
+		ID:           42,
+		Nonce:        &nonce,
+		FromAddress:  common.HexToAddress("0x123"),
+		ToAddress:    to,
+		Data:         []byte{0xcd},
+		AttemptCount: 1,
+		IsPurgeable:  false,
+		Meta:         &meta,
+	}
+	attempt := &txmtypes.Attempt{
+		ID:                1,
+		SignedTransaction: signedTx,
+		Fee:               gas.EvmFee{GasPrice: assets.NewWeiI(1)},
+		GasLimit:          21000,
+	}
+
+	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
+	require.NoError(t, err)
+
+	require.Equal(t, int32(1), metaClient.sends.Load(), "auction branch must run inside MetaClient.SendTransaction")
+	require.Equal(t, int32(0), chainClient.sendTxCalls.Load(), "chain client must not be used when Meta owns auction routing")
+}
+
+func TestMultiOfaClient_MetaPrimary_NonDual_Case2_RebroadcastFirstAttempt_DelegatesToMetaSendTransaction(t *testing.T) {
+	chainClient := &chainClientMock{}
+	metaClient := &metaClientMock{}
+	mux := createMultiOfaClient(t, chainClient, metaClient)
+
+	to := common.HexToAddress("0x456")
+	firstSigned := evmtypes.NewTx(&evmtypes.LegacyTx{
+		Nonce:    1,
+		To:       &to,
+		Gas:      21000,
+		GasPrice: big.NewInt(1),
+		Data:     []byte{0x01},
+	})
+	secondSigned := evmtypes.NewTx(&evmtypes.LegacyTx{
+		Nonce:    1,
+		To:       &to,
+		Gas:      21000,
+		GasPrice: big.NewInt(1),
+		Data:     []byte{0x02},
+	})
+
+	tx := &txmtypes.Transaction{
+		ID:           99,
+		AttemptCount: 2,
+		IsPurgeable:  false,
+		FromAddress:  common.HexToAddress("0x123"),
+		ToAddress:    to,
+		Meta:         nil,
+		Attempts: []*txmtypes.Attempt{
+			{ID: 1, SignedTransaction: firstSigned},
+			{ID: 2, SignedTransaction: secondSigned},
+		},
+	}
+	currentAttempt := tx.Attempts[1]
+
+	err := mux.SendTransaction(testutils.Context(t), tx, currentAttempt)
+	require.NoError(t, err)
+	require.Equal(t, int32(1), metaClient.sends.Load(), "multiOfaClient must delegate SendTransaction to Meta primary")
+	require.Equal(t, int32(0), chainClient.sendTxCalls.Load(), "chain client must not be used when Meta owns rebroadcast-first-attempt routing")
+}
+
+func TestMultiOfaClient_MetaPrimary_NonDual_Case3_DoesNotDelegateToMetaSendTransactionButSendsToChainClient(t *testing.T) {
+	chainClient := &chainClientMock{}
+	metaClient := &metaClientMock{}
+	mux := createMultiOfaClient(t, chainClient, metaClient)
+
+	to := common.HexToAddress("0x456")
+	nonce := uint64(1)
+	signedTx := evmtypes.NewTx(&evmtypes.LegacyTx{
+		Nonce:    nonce,
+		To:       &to,
+		Gas:      21000,
+		GasPrice: big.NewInt(1),
+	})
+	tx := &txmtypes.Transaction{
+		ID:           1,
+		Nonce:        &nonce,
+		FromAddress:  common.HexToAddress("0x123"),
+		ToAddress:    to,
+		AttemptCount: 1,
+		Meta:         nil,
+	}
+	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
+
+	err := mux.SendTransaction(testutils.Context(t), tx, attempt)
+	require.NoError(t, err)
+	require.Equal(t, int32(0), metaClient.sends.Load(), "multiOfaClient must not delegate SendTransaction to Meta primary")
+	require.Equal(t, int32(1), chainClient.sendTxCalls.Load(), "chain client must be used when Meta does not own non-dual routing")
 }
