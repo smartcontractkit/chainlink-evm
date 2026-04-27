@@ -172,10 +172,9 @@ func TestMultiOfaClient_SendTransaction_BothSucceed(t *testing.T) {
 	}
 }
 
-// TestMultiOfaClient_SendTransaction_WaitsForSecondaryBeforeReturn guards the WaitGroup behavior:
-// the call must not return until every secondary SendTransaction has finished (so we do not
-// detach goroutines that may outlive the request).
-func TestMultiOfaClient_SendTransaction_WaitsForSecondaryBeforeReturn(t *testing.T) {
+// TestMultiOfaClient_SecondarySend_DoesNotBlockReturn ensures the primary outcome is not delayed
+// by slow secondaries (fan-out does not synchronize on secondary completion).
+func TestMultiOfaClient_SecondarySend_DoesNotBlockReturn(t *testing.T) {
 	releaseSecondary := make(chan struct{})
 	chainClient := &chainClientMock{}
 	primary := &ofaBackendMock{
@@ -199,18 +198,12 @@ func TestMultiOfaClient_SendTransaction_WaitsForSecondaryBeforeReturn(t *testing
 
 	select {
 	case err := <-done:
-		t.Fatalf("SendTransaction returned before secondary completed: %v", err)
-	case <-time.After(100 * time.Millisecond):
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("SendTransaction should return when primary completes, without waiting for secondary")
 	}
 
 	close(releaseSecondary)
-
-	select {
-	case err := <-done:
-		require.NoError(t, err)
-	case <-time.After(2 * time.Second):
-		t.Fatal("SendTransaction did not return after secondary was released")
-	}
 }
 
 func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {

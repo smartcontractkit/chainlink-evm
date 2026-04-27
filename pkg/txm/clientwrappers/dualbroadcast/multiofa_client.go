@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -93,12 +92,16 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 		return m.chainClient.SendTransaction(ctx, tx, attempt)
 	}
 
-	// send to secondaries in parallel, fire-and-forget: in case of error, log and continue
-	var wg sync.WaitGroup
+	// Secondaries are best-effort and do not block the primary. Each call is bounded by
+	// secondarySendTimeout (or rpcTimeout if the field is unset/invalid).
+	secTimeout := m.secondarySendTimeout
+	if secTimeout <= 0 {
+		secTimeout = rpcTimeout
+	}
 	for _, secondary := range m.secondaries {
 		sec := secondary
-		wg.Go(func() {
-			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
+		go func() {
+			secondaryCtx, cancel := context.WithTimeout(ctx, secTimeout)
 			defer cancel()
 
 			if secErr := sec.SendTransaction(secondaryCtx, tx, attempt); secErr != nil {
@@ -108,14 +111,12 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 					"attemptHash", attempt.Hash,
 					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
 			}
-		})
+		}()
 	}
 
 	primaryCtx, cancel := context.WithTimeout(ctx, rpcTimeout)
 	defer cancel()
-	err = m.primary.SendTransaction(primaryCtx, tx, attempt)
-	wg.Wait()
-	return err
+	return m.primary.SendTransaction(primaryCtx, tx, attempt)
 }
 
 func (m *multiOfaClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
