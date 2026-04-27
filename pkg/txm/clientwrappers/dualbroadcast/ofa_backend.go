@@ -140,7 +140,7 @@ func (d *ofaBackend) SendTransaction(ctx context.Context, tx *types.Transaction,
 		return fmt.Errorf("ofaTXClient: SendTransaction called for a non-dual-broadcast transaction")
 	}
 
-	// TODO(gg): set different gas limit if Nova
+	// TODO(gg): set different gas limit if Nova --> put in separate PR
 	if err := d.sendDualBroadcastTx(ctx, tx, attempt, meta); err != nil {
 		return err
 	}
