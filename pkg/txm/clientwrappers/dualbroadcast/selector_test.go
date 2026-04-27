@@ -34,7 +34,7 @@ func TestSelectClient_FlashbotsPrimaryOnly(t *testing.T) {
 	require.True(t, ok, "single flashbots URL should still use multiOfaClient as the outer shell")
 	assert.Equal(t, "flashbots", mux.primary.Label())
 	assert.Empty(t, mux.secondaries)
-	fb, ok := mux.primary.(*ofaTXClient)
+	fb, ok := mux.primary.(*ofaBackend)
 	require.True(t, ok)
 	assert.Equal(t, ofaFlashbots, fb.ofa)
 }
@@ -56,12 +56,12 @@ func TestSelectClient_FlashbotsPrimaryWithNovaSecondary(t *testing.T) {
 	mux, ok := c.(*multiOfaClient)
 	require.True(t, ok)
 	assert.Equal(t, "flashbots", mux.primary.Label())
-	pri, ok := mux.primary.(*ofaTXClient)
+	pri, ok := mux.primary.(*ofaBackend)
 	require.True(t, ok)
 	assert.Equal(t, ofaFlashbots, pri.ofa)
 	require.Len(t, mux.secondaries, 1)
 	assert.Equal(t, "nova", mux.secondaries[0].Label())
-	sec, ok := mux.secondaries[0].(*ofaTXClient)
+	sec, ok := mux.secondaries[0].(*ofaBackend)
 	require.True(t, ok)
 	assert.Equal(t, ofaNova, sec.ofa)
 }
@@ -80,7 +80,7 @@ func TestSelectClient_NovaPrimaryOnly(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "nova", mux.primary.Label())
 	assert.Empty(t, mux.secondaries)
-	nc, ok := mux.primary.(*ofaTXClient)
+	nc, ok := mux.primary.(*ofaBackend)
 	require.True(t, ok, "nova URL should use OFA primary inside multiplex shell")
 	assert.Equal(t, ofaNova, nc.ofa)
 }

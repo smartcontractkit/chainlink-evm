@@ -17,8 +17,8 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-// ofaBackend is used to broadcast to an OFA and read nonces.
-type ofaBackend interface {
+// multiOfaBackend is used to broadcast to an OFA backend and read nonces.
+type multiOfaBackend interface {
 	PendingNonceAt(ctx context.Context, address common.Address) (uint64, error)
 	NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error)
 	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
@@ -30,15 +30,12 @@ type ofaBackend interface {
 type multiOfaClient struct {
 	lggr                 logger.SugaredLogger
 	chainClient          chainRPCClient
-	primary              ofaBackend
-	secondaries          []ofaBackend
+	primary              multiOfaBackend
+	secondaries          []multiOfaBackend
 	secondarySendTimeout time.Duration
 }
 
-var (
-	_ txm.Client = (*multiOfaClient)(nil)
-	_ ofaBackend = (*ofaTXClient)(nil)
-)
+var _ txm.Client = (*multiOfaClient)(nil)
 
 // newMultiOfaClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
 func newMultiOfaClient(
@@ -59,7 +56,7 @@ func newMultiOfaClient(
 		return nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(ofaURLs[0]), err)
 	}
 
-	secondaries := make([]ofaBackend, 0, len(ofaURLs)-1)
+	secondaries := make([]multiOfaBackend, 0, len(ofaURLs)-1)
 	for _, u := range ofaURLs[1:] {
 		sec, err := newClientForRelayOFAURL(lggr, chainClient, keyStore, u, chainID, txStore, bundles)
 		if err != nil {
@@ -144,7 +141,7 @@ func newClientForRelayOFAURL(
 	u *url.URL,
 	chainID *big.Int,
 	txStore txm.TxStore,
-	bundles *bool) (ofaBackend, error) {
+	bundles *bool) (multiOfaBackend, error) {
 
 	urlString := u.String()
 	switch {

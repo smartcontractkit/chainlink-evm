@@ -71,8 +71,8 @@ type FlashbotsTxStore interface {
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
 }
 
-// ofaTXClient is an HTTP JSON-RPC OFA backend (Flashbots MEV-Share, Nova RPC)
-type ofaTXClient struct {
+// ofaBackend is an HTTP JSON-RPC OFA backend (Flashbots MEV-Share, Nova RPC)
+type ofaBackend struct {
 	lggr      logger.SugaredLogger
 	c         chainRPCClient
 	customURL *url.URL
@@ -83,8 +83,10 @@ type ofaTXClient struct {
 	bundles   bool
 }
 
-func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundlesEnabled bool, metrics ofaMetrics) *ofaTXClient {
-	return &ofaTXClient{
+var _ multiOfaBackend = (*ofaBackend)(nil)
+
+func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundlesEnabled bool, metrics ofaMetrics) *ofaBackend {
+	return &ofaBackend{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
 		c:         c,
 		customURL: customURL,
@@ -96,8 +98,8 @@ func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.Mess
 	}
 }
 
-func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, metrics ofaMetrics) *ofaTXClient {
-	return &ofaTXClient{
+func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, metrics ofaMetrics) *ofaBackend {
+	return &ofaBackend{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,
 		customURL: customURL,
@@ -106,11 +108,11 @@ func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, met
 	}
 }
 
-func (d *ofaTXClient) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
+func (d *ofaBackend) NonceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
 	return d.c.NonceAt(ctx, address, blockNumber)
 }
 
-func (d *ofaTXClient) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
+func (d *ofaBackend) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex()))
 	raw, err := d.postJSONRPC(ctx, address, body, nil)
 	if err != nil {
@@ -128,7 +130,7 @@ func (d *ofaTXClient) PendingNonceAt(ctx context.Context, address common.Address
 	return nonce, nil
 }
 
-func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
+func (d *ofaBackend) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return err
@@ -152,11 +154,11 @@ func (d *ofaTXClient) SendTransaction(ctx context.Context, tx *types.Transaction
 	return nil
 }
 
-func (d *ofaTXClient) Label() string {
+func (d *ofaBackend) Label() string {
 	return d.ofa.name()
 }
 
-func (d *ofaTXClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta *types.TxMeta) error {
+func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta *types.TxMeta) error {
 	data, err := attempt.SignedTransaction.MarshalBinary()
 	if err != nil {
 		return err
@@ -170,7 +172,7 @@ func (d *ofaTXClient) sendDualBroadcastTx(ctx context.Context, tx *types.Transac
 	return err
 }
 
-func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {
+func (d *ofaBackend) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, rpcTimeout)
@@ -210,7 +212,7 @@ func (d *ofaTXClient) postJSONRPC(ctx context.Context, from common.Address, body
 	return response.Result, nil
 }
 
-func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
+func (d *ofaBackend) signRequest(ctx context.Context, req *http.Request, body []byte, from common.Address) error {
 	if d.ofa != ofaFlashbots || d.keystore == nil {
 		// signing is only required for Flashbots
 		return nil
@@ -226,7 +228,7 @@ func (d *ofaTXClient) signRequest(ctx context.Context, req *http.Request, body [
 	return nil
 }
 
-func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
+func (d *ofaBackend) postURL(meta *types.TxMeta) string {
 	// Only Flashbots needs URL parameters
 	if d.ofa != ofaFlashbots {
 		return d.customURL.String()
@@ -246,7 +248,7 @@ func (d *ofaTXClient) postURL(meta *types.TxMeta) string {
 const maxBlockDiff = 24
 
 // sendBundle sends a bundle of all the in-flight transactions.
-func (d *ofaTXClient) sendBundle(ctx context.Context, fromAddress common.Address, meta *types.TxMeta) error {
+func (d *ofaBackend) sendBundle(ctx context.Context, fromAddress common.Address, meta *types.TxMeta) error {
 	var urlParams string
 	if meta != nil && meta.DualBroadcastParams != nil {
 		urlParams = *meta.DualBroadcastParams

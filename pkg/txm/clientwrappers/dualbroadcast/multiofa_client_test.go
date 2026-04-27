@@ -43,7 +43,7 @@ func (c *chainClientMock) SendTransaction(context.Context, *txmtypes.Transaction
 
 var _ chainRPCClient = (*chainClientMock)(nil)
 
-func createMultiOfaClient(t *testing.T, c chainRPCClient, primary ofaBackend, secondaries ...ofaBackend) *multiOfaClient {
+func createMultiOfaClient(t *testing.T, c chainRPCClient, primary multiOfaBackend, secondaries ...multiOfaBackend) *multiOfaClient {
 	t.Helper()
 	return &multiOfaClient{
 		lggr:                 logger.Sugared(logger.Test(t)),
@@ -90,7 +90,7 @@ func (m *ofaBackendMock) Label() string {
 	return m.label
 }
 
-var _ ofaBackend = (*ofaBackendMock)(nil)
+var _ multiOfaBackend = (*ofaBackendMock)(nil)
 
 func TestMultiOfaClient_NonDual_RoutesOnlyToChainClient(t *testing.T) {
 	chainClient := &chainClientMock{}
