@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -13,10 +14,12 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 )
 
-// SelectClient builds the txm.Client for dual broadcast. ofaURLs must be non-empty; index 0 is the
-// primary (determines broadcast outcome and nonce queries). The implementation is always a multiOfaClient:
-// it classifies each URL (Flashbots, Nova, Meta, …), builds one backend per entry, and with one URL has
-// no secondaries; with more, additional URLs are best-effort secondaries (fire-and-forget with a separate timeout).
+// SelectClient builds the txm.Client for OFA broadcast. ofaURLs must be non-empty; index 0 is the
+// primary OFA.
+//
+// Currently supports:
+// * a single fastlane OFA url
+// * any Flashbots/Nova urls (either standalone or combined)
 func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainStore, ofaURLs []*url.URL, chainID *big.Int, txStore txm.TxStore, readRequestsToMultipleNodes bool, bundles *bool, auctionRequestTimeout *time.Duration) (txm.Client, txm.ErrorHandler, error) {
 	if len(ofaURLs) == 0 {
 		return nil, nil, fmt.Errorf("ofaURLs must not be empty")
@@ -27,19 +30,24 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 		return nil, nil, err
 	}
 
-	return newMultiOfaClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles, auctionRequestTimeout)
-}
+	primaryUrl := ofaURLs[0].String()
+	switch {
+	case strings.Contains(primaryUrl, "flashbots") || strings.Contains(primaryUrl, "novarpc"):
+		mc, err := newMultiOfaClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles)
+		return mc, nil, err
+	default:
+		mc, err := NewMetaClient(lggr, chainClient, keyStore, ofaURLs[0], chainID, txStore, auctionRequestTimeout)
+		if err != nil {
+			return nil, nil, err
+		}
 
-// redactURL returns u as a string safe for logs: same redaction as url.URL.Redacted for userinfo, and api_key query values are replaced with "xxxxx". It does not mutate the original URL.
-func redactURL(u *url.URL) string {
-	if u == nil {
-		return ""
+		if len(ofaURLs) > 1 {
+			lggr.Warnw("Created MetaClient for primary OFA URL, ignoring secondary OFA URLs",
+				"primaryURL", redactURL(ofaURLs[0]),
+				"secondaryURLs", redactURLs(ofaURLs[1:]),
+			)
+		}
+
+		return mc, NewErrorHandler(), nil
 	}
-	cp := *u
-	q := cp.Query()
-	if _, has := q["api_key"]; has {
-		q.Set("api_key", "xxxxx")
-		cp.RawQuery = q.Encode()
-	}
-	return cp.Redacted()
 }

@@ -120,8 +120,6 @@ var ErrAuction = errors.New("auction error")
 
 var _ txm.Client = &MetaClient{}
 
-var _ ofaBackend = (*MetaClient)(nil)
-
 type MetaClientTxStore interface {
 	UpdateSignedAttempt(_ context.Context, txID uint64, attemptID uint64, signedTransaction *evmtypes.Transaction, fromAddress common.Address) error
 }
@@ -149,6 +147,10 @@ type MetaClient struct {
 }
 
 func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore, auctionRequestTimeout *time.Duration) (*MetaClient, error) {
+	if customURL == nil {
+		return nil, fmt.Errorf("customURL must not be nil")
+	}
+
 	metrics, err := NewMetaMetrics(chainID.String(), lggr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
@@ -158,6 +160,12 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 	if auctionRequestTimeout != nil {
 		t = *auctionRequestTimeout
 	}
+
+	lggr.Infow("Meta client created",
+		"customURL", redactURL(customURL),
+		"chainID", chainID,
+		"auctionRequestTimeout", t,
+	)
 
 	return &MetaClient{
 		lggr:                  logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
@@ -224,10 +232,6 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 	// #3
 	a.lggr.Infow("Broadcasting attempt to public mempool", "tx", tx)
 	return a.c.SendTransaction(ctx, nil, attempt)
-}
-
-func (a *MetaClient) Label() string {
-	return "meta"
 }
 
 type Parameters struct {

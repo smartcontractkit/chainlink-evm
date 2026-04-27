@@ -38,7 +38,6 @@ type multiOfaClient struct {
 var (
 	_ txm.Client = (*multiOfaClient)(nil)
 	_ ofaBackend = (*ofaTXClient)(nil)
-	_ ofaBackend = (*MetaClient)(nil)
 )
 
 // newMultiOfaClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
@@ -50,29 +49,23 @@ func newMultiOfaClient(
 	chainID *big.Int,
 	txStore txm.TxStore,
 	bundles *bool,
-	auctionRequestTimeout *time.Duration,
-) (*multiOfaClient, txm.ErrorHandler, error) {
+) (*multiOfaClient, error) {
 	if len(ofaURLs) == 0 {
-		return nil, nil, fmt.Errorf("ofaURLs must not be empty")
+		return nil, fmt.Errorf("ofaURLs must not be empty")
 	}
 
-	primary, errHandler, err := newClientForOFAURL(lggr, chainClient, keyStore, ofaURLs[0], chainID, txStore, bundles, auctionRequestTimeout)
+	primary, err := newClientForRelayOFAURL(lggr, chainClient, keyStore, ofaURLs[0], chainID, txStore, bundles)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(ofaURLs[0]), err)
+		return nil, fmt.Errorf("failed to create primary client for %s: %w", redactURL(ofaURLs[0]), err)
 	}
 
 	secondaries := make([]ofaBackend, 0, len(ofaURLs)-1)
 	for _, u := range ofaURLs[1:] {
-		sec, _, err := newClientForOFAURL(lggr, chainClient, keyStore, u, chainID, txStore, bundles, auctionRequestTimeout)
+		sec, err := newClientForRelayOFAURL(lggr, chainClient, keyStore, u, chainID, txStore, bundles)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create secondary client for %s: %w", redactURL(u), err)
+			return nil, fmt.Errorf("failed to create secondary client for %s: %w", redactURL(u), err)
 		}
 		secondaries = append(secondaries, sec)
-	}
-
-	urlStrs := make([]string, len(ofaURLs))
-	for i, u := range ofaURLs {
-		urlStrs[i] = redactURL(u)
 	}
 
 	secondaryLabels := make([]string, len(secondaries))
@@ -82,9 +75,10 @@ func newMultiOfaClient(
 
 	lggr.Infow("TransactionManagerV2 OFA client created",
 		"primaryBackend", primary.Label(),
-		"primaryURL", urlStrs[0],
+		"primaryURL", redactURL(ofaURLs[0]),
 		"secondaryBackends", secondaryLabels,
-		"secondaryURLs", urlStrs[1:])
+		"secondaryURLs", redactURLs(ofaURLs[1:]),
+	)
 
 	return &multiOfaClient{
 		lggr:                 logger.Sugared(logger.Named(lggr, "Txm.MultiOfaClient")),
@@ -92,7 +86,7 @@ func newMultiOfaClient(
 		primary:              primary,
 		secondaries:          secondaries,
 		secondarySendTimeout: rpcTimeout,
-	}, errHandler, nil
+	}, nil
 }
 
 // SendTransaction sends the transaction to the primary and secondaries, unless it is a non-dual-broadcast transaction.
@@ -103,8 +97,7 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 		return err
 	}
 
-	// TODO(gg): check that this is the correct behavior for meta_client as well --> seems to not fully be the case, case #2 in meta_client is not handled here!
-	// If not dual-broadcast, fall back to sending the transaction to the chain RPC directly
+	// If not dual-broadcast, fall back to sending the transaction to the chain RPC directly.
 	if meta == nil || meta.DualBroadcast == nil || !*meta.DualBroadcast || tx.IsPurgeable {
 		return m.chainClient.SendTransaction(ctx, tx, attempt)
 	}
@@ -143,36 +136,54 @@ func (m *multiOfaClient) NonceAt(ctx context.Context, address common.Address, bl
 	return m.primary.NonceAt(ctx, address, blockNumber)
 }
 
-func newClientForOFAURL(
+// newClientForRelayOFAURL builds only Flashbots or Nova backends for use inside multiOfaClient.
+func newClientForRelayOFAURL(
 	lggr logger.Logger,
 	chainClient *clientwrappers.ChainClient,
 	keyStore keys.ChainStore,
 	u *url.URL,
 	chainID *big.Int,
 	txStore txm.TxStore,
-	bundles *bool,
-	auctionRequestTimeout *time.Duration) (ofaBackend, txm.ErrorHandler, error) {
+	bundles *bool) (ofaBackend, error) {
 
 	urlString := u.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):
 		metrics, err := newOFAMetrics(chainID.String(), ofaFlashbots.name())
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create OFA metrics for flashbots: %w", err)
+			return nil, fmt.Errorf("failed to create OFA metrics for flashbots: %w", err)
 		}
 		bundlesEnabled := bundles != nil && *bundles
-		return newFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundlesEnabled, metrics), nil, nil
+		return newFlashbotsClient(lggr, chainClient, keyStore, u, txStore, bundlesEnabled, metrics), nil
 	case strings.Contains(urlString, "novarpc"):
 		metrics, err := newOFAMetrics(chainID.String(), ofaNova.name())
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
+			return nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
 		}
-		return newNovaClient(lggr, chainClient, u, metrics), nil, nil
+		return newNovaClient(lggr, chainClient, u, metrics), nil
 	default:
-		mc, err := NewMetaClient(lggr, chainClient, keyStore, u, chainID, txStore, auctionRequestTimeout)
-		if err != nil {
-			return nil, nil, err
-		}
-		return mc, NewErrorHandler(), nil
+		return nil, fmt.Errorf("multiOfaClient does not support OFA URL %s", redactURL(u))
 	}
+}
+
+// redactURL returns u as a string safe for logs: same redaction as url.URL.Redacted for userinfo, and api_key query values are replaced with "xxxxx". It does not mutate the original URL.
+func redactURL(u *url.URL) string {
+	if u == nil {
+		return ""
+	}
+	cp := *u
+	q := cp.Query()
+	if _, has := q["api_key"]; has {
+		q.Set("api_key", "xxxxx")
+		cp.RawQuery = q.Encode()
+	}
+	return cp.Redacted()
+}
+
+func redactURLs(urls []*url.URL) []string {
+	redacted := make([]string, len(urls))
+	for i, u := range urls {
+		redacted[i] = redactURL(u)
+	}
+	return redacted
 }

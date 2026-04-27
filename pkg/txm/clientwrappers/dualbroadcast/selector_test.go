@@ -96,23 +96,40 @@ func TestSelectClient_MetaPrimaryOnly(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.NotNil(t, eh)
 
-	mux, ok := c.(*multiOfaClient)
-	require.True(t, ok)
-	assert.Equal(t, "meta", mux.primary.Label())
-	assert.Empty(t, mux.secondaries)
-	_, isMeta := mux.primary.(*MetaClient)
-	require.True(t, isMeta)
+	_, ok := c.(*MetaClient)
+	require.True(t, ok, "Meta auction URL should return MetaClient directly, not multiOfaClient")
 }
 
-func TestRedactURL(t *testing.T) {
-	t.Parallel()
+func TestSelectClient_CreatesMetaClientBasedOnFirstURL(t *testing.T) {
+	mockClient := clienttest.NewClient(t)
+	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
 
-	assert.Empty(t, redactURL(nil))
+	urls := []*url.URL{
+		mustParseURL(t, "https://custom-auction.example.com"),
+		mustParseURL(t, "https://relay.flashbots.net"),
+	}
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil)
+	require.NoError(t, err)
+	assert.NotNil(t, c)
+	assert.NotNil(t, eh)
 
-	u := mustParseURL(t, "https://eth.novarpc.xyz?api_key=secret&foo=bar")
-	assert.Equal(t, "https://eth.novarpc.xyz?api_key=xxxxx&foo=bar", redactURL(u))
-	assert.Equal(t, "secret", u.Query().Get("api_key"), "must not mutate original URL")
+	_, ok := c.(*MetaClient)
+	require.True(t, ok, "Meta auction URL should return MetaClient directly, not multiOfaClient")
+}
 
-	uPass := mustParseURL(t, "https://user:pass@eth.novarpc.xyz?api_key=secret")
-	assert.Equal(t, "https://user:xxxxx@eth.novarpc.xyz?api_key=xxxxx", redactURL(uPass))
+func TestSelectClient_IgnoresNonPrimaryURLsWhenPrimaryIsMeta(t *testing.T) {
+	mockClient := clienttest.NewClient(t)
+	mockClient.EXPECT().ConfiguredChainID().Return(big.NewInt(1))
+
+	urls := []*url.URL{
+		mustParseURL(t, "https://custom-auction-a.example.com"),
+		mustParseURL(t, "https://custom-auction-b.example.com"),
+	}
+	c, eh, err := SelectClient(logger.Test(t), mockClient, nil, urls, big.NewInt(1), nil, false, nil, nil)
+	require.NoError(t, err)
+	assert.NotNil(t, c)
+	assert.NotNil(t, eh)
+
+	_, ok := c.(*MetaClient)
+	require.True(t, ok, "Meta auction URL should return MetaClient directly, not multiOfaClient")
 }

@@ -33,6 +33,7 @@ const rpcTimeout = 10 * time.Second
 // ofa selects URL shape, signing headers, logger name, and bundle behavior.
 type ofa uint8
 
+// ofa represents the type of OFA backend: Flashbots or Nova. Meta (Fastlane Atlas) is separate from this at the moment.
 const (
 	ofaFlashbots ofa = iota
 	ofaNova
