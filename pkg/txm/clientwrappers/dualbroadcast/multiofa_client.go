@@ -101,9 +101,9 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
-			if err := sec.SendTransaction(secondaryCtx, tx, attempt); err != nil {
+			if secErr := sec.SendTransaction(secondaryCtx, tx, attempt); secErr != nil {
 				m.lggr.Errorw("Secondary backend send failed",
-					"err", err,
+					"err", secErr,
 					"txID", tx.ID,
 					"attemptHash", attempt.Hash,
 					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
@@ -135,7 +135,6 @@ func newClientForRelayOFAURL(
 	chainID *big.Int,
 	txStore txm.TxStore,
 	bundles *bool) (multiOfaBackend, error) {
-
 	urlString := u.String()
 	switch {
 	case strings.Contains(urlString, "flashbots"):

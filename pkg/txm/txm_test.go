@@ -503,7 +503,7 @@ func TestFlow_ErrorHandler(t *testing.T) {
 	keystore := &keystest.FakeChainStore{}
 	attemptBuilder := txm.NewAttemptBuilder(func(address common.Address) *assets.Wei { return assets.NewWeiI(1) }, mockEstimator, keystore, 22000)
 	stuckTxDetector := txm.NewStuckTxDetector(lggr, "", txm.StuckTxDetectorConfig{BlockTime: config.BlockTime, StuckTxBlockThreshold: uint32(config.RetryBlockThreshold + 1)})
-	errorHandler := dualbroadcast.NewErrorHandler()
+	errorHandler := dualbroadcast.NewMetaErrorHandler()
 	tm := txm.NewTxm(lggr, testutils.FixtureChainID, client, attemptBuilder, txStoreManager, stuckTxDetector, config, keystore, errorHandler, txm.NewNoopTxmMetrics())
 	initialNonce := uint64(0)
 	tm.SetNonce(address, initialNonce)

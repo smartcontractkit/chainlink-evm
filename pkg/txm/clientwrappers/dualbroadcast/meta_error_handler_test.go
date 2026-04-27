@@ -19,7 +19,7 @@ import (
 )
 
 func TestMetaErrorHandler(t *testing.T) {
-	errorHandler := NewErrorHandler()
+	errorHandler := NewMetaErrorHandler()
 	require.NotNil(t, errorHandler)
 
 	t.Run("handles no bids error for first attempt", func(t *testing.T) {

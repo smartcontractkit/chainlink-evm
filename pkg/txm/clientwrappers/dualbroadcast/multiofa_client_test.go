@@ -3,7 +3,6 @@ package dualbroadcast
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"math/big"
 	"net/http"
@@ -31,10 +30,10 @@ type chainClientMock struct {
 }
 
 func (c *chainClientMock) BlockByNumber(context.Context, *big.Int) (*evmtypes.Block, error) {
-	return nil, fmt.Errorf("unexpected BlockByNumber")
+	return nil, errors.New("unexpected BlockByNumber")
 }
 func (c *chainClientMock) NonceAt(context.Context, common.Address, *big.Int) (uint64, error) {
-	return 0, fmt.Errorf("unexpected NonceAt")
+	return 0, errors.New("unexpected NonceAt")
 }
 func (c *chainClientMock) SendTransaction(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
 	c.sendTxCalls.Add(1)
@@ -55,7 +54,6 @@ func createMultiOfaClient(t *testing.T, c chainRPCClient, primary multiOfaBacken
 }
 
 type ofaBackendMock struct {
-	label          string
 	sendTxFn       func(ctx context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error
 	pendingNonceFn func(ctx context.Context, address common.Address) (uint64, error)
 	nonceAtFn      func(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error)
@@ -86,17 +84,12 @@ func (m *ofaBackendMock) NonceAt(ctx context.Context, address common.Address, bl
 	return 0, nil
 }
 
-func (m *ofaBackendMock) Label() string {
-	return m.label
-}
-
 var _ multiOfaBackend = (*ofaBackendMock)(nil)
 
 func TestMultiOfaClient_NonDual_RoutesOnlyToChainClient(t *testing.T) {
 	chainClient := &chainClientMock{}
 
 	primary := &ofaBackendMock{
-		label: "primary",
 		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
 			require.FailNow(t, "primary must not receive SendTransaction when not dual-broadcasting")
 			return nil
@@ -104,7 +97,6 @@ func TestMultiOfaClient_NonDual_RoutesOnlyToChainClient(t *testing.T) {
 	}
 	secCalled := make(chan struct{}, 1)
 	secondary := &ofaBackendMock{
-		label: "secondary",
 		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
 			secCalled <- struct{}{}
 			return nil
@@ -144,8 +136,8 @@ func TestMultiOfaClient_SendTransaction_TwoSecondaries(t *testing.T) {
 	chainClient := &chainClientMock{}
 	sec1 := make(chan struct{}, 1)
 	sec2 := make(chan struct{}, 1)
-	primary := &ofaBackendMock{label: "primary"}
-	mc := createMultiOfaClient(t, chainClient, primary, &ofaBackendMock{label: "secondary1", sendCalled: sec1}, &ofaBackendMock{label: "secondary2", sendCalled: sec2})
+	primary := &ofaBackendMock{}
+	mc := createMultiOfaClient(t, chainClient, primary, &ofaBackendMock{sendCalled: sec1}, &ofaBackendMock{sendCalled: sec2})
 	tx, attempt := newDualBroadcastTx(t, 1)
 	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
 	require.NoError(t, err)
@@ -165,8 +157,8 @@ func TestMultiOfaClient_SendTransaction_TwoSecondaries(t *testing.T) {
 func TestMultiOfaClient_SendTransaction_BothSucceed(t *testing.T) {
 	chainClient := &chainClientMock{}
 	secondaryCalled := make(chan struct{}, 1)
-	primary := &ofaBackendMock{label: "primary"}
-	secondary := &ofaBackendMock{label: "secondary", sendCalled: secondaryCalled}
+	primary := &ofaBackendMock{}
+	secondary := &ofaBackendMock{sendCalled: secondaryCalled}
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	tx, attempt := newDualBroadcastTx(t, 1)
@@ -187,13 +179,11 @@ func TestMultiOfaClient_SendTransaction_WaitsForSecondaryBeforeReturn(t *testing
 	releaseSecondary := make(chan struct{})
 	chainClient := &chainClientMock{}
 	primary := &ofaBackendMock{
-		label: "primary",
 		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
 			return nil
 		},
 	}
 	secondary := &ofaBackendMock{
-		label: "secondary",
 		sendTxFn: func(context.Context, *txmtypes.Transaction, *txmtypes.Attempt) error {
 			<-releaseSecondary
 			return nil
@@ -230,9 +220,8 @@ func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {
 		sendTxFn: func(ctx context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
 			return primaryErr
 		},
-		label: "primary",
 	}
-	secondary := &ofaBackendMock{label: "secondary", sendCalled: make(chan struct{}, 1)}
+	secondary := &ofaBackendMock{sendCalled: make(chan struct{}, 1)}
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	tx, attempt := newDualBroadcastTx(t, 1)
@@ -243,7 +232,7 @@ func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {
 func TestMultiOfaClient_SecondarySendRespectsTimeout(t *testing.T) {
 	chainClient := &chainClientMock{}
 	secondaryDone := make(chan struct{}, 1)
-	primary := &ofaBackendMock{label: "primary"}
+	primary := &ofaBackendMock{}
 	secondary := &ofaBackendMock{
 		sendTxFn: func(ctx context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
 			<-ctx.Done()
@@ -274,7 +263,7 @@ func TestMultiOfaClient_SecondarySendRespectsTimeout(t *testing.T) {
 func TestMultiOfaClient_SendTransaction_SecondaryFails(t *testing.T) {
 	chainClient := &chainClientMock{}
 	secondaryCalled := make(chan struct{}, 1)
-	primary := &ofaBackendMock{label: "primary"}
+	primary := &ofaBackendMock{}
 	secondary := &ofaBackendMock{
 		sendTxFn: func(ctx context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
 			return errors.New("nova failed")
@@ -296,12 +285,12 @@ func TestMultiOfaClient_SendTransaction_SecondaryFails(t *testing.T) {
 
 func TestMultiOfaClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
 	chainClient := &chainClientMock{}
-	primary := &ofaBackendMock{label: "primary",
+	primary := &ofaBackendMock{
 		pendingNonceFn: func(ctx context.Context, address common.Address) (uint64, error) {
 			return 42, nil
 		},
 	}
-	secondary := &ofaBackendMock{label: "secondary",
+	secondary := &ofaBackendMock{
 		pendingNonceFn: func(ctx context.Context, address common.Address) (uint64, error) {
 			t.Fatal("secondary PendingNonceAt should not be called")
 			return 0, nil
@@ -316,12 +305,12 @@ func TestMultiOfaClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
 
 func TestMultiOfaClient_NonceAt_RoutesToPrimary(t *testing.T) {
 	chainClient := &chainClientMock{}
-	primary := &ofaBackendMock{label: "primary",
+	primary := &ofaBackendMock{
 		nonceAtFn: func(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
 			return 99, nil
 		},
 	}
-	secondary := &ofaBackendMock{label: "secondary",
+	secondary := &ofaBackendMock{
 		nonceAtFn: func(ctx context.Context, address common.Address, blockNumber *big.Int) (uint64, error) {
 			t.Fatal("secondary NonceAt should not be called")
 			return 0, nil
