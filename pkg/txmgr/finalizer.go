@@ -208,7 +208,7 @@ func (f *evmFinalizer) ProcessHead(ctx context.Context, head *types.Head) error 
 		f.lggr.Errorf("failed to resume pending task runs: %s", err.Error())
 	}
 	err = f.processFinalizedHead(ctx, latestFinalizedHead)
-	f.observeOldestNonTerminalTxAge(ctx)
+	//f.observeOldestNonTerminalTxAge(ctx)
 	return err
 }
 
