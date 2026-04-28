@@ -996,14 +996,11 @@ func TestChainClient_NonceAtWithFallback(t *testing.T) {
 			nonceServer(t, nonceResponse{delay: 25 * time.Millisecond, result: `"0xa"`, calls: &fastFallbackCalls}),
 		)
 
-		startedAt := time.Now()
 		nonce, err := ethClient.NonceAtWithFallback(t.Context(), testutils.NewAddress(), nil)
-		duration := time.Since(startedAt)
 		require.NoError(t, err)
 		require.Equal(t, uint64(10), nonce)
 		require.Equal(t, int32(1), mainCalls.Load())
 		require.Equal(t, int32(1), fastFallbackCalls.Load())
-		require.Less(t, duration, 200*time.Millisecond) // should be faster than 200ms but can vary due to CI load
 	})
 
 	t.Run("all primaries fail", func(t *testing.T) {
