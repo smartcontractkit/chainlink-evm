@@ -112,7 +112,7 @@ func NewEvmFinalizer(
 	return &evmFinalizer{
 		lggr:                  logger.Sugared(lggr),
 		chainID:               chainID,
-		rpcBatchSize:          int(rpcBatchSize), //nolint:gosec // G115 -- RPC batch size is a small config value
+		rpcBatchSize:          int(max(rpcBatchSize, 1)), //nolint:gosec // G115 -- RPC batch size is a small config value
 		forwardersEnabled:     forwardersEnabled,
 		txStore:               txStore,
 		client:                client,
