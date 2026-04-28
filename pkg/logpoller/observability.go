@@ -138,12 +138,6 @@ func (o *ObservedORM) SelectOldestBlock(ctx context.Context, minAllowedBlockNumb
 	})
 }
 
-func (o *ObservedORM) SelectNewestBlock(ctx context.Context, maxAllowedBlockNumber int64) (*Block, error) {
-	return withObservedQuery(ctx, o, "SelectNewestBlock", func() (*Block, error) {
-		return o.ORM.SelectNewestBlock(ctx, maxAllowedBlockNumber)
-	})
-}
-
 func (o *ObservedORM) SelectLatestLogByEventSigWithConfs(ctx context.Context, eventSig common.Hash, address common.Address, confs evmtypes.Confirmations) (*Log, error) {
 	return withObservedQuery(ctx, o, "SelectLatestLogByEventSigWithConfs", func() (*Log, error) {
 		return o.ORM.SelectLatestLogByEventSigWithConfs(ctx, eventSig, address, confs)

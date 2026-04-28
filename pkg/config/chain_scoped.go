@@ -95,10 +95,6 @@ func (e *EVMConfig) LogPollInterval() time.Duration {
 	return e.C.LogPollInterval.Duration()
 }
 
-func (e *EVMConfig) LogPollerSkipEmptyBlocks() bool {
-	return *e.C.LogPollerSkipEmptyBlocks
-}
-
 func (e *EVMConfig) FinalityDepth() uint32 {
 	return *e.C.FinalityDepth
 }

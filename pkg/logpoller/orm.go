@@ -43,7 +43,6 @@ type ORM interface {
 	SelectBlockByHash(ctx context.Context, hash common.Hash) (*Block, error)
 	SelectLatestBlock(ctx context.Context) (*Block, error)
 	SelectOldestBlock(ctx context.Context, minAllowedBlockNumber int64) (*Block, error)
-	SelectNewestBlock(ctx context.Context, maxAllowedBlockNumber int64) (*Block, error)
 	SelectLatestFinalizedBlock(ctx context.Context) (*Block, error)
 
 	SelectLogs(ctx context.Context, start, end int64, address common.Address, eventSig common.Hash) ([]Log, error)
@@ -290,17 +289,6 @@ func (o *DSORM) SelectOldestBlock(ctx context.Context, minAllowedBlockNumber int
 	if err := o.ds.GetContext(ctx, &b,
 		blocksQuery(`WHERE evm_chain_id = $1 AND block_number >= $2 ORDER BY block_number ASC LIMIT 1`),
 		sqlutil.New(o.chainID), minAllowedBlockNumber,
-	); err != nil {
-		return nil, err
-	}
-	return &b, nil
-}
-
-func (o *DSORM) SelectNewestBlock(ctx context.Context, maxAllowedBlockNumber int64) (*Block, error) {
-	var b Block
-	if err := o.ds.GetContext(ctx, &b,
-		blocksQuery(`WHERE evm_chain_id = $1 AND block_number <= $2 ORDER BY block_number DESC LIMIT 1`),
-		sqlutil.New(o.chainID), maxAllowedBlockNumber,
 	); err != nil {
 		return nil, err
 	}
