@@ -505,8 +505,13 @@ func (c *Chain) ValidateConfig() (err error) {
 func (c *Transactions) ValidateConfig() (err error) {
 	if c.TransactionManagerV2.Enabled != nil && *c.TransactionManagerV2.Enabled &&
 		c.TransactionManagerV2.DualBroadcast != nil && *c.TransactionManagerV2.DualBroadcast {
-		if c.TransactionManagerV2.CustomURL == nil {
-			err = multierr.Append(err, commonconfig.ErrMissing{Name: "TransactionManagerV2.CustomURL", Msg: "must be set if DualBroadcast is enabled"})
+		hasSingleURL := c.TransactionManagerV2.CustomURL != nil
+		hasMultipleURLs := len(c.TransactionManagerV2.CustomURLs) > 0
+		switch {
+		case !hasSingleURL && !hasMultipleURLs:
+			err = multierr.Append(err, commonconfig.ErrMissing{Name: "TransactionManagerV2.CustomURLs", Msg: "must be set if DualBroadcast is enabled"})
+		case hasSingleURL && hasMultipleURLs:
+			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "TransactionManagerV2.CustomURL", Msg: "cannot be set together with CustomURLs — CustomURL is deprecated, use only CustomURLs instead"})
 		}
 		if c.AutoPurge.Enabled != nil && !*c.AutoPurge.Enabled {
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "AutoPurge.Enabled", Value: false, Msg: "cannot be false if DualBroadcast is enabled"})
@@ -589,6 +594,7 @@ type TransactionManagerV2Config struct {
 	Enabled                       *bool                  `toml:",omitempty"`
 	BlockTime                     *commonconfig.Duration `toml:",omitempty"`
 	CustomURL                     *commonconfig.URL      `toml:",omitempty"`
+	CustomURLs                    []*commonconfig.URL    `toml:",omitempty"`
 	DualBroadcast                 *bool                  `toml:",omitempty"`
 	ReadRequestsToMultipleNodes   *bool                  `toml:",omitempty"`
 	Bundles                       *bool                  `toml:",omitempty"`
@@ -604,6 +610,9 @@ func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
 	}
 	if v := f.CustomURL; v != nil {
 		t.CustomURL = f.CustomURL
+	}
+	if f.CustomURLs != nil {
+		t.CustomURLs = f.CustomURLs
 	}
 	if v := f.DualBroadcast; v != nil {
 		t.DualBroadcast = f.DualBroadcast

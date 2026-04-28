@@ -63,6 +63,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Workflow.GasLimitDefault = ptr(uint64(400000))
 	unknown.Transactions.TransactionManagerV2.BlockTime = new(config.Duration)
 	unknown.Transactions.TransactionManagerV2.CustomURL = new(config.URL)
+	unknown.Transactions.TransactionManagerV2.CustomURLs = []*config.URL{new(config.URL)}
 	unknown.Transactions.TransactionManagerV2.DualBroadcast = ptr(false)
 	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
 	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
@@ -161,6 +162,7 @@ func TestDocs(t *testing.T) {
 		// TransactionManagerV2 configs are only set if the feature is enabled
 		docDefaults.Transactions.TransactionManagerV2.BlockTime = nil
 		docDefaults.Transactions.TransactionManagerV2.CustomURL = nil
+		docDefaults.Transactions.TransactionManagerV2.CustomURLs = nil
 		docDefaults.Transactions.TransactionManagerV2.DualBroadcast = nil
 		docDefaults.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = nil
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
@@ -294,6 +296,7 @@ var fullConfig = EVMConfig{
 				Bundles:                       ptr(false),
 				BlockTime:                     config.MustNewDuration(42 * time.Second),
 				CustomURL:                     config.MustParseURL("http://txs.org"),
+				CustomURLs:                    []*config.URL{config.MustParseURL("http://txs.org"), config.MustParseURL("http://txs.org/secondary")},
 				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
 			},
 		},

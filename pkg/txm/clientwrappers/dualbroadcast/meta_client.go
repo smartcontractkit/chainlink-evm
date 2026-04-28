@@ -148,6 +148,10 @@ type MetaClient struct {
 }
 
 func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, customURL *url.URL, chainID *big.Int, txStore MetaClientTxStore, auctionRequestTimeout *time.Duration, lifecycleMetrics txm.Metrics) (*MetaClient, error) {
+	if customURL == nil {
+		return nil, errors.New("customURL must not be nil")
+	}
+
 	metrics, err := NewMetaMetrics(chainID.String(), lggr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Meta metrics: %w", err)
@@ -157,6 +161,12 @@ func NewMetaClient(lggr logger.Logger, c MetaClientRPC, ks MetaClientKeystore, c
 	if auctionRequestTimeout != nil {
 		t = *auctionRequestTimeout
 	}
+
+	lggr.Infow("MetaClient created",
+		"customURL", redactURL(customURL),
+		"chainID", chainID,
+		"auctionRequestTimeout", t,
+	)
 
 	return &MetaClient{
 		lggr:                  logger.Sugared(logger.Named(lggr, "Txm.MetaClient")),
