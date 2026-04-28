@@ -32,7 +32,7 @@ type multiOfaClient struct {
 	chainClient          chainRPCClient
 	primary              multiOfaBackend
 	secondaries          []multiOfaBackend
-	secondarySendTimeout time.Duration
+	secondarySendTimeout time.Duration // used in unit tests to configure the timeout
 }
 
 var _ txm.Client = (*multiOfaClient)(nil)
@@ -93,15 +93,11 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 	}
 
 	// Secondaries are best-effort and do not block the primary. Each call is bounded by
-	// secondarySendTimeout (or rpcTimeout if the field is unset/invalid).
-	secTimeout := m.secondarySendTimeout
-	if secTimeout <= 0 {
-		secTimeout = rpcTimeout
-	}
+	// secondarySendTimeout
 	for _, secondary := range m.secondaries {
 		sec := secondary
 		go func() {
-			secondaryCtx, cancel := context.WithTimeout(ctx, secTimeout)
+			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
 			if secErr := sec.SendTransaction(secondaryCtx, tx, attempt); secErr != nil {

@@ -286,34 +286,6 @@ func TestMultiOfaClient_SecondarySend_DoesNotBlockReturn(t *testing.T) {
 	close(releaseSecondary)
 }
 
-func TestMultiOfaClient_SecondaryUsesRpcTimeoutWhenSecondarySendTimeoutZero(t *testing.T) {
-	var remainingNs atomic.Int64
-	chainClient := &chainClientMock{}
-	primary := &ofaBackendMock{}
-	secondary := &ofaBackendMock{
-		sendCalled: make(chan struct{}, 1),
-		sendTxFn: func(ctx context.Context, tx *txmtypes.Transaction, attempt *txmtypes.Attempt) error {
-			if d, ok := ctx.Deadline(); ok {
-				remainingNs.Store(int64(time.Until(d)))
-			}
-			return nil
-		},
-	}
-
-	mc := createMultiOfaClient(t, chainClient, primary, secondary)
-	mc.secondarySendTimeout = 0
-	tx, attempt := newDualBroadcastTx(t, 1)
-	require.NoError(t, mc.SendTransaction(testutils.Context(t), tx, attempt))
-
-	require.Eventually(t, func() bool {
-		return remainingNs.Load() > 0
-	}, 2*time.Second, 5*time.Millisecond, "secondary should observe a deadline")
-
-	rem := time.Duration(remainingNs.Load())
-	assert.InDelta(t, float64(rpcTimeout), float64(rem), float64(400*time.Millisecond),
-		"secondary context should use rpcTimeout when secondarySendTimeout is unset")
-}
-
 func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {
 	chainClient := &chainClientMock{}
 	primaryErr := errors.New("flashbots rejected")
