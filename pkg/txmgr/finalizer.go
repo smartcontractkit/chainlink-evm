@@ -414,7 +414,7 @@ func (f *evmFinalizer) FetchAndStoreReceipts(ctx context.Context, head, latestFi
 	}
 
 	oldTxIDs := findOldTxIDsWithoutReceipts(attempts, allReceipts, latestFinalizedHead)
-	// Process old transactions that never received receipts and need to be marked as fatal
+	// Process old transactions that never received receipts and need to be marked as fatal.
 	err = f.ProcessOldTxsWithoutReceipts(ctx, oldTxIDs, head, latestFinalizedHead)
 	if err != nil {
 		return err
