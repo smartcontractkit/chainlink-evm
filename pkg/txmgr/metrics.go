@@ -39,22 +39,17 @@ var (
 		Name: "txm_pending_tx_queue_utilization",
 		Help: "Queue utilization in [0,1] = depth/capacity.",
 	}, []string{"chainID"})
-	promOldestNonTerminalTxAgeSeconds = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "tx_manager_tx_oldest_non_terminal_age_seconds",
-		Help: "Age in seconds of the oldest evm.tx not in a terminal state (finalized or fatal_error); 0 if none. Useful for stuck-tx alerts (unlike a simple count, steady load can still show ~0 if txs complete quickly).",
-	}, []string{"chainID"})
 )
 
 type evmTxmMetrics struct {
 	metrics.GenericTXMMetrics
-	chainID                       string
-	numSuccessfulTxs              metric.Int64Counter
-	numRevertedTxs                metric.Int64Counter
-	fwdTxCount                    metric.Int64Counter
-	txAttemptCount                metric.Float64Gauge
-	numFinalizedTxs               metric.Int64Counter
-	pendingTxQueueUtilization     metric.Float64Gauge
-	oldestNonTerminalTxAgeSeconds metric.Float64Gauge
+	chainID                   string
+	numSuccessfulTxs          metric.Int64Counter
+	numRevertedTxs            metric.Int64Counter
+	fwdTxCount                metric.Int64Counter
+	txAttemptCount            metric.Float64Gauge
+	numFinalizedTxs           metric.Int64Counter
+	pendingTxQueueUtilization metric.Float64Gauge
 }
 
 func NewEVMTxmMetrics(chainID string) (*evmTxmMetrics, error) {
@@ -93,21 +88,15 @@ func NewEVMTxmMetrics(chainID string) (*evmTxmMetrics, error) {
 		return nil, fmt.Errorf("failed to register pending tx queue utilization: %w", err)
 	}
 
-	oldestNonTerminalTxAgeSeconds, err := beholder.GetMeter().Float64Gauge("tx_manager_tx_oldest_non_terminal_age_seconds")
-	if err != nil {
-		return nil, fmt.Errorf("failed to register oldest non-terminal transaction age metric: %w", err)
-	}
-
 	return &evmTxmMetrics{
-		chainID:                       chainID,
-		GenericTXMMetrics:             genericTXMMetrics,
-		numSuccessfulTxs:              numSuccessfulTxs,
-		numRevertedTxs:                numRevertedTxs,
-		fwdTxCount:                    fwdTxCount,
-		txAttemptCount:                txAttemptCount,
-		numFinalizedTxs:               numFinalizedTxs,
-		pendingTxQueueUtilization:     pendingTxQueueUtilization,
-		oldestNonTerminalTxAgeSeconds: oldestNonTerminalTxAgeSeconds,
+		chainID:                   chainID,
+		GenericTXMMetrics:         genericTXMMetrics,
+		numSuccessfulTxs:          numSuccessfulTxs,
+		numRevertedTxs:            numRevertedTxs,
+		fwdTxCount:                fwdTxCount,
+		txAttemptCount:            txAttemptCount,
+		numFinalizedTxs:           numFinalizedTxs,
+		pendingTxQueueUtilization: pendingTxQueueUtilization,
 	}, nil
 }
 
@@ -136,15 +125,7 @@ func (m *evmTxmMetrics) RecordTxAttemptCount(ctx context.Context, value float64)
 	m.txAttemptCount.Record(ctx, value, metric.WithAttributes(attribute.String("chainID", m.chainID)))
 }
 
-func (m *evmTxmMetrics) AddNumFinalizedTxs(ctx context.Context, n int64) {
-	if n <= 0 {
-		return
-	}
-	promNumFinalizedTxs.WithLabelValues(m.chainID).Add(float64(n))
-	m.numFinalizedTxs.Add(ctx, n, metric.WithAttributes(attribute.String("chainID", m.chainID)))
-}
-
-func (m *evmTxmMetrics) RecordOldestNonTerminalTxAgeSeconds(ctx context.Context, seconds float64) {
-	promOldestNonTerminalTxAgeSeconds.WithLabelValues(m.chainID).Set(seconds)
-	m.oldestNonTerminalTxAgeSeconds.Record(ctx, seconds, metric.WithAttributes(attribute.String("chainID", m.chainID)))
+func (m *evmTxmMetrics) IncrementNumFinalizedTxs(ctx context.Context) {
+	promNumFinalizedTxs.WithLabelValues(m.chainID).Add(float64(1))
+	m.numFinalizedTxs.Add(ctx, 1, metric.WithAttributes(attribute.String("chainID", m.chainID)))
 }

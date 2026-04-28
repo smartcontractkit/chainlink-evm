@@ -490,7 +490,7 @@ func TestFinalizer_FetchAndStoreReceipts(t *testing.T) {
 		db := testutils.NewSqlxDB(t)
 		txStore := txmgrtest.NewTestTxStore(t, db)
 		fromAddress := testutils.NewAddress()
-		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, rpcBatchSize, false, txStore, txmClient, ht, metrics)
+		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, config.EVM().RPCDefaultBatchSize(), false, txStore, txmClient, ht, metrics)
 
 		mustInsertFatalErrorEthTx(t, txStore, fromAddress)
 		mustInsertInProgressEthTx(t, txStore, 0, fromAddress)
