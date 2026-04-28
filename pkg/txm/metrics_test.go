@@ -1,6 +1,7 @@
 package txm
 
 import (
+	"encoding/json"
 	"strconv"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder/beholdertest"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
@@ -115,6 +117,85 @@ func TestEmitTxMessage(t *testing.T) {
 		assert.Equal(t, strconv.FormatUint(expectedNonce, 10), actualMessage.Nonce)
 		assert.Equal(t, expectedChain.String(), actualMessage.ChainId)
 		assert.Equal(t, "", actualMessage.FeedAddress)
+	})
+
+	t.Run("populates dual_broadcast_params when tx is a dual-broadcast secondary tx", func(t *testing.T) {
+		// GIVEN
+		ctx := t.Context()
+		beholderTester := beholdertest.NewObserver(t)
+
+		toAddress := testutils.NewAddress()
+		fromAddress := testutils.NewAddress()
+		expectedNonce := uint64(7)
+		expectedChain := testutils.FixtureChainID
+		expectedParams := "hint=calldata&hint=logs&builder=flashbots"
+		isDualBroadcast := true
+
+		metaBytes, err := json.Marshal(types.TxMeta{
+			DualBroadcast:       &isDualBroadcast,
+			DualBroadcastParams: &expectedParams,
+		})
+		require.NoError(t, err)
+		meta := sqlutil.JSON(metaBytes)
+
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
+
+		tx := &types.Transaction{
+			IsPurgeable: false,
+			FromAddress: fromAddress,
+			ToAddress:   toAddress,
+			Nonce:       &expectedNonce,
+			Meta:        &meta,
+		}
+
+		// WHEN
+		err = txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx)
+		require.NoError(t, err)
+
+		// THEN
+		messages := beholderTester.Messages(t)
+		assert.Len(t, messages, 1)
+
+		var actualMessage svrv1.TxMessage
+		err = proto.Unmarshal(messages[0].Body, &actualMessage)
+		require.NoError(t, err)
+
+		require.NotNil(t, actualMessage.DualBroadcastParams)
+		assert.Equal(t, expectedParams, *actualMessage.DualBroadcastParams)
+	})
+
+	t.Run("does not set dual_broadcast_params for a primary (non-dual-broadcast) tx", func(t *testing.T) {
+		// GIVEN
+		ctx := t.Context()
+		beholderTester := beholdertest.NewObserver(t)
+
+		toAddress := testutils.NewAddress()
+		fromAddress := testutils.NewAddress()
+		expectedNonce := uint64(3)
+		expectedChain := testutils.FixtureChainID
+
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
+
+		tx := &types.Transaction{
+			IsPurgeable: false,
+			FromAddress: fromAddress,
+			ToAddress:   toAddress,
+			Nonce:       &expectedNonce,
+		}
+
+		// WHEN
+		err := txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx)
+		require.NoError(t, err)
+
+		// THEN
+		messages := beholderTester.Messages(t)
+		assert.Len(t, messages, 1)
+
+		var actualMessage svrv1.TxMessage
+		err = proto.Unmarshal(messages[0].Body, &actualMessage)
+		require.NoError(t, err)
+
+		assert.Nil(t, actualMessage.DualBroadcastParams)
 	})
 }
 

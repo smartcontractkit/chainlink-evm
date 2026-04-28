@@ -210,14 +210,20 @@ func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, from
 		toAddress = tx.ToAddress
 	}
 
+	var dualBroadcastParams *string
+	if meta != nil && meta.DualBroadcast != nil && *meta.DualBroadcast {
+		dualBroadcastParams = meta.DualBroadcastParams
+	}
+
 	message := &svrv1.TxMessage{
-		Hash:        txHash.String(),
-		FromAddress: fromAddress.String(),
-		ToAddress:   toAddress.String(),
-		Nonce:       strconv.FormatUint(*tx.Nonce, 10),
-		CreatedAt:   time.Now().UnixMicro(),
-		ChainId:     m.chainID.String(),
-		FeedAddress: destAddress,
+		Hash:                txHash.String(),
+		FromAddress:         fromAddress.String(),
+		ToAddress:           toAddress.String(),
+		Nonce:               strconv.FormatUint(*tx.Nonce, 10),
+		CreatedAt:           time.Now().UnixMicro(),
+		ChainId:             m.chainID.String(),
+		FeedAddress:         destAddress,
+		DualBroadcastParams: dualBroadcastParams,
 	}
 
 	messageBytes, err := proto.Marshal(message)
