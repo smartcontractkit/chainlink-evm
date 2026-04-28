@@ -380,7 +380,7 @@ func assertBackupPollerStartup(t *testing.T, head *evmtypes.Head, finalizedHead 
 	assert.Equal(t, int64(0), lp.backupPollerNextBlock)
 	assert.Equal(t, 1, observedLogs.FilterMessageSnippet("ran before first successful log poller run").Len())
 
-	lp.PollAndSaveLogs(ctx, head.Number, false)
+	lp.PollAndSaveLogs(ctx, head.Number)
 
 	lastProcessed, err := lp.orm.SelectLatestBlock(ctx)
 	require.NoError(t, err)
@@ -489,7 +489,7 @@ func TestLogPoller_Replay(t *testing.T) {
 	{
 		ctx := testutils.Context(t)
 		// process 1 log in block 3
-		lp.PollAndSaveLogs(ctx, 4, false)
+		lp.PollAndSaveLogs(ctx, 4)
 		latest, err := lp.LatestBlock(ctx)
 		require.NoError(t, err)
 		require.Equal(t, int64(4), latest.BlockNumber)
@@ -894,7 +894,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		// insert finalized block with different hash than in RPC
 		require.NoError(t, orm.InsertBlock(t.Context(), common.HexToHash("0x123"), 2, time.Unix(10, 0), 2, 2))
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(t.Context(), 4, false)
+		lp.PollAndSaveLogs(t.Context(), 4)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("RPCs contradict each other and return different finalized blocks", func(t *testing.T) {
@@ -915,7 +915,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 			return evmtypes.Head{Number: num, Hash: utils.NewHash()}
 		})
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(t.Context(), 4, false)
+		lp.PollAndSaveLogs(t.Context(), 4)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("Log's hash does not match block's", func(t *testing.T) {
@@ -933,7 +933,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5, BlockHash: common.HexToHash("0x123")}}, nil).Once()
 		mockBatchCallContext(t, ec)
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(t.Context(), 4, false)
+		lp.PollAndSaveLogs(t.Context(), 4)
 		require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
 	})
 	t.Run("Happy path", func(t *testing.T) {
@@ -953,7 +953,7 @@ func Test_PollAndSaveLogs_BackfillFinalityViolation(t *testing.T) {
 		ec.EXPECT().FilterLogs(mock.Anything, mock.Anything).Return([]types.Log{{BlockNumber: 5, BlockHash: common.BigToHash(big.NewInt(5)), Topics: []common.Hash{{}}}}, nil).Once()
 		mockBatchCallContext(t, ec)
 		lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
-		lp.PollAndSaveLogs(t.Context(), 4, false)
+		lp.PollAndSaveLogs(t.Context(), 4)
 		require.NoError(t, lp.HealthReport()[lp.Name()])
 	})
 }

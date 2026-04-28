@@ -164,7 +164,7 @@ func (th *TestHarness) AdjustTime(t *testing.T, d time.Duration) {
 }
 
 func (th *TestHarness) PollAndSaveLogs(ctx context.Context, currentBlockNumber int64) int64 {
-	th.LogPoller.PollAndSaveLogs(ctx, currentBlockNumber, false)
+	th.LogPoller.PollAndSaveLogs(ctx, currentBlockNumber)
 	latest, _ := th.LogPoller.LatestBlock(ctx)
 	return latest.BlockNumber + 1
 }
