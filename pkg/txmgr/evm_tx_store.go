@@ -1645,10 +1645,15 @@ func (o *evmTxStore) OldestNonTerminalTxAgeSeconds(ctx context.Context, chainID 
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 	err = o.q.GetContext(ctx, &seconds, `
-SELECT GREATEST(0::float8, COALESCE(EXTRACT(EPOCH FROM (NOW() - MIN(created_at))), 0::float8))
-FROM evm.txes
-WHERE evm_chain_id = $1 AND state NOT IN ('finalized', 'fatal_error')`,
+SELECT GREATEST(0::float8, COALESCE(EXTRACT(EPOCH FROM (NOW() - t.created_at)), 0::float8)) AS seconds
+FROM evm.txes AS t
+WHERE t.evm_chain_id = $1 AND t.state NOT IN ('finalized', 'fatal_error')
+ORDER BY t.created_at ASC NULLS LAST
+LIMIT 1`,
 		chainID.String())
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
 	if err != nil {
 		return 0, fmt.Errorf("failed to OldestNonTerminalTxAgeSeconds: %w", err)
 	}

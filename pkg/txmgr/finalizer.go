@@ -37,6 +37,7 @@ var (
 const (
 	processHeadTimeout            = 10 * time.Minute
 	attemptsCacheRefreshThreshold = 5
+	oldestNonTerminalTxAgeMetricQueryTimeout = 5 * time.Second
 )
 
 type finalizerTxStore interface {
@@ -213,7 +214,9 @@ func (f *evmFinalizer) ProcessHead(ctx context.Context, head *types.Head) error 
 }
 
 func (f *evmFinalizer) observeOldestNonTerminalTxAge(ctx context.Context) {
-	age, err := f.txStore.OldestNonTerminalTxAgeSeconds(ctx, f.chainID)
+	ctxObs, cancel := context.WithTimeout(ctx, oldestNonTerminalTxAgeMetricQueryTimeout)
+	defer cancel()
+	age, err := f.txStore.OldestNonTerminalTxAgeSeconds(ctxObs, f.chainID)
 	if err != nil {
 		f.lggr.Errorw("Failed to load oldest non-terminal transaction age for metrics", "err", err)
 		return
