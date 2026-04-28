@@ -45,12 +45,12 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 		if tx.IsPurgeable {
 			gasLimit = a.emptyTxLimitDefault
 		}
-		fee, estimatedGasLimit, err = a.EvmFeeEstimator.GetMaxFee(ctx, tx.Data, gasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
+		fee, estimatedGasLimit, err = a.GetMaxFee(ctx, tx.Data, gasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		fee, estimatedGasLimit, err = a.EvmFeeEstimator.GetFee(ctx, tx.Data, tx.SpecifiedGasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
+		fee, estimatedGasLimit, err = a.GetFee(ctx, tx.Data, tx.SpecifiedGasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
 		if err != nil {
 			return nil, err
 		}
