@@ -86,7 +86,7 @@ func ListOCR3PlusOnchainKeyrings(ctx context.Context, ks keystore.Keystore, keyr
 
 	keyrings := make([]ocrtypes.OnchainKeyringPlus, 0, len(resp.Keys))
 	for _, key := range resp.Keys {
-		keyrings = append(keyrings, &evmOnchainKeyring{something with the key})
+		keyrings = append(keyrings, &evmOnchainPlusKeyring{something with the key})
 	}
 	return keyrings, nil
 }
