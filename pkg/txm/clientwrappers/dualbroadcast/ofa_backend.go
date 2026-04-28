@@ -57,12 +57,12 @@ type chainRPCClient interface {
 	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
 }
 
-type ofaPostResponse struct {
+type postResponse struct {
 	Result json.RawMessage `json:"result,omitempty"`
-	Error  ofaPostError
+	Error  postError
 }
 
-type ofaPostError struct {
+type postError struct {
 	Message string `json:"message,omitempty"`
 }
 
@@ -201,7 +201,7 @@ func (d *ofaBackend) postJSONRPC(ctx context.Context, from common.Address, body 
 		return nil, fmt.Errorf("%s request failed with status %d: %s", d.ofa.name(), resp.StatusCode, string(respBody))
 	}
 
-	var response ofaPostResponse
+	var response postResponse
 	if err = json.Unmarshal(respBody, &response); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal OFA response: %w: %s", err, string(respBody))
 	}
