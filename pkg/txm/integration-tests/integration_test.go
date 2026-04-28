@@ -124,7 +124,7 @@ func setupTestnetTXM(
 
 	var errorHandler txm.ErrorHandler
 	if simulationMode == ErrorHandling {
-		errorHandler = dualbroadcast.NewMetaErrorHandler()
+		errorHandler = dualbroadcast.NewErrorHandler()
 	}
 
 	metrics := txm.NewTxmMetrics(lggr, chainID)
@@ -181,7 +181,7 @@ func setupDevnetTXM(
 
 	var errorHandler txm.ErrorHandler
 	if simulationMode == ErrorHandling {
-		errorHandler = dualbroadcast.NewMetaErrorHandler()
+		errorHandler = dualbroadcast.NewErrorHandler()
 	}
 
 	metrics := txm.NewTxmMetrics(lggr, chainID)

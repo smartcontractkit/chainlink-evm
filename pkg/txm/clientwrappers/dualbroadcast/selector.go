@@ -38,7 +38,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 			return nil, nil, err
 		}
 
-		return mc, NewMetaErrorHandler(), nil
+		return mc, NewErrorHandler(), nil
 	}
 
 	// use multiOfaClient for all other cases

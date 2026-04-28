@@ -11,13 +11,13 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-type metaErrorHandler struct{}
+type errorHandler struct{}
 
-func NewMetaErrorHandler() *metaErrorHandler {
-	return &metaErrorHandler{}
+func NewErrorHandler() *errorHandler {
+	return &errorHandler{}
 }
 
-func (e *metaErrorHandler) HandleError(
+func (e *errorHandler) HandleError(
 	ctx context.Context,
 	lggr logger.Logger,
 	tx *types.Transaction,
