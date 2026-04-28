@@ -50,7 +50,6 @@ type EvmTxStore interface {
 	FindTxesByIDs(ctx context.Context, etxIDs []int64, chainID *big.Int) (etxs []*Tx, err error)
 	SaveFetchedReceipts(ctx context.Context, r []*types.Receipt) (err error)
 	UpdateTxStatesToFinalizedUsingTxHashes(ctx context.Context, txHashes []common.Hash, chainID *big.Int) error
-	OldestNonTerminalTxAgeSeconds(ctx context.Context, chainID *big.Int) (seconds float64, err error)
 }
 
 // TxStoreWebApi encapsulates the methods that are not used by the txmgr and only used by the various web controllers, readers, or evm specific components
@@ -1634,25 +1633,6 @@ func (o *evmTxStore) CountTransactionsByState(ctx context.Context, state txmgrty
 		return 0, fmt.Errorf("failed to CountTransactionsByState: %w", err)
 	}
 	return count, nil
-}
-
-// OldestNonTerminalTxAgeSeconds returns the age in seconds of the oldest evm.tx row that is not in a
-// terminal state (finalized or fatal_error). Returns 0 when there are no such rows. One aggregate
-// over the same filter as a count query—suitable for “stuck tx” style alerts without implying
-// that any non-zero backlog is unhealthy.
-func (o *evmTxStore) OldestNonTerminalTxAgeSeconds(ctx context.Context, chainID *big.Int) (seconds float64, err error) {
-	var cancel context.CancelFunc
-	ctx, cancel = o.stopCh.Ctx(ctx)
-	defer cancel()
-	err = o.q.GetContext(ctx, &seconds, `
-SELECT GREATEST(0::float8, COALESCE(EXTRACT(EPOCH FROM (NOW() - MIN(created_at))), 0::float8))
-FROM evm.txes
-WHERE evm_chain_id = $1 AND state NOT IN ('finalized', 'fatal_error')`,
-		chainID.String())
-	if err != nil {
-		return 0, fmt.Errorf("failed to OldestNonTerminalTxAgeSeconds: %w", err)
-	}
-	return seconds, nil
 }
 
 // CountUnstartedTransactions returns the number of unconfirmed transactions
