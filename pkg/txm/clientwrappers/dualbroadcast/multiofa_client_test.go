@@ -42,9 +42,9 @@ func (c *chainClientMock) SendTransaction(context.Context, *txmtypes.Transaction
 	return nil
 }
 
-var _ chainRPCClient = (*chainClientMock)(nil)
+var _ ofaBackendRPCClient = (*chainClientMock)(nil)
 
-func createMultiOfaClient(t *testing.T, c chainRPCClient, primary multiOfaBackend, secondaries ...multiOfaBackend) *multiOfaClient {
+func createMultiOfaClient(t *testing.T, c ofaBackendRPCClient, primary multiOfaBackend, secondaries ...multiOfaBackend) *multiOfaClient {
 	t.Helper()
 	return &multiOfaClient{
 		lggr:                 logger.Sugared(logger.Test(t)),

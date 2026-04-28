@@ -50,8 +50,8 @@ func (k ofa) name() string {
 	}
 }
 
-// chainRPCClient is used for public mempool fallback and reads shared by OFA implementations.
-type chainRPCClient interface {
+// ofaBackendRPCClient is used for public mempool fallback and reads shared by OFA implementations.
+type ofaBackendRPCClient interface {
 	BlockByNumber(ctx context.Context, number *big.Int) (*evmtypes.Block, error)
 	NonceAt(context.Context, common.Address, *big.Int) (uint64, error)
 	SendTransaction(context.Context, *types.Transaction, *types.Attempt) error
@@ -74,7 +74,7 @@ type FlashbotsTxStore interface {
 // ofaBackend is an HTTP JSON-RPC OFA backend (Flashbots MEV-Share, Nova RPC)
 type ofaBackend struct {
 	lggr      logger.SugaredLogger
-	c         chainRPCClient
+	c         ofaBackendRPCClient
 	customURL *url.URL
 	ofa       ofa
 	keystore  keys.MessageSigner // Only if authentication is required
@@ -85,7 +85,7 @@ type ofaBackend struct {
 
 var _ multiOfaBackend = (*ofaBackend)(nil)
 
-func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundlesEnabled bool, metrics ofaMetrics) *ofaBackend {
+func newFlashbotsClient(lggr logger.Logger, c ofaBackendRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundlesEnabled bool, metrics ofaMetrics) *ofaBackend {
 	return &ofaBackend{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
 		c:         c,
@@ -98,7 +98,7 @@ func newFlashbotsClient(lggr logger.Logger, c chainRPCClient, keystore keys.Mess
 	}
 }
 
-func newNovaClient(lggr logger.Logger, c chainRPCClient, customURL *url.URL, metrics ofaMetrics) *ofaBackend {
+func newNovaClient(lggr logger.Logger, c ofaBackendRPCClient, customURL *url.URL, metrics ofaMetrics) *ofaBackend {
 	return &ofaBackend{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,

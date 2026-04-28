@@ -29,7 +29,7 @@ type multiOfaBackend interface {
 // fans out sends to secondaries (best-effort), and delegates nonce queries to the primary only.
 type multiOfaClient struct {
 	lggr                 logger.SugaredLogger
-	chainClient          chainRPCClient
+	chainClient          ofaBackendRPCClient
 	primary              multiOfaBackend
 	secondaries          []multiOfaBackend
 	secondarySendTimeout time.Duration // used in unit tests to configure the timeout
