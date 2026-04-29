@@ -1,2 +1,3 @@
 ChainID = '1672'
 RPCDefaultBatchSize = 100
+ChainType = 'pharos'
