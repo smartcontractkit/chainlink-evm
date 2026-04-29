@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -161,10 +162,70 @@ func (m *MetaMetrics) emitAtlasError(ctx context.Context, errType string, custom
 		UseProtoNames:   true,
 		EmitUnpopulated: true,
 	}.Format(msg)
-	m.lggr.Infow("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
+	m.lggr.Debugw("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
 
 	if emitErr := m.emitter.Emit(ctx, messageBytes, attrKVs...); emitErr != nil {
 		m.lggr.Errorw("Failed to emit Atlas error event", "err", emitErr)
 	}
 	m.lggr.Debugw("Successfully emitted Atlas error event to Beholder", "message", mStr, "attributes", attrKVs)
+}
+
+func (m *MetaMetrics) emitAtlasUserOp(ctx context.Context, userOpHash common.Hash, tx *types.Transaction, requestSentAt, responseReceivedAt int64) {
+	var nonce string
+	if tx.Nonce != nil {
+		nonce = strconv.FormatUint(*tx.Nonce, 10)
+	}
+
+	meta, err := tx.GetMeta()
+	if err != nil {
+		m.lggr.Errorw("Failed to get meta for tx", "txId", tx.ID, "userOpHash", userOpHash.Hex(), "err", err)
+		return
+	}
+
+	var destAddress string
+	var transactionLifecycleID string
+	if meta != nil {
+		if meta.FwdrDestAddress != nil {
+			destAddress = meta.FwdrDestAddress.String()
+		}
+		if meta.TransactionLifecycleID != nil {
+			transactionLifecycleID = *meta.TransactionLifecycleID
+		}
+	}
+
+	msg := &pb.FastLaneAtlasUserOp{
+		ChainId:                m.chainID,
+		FromAddress:            tx.FromAddress.Hex(),
+		ToAddress:              tx.ToAddress.Hex(),
+		FeedAddress:            destAddress,
+		Nonce:                  nonce,
+		UserOpHash:             userOpHash.Hex(),
+		TransactionLifecycleId: transactionLifecycleID,
+		RequestSentAt:          requestSentAt,
+		ResponseReceivedAt:     responseReceivedAt,
+	}
+
+	messageBytes, err := proto.Marshal(msg)
+	if err != nil {
+		m.lggr.Errorw("Failed to marshal Atlas user op event", "err", err)
+		return
+	}
+
+	attrKVs := []any{
+		"beholder_domain", "svr",
+		"beholder_entity", "svr.v1.FastLaneAtlasUserOp",
+		"beholder_data_schema", "/fastlane-atlas-user-op/versions/1",
+	}
+
+	mStr := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Format(msg)
+	m.lggr.Debugw("[Beholder.emit]", "message", mStr, "attributes", attrKVs)
+
+	if emitErr := m.emitter.Emit(ctx, messageBytes, attrKVs...); emitErr != nil {
+		m.lggr.Errorw("Failed to emit Atlas user op event", "err", emitErr)
+		return
+	}
+	m.lggr.Debugw("Successfully emitted Atlas user op event to Beholder", "message", mStr, "attributes", attrKVs)
 }
