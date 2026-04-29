@@ -178,7 +178,7 @@ func (m *MetaMetrics) emitAtlasUserOp(ctx context.Context, userOpHash common.Has
 
 	meta, err := tx.GetMeta()
 	if err != nil {
-		m.lggr.Errorw("Failed to get meta for tx. UserOpHash to emit was: "+userOpHash.Hex(), "txId", tx.ID, "err", err)
+		m.lggr.Errorw("Failed to get meta for tx", "txId", tx.ID, "userOpHash", userOpHash.Hex(), "err", err)
 		return
 	}
 
