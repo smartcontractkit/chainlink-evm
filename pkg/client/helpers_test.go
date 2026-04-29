@@ -39,6 +39,7 @@ type TestClientErrors struct {
 	serviceUnavailable                string
 	tooManyResults                    string
 	missingBlocks                     string
+	finalizedStateUnavailable         string
 }
 
 func NewTestClientErrors() TestClientErrors {
@@ -75,32 +76,35 @@ func (c *TestClientErrors) TransactionAlreadyInMempool() string {
 	return c.transactionAlreadyInMempool
 }
 
-func (c *TestClientErrors) TerminallyUnderpriced() string   { return c.terminallyUnderpriced }
-func (c *TestClientErrors) InsufficientEth() string         { return c.insufficientEth }
-func (c *TestClientErrors) TxFeeExceedsCap() string         { return c.txFeeExceedsCap }
-func (c *TestClientErrors) L2FeeTooLow() string             { return c.l2FeeTooLow }
-func (c *TestClientErrors) L2FeeTooHigh() string            { return c.l2FeeTooHigh }
-func (c *TestClientErrors) L2Full() string                  { return c.l2Full }
-func (c *TestClientErrors) TransactionAlreadyMined() string { return c.transactionAlreadyMined }
-func (c *TestClientErrors) Fatal() string                   { return c.fatal }
-func (c *TestClientErrors) ServiceUnavailable() string      { return c.serviceUnavailable }
-func (c *TestClientErrors) TooManyResults() string          { return c.tooManyResults }
-func (c *TestClientErrors) MissingBlocks() string           { return c.missingBlocks }
+func (c *TestClientErrors) TerminallyUnderpriced() string     { return c.terminallyUnderpriced }
+func (c *TestClientErrors) InsufficientEth() string           { return c.insufficientEth }
+func (c *TestClientErrors) TxFeeExceedsCap() string           { return c.txFeeExceedsCap }
+func (c *TestClientErrors) L2FeeTooLow() string               { return c.l2FeeTooLow }
+func (c *TestClientErrors) L2FeeTooHigh() string              { return c.l2FeeTooHigh }
+func (c *TestClientErrors) L2Full() string                    { return c.l2Full }
+func (c *TestClientErrors) TransactionAlreadyMined() string   { return c.transactionAlreadyMined }
+func (c *TestClientErrors) Fatal() string                     { return c.fatal }
+func (c *TestClientErrors) ServiceUnavailable() string        { return c.serviceUnavailable }
+func (c *TestClientErrors) TooManyResults() string            { return c.tooManyResults }
+func (c *TestClientErrors) MissingBlocks() string             { return c.missingBlocks }
+func (c *TestClientErrors) FinalizedStateUnavailable() string { return c.finalizedStateUnavailable }
 
 type TestNodePoolConfig struct {
-	NodePollFailureThreshold          uint32
-	NodePollSuccessThreshold          uint32
-	NodePollInterval                  time.Duration
-	NodeSelectionMode                 string
-	NodeSyncThreshold                 uint32
-	NodeLeaseDuration                 time.Duration
-	NodeIsSyncingEnabledVal           bool
-	NodeFinalizedBlockPollInterval    time.Duration
-	NodeErrors                        config.ClientErrors
-	EnforceRepeatableReadVal          bool
-	NodeDeathDeclarationDelay         time.Duration
-	NodeNewHeadsPollInterval          time.Duration
-	ExternalRequestMaxResponseSizeVal uint32
+	NodePollFailureThreshold               uint32
+	NodePollSuccessThreshold               uint32
+	NodePollInterval                       time.Duration
+	NodeSelectionMode                      string
+	NodeSyncThreshold                      uint32
+	NodeLeaseDuration                      time.Duration
+	NodeIsSyncingEnabledVal                bool
+	NodeFinalizedBlockPollInterval         time.Duration
+	HistoricalBalanceCheckAddressVal       string
+	NodeErrors                             config.ClientErrors
+	EnforceRepeatableReadVal               bool
+	NodeDeathDeclarationDelay              time.Duration
+	NodeNewHeadsPollInterval               time.Duration
+	ExternalRequestMaxResponseSizeVal      uint32
+	FinalizedStateCheckFailureThresholdVal uint32
 }
 
 func (tc TestNodePoolConfig) PollFailureThreshold() uint32 { return tc.NodePollFailureThreshold }
@@ -118,6 +122,10 @@ func (tc TestNodePoolConfig) NodeIsSyncingEnabled() bool {
 
 func (tc TestNodePoolConfig) FinalizedBlockPollInterval() time.Duration {
 	return tc.NodeFinalizedBlockPollInterval
+}
+
+func (tc TestNodePoolConfig) HistoricalBalanceCheckAddress() string {
+	return tc.HistoricalBalanceCheckAddressVal
 }
 
 func (tc TestNodePoolConfig) NewHeadsPollInterval() time.Duration {
@@ -142,6 +150,10 @@ func (tc TestNodePoolConfig) DeathDeclarationDelay() time.Duration {
 
 func (tc TestNodePoolConfig) ExternalRequestMaxResponseSize() uint32 {
 	return tc.ExternalRequestMaxResponseSizeVal
+}
+
+func (tc TestNodePoolConfig) FinalizedStateCheckFailureThreshold() uint32 {
+	return tc.FinalizedStateCheckFailureThresholdVal
 }
 
 func NewChainClientWithTestNode(

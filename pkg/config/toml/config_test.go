@@ -121,6 +121,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		ServiceUnavailable:                ptr("unavailable"),
 		TooManyResults:                    ptr("too-many"),
 		MissingBlocks:                     ptr("missing"),
+		FinalizedStateUnavailable:         ptr("finalized-unavailable"),
 	}
 
 	configtest.AssertFieldsNotNil(t, unknown)
@@ -330,19 +331,21 @@ var fullConfig = EVMConfig{
 		},
 
 		NodePool: NodePool{
-			PollFailureThreshold:           ptr[uint32](5),
-			PollSuccessThreshold:           ptr[uint32](0),
-			PollInterval:                   config.MustNewDuration(time.Minute),
-			SelectionMode:                  ptr(multinode.NodeSelectionModeHighestHead),
-			SyncThreshold:                  ptr[uint32](13),
-			LeaseDuration:                  config.MustNewDuration(0),
-			NodeIsSyncingEnabled:           ptr(true),
-			FinalizedBlockPollInterval:     config.MustNewDuration(time.Second),
-			EnforceRepeatableRead:          ptr(true),
-			DeathDeclarationDelay:          config.MustNewDuration(time.Minute),
-			VerifyChainID:                  ptr(true),
-			NewHeadsPollInterval:           config.MustNewDuration(0),
-			ExternalRequestMaxResponseSize: ptr[uint32](10),
+			PollFailureThreshold:                ptr[uint32](5),
+			PollSuccessThreshold:                ptr[uint32](0),
+			PollInterval:                        config.MustNewDuration(time.Minute),
+			SelectionMode:                       ptr(multinode.NodeSelectionModeHighestHead),
+			SyncThreshold:                       ptr[uint32](13),
+			LeaseDuration:                       config.MustNewDuration(0),
+			NodeIsSyncingEnabled:                ptr(true),
+			FinalizedBlockPollInterval:          config.MustNewDuration(time.Second),
+			HistoricalBalanceCheckAddress:       ptr(types.MustEIP55Address("0x0000000000000000000000000000000000000001")),
+			EnforceRepeatableRead:               ptr(true),
+			DeathDeclarationDelay:               config.MustNewDuration(time.Minute),
+			VerifyChainID:                       ptr(true),
+			NewHeadsPollInterval:                config.MustNewDuration(0),
+			ExternalRequestMaxResponseSize:      ptr[uint32](10),
+			FinalizedStateCheckFailureThreshold: ptr[uint32](3),
 			Errors: ClientErrors{
 				NonceTooLow:                       ptr[string]("(: |^)nonce too low"),
 				NonceTooHigh:                      ptr[string]("(: |^)nonce too high"),
@@ -360,6 +363,7 @@ var fullConfig = EVMConfig{
 				ServiceUnavailable:                ptr[string]("(: |^)service unavailable"),
 				TooManyResults:                    ptr[string]("(: |^)too many results"),
 				MissingBlocks:                     ptr[string]("(: |^)invalid block range"),
+				FinalizedStateUnavailable:         ptr[string]("(: |^)missing trie node"),
 			},
 		},
 		OCR: OCR{

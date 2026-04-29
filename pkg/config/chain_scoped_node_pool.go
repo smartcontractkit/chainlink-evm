@@ -42,6 +42,13 @@ func (n *NodePoolConfig) FinalizedBlockPollInterval() time.Duration {
 	return n.C.FinalizedBlockPollInterval.Duration()
 }
 
+func (n *NodePoolConfig) HistoricalBalanceCheckAddress() string {
+	if n.C.HistoricalBalanceCheckAddress == nil {
+		return ""
+	}
+	return n.C.HistoricalBalanceCheckAddress.String()
+}
+
 func (n *NodePoolConfig) NewHeadsPollInterval() time.Duration {
 	return n.C.NewHeadsPollInterval.Duration()
 }
@@ -65,4 +72,11 @@ func (n *NodePoolConfig) ExternalRequestMaxResponseSize() uint32 {
 		return 0
 	}
 	return *n.C.ExternalRequestMaxResponseSize
+}
+
+func (n *NodePoolConfig) FinalizedStateCheckFailureThreshold() uint32 {
+	if n.C.FinalizedStateCheckFailureThreshold == nil {
+		return 0
+	}
+	return *n.C.FinalizedStateCheckFailureThreshold
 }

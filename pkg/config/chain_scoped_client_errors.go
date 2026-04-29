@@ -50,3 +50,6 @@ func (c *clientErrorsConfig) ServiceUnavailable() string {
 }
 func (c *clientErrorsConfig) TooManyResults() string { return derefOrDefault(c.c.TooManyResults) }
 func (c *clientErrorsConfig) MissingBlocks() string  { return derefOrDefault(c.c.MissingBlocks) }
+func (c *clientErrorsConfig) FinalizedStateUnavailable() string {
+	return derefOrDefault(c.c.FinalizedStateUnavailable)
+}
