@@ -531,7 +531,7 @@ func (r *RPCClient) SubscribeToHeads(ctx context.Context) (ch <-chan *evmtypes.H
 // GethClient wrappers
 
 func (r *RPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (receipt *evmtypes.Receipt, err error) {
-	err = r.CallContext(ctx, &receipt, "eth_getTransactionReceipt", txHash, false)
+	err = r.CallContext(ctx, &receipt, "eth_getTransactionReceipt", txHash)
 	if err != nil {
 		return nil, err
 	}
@@ -544,7 +544,7 @@ func (r *RPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) 
 
 func (r *RPCClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *evmtypes.Receipt, err error) {
 	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
-	err = r.CallContext(ctx, &receipt, "eth_getTransactionReceipt", txHash, false)
+	err = r.CallContext(ctx, &receipt, "eth_getTransactionReceipt", txHash)
 	if err != nil {
 		return nil, err
 	}

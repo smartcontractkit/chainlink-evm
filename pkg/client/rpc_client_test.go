@@ -1300,6 +1300,9 @@ func TestRPCClient_TransactionReceiptWithOpts(t *testing.T) {
 		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
 			case "eth_getTransactionReceipt":
+				require.True(t, params.IsArray())
+				require.Len(t, params.Array(), 1)
+				require.Equal(t, common.Hash{}.Hex(), params.Array()[0].String())
 				resp.Result = receiptJSON
 			default:
 				require.Fail(t, "unexpected method: "+method)
@@ -1318,6 +1321,9 @@ func TestRPCClient_TransactionReceiptWithOpts(t *testing.T) {
 		httpURL := testutils.NewHTTPServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
 			case "eth_getTransactionReceipt":
+				require.True(t, params.IsArray())
+				require.Len(t, params.Array(), 1)
+				require.Equal(t, common.Hash{}.Hex(), params.Array()[0].String())
 				resp.Result = receiptJSON
 			default:
 				require.Fail(t, "unexpected method: "+method)
