@@ -48,6 +48,24 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 	}
 }
 
+func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
+	name := "fake"
+	id := DefaultIDs[0]
+	evmCfg := &EVMConfig{
+		ChainID: id,
+		Chain:   Defaults(id),
+		Nodes: EVMNodes{{
+			Name:    &name,
+			WSURL:   config.MustParseURL("wss://foo.test/ws"),
+			HTTPURL: config.MustParseURL("http://foo.test"),
+		}},
+	}
+	evmCfg.RPCDefaultBatchSize = ptr[uint32](0)
+	err := config.Validate(evmCfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "RPCDefaultBatchSize")
+}
+
 func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown := Defaults(nil)
 
