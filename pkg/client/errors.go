@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -734,20 +733,6 @@ const (
 
 	jsonRPCQuicknodeTooManyResults = -32614 // Undocumented error code used by Quicknode for too many results error
 )
-
-// batchRPCResponseEnvelopeUnmarshal is the substring returned by go-ethereum's rpc
-// client when the HTTP body is a single JSON-RPC object (typically an error envelope)
-// instead of an array of responses. Providers often do this when batch limits are exceeded.
-const batchRPCResponseEnvelopeUnmarshal = "cannot unmarshal object into Go value of type []*rpc.jsonrpcMessage"
-
-func IsBatchRPCResponseEnvelopeUnmarshalError(err error) bool {
-	for cur := err; cur != nil; cur = errors.Unwrap(cur) {
-		if strings.Contains(cur.Error(), batchRPCResponseEnvelopeUnmarshal) {
-			return true
-		}
-	}
-	return false
-}
 
 func IsTooManyResults(err error, clientErrors config.ClientErrors) bool {
 	// Context timeouts often occur when receiving too many results from RPCs
