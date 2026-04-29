@@ -218,9 +218,13 @@ func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("fetching latest block number failed: %w", err)
 		}
-		latest := int64(latestBlock)
-		finalizedHeight := max(int64(0), latest-int64(r.finalityDepth))
-		blockNumber = big.NewInt(finalizedHeight)
+		latest := new(big.Int).SetUint64(latestBlock)
+		depth := new(big.Int).SetUint64(uint64(r.finalityDepth))
+		if latest.Cmp(depth) > 0 {
+			blockNumber = new(big.Int).Sub(latest, depth)
+		} else {
+			blockNumber = big.NewInt(0)
+		}
 	}
 	_, err := r.BalanceAt(ctx, r.historicalBalanceCheckAddress, blockNumber)
 	if err != nil {
