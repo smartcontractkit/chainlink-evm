@@ -192,12 +192,16 @@ func (c *SimulatedBackendClient) FeeHistory(ctx context.Context, blockCount uint
 }
 
 // TransactionReceipt returns the transaction receipt for the given transaction hash.
-func (c *SimulatedBackendClient) TransactionReceipt(ctx context.Context, receipt common.Hash) (*types.Receipt, error) {
-	return c.client.TransactionReceipt(ctx, receipt)
+func (c *SimulatedBackendClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	return c.client.TransactionReceipt(ctx, txHash)
 }
 
-func (c *SimulatedBackendClient) TransactionReceiptWithOpts(ctx context.Context, receipt common.Hash, _ evmtypes.TransactionReceiptOpts) (*types.Receipt, error) {
-	return c.client.TransactionReceipt(ctx, receipt)
+func (c *SimulatedBackendClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, _ evmtypes.TransactionReceiptOpts) (*evmtypes.Receipt, error) {
+	receipt, err := c.client.TransactionReceipt(ctx, txHash)
+	if err != nil {
+		return nil, err
+	}
+	return evmtypes.FromGethReceipt(receipt), nil
 }
 
 func (c *SimulatedBackendClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, err error) {

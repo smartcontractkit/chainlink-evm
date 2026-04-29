@@ -169,7 +169,7 @@ func (nc *NullClient) TransactionReceipt(ctx context.Context, txHash common.Hash
 	return nil, nil
 }
 
-func (nc *NullClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (*types.Receipt, error) {
+func (nc *NullClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (*evmtypes.Receipt, error) {
 	nc.lggr.Debug("TransactionReceiptWithOpts")
 	return nil, nil
 }

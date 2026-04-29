@@ -82,7 +82,7 @@ type Client interface {
 	TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, error)
 	TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error)
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
-	TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (*types.Receipt, error)
+	TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (*evmtypes.Receipt, error)
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
@@ -606,12 +606,12 @@ func (c *chainClient) TransactionReceipt(ctx context.Context, txHash common.Hash
 	return r.TransactionReceiptGeth(ctx, txHash)
 }
 
-func (c *chainClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *types.Receipt, err error) {
+func (c *chainClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *evmtypes.Receipt, err error) {
 	r, err := c.multiNode.SelectRPC(ctx)
 	if err != nil {
 		return receipt, err
 	}
-	return r.TransactionReceiptGethWithOpts(ctx, txHash, opts)
+	return r.TransactionReceiptWithOpts(ctx, txHash, opts)
 }
 
 func (c *chainClient) LatestFinalizedBlock(ctx context.Context) (*evmtypes.Head, error) {
