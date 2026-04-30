@@ -176,16 +176,6 @@ func (th *TestHarness) assertDontHave(t *testing.T, start, end int) {
 	}
 }
 
-func (th *TestHarness) assertHaveCanonical(t *testing.T, start, end int) {
-	for i := start; i < end; i++ {
-		blk, err := th.ORM.SelectBlockByNumber(testutils.Context(t), int64(i))
-		require.NoError(t, err, "block %v", i)
-		chainBlk, err := th.Client.BlockByNumber(testutils.Context(t), big.NewInt(int64(i)))
-		require.NoError(t, err)
-		assert.Equal(t, chainBlk.Hash().String(), blk.BlockHash.String(), "block %v", i)
-	}
-}
-
 // Simulates an RPC failover event to an alternate rpc server. This can also be used to
 // simulate switching back to the primary rpc after it recovers.
 func (th *TestHarness) SetActiveClient(backend evmtypes.Backend, chainType chaintype.ChainType) {
