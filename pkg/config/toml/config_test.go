@@ -86,6 +86,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
 	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
 	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
+	unknown.Transactions.TransactionManagerV2.FeeBoost = ptr(false)
 	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
@@ -185,6 +186,7 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = nil
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
 		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
+		docDefaults.Transactions.TransactionManagerV2.FeeBoost = nil
 
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
@@ -316,6 +318,7 @@ var fullConfig = EVMConfig{
 				CustomURL:                     config.MustParseURL("http://txs.org"),
 				CustomURLs:                    []*config.URL{config.MustParseURL("http://txs.org"), config.MustParseURL("http://txs.org/secondary")},
 				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
+				FeeBoost:                      ptr(true),
 			},
 		},
 

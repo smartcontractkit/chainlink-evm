@@ -402,6 +402,7 @@ DualBroadcast = false # Example
 ReadRequestsToMultipleNodes = false # Example
 Bundles = false # Example
 FastlaneAuctionRequestTimeout = '5s' # Example
+FeeBoost = false # Example
 ```
 
 
@@ -452,6 +453,12 @@ Bundles enables sending bundles for auctioning (not compatible with all OFAs).
 FastlaneAuctionRequestTimeout = '5s' # Example
 ```
 FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
+
+### FeeBoost
+```toml
+FeeBoost = false # Example
+```
+FeeBoost enables using GetMaxFee instead of GetFee for all TxM v2 transaction attempts. This makes SVR transactions as aggressive as possible with gas pricing. Only active when DualBroadcast is also enabled.
 
 ## BalanceMonitor
 ```toml

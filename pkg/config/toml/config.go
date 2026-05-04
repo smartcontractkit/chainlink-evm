@@ -603,6 +603,7 @@ type TransactionManagerV2Config struct {
 	ReadRequestsToMultipleNodes   *bool                  `toml:",omitempty"`
 	Bundles                       *bool                  `toml:",omitempty"`
 	FastlaneAuctionRequestTimeout *commonconfig.Duration `toml:",omitempty"`
+	FeeBoost                      *bool                  `toml:",omitempty"`
 }
 
 func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
@@ -629,6 +630,9 @@ func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
 	}
 	if v := f.FastlaneAuctionRequestTimeout; v != nil {
 		t.FastlaneAuctionRequestTimeout = f.FastlaneAuctionRequestTimeout
+	}
+	if v := f.FeeBoost; v != nil {
+		t.FeeBoost = f.FeeBoost
 	}
 }
 
