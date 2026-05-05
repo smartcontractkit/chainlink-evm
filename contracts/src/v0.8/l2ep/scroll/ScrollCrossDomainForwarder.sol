@@ -7,7 +7,7 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 import {CrossDomainForwarder} from "../CrossDomainForwarder.sol";
 import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 
 /// @title ScrollCrossDomainForwarder - L1 xDomain account representation
@@ -16,7 +16,7 @@ import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenge
 /// @dev Any other L2 contract which uses this contract's address as a privileged position,
 /// can be considered to be owned by the `l1Owner`
 contract ScrollCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
-  string public constant override typeAndVersion = "ScrollCrossDomainForwarder 1.0.0";
+  string public constant override typeAndVersion = "ScrollCrossDomainForwarder 1.1.0-dev";
 
   address internal immutable i_scrollCrossDomainMessenger;
 
@@ -31,7 +31,7 @@ contract ScrollCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
   /// @dev forwarded only if L2 Messenger calls with `xDomainMessageSender` being the L1 owner address
   /// @inheritdoc IForwarder
   function forward(address target, bytes memory data) external override onlyL1Owner {
-    Address.functionCall(target, data, "Forwarder call reverted");
+    Address.functionCall(target, data);
   }
 
   /// @notice This is always the address of the Scroll Cross Domain Messenger contract

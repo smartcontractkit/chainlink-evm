@@ -23,8 +23,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
+	"github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
+	"github.com/smartcontractkit/chainlink-framework/multinode/mocks"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
@@ -958,6 +961,179 @@ func TestEthClient_ErroringClient(t *testing.T) {
 
 	_, err = erroringClient.TransactionReceipt(ctx, common.Hash{})
 	require.Equal(t, multinode.ErrNodeError, err)
+}
+
+func TestChainClient_NonceAtWithFallback(t *testing.T) {
+	t.Parallel()
+
+	t.Run("main succeeds without fallback", func(t *testing.T) {
+		t.Parallel()
+
+		mainCalls := atomic.Int32{}
+		fallbackCalls := atomic.Int32{}
+
+		ethClient := mustNewChainClientWithTestNodes(t,
+			nonceServer(t, nonceResponse{result: `"0x5"`, calls: &mainCalls}),
+			nonceServer(t, nonceResponse{result: `"0x6"`, calls: &fallbackCalls}),
+		)
+
+		nonce, err := ethClient.NonceAtWithFallback(t.Context(), testutils.NewAddress(), nil)
+		require.NoError(t, err)
+		require.Equal(t, uint64(5), nonce)
+		require.Equal(t, int32(1), mainCalls.Load())
+		require.Equal(t, int32(0), fallbackCalls.Load())
+	})
+
+	t.Run("fallback returns first success", func(t *testing.T) {
+		t.Parallel()
+
+		mainCalls := atomic.Int32{}
+		fastFallbackCalls := atomic.Int32{}
+
+		ethClient := mustNewChainClientWithTestNodes(t,
+			nonceServer(t, nonceResponse{code: -32000, message: "main failed", calls: &mainCalls}),
+			nonceServer(t, nonceResponse{delay: 200 * time.Millisecond, result: `"0x9"`}),
+			nonceServer(t, nonceResponse{delay: 25 * time.Millisecond, result: `"0xa"`, calls: &fastFallbackCalls}),
+		)
+
+		nonce, err := ethClient.NonceAtWithFallback(t.Context(), testutils.NewAddress(), nil)
+		require.NoError(t, err)
+		require.Equal(t, uint64(10), nonce)
+		require.Equal(t, int32(1), mainCalls.Load())
+		require.Equal(t, int32(1), fastFallbackCalls.Load())
+	})
+
+	t.Run("all primaries fail", func(t *testing.T) {
+		t.Parallel()
+
+		ethClient := mustNewChainClientWithTestNodes(t,
+			nonceServer(t, nonceResponse{code: -32000, message: "main failed"}),
+			nonceServer(t, nonceResponse{code: -32001, message: "fallback one failed"}),
+			nonceServer(t, nonceResponse{code: -32002, message: "fallback two failed"}),
+		)
+
+		_, err := ethClient.PendingNonceAtWithFallback(t.Context(), testutils.NewAddress())
+		require.Error(t, err)
+		requireErrorContainsAll(t, err,
+			"eth-primary-rpc-0", "main failed",
+			"eth-primary-rpc-1", "fallback one failed",
+			"eth-primary-rpc-2", "fallback two failed",
+		)
+	})
+
+	t.Run("context canceled", func(t *testing.T) {
+		t.Parallel()
+
+		ethClient := mustNewChainClientWithTestNodes(t,
+			nonceServer(t, nonceResponse{delay: 100 * time.Millisecond, result: `"0x5"`}),
+		)
+
+		ctx, cancel := context.WithCancel(tests.Context(t))
+		cancel()
+
+		_, err := ethClient.NonceAtWithFallback(ctx, testutils.NewAddress(), nil)
+		require.Error(t, err)
+		require.ErrorIs(t, err, context.Canceled)
+	})
+}
+
+func mustNewChainClientWithTestNodes(t *testing.T, wsURLs ...string) client.Client {
+	t.Helper()
+
+	chainID := testutils.FixtureChainID
+	lggr := logger.Test(t)
+	metricsRecorder, err := metrics.NewGenericMultiNodeMetrics("EVM Test", chainID.String())
+	require.NoError(t, err)
+
+	cfg := client.TestNodePoolConfig{NodeSelectionMode: multinode.NodeSelectionModeRoundRobin}
+	primaries := make([]multinode.Node[*big.Int, *client.RPCClient], 0, len(wsURLs))
+	for i, wsURL := range wsURLs {
+		parsed, err := url.ParseRequestURI(wsURL)
+		require.NoError(t, err)
+
+		rpc := client.NewTestRPCClient(t, client.RPCClientOpts{
+			Cfg:     cfg,
+			WS:      parsed,
+			Name:    "eth-primary-rpc-" + big.NewInt(int64(i)).String(),
+			ID:      i + 1,
+			ChainID: chainID,
+			Tier:    multinode.Primary,
+		})
+
+		node := multinode.NewNode(
+			cfg,
+			mocks.ChainConfig{NoNewHeadsThresholdVal: 0},
+			lggr,
+			metricsRecorder,
+			parsed,
+			nil,
+			"eth-primary-node-"+big.NewInt(int64(i)).String(),
+			i+1,
+			chainID,
+			1,
+			rpc,
+			"EVM",
+			false,
+		)
+		primaries = append(primaries, node)
+	}
+
+	clientErrors := client.NewTestClientErrors()
+	ethClient := client.NewChainClient(lggr, metricsRecorder, cfg.SelectionMode(), 0, primaries, nil, chainID, &clientErrors, 0, "")
+	t.Cleanup(ethClient.Close)
+	require.NoError(t, ethClient.Dial(t.Context()))
+	require.Eventually(t, func() bool {
+		alive := 0
+		for _, state := range ethClient.NodeStates() {
+			if state == "Alive" {
+				alive++
+			}
+		}
+		return alive == len(wsURLs)
+	}, time.Minute, time.Second)
+
+	return ethClient
+}
+
+type nonceResponse struct {
+	delay   time.Duration
+	result  string
+	code    int
+	message string
+	calls   *atomic.Int32
+}
+
+func nonceServer(t *testing.T, respCfg nonceResponse) string {
+	t.Helper()
+	return testutils.NewWSServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+		switch method {
+		case "eth_subscribe":
+			resp.Result = `"0x00"`
+			resp.Notify = headResult
+		case "eth_unsubscribe":
+			resp.Result = "true"
+		case "eth_getBlockByNumber":
+			resp.Result = client.MakeHeadMsgForNumber(42)
+		case "eth_getTransactionCount":
+			if respCfg.calls != nil {
+				respCfg.calls.Add(1)
+			}
+			if respCfg.delay > 0 {
+				time.Sleep(respCfg.delay)
+			}
+			resp.Result = respCfg.result
+			resp.Error.Code = respCfg.code
+			resp.Error.Message = respCfg.message
+		}
+		return
+	}).WSURL().String()
+}
+
+func requireErrorContainsAll(t *testing.T, err error, parts ...string) {
+	t.Helper()
+	for _, part := range parts {
+		require.ErrorContains(t, err, part)
+	}
 }
 
 const headResult = client.HeadResult

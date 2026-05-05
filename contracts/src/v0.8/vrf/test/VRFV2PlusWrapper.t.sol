@@ -4,14 +4,14 @@ pragma solidity 0.8.19;
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 
-import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
+import {SubscriptionAPI} from "../SubscriptionAPI.sol";
 
-import {VRFConsumerBaseV2Plus} from "../dev/VRFConsumerBaseV2Plus.sol";
-import {VRFCoordinatorV2_5} from "../dev/VRFCoordinatorV2_5.sol";
-import {VRFV2PlusWrapper} from "../dev/VRFV2PlusWrapper.sol";
-import {VRFV2PlusClient} from "../dev/libraries/VRFV2PlusClient.sol";
-import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
-import {VRFV2PlusWrapperConsumerExample} from "../dev/testhelpers/VRFV2PlusWrapperConsumerExample.sol";
+import {VRFConsumerBaseV2Plus} from "../VRFConsumerBaseV2Plus.sol";
+import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
+import {VRFV2PlusWrapper} from "../VRFV2PlusWrapper.sol";
+import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
+import {ExposedVRFCoordinatorV2_5} from "../testhelpers/ExposedVRFCoordinatorV2_5.sol";
+import {VRFV2PlusWrapperConsumerExample} from "../testhelpers/VRFV2PlusWrapperConsumerExample.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 
 contract VRFV2PlusWrapperTest is BaseTest {

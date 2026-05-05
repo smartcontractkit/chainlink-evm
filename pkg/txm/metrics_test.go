@@ -1,6 +1,7 @@
 package txm
 
 import (
+	"encoding/json"
 	"strconv"
 	"testing"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/beholder/beholdertest"
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 	svrv1 "github.com/smartcontractkit/chainlink-protos/svr/v1"
@@ -31,10 +34,10 @@ func TestEmitTxMessage(t *testing.T) {
 		expectedHash := common.Hash{}
 		expectedChain := testutils.FixtureChainID
 		expectedNonce := uint64(256)
+		var err error
 		var actualMessage svrv1.TxMessage
 
-		txmMetrics, err := NewTxmMetrics(expectedChain)
-		require.NoError(t, err)
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
 
 		tx := &types.Transaction{
 			IsPurgeable: true,
@@ -80,10 +83,10 @@ func TestEmitTxMessage(t *testing.T) {
 		expectedHash := common.Hash{}
 		expectedChain := testutils.FixtureChainID
 		expectedNonce := uint64(256)
+		var err error
 		var actualMessage svrv1.TxMessage
 
-		txmMetrics, err := NewTxmMetrics(expectedChain)
-		require.NoError(t, err)
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
 
 		tx := &types.Transaction{
 			IsPurgeable: false,
@@ -115,14 +118,92 @@ func TestEmitTxMessage(t *testing.T) {
 		assert.Equal(t, expectedChain.String(), actualMessage.ChainId)
 		assert.Equal(t, "", actualMessage.FeedAddress)
 	})
+
+	t.Run("populates dual_broadcast_params when tx is a dual-broadcast secondary tx", func(t *testing.T) {
+		// GIVEN
+		ctx := t.Context()
+		beholderTester := beholdertest.NewObserver(t)
+
+		toAddress := testutils.NewAddress()
+		fromAddress := testutils.NewAddress()
+		expectedNonce := uint64(7)
+		expectedChain := testutils.FixtureChainID
+		expectedParams := "hint=calldata&hint=logs&builder=flashbots"
+		isDualBroadcast := true
+
+		metaBytes, err := json.Marshal(types.TxMeta{
+			DualBroadcast:       &isDualBroadcast,
+			DualBroadcastParams: &expectedParams,
+		})
+		require.NoError(t, err)
+		meta := sqlutil.JSON(metaBytes)
+
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
+
+		tx := &types.Transaction{
+			IsPurgeable: false,
+			FromAddress: fromAddress,
+			ToAddress:   toAddress,
+			Nonce:       &expectedNonce,
+			Meta:        &meta,
+		}
+
+		// WHEN
+		err = txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx)
+		require.NoError(t, err)
+
+		// THEN
+		messages := beholderTester.Messages(t)
+		assert.Len(t, messages, 1)
+
+		var actualMessage svrv1.TxMessage
+		err = proto.Unmarshal(messages[0].Body, &actualMessage)
+		require.NoError(t, err)
+
+		require.NotNil(t, actualMessage.DualBroadcastParams)
+		assert.Equal(t, expectedParams, *actualMessage.DualBroadcastParams)
+	})
+
+	t.Run("does not set dual_broadcast_params for a primary (non-dual-broadcast) tx", func(t *testing.T) {
+		// GIVEN
+		ctx := t.Context()
+		beholderTester := beholdertest.NewObserver(t)
+
+		toAddress := testutils.NewAddress()
+		fromAddress := testutils.NewAddress()
+		expectedNonce := uint64(3)
+		expectedChain := testutils.FixtureChainID
+
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
+
+		tx := &types.Transaction{
+			IsPurgeable: false,
+			FromAddress: fromAddress,
+			ToAddress:   toAddress,
+			Nonce:       &expectedNonce,
+		}
+
+		// WHEN
+		err := txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx)
+		require.NoError(t, err)
+
+		// THEN
+		messages := beholderTester.Messages(t)
+		assert.Len(t, messages, 1)
+
+		var actualMessage svrv1.TxMessage
+		err = proto.Unmarshal(messages[0].Body, &actualMessage)
+		require.NoError(t, err)
+
+		assert.Nil(t, actualMessage.DualBroadcastParams)
+	})
 }
 
 func TestReachedMaxAttempts(t *testing.T) {
 	ctx := t.Context()
 
 	expectedChain := testutils.FixtureChainID
-	txmMetrics, err := NewTxmMetrics(expectedChain)
-	require.NoError(t, err)
+	txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
 
 	txmMetrics.ReachedMaxAttempts(ctx, true)
 	value := testutil.ToFloat64(promReachedMaxAttempts.WithLabelValues(testutils.FixtureChainID.String()))
@@ -131,4 +212,38 @@ func TestReachedMaxAttempts(t *testing.T) {
 	txmMetrics.ReachedMaxAttempts(ctx, false)
 	value = testutil.ToFloat64(promReachedMaxAttempts.WithLabelValues(testutils.FixtureChainID.String()))
 	require.InDelta(t, float64(0), value, 0.00001)
+}
+
+func TestSetRPCNonce(t *testing.T) {
+	ctx := t.Context()
+	chainID := testutils.FixtureChainID
+	address := testutils.NewAddress()
+
+	m := NewTxmMetrics(logger.Test(t), chainID)
+
+	m.SetRPCNonce(ctx, address, 10)
+	value := testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String()))
+	assert.InDelta(t, float64(10), value, 0.00001)
+
+	m.SetRPCNonce(ctx, address, 25)
+	value = testutil.ToFloat64(promRPCNonce.WithLabelValues(chainID.String(), address.String()))
+	assert.InDelta(t, float64(25), value, 0.00001)
+}
+
+func TestNoopTxmMetrics(t *testing.T) {
+	ctx := t.Context()
+	address := testutils.NewAddress()
+	nonce := uint64(1)
+	m := NewNoopTxmMetrics()
+
+	assert.NotPanics(t, func() {
+		m.IncrementLifecycleFailure(ctx, StageBroadcast)
+		m.IncrementNumBroadcastedTxs(ctx)
+		m.IncrementNumConfirmedTxs(ctx, 1)
+		m.IncrementNumNonceGaps(ctx)
+		m.ReachedMaxAttempts(ctx, true)
+		m.RecordTimeUntilTxConfirmed(ctx, 1)
+		m.SetRPCNonce(ctx, address, nonce)
+	})
+	assert.NoError(t, m.EmitTxMessage(ctx, common.Hash{}, address, &types.Transaction{Nonce: &nonce}))
 }

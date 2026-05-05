@@ -28,7 +28,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
-	"github.com/smartcontractkit/chainlink-framework/metrics"
+	frameworkmetrics "github.com/smartcontractkit/chainlink-framework/metrics"
 	"github.com/smartcontractkit/chainlink-framework/multinode"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
@@ -169,7 +169,7 @@ func NewRPCClient(
 	)
 	r.rpcLog = logger.Sugared(lggr).Named("RPC")
 
-	bm, bmErr := newRPCClientMetrics()
+	bm, bmErr := newRPCClientMetrics(chainID)
 	if bmErr != nil {
 		lggr.Warnw("Failed to initialize beholder metrics for RPC client", "err", bmErr)
 	} else {
@@ -180,7 +180,18 @@ func NewRPCClient(
 		lggr.Error("RPC client is configured with only WebSocket URL. If this CL Node serves external requests, it must also have an HTTP URL configured. Otherwise, there is a serious DDoS risk.")
 	}
 
-	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock)
+	var rpcURL string
+	if wsuri != nil {
+		rpcURL = wsuri.String()
+	} else if httpuri != nil {
+		rpcURL = httpuri.String()
+	}
+	isSendOnly := tier == multinode.Secondary
+	var rpcBaseMetrics frameworkmetrics.RPCClientMetrics
+	if r.beholderMetrics != nil {
+		rpcBaseMetrics = r.beholderMetrics.rpcClientMetrics
+	}
+	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock, rpcURL, isSendOnly, rpcBaseMetrics)
 	return r
 }
 
@@ -309,18 +320,8 @@ func (r *RPCClient) logResult(
 		} else {
 			r.beholderMetrics.IncrementFailed(ctx, chainID, r.name, rpcDomain, callName)
 		}
+		r.beholderMetrics.RecordLatency(ctx, rpcDomain, callName, false, callDuration, err)
 	}
-
-	metrics.RPCCallLatency.
-		WithLabelValues(
-			metrics.EVM,                    // chain family
-			r.chainID.String(),             // chain id
-			rpcDomain,                      // rpc url
-			"false",                        // is send only
-			strconv.FormatBool(err == nil), // is successful
-			callName,                       // rpc call name
-		).
-		Observe(float64(callDuration))
 
 	// TODO: Remove deprecated metric
 	promEVMPoolRPCCallTiming.
@@ -368,6 +369,28 @@ func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method 
 	return err
 }
 
+// batchElemLog is a logging-safe view of rpc.BatchElem that omits Result. After
+// BatchCallContext returns, Result fields may hold large payloads (for example
+// many eth_getTransactionReceipt responses); including them in logger context
+// massively increases log volume even when the batch fails.
+type batchElemLog struct {
+	Method string
+	Args   []interface{}
+	Error  error
+}
+
+func batchElemsForLog(b []rpc.BatchElem) []batchElemLog {
+	out := make([]batchElemLog, len(b))
+	for i := range b {
+		out[i] = batchElemLog{
+			Method: b[i].Method,
+			Args:   b[i].Args,
+			Error:  b[i].Error,
+		}
+	}
+	return out
+}
+
 func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem) error {
 	// Astar's finality tags provide weaker finality guarantees than we require.
 	// Fetch latest finalized block using Astar's custom requests and populate it after batch request completes
@@ -395,7 +418,10 @@ func (r *RPCClient) BatchCallContext(rootCtx context.Context, b []rpc.BatchElem)
 
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(rootCtx, r.largePayloadRPCTimeout)
 	defer cancel()
-	lggr := r.newRqLggr().With("nBatchElems", len(b), "batchElems", b)
+
+	logElems := batchElemsForLog(b)
+
+	lggr := r.newRqLggr().With("nBatchElems", len(b), "batchElems", logElems)
 
 	lggr.Trace("RPC call: evmclient.Client#BatchCallContext")
 	start := time.Now()
@@ -505,7 +531,20 @@ func (r *RPCClient) SubscribeToHeads(ctx context.Context) (ch <-chan *evmtypes.H
 // GethClient wrappers
 
 func (r *RPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (receipt *evmtypes.Receipt, err error) {
-	err = r.CallContext(ctx, &receipt, "eth_getTransactionReceipt", txHash, false)
+	err = r.CallContext(ctx, &receipt, "eth_getTransactionReceipt", txHash)
+	if err != nil {
+		return nil, err
+	}
+	if receipt == nil {
+		err = r.wrapRPCClientError(ethereum.NotFound)
+		return
+	}
+	return
+}
+
+func (r *RPCClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (receipt *evmtypes.Receipt, err error) {
+	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
+	err = r.CallContext(ctx, &receipt, "eth_getTransactionReceipt", txHash)
 	if err != nil {
 		return nil, err
 	}
@@ -808,18 +847,18 @@ func (r *RPCClient) SendTransaction(ctx context.Context, tx *types.Transaction) 
 	lggr := r.newRqLggr().With("tx", tx)
 
 	lggr.Debug("RPC call: evmclient.Client#SendTransaction")
-	start := time.Now()
 	if r.isChainType(chaintype.ChainTron) {
 		err := errors.New("SendTransaction not implemented for Tron, this should never be called")
 		return struct{}{}, multinode.Fatal, err
 	}
 
+	start := time.Now()
 	err := r.wrapRPCClientError(client.geth.SendTransaction(ctx, tx))
 	duration := time.Since(start)
 
 	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "SendTransaction")
 
-	return struct{}{}, ClassifySendError(err, r.clientErrors, logger.Sugared(logger.Nop()), tx, common.Address{}, r.chainType.IsL2()), err
+	return struct{}{}, ClassifySendError(err, r.clientErrors, lggr, tx, common.Address{}, r.chainType.IsL2()), err
 }
 
 func (r *RPCClient) SimulateTransaction(ctx context.Context, tx *types.Transaction) error {

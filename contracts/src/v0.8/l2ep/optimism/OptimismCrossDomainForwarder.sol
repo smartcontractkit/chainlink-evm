@@ -11,7 +11,7 @@ import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
 import {iOVM_CrossDomainMessenger} from
   "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 
 /**
  * @title OptimismCrossDomainForwarder - L1 xDomain account representation
@@ -45,7 +45,7 @@ contract OptimismCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
    * @inheritdoc ITypeAndVersion
    */
   function typeAndVersion() external pure virtual override returns (string memory) {
-    return "OptimismCrossDomainForwarder 1.0.0";
+    return "OptimismCrossDomainForwarder 1.1.0-dev";
   }
 
   /**
@@ -53,7 +53,7 @@ contract OptimismCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
    * @inheritdoc IForwarder
    */
   function forward(address target, bytes memory data) external virtual override onlyL1Owner {
-    Address.functionCall(target, data, "Forwarder call reverted");
+    Address.functionCall(target, data);
   }
 
   /**

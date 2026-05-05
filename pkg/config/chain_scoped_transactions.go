@@ -56,12 +56,45 @@ func (t *transactionManagerV2Config) BlockTime() *time.Duration {
 	return &d
 }
 
-func (t *transactionManagerV2Config) CustomURL() *url.URL {
-	return t.c.CustomURL.URL()
+func (t *transactionManagerV2Config) CustomURLs() []*url.URL {
+	if len(t.c.CustomURLs) > 0 {
+		out := make([]*url.URL, 0, len(t.c.CustomURLs))
+		for _, u := range t.c.CustomURLs {
+			if u != nil {
+				out = append(out, u.URL())
+			}
+		}
+		return out
+	}
+	// fall back to deprecated CustomURL if no CustomURLs are configured
+	if t.c.CustomURL != nil {
+		return []*url.URL{t.c.CustomURL.URL()}
+	}
+	return nil
 }
 
 func (t *transactionManagerV2Config) DualBroadcast() *bool {
 	return t.c.DualBroadcast
+}
+
+func (t *transactionManagerV2Config) ReadRequestsToMultipleNodes() *bool {
+	return t.c.ReadRequestsToMultipleNodes
+}
+
+func (t *transactionManagerV2Config) Bundles() *bool {
+	return t.c.Bundles
+}
+
+func (t *transactionManagerV2Config) FastlaneAuctionRequestTimeout() *time.Duration {
+	if t.c.FastlaneAuctionRequestTimeout == nil {
+		return nil
+	}
+	d := t.c.FastlaneAuctionRequestTimeout.Duration()
+	return &d
+}
+
+func (t *transactionManagerV2Config) FeeBoost() bool {
+	return t.c.FeeBoost != nil && *t.c.FeeBoost
 }
 
 func (t *transactionsConfig) AutoPurge() AutoPurgeConfig {

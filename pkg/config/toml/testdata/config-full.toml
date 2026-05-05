@@ -47,7 +47,12 @@ DetectionApiUrl = 'http://example.net'
 Enabled = false
 BlockTime = '42s'
 CustomURL = 'http://txs.org'
+CustomURLs = ['http://txs.org', 'http://txs.org/secondary']
 DualBroadcast = true
+ReadRequestsToMultipleNodes = false
+Bundles = false
+FastlaneAuctionRequestTimeout = '15s'
+FeeBoost = true
 
 [BalanceMonitor]
 Enabled = true
@@ -113,6 +118,7 @@ PriceMax = '79.228162514264337593543950335 gether'
 
 [NodePool]
 PollFailureThreshold = 5
+PollSuccessThreshold = 0
 PollInterval = '1m0s'
 SelectionMode = 'HighestHead'
 SyncThreshold = 13

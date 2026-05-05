@@ -1,6 +1,6 @@
 pragma solidity 0.8.19;
 
-import {TrustedBlockhashStore} from "../dev/TrustedBlockhashStore.sol";
+import {TrustedBlockhashStore} from "../TrustedBlockhashStore.sol";
 import "./BaseTest.t.sol";
 import {console} from "forge-std/console.sol";
 

@@ -1277,7 +1277,6 @@ func testFindBlockAfterLCA(t *testing.T, opts Opts) {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 			db := testutils.NewSqlxDB(t)
@@ -1532,7 +1531,7 @@ func TestLogPoller_getCurrentBlockMaybeHandleReorg(t *testing.T) {
 	}
 }
 
-// TestLogPoller_ReplayAfterReorg - covers the scenario when replay is triggered after a reorg, and the reorg includes blocks that are not present in DB (e.g. because they were empty and SkipEmptyBlocks is true). 
+// TestLogPoller_ReplayAfterReorg - covers the scenario when replay is triggered after a reorg, and the reorg includes blocks that are not present in DB (e.g. because they were empty and SkipEmptyBlocks is true).
 // LogPoller should be able to replay logs and DB's state should be consistent with the chain's state after the reorg.
 func TestLogPoller_ReplayAfterReorg(t *testing.T) {
 	t.Parallel()

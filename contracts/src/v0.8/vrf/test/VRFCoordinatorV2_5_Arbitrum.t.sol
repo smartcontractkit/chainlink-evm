@@ -5,8 +5,8 @@ import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
-import {BlockhashStore} from "../dev/BlockhashStore.sol";
-import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
+import {BlockhashStore} from "../BlockhashStore.sol";
+import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
 import "./BaseTest.t.sol";
 
 import {VmSafe} from "forge-std/Vm.sol";

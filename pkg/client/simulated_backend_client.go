@@ -130,6 +130,16 @@ func (c *SimulatedBackendClient) CallContext(ctx context.Context, result interfa
 	}
 }
 
+func (c *SimulatedBackendClient) PendingNonceAtWithFallback(ctx context.Context, account common.Address) (uint64, error) {
+	nonce, err := c.PendingNonceAt(ctx, account)
+	return nonce, err
+}
+
+func (c *SimulatedBackendClient) NonceAtWithFallback(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
+	nonce, err := c.NonceAt(ctx, account, blockNumber)
+	return nonce, err
+}
+
 // FilterLogs returns all logs that respect the passed filter query.
 func (c *SimulatedBackendClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (logs []types.Log, err error) {
 	logs, err = c.client.FilterLogs(ctx, q)
@@ -182,12 +192,16 @@ func (c *SimulatedBackendClient) FeeHistory(ctx context.Context, blockCount uint
 }
 
 // TransactionReceipt returns the transaction receipt for the given transaction hash.
-func (c *SimulatedBackendClient) TransactionReceipt(ctx context.Context, receipt common.Hash) (*types.Receipt, error) {
-	return c.client.TransactionReceipt(ctx, receipt)
+func (c *SimulatedBackendClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	return c.client.TransactionReceipt(ctx, txHash)
 }
 
-func (c *SimulatedBackendClient) TransactionReceiptWithOpts(ctx context.Context, receipt common.Hash, _ evmtypes.TransactionReceiptOpts) (*types.Receipt, error) {
-	return c.client.TransactionReceipt(ctx, receipt)
+func (c *SimulatedBackendClient) TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, _ evmtypes.TransactionReceiptOpts) (*evmtypes.Receipt, error) {
+	receipt, err := c.client.TransactionReceipt(ctx, txHash)
+	if err != nil {
+		return nil, err
+	}
+	return evmtypes.FromGethReceipt(receipt), nil
 }
 
 func (c *SimulatedBackendClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, err error) {

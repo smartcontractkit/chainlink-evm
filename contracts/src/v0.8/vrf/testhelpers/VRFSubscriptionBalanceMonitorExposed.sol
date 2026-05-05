@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.6;
 
-import {VRFSubscriptionBalanceMonitor} from "../dev/VRFSubscriptionBalanceMonitor.sol";
+import {VRFSubscriptionBalanceMonitor} from "../VRFSubscriptionBalanceMonitor.sol";
 
 contract VRFSubscriptionBalanceMonitorExposed is VRFSubscriptionBalanceMonitor {
   constructor(

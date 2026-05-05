@@ -199,3 +199,61 @@ func TestMetaClient_emitAtlasError(t *testing.T) {
 		mockEmitter.AssertNotCalled(t, "Emit", mock.Anything, mock.Anything, mock.Anything)
 	})
 }
+
+func TestMetaClient_emitAtlasUserOp(t *testing.T) {
+	t.Parallel()
+	testChainID := big.NewInt(1)
+	lggr := logger.Test(t)
+
+	t.Run("emits user op with transaction lifecycle ID", func(t *testing.T) {
+		t.Parallel()
+		mockEmitter := new(mockBeholderEmitter)
+		metrics, err := NewMetaMetrics(testChainID.String(), lggr)
+		require.NoError(t, err)
+		metrics.emitter = mockEmitter
+
+		nonce := uint64(450)
+		fwdrDestAddress := common.HexToAddress("0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+		transactionLifecycleID := "atlas-lifecycle-id"
+		metaBytes, err := json.Marshal(types.TxMeta{FwdrDestAddress: &fwdrDestAddress, TransactionLifecycleID: &transactionLifecycleID})
+		require.NoError(t, err)
+		meta := sqlutil.JSON(metaBytes)
+
+		tx := &types.Transaction{
+			ID:          123,
+			Nonce:       &nonce,
+			FromAddress: common.HexToAddress("0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+			ToAddress:   common.HexToAddress("0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
+			Meta:        &meta,
+		}
+
+		userOpHash := common.HexToHash("0x1111111111111111111111111111111111111111111111111111111111111111")
+		requestSentAt := int64(100)
+		responseReceivedAt := int64(250)
+
+		var capturedBody []byte
+		mockEmitter.On("Emit", mock.Anything, mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				capturedBody = args.Get(1).([]byte)
+			}).
+			Return(nil)
+
+		metrics.emitAtlasUserOp(t.Context(), userOpHash, tx, requestSentAt, responseReceivedAt)
+
+		mockEmitter.AssertExpectations(t)
+
+		var emittedMsg pb.FastLaneAtlasUserOp
+		err = proto.Unmarshal(capturedBody, &emittedMsg)
+		require.NoError(t, err)
+
+		assert.Equal(t, testChainID.String(), emittedMsg.ChainId)
+		assert.Equal(t, tx.FromAddress.Hex(), emittedMsg.FromAddress)
+		assert.Equal(t, tx.ToAddress.Hex(), emittedMsg.ToAddress)
+		assert.Equal(t, fwdrDestAddress.String(), emittedMsg.FeedAddress)
+		assert.Equal(t, "450", emittedMsg.Nonce)
+		assert.Equal(t, userOpHash.Hex(), emittedMsg.UserOpHash)
+		assert.Equal(t, transactionLifecycleID, emittedMsg.TransactionLifecycleId)
+		assert.Equal(t, requestSentAt, emittedMsg.RequestSentAt)
+		assert.Equal(t, responseReceivedAt, emittedMsg.ResponseReceivedAt)
+	})
+}
