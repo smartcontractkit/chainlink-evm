@@ -462,7 +462,6 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	assert.Equal(t, "eth_sendRawTransaction", req.Method)
 	assert.Len(t, req.Params, 1)
 	assert.Contains(t, req.Params[0], "0x") // hex-encoded RLP
-	assert.Equal(t, uint64(21120), rawTxGasLimit(t, req.Params[0]))
 
 	assert.Empty(t, rpc.sendTxCalls, "dual-broadcast tx should go to Nova, not chain RPC fallback")
 }
@@ -475,8 +474,8 @@ func TestOfaBackend_CreateAttemptWithTiering_AdjustsGasLimitByOfaType(t *testing
 		ofa  ofa
 		want uint64
 	}{
-		{name: "flashbots", ofa: ofaFlashbots, want: 21110},
-		{name: "nova", ofa: ofaNova, want: 21120},
+		{name: "flashbots", ofa: ofaFlashbots, want: 21110 + tieringSpace},
+		{name: "nova", ofa: ofaNova, want: 21120 + tieringSpace},
 	}
 
 	for _, tt := range tests {

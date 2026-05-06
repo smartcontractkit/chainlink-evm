@@ -32,6 +32,9 @@ const rpcTimeout = 10 * time.Second
 // ofa selects URL shape, signing headers, logger name, and bundle behavior.
 type ofa uint8
 
+// tieringSpace is the entire space reserved for gas limit tiering.
+const tieringSpace = 100
+
 // ofa represents the type of OFA backend: Flashbots or Nova. Meta (Fastlane Atlas) is separate from this at the moment.
 const (
 	ofaFlashbots ofa = iota
@@ -225,10 +228,15 @@ func (d *ofaBackend) createAttemptWithTiering(ctx context.Context, tx *types.Tra
 
 func (k ofa) tieredGasLimit(gasLimit uint64) (uint64, error) {
 	suffix := (uint64(k) + 1) * 10
-	if suffix >= 100 {
-		return 0, fmt.Errorf("cannot calculate OFA gas limit tier for %s: suffix %d is not two digits", k.name(), suffix)
+	if suffix >= tieringSpace {
+		return 0, fmt.Errorf("cannot calculate OFA gas limit tier for %s: suffix %d is not in the range 0-%d", k.name(), suffix, tieringSpace-1)
 	}
-	return gasLimit - gasLimit%100 + suffix, nil
+	tieredLimit := gasLimit - gasLimit%tieringSpace + suffix
+	// If the tiered limit is less than the original gas limit, add the tiering space so we never underestimate.
+	if tieredLimit < gasLimit {
+		tieredLimit += tieringSpace
+	}
+	return tieredLimit, nil
 }
 
 func (d *ofaBackend) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {
