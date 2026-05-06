@@ -91,7 +91,7 @@ var _ multiOfaBackend = (*ofaBackendMock)(nil)
 func TestNewMultiOfaClient_EmptyURLs_Errors(t *testing.T) {
 	t.Parallel()
 
-	_, err := newMultiOfaClient(logger.Test(t), nil, nil, []*url.URL{}, big.NewInt(1), nil, nil)
+	_, err := NewMultiOfaClient(logger.Test(t), nil, nil, []*url.URL{}, big.NewInt(1), nil, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must not be empty")
 }
@@ -426,10 +426,10 @@ func TestMultiOfaClient_FromOFAURLs_HTTPServers_DualBroadcast(t *testing.T) {
 	cc, err := clientwrappers.NewChainClient(logger.Test(t), mockEth, false)
 	require.NoError(t, err)
 
-	mux, err := newMultiOfaClient(
+	mux, err := NewMultiOfaClient(
 		logger.Test(t),
 		cc,
-		nil,
+		testKeyStore(),
 		[]*url.URL{uPrimary, uSecondary},
 		big.NewInt(1),
 		nil,
@@ -469,7 +469,7 @@ func TestMultiOfaClient_NonDual_NovaPrimary_RoutesToMempool(t *testing.T) {
 	cc, err := clientwrappers.NewChainClient(logger.Test(t), mockEth, false)
 	require.NoError(t, err)
 
-	mux, err := newMultiOfaClient(logger.Test(t), cc, nil, []*url.URL{u}, big.NewInt(1), nil, nil)
+	mux, err := NewMultiOfaClient(logger.Test(t), cc, nil, []*url.URL{u}, big.NewInt(1), nil, nil)
 	require.NoError(t, err)
 
 	nonce := uint64(1)
@@ -522,7 +522,7 @@ func TestMultiOfaClient_NonDual_FlashbotsPrimaryNovaSecondary_NoOFAHTTPHits(t *t
 	cc, err := clientwrappers.NewChainClient(logger.Test(t), mockEth, false)
 	require.NoError(t, err)
 
-	mux, err := newMultiOfaClient(
+	mux, err := NewMultiOfaClient(
 		logger.Test(t),
 		cc,
 		nil,
@@ -575,7 +575,7 @@ func TestMultiOfaClient_Purgeable_NovaPrimary_RoutesToMempool(t *testing.T) {
 	cc, err := clientwrappers.NewChainClient(logger.Test(t), mockEth, false)
 	require.NoError(t, err)
 
-	mux, err := newMultiOfaClient(logger.Test(t), cc, nil, []*url.URL{u}, big.NewInt(1), nil, nil)
+	mux, err := NewMultiOfaClient(logger.Test(t), cc, nil, []*url.URL{u}, big.NewInt(1), nil, nil)
 	require.NoError(t, err)
 
 	tx, attempt := newDualBroadcastTx(t, 1)

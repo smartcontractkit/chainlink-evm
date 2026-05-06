@@ -12,9 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
-	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -38,10 +36,10 @@ type multiOfaClient struct {
 var _ txm.Client = (*multiOfaClient)(nil)
 
 // newMultiOfaClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
-func newMultiOfaClient(
+func NewMultiOfaClient(
 	lggr logger.Logger,
-	chainClient *clientwrappers.ChainClient,
-	keyStore keys.ChainStore,
+	chainClient ofaBackendRPCClient,
+	keyStore ofaBackendKeyStore,
 	ofaURLs []*url.URL,
 	chainID *big.Int,
 	txStore txm.TxStore,
@@ -95,12 +93,11 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 	// Secondaries are best-effort and do not block the primary. Each call is bounded by
 	// secondarySendTimeout
 	for _, secondary := range m.secondaries {
-		sec := secondary
 		go func() {
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
-			if secErr := sec.SendTransaction(secondaryCtx, tx, attempt); secErr != nil {
+			if secErr := secondary.SendTransaction(secondaryCtx, tx, attempt); secErr != nil {
 				m.lggr.Errorw("Secondary backend send failed",
 					"err", secErr,
 					"txID", tx.ID,
@@ -126,8 +123,8 @@ func (m *multiOfaClient) NonceAt(ctx context.Context, address common.Address, bl
 // newClientForRelayOFAURL builds only Flashbots or Nova backends for use inside multiOfaClient.
 func newClientForRelayOFAURL(
 	lggr logger.Logger,
-	chainClient *clientwrappers.ChainClient,
-	keyStore keys.ChainStore,
+	chainClient ofaBackendRPCClient,
+	keyStore ofaBackendKeyStore,
 	u *url.URL,
 	chainID *big.Int,
 	txStore txm.TxStore,
@@ -146,7 +143,7 @@ func newClientForRelayOFAURL(
 		if err != nil {
 			return nil, fmt.Errorf("failed to create OFA metrics for nova: %w", err)
 		}
-		return newNovaClient(lggr, chainClient, u, metrics), nil
+		return newNovaClient(lggr, chainClient, u, metrics, keyStore), nil
 	default:
 		return nil, fmt.Errorf("multiOfaClient does not support OFA URL %s", redactURL(u))
 	}

@@ -42,7 +42,7 @@ func SelectClient(lggr logger.Logger, client client.Client, keyStore keys.ChainS
 	}
 
 	// use multiOfaClient for all other cases
-	mc, err = newMultiOfaClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles)
+	mc, err = NewMultiOfaClient(lggr, chainClient, keyStore, ofaURLs, chainID, txStore, bundles)
 	if err != nil {
 		return nil, nil, err
 	}

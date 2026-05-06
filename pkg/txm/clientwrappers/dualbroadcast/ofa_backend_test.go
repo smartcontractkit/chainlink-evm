@@ -11,12 +11,16 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
+	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
+	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -45,6 +49,32 @@ type testFlashbotsTxStore struct {
 
 func (s *testFlashbotsTxStore) FetchUnconfirmedTransactions(context.Context, common.Address) ([]*txmtypes.Transaction, error) {
 	return s.txs, nil
+}
+
+func testKeyStore() *keystest.FakeChainStore {
+	return &keystest.FakeChainStore{
+		MessageSigner: func(context.Context, common.Address, []byte) ([]byte, error) {
+			return []byte{0x01}, nil
+		},
+		TxSigner: func(_ context.Context, _ common.Address, tx *evmtypes.Transaction) (*evmtypes.Transaction, error) {
+			key, err := crypto.GenerateKey()
+			if err != nil {
+				return nil, err
+			}
+			return evmtypes.SignTx(tx, evmtypes.LatestSignerForChainID(big.NewInt(1)), key)
+		},
+	}
+}
+
+func rawTxGasLimit(t *testing.T, raw string) uint64 {
+	t.Helper()
+
+	txBytes, err := hexutil.Decode(raw)
+	require.NoError(t, err)
+
+	var sentTx evmtypes.Transaction
+	require.NoError(t, sentTx.UnmarshalBinary(txBytes))
+	return sentTx.Gas()
 }
 
 func TestParseURLParams(t *testing.T) {
@@ -211,7 +241,7 @@ func TestSendBundle_UsesLatestAttemptPerTransaction(t *testing.T) {
 	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
 	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
-	client := newFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, false, metrics)
+	client := newFlashbotsClient(logger.Test(t), rpc, testKeyStore(), customURL, txStore, false, metrics)
 
 	err = client.sendBundle(context.Background(), fromAddress, nil)
 	require.NoError(t, err)
@@ -274,7 +304,7 @@ func TestSendBundle_SucceedsOnIncreasingNonces(t *testing.T) {
 	rpc := &testFlashbotsRPC{block: evmtypes.NewBlockWithHeader(&evmtypes.Header{Number: big.NewInt(100)})}
 	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
-	client := newFlashbotsClient(logger.Test(t), rpc, keystest.MessageSigner(nil), customURL, txStore, false, metrics)
+	client := newFlashbotsClient(logger.Test(t), rpc, testKeyStore(), customURL, txStore, false, metrics)
 	err = client.sendBundle(context.Background(), fromAddress, nil)
 	require.NoError(t, err)
 
@@ -316,7 +346,7 @@ func TestSendBundle_ReturnsErrorOnNonceGap(t *testing.T) {
 
 	metrics, mErr := newOFAMetrics("1", "flashbots")
 	require.NoError(t, mErr)
-	client := newFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, keystest.MessageSigner(nil), customURL, txStore, false, metrics)
+	client := newFlashbotsClient(logger.Test(t), &testFlashbotsRPC{}, testKeyStore(), customURL, txStore, false, metrics)
 	err = client.sendBundle(context.Background(), fromAddress, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must be contiguous and strictly increasing")
@@ -366,11 +396,14 @@ func testOFAMetrics(t *testing.T) ofaMetrics {
 func newDualBroadcastTx(t *testing.T, nonce uint64) (*txmtypes.Transaction, *txmtypes.Attempt) {
 	t.Helper()
 	toAddress := common.HexToAddress("0x456")
-	signedTx := evmtypes.NewTx(&evmtypes.LegacyTx{
-		Nonce:    nonce,
-		To:       &toAddress,
-		Gas:      21000,
-		GasPrice: big.NewInt(1),
+	chainID := big.NewInt(1)
+	signedTx := evmtypes.NewTx(&evmtypes.DynamicFeeTx{
+		ChainID:   chainID,
+		Nonce:     nonce,
+		To:        &toAddress,
+		Gas:       21123,
+		GasTipCap: big.NewInt(1),
+		GasFeeCap: big.NewInt(2),
 	})
 	dualBroadcast := true
 	metaJSON, err := json.Marshal(txmtypes.TxMeta{DualBroadcast: &dualBroadcast})
@@ -378,14 +411,19 @@ func newDualBroadcastTx(t *testing.T, nonce uint64) (*txmtypes.Transaction, *txm
 	meta := sqlutil.JSON(metaJSON)
 
 	tx := &txmtypes.Transaction{
+		ChainID:     chainID,
 		Nonce:       &nonce,
 		FromAddress: common.HexToAddress("0x123"),
 		ToAddress:   toAddress,
+		Value:       big.NewInt(0),
 		Meta:        &meta,
 	}
 
 	attempt := &txmtypes.Attempt{
 		ID:                1,
+		Fee:               gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(1), GasFeeCap: assets.NewWeiI(2)}},
+		GasLimit:          21123,
+		Type:              evmtypes.DynamicFeeTxType,
 		SignedTransaction: signedTx,
 	}
 	return tx, attempt
@@ -410,7 +448,7 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t), testKeyStore())
 
 	tx, attempt := newDualBroadcastTx(t, 42)
 	err = client.SendTransaction(context.Background(), tx, attempt)
@@ -424,8 +462,33 @@ func TestNovaClient_SendTransaction_DualBroadcast(t *testing.T) {
 	assert.Equal(t, "eth_sendRawTransaction", req.Method)
 	assert.Len(t, req.Params, 1)
 	assert.Contains(t, req.Params[0], "0x") // hex-encoded RLP
+	assert.Equal(t, uint64(21120), rawTxGasLimit(t, req.Params[0]))
 
 	assert.Empty(t, rpc.sendTxCalls, "dual-broadcast tx should go to Nova, not chain RPC fallback")
+}
+
+func TestOfaBackend_CreateAttemptWithTiering_AdjustsGasLimitByOfaType(t *testing.T) {
+	tx, attempt := newDualBroadcastTx(t, 1)
+
+	tests := []struct {
+		name string
+		ofa  ofa
+		want uint64
+	}{
+		{name: "flashbots", ofa: ofaFlashbots, want: 21110},
+		{name: "nova", ofa: ofaNova, want: 21120},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			backend := &ofaBackend{lggr: logger.Sugared(logger.Test(t)), ofa: tt.ofa, keystore: testKeyStore()}
+			tieredAttempt, err := backend.createAttemptWithTiering(context.Background(), tx, attempt)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, tieredAttempt.GasLimit)
+			assert.Equal(t, tt.want, tieredAttempt.SignedTransaction.Gas())
+			assert.Equal(t, uint64(21123), attempt.GasLimit)
+		})
+	}
 }
 
 func TestNovaClient_SendTransaction_NonDual_errors(t *testing.T) {
@@ -433,7 +496,7 @@ func TestNovaClient_SendTransaction_NonDual_errors(t *testing.T) {
 	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t), testKeyStore())
 
 	nonce := uint64(1)
 	toAddress := common.HexToAddress("0x456")
@@ -468,7 +531,7 @@ func TestNovaClient_SendTransaction_ServerError(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t), testKeyStore())
 
 	tx, attempt := newDualBroadcastTx(t, 1)
 	err = client.SendTransaction(context.Background(), tx, attempt)
@@ -487,7 +550,7 @@ func TestNovaClient_SendTransaction_RPCError(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t), testKeyStore())
 
 	tx, attempt := newDualBroadcastTx(t, 1)
 	err = client.SendTransaction(context.Background(), tx, attempt)
