@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
@@ -64,17 +63,6 @@ func testKeyStore() *keystest.FakeChainStore {
 			return evmtypes.SignTx(tx, evmtypes.LatestSignerForChainID(big.NewInt(1)), key)
 		},
 	}
-}
-
-func rawTxGasLimit(t *testing.T, raw string) uint64 {
-	t.Helper()
-
-	txBytes, err := hexutil.Decode(raw)
-	require.NoError(t, err)
-
-	var sentTx evmtypes.Transaction
-	require.NoError(t, sentTx.UnmarshalBinary(txBytes))
-	return sentTx.Gas()
 }
 
 func TestParseURLParams(t *testing.T) {
