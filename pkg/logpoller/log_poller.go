@@ -522,9 +522,15 @@ func (lp *logPoller) savedFinalizedBlockNumber(ctx context.Context) (int64, erro
 
 func (lp *logPoller) recvReplayComplete() {
 	defer lp.wg.Done()
-	err := <-lp.replayComplete
-	if err != nil {
-		lp.lggr.Error(err)
+	// Also listen on stopCh: if Close runs before run loop produces a replayComplete
+	// value (e.g. a concurrent Replay observed ctx.Done at the same instant the run
+	// loop did and produced no completion), wait would block forever.
+	select {
+	case err := <-lp.replayComplete:
+		if err != nil {
+			lp.lggr.Error(err)
+		}
+	case <-lp.stopCh:
 	}
 }
 

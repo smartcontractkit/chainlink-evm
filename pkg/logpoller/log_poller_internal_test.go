@@ -713,6 +713,39 @@ func TestLogPoller_Replay(t *testing.T) {
 	})
 }
 
+// TestLogPoller_Close_RecvReplayComplete_NoDeadlock is a regression test for the scenario
+// where Close() hangs in wg.Wait() because recvReplayComplete blocks forever on <-replayComplete.
+//
+// Sequence that previously deadlocked:
+//  1. Replay's ctx fires Done → Replay spawns recvReplayComplete (wg.Add(1)) and returns ErrReplayInProgress.
+//  2. Close's single non-blocking send to replayComplete fires to default (recvReplayComplete not yet receiving).
+//  3. close(stopCh) then wg.Wait() — recvReplayComplete blocks on <-replayComplete forever, wg never drains.
+//
+// Fix: recvReplayComplete also selects on stopCh so it exits when the poller shuts down.
+func TestLogPoller_Close_RecvReplayComplete_NoDeadlock(t *testing.T) {
+	t.Parallel()
+
+	lggr := logger.Test(t)
+	lp := NewLogPoller(nil, nil, lggr, nil, Opts{PollPeriod: time.Hour})
+
+	// Reproduce the race: Close's non-blocking send already went to default before
+	// recvReplayComplete was scheduled, then stopCh was closed. No replayComplete value
+	// will ever arrive; recvReplayComplete must exit via stopCh or wg.Wait() hangs.
+	close(lp.stopCh)
+
+	lp.wg.Add(1)
+	go lp.recvReplayComplete()
+
+	done := make(chan struct{})
+	go func() { lp.wg.Wait(); close(done) }()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("recvReplayComplete blocked on <-replayComplete after stopCh closed; Close() would deadlock")
+	}
+}
+
 func (lp *logPoller) reset() {
 	lp.StateMachine = services.StateMachine{}
 	lp.stopCh = make(chan struct{})
