@@ -35,7 +35,7 @@ type multiOfaClient struct {
 
 var _ txm.Client = (*multiOfaClient)(nil)
 
-// newMultiOfaClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
+// NewMultiOfaClient builds backends from URLs: index 0 is primary (outcome and nonces); the rest are secondaries.
 func NewMultiOfaClient(
 	lggr logger.Logger,
 	chainClient ofaBackendRPCClient,

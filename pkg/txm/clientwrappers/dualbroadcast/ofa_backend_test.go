@@ -561,7 +561,7 @@ func TestNovaClient_PendingNonceAt(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t), testKeyStore())
 
 	addr := common.HexToAddress("0x123")
 	nonce, err := client.PendingNonceAt(context.Background(), addr)
@@ -590,7 +590,7 @@ func TestNovaClient_PendingNonceAt_ServerError(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t), testKeyStore())
 
 	_, err = client.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
 	require.Error(t, err)
@@ -608,7 +608,7 @@ func TestNovaClient_PendingNonceAt_RPCError(t *testing.T) {
 	require.NoError(t, err)
 
 	rpc := &testNovaRPC{}
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t), testKeyStore())
 
 	_, err = client.PendingNonceAt(context.Background(), common.HexToAddress("0x123"))
 	require.Error(t, err)
@@ -620,7 +620,7 @@ func TestNovaClient_NonceAt(t *testing.T) {
 	customURL, err := url.Parse("http://localhost?api_key=test")
 	require.NoError(t, err)
 
-	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t))
+	client := newNovaClient(logger.Test(t), rpc, customURL, testOFAMetrics(t), testKeyStore())
 
 	addr := common.HexToAddress("0x123")
 	blockNum := big.NewInt(100)

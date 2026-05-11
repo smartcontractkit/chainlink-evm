@@ -105,17 +105,13 @@ func newFlashbotsClient(lggr logger.Logger, c ofaBackendRPCClient, keystore ofaB
 	}
 }
 
-func newNovaClient(lggr logger.Logger, c ofaBackendRPCClient, customURL *url.URL, metrics ofaMetrics, keystore ...ofaBackendKeyStore) *ofaBackend {
-	var ks ofaBackendKeyStore
-	if len(keystore) > 0 {
-		ks = keystore[0]
-	}
+func newNovaClient(lggr logger.Logger, c ofaBackendRPCClient, customURL *url.URL, metrics ofaMetrics, keystore ofaBackendKeyStore) *ofaBackend {
 	return &ofaBackend{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,
 		customURL: customURL,
 		ofa:       ofaNova,
-		keystore:  ks,
+		keystore:  keystore,
 		metrics:   metrics,
 	}
 }
