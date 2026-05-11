@@ -1376,7 +1376,7 @@ func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNu
 // that block number is the LCA. Return the block after that, where we want to resume polling.
 // As we do not store empty blocks in DB, it's possible that actual LCA is not in DB and we will return a block before it.
 // Example: Reorg occurred at block 100. Since [90, 100] blocks were empty, the latest DB block present in canonical chain is 89.
-// Thus, this functional will return block 90.
+// Thus, this function will return block 90.
 // That's an expected behavior and conscious decision to avoid having to store all empty blocks in the DB for the sake of reducing the number of RPC calls in case of reorgs.
 func (lp *logPoller) findBlockAfterLCA(ctx context.Context, currentHeadNumber int64, dbLatestFinalizedBlockNumber int64) (*evmtypes.Head, error) {
 	if currentHeadNumber < dbLatestFinalizedBlockNumber {
