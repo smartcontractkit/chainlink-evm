@@ -40,6 +40,11 @@ import (
 type LogPoller interface {
 	services.Service
 	Healthy() error
+	// Replay signals that the poller should resume from a new block. Blocks until the replay is complete.
+	// Replay can be used to ensure that filter modification has been applied for all blocks from "fromBlock" up to latest.
+	// WARN: nil error does not necessarily mean the replay was successful, clients should monitor logs to identify success.
+	// This is a miss from original design, but due to the complexity of fix and the fact that callers generally don't need a strong guarantee of replay success, we choose to just log errors instead of returning them.
+	// Reach out, if you think you need a stronger guarantee, and we can discuss options.
 	Replay(ctx context.Context, fromBlock int64) error
 	ReplayAsync(fromBlock int64)
 	RegisterFilter(ctx context.Context, filter Filter) error
@@ -517,9 +522,15 @@ func (lp *logPoller) savedFinalizedBlockNumber(ctx context.Context) (int64, erro
 
 func (lp *logPoller) recvReplayComplete() {
 	defer lp.wg.Done()
-	err := <-lp.replayComplete
-	if err != nil {
-		lp.lggr.Error(err)
+	// Also listen on stopCh: if Close runs before run loop produces a replayComplete
+	// value (e.g. a concurrent Replay observed ctx.Done at the same instant the run
+	// loop did and produced no completion), wait would block forever.
+	select {
+	case err := <-lp.replayComplete:
+		if err != nil {
+			lp.lggr.Error(err)
+		}
+	case <-lp.stopCh:
 	}
 }
 
@@ -633,11 +644,18 @@ func (lp *logPoller) run() {
 	logPollTicker := services.NewTicker(lp.pollPeriod)
 	defer logPollTicker.Stop()
 	// stagger these somewhat, so they don't all run back-to-back
-	backupLogPollTicker := services.TickerConfig{
-		Initial:   100 * time.Millisecond,
-		JitterPct: services.DefaultJitter,
-	}.NewTicker(time.Duration(lp.backupPollerBlockDelay) * lp.pollPeriod)
-	defer backupLogPollTicker.Stop()
+	var backupLogPollCh <-chan time.Time
+	if lp.backupPollerBlockDelay > 0 {
+		backupLogPollTicker := services.TickerConfig{
+			Initial:   100 * time.Millisecond,
+			JitterPct: services.DefaultJitter,
+		}.NewTicker(time.Duration(lp.backupPollerBlockDelay) * lp.pollPeriod)
+		backupLogPollCh = backupLogPollTicker.C
+		defer backupLogPollTicker.Stop()
+	} else {
+		lp.lggr.Infow("Backup log poller disabled")
+	}
+
 	filtersLoaded := false
 
 	for {
@@ -677,10 +695,7 @@ func (lp *logPoller) run() {
 				start = lastProcessed.BlockNumber + 1
 			}
 			lp.PollAndSaveLogs(ctx, start, false)
-		case <-backupLogPollTicker.C:
-			if lp.backupPollerBlockDelay == 0 {
-				continue // backup poller is disabled
-			}
+		case <-backupLogPollCh:
 			// Backup log poller:  this serves as an emergency backup to protect against eventual-consistency behavior
 			// of an rpc node (seen occasionally on optimism, but possibly could happen on other chains?).  If the first
 			// time we request a block, no logs or incomplete logs come back, this ensures that every log is eventually
@@ -958,7 +973,7 @@ func (lp *logPoller) backfill(ctx context.Context, start, end int64) error {
 			blocks = blocks[:len(blocks)-1]
 		}
 
-		lp.lggr.Debugw("Inserting backfilled logs with batch endblock", "from", from, "to", to, "logs", len(gethLogs), "blocks", blocks)
+		lp.lggr.Debugw("Inserting backfilled logs with batch endblock", "from", from, "to", to, "logs", len(gethLogs))
 		err = lp.orm.InsertLogsWithBlocks(ctx, convertLogs(gethLogs, blocks, lp.lggr, lp.ec.ConfiguredChainID()), []Block{endblock})
 		if err != nil {
 			lp.lggr.Warnw("Unable to insert logs, retrying", "err", err, "from", from, "to", to)
@@ -996,23 +1011,22 @@ func (lp *logPoller) headerByNumber(ctx context.Context, blockNumber int64) (*ev
 // 2. Delete all logs and blocks after the LCA
 // 3. Return the LCA+1, i.e. our new current (unprocessed) block.
 func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, currentBlockNumber int64, currentBlock *evmtypes.Head, isReplay bool) (head *evmtypes.Head, err error) {
-	var err1 error
 	if currentBlock == nil {
-		currentBlock, err1 = lp.headerByNumber(ctx, currentBlockNumber)
-		if err1 != nil {
-			return nil, fmt.Errorf("unable to get current block header for block number %d: %w", currentBlockNumber, err1)
+		currentBlock, err = lp.headerByNumber(ctx, currentBlockNumber)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get current block header for block number %d: %w", currentBlockNumber, err)
 		}
 	}
 	// Does this currentBlock point to the same parent that we have saved?
 	// If not, there was a reorg, so we need to rewind.
-	expectedParent, err1 := lp.orm.SelectBlockByNumber(ctx, currentBlockNumber-1)
-	if err1 != nil && !pkgerrors.Is(err1, sql.ErrNoRows) {
+	expectedParent, err := lp.orm.SelectBlockByNumber(ctx, currentBlockNumber-1)
+	if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
 		// If err is not a 'no rows' error, assume transient db issue and retry
-		lp.lggr.Warnw("Unable to read latestBlockNumber currentBlock saved", "err", err1, "currentBlockNumber", currentBlockNumber)
+		lp.lggr.Warnw("Unable to read latestBlockNumber currentBlock saved", "err", err, "currentBlockNumber", currentBlockNumber)
 		return nil, pkgerrors.New("Unable to read latestBlockNumber currentBlock saved")
 	}
 	// We will not have the previous currentBlock on initial poll.
-	havePreviousBlock := err1 == nil
+	havePreviousBlock := err == nil
 	if havePreviousBlock {
 		// Check for reorg.
 		if currentBlock.ParentHash != expectedParent.BlockHash {
@@ -1027,7 +1041,7 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 		// previous block is not present, it could only in case of initial poll or replay.
 		// If that's not a replay, let's double-check that it's an initial poll by verifying that the DB is empty.
 		if !isReplay {
-			_, err := lp.orm.SelectLatestBlock(ctx)
+			_, err = lp.orm.SelectLatestBlock(ctx)
 			if err == nil {
 				err = fmt.Errorf("unexpected state: no previous block found for block number %d, but db is not empty", currentBlockNumber)
 				lp.lggr.Criticalw("Invariant violation: expected to always have previous block except replay and first poll for a new chain", "currentBlockNumber", currentBlockNumber, "err", err)
@@ -1045,7 +1059,7 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 		}
 	}
 
-	// In case of replay currentBlock may be in the middle of DB range, lets do additional checks to handle possible reorgs. 
+	// In case of replay currentBlock may be in the middle of DB range, lets do additional checks to handle possible reorgs.
 	// Ensure that if DB contains current block it matches the current block from RPC.
 	currentBlockDB, err := lp.orm.SelectBlockByNumber(ctx, currentBlockNumber)
 	if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
@@ -1057,12 +1071,12 @@ func (lp *logPoller) getCurrentBlockMaybeHandleReorg(ctx context.Context, curren
 	}
 
 	// No reorg for current block, but during replay it's possible that current block is older than the latest block, let's check it too to avoid false positives on finality violation.
-	latestBlockDB, err1 := lp.orm.SelectLatestBlock(ctx)
-	if err1 != nil {
-		if pkgerrors.Is(err1, sql.ErrNoRows) {
-			lp.lggr.Criticalw("Unexpected state. Expected at least one block to be present in the db when checking for reorg during replay, but got no rows", "currentBlockNumber", currentBlockNumber, "err", err1)
+	latestBlockDB, err := lp.orm.SelectLatestBlock(ctx)
+	if err != nil {
+		if pkgerrors.Is(err, sql.ErrNoRows) {
+			lp.lggr.Criticalw("Unexpected state. Expected at least one block to be present in the db when checking for reorg during replay, but got no rows", "currentBlockNumber", currentBlockNumber, "err", err)
 		}
-		return nil, pkgerrors.Wrap(err1, "unable to get latest block")
+		return nil, pkgerrors.Wrap(err, "unable to get latest block")
 	}
 
 	if currentBlock.BlockNumber() >= latestBlockDB.BlockNumber {
@@ -1209,7 +1223,6 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 	}
 
 	for {
-
 		blocks, logs, err := lp.getUnfinalizedLogs(ctx, currentBlock, latestBlockNumber, safeBlockNumber, latestFinalizedBlockNumber, isReplay)
 		// even if we have an error, we may have partial logs and blocks that can be saved, so we save what we have and then retry.
 		if len(logs) > 0 || len(blocks) > 0 {
@@ -1222,6 +1235,9 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		}
 
 		if err == nil {
+			if len(blocks) > 0 {
+				latestBlockNumber = blocks[len(blocks)-1].BlockNumber
+			}
 			lp.lggr.Debugw("Finished processing unfinalized blocks", "from", currentBlockNumber, "to", latestBlockNumber)
 			return nil
 		}
@@ -1236,6 +1252,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		if err != nil {
 			return fmt.Errorf("failed to handle reorg: %w", err)
 		}
+		currentBlockNumber = currentBlock.Number
 		lp.lggr.Infow("Finished handling reorg, resuming log processing from new block after LCA", "currentBlockNumber", currentBlock.Number)
 	}
 }
@@ -1266,7 +1283,7 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 		rpcLogs, err := lp.latencyMonitor.FilterLogs(ctx, lp.Filter(nil, nil, &h))
 		if err != nil {
 			lp.lggr.Warnw("Unable to query for logs, retrying on next poll", "err", err, "block", currentBlock.Number)
-			return blocks, logs, nil
+			return blocks, logs, fmt.Errorf("unable to query for logs: %w", err)
 		}
 		lp.lggr.Debugw("Unfinalized log query", "logs", len(logs), "currentBlockNumber", currentBlock.Number, "blockHash", currentBlock.Hash, "timestamp", currentBlock.Timestamp)
 		block = &Block{
@@ -1294,7 +1311,7 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 		nextBlock, err := lp.headerByNumber(ctx, currentBlock.Number+1)
 		if err != nil {
 			lp.lggr.Warnw("Unable to get next block header, retrying on next poll", "err", err, "block", currentBlock.Number)
-			return blocks, logs, nil
+			return blocks, logs, fmt.Errorf("unable to get next block: %w", err)
 		}
 
 		if nextBlock.ParentHash != currentBlock.Hash {
@@ -1306,7 +1323,7 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 			nextBlockDB, err := lp.orm.SelectBlockByNumber(ctx, nextBlock.Number)
 			if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
 				lp.lggr.Warnw("Unable to get next block from DB during replay, retrying on next poll", "err", err, "block", nextBlock.Number)
-				return blocks, logs, nil
+				return blocks, logs, fmt.Errorf("failed to get next block from DB during replay: %w", err)
 			}
 
 			if nextBlockDB != nil && nextBlock.Hash != nextBlockDB.BlockHash {

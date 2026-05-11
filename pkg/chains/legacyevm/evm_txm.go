@@ -48,13 +48,17 @@ func newEvmTxm(
 
 	if opts.GenTxManager == nil {
 		var txmv2 txmgr.TxManager
-		if cfg.Transactions().TransactionManagerV2().Enabled() {
+		txV2Cfg := cfg.Transactions().TransactionManagerV2()
+		dualBroadcastEnabled := txV2Cfg.Enabled() && txV2Cfg.DualBroadcast() != nil &&
+			*txV2Cfg.DualBroadcast() && len(txV2Cfg.CustomURLs()) > 0
+
+		if txV2Cfg.Enabled() {
 			txmv2, err = txmgr.NewTxmV2(
 				ds,
 				cfg,
 				txmgr.NewEvmTxmFeeConfig(cfg.GasEstimator()),
 				cfg.Transactions(),
-				cfg.Transactions().TransactionManagerV2(),
+				txV2Cfg,
 				client,
 				lggr,
 				logPoller,
@@ -62,8 +66,12 @@ func newEvmTxm(
 				estimator,
 				cfg.GasEstimator(),
 			)
-			if cfg.Transactions().TransactionManagerV2().DualBroadcast() == nil || !*cfg.Transactions().TransactionManagerV2().DualBroadcast() {
-				return txmv2, err
+			if err != nil {
+				return nil, err
+			}
+
+			if !dualBroadcastEnabled {
+				return txmv2, nil
 			}
 		}
 		txm, err = txmgr.NewTxm(
@@ -80,7 +88,8 @@ func newEvmTxm(
 			opts.KeyStore,
 			estimator,
 			headTracker,
-			txmv2)
+			txmv2,
+			dualBroadcastEnabled)
 	} else {
 		txm = opts.GenTxManager(chainID)
 	}

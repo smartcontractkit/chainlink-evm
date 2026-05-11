@@ -397,7 +397,12 @@ MinAttempts configures the minimum number of broadcasted attempts a transaction 
 Enabled = false # Default
 BlockTime = '10s' # Example
 CustomURL = 'https://example.api.io' # Example
+CustomURLs = ['https://relay.example/api', 'https://ofa-secondary.example/api'] # Example
 DualBroadcast = false # Example
+ReadRequestsToMultipleNodes = false # Example
+Bundles = false # Example
+FastlaneAuctionRequestTimeout = '5s' # Example
+FeeBoost = false # Example
 ```
 
 
@@ -417,13 +422,43 @@ BlockTime controls the frequency of the backfill loop of TransactionManagerV2.
 ```toml
 CustomURL = 'https://example.api.io' # Example
 ```
-CustomURL configures the base url of a custom endpoint used by the ChainDualBroadcast chain type.
+CustomURL configures the base url of a custom endpoint used by the dual broadcast functionality. (legacy single endpoint). Deprecated: use CustomURLs instead.
+
+### CustomURLs
+```toml
+CustomURLs = ['https://relay.example/api', 'https://ofa-secondary.example/api'] # Example
+```
+CustomURLs configures an ordered list of OFA URLs: the first entry is primary (determines broadcast outcome); additional entries are multiplexed as secondaries (fire-and-forget). Cannot be used together with CustomURL in the same configuration.
 
 ### DualBroadcast
 ```toml
 DualBroadcast = false # Example
 ```
 DualBroadcast enables DualBroadcast functionality.
+
+### ReadRequestsToMultipleNodes
+```toml
+ReadRequestsToMultipleNodes = false # Example
+```
+ReadRequestsToMultipleNodes controls whether txm chain client reads use multiplexed calls.
+
+### Bundles
+```toml
+Bundles = false # Example
+```
+Bundles enables sending bundles for auctioning (not compatible with all OFAs).
+
+### FastlaneAuctionRequestTimeout
+```toml
+FastlaneAuctionRequestTimeout = '5s' # Example
+```
+FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
+
+### FeeBoost
+```toml
+FeeBoost = false # Example
+```
+FeeBoost enables using GetMaxFee instead of GetFee for all TxM v2 transaction attempts. This makes SVR transactions as aggressive as possible with gas pricing. Only active when DualBroadcast is also enabled.
 
 ## BalanceMonitor
 ```toml
@@ -913,6 +948,7 @@ GasEstimator.PriceMax overrides the maximum gas price for this key. See EVM.GasE
 ```toml
 [NodePool]
 PollFailureThreshold = 5 # Default
+PollSuccessThreshold = 0 # Default
 PollInterval = '10s' # Default
 SelectionMode = 'HighestHead' # Default
 SyncThreshold = 5 # Default
@@ -936,6 +972,14 @@ PollFailureThreshold = 5 # Default
 PollFailureThreshold indicates how many consecutive polls must fail in order to mark a node as unreachable.
 
 Set to zero to disable poll checking.
+
+### PollSuccessThreshold
+```toml
+PollSuccessThreshold = 0 # Default
+```
+PollSuccessThreshold indicates how many consecutive polls must succeed in order to mark a node as alive once it has been marked as unreachable.
+
+Set to zero to require no successful polls (previous behavior).
 
 ### PollInterval
 ```toml

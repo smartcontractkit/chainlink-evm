@@ -132,8 +132,12 @@ type AutoPurgeConfig interface {
 type TransactionManagerV2 interface {
 	Enabled() bool
 	BlockTime() *time.Duration
-	CustomURL() *url.URL
+	CustomURLs() []*url.URL
 	DualBroadcast() *bool
+	ReadRequestsToMultipleNodes() *bool
+	Bundles() *bool
+	FastlaneAuctionRequestTimeout() *time.Duration
+	FeeBoost() bool
 }
 
 type GasEstimator interface {
@@ -203,6 +207,7 @@ type Workflow interface {
 
 type NodePool interface {
 	PollFailureThreshold() uint32
+	PollSuccessThreshold() uint32
 	PollInterval() time.Duration
 	SelectionMode() string
 	SyncThreshold() uint32

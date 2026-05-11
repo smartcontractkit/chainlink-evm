@@ -2,9 +2,9 @@ pragma solidity 0.8.19;
 
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
-import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
-import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
-import {VRFV2PlusLoadTestWithMetrics} from "../dev/testhelpers/VRFV2PlusLoadTestWithMetrics.sol";
+import {SubscriptionAPI} from "../SubscriptionAPI.sol";
+import {ExposedVRFCoordinatorV2_5} from "../testhelpers/ExposedVRFCoordinatorV2_5.sol";
+import {VRFV2PlusLoadTestWithMetrics} from "../testhelpers/VRFV2PlusLoadTestWithMetrics.sol";
 import "./BaseTest.t.sol";
 
 import "@openzeppelin/contracts@4.9.6/utils/Strings.sol"; // for Strings.toString
