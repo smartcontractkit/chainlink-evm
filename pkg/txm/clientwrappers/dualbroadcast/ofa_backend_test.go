@@ -462,14 +462,14 @@ func TestOfaBackend_CreateAttemptWithTiering_AdjustsGasLimitByOfaType(t *testing
 		ofa  ofa
 		want uint64
 	}{
-		{name: "flashbots", ofa: ofaFlashbots, want: 21110 + tieringSpace},
-		{name: "nova", ofa: ofaNova, want: 21120 + tieringSpace},
+		{name: "flashbots", ofa: ofaFlashbots, want: 21110 + ofaGasTierSpace},
+		{name: "nova", ofa: ofaNova, want: 21120 + ofaGasTierSpace},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			backend := &ofaBackend{lggr: logger.Sugared(logger.Test(t)), ofa: tt.ofa, keystore: testKeyStore()}
-			tieredAttempt, err := backend.createAttemptWithTiering(context.Background(), tx, attempt)
+			tieredAttempt, err := backend.createAttemptWithOFAGasTier(context.Background(), tx, attempt)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, tieredAttempt.GasLimit)
 			assert.Equal(t, tt.want, tieredAttempt.SignedTransaction.Gas())

@@ -32,8 +32,8 @@ const rpcTimeout = 10 * time.Second
 // ofa selects URL shape, signing headers, logger name, and bundle behavior.
 type ofa uint8
 
-// tieringSpace is the entire space reserved for gas limit tiering.
-const tieringSpace = 100
+// ofaGasTierSpace is the entire space reserved for gas limit tiering.
+const ofaGasTierSpace = 100
 
 // ofa represents the type of OFA backend: Flashbots or Nova. Meta (Fastlane Atlas) is separate from this at the moment.
 const (
@@ -162,12 +162,12 @@ func (d *ofaBackend) SendTransaction(ctx context.Context, tx *types.Transaction,
 }
 
 func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta *types.TxMeta) error {
-	tieredAttempt, err := d.createAttemptWithTiering(ctx, tx, attempt)
+	attemptWithOFAGasTier, err := d.createAttemptWithOFAGasTier(ctx, tx, attempt)
 	if err != nil {
 		return err
 	}
 
-	data, err := tieredAttempt.SignedTransaction.MarshalBinary()
+	data, err := attemptWithOFAGasTier.SignedTransaction.MarshalBinary()
 	if err != nil {
 		return err
 	}
@@ -180,10 +180,10 @@ func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transact
 	return err
 }
 
-// createAttemptWithTiering creates a tiered attempt that has a different gas limit for each OFA backend, by reserving the last two digits.
+// createAttemptWithOFAGasTier creates an OFA-specific gas tiered attempt that has a different gas limit for each OFA backend, by reserving the last two digits.
 // Each OFA has 10 values spaced 10 units apart for the gas limit so there is room for feed-specific tiers per OFA in the future.
 // Unfortunately, the per-OFA attempts are not tracked by the txm. We can track them by looking at the individual logs per attempt stored.
-func (d *ofaBackend) createAttemptWithTiering(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) (*types.Attempt, error) {
+func (d *ofaBackend) createAttemptWithOFAGasTier(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) (*types.Attempt, error) {
 	if tx.Nonce == nil {
 		return nil, fmt.Errorf("failed to create tiered attempt for txID: %v: nonce empty", tx.ID)
 	}
@@ -191,7 +191,7 @@ func (d *ofaBackend) createAttemptWithTiering(ctx context.Context, tx *types.Tra
 		return nil, errors.New("attempt is not a dynamic fee attempt") // We could potentially support legacy transactions, but dynamic transactions are the default so this is ok.
 	}
 
-	tieredGasLimit, err := d.ofa.tieredGasLimit(attempt.GasLimit)
+	ofaGasTier, err := d.ofa.ofaGasTier(attempt.GasLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (d *ofaBackend) createAttemptWithTiering(ctx context.Context, tx *types.Tra
 		Nonce:     *tx.Nonce,
 		To:        &tx.ToAddress,
 		Value:     tx.Value,
-		Gas:       tieredGasLimit,
+		Gas:       ofaGasTier,
 		GasFeeCap: attempt.Fee.GasFeeCap.ToInt(),
 		GasTipCap: attempt.Fee.GasTipCap.ToInt(),
 		Data:      tx.Data,
@@ -212,25 +212,25 @@ func (d *ofaBackend) createAttemptWithTiering(ctx context.Context, tx *types.Tra
 		return nil, fmt.Errorf("failed to sign tiered attempt for txID: %v: %w", tx.ID, err)
 	}
 
-	d.lggr.Infow("Intercepting attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", tx.ToAddress, "gasLimit", tieredGasLimit,
+	d.lggr.Infow("Intercepting attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", tx.ToAddress, "gasLimit", ofaGasTier,
 		"TipCap", attempt.Fee.GasTipCap, "FeeCap", attempt.Fee.GasFeeCap, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr), "ofa", d.ofa.name())
 
 	tieredAttempt := *attempt
 	tieredAttempt.Hash = signedTx.Hash()
-	tieredAttempt.GasLimit = tieredGasLimit
+	tieredAttempt.GasLimit = ofaGasTier
 	tieredAttempt.SignedTransaction = signedTx
 	return &tieredAttempt, nil
 }
 
-func (k ofa) tieredGasLimit(gasLimit uint64) (uint64, error) {
+func (k ofa) ofaGasTier(gasLimit uint64) (uint64, error) {
 	suffix := (uint64(k) + 1) * 10
-	if suffix >= tieringSpace {
-		return 0, fmt.Errorf("cannot calculate OFA gas limit tier for %s: suffix %d is not in the range 0-%d", k.name(), suffix, tieringSpace-1)
+	if suffix >= ofaGasTierSpace {
+		return 0, fmt.Errorf("cannot calculate OFA gas limit tier for %s: suffix %d is not in the range 0-%d", k.name(), suffix, ofaGasTierSpace-1)
 	}
-	tieredLimit := gasLimit - gasLimit%tieringSpace + suffix
+	tieredLimit := gasLimit - gasLimit%ofaGasTierSpace + suffix
 	// If the tiered limit is less than the original gas limit, add the tiering space so we never underestimate.
 	if tieredLimit < gasLimit {
-		tieredLimit += tieringSpace
+		tieredLimit += ofaGasTierSpace
 	}
 	return tieredLimit, nil
 }
