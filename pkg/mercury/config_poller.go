@@ -10,10 +10,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/mercury"
+	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
+
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/verifier"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 )
@@ -48,7 +49,7 @@ func unpackLogData(d []byte) (*verifier.VerifierConfigSet, error) {
 
 	err := verifierABI.UnpackIntoInterface(unpacked, configSetEventName, d)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to unpack log data: %w", err)
+		return nil, fmt.Errorf("failed to unpack log data: %w", err)
 	}
 
 	return unpacked, nil
@@ -89,7 +90,7 @@ type ConfigPoller struct {
 	lggr               logger.Logger
 	destChainLogPoller logpoller.LogPoller
 	addr               common.Address
-	feedId             common.Hash
+	feedID             common.Hash
 }
 
 func FilterName(addr common.Address, feedID common.Hash) string {
@@ -107,7 +108,7 @@ func NewConfigPoller(ctx context.Context, lggr logger.Logger, destChainPoller lo
 		lggr:               lggr,
 		destChainLogPoller: destChainPoller,
 		addr:               addr,
-		feedId:             feedID,
+		feedID:             feedID,
 	}
 
 	return cp, nil
@@ -130,8 +131,8 @@ func (cp *ConfigPoller) Replay(ctx context.Context, fromBlock int64) error {
 
 // LatestConfigDetails returns the latest config details from the logs
 func (cp *ConfigPoller) LatestConfigDetails(ctx context.Context) (changedInBlock uint64, configDigest ocrtypes.ConfigDigest, err error) {
-	cp.lggr.Debugw("LatestConfigDetails", "eventSig", FeedScopedConfigSet, "addr", cp.addr, "topicIndex", feedIDTopicIndex, "feedID", cp.feedId)
-	logs, err := cp.destChainLogPoller.IndexedLogs(ctx, FeedScopedConfigSet, cp.addr, feedIDTopicIndex, []common.Hash{cp.feedId}, 1)
+	cp.lggr.Debugw("LatestConfigDetails", "eventSig", FeedScopedConfigSet, "addr", cp.addr, "topicIndex", feedIDTopicIndex, "feedID", cp.feedID)
+	logs, err := cp.destChainLogPoller.IndexedLogs(ctx, FeedScopedConfigSet, cp.addr, feedIDTopicIndex, []common.Hash{cp.feedID}, 1)
 	if err != nil {
 		return 0, ocrtypes.ConfigDigest{}, err
 	}
@@ -148,7 +149,7 @@ func (cp *ConfigPoller) LatestConfigDetails(ctx context.Context) (changedInBlock
 
 // LatestConfig returns the latest config from the logs on a certain block
 func (cp *ConfigPoller) LatestConfig(ctx context.Context, changedInBlock uint64) (ocrtypes.ContractConfig, error) {
-	lgs, err := cp.destChainLogPoller.IndexedLogsByBlockRange(ctx, int64(changedInBlock), int64(changedInBlock), FeedScopedConfigSet, cp.addr, feedIDTopicIndex, []common.Hash{cp.feedId})
+	lgs, err := cp.destChainLogPoller.IndexedLogsByBlockRange(ctx, int64(changedInBlock), int64(changedInBlock), FeedScopedConfigSet, cp.addr, feedIDTopicIndex, []common.Hash{cp.feedID})
 	if err != nil {
 		return ocrtypes.ContractConfig{}, err
 	}

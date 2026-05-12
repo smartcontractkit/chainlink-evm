@@ -2,6 +2,7 @@ package mercury
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -13,15 +14,15 @@ import (
 	"github.com/ethereum/go-ethereum/eth/ethconfig"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/onsi/gomega"
-	"github.com/pkg/errors"
-	"github.com/smartcontractkit/libocr/offchainreporting2plus/confighelper"
-	ocrtypes2 "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/umbracle/ethgo/abi"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/confighelper"
+	ocrtypes2 "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
+
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/verifier"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/verifier_proxy"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
@@ -126,7 +127,7 @@ func TestMercuryConfigPoller(t *testing.T) {
 func onchainPublicKeyToAddress(publicKeys []ocrtypes2.OnchainPublicKey) (addresses []common.Address, err error) {
 	for _, signer := range publicKeys {
 		if len(signer) != 20 {
-			return []common.Address{}, errors.Errorf("address is not 20 bytes %s", signer)
+			return []common.Address{}, fmt.Errorf("address is not 20 bytes %s", signer)
 		}
 		addresses = append(addresses, common.BytesToAddress(signer))
 	}
