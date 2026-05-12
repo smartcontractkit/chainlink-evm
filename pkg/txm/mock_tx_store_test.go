@@ -6,9 +6,7 @@ import (
 	context "context"
 
 	common "github.com/ethereum/go-ethereum/common"
-
 	coretypes "github.com/ethereum/go-ethereum/core/types"
-
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
