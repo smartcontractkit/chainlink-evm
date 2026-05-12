@@ -144,12 +144,12 @@ func (cp *ConfigPoller) LatestConfigDetails(ctx context.Context) (changedInBlock
 	if err != nil {
 		return 0, ocrtypes.ConfigDigest{}, err
 	}
-	return uint64(latest.BlockNumber), latestConfigSet.ConfigDigest, nil
+	return uint64(latest.BlockNumber), latestConfigSet.ConfigDigest, nil //nolint:gosec // G115
 }
 
 // LatestConfig returns the latest config from the logs on a certain block
 func (cp *ConfigPoller) LatestConfig(ctx context.Context, changedInBlock uint64) (ocrtypes.ContractConfig, error) {
-	lgs, err := cp.destChainLogPoller.IndexedLogsByBlockRange(ctx, int64(changedInBlock), int64(changedInBlock), FeedScopedConfigSet, cp.addr, feedIDTopicIndex, []common.Hash{cp.feedID})
+	lgs, err := cp.destChainLogPoller.IndexedLogsByBlockRange(ctx, int64(changedInBlock), int64(changedInBlock), FeedScopedConfigSet, cp.addr, feedIDTopicIndex, []common.Hash{cp.feedID}) //nolint:gosec // G115
 	if err != nil {
 		return ocrtypes.ContractConfig{}, err
 	}
@@ -173,5 +173,5 @@ func (cp *ConfigPoller) LatestBlockHeight(ctx context.Context) (blockHeight uint
 		}
 		return 0, err
 	}
-	return uint64(latest.BlockNumber), nil
+	return uint64(latest.BlockNumber), nil //nolint:gosec // G115
 }
