@@ -14,8 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	confighelper2 "github.com/smartcontractkit/libocr/offchainreporting2plus/confighelper"
-	"github.com/smartcontractkit/libocr/offchainreporting2plus/types"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/confighelper"
 	ocrtypes2 "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,10 +47,10 @@ func TestMercuryConfigPoller(t *testing.T) {
 
 	// Create minimum number of nodes.
 	n := 4
-	var oracles []confighelper2.OracleIdentityExtra
+	oracles := make([]confighelper.OracleIdentityExtra, 0, n)
 	for range n {
-		oracles = append(oracles, confighelper2.OracleIdentityExtra{
-			OracleIdentity: confighelper2.OracleIdentity{
+		oracles = append(oracles, confighelper.OracleIdentityExtra{
+			OracleIdentity: confighelper.OracleIdentity{
 				OnchainPublicKey:  evmutils.RandomAddress().Bytes(),
 				TransmitAccount:   ocrtypes2.Account(evmutils.RandomAddress().String()),
 				OffchainPublicKey: evmutils.RandomBytes32(),
@@ -64,7 +63,7 @@ func TestMercuryConfigPoller(t *testing.T) {
 	configType := abi.MustNewType("tuple()")
 	onchainConfigVal, err := abi.Encode(map[string]any{}, configType)
 	require.NoError(t, err)
-	signers, _, threshold, onchainConfig, offchainConfigVersion, offchainConfig, err := confighelper2.ContractSetConfigArgsForTests(
+	signers, _, threshold, onchainConfig, offchainConfigVersion, offchainConfig, err := confighelper.ContractSetConfigArgsForTests(
 		2*time.Second,        // DeltaProgress
 		20*time.Second,       // DeltaResend
 		100*time.Millisecond, // DeltaRound
@@ -124,7 +123,7 @@ func TestMercuryConfigPoller(t *testing.T) {
 	assert.Equal(t, offchainConfig, newConfig.OffchainConfig)
 }
 
-func onchainPublicKeyToAddress(publicKeys []types.OnchainPublicKey) (addresses []common.Address, err error) {
+func onchainPublicKeyToAddress(publicKeys []ocrtypes2.OnchainPublicKey) (addresses []common.Address, err error) {
 	for _, signer := range publicKeys {
 		if len(signer) != 20 {
 			return []common.Address{}, errors.Errorf("address is not 20 bytes %s", signer)
