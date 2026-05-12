@@ -31,7 +31,7 @@ jobs:
         if: ${{ env.ALLOW_FAILURE != 'true' }}
         uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4
         with:
-          golangci-lint-version: v2.6.1
+          golangci-lint-version: v2.11.4
           only-new-issues: true
           go-directory: pkg
 
