@@ -10,10 +10,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
-	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 
 	"github.com/smartcontractkit/chainlink-common/keystore"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
+	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 )
 
 // CreateOCR3OnchainKeyring creates a new OCR3 onchain keyring.
@@ -121,7 +121,7 @@ func (e *evmOnchainKeyring2[RI]) DebugIdentifier() string {
 func compressSignature(sig []byte) []byte {
 	// v is either 0 or 1; stores the recovery id of the underlying public key.
 	v := sig[64]
-	if !(v == 0 || v == 1) {
+	if v != 0 && v != 1 {
 		panic("v not in {0, 1}, cannot happen with cryptographic certainty")
 	}
 

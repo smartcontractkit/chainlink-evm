@@ -3,17 +3,16 @@ package keys
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
+	"errors"
 	"slices"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
 	"github.com/stretchr/testify/require"
 
-	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
-
 	"github.com/smartcontractkit/chainlink-common/keystore"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
+	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 )
 
 var _ keystore.Storage = &TestMemoryStorage{}
@@ -41,14 +40,14 @@ func (t TestMemoryStorage) GetEncryptedKeystore(_ context.Context) ([]byte, erro
 }
 
 func (t TestMemoryStorage) PutEncryptedKeystore(_ context.Context, _ []byte) error {
-	return fmt.Errorf("unimplemented")
+	return errors.New("unimplemented")
 }
 
 func TestSignVerifyTestVectorsOnchain(t *testing.T) {
 	ks, err := keystore.LoadKeystore(t.Context(), TestMemoryStorage{}, "")
 	require.NoError(t, err)
 	for _, tv := range slices.Concat(ecdsaTestVectors, ecdsaNegativeTestVectors) {
-		resp, err := ks.GetKeys(t.Context(), keystore.GetKeysRequest{[]string{tv.signingKey[:4]}})
+		resp, err := ks.GetKeys(t.Context(), keystore.GetKeysRequest{KeyNames: []string{tv.signingKey[:4]}})
 		require.Len(t, resp.Keys, 1)
 		publicKey, err := crypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
 		require.NoError(t, err)
