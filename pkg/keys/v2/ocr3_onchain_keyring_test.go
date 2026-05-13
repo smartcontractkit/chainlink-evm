@@ -48,6 +48,7 @@ func TestSignVerifyTestVectorsOnchain(t *testing.T) {
 	require.NoError(t, err)
 	for _, tv := range slices.Concat(ecdsaTestVectors, ecdsaNegativeTestVectors) {
 		resp, err := ks.GetKeys(t.Context(), keystore.GetKeysRequest{KeyNames: []string{tv.signingKey[:4]}})
+		require.NoError(t, err)
 		require.Len(t, resp.Keys, 1)
 		publicKey, err := crypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
 		require.NoError(t, err)
