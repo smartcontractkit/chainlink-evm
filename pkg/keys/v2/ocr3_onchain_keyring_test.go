@@ -18,7 +18,7 @@ import (
 var _ keystore.Storage = &TestMemoryStorage{}
 
 /*
-TestMemoryStorage implements a keystore storage prepopulated with the test ECDSA keys:
+TestMemoryStorage implements a keystore storage prepopulated with the test ECDSA keys (used in test vectors):
 
 	"0000000000000000000000000000000000000000000000000000000000000001",
 	"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
@@ -97,6 +97,8 @@ type ecdsaTestVector struct {
 	sigValid     bool
 }
 
+// Test vectors have been generated in offchain-reporting
+// https://github.com/smartcontractkit/offchain-reporting/blob/c72a6e434f1397b6ede9c31fd5c540a782df3476/lib/offchainreporting2plus/internal/ocr3/keyring/onchain_keyring_ecdsa_testvectors_test.go
 var ecdsaTestVectors = []ecdsaTestVector{
 	{
 		desc:         "key=00000000...0001 | zero digest, seqNr=0, empty report",

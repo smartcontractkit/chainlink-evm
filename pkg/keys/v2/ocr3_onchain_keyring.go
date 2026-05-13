@@ -128,7 +128,7 @@ func compressSignature(sig []byte) []byte {
 	result := make([]byte, 64)
 	copy(result, sig[:64])
 
-	// In the smart contracts, a value of v=0 is assumed.
+	// In the smart contracts, a value of v=0 is assumed. (See https://github.com/smartcontractkit/offchain-reporting/blob/03dfcfe3e36f89a0d50678860b4b35ddf45a1c7e/contract3/src/OCR3ECDSAAttestationVerifierLib.sol#L62 .)
 	// So, if the recovery id is 1, s needs to flipped to "simulate" v=0.
 	if v == 1 {
 		// Extract the value of s from the signature bytes.
@@ -154,6 +154,8 @@ func uncompressSignature(sig []byte) []byte {
 	return append(sig, 0)
 }
 
+// hashReport performs OCR3 report hashing. The main difference from OCR2 hashing (https://github.com/smartcontractkit/chainlink-evm/blob/b4068bf735e6e1af28602eece9e29a0bd31eed37/pkg/keys/v2/ocr2_onchain_keyring.go#L98)
+// is that we hash the sequence number `seqNr` instead of epoch||round (while also changing the hashing order).
 func hashReport[RI any](configDigest ocrtypes.ConfigDigest, seqNr uint64, report ocr3types.ReportWithInfo[RI]) []byte {
 	data := make([]byte, 96)
 	copy(data, configDigest[:])
