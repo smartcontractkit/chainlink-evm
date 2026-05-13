@@ -1,0 +1,132 @@
+package keys
+
+import (
+	"bytes"
+	"context"
+	"encoding/binary"
+	"fmt"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
+	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
+
+	"github.com/smartcontractkit/chainlink-common/keystore"
+)
+
+// CreateOCR3OnchainKeyring creates a new OCR3 onchain keyring.
+// Note that key names are prefixed with PrefixEVM and PrefixOCR2Onchain (to preserve compatibility with OCR2)
+// For example, a key named "test-key" will be stored at the path "evm/ocr2_onchain/test-key".
+func CreateOCR3OnchainKeyring[RI any](ctx context.Context, ks keystore.Keystore, keyringName string) (ocr3types.OnchainKeyring2[RI], error) {
+	onchainKeyPath := keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain, keyringName)
+	createReq := keystore.CreateKeysRequest{
+		Keys: []keystore.CreateKeyRequest{
+			{
+				KeyName: onchainKeyPath.String(),
+				KeyType: keystore.ECDSA_S256,
+			},
+		},
+	}
+	resp, err := ks.CreateKeys(ctx, createReq)
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Keys) != 1 {
+		return nil, fmt.Errorf("expected 1 key, got %d", len(resp.Keys))
+	}
+	publicKey, err := crypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	addr := crypto.PubkeyToAddress(*publicKey)
+	return &evmOnchainKeyring2[RI]{ks: ks, addr: addr, keyPath: onchainKeyPath}, nil
+}
+
+var _ ocr3types.OnchainKeyring2[struct{}] = &evmOnchainKeyring2[struct{}]{}
+
+type evmOnchainKeyring2[RI any] struct {
+	ks      keystore.Keystore
+	addr    common.Address
+	keyPath keystore.KeyPath
+}
+
+func (e *evmOnchainKeyring2[RI]) Sign(configDigest ocrtypes.ConfigDigest, seqNr uint64, report ocr3types.ReportWithInfo[RI]) (signature []byte, err error) {
+	hash := hashReport(configDigest, seqNr, report)
+	signResp, err := e.ks.Sign(context.Background(), keystore.SignRequest{
+		KeyName: e.keyPath.String(),
+		Data:    hash,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return compressSignature(signResp.Signature), nil
+}
+
+func (e *evmOnchainKeyring2[RI]) Verify(publicKey ocrtypes.OnchainPublicKey, configDigest ocrtypes.ConfigDigest, seqNr uint64, report ocr3types.ReportWithInfo[RI], signature []byte) bool {
+	hash := hashReport(configDigest, seqNr, report)
+	recoveredPublicKey, err := crypto.SigToPub(hash, uncompressSignature(signature))
+	if err != nil {
+		return false
+	}
+	signerAddress := crypto.PubkeyToAddress(*recoveredPublicKey)
+	return bytes.Equal(publicKey, signerAddress[:])
+}
+
+func (e *evmOnchainKeyring2[RI]) Has(publicKey ocrtypes.OnchainPublicKey) bool {
+	return bytes.Equal(publicKey, e.addr.Bytes())
+}
+
+func (e *evmOnchainKeyring2[RI]) MaxSignatureLength() int {
+	return 64
+}
+
+func (e *evmOnchainKeyring2[RI]) DebugIdentifier() string {
+	return fmt.Sprintf("addr = %s, path = %s", e.addr.Hex(), e.keyPath.String())
+}
+
+// Compresses the given ECDSA signature in its internal format (r, s, v) into the
+// corresponding compressed format (r, s'), where s' in {s, n-s} depending on v.
+func compressSignature(sig []byte) []byte {
+	// v is either 0 or 1; stores the recovery id of the underlying public key.
+	v := sig[64]
+	if !(v == 0 || v == 1) {
+		panic("v not in {0, 1}, cannot happen with cryptographic certainty")
+	}
+
+	result := make([]byte, 64)
+	copy(result, sig[:64])
+
+	// In the smart contracts, a value of v=0 is assumed.
+	// So, if the recovery id is 1, s needs to flipped to "simulate" v=0.
+	if v == 1 {
+		// Extract the value of s from the signature bytes.
+		s := new(big.Int).SetBytes(result[32:64])
+
+		// Get the order of the elliptic curve n, and compute s' = n - s.
+		N := crypto.S256().Params().N
+		s.Sub(N, s)
+
+		// Store s back into the result bytes.
+		s.FillBytes(result[32:64])
+	}
+
+	return result
+}
+
+// Uncompresses the given ECDSA signature in its external format (r, s') into the
+// format expected internally (r, s', v=0).
+// Note that uncompression does not guarantee that the resulting signature verifies
+// using the "github.com/ethereum/go-ethereum/crypto".VerifySignature function. Instead, it guarantees that
+// the correct public key is recovered using "github.com/ethereum/go-ethereum/crypto".SigToPub.
+func uncompressSignature(sig []byte) []byte {
+	return append(sig, 0)
+}
+
+func hashReport[RI any](configDigest ocrtypes.ConfigDigest, seqNr uint64, report ocr3types.ReportWithInfo[RI]) []byte {
+	data := make([]byte, 96)
+	copy(data, configDigest[:])
+	binary.BigEndian.PutUint64(data[56:64], seqNr)
+	copy(data[64:96], crypto.Keccak256(report.Report))
+	return crypto.Keccak256(data)
+}
