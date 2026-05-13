@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -41,6 +42,36 @@ func CreateOCR3OnchainKeyring[RI any](ctx context.Context, ks keystore.Keystore,
 	}
 	addr := crypto.PubkeyToAddress(*publicKey)
 	return &evmOnchainKeyring2[RI]{ks: ks, addr: addr, keyPath: onchainKeyPath}, nil
+}
+
+func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]ocr3types.OnchainKeyring2[RI], error) {
+	var names []string
+	if len(keyringNames) > 0 {
+		for _, krn := range keyringNames {
+			names = append(names, keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain, krn).String())
+		}
+	}
+
+	getReq := keystore.GetKeysRequest{KeyNames: names}
+	resp, err := ks.GetKeys(ctx, getReq)
+	if err != nil {
+		return nil, err
+	}
+
+	keyrings := make([]ocr3types.OnchainKeyring2[RI], 0, len(resp.Keys))
+	for _, key := range resp.Keys {
+		if !strings.HasPrefix(key.KeyInfo.Name, keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain).String()) {
+			continue
+		}
+		keyPath := keystore.NewKeyPathFromString(key.KeyInfo.Name)
+		publicKey, err := crypto.UnmarshalPubkey(key.KeyInfo.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		addr := crypto.PubkeyToAddress(*publicKey)
+		keyrings = append(keyrings, &evmOnchainKeyring2[RI]{ks: ks, addr: addr, keyPath: keyPath})
+	}
+	return keyrings, nil
 }
 
 var _ ocr3types.OnchainKeyring2[struct{}] = &evmOnchainKeyring2[struct{}]{}
