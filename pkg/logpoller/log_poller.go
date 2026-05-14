@@ -1116,7 +1116,6 @@ func (lp *logPoller) handleReorg(ctx context.Context, currentBlock *evmtypes.Hea
 	}
 	// There can be another reorg while we're finding the LCA.
 	// That is ok, since we'll detect it on the next iteration.
-	// Since we go currentBlock by currentBlock for unfinalized logs, the mismatch starts at currentBlockNumber - 1.
 	blockAfterLCA, err2 := lp.findBlockAfterLCA(ctx, currentBlock.Number, latestBlock.FinalizedBlockNumber)
 	if err2 != nil {
 		return nil, fmt.Errorf("unable to find LCA after reorg: %w", err2)
@@ -1375,6 +1374,10 @@ func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNu
 
 // Find the first place where our chain and their chain have the same block,
 // that block number is the LCA. Return the block after that, where we want to resume polling.
+// As we do not store empty blocks in DB, it's possible that actual LCA is not in DB and we will return a block before it.
+// Example: Reorg occurred at block 100. Since [90, 100] blocks were empty, the latest DB block present in canonical chain is 89.
+// Thus, this function will return block 90.
+// That's an expected behavior and conscious decision to avoid having to store all empty blocks in the DB for the sake of reducing the number of RPC calls in case of reorgs.
 func (lp *logPoller) findBlockAfterLCA(ctx context.Context, currentHeadNumber int64, dbLatestFinalizedBlockNumber int64) (*evmtypes.Head, error) {
 	if currentHeadNumber < dbLatestFinalizedBlockNumber {
 		lp.lggr.Criticalw("Unexpected state. Current head number is lower than latest finalized block number", "currentHeadNumber", currentHeadNumber, "dbLatestFinalizedBlockNumber", dbLatestFinalizedBlockNumber)
