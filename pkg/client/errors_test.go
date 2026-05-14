@@ -51,6 +51,7 @@ func Test_Eth_Errors(t *testing.T) {
 			{"client error nonce too low", true, "tomlConfig"},
 			{"[Request ID: 2e952947-ffad-408b-aed9-35f3ed152001] Nonce too low. Provided nonce: 15, current nonce: 15", true, "hedera"},
 			{"failed to forward tx to sequencer, please try again. Error message: 'nonce too low'", true, "Mantle"},
+			{"RPC call failed: TX_REPLAY_ATTACK", true, "Jovay"},
 		}
 
 		for _, test := range tests {
@@ -445,6 +446,8 @@ func Test_Eth_Errors_Fatal(t *testing.T) {
 		{"Failed to serialize transaction: oversized data. max: 1000000; actual: 1000000", true, "zkSync"},
 
 		{"failed to forward tx to sequencer, please try again. Error message: 'invalid sender'", true, "Mantle"},
+		{"failed to forward tx to sequencer, err: 'intrinsic gas too low: gas 5000000, minimum needed 93897576'", true, "Mantle"},
+		{"failed to forward tx to sequencer, err: 'exceeds block gas limit'", true, "Mantle"},
 
 		{"client error fatal", true, "tomlConfig"},
 		{"[Request ID: d9711488-4c1e-4af2-bc1f-7969913d7b60] Error invoking RPC: transaction 0.0.4425573@1718213476.914320044 failed precheck with status INVALID_SIGNATURE", true, "hedera"},
@@ -577,6 +580,15 @@ func Test_IsTooManyResultsError(t *testing.T) {
 	t.Run("Context DeadlineExceeded is TooManyResults", func(t *testing.T) {
 		assert.True(t, evmclient.IsTooManyResults(context.DeadlineExceeded, nil))
 	})
+}
+
+func Test_IsBatchRPCResponseEnvelopeUnmarshalError(t *testing.T) {
+	t.Parallel()
+	inner := errors.New(`json: cannot unmarshal object into Go value of type []*rpc.jsonrpcMessage`)
+	assert.True(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(inner))
+	assert.True(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(fmt.Errorf("wrapped: %w", inner)))
+	assert.False(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(nil))
+	assert.False(t, evmclient.IsBatchRPCResponseEnvelopeUnmarshalError(errors.New("RPC call failed: some other failure")))
 }
 
 func Test_IsMissingBlocksError(t *testing.T) {

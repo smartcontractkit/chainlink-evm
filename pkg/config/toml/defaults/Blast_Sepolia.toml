@@ -20,6 +20,7 @@ HistoryDepth = 300
 [NodePool]
 # 4 block sync time between nodes to ensure they aren't labelled unreachable too soon
 PollFailureThreshold = 4
+PollSuccessThreshold = 0
 # polls every 4sec to check if there is a block produced, since blockRate is ~3sec
 PollInterval = '4s'
 

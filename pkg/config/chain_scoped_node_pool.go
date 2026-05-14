@@ -14,6 +14,10 @@ func (n *NodePoolConfig) PollFailureThreshold() uint32 {
 	return *n.C.PollFailureThreshold
 }
 
+func (n *NodePoolConfig) PollSuccessThreshold() uint32 {
+	return *n.C.PollSuccessThreshold
+}
+
 func (n *NodePoolConfig) PollInterval() time.Duration {
 	return n.C.PollInterval.Duration()
 }

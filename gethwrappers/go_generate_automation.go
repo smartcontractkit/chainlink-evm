@@ -16,6 +16,7 @@ package gethwrappers
 //go:generate go run ./generation/generate_automation/wrap.go AutomationRegistryLogicA2_3 AutomationRegistryLogicA automation_registry_logic_a_wrapper_2_3
 //go:generate go run ./generation/generate_automation/wrap.go AutomationRegistryLogicB2_3 AutomationRegistryLogicB automation_registry_logic_b_wrapper_2_3
 //go:generate go run ./generation/generate_automation/wrap.go AutomationRegistryLogicC2_3 AutomationRegistryLogicC automation_registry_logic_c_wrapper_2_3
+//go:generate go run ./generation/generate_automation/wrap.go EthBalanceMonitor EthBalanceMonitor eth_balance_monitor_wrapper
 //go:generate go run ./generation/wrap.go automation IAutomationRegistryMaster2_3 i_automation_registry_master_wrapper_2_3
 //go:generate go run ./generation/wrap.go automation ArbitrumModule arbitrum_module
 //go:generate go run ./generation/wrap.go automation ChainModuleBase chain_module_base

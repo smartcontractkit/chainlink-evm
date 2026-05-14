@@ -48,6 +48,24 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 	}
 }
 
+func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
+	name := "fake"
+	id := DefaultIDs[0]
+	evmCfg := &EVMConfig{
+		ChainID: id,
+		Chain:   Defaults(id),
+		Nodes: EVMNodes{{
+			Name:    &name,
+			WSURL:   config.MustParseURL("wss://foo.test/ws"),
+			HTTPURL: config.MustParseURL("http://foo.test"),
+		}},
+	}
+	evmCfg.RPCDefaultBatchSize = ptr[uint32](0)
+	err := config.Validate(evmCfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "RPCDefaultBatchSize")
+}
+
 func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown := Defaults(nil)
 
@@ -63,7 +81,12 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Workflow.GasLimitDefault = ptr(uint64(400000))
 	unknown.Transactions.TransactionManagerV2.BlockTime = new(config.Duration)
 	unknown.Transactions.TransactionManagerV2.CustomURL = new(config.URL)
+	unknown.Transactions.TransactionManagerV2.CustomURLs = []*config.URL{new(config.URL)}
 	unknown.Transactions.TransactionManagerV2.DualBroadcast = ptr(false)
+	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
+	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
+	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
+	unknown.Transactions.TransactionManagerV2.FeeBoost = ptr(false)
 	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
@@ -158,7 +181,12 @@ func TestDocs(t *testing.T) {
 		// TransactionManagerV2 configs are only set if the feature is enabled
 		docDefaults.Transactions.TransactionManagerV2.BlockTime = nil
 		docDefaults.Transactions.TransactionManagerV2.CustomURL = nil
+		docDefaults.Transactions.TransactionManagerV2.CustomURLs = nil
 		docDefaults.Transactions.TransactionManagerV2.DualBroadcast = nil
+		docDefaults.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = nil
+		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
+		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
+		docDefaults.Transactions.TransactionManagerV2.FeeBoost = nil
 
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
@@ -282,10 +310,15 @@ var fullConfig = EVMConfig{
 				DetectionApiUrl: config.MustParseURL("http://example.net"),
 			},
 			TransactionManagerV2: TransactionManagerV2Config{
-				Enabled:       ptr(false),
-				DualBroadcast: ptr(true),
-				BlockTime:     config.MustNewDuration(42 * time.Second),
-				CustomURL:     config.MustParseURL("http://txs.org"),
+				Enabled:                       ptr(false),
+				DualBroadcast:                 ptr(true),
+				ReadRequestsToMultipleNodes:   ptr(false),
+				Bundles:                       ptr(false),
+				BlockTime:                     config.MustNewDuration(42 * time.Second),
+				CustomURL:                     config.MustParseURL("http://txs.org"),
+				CustomURLs:                    []*config.URL{config.MustParseURL("http://txs.org"), config.MustParseURL("http://txs.org/secondary")},
+				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
+				FeeBoost:                      ptr(true),
 			},
 		},
 
@@ -301,6 +334,7 @@ var fullConfig = EVMConfig{
 
 		NodePool: NodePool{
 			PollFailureThreshold:           ptr[uint32](5),
+			PollSuccessThreshold:           ptr[uint32](0),
 			PollInterval:                   config.MustNewDuration(time.Minute),
 			SelectionMode:                  ptr(multinode.NodeSelectionModeHighestHead),
 			SyncThreshold:                  ptr[uint32](13),

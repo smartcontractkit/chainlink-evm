@@ -5,8 +5,8 @@ import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToke
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
-import {VRFV2PlusWrapper_Arbitrum} from "../dev/VRFV2PlusWrapper_Arbitrum.sol";
-import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
+import {VRFV2PlusWrapper_Arbitrum} from "../VRFV2PlusWrapper_Arbitrum.sol";
+import {ExposedVRFCoordinatorV2_5_Arbitrum} from "../testhelpers/ExposedVRFCoordinatorV2_5_Arbitrum.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 
 contract VRFV2PlusWrapperArbitrumTest is BaseTest {
