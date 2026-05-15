@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 	"sync"
@@ -1148,7 +1149,9 @@ func Test_PollAndSaveLogs_FinalityViolation_reorgedFinalizedEmpty(t *testing.T) 
 			default:
 				n, err := hexutil.DecodeUint64(block)
 				require.NoError(t, err)
-				num = int64(n)
+				if n <= math.MaxInt64 {
+					num = int64(n)
+				}
 				if num == 0 {
 					elems[i].Error = errors.New("block 0 is not available")
 					continue
@@ -1237,7 +1240,6 @@ func Test_PollAndSaveLogs_FinalityViolation_replayMissingSkippedEmptyParent(t *t
 
 		result := newHeadWithFork(num)
 		return &result, nil
-
 	}).Maybe()
 
 	addr := common.HexToAddress("0x1000000000000000000000000000000000000001")
