@@ -199,15 +199,16 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 }
 
 type Filter struct {
-	Name         string // see FilterName(id, args) below
-	Addresses    evmtypes.AddressArray
-	EventSigs    evmtypes.HashArray // list of possible values for eventsig (aka topic1)
-	Topic2       evmtypes.HashArray // list of possible values for topic2
-	Topic3       evmtypes.HashArray // list of possible values for topic3
-	Topic4       evmtypes.HashArray // list of possible values for topic4
-	Retention    time.Duration      // maximum amount of time to retain logs
-	MaxLogsKept  uint64             // maximum number of logs to retain ( 0 = unlimited )
-	LogsPerBlock uint64             // rate limit ( maximum # of logs per block, 0 = unlimited )
+	Name        string // see FilterName(id, args) below
+	Addresses   evmtypes.AddressArray
+	EventSigs   evmtypes.HashArray // list of possible values for eventsig (aka topic1)
+	Topic2      evmtypes.HashArray // list of possible values for topic2
+	Topic3      evmtypes.HashArray // list of possible values for topic3
+	Topic4      evmtypes.HashArray // list of possible values for topic4
+	Retention   time.Duration      // maximum amount of time to retain logs
+	MaxLogsKept uint64             // maximum number of logs to retain ( 0 = unlimited )
+	// NOTE: not supported. Must be set to 0.
+	LogsPerBlock uint64 // rate limit ( maximum # of logs per block, 0 = unlimited )
 }
 
 // FilterName is a suggested convenience function for clients to construct unique filter names
@@ -281,6 +282,11 @@ func (lp *logPoller) RegisterFilter(ctx context.Context, filter Filter) error {
 	}
 	if len(filter.EventSigs) == 0 {
 		return pkgerrors.Errorf("at least one event must be specified")
+	}
+
+	if filter.LogsPerBlock != 0 {
+		lp.lggr.Errorw("LogsPerBlock is not supported yet, must be 0", "name", filter.Name, "filter", filter)
+		// error is not returned to maintain backwards compatibility, in case any clients are using LogsPerBlock field, even though it's not supported yet
 	}
 
 	for _, eventSig := range filter.EventSigs {
