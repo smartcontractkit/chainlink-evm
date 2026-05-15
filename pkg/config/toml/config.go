@@ -1193,11 +1193,8 @@ func (p *NodePool) ValidateConfig(finalityTagEnabled *bool) (err error) {
 		}
 	}
 	if p.FinalizedStateCheckFailureThreshold != nil && *p.FinalizedStateCheckFailureThreshold > 0 {
-		if p.Errors.FinalizedStateUnavailable == nil || *p.Errors.FinalizedStateUnavailable == "" {
-			err = multierr.Append(err, commonconfig.ErrMissing{Name: "Errors.FinalizedStateUnavailable", Msg: "required when FinalizedStateCheckFailureThreshold is greater than 0"})
-		} else {
-			_, compileErr := regexp.Compile(*p.Errors.FinalizedStateUnavailable)
-			if compileErr != nil {
+		if p.Errors.FinalizedStateUnavailable != nil && *p.Errors.FinalizedStateUnavailable != "" {
+			if _, compileErr := regexp.Compile(*p.Errors.FinalizedStateUnavailable); compileErr != nil {
 				err = multierr.Append(err, commonconfig.ErrInvalid{Name: "Errors.FinalizedStateUnavailable", Value: *p.Errors.FinalizedStateUnavailable, Msg: "must be a valid regular expression"})
 			}
 		}

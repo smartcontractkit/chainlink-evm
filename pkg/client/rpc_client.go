@@ -84,6 +84,14 @@ var (
 
 const rpcSubscriptionMethodNewHeads = "newHeads"
 
+// defaultFinalizedStateUnavailableRe matches common RPC errors when historical state is unavailable
+// at the effective finalized block (e.g. pruned / non-archive nodes). Used when
+// [NodePool.Errors].FinalizedStateUnavailable is unset, analogous to built-in heuristics in IsTooManyResults.
+// Keep aligned with examples in pkg/config/toml/docs.toml and CONFIG.md.
+var defaultFinalizedStateUnavailableRe = regexp.MustCompile(
+	`(missing trie node|state not available|historical state unavailable)`,
+)
+
 type rawclient struct {
 	rpc  *rpc.Client
 	geth *ethclient.Client
@@ -208,7 +216,8 @@ func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err erro
 }
 
 // CheckFinalizedStateAvailability verifies if the RPC can serve historical state at the finalized block.
-// Returns multinode.ErrFinalizedStateUnavailable if the error matches the FinalizedStateUnavailable pattern.
+// Returns multinode.ErrFinalizedStateUnavailable if the error matches the FinalizedStateUnavailable pattern
+// from config, or the built-in default pattern when that config value is unset.
 func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context) error {
 	var blockNumber *big.Int
 	if r.finalityTagEnabled {
@@ -242,8 +251,7 @@ func (r *RPCClient) isFinalizedStateUnavailableError(err error) bool {
 	}
 	pattern := r.clientErrors.FinalizedStateUnavailable()
 	if pattern == "" {
-		r.rpcLog.Critical("FinalizedStateUnavailable regex pattern is empty; finalized state availability check is effectively disabled")
-		return false
+		return defaultFinalizedStateUnavailableRe.MatchString(err.Error())
 	}
 	re, compileErr := regexp.Compile(pattern)
 	if compileErr != nil {

@@ -503,6 +503,36 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("returns ErrFinalizedStateUnavailable when error matches built-in default regex", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				resp.Error.Message = "historical state unavailable for this node"
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		clientErrors := NewTestClientErrors()
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: probeAddress,
+				NodeErrors:                       &clientErrors,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.Error(t, err)
+		require.ErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
+	})
+
 	t.Run("returns ErrFinalizedStateUnavailable when error matches regex", func(t *testing.T) {
 		t.Parallel()
 		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
