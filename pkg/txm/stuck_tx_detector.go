@@ -16,6 +16,8 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
+const maxHederaAttemptsThreshold = 4
+
 type StuckTxDetectorConfig struct {
 	BlockTime             time.Duration
 	StuckTxBlockThreshold uint32
@@ -42,12 +44,14 @@ func NewStuckTxDetector(lggr logger.Logger, chaintype chaintype.ChainType, confi
 func (s *stuckTxDetector) DetectStuckTransaction(ctx context.Context, tx *types.Transaction) (bool, error) {
 	//nolint:gocritic //placeholder for upcoming chaintypes
 	switch s.chainType {
+	case chaintype.ChainHedera:
+		return s.hederaDetection(tx), nil
 	default:
 		return s.timeBasedDetection(tx), nil
 	}
 }
 
-// timeBasedDetection marks a transaction if:
+// timeBasedDetection marks a transaction purgeable if:
 //   - LastBroadcastAt is nil
 //   - Total attempt count is equal or greater than the maxAttemptsThreshold
 //
@@ -75,6 +79,17 @@ func (s *stuckTxDetector) timeBasedDetection(tx *types.Transaction) bool {
 		s.lggr.Debugf("TxID: %v last broadcast was: %v and last purge: %v which is more than the max configured duration: %v. Transaction is now considered stuck and will be purged.",
 			tx.ID, tx.LastBroadcastAt, s.lastPurgeMap[tx.FromAddress], threshold)
 		s.lastPurgeMap[tx.FromAddress] = time.Now()
+		return true
+	}
+	return false
+}
+
+// hederaDetection mars a transaction as purgeable starting from maxHederaAttemptsThreshold.
+// Hedera is a unique chain that is not EVM based, but it provides an RPC endpoint that mimics EVM RPC calls.
+// This means that the RPC will respond unreliably and can drop your requests without an error.
+// To bypass that we want to optimistically broadcast transactions and then fallback to purgeable transactions to clear the nonce.
+func (s *stuckTxDetector) hederaDetection(tx *types.Transaction) bool {
+	if tx.AttemptCount >= maxHederaAttemptsThreshold {
 		return true
 	}
 	return false

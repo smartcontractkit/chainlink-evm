@@ -10,13 +10,16 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
-// maxBumpThreshold controls the maximum number of bumps for an attempt.
-const maxBumpThreshold = 5
+const (
+	maxBumpThreshold   = 5              // maxBumpThreshold controls the maximum number of bumps for an attempt.
+	hederaWeiToTinybar = 10_000_000_001 // hederaWeiToTinybar is the minimum allowed value for a transfer in Hedera plus 1. Hedera uses HBAR instead of ETH
+)
 
 type attemptBuilder struct {
 	gas.EvmFeeEstimator
@@ -24,15 +27,17 @@ type attemptBuilder struct {
 	keystore            keys.TxSigner
 	emptyTxLimitDefault uint64
 	feeBoost            bool
+	chainType           chaintype.ChainType
 }
 
-func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, emptyTxLimitDefault uint64, feeBoost bool) *attemptBuilder {
+func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, emptyTxLimitDefault uint64, feeBoost bool, chainType chaintype.ChainType) *attemptBuilder {
 	return &attemptBuilder{
 		priceMaxKey:         priceMaxKey,
 		EvmFeeEstimator:     estimator,
 		keystore:            keystore,
 		emptyTxLimitDefault: emptyTxLimitDefault,
 		feeBoost:            feeBoost,
+		chainType:           chainType,
 	}
 }
 
@@ -75,9 +80,11 @@ func (a *attemptBuilder) NewBumpAttempt(ctx context.Context, lggr logger.Logger,
 }
 
 func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, dynamic bool) (attempt *types.Attempt, err error) {
+	if a.chainType == chaintype.ChainHedera {
+		return a.newHederaAttempt(ctx, lggr, tx, a.priceMaxKey(tx.FromAddress), dynamic)
+	}
 	// if the transaction is purgeable or feeBoost is enabled, NewAttempt will return the max fee instantly, so there is no need to bump
 	attempt, err = a.NewAttempt(ctx, lggr, tx, dynamic)
-
 	if err != nil {
 		return
 	}
@@ -96,6 +103,45 @@ func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger
 		attempt = bumpedAttempt
 	}
 
+	return attempt, nil
+}
+
+// newHederaAttempt is used to build a new attempt for Hedera.
+// Hedera is a special case. It doesn't have a mempool but can reject an attempt for unknown reasons, even though the RPC returns success.
+// The network binds transactions with unique IDs and a timestamp. If the timestamp exceeds a threshold it will auto-reject the
+// transaction no matter how many times we retry. To bypass this case, we fetch a new market price and bump the fee by 1 per attempt
+// to forcefully generate a new hash. We avoid max pricing purgeable transactions for the same reason.
+func (a *attemptBuilder) newHederaAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, maxPrice *assets.Wei, dynamic bool) (*types.Attempt, error) {
+	gasLimit := tx.SpecifiedGasLimit
+	if tx.IsPurgeable {
+		gasLimit = a.emptyTxLimitDefault
+	}
+	fee, estimatedGasLimit, err := a.GetFee(ctx, tx.Data, gasLimit, maxPrice, &tx.FromAddress, &tx.ToAddress)
+	if err != nil {
+		return nil, err
+	}
+	txType := evmtypes.LegacyTxType
+	if dynamic {
+		txType = evmtypes.DynamicFeeTxType
+	}
+
+	attempt, err := a.newCustomAttempt(ctx, tx, fee, estimatedGasLimit, byte(txType), lggr)
+	if err != nil {
+		return nil, err
+	}
+	for range tx.AttemptCount {
+		if attempt.Fee.ValidDynamic() && maxPrice.Cmp(attempt.Fee.GasFeeCap) > 0 {
+			fee.GasFeeCap = attempt.Fee.GasFeeCap.Add(assets.NewWeiI(1)) // Hedera doesn't have a mempool so maxPriorityFeePerGas is always 0.
+		} else if attempt.Fee.GasPrice != nil && maxPrice.Cmp(attempt.Fee.GasPrice) > 0 {
+			fee.GasPrice = attempt.Fee.GasPrice.Add(assets.NewWeiI(1))
+		} else {
+			break
+		}
+		attempt, err = a.newCustomAttempt(ctx, tx, fee, estimatedGasLimit, byte(txType), lggr)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return attempt, nil
 }
 
@@ -136,6 +182,10 @@ func (a *attemptBuilder) newLegacyAttempt(ctx context.Context, tx *types.Transac
 		toAddress = tx.ToAddress
 		value = tx.Value
 	}
+	if a.chainType == chaintype.ChainHedera && tx.IsPurgeable {
+		value = big.NewInt(hederaWeiToTinybar)
+		toAddress = tx.FromAddress
+	}
 	if tx.Nonce == nil {
 		return nil, fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
 	}
@@ -173,6 +223,10 @@ func (a *attemptBuilder) newDynamicFeeAttempt(ctx context.Context, tx *types.Tra
 		data = tx.Data
 		toAddress = tx.ToAddress
 		value = tx.Value
+	}
+	if a.chainType == chaintype.ChainHedera && tx.IsPurgeable {
+		value = big.NewInt(10_000_000_001)
+		toAddress = tx.FromAddress
 	}
 	if tx.Nonce == nil {
 		return nil, fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
