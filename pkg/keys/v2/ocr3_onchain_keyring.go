@@ -11,9 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/chainlink-common/keystore"
 	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
+
+	"github.com/smartcontractkit/chainlink-common/keystore"
 )
 
 // CreateOCR3OnchainKeyring creates a new OCR3 onchain keyring.
@@ -154,8 +155,11 @@ func uncompressSignature(sig []byte) []byte {
 	return append(sig, 0)
 }
 
-// hashReport performs OCR3 report hashing. The main difference from OCR2 hashing (https://github.com/smartcontractkit/chainlink-evm/blob/b4068bf735e6e1af28602eece9e29a0bd31eed37/pkg/keys/v2/ocr2_onchain_keyring.go#L98)
-// is that we hash the sequence number `seqNr` instead of epoch||round (while also changing the hashing order).
+// hashReport computes an EVM-friendly cryptographic hash function over configDigest, seqNr, and reportWithInfo.Report.
+// The main difference from OCR2 hashing (https://github.com/smartcontractkit/chainlink-evm/blob/b4068bf735e6e1af28602eece9e29a0bd31eed37/pkg/keys/v2/ocr2_onchain_keyring.go#L98)
+// is that we hash the sequence number `seqNr` instead of `epoch||round||extraHash`.
+// Domain separation is guaranteed because the result of this function is a Keccak hash computed over 96 bytes
+// while the aforementioned OCR2 function is a Keccak hash computed over 128 bytes.
 func hashReport[RI any](configDigest ocrtypes.ConfigDigest, seqNr uint64, report ocr3types.ReportWithInfo[RI]) []byte {
 	data := make([]byte, 96)
 	copy(data, configDigest[:])
