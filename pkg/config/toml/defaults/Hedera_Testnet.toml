@@ -17,7 +17,7 @@ EIP1559DynamicFees = true
 Mode = 'FeeHistory'
 BumpThreshold = 1 # Force retry after each block.
 EstimateLimit = true
-LimitTransfer = 21_300
+LimitTransfer = 25_000
 LimitDefault = 200_000
 LimitMax = 200_000
 
