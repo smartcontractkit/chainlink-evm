@@ -18,9 +18,12 @@ import (
 // Type aliases for EVM
 type (
 	Confirmer              = txmgr.Confirmer[*big.Int, *evmtypes.Head, common.Address, common.Hash, common.Hash, *evmtypes.Receipt, evmtypes.Nonce, gas.EvmFee]
+	ConfirmerI             = txmgr.ConfirmerI[*evmtypes.Head, common.Address, common.Hash]
 	Broadcaster            = txmgr.Broadcaster[*big.Int, *evmtypes.Head, common.Address, common.Hash, common.Hash, evmtypes.Nonce, gas.EvmFee]
+	BroadcasterI           = txmgr.BroadcasterI[common.Address]
 	Resender               = txmgr.Resender[*big.Int, common.Address, common.Hash, common.Hash, *evmtypes.Receipt, evmtypes.Nonce, gas.EvmFee]
 	Tracker                = txmgr.Tracker[*big.Int, common.Address, common.Hash, common.Hash, *evmtypes.Receipt, evmtypes.Nonce, gas.EvmFee]
+	TrackerI               = txmgr.TrackerI[common.Address]
 	Reaper                 = txmgr.Reaper[*big.Int]
 	TxStore                = txmgrtypes.TxStore[common.Address, *big.Int, common.Hash, common.Hash, *evmtypes.Receipt, evmtypes.Nonce, gas.EvmFee]
 	TransactionStore       = txmgrtypes.TransactionStore[common.Address, *big.Int, common.Hash, common.Hash, evmtypes.Nonce, gas.EvmFee]
@@ -43,6 +46,12 @@ type (
 	TransactionClient      = txmgrtypes.TransactionClient[*big.Int, common.Address, common.Hash, common.Hash, evmtypes.Nonce, gas.EvmFee]
 	ChainReceipt           = txmgrtypes.ChainReceipt[common.Hash, common.Hash]
 	Finalizer              = txmgrtypes.Finalizer[common.Hash, *evmtypes.Head]
+)
+
+var (
+	_ BroadcasterI = &Broadcaster{}
+	_ ConfirmerI   = &Confirmer{}
+	_ TrackerI     = &Tracker{}
 )
 
 var _ KeyStore = (keys.Addresses)(nil) // check interface in txmgr to avoid circular import

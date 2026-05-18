@@ -9,7 +9,7 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 
 import {ArbitrumCrossDomainForwarder} from "./ArbitrumCrossDomainForwarder.sol";
 
-import {Address} from "@openzeppelin/contracts@4.7.3/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 
 /**
  * @title ArbitrumCrossDomainGovernor - L1 xDomain account representation (with delegatecall support) for Arbitrum
@@ -36,7 +36,7 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @inheritdoc ITypeAndVersion
    */
   function typeAndVersion() external pure virtual override returns (string memory) {
-    return "ArbitrumCrossDomainGovernor 1.0.0";
+    return "ArbitrumCrossDomainGovernor 1.1.0-dev";
   }
 
   /**
@@ -44,7 +44,7 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @inheritdoc IForwarder
    */
   function forward(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
-    Address.functionCall(target, data, "Governor call reverted");
+    Address.functionCall(target, data);
   }
 
   /**
@@ -52,7 +52,7 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @inheritdoc IDelegateForwarder
    */
   function forwardDelegate(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
-    Address.functionDelegateCall(target, data, "Governor delegatecall reverted");
+    Address.functionDelegateCall(target, data);
   }
 
   /**

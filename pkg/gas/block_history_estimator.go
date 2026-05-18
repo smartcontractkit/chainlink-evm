@@ -13,8 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -34,45 +32,6 @@ import (
 // trying to fill initial data on start. This must be capped because it can
 // block the application from starting.
 var MaxStartTime = 10 * time.Second
-
-var (
-	promBlockHistoryEstimatorAllGasPricePercentiles = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_all_gas_price_percentiles",
-		Help: "Gas price at given percentile",
-	},
-		[]string{"percentile", "evmChainID"},
-	)
-	promBlockHistoryEstimatorAllTipCapPercentiles = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_all_tip_cap_percentiles",
-		Help: "Tip cap at given percentile",
-	},
-		[]string{"percentile", "evmChainID"},
-	)
-	promBlockHistoryEstimatorSetGasPrice = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_set_gas_price",
-		Help: "Gas updater set gas price (in Wei)",
-	},
-		[]string{"percentile", "evmChainID"},
-	)
-	promBlockHistoryEstimatorSetTipCap = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_set_tip_cap",
-		Help: "Gas updater set gas tip cap (in Wei)",
-	},
-		[]string{"percentile", "evmChainID"},
-	)
-	promBlockHistoryEstimatorCurrentBaseFee = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "gas_updater_current_base_fee",
-		Help: "Gas updater current block base fee in Wei",
-	},
-		[]string{"evmChainID"},
-	)
-	promBlockHistoryEstimatorConnectivityFailureCount = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "block_history_estimator_connectivity_failure_count",
-		Help: "Counter is incremented every time a gas bump is prevented due to a detected network propagation/connectivity issue",
-	},
-		[]string{"evmChainID", "mode"},
-	)
-)
 
 const BumpingHaltedLabel = "Tx gas bumping halted since price exceeds current block prices by significant margin; tx will continue to be rebroadcasted but your node, RPC, or the chain might be experiencing connectivity issues; please investigate and fix ASAP"
 
@@ -116,13 +75,16 @@ type BlockHistoryEstimator struct {
 	logger logger.SugaredLogger
 
 	l1Oracle rollups.L1Oracle
+
+	metrics *blockHistoryEstimatorMetrics
 }
 
 // NewBlockHistoryEstimator returns a new BlockHistoryEstimator that listens
 // for new heads and updates the base gas price dynamically based on the
 // configured percentile of gas prices in that block
 func NewBlockHistoryEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype chaintype.ChainType, eCfg BlockHistoryEstimatorConfig, bhCfg evmconfig.BlockHistory, chainID *big.Int, l1Oracle rollups.L1Oracle) EvmEstimator {
-	return &BlockHistoryEstimator{
+	l := logger.Sugared(logger.Named(lggr, "BlockHistoryEstimator"))
+	b := &BlockHistoryEstimator{
 		ethClient: ethClient,
 		chainID:   chainID,
 		chaintype: chaintype,
@@ -134,26 +96,29 @@ func NewBlockHistoryEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, 
 		mb:       mailbox.NewSingle[*evmtypes.Head](),
 		wg:       new(sync.WaitGroup),
 		stopCh:   make(chan struct{}),
-		logger:   logger.Sugared(logger.Named(lggr, "BlockHistoryEstimator")),
+		logger:   l,
 		l1Oracle: l1Oracle,
+		metrics:  newBlockHistoryEstimatorMetrics(l, chainID),
 	}
+	return b
 }
 
 // OnNewLongestChain recalculates and sets global gas price if a sampled new head comes
 // in and we are not currently fetching
-func (b *BlockHistoryEstimator) OnNewLongestChain(_ context.Context, head *evmtypes.Head) {
+func (b *BlockHistoryEstimator) OnNewLongestChain(ctx context.Context, head *evmtypes.Head) {
 	// set latest base fee here to avoid potential lag introduced by block delay
 	// it is really important that base fee be as up-to-date as possible
-	b.setLatest(head)
+	b.setLatest(ctx, head)
 	b.mb.Deliver(head)
 }
 
 // setLatest assumes that head won't be mutated
-func (b *BlockHistoryEstimator) setLatest(head *evmtypes.Head) {
+func (b *BlockHistoryEstimator) setLatest(ctx context.Context, head *evmtypes.Head) {
 	// Non-eip1559 blocks don't include base fee
 	if baseFee := head.BaseFeePerGas; baseFee != nil {
-		promBlockHistoryEstimatorCurrentBaseFee.WithLabelValues(b.chainID.String()).Set(float64(baseFee.Int64()))
+		b.metrics.RecordCurrentBaseFee(ctx, float64(baseFee.Int64()))
 	}
+
 	b.logger.Debugw("Set latest block", "blockNum", head.Number, "blockHash", head.Hash, "baseFee", head.BaseFeePerGas, "baseFeeWei", head.BaseFeePerGas.ToInt())
 	b.latestMu.Lock()
 	defer b.latestMu.Unlock()
@@ -197,7 +162,7 @@ func (b *BlockHistoryEstimator) Start(ctx context.Context) error {
 			b.logger.Warnw("initial check for latest head failed, head was unexpectedly nil")
 		} else {
 			b.logger.Debugw("Got latest head", "number", latestHead.Number, "blockHash", latestHead.Hash.Hex())
-			b.setLatest(latestHead)
+			b.setLatest(fetchCtx, latestHead)
 			b.FetchBlocksAndRecalculate(fetchCtx, latestHead)
 		}
 
@@ -318,13 +283,13 @@ func (b *BlockHistoryEstimator) setMaxPercentileTipCap(tipCap *assets.Wei) {
 	b.maxPercentileTipCap = tipCap
 }
 
-func (b *BlockHistoryEstimator) BumpLegacyGas(_ context.Context, originalGasPrice *assets.Wei, gasLimit uint64, maxGasPriceWei *assets.Wei, attempts []EvmPriorAttempt) (bumpedGasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+func (b *BlockHistoryEstimator) BumpLegacyGas(ctx context.Context, originalGasPrice *assets.Wei, gasLimit uint64, maxGasPriceWei *assets.Wei, attempts []EvmPriorAttempt) (bumpedGasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
 	if b.bhConfig.CheckInclusionBlocks() > 0 {
 		if err = b.haltBumping(attempts); err != nil {
 			if errors.Is(err, fees.ErrConnectivity) {
 				b.logger.Criticalw(BumpingHaltedLabel, "err", err)
 				b.SvcErrBuffer.Append(err)
-				promBlockHistoryEstimatorConnectivityFailureCount.WithLabelValues(b.chainID.String(), "legacy").Inc()
+				b.metrics.RecordConnectivityFailure(ctx, "legacy")
 			}
 			return nil, 0, err
 		}
@@ -498,13 +463,14 @@ func calcFeeCap(latestAvailableBaseFeePerGas *assets.Wei, bufferBlocks int, tipC
 	return feeCap
 }
 
-func (b *BlockHistoryEstimator) BumpDynamicFee(_ context.Context, originalFee DynamicFee, maxGasPriceWei *assets.Wei, attempts []EvmPriorAttempt) (bumped DynamicFee, err error) {
+func (b *BlockHistoryEstimator) BumpDynamicFee(ctx context.Context, originalFee DynamicFee, maxGasPriceWei *assets.Wei, attempts []EvmPriorAttempt) (bumped DynamicFee, err error) {
 	if b.bhConfig.CheckInclusionBlocks() > 0 {
 		if err = b.haltBumping(attempts); err != nil {
 			if errors.Is(err, fees.ErrConnectivity) {
 				b.logger.Criticalw(BumpingHaltedLabel, "err", err)
 				b.SvcErrBuffer.Append(err)
-				promBlockHistoryEstimatorConnectivityFailureCount.WithLabelValues(b.chainID.String(), "eip1559").Inc()
+
+				b.metrics.RecordConnectivityFailure(ctx, "eip1559")
 			}
 			return bumped, err
 		}
@@ -539,11 +505,11 @@ func (b *BlockHistoryEstimator) FetchBlocksAndRecalculate(ctx context.Context, h
 		return
 	}
 	b.initialFetch.Store(true)
-	b.Recalculate(head)
+	b.Recalculate(ctx, head)
 }
 
 // Recalculate adds the given heads to the history and recalculates gas price.
-func (b *BlockHistoryEstimator) Recalculate(head *evmtypes.Head) {
+func (b *BlockHistoryEstimator) Recalculate(ctx context.Context, head *evmtypes.Head) {
 	lggr := b.logger.With("head", head)
 
 	blockHistory := b.getBlocks()
@@ -553,13 +519,13 @@ func (b *BlockHistoryEstimator) Recalculate(head *evmtypes.Head) {
 	}
 
 	// Calculate and set the TransactionPercentile gas price and tip cap to use during gas estimation
-	b.calculateGasPriceTipCap(lggr, blockHistory, head)
+	b.calculateGasPriceTipCap(ctx, lggr, blockHistory, head)
 
 	// Calculate and set the CheckInclusionPercentile gas price and tip cap to halt excessive bumping
 	b.calculateMaxPercentileGasPriceTipCap(lggr, blockHistory, head)
 }
 
-func (b *BlockHistoryEstimator) calculateGasPriceTipCap(lggr logger.SugaredLogger, blockHistory []evmtypes.Block, head *evmtypes.Head) {
+func (b *BlockHistoryEstimator) calculateGasPriceTipCap(ctx context.Context, lggr logger.SugaredLogger, blockHistory []evmtypes.Block, head *evmtypes.Head) {
 	percentile := int(b.bhConfig.TransactionPercentile())
 	eip1559 := b.eConfig.EIP1559DynamicFees()
 
@@ -571,12 +537,14 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(lggr logger.SugaredLogge
 		func(gasPrices []*assets.Wei) {
 			for i := 0; i <= 100; i += 5 {
 				jdx := ((len(gasPrices) - 1) * i) / 100
-				promBlockHistoryEstimatorAllGasPricePercentiles.WithLabelValues(fmt.Sprintf("%v%%", i), b.chainID.String()).Set(float64(gasPrices[jdx].Int64()))
+				percentileLabel := fmt.Sprintf("%v%%", i)
+				b.metrics.RecordAllGasPricePercentile(ctx, percentileLabel, float64(gasPrices[jdx].Int64()))
 			}
 		}, func(tipCaps []*assets.Wei) {
 			for i := 0; i <= 100; i += 5 {
 				jdx := ((len(tipCaps) - 1) * i) / 100
-				promBlockHistoryEstimatorAllTipCapPercentiles.WithLabelValues(fmt.Sprintf("%v%%", i), b.chainID.String()).Set(float64(tipCaps[jdx].Int64()))
+				percentileLabel := fmt.Sprintf("%v%%", i)
+				b.metrics.RecordAllTipCapPercentile(ctx, percentileLabel, float64(tipCaps[jdx].Int64()))
 			}
 		})
 	if err != nil {
@@ -602,7 +570,9 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(lggr logger.SugaredLogge
 		"priceBlocks", numsForPrice,
 	}
 	b.setPercentileGasPrice(percentileGasPrice)
-	promBlockHistoryEstimatorSetGasPrice.WithLabelValues(fmt.Sprintf("%v%%", percentile), b.chainID.String()).Set(float64(percentileGasPrice.Int64()))
+
+	percentileLabel := fmt.Sprintf("%v%%", percentile)
+	b.metrics.RecordSetGasPrice(ctx, percentileLabel, float64(percentileGasPrice.Int64()))
 
 	if !eip1559 {
 		lggr.Debugw(fmt.Sprintf("Setting new default GasPrice: %v Gwei", gasPriceGwei), lggrFields...)
@@ -616,7 +586,8 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(lggr logger.SugaredLogge
 	}...)
 	lggr.Debugw(fmt.Sprintf("Setting new default prices, GasPrice: %v Gwei, TipCap: %v Gwei", gasPriceGwei, tipCapGwei), lggrFields...)
 	b.setPercentileTipCap(percentileTipCap)
-	promBlockHistoryEstimatorSetTipCap.WithLabelValues(fmt.Sprintf("%v%%", percentile), b.chainID.String()).Set(float64(percentileTipCap.Int64()))
+
+	b.metrics.RecordSetTipCap(ctx, percentileLabel, float64(percentileTipCap.Int64()))
 }
 
 func (b *BlockHistoryEstimator) calculateMaxPercentileGasPriceTipCap(lggr logger.SugaredLogger, blockHistory []evmtypes.Block, head *evmtypes.Head) {
@@ -863,13 +834,13 @@ func (b *BlockHistoryEstimator) getPricesFromBlocks(blocks []evmtypes.Block, eip
 	tipCaps = make([]*assets.Wei, 0)
 	for _, block := range blocks {
 		if err := verifyBlock(block, eip1559); err != nil {
-			b.logger.Warnw(fmt.Sprintf("Block %v is not usable, %s", block.Number, err.Error()), "block", block, "err", err)
+			b.logger.Warnw(fmt.Sprintf("Block %v is not usable, %s", block.Number, err.Error()), "blockNum", block.Number, "blockHash", block.Hash, "err", err)
 		}
 		for _, tx := range block.Transactions {
 			if b.IsUsable(tx, block, b.chaintype, b.eConfig.PriceMin(), b.logger) {
 				gp := b.EffectiveGasPrice(block, tx)
 				if gp == nil {
-					b.logger.Warnw("Unable to get gas price for tx", "tx", tx, "block", block)
+					b.logger.Warnw("Unable to get gas price for tx", "tx", tx, "blockNum", block.Number, "blockHash", block.Hash)
 					continue
 				}
 				gasPrices = append(gasPrices, gp)
@@ -878,7 +849,7 @@ func (b *BlockHistoryEstimator) getPricesFromBlocks(blocks []evmtypes.Block, eip
 				}
 				tc := b.EffectiveTipCap(block, tx)
 				if tc == nil {
-					b.logger.Warnw("Unable to get tip cap for tx", "tx", tx, "block", block)
+					b.logger.Warnw("Unable to get tip cap for tx", "tx", tx, "blockNum", block.Number, "blockHash", block.Hash)
 					continue
 				}
 				tipCaps = append(tipCaps, tc)
@@ -960,14 +931,14 @@ func (b *BlockHistoryEstimator) EffectiveGasPrice(block evmtypes.Block, tx evmty
 	case 0x2, 0x3, 0x4:
 		return b.getEffectiveGasPrice(block, tx)
 	default:
-		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "block", block, "tx", tx)
+		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return nil
 	}
 }
 
 func (b *BlockHistoryEstimator) getEffectiveGasPrice(block evmtypes.Block, tx evmtypes.Transaction) *assets.Wei {
 	if block.BaseFeePerGas == nil || tx.MaxPriorityFeePerGas == nil || tx.MaxFeePerGas == nil {
-		b.logger.Warnw(fmt.Sprintf("Got transaction type %v but one of the required EIP1559 fields was missing, falling back to gasPrice", tx.Type), "block", block, "tx", tx)
+		b.logger.Warnw(fmt.Sprintf("Got transaction type %v but one of the required EIP1559 fields was missing, falling back to gasPrice", tx.Type), "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return tx.GasPrice
 	}
 	if tx.GasPrice != nil {
@@ -975,11 +946,11 @@ func (b *BlockHistoryEstimator) getEffectiveGasPrice(block evmtypes.Block, tx ev
 		return tx.GasPrice
 	}
 	if tx.MaxFeePerGas.Cmp(block.BaseFeePerGas) < 0 {
-		b.logger.AssumptionViolationw("MaxFeePerGas >= BaseFeePerGas", "block", block, "tx", tx)
+		b.logger.AssumptionViolationw("MaxFeePerGas >= BaseFeePerGas", "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return nil
 	}
 	if tx.MaxFeePerGas.Cmp(tx.MaxPriorityFeePerGas) < 0 {
-		b.logger.AssumptionViolationw("MaxFeePerGas >= MaxPriorityFeePerGas", "block", block, "tx", tx)
+		b.logger.AssumptionViolationw("MaxFeePerGas >= MaxPriorityFeePerGas", "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return nil
 	}
 
@@ -1006,12 +977,12 @@ func (b *BlockHistoryEstimator) EffectiveTipCap(block evmtypes.Block, tx evmtype
 		}
 		effectiveTipCap := tx.GasPrice.Sub(block.BaseFeePerGas)
 		if effectiveTipCap.IsNegative() {
-			b.logger.AssumptionViolationw("GasPrice - BaseFeePerGas may not be negative", "block", block, "tx", tx)
+			b.logger.AssumptionViolationw("GasPrice - BaseFeePerGas may not be negative", "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 			return nil
 		}
 		return effectiveTipCap
 	default:
-		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "block", block, "tx", tx)
+		b.logger.Debugw(fmt.Sprintf("Ignoring unknown transaction type %v", tx.Type), "blockNum", block.Number, "blockHash", block.Hash, "tx", tx)
 		return nil
 	}
 }
