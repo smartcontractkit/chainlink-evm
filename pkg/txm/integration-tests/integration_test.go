@@ -99,7 +99,7 @@ func setupTestnetTXM(
 	require.NoError(t, err, "failed to add private key to keystore")
 
 	// AttemptBuilder
-	ab := txm.NewAttemptBuilder(configs.PriceMaxKey, estimator, keystore, configs.LimitTransfer(), false)
+	ab := txm.NewAttemptBuilder(configs.PriceMaxKey, estimator, keystore, configs.LimitTransfer(), false, "")
 
 	// InMemory storage
 	store := storage.NewInMemoryStoreManager(lggr, chainID)
@@ -158,7 +158,7 @@ func setupDevnetTXM(
 	require.NoError(t, keystore.Add(privateKeyHex), "failed to add private key to keystore")
 
 	// AttemptBuilder
-	ab := txm.NewAttemptBuilder(configs.PriceMaxKey, estimator, keystore, configs.LimitDefault(), false)
+	ab := txm.NewAttemptBuilder(configs.PriceMaxKey, estimator, keystore, configs.LimitDefault(), false, "")
 
 	// InMemory storage
 	store := storage.NewInMemoryStoreManager(lggr, chainID)

@@ -89,10 +89,7 @@ func (s *stuckTxDetector) timeBasedDetection(tx *types.Transaction) bool {
 // This means that the RPC will respond unreliably and can drop your requests without an error.
 // To bypass that we want to optimistically broadcast transactions and then fallback to purgeable transactions to clear the nonce.
 func (s *stuckTxDetector) hederaDetection(tx *types.Transaction) bool {
-	if tx.AttemptCount >= maxHederaAttemptsThreshold {
-		return true
-	}
-	return false
+	return tx.AttemptCount >= maxHederaAttemptsThreshold
 }
 
 type APIResponse struct {
