@@ -199,15 +199,16 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 }
 
 type Filter struct {
-	Name         string // see FilterName(id, args) below
-	Addresses    evmtypes.AddressArray
-	EventSigs    evmtypes.HashArray // list of possible values for eventsig (aka topic1)
-	Topic2       evmtypes.HashArray // list of possible values for topic2
-	Topic3       evmtypes.HashArray // list of possible values for topic3
-	Topic4       evmtypes.HashArray // list of possible values for topic4
-	Retention    time.Duration      // maximum amount of time to retain logs
-	MaxLogsKept  uint64             // maximum number of logs to retain ( 0 = unlimited )
-	LogsPerBlock uint64             // rate limit ( maximum # of logs per block, 0 = unlimited )
+	Name        string // see FilterName(id, args) below
+	Addresses   evmtypes.AddressArray
+	EventSigs   evmtypes.HashArray // list of possible values for eventsig (aka topic1)
+	Topic2      evmtypes.HashArray // list of possible values for topic2
+	Topic3      evmtypes.HashArray // list of possible values for topic3
+	Topic4      evmtypes.HashArray // list of possible values for topic4
+	Retention   time.Duration      // maximum amount of time to retain logs
+	MaxLogsKept uint64             // maximum number of logs to retain ( 0 = unlimited )
+	// NOTE: not supported. Must be set to 0.
+	LogsPerBlock uint64 // rate limit ( maximum # of logs per block, 0 = unlimited )
 }
 
 // FilterName is a suggested convenience function for clients to construct unique filter names
@@ -281,6 +282,11 @@ func (lp *logPoller) RegisterFilter(ctx context.Context, filter Filter) error {
 	}
 	if len(filter.EventSigs) == 0 {
 		return pkgerrors.Errorf("at least one event must be specified")
+	}
+
+	if filter.LogsPerBlock != 0 {
+		lp.lggr.Errorw("LogsPerBlock is not supported yet, must be 0", "name", filter.Name, "filter", filter)
+		// error is not returned to maintain backwards compatibility, in case any clients are using LogsPerBlock field, even though it's not supported yet
 	}
 
 	for _, eventSig := range filter.EventSigs {
@@ -522,9 +528,15 @@ func (lp *logPoller) savedFinalizedBlockNumber(ctx context.Context) (int64, erro
 
 func (lp *logPoller) recvReplayComplete() {
 	defer lp.wg.Done()
-	err := <-lp.replayComplete
-	if err != nil {
-		lp.lggr.Error(err)
+	// Also listen on stopCh: if Close runs before run loop produces a replayComplete
+	// value (e.g. a concurrent Replay observed ctx.Done at the same instant the run
+	// loop did and produced no completion), wait would block forever.
+	select {
+	case err := <-lp.replayComplete:
+		if err != nil {
+			lp.lggr.Error(err)
+		}
+	case <-lp.stopCh:
 	}
 }
 
@@ -1110,7 +1122,6 @@ func (lp *logPoller) handleReorg(ctx context.Context, currentBlock *evmtypes.Hea
 	}
 	// There can be another reorg while we're finding the LCA.
 	// That is ok, since we'll detect it on the next iteration.
-	// Since we go currentBlock by currentBlock for unfinalized logs, the mismatch starts at currentBlockNumber - 1.
 	blockAfterLCA, err2 := lp.findBlockAfterLCA(ctx, currentBlock.Number, latestBlock.FinalizedBlockNumber)
 	if err2 != nil {
 		return nil, fmt.Errorf("unable to find LCA after reorg: %w", err2)
@@ -1148,11 +1159,6 @@ func (lp *logPoller) PollAndSaveLogs(ctx context.Context, currentBlockNumber int
 	if err != nil {
 		lp.lggr.Errorw("Failed to poll and save logs, retrying later", "err", err)
 		return
-	}
-
-	if lp.finalityViolated.Load() {
-		lp.lggr.Info("PollAndSaveLogs completed successfully - removing finality violation flag")
-		lp.finalityViolated.Store(false)
 	}
 }
 
@@ -1193,6 +1199,11 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 		return fmt.Errorf("unable to get current block: %w", err)
 	}
 	currentBlockNumber = currentBlock.Number
+	// getCurrentBlockMaybeHandleReorg ensured that DB's state matches RPC's, so it's safe to remove finality violation flag if it was set.
+	if lp.finalityViolated.Load() {
+		lp.lggr.Info("getCurrentBlockMaybeHandleReorg completed successfully - removing finality violation flag")
+		lp.finalityViolated.Store(false)
+	}
 
 	// backfill finalized blocks if we can for performance. If we crash during backfill, we
 	// may reprocess logs.  Log insertion is idempotent so this is ok.
@@ -1290,7 +1301,9 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 		}
 		logs = append(logs, convertLogs(rpcLogs, []Block{*block}, lp.lggr, lp.ec.ConfiguredChainID())...)
 		// Skip empty blocks if configured to do so.
-		if len(rpcLogs) > 0 || !lp.skipEmptyBlocks {
+		// Ensure that even if latest finalized block is empty, we still save it to the db.
+		// This is important to detect finality violations.
+		if len(rpcLogs) > 0 || !lp.skipEmptyBlocks || currentBlock.Number == finalized {
 			blocks = append(blocks, *block)
 		}
 
@@ -1369,10 +1382,14 @@ func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNu
 
 // Find the first place where our chain and their chain have the same block,
 // that block number is the LCA. Return the block after that, where we want to resume polling.
+// As we do not store empty blocks in DB, it's possible that actual LCA is not in DB and we will return a block before it.
+// Example: Reorg occurred at block 100. Since [90, 100] blocks were empty, the latest DB block present in canonical chain is 89.
+// Thus, this function will return block 90.
+// That's an expected behavior and conscious decision to avoid having to store all empty blocks in the DB for the sake of reducing the number of RPC calls in case of reorgs.
 func (lp *logPoller) findBlockAfterLCA(ctx context.Context, currentHeadNumber int64, dbLatestFinalizedBlockNumber int64) (*evmtypes.Head, error) {
-	if currentHeadNumber < dbLatestFinalizedBlockNumber {
-		lp.lggr.Criticalw("Unexpected state. Current head number is lower than latest finalized block number", "currentHeadNumber", currentHeadNumber, "dbLatestFinalizedBlockNumber", dbLatestFinalizedBlockNumber)
-		return nil, fmt.Errorf("current head number %d is lower than latest finalized block number %d: %w", currentHeadNumber, dbLatestFinalizedBlockNumber, commontypes.ErrFinalityViolated)
+	if currentHeadNumber <= dbLatestFinalizedBlockNumber {
+		lp.lggr.Criticalw("Finality violation detected. Requested to find block after LCA starting from block that is finalized", "currentHeadNumber", currentHeadNumber, "dbLatestFinalizedBlockNumber", dbLatestFinalizedBlockNumber)
+		return nil, fmt.Errorf("finality violation detected. Requested to find block after LCA starting from block %d that is finalized (dbLatestFinalized %d): %w", currentHeadNumber, dbLatestFinalizedBlockNumber, commontypes.ErrFinalityViolated)
 	}
 
 	// We expect reorgs up to the block after latestFinalizedBlock
