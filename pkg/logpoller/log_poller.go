@@ -478,6 +478,11 @@ func (lp *logPoller) Replay(ctx context.Context, fromBlock int64) (err error) {
 	if err != nil {
 		return err
 	}
+
+	if latest == nil {
+		return pkgerrors.New("expected latest block to be non-nil")
+	}
+
 	if fromBlock < 1 || fromBlock > latest.Number {
 		return pkgerrors.Errorf("Invalid replay block number %v, acceptable range [1, %v]", fromBlock, latest.Number)
 	}
@@ -1359,6 +1364,14 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, e
 		return nil, 0, fmt.Errorf("failed to get latest and latest finalized block from HeadTracker: %w", err)
 	}
 
+	if latest == nil {
+		return nil, 0, errors.New("expected non-nil latest block from HeadTracker")
+	}
+
+	if finalized == nil {
+		return nil, 0, errors.New("expected non-nil finalized block from HeadTracker")
+	}
+
 	finalizedBN := finalized.BlockNumber()
 	// This is a dirty trick that allows LogPoller to function properly in tests where chain needs significant time to
 	// reach finality depth. An alternative to this one-liner is a database migration that drops restriction
@@ -1376,6 +1389,9 @@ func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNu
 	safe, err := lp.headTracker.LatestSafeBlock(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get safe block from HeadTracker: %w", err)
+	}
+	if safe == nil {
+		return 0, errors.New("expected non-nil safe block from HeadTracker")
 	}
 	safeBlockNumber := safe.BlockNumber()
 	if safeBlockNumber == 0 {
