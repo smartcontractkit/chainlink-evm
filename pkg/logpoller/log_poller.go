@@ -1365,11 +1365,11 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, e
 	}
 
 	if latest == nil {
-		return nil, 0, fmt.Errorf("expected non-nil latest block from HeadTracker")
+		return nil, 0, errors.New("expected non-nil latest block from HeadTracker")
 	}
 
 	if finalized == nil {
-		return nil, 0, fmt.Errorf("expected non-nil finalized block from HeadTracker")
+		return nil, 0, errors.New("expected non-nil finalized block from HeadTracker")
 	}
 
 	finalizedBN := finalized.BlockNumber()
@@ -1391,7 +1391,7 @@ func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNu
 		return 0, fmt.Errorf("failed to get safe block from HeadTracker: %w", err)
 	}
 	if safe == nil {
-		return 0, fmt.Errorf("expected non-nil safe block from HeadTracker")
+		return 0, errors.New("expected non-nil safe block from HeadTracker")
 	}
 	safeBlockNumber := safe.BlockNumber()
 	if safeBlockNumber == 0 {
