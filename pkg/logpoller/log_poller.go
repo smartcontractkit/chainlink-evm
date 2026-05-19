@@ -129,6 +129,7 @@ type logPoller struct {
 	clientErrors             config.ClientErrors
 	backupPollerNextBlock    int64 // next block to be processed by Backup LogPoller
 	backupPollerBlockDelay   int64 // how far behind regular LogPoller should BackupLogPoller run. 0 = disabled
+	metrics                  Metrics
 
 	filterMu        sync.RWMutex
 	filters         map[string]Filter
@@ -161,6 +162,7 @@ type Opts struct {
 	LogPrunePageSize         int64
 	ClientErrors             config.ClientErrors
 	SkipEmptyBlocks          bool
+	Metrics                  Metrics // optional, if nil, no metrics will be recorded
 }
 
 // NewLogPoller creates a log poller. Note there is an assumption
@@ -174,13 +176,18 @@ type Opts struct {
 // How fast that can be done depends largely on network speed and DB, but even for the fastest
 // support chain, polygon, which has 2s block times, we need RPCs roughly with <= 500ms latency
 func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracker, opts Opts) *logPoller {
+	m := opts.Metrics
+	lpLggr := logger.Sugared(logger.Named(lggr, "LogPoller"))
+	if m == nil {
+		m = NoopMetrics
+	}
 	return &logPoller{
 		stopCh:                   make(chan struct{}),
 		ec:                       ec,
 		orm:                      orm,
 		headTracker:              headTracker,
 		latencyMonitor:           NewLatencyMonitor(ec, lggr, opts.PollPeriod),
-		lggr:                     logger.Sugared(logger.Named(lggr, "LogPoller")),
+		lggr:                     lpLggr,
 		replayStart:              make(chan int64),
 		replayComplete:           make(chan error),
 		pollPeriod:               opts.PollPeriod,
@@ -195,6 +202,7 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 		clientErrors:             opts.ClientErrors,
 		filters:                  make(map[string]Filter),
 		filterDirty:              true, // Always build Filter on first call to cache an empty filter if nothing registered yet.
+		metrics:                  m,
 	}
 }
 
@@ -698,6 +706,7 @@ func (lp *logPoller) run() {
 				// Starting at the first finalized block. We do not backfill the first finalized block.
 				start = latestFinalizedBlockNumber
 			} else {
+				lp.metrics.RecordLastProcessedBlock(ctx, lastProcessed.BlockNumber)
 				start = lastProcessed.BlockNumber + 1
 			}
 			lp.PollAndSaveLogs(ctx, start, false)
