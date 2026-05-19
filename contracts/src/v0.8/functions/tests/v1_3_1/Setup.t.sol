@@ -8,7 +8,7 @@ import {TermsOfServiceAllowListConfig} from "../../v1_3_1/accessControl/interfac
 
 import {FunctionsBillingConfig} from "../../v1_3_1/interfaces/IFunctionsBilling.sol";
 import {FunctionsResponse} from "../../v1_3_1/libraries/FunctionsResponse.sol";
-import {FunctionsRouter as FunctionsRouterStable} from "../../v1_0_0/FunctionsRouter.sol";
+
 import {BaseTest} from "./BaseTest.t.sol";
 import {FunctionsClientHarness} from "./testhelpers/FunctionsClientHarness.sol";
 
@@ -123,13 +123,13 @@ contract ZKSyncFunctionsRouterSetup is BaseTest {
     s_functionsRouter = new ZKSyncFunctionsRouterHarness(address(s_linkToken), this.getRouterConfig());
   }
 
-  function getRouterConfig() public view returns (FunctionsRouterStable.Config memory) {
+  function getRouterConfig() public view returns (FunctionsRouter.Config memory) {
     uint32[] memory maxCallbackGasLimits = new uint32[](3);
     maxCallbackGasLimits[0] = 300_000;
     maxCallbackGasLimits[1] = 500_000;
     maxCallbackGasLimits[2] = 1_000_000;
 
-    return FunctionsRouterStable.Config({
+    return FunctionsRouter.Config({
       maxConsumersPerSubscription: s_maxConsumersPerSubscription,
       adminFee: s_adminFee,
       handleOracleFulfillmentSelector: s_handleOracleFulfillmentSelector,

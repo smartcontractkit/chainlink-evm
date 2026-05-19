@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {MockSystemContext} from "../../../shared/test/mocks/MockSystemContext.sol";
-import {FunctionsRouter} from "../../v1_0_0/FunctionsRouter.sol";
+import {FunctionsRouter} from "../../v1_3_1/FunctionsRouter.sol";
 import {ZKSyncFunctionsRouter} from "../../v1_3_0_zksync/ZKSyncFunctionsRouter.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 

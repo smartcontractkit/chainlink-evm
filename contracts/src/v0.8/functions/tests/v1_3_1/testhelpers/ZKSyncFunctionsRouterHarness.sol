@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {ZKSyncFunctionsRouter} from "../../../v1_3_0_zksync/ZKSyncFunctionsRouter.sol";
 
-import {FunctionsRouter} from "../../../v1_0_0/FunctionsRouter.sol";
+import {FunctionsRouter} from "../../../v1_3_1/FunctionsRouter.sol";
 
 /// @title ZKSync Functions Router Test Harness
 /// @notice Contract to expose internal functions for testing purposes
