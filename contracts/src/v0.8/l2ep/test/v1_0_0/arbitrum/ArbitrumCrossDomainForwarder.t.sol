@@ -41,7 +41,7 @@ contract ArbitrumCrossDomainForwarder_Constructor is ArbitrumCrossDomainForwarde
     assertEq(s_arbitrumCrossDomainForwarder.crossDomainMessenger(), s_crossDomainMessengerAddr);
 
     // it should set the typeAndVersion correctly
-    assertEq(s_arbitrumCrossDomainForwarder.typeAndVersion(), "ArbitrumCrossDomainForwarder 1.0.0");
+    assertEq(s_arbitrumCrossDomainForwarder.typeAndVersion(), "ArbitrumCrossDomainForwarder 1.1.0-dev");
   }
 }
 

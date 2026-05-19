@@ -9,4 +9,5 @@ FeeCapDefault = '1000 gwei'
 
 [NodePool]
 PollFailureThreshold = 2
+PollSuccessThreshold = 0
 PollInterval = '3s'

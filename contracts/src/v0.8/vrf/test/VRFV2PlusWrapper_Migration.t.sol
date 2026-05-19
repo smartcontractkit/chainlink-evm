@@ -4,11 +4,11 @@ pragma solidity 0.8.19;
 import {MockLinkToken} from "../../functions/tests/v1_X/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 
-import {SubscriptionAPI} from "../dev/SubscriptionAPI.sol";
-import {VRFV2PlusWrapper} from "../dev/VRFV2PlusWrapper.sol";
-import {ExposedVRFCoordinatorV2_5} from "../dev/testhelpers/ExposedVRFCoordinatorV2_5.sol";
-import {VRFCoordinatorV2Plus_V2Example} from "../dev/testhelpers/VRFCoordinatorV2Plus_V2Example.sol";
-import {VRFV2PlusWrapperConsumerExample} from "../dev/testhelpers/VRFV2PlusWrapperConsumerExample.sol";
+import {SubscriptionAPI} from "../SubscriptionAPI.sol";
+import {VRFV2PlusWrapper} from "../VRFV2PlusWrapper.sol";
+import {ExposedVRFCoordinatorV2_5} from "../testhelpers/ExposedVRFCoordinatorV2_5.sol";
+import {VRFCoordinatorV2Plus_V2Example} from "../testhelpers/VRFCoordinatorV2Plus_V2Example.sol";
+import {VRFV2PlusWrapperConsumerExample} from "../testhelpers/VRFV2PlusWrapperConsumerExample.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 
 contract VRFV2PlusWrapper_MigrationTest is BaseTest {

@@ -99,7 +99,7 @@ func setupTestnetTXM(
 	require.NoError(t, err, "failed to add private key to keystore")
 
 	// AttemptBuilder
-	ab := txm.NewAttemptBuilder(configs.PriceMaxKey, estimator, keystore, configs.LimitTransfer())
+	ab := txm.NewAttemptBuilder(configs.PriceMaxKey, estimator, keystore, configs.LimitTransfer(), false)
 
 	// InMemory storage
 	store := storage.NewInMemoryStoreManager(lggr, chainID)
@@ -127,8 +127,10 @@ func setupTestnetTXM(
 		errorHandler = dualbroadcast.NewErrorHandler()
 	}
 
+	metrics := txm.NewTxmMetrics(lggr, chainID)
+
 	// TXM
-	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler)
+	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler, metrics)
 	require.NotNil(t, txm)
 	servicetest.Run(t, txm)
 	return txm, store, client
@@ -156,7 +158,7 @@ func setupDevnetTXM(
 	require.NoError(t, keystore.Add(privateKeyHex), "failed to add private key to keystore")
 
 	// AttemptBuilder
-	ab := txm.NewAttemptBuilder(configs.PriceMaxKey, estimator, keystore, configs.LimitDefault())
+	ab := txm.NewAttemptBuilder(configs.PriceMaxKey, estimator, keystore, configs.LimitDefault(), false)
 
 	// InMemory storage
 	store := storage.NewInMemoryStoreManager(lggr, chainID)
@@ -182,8 +184,10 @@ func setupDevnetTXM(
 		errorHandler = dualbroadcast.NewErrorHandler()
 	}
 
+	metrics := txm.NewTxmMetrics(lggr, chainID)
+
 	// TXM
-	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler)
+	txm := txm.NewTxm(lggr, chainID, client, ab, store, stuckTxDetector, txmConfig, keystore, errorHandler, metrics)
 	require.NotNil(t, txm)
 	servicetest.Run(t, txm)
 

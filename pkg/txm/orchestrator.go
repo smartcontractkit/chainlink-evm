@@ -79,6 +79,13 @@ func NewTxmOrchestrator[BLOCK_HASH chains.Hashable, HEAD chains.Head[BLOCK_HASH]
 	}
 }
 
+// SupportsDualBroadcast always returns false for the Orchestrator. When dual-broadcast is
+// enabled, the Orchestrator is wrapped by the legacy Txm. The wrapper returns dualBroadcastEnabled
+// based on the node config.
+func (o *Orchestrator[BLOCK_HASH, HEAD]) SupportsDualBroadcast() bool {
+	return false
+}
+
 func (o *Orchestrator[BLOCK_HASH, HEAD]) Start(ctx context.Context) error {
 	return o.StartOnce("Orchestrator", func() error {
 		var ms services.MultiStart
@@ -182,7 +189,7 @@ func (o *Orchestrator[BLOCK_HASH, HEAD]) CreateTransaction(ctx context.Context, 
 		o.lggr.Infof("Found Tx with IdempotencyKey: %v. Returning existing Tx without creating a new one.", *wrappedTx.IdempotencyKey)
 	} else {
 		if kErr := o.keystore.CheckEnabled(ctx, request.FromAddress); kErr != nil {
-			return tx, NotEnabledError{FromAddress: request.FromAddress, Err: err}
+			return tx, NotEnabledError{FromAddress: request.FromAddress, Err: kErr}
 		}
 
 		var pipelineTaskRunID uuid.NullUUID
@@ -270,59 +277,47 @@ func (o *Orchestrator[BLOCK_HASH, HEAD]) CreateTransaction(ctx context.Context, 
 
 // CountTransactionsByState was required for backwards compatibility and it's used only for unconfirmed transactions.
 func (o *Orchestrator[BLOCK_HASH, HEAD]) CountTransactionsByState(ctx context.Context, state txmgrtypes.TxState) (uint32, error) {
-	addresses, err := o.keystore.EnabledAddresses(ctx)
-	if err != nil {
-		return 0, err
-	}
-	total := 0
-	for _, address := range addresses {
-		_, count, err := o.txStore.FetchUnconfirmedTransactionAtNonceWithCount(ctx, 0, address)
-		if err != nil {
-			return 0, err
-		}
-		total += count
-	}
-
-	//nolint:gosec // disable G115
-	return uint32(total), nil
+	return 0, errors.New("unimplemented")
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) FindEarliestUnconfirmedBroadcastTime(ctx context.Context) (time nullv4.Time, err error) {
-	return
+	return time, errors.New("unimplemented")
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) FindEarliestUnconfirmedTxAttemptBlock(ctx context.Context) (time nullv4.Int, err error) {
-	return
+	return time, errors.New("unimplemented")
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) FindTxesByMetaFieldAndStates(ctx context.Context, metaField string, metaValue string, states []txmgrtypes.TxState, chainID *big.Int) (txs []*txmgrtypes.Tx[*big.Int, common.Address, common.Hash, common.Hash, evmtypes.Nonce, gas.EvmFee], err error) {
-	return
+	return nil, errors.New("unimplemented")
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) FindTxesWithMetaFieldByStates(ctx context.Context, metaField string, states []txmgrtypes.TxState, chainID *big.Int) (txs []*txmgrtypes.Tx[*big.Int, common.Address, common.Hash, common.Hash, evmtypes.Nonce, gas.EvmFee], err error) {
-	return
+	return nil, errors.New("unimplemented")
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) FindTxesWithMetaFieldByReceiptBlockNum(ctx context.Context, metaField string, blockNum int64, chainID *big.Int) (txs []*txmgrtypes.Tx[*big.Int, common.Address, common.Hash, common.Hash, evmtypes.Nonce, gas.EvmFee], err error) {
-	return
+	return nil, errors.New("unimplemented")
 }
 
 //nolint:revive // keep API backwards compatible
 func (o *Orchestrator[BLOCK_HASH, HEAD]) FindTxesWithAttemptsAndReceiptsByIdsAndState(ctx context.Context, ids []int64, states []txmgrtypes.TxState, chainID *big.Int) (txs []*txmgrtypes.Tx[*big.Int, common.Address, common.Hash, common.Hash, evmtypes.Nonce, gas.EvmFee], err error) {
-	return
+	return nil, errors.New("unimplemented")
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) GetForwarderForEOA(ctx context.Context, eoa common.Address) (forwarder common.Address, err error) {
-	if o.fwdMgr != nil {
-		forwarder, err = o.fwdMgr.ForwarderFor(ctx, eoa)
+	if o.fwdMgr == nil {
+		return forwarder, errors.New("forwarding is not enabled, to enable set Transactions.ForwardersEnabled=true")
 	}
+	forwarder, err = o.fwdMgr.ForwarderFor(ctx, eoa)
 	return
 }
 
 func (o *Orchestrator[BLOCK_HASH, HEAD]) GetForwarderForEOAOCR2Feeds(ctx context.Context, eoa, ocr2AggregatorID common.Address) (forwarder common.Address, err error) {
-	if o.fwdMgr != nil {
-		forwarder, err = o.fwdMgr.ForwarderForOCR2Feeds(ctx, eoa, ocr2AggregatorID)
+	if o.fwdMgr == nil {
+		return forwarder, errors.New("forwarding is not enabled, to enable set Transactions.ForwardersEnabled=true")
 	}
+	forwarder, err = o.fwdMgr.ForwarderForOCR2Feeds(ctx, eoa, ocr2AggregatorID)
 	return
 }
 

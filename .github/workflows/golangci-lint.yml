@@ -9,6 +9,8 @@ jobs:
       id-token: write
       contents: read
       actions: read
+    env:
+      ALLOW_FAILURE: ${{ contains(join(github.event.pull_request.labels.*.name, ' '), 'allow-lint-issues') }}
     steps:
       - name: Setup tar default options
         shell: bash
@@ -26,8 +28,13 @@ jobs:
           go-version-file: go.mod
 
       - name: Run golangci-lint
-        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # v3.1.0
+        if: ${{ env.ALLOW_FAILURE != 'true' }}
+        uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4
         with:
-          golangci-lint-version: v2.6.1
+          golangci-lint-version: v2.11.4
           only-new-issues: true
-          working-directory: pkg
+          go-directory: pkg
+
+      - name: Skip golangci-lint (allow-lint-issues)
+        if: ${{ env.ALLOW_FAILURE == 'true' }}
+        run: echo "Skipping golangci-lint because PR has the allow-lint-issues label"

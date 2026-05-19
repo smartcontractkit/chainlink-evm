@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 	"sync"
@@ -713,6 +714,39 @@ func TestLogPoller_Replay(t *testing.T) {
 	})
 }
 
+// TestLogPoller_Close_RecvReplayComplete_NoDeadlock is a regression test for the scenario
+// where Close() hangs in wg.Wait() because recvReplayComplete blocks forever on <-replayComplete.
+//
+// Sequence that previously deadlocked:
+//  1. Replay's ctx fires Done → Replay spawns recvReplayComplete (wg.Add(1)) and returns ErrReplayInProgress.
+//  2. Close's single non-blocking send to replayComplete fires to default (recvReplayComplete not yet receiving).
+//  3. close(stopCh) then wg.Wait() — recvReplayComplete blocks on <-replayComplete forever, wg never drains.
+//
+// Fix: recvReplayComplete also selects on stopCh so it exits when the poller shuts down.
+func TestLogPoller_Close_RecvReplayComplete_NoDeadlock(t *testing.T) {
+	t.Parallel()
+
+	lggr := logger.Test(t)
+	lp := NewLogPoller(nil, nil, lggr, nil, Opts{PollPeriod: time.Hour})
+
+	// Reproduce the race: Close's non-blocking send already went to default before
+	// recvReplayComplete was scheduled, then stopCh was closed. No replayComplete value
+	// will ever arrive; recvReplayComplete must exit via stopCh or wg.Wait() hangs.
+	close(lp.stopCh)
+
+	lp.wg.Add(1)
+	go lp.recvReplayComplete()
+
+	done := make(chan struct{})
+	go func() { lp.wg.Wait(); close(done) }()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("recvReplayComplete blocked on <-replayComplete after stopCh closed; Close() would deadlock")
+	}
+}
+
 func TestLogPoller_Replay_nilLatestHead(t *testing.T) {
 	t.Parallel()
 	lggr := logger.Test(t)
@@ -1157,7 +1191,9 @@ func Test_PollAndSaveLogs_FinalityViolation_reorgedFinalizedEmpty(t *testing.T) 
 			default:
 				n, err := hexutil.DecodeUint64(block)
 				require.NoError(t, err)
-				num = int64(n)
+				if n <= math.MaxInt64 {
+					num = int64(n)
+				}
 				if num == 0 {
 					elems[i].Error = errors.New("block 0 is not available")
 					continue
@@ -1199,6 +1235,123 @@ func Test_PollAndSaveLogs_FinalityViolation_reorgedFinalizedEmpty(t *testing.T) 
 
 	lp.PollAndSaveLogs(ctx, latestBlock+1, false)
 	require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated)
+}
+
+// Test_PollAndSaveLogs_FinalityViolation_replayMissingSkippedEmptyParent - documents a scenario where DB stores sparse chain.
+// Block 100 is present in DB and marked finalized, but its parent 99 was empty and thus not stored.
+// A later reorg occurred at block 99.
+// A replay is triggered at the finalized height 100, which must surface finality violation instead of silently accepting the new chain with a different block 100 that descends from 99.
+func Test_PollAndSaveLogs_FinalityViolation_replayMissingSkippedEmptyParent(t *testing.T) {
+	t.Parallel()
+
+	ctx := testutils.Context(t)
+	db := testutils.NewSqlxDB(t)
+	chainID := testutils.NewRandomEVMChainID()
+	lggr := logger.Test(t)
+	orm := NewORM(chainID, db, lggr)
+	ht := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
+	ec := clienttest.NewClient(t)
+
+	const (
+		forkedAt     = int64(99)
+		finalizedNum = int64(100)
+		latestNum    = int64(102)
+	)
+
+	newHash := func(n int64) common.Hash {
+		if n >= forkedAt {
+			return hashOf(n + 9_000_000) // ensure different hashes on fork
+		}
+		return hashOf(n)
+	}
+
+	newHeadWithFork := func(n int64) evmtypes.Head {
+		return evmtypes.Head{
+			Number:     n,
+			Hash:       newHash(n),
+			ParentHash: newHash(n - 1),
+			EVMChainID: sqlutil.New(chainID),
+		}
+	}
+
+	ec.EXPECT().HeadByNumber(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, n *big.Int) (*evmtypes.Head, error) {
+		num := latestNum
+		if n != nil {
+			num = n.Int64()
+		}
+
+		result := newHeadWithFork(num)
+		return &result, nil
+	}).Maybe()
+
+	addr := common.HexToAddress("0x1000000000000000000000000000000000000001")
+	ec.EXPECT().CodeAt(mock.Anything, addr, (*big.Int)(nil)).Return([]byte{0x60, 0x80, 0x60, 0x40, 0x52}, nil).Once()
+	ec.EXPECT().ConfiguredChainID().Return(chainID).Maybe()
+
+	lpOpts := Opts{
+		PollPeriod:               time.Hour,
+		FinalityDepth:            2,
+		BackfillBatchSize:        10,
+		RPCBatchSize:             10,
+		KeepFinalizedBlocksDepth: 1000,
+		BackupPollerBlockDelay:   0,
+		SkipEmptyBlocks:          true,
+		UseFinalityTag:           false,
+	}
+	lp := NewLogPoller(orm, ec, lggr, ht, lpOpts)
+
+	require.NoError(t, lp.RegisterFilter(ctx, Filter{
+		Name:      "emitter",
+		EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID},
+		Addresses: []common.Address{addr},
+	}))
+
+	ts := func(n int64) time.Time { return time.Unix(n, 0) }
+
+	// setup DB state:
+	// 98	canonical, unchanged by the reorg
+	// 99 was empty, so not present in DB
+	// 100 was persisted as checkpoint. Is finalized at T1; reorged as a descendant of H=99
+	// 102 has FinalizedBlockNumber=100 reorged as a descendant of H=99
+
+	b98 := Block{
+		EVMChainID:           sqlutil.New(chainID),
+		BlockHash:            hashOf(98),
+		BlockNumber:          98,
+		BlockTimestamp:       ts(98),
+		FinalizedBlockNumber: finalizedNum,
+		SafeBlockNumber:      finalizedNum,
+	}
+
+	b100 := Block{
+		EVMChainID:           sqlutil.New(chainID),
+		BlockHash:            hashOf(100),
+		BlockNumber:          100,
+		BlockTimestamp:       ts(100),
+		FinalizedBlockNumber: finalizedNum,
+		SafeBlockNumber:      finalizedNum,
+	}
+
+	b102 := Block{
+		EVMChainID:           sqlutil.New(chainID),
+		BlockHash:            hashOf(102),
+		BlockNumber:          102,
+		BlockTimestamp:       ts(102),
+		FinalizedBlockNumber: finalizedNum,
+		SafeBlockNumber:      finalizedNum,
+	}
+
+	require.NoError(t, orm.InsertBlocks(ctx, []Block{b98, b100, b102}))
+
+	latestH := newHeadWithFork(latestNum + 2)
+	finalizedH := newHeadWithFork(finalizedNum)
+	ht.EXPECT().LatestAndFinalizedBlock(mock.Anything).Return(&latestH, &finalizedH, nil).Maybe()
+	ht.EXPECT().LatestSafeBlock(mock.Anything).Return(&finalizedH, nil).Maybe()
+
+	lp.PollAndSaveLogs(ctx, finalizedNum, true)
+
+	require.ErrorIs(t, lp.HealthReport()[lp.Name()], commontypes.ErrFinalityViolated,
+		"reorg that changes a previously finalized checkpoint must not be treated as an ordinary rewind")
 }
 
 // Test_PollAndSaveLogs_FinalityViolationSurvivesTransient documents that
@@ -1331,6 +1484,15 @@ func testFindBlockAfterLCA(t *testing.T, opts Opts) {
 		{
 			Name:               "current head lower than DB finalized",
 			CurrentBlockNumber: 3,
+			DBLatestFinalized:  5,
+			DBBlocks:           nil,
+			Setup:              nil,
+			ExpectedError:      commontypes.ErrFinalityViolated,
+			ExpectedHead:       nil,
+		},
+		{
+			Name:               "current head is equal to DB finalized", // still finality violation as hash mismatch occurred for finalized block
+			CurrentBlockNumber: 5,
 			DBLatestFinalized:  5,
 			DBBlocks:           nil,
 			Setup:              nil,
@@ -1477,7 +1639,6 @@ func testFindBlockAfterLCA(t *testing.T, opts Opts) {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 			db := testutils.NewSqlxDB(t)
@@ -1732,7 +1893,7 @@ func TestLogPoller_getCurrentBlockMaybeHandleReorg(t *testing.T) {
 	}
 }
 
-// TestLogPoller_ReplayAfterReorg - covers the scenario when replay is triggered after a reorg, and the reorg includes blocks that are not present in DB (e.g. because they were empty and SkipEmptyBlocks is true). 
+// TestLogPoller_ReplayAfterReorg - covers the scenario when replay is triggered after a reorg, and the reorg includes blocks that are not present in DB (e.g. because they were empty and SkipEmptyBlocks is true).
 // LogPoller should be able to replay logs and DB's state should be consistent with the chain's state after the reorg.
 func TestLogPoller_ReplayAfterReorg(t *testing.T) {
 	t.Parallel()
