@@ -703,7 +703,7 @@ func (lp *logPoller) run() {
 				}
 				// Otherwise this is the first poll _ever_ on a new chain.
 				// Only safe thing to do is to start at the first finalized block.
-				_, latestFinalizedBlockNumber, err := lp.latestBlocks(ctx)
+				_, latestFinalizedBlockNumber, err := lp.latestAndFinalizedBlocks(ctx)
 				if err != nil {
 					lp.lggr.Warnw("Unable to get latest for first poll", "err", err)
 					continue
@@ -856,7 +856,7 @@ func (lp *logPoller) BackupPollAndSaveLogs(ctx context.Context) error {
 		lp.backupPollerNextBlock = mathutil.Max(backupStartBlock, 0)
 	}
 
-	_, latestFinalizedBlockNumber, err := lp.latestBlocks(ctx)
+	_, latestFinalizedBlockNumber, err := lp.latestAndFinalizedBlocks(ctx)
 	if err != nil {
 		lp.lggr.Warnw("Backup logpoller failed to get latest block", "err", err)
 		return nil
@@ -1180,15 +1180,9 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 	lp.lggr.Debugw("Polling for logs", "currentBlockNumber", currentBlockNumber)
 	// Intentionally not using logPoller.finalityDepth directly but the latestFinalizedBlockNumber returned from lp.latestBlocks()
 	// latestBlocks knows how to pick a proper latestFinalizedBlockNumber based on the logPoller's configuration
-	latestBlock, latestFinalizedBlockNumber, err := lp.latestBlocks(ctx)
+	latestBlock, safeBlockNumber, latestFinalizedBlockNumber, err := lp.latestBlocks(ctx)
 	if err != nil {
-		lp.lggr.Warnw("Unable to get latestBlockNumber block", "err", err, "currentBlockNumber", currentBlockNumber)
-		return nil
-	}
-
-	safeBlockNumber, err := lp.latestSafeBlock(ctx, latestFinalizedBlockNumber)
-	if err != nil {
-		lp.lggr.Warnw("Unable to get latest safe block", "err", err, "currentBlockNumber", currentBlockNumber)
+		lp.lggr.Warnw("Unable to get latest blocks", "err", err, "currentBlockNumber", currentBlockNumber)
 		return nil
 	}
 
@@ -1358,7 +1352,7 @@ func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmty
 }
 
 // Returns information about latestBlock, latestFinalizedBlockNumber provided by HeadTracker
-func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, error) {
+func (lp *logPoller) latestAndFinalizedBlocks(ctx context.Context) (*evmtypes.Head, int64, error) {
 	latest, finalized, err := lp.headTracker.LatestAndFinalizedBlock(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get latest and latest finalized block from HeadTracker: %w", err)
@@ -1370,6 +1364,14 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, e
 
 	if finalized == nil {
 		return nil, 0, errors.New("expected non-nil finalized block from HeadTracker")
+	}
+
+	// Softly check invariant that finalized block is not ahead of the latest block.
+	// This can happen on fast chains with finality tags or small finality depth.
+	// The check should be done on HeadTracker level, but to avoid scope creep for the audit we just do a mitigation here.
+	// Proper fix will be introduced as part of PLEX-2828
+	if finalized.Number > latest.Number {
+		latest = finalized
 	}
 
 	finalizedBN := finalized.BlockNumber()
@@ -1384,25 +1386,36 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (*evmtypes.Head, int64, e
 	return latest, finalizedBN, nil
 }
 
-// Returns information about safe latestSafeBlock, LatestSafeBlock provided by HeadTracker
-func (lp *logPoller) latestSafeBlock(ctx context.Context, latestFinalizedBlockNumber int64) (int64, error) {
+func (lp *logPoller) latestBlocks(ctx context.Context) (latest *evmtypes.Head, safeBlockNum int64, finalizedBlockNum int64, err error) {
+	latest, finalizedBlockNum, err = lp.latestAndFinalizedBlocks(ctx)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
 	safe, err := lp.headTracker.LatestSafeBlock(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get safe block from HeadTracker: %w", err)
+		return nil, 0, 0, fmt.Errorf("failed to get safe block from HeadTracker: %w", err)
 	}
 	if safe == nil {
-		return 0, errors.New("expected non-nil safe block from HeadTracker")
+		return nil, 0, 0, errors.New("expected non-nil safe block from HeadTracker")
 	}
+
+	// Since call to fetch safe block is done after fetching latest, it's possible that safe block is ahead of the latest block.
+	if safe.Number > latest.Number {
+		lp.lggr.Debugw("Safe block is ahead of latest block, using safe block as latest", "safe", safe.Number, "latest", latest.Number)
+		latest = safe
+	}
+
 	safeBlockNumber := safe.BlockNumber()
 	if safeBlockNumber == 0 {
 		safeBlockNumber = 1
 	}
 	// if safe block is lower than finalized block, it doesn't make sense to use it
-	if safeBlockNumber < latestFinalizedBlockNumber {
-		safeBlockNumber = latestFinalizedBlockNumber
+	if safeBlockNumber < finalizedBlockNum {
+		safeBlockNumber = finalizedBlockNum
 	}
-	lp.lggr.Debugw("Latest safe blocks read from chain", "safe", safe.Number)
-	return safeBlockNumber, nil
+	lp.lggr.Debugw("Latest safe blocks read from chain", "safe", safeBlockNumber)
+	return latest, safeBlockNumber, finalizedBlockNum, nil
 }
 
 // Find the first place where our chain and their chain have the same block,
