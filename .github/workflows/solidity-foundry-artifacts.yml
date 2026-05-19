@@ -156,7 +156,8 @@ jobs:
       link_with_jira: ${{ inputs.link_with_jira }}
       jira_host: ${{ vars.JIRA_HOST }}
       install_semver: false
-      slither_config_file_path: 'contracts/configs/slither/.slither.config-artifacts.json'
+      slither_config_file_path: ''
+      generate_slither_reports: false
       lcov_prune_script_path: 'scripts/lcov_prune'
     secrets:
       jira_username: ${{ secrets.JIRA_USERNAME }}
