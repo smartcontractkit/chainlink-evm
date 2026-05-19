@@ -1414,7 +1414,7 @@ func (lp *logPoller) latestBlocks(ctx context.Context) (latest *evmtypes.Head, s
 	if safeBlockNumber < finalizedBlockNum {
 		safeBlockNumber = finalizedBlockNum
 	}
-	lp.lggr.Debugw("Latest safe blocks read from chain", "safe", safe.Number)
+	lp.lggr.Debugw("Latest safe blocks read from chain", "safe", safeBlockNumber)
 	return latest, safeBlockNumber, finalizedBlockNum, nil
 }
 
