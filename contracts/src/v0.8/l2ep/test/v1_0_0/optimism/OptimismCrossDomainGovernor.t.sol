@@ -8,6 +8,7 @@ import {MockOVMCrossDomainMessenger} from "../../mocks/optimism/MockOVMCrossDoma
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 import {MultiSend} from "../../../../vendor/MultiSend.sol";
+import {Errors} from "@openzeppelin/contracts@5.3.0/utils/Errors.sol";
 
 contract OptimismCrossDomainGovernorTest is L2EPTest {
   /// Contracts
@@ -45,7 +46,7 @@ contract OptimismCrossDomainGovernor_Constructor is OptimismCrossDomainGovernorT
     assertEq(s_optimismCrossDomainGovernor.crossDomainMessenger(), address(s_mockOptimismCrossDomainMessenger));
 
     // it should set the typeAndVersion correctly
-    assertEq(s_optimismCrossDomainGovernor.typeAndVersion(), "OptimismCrossDomainGovernor 1.0.0");
+    assertEq(s_optimismCrossDomainGovernor.typeAndVersion(), "OptimismCrossDomainGovernor 1.1.0-dev");
   }
 }
 
@@ -162,7 +163,7 @@ contract OptimismCrossDomainGovernor_ForwardDelegate is OptimismCrossDomainGover
     vm.startPrank(s_strangerAddr);
 
     // Sends an invalid message (empty transaction data is not allowed)
-    vm.expectRevert("Governor delegatecall reverted");
+    vm.expectRevert(Errors.FailedCall.selector);
     s_mockOptimismCrossDomainMessenger.sendMessage(
       address(s_optimismCrossDomainGovernor), // target
       encodeCrossDomainMultiSendMsg(

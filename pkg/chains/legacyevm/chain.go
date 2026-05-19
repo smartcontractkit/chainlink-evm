@@ -100,6 +100,8 @@ func (c *LegacyChains) Get(id string) (types.ChainService, error) {
 
 type chain struct {
 	services.StateMachine
+
+	types.UnimplementedChainService
 	id              *big.Int
 	cfg             *config.ChainScoped
 	client          client.Client
@@ -234,7 +236,8 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 		if opts.GenLogPoller != nil {
 			logPoller = opts.GenLogPoller(chainID)
 		} else {
-			metrics, err := logpoller.NewPromBeholderMetrics(chainID.String(), chainselectors.FamilyEVM)
+			var metrics *logpoller.PromBeholderMetrics
+			metrics, err = logpoller.NewPromBeholderMetrics(chainID.String(), chainselectors.FamilyEVM)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create log poller metrics: %w", err)
 			}
@@ -253,7 +256,8 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 				Metrics:                  metrics,
 			}
 
-			lpORM, err := logpoller.NewObservedORM(chainID, opts.DS, l)
+			var lpORM *logpoller.ObservedORM
+			lpORM, err = logpoller.NewObservedORM(chainID, opts.DS, l)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create logpoller observed ORM: %w", err)
 			}
@@ -382,20 +386,26 @@ func (c *chain) Close() error {
 	return c.StopOnce("Chain", func() (merr error) {
 		c.logger.Debug("Chain: stopping")
 
+		// Stop event sources before consumers to prevent late delivery
+		// (e.g. headBroadcaster calling balanceMonitor.OnNewLongestChain
+		// after the balance monitor has stopped, causing a data race).
+
 		if c.logPoller != logpoller.LogPollerDisabled {
 			merr = multierr.Append(merr, c.logPoller.Close())
 		}
 
-		if c.balanceMonitor != nil {
-			c.logger.Debug("Chain: stopping balance monitor")
-			merr = c.balanceMonitor.Close()
-		}
 		c.logger.Debug("Chain: stopping logBroadcaster")
 		merr = multierr.Combine(merr, c.logBroadcaster.Close())
 		c.logger.Debug("Chain: stopping headTracker")
 		merr = multierr.Combine(merr, c.headTracker.Close())
 		c.logger.Debug("Chain: stopping headBroadcaster")
 		merr = multierr.Combine(merr, c.headBroadcaster.Close())
+
+		if c.balanceMonitor != nil {
+			c.logger.Debug("Chain: stopping balance monitor")
+			merr = multierr.Combine(merr, c.balanceMonitor.Close())
+		}
+
 		c.logger.Debug("Chain: stopping evmTxm")
 		merr = multierr.Combine(merr, c.txm.Close())
 
@@ -455,6 +465,11 @@ func (c *chain) Transact(ctx context.Context, from, to string, amount *big.Int, 
 	return errors.New("LOOPP not yet supported")
 }
 
+// Replay signals that the poller should resume from a new block. Blocks until the replay is complete.
+// Replay can be used to ensure that filter modification has been applied for all blocks from "fromBlock" up to latest.
+// WARN: nil error does not necessarily mean the replay was successful, clients should monitor logs to identify success.
+// This is a miss from original design, but due to the complexity of fix and the fact that callers generally don't need a strong guarantee of replay success, we choose to just log errors instead of returning them.
+// Reach out, if you think you need a stronger guarantee, and we can discuss options.
 func (c *chain) Replay(ctx context.Context, fromBlock string, args map[string]any) error {
 	block, err := strconv.ParseInt(fromBlock, 10, 64)
 	if err != nil {
@@ -509,15 +524,10 @@ func (c *chain) GetChainInfo(_ context.Context) (types.ChainInfo, error) {
 		return types.ChainInfo{}, fmt.Errorf("failed to get chain details for chain %d and family %s: %w", chainID, chainFamily, err)
 	}
 
-	envName, err := chainselectors.ExtractNetworkEnvName(chainDetails.ChainName)
-	if err != nil {
-		return types.ChainInfo{}, fmt.Errorf("failed to get network name for chain %d: %w", chainID, err)
-	}
-
 	return types.ChainInfo{
 		FamilyName:      chainFamily,
 		ChainID:         chainID.String(),
-		NetworkName:     envName,
+		NetworkName:     string(chainDetails.NetworkType),
 		NetworkNameFull: chainDetails.ChainName,
 	}, nil
 }

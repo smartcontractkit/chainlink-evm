@@ -366,6 +366,7 @@ func TestNodePoolConfig(t *testing.T) {
 	require.Equal(t, uint32(5), cfg.EVM().NodePool().SyncThreshold())
 	require.Equal(t, time.Duration(10000000000), cfg.EVM().NodePool().PollInterval())
 	require.Equal(t, uint32(5), cfg.EVM().NodePool().PollFailureThreshold())
+	require.Equal(t, uint32(0), cfg.EVM().NodePool().PollSuccessThreshold())
 	require.False(t, cfg.EVM().NodePool().NodeIsSyncingEnabled())
 	require.True(t, cfg.EVM().NodePool().EnforceRepeatableRead())
 	require.Equal(t, time.Minute, cfg.EVM().NodePool().DeathDeclarationDelay())
