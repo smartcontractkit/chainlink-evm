@@ -3,12 +3,12 @@ pragma solidity ^0.8.19;
 
 import {IAccessController} from "../../shared/interfaces/IAccessController.sol";
 import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {IFunctionsCoordinator} from "../v1_3_1/interfaces/IFunctionsCoordinator.sol";
-import {IFunctionsRouter} from "../v1_3_1/interfaces/IFunctionsRouter.sol";
+import {IFunctionsCoordinator} from "./interfaces/IFunctionsCoordinator.sol";
+import {IFunctionsRouter} from "./interfaces/IFunctionsRouter.sol";
 
 import {ConfirmedOwner} from "../../shared/access/ConfirmedOwner.sol";
-import {FunctionsSubscriptions} from "../v1_3_1/FunctionsSubscriptions.sol";
-import {FunctionsResponse} from "../v1_3_1/libraries/FunctionsResponse.sol";
+import {FunctionsSubscriptions} from "./FunctionsSubscriptions.sol";
+import {FunctionsResponse} from "./libraries/FunctionsResponse.sol";
 
 import {Pausable} from "@openzeppelin/contracts@4.8.3/security/Pausable.sol";
 import {SafeCast} from "@openzeppelin/contracts@4.8.3/utils/math/SafeCast.sol";
@@ -18,7 +18,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
   using FunctionsResponse for FunctionsResponse.Commitment;
   using FunctionsResponse for FunctionsResponse.FulfillResult;
 
-  string public constant override typeAndVersion = "Functions Router v1.0.0";
+  string public constant override typeAndVersion = "Functions Router v2.0.0";
 
   // We limit return data to a selector plus 4 words. This is to avoid
   // malicious contracts from returning large amounts of data and causing
@@ -81,6 +81,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
   // ================================================================
   // |                    Configuration state                       |
   // ================================================================
+  // solhint-disable-next-line gas-struct-packing
   struct Config {
     uint16 maxConsumersPerSubscription; // ═════════╗ Maximum number of consumers which can be added
       // to a single subscription. This bound ensures we are able to loop over all subscription consumers as needed,
@@ -91,7 +92,8 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
       // Client contract
     uint16 gasForCallExactCheck; // ════════════════╝ Used during calling back to the
       // client. Ensures we have at least enough gas to be able to revert if gasAmount >  63//64*gas available.
-    uint32[] maxCallbackGasLimits; // ══════════════╸ List of max callback gas limits used by flag with GAS_FLAG_INDEX
+    uint32[] maxCallbackGasLimits; // ══════════════╸ List of max callback gas limits used
+      // by flag with MAX_CALLBACK_GAS_LIMIT_FLAGS_INDEX
     uint16 subscriptionDepositMinimumRequests; //═══╗ Amount of requests that must be completed before the full
       // subscription balance will be released when closing a subscription account.
     uint72 subscriptionDepositJuels; // ════════════╝ Amount of subscription funds that are
@@ -292,6 +294,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
       subscriptionId: subscriptionId,
       subscriptionOwner: subscription.owner,
       requestingContract: msg.sender,
+      // solhint-disable-next-line avoid-tx-origin
       requestInitiator: tx.origin,
       data: data,
       dataVersion: dataVersion,
@@ -311,7 +314,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
     bytes memory response,
     bytes memory err,
     uint96 juelsPerGas,
-    uint96 costWithoutCallback,
+    uint96 costWithoutFulfillment,
     address transmitter,
     FunctionsResponse.Commitment memory commitment
   ) external override returns (FunctionsResponse.FulfillResult resultCode, uint96) {
@@ -346,7 +349,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
 
     {
       uint96 callbackCost = juelsPerGas * SafeCast.toUint96(commitment.callbackGasLimit);
-      uint96 totalCostJuels = commitment.adminFee + costWithoutCallback + callbackCost;
+      uint96 totalCostJuels = commitment.adminFee + costWithoutFulfillment + callbackCost;
 
       // Check that the subscription can still afford to fulfill the request
       if (totalCostJuels > getSubscription(commitment.subscriptionId).balance) {
@@ -378,7 +381,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
       commitment.adminFee,
       juelsPerGas,
       SafeCast.toUint96(result.gasUsed),
-      costWithoutCallback
+      costWithoutFulfillment
     );
 
     emit RequestProcessed({
@@ -401,7 +404,7 @@ contract FunctionsRouter is IFunctionsRouter, FunctionsSubscriptions, Pausable, 
     bytes memory err,
     uint32 callbackGasLimit,
     address client
-  ) internal virtual returns (CallbackResult memory) {
+  ) private returns (CallbackResult memory) {
     bool destinationNoLongerExists;
     assembly {
       // solidity calls check that a contract actually exists at the destination, so we do the same

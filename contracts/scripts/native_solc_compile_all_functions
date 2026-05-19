@@ -33,16 +33,16 @@ compileContract () {
 # Version 1 (Mainnet Preview)
 ############################
 
-compileContract dev/v1_X/libraries/FunctionsRequest
-compileContract dev/v1_X/FunctionsClient
-compileContract dev/v1_X/FunctionsRouter
-compileContract dev/v1_X/FunctionsCoordinator
-compileContract dev/v1_X/accessControl/TermsOfServiceAllowList
-compileContract dev/v1_X/example/FunctionsClientExample
+compileContract v1_3_1/libraries/FunctionsRequest
+compileContract v1_3_1/FunctionsClient
+compileContract v1_3_1/FunctionsRouter
+compileContract v1_3_1/FunctionsCoordinator
+compileContract v1_3_1/accessControl/TermsOfServiceAllowList
+compileContract v1_3_1/example/FunctionsClientExample
 
 # Test helpers
-compileContract tests/v1_X/testhelpers/FunctionsCoordinatorTestHelper
-compileContract tests/v1_X/testhelpers/FunctionsLoadTestClient
+compileContract tests/v1_3_1/testhelpers/FunctionsCoordinatorTestHelper
+compileContract tests/v1_3_1/testhelpers/FunctionsLoadTestClient
 
 # Mocks
-compileContract dev/v1_X/mocks/FunctionsV1EventsMock
+compileContract v1_3_1/mocks/FunctionsV1EventsMock
