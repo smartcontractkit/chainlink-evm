@@ -66,28 +66,28 @@ interface IFunctionsBilling {
 
 struct FunctionsBillingConfig {
   uint32 fulfillmentGasPriceOverEstimationBP; // ══╗ Percentage of gas price overestimation to account for changes
-    // in gas price between request and response. Held as basis points (one hundredth of 1 percentage point)
+  // in gas price between request and response. Held as basis points (one hundredth of 1 percentage point)
   uint32 feedStalenessSeconds; //                  ║ How long before we consider the feed price to be stale and
-    // fallback to fallbackNativePerUnitLink. Default of 0 means no fallback.
+  // fallback to fallbackNativePerUnitLink. Default of 0 means no fallback.
   uint32 gasOverheadBeforeCallback; //             ║ Represents the average gas execution cost before the fulfillment
-    // callback. This amount is always billed for every request.
+  // callback. This amount is always billed for every request.
   uint32 gasOverheadAfterCallback; //              ║ Represents the average gas execution cost after the fulfillment
-    // callback. This amount is always billed for every request.
+  // callback. This amount is always billed for every request.
   uint40 minimumEstimateGasPriceWei; //            ║ The lowest amount of wei that will be used as the tx.gasprice
-    // when estimating the cost to fulfill the request
+  // when estimating the cost to fulfill the request
   uint16 maxSupportedRequestDataVersion; //        ║ The highest support request data version supported by the node.
-    // All lower versions should also be supported.
+  // All lower versions should also be supported.
   uint64 fallbackUsdPerUnitLink; //                ║ Fallback LINK / USD conversion rate if the data feed is stale
   uint8 fallbackUsdPerUnitLinkDecimals; // ════════╝ Fallback LINK / USD conversion rate decimal
-    // places if the data feed is stale
+  // places if the data feed is stale
   uint224 fallbackNativePerUnitLink; // ═══════════╗ Fallback NATIVE CURRENCY / LINK conversion
-    // rate if the data feed is stale
+  // rate if the data feed is stale
   uint32 requestTimeoutSeconds; // ════════════════╝ How many seconds it takes before
-    // we consider a request to be timed out
+  // we consider a request to be timed out
   uint16 donFeeCentsUsd; // ═══════════════════════════════╗
-    // Additional flat fee (denominated in cents of USD, paid as LINK) that will be split between Node Operators.
+  // Additional flat fee (denominated in cents of USD, paid as LINK) that will be split between Node Operators.
   uint16 operationFeeCentsUsd; //                          ║ Additional flat fee (denominated in cents of USD, paid as
-    // LINK) that will be paid to the owner of the Coordinator contract.
+  // LINK) that will be paid to the owner of the Coordinator contract.
   uint16 transmitTxSizeBytes; // ══════════════════════════╝ The
     // size of the calldata for the transmit transaction in bytes assuming a single 256 byte response payload. Used to
     // estimate L1 cost for fulfillments on L2 chains.

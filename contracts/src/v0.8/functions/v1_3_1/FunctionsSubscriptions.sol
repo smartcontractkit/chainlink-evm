@@ -221,7 +221,12 @@ abstract contract FunctionsSubscriptions is IFunctionsSubscriptions, IERC677Rece
   /// @dev    address(ROUTER),
   /// @dev    amount,
   /// @dev    abi.encode(subscriptionId));
-  function onTokenTransfer(address, /* sender */ uint256 amount, bytes calldata data) external override {
+  function onTokenTransfer(
+    address,
+    /* sender */
+    uint256 amount,
+    bytes calldata data
+  ) external override {
     _whenNotPaused();
     if (msg.sender != address(i_linkToken)) {
       revert OnlyCallableFromLink();

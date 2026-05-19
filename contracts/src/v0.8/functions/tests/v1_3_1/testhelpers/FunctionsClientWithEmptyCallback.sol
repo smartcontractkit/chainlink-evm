@@ -27,7 +27,13 @@ contract FunctionsClientWithEmptyCallback is FunctionsClient {
     emit SendRequestInvoked(requestId, sourceCode, subscriptionId);
   }
 
-  function _fulfillRequest(bytes32, /*requestId*/ bytes memory, /*response*/ bytes memory /*err*/ ) internal override {
+  function _fulfillRequest(
+    bytes32,
+    /*requestId*/
+    bytes memory,
+    /*response*/
+    bytes memory /*err*/
+  ) internal override {
     // Do nothing
   }
 }

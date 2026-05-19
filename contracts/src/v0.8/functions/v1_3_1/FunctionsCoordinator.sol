@@ -135,7 +135,11 @@ contract FunctionsCoordinator is OCR2Base, IFunctionsCoordinator, FunctionsBilli
   }
 
   /// @dev DON fees are pooled together. If the OCR configuration is going to change, these need to be distributed.
-  function _beforeSetConfig(uint8, /* _f */ bytes memory /* _onchainConfig */ ) internal override {
+  function _beforeSetConfig(
+    uint8,
+    /* _f */
+    bytes memory /* _onchainConfig */
+  ) internal override {
     if (_getTransmitters().length > 0) {
       _disperseFeePool();
     }

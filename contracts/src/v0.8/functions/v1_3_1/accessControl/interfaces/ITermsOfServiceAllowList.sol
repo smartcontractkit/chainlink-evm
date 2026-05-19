@@ -90,6 +90,6 @@ interface ITermsOfServiceAllowList {
 // ================================================================
 struct TermsOfServiceAllowListConfig {
   bool enabled; // ═════════════╗ When enabled, access will be checked against
-    // s_allowedSenders. When disabled, all access will be allowed.
+  // s_allowedSenders. When disabled, all access will be allowed.
   address signerPublicKey; // ══╝ The key pair that needs to sign the acceptance data
 }

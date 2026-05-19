@@ -32,7 +32,7 @@ contract FunctionsRouterSetup is BaseTest {
 
   uint16 internal s_maxConsumersPerSubscription = 3;
   uint72 internal s_adminFee = 0; // Keep as 0. Setting this to anything else will cause fulfillments to fail with
-    // INVALID_COMMITMENT
+  // INVALID_COMMITMENT
   uint16 internal s_donFee = 100; // $1
   uint16 internal s_operationFee = 100; // $1
   bytes4 internal s_handleOracleFulfillmentSelector = 0x0ca76175;
@@ -112,7 +112,7 @@ contract ZKSyncFunctionsRouterSetup is BaseTest {
 
   uint16 internal s_maxConsumersPerSubscription = 3;
   uint72 internal s_adminFee = 0; // Keep as 0. Setting this to anything else will cause fulfillments to fail with
-    // INVALID_COMMITMENT
+  // INVALID_COMMITMENT
   bytes4 internal s_handleOracleFulfillmentSelector = 0x0ca76175;
   uint16 s_subscriptionDepositMinimumRequests = 1;
   uint72 s_subscriptionDepositJuels = 11 * JUELS_PER_LINK;
@@ -296,7 +296,7 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
     RequestData requestData;
     bytes32 requestId;
     FunctionsResponse.Commitment commitment; // Offchain commitment that contains operation fee in the place of admin
-      // fee
+    // fee
     FunctionsResponse.Commitment commitmentOnchain; // Commitment that is persisted as a hash in the Router
   }
 
@@ -543,8 +543,8 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
   /// the requests, that will be added to the report
   /// @param results - The result that will be sent to the consumer contract's callback. For each index, e.g.
   /// result[index] or errors[index], only one of should be filled.
-  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g. result[index]
-  /// or errors[index], only one of should be filled.
+  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g.
+  /// result[index] or errors[index], only one of should be filled.
   /// @param transmitter - The address that will send the `.report` transaction
   /// @param expectedToSucceed - Boolean representing if the report transmission is expected to produce a
   /// RequestProcessed event for every fulfillment. If not, we ignore retrieving the event log.
@@ -610,8 +610,8 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
   /// the requests, that will be added to the report
   /// @param results - The result that will be sent to the consumer contract's callback. For each index, e.g.
   /// result[index] or errors[index], only one of should be filled.
-  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g. result[index]
-  /// or errors[index], only one of should be filled.
+  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g.
+  /// result[index] or errors[index], only one of should be filled.
   /// @param transmitter - The address that will send the `.report` transaction
   /// @param expectedToSucceed - Boolean representing if the report transmission is expected to produce a
   /// RequestProcessed event for every fulfillment. If not, we ignore retrieving the event log.
@@ -637,8 +637,8 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
   /// the requests, that will be added to the report
   /// @param results - The result that will be sent to the consumer contract's callback. For each index, e.g.
   /// result[index] or errors[index], only one of should be filled.
-  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g. result[index]
-  /// or errors[index], only one of should be filled.
+  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g.
+  /// result[index] or errors[index], only one of should be filled.
   /// @param transmitter - The address that will send the `.report` transaction
   /// @param expectedToSucceed - Boolean representing if the report transmission is expected to produce a
   /// RequestProcessed event for every fulfillment. If not, we ignore retrieving the event log.
@@ -664,8 +664,8 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
   /// the requests, that will be added to the report
   /// @param results - The result that will be sent to the consumer contract's callback. For each index, e.g.
   /// result[index] or errors[index], only one of should be filled.
-  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g. result[index]
-  /// or errors[index], only one of should be filled.
+  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g.
+  /// result[index] or errors[index], only one of should be filled.
   /// @param transmitter - The address that will send the `.report` transaction
   /// @dev @param expectedToSucceed is overloaded to give the value as true - The report transmission is expected to
   /// produce a RequestProcessed event for every fulfillment
@@ -690,8 +690,8 @@ contract FunctionsClientRequestSetup is FunctionsSubscriptionSetup {
   /// the requests, that will be added to the report
   /// @param results - The result that will be sent to the consumer contract's callback. For each index, e.g.
   /// result[index] or errors[index], only one of should be filled.
-  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g. result[index]
-  /// or errors[index], only one of should be filled.
+  /// @param errors - The error that will be sent to the consumer contract's callback. For each index, e.g.
+  /// result[index] or errors[index], only one of should be filled.
   /// @dev @param transmitter is overloaded to give the value of transmitter #1 - The address that will send the
   /// `.report` transaction
   /// @dev @param expectedToSucceed is overloaded to give the value as true - The report transmission is expected to

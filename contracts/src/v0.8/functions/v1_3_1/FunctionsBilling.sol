@@ -316,14 +316,15 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
       err,
       juelsPerGas,
       // The following line represents: "cost without callback or admin fee, those will be added by the Router"
-      // But because the _offchain_ Commitment is using operation fee in the place of the admin fee, this now adds admin
+      // But because the _offchain_ Commitment is using operation fee in the place of the admin fee, this now adds
+      // admin
       // fee (actually operation fee)
       // Admin fee is configured to 0 in the Router
       gasOverheadJuels + commitment.donFee + commitment.adminFee,
       msg.sender,
       FunctionsResponse.Commitment({
         adminFee: 0, // The Router should have adminFee set to 0. If it does not this will cause fulfillments to fail
-          // with INVALID_COMMITMENT instead of carrying out incorrect bookkeeping.
+        // with INVALID_COMMITMENT instead of carrying out incorrect bookkeeping.
         coordinator: commitment.coordinator,
         client: commitment.client,
         subscriptionId: commitment.subscriptionId,
@@ -352,7 +353,7 @@ abstract contract FunctionsBilling is Routable, IFunctionsBilling {
       s_feePool += commitment.donFee;
       // Pay the operation fee to the Coordinator owner
       s_withdrawableTokens[_owner()] += commitment.adminFee; // OperationFee is used in the slot for Admin Fee in the
-        // Offchain Commitment. Admin Fee is set to 0 in the Router (enforced by line 316 in FunctionsBilling.sol).
+      // Offchain Commitment. Admin Fee is set to 0 in the Router (enforced by line 316 in FunctionsBilling.sol).
       emit RequestBilled({
         requestId: requestId,
         juelsPerGas: juelsPerGas,

@@ -173,7 +173,7 @@ contract Gas_FulfillRequest_Setup is FunctionsClientRequestSetup {
       s_functionsClientWithMaximumReturnData = new FunctionsClientTestHelper(address(s_functionsRouter));
       s_functionsClientWithMaximumReturnData.setRevertFulfillRequest(true);
       string memory revertMessage = _makeStringOfBytesSize(30_000); // 30kb - FunctionsRouter cuts off response at
-        // MAX_CALLBACK_RETURN_BYTES = 4 + 4 * 32 = 132bytes, go well above that
+      // MAX_CALLBACK_RETURN_BYTES = 4 + 4 * 32 = 132bytes, go well above that
       s_functionsClientWithMaximumReturnData.setRevertFulfillRequestMessage(revertMessage);
       s_functionsRouter.addConsumer(s_subscriptionId, address(s_functionsClientWithMaximumReturnData));
     }
@@ -229,7 +229,7 @@ contract Gas_FulfillRequest_Setup is FunctionsClientRequestSetup {
       // Send requests minimum gas test
       uint8 requestsToSend = 1;
       uint8 requestNumberOffset = 3; // the setup already has request #1 sent, and the previous test case uses request
-        // #2, start from request #3
+      // #2, start from request #3
 
       string memory sourceCode = "return Functions.encodeString('hello world');";
       bytes memory secrets = new bytes(0);
