@@ -20,6 +20,9 @@ import (
 // CreateOCR3OnchainKeyring creates a new OCR3 onchain keyring.
 // Note that key names are prefixed with PrefixEVM and PrefixOCR2Onchain (to preserve compatibility with OCR2)
 // For example, a key named "test-key" will be stored at the path "evm/ocr2_onchain/test-key".
+// The generic RI parameter is not used anywhere in the implementation. It acts as a defensive interface boundary to
+// avoid signing a wrong type of reports. Note that it is not 100% bulletproof since one can also create a key with
+// CreateOCR3OnchainKeyring[A] and then read it with ListOCR3OnchainKeyrings[B].
 func CreateOCR3OnchainKeyring[RI any](ctx context.Context, ks keystore.Keystore, keyringName string) (ocr3types.OnchainKeyring2[RI], error) {
 	onchainKeyPath := keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain, keyringName)
 	createReq := keystore.CreateKeysRequest{
