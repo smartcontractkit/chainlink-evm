@@ -418,6 +418,11 @@ func TestClientErrorsConfig(t *testing.T) {
 		assert.Equal(t, "client error service unavailable", errors.ServiceUnavailable())
 		assert.Equal(t, "client error too many results", errors.TooManyResults())
 	})
+
+	t.Run("FinalizedStateUnavailable uses fallback default", func(t *testing.T) {
+		cfg := configtest.NewChainScopedConfig(t, nil)
+		assert.Equal(t, "(: |^)(missing trie node|state not available|historical state unavailable)", cfg.EVM().NodePool().Errors().FinalizedStateUnavailable())
+	})
 }
 
 func ptr[T any](t T) *T { return &t }

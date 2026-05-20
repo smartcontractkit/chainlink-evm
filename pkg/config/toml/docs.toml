@@ -539,7 +539,7 @@ TooManyResults = '(: |^)too many results' # Example
 # MissingBlocks is a regex pattern to match an eth_getLogs error indicating the rpc server is permanently missing some blocks in the requested block range
 MissingBlocks = '(: |^)invalid block range' # Example
 # FinalizedStateUnavailable is a regex pattern to match errors indicating the RPC cannot serve historical state at the finalized block (e.g., pruned/non-archive node)
-FinalizedStateUnavailable = '(missing trie node|state not available|historical state unavailable)' # Example
+FinalizedStateUnavailable = '(: |^)(missing trie node|state not available|historical state unavailable)' # Default
 
 [OCR]
 # ContractConfirmations sets `OCR.ContractConfirmations` for this EVM chain.

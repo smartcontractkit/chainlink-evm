@@ -149,7 +149,7 @@ Fatal = '(: |^)fatal'
 ServiceUnavailable = '(: |^)service unavailable'
 TooManyResults = '(: |^)too many results'
 MissingBlocks = '(: |^)invalid block range'
-FinalizedStateUnavailable = '(: |^)missing trie node'
+FinalizedStateUnavailable = '(: |^)(missing trie node|state not available|historical state unavailable)'
 
 [OCR]
 ContractConfirmations = 11

@@ -363,7 +363,7 @@ var fullConfig = EVMConfig{
 				ServiceUnavailable:                ptr[string]("(: |^)service unavailable"),
 				TooManyResults:                    ptr[string]("(: |^)too many results"),
 				MissingBlocks:                     ptr[string]("(: |^)invalid block range"),
-				FinalizedStateUnavailable:         ptr[string]("(: |^)missing trie node"),
+				FinalizedStateUnavailable:         ptr[string]("(: |^)(missing trie node|state not available|historical state unavailable)"),
 			},
 		},
 		OCR: OCR{

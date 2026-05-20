@@ -1120,7 +1120,7 @@ Fatal = '(: |^)fatal' # Example
 ServiceUnavailable = '(: |^)service unavailable' # Example
 TooManyResults = '(: |^)too many results' # Example
 MissingBlocks = '(: |^)invalid block range' # Example
-FinalizedStateUnavailable = '(missing trie node|state not available|historical state unavailable)' # Example
+FinalizedStateUnavailable = '(: |^)(missing trie node|state not available|historical state unavailable)' # Default
 ```
 Errors enable the node to provide custom regex patterns to match against error messages from RPCs.
 
@@ -1222,7 +1222,7 @@ MissingBlocks is a regex pattern to match an eth_getLogs error indicating the rp
 
 ### FinalizedStateUnavailable
 ```toml
-FinalizedStateUnavailable = '(missing trie node|state not available|historical state unavailable)' # Example
+FinalizedStateUnavailable = '(: |^)(missing trie node|state not available|historical state unavailable)' # Default
 ```
 FinalizedStateUnavailable is a regex pattern to match errors indicating the RPC cannot serve historical state at the finalized block (e.g., pruned/non-archive node)
 

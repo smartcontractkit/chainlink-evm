@@ -503,7 +503,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("returns ErrFinalizedStateUnavailable when error matches built-in default regex", func(t *testing.T) {
+	t.Run("returns ErrFinalizedStateUnavailable when error matches fallback default regex", func(t *testing.T) {
 		t.Parallel()
 		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
 			switch method {
@@ -516,6 +516,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 		}).WSURL()
 
 		clientErrors := NewTestClientErrors()
+		clientErrors.finalizedStateUnavailable = "(: |^)(missing trie node|state not available|historical state unavailable)"
 
 		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
 			HTTP: wsURL,

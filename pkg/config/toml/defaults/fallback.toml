@@ -94,6 +94,9 @@ NewHeadsPollInterval = '0s'
 VerifyChainID = true
 ExternalRequestMaxResponseSize = 1000000 # 1 MB
 
+[NodePool.Errors]
+FinalizedStateUnavailable = '(: |^)(missing trie node|state not available|historical state unavailable)'
+
 [OCR]
 ContractConfirmations = 4
 ContractTransmitterTransmitTimeout = '10s'
