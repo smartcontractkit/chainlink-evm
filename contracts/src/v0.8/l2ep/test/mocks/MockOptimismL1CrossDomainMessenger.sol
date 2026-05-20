@@ -7,7 +7,6 @@ import {IL1CrossDomainMessenger} from "@eth-optimism/contracts/L1/messaging/IL1C
 contract MockOptimismL1CrossDomainMessenger is IL1CrossDomainMessenger {
   uint256 private s_nonce;
 
-  // slither-disable-next-line external-function
   function xDomainMessageSender() public pure returns (address) {
     return address(0);
   }
@@ -21,7 +20,6 @@ contract MockOptimismL1CrossDomainMessenger is IL1CrossDomainMessenger {
    * Relays a cross domain message to a contract.
    * @inheritdoc IL1CrossDomainMessenger
    */
-  // slither-disable-next-line external-function
   function relayMessage(
     address _target,
     address _sender,

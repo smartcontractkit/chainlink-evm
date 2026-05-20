@@ -8,7 +8,6 @@ contract MockOptimismL2CrossDomainMessenger is IL2CrossDomainMessenger {
   uint256 private s_nonce;
   address private s_sender;
 
-  // slither-disable-next-line external-function
   function xDomainMessageSender() public view returns (address) {
     return s_sender;
   }
