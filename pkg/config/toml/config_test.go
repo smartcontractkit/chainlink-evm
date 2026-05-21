@@ -48,6 +48,32 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 	}
 }
 
+func TestEVMConfig_ValidateInvalidConfig(t *testing.T) {
+	testCases := []struct {
+		Name          string
+		MakeInvalid   func(cfg *Chain)
+		ExpectedError string
+	}{
+		{
+			Name: "LogBackfillBatchSize must be > 0",
+			MakeInvalid: func(cfg *Chain) {
+				cfg.LogBackfillBatchSize = ptr[uint32](0)
+			},
+			ExpectedError: "LogBackfillBatchSize: invalid value (0): must be greater than 0",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			var cfg Chain
+			cfg.SetFrom(&fallback)
+			tc.MakeInvalid(&cfg)
+			err := cfg.ValidateConfig()
+			require.Error(t, err)
+			require.ErrorContains(t, err, tc.ExpectedError)
+		})
+	}
+}
+
 func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
 	name := "fake"
 	id := DefaultIDs[0]
@@ -86,6 +112,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
 	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
 	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
+	unknown.Transactions.TransactionManagerV2.FeeBoost = ptr(false)
 	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
@@ -186,6 +213,7 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = nil
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
 		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
+		docDefaults.Transactions.TransactionManagerV2.FeeBoost = nil
 
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
@@ -317,6 +345,7 @@ var fullConfig = EVMConfig{
 				CustomURL:                     config.MustParseURL("http://txs.org"),
 				CustomURLs:                    []*config.URL{config.MustParseURL("http://txs.org"), config.MustParseURL("http://txs.org/secondary")},
 				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
+				FeeBoost:                      ptr(true),
 			},
 		},
 

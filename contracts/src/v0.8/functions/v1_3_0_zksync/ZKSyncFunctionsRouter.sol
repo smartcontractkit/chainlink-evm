@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {CallWithExactGasZKSync} from "../../shared/call/CallWithExactGasZKSync.sol";
-import {FunctionsRouter} from "../v1_0_0/FunctionsRouter.sol";
+import {FunctionsRouter} from "../v1_3_1/FunctionsRouter.sol";
 
 ///
 /// @title FunctionsRouterZkSync

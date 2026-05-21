@@ -183,18 +183,12 @@ func NewRPCClient(
 		lggr.Error("RPC client is configured with only WebSocket URL. If this CL Node serves external requests, it must also have an HTTP URL configured. Otherwise, there is a serious DDoS risk.")
 	}
 
-	var rpcURL string
-	if wsuri != nil {
-		rpcURL = wsuri.String()
-	} else if httpuri != nil {
-		rpcURL = httpuri.String()
-	}
 	isSendOnly := tier == multinode.Secondary
 	var rpcBaseMetrics frameworkmetrics.RPCClientMetrics
 	if r.beholderMetrics != nil {
 		rpcBaseMetrics = r.beholderMetrics.rpcClientMetrics
 	}
-	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock, rpcURL, isSendOnly, rpcBaseMetrics)
+	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock, r.getRPCDomain(), isSendOnly, rpcBaseMetrics)
 	return r
 }
 
@@ -390,7 +384,11 @@ func (r *RPCClient) getRPCDomain() string {
 	if http != nil {
 		return http.uri.Host
 	}
-	return r.ws.Load().uri.Host
+	ws := r.ws.Load()
+	if ws != nil {
+		return ws.uri.Host
+	}
+	return ""
 }
 
 func (r *RPCClient) isChainType(chainType chaintype.ChainType) bool {
