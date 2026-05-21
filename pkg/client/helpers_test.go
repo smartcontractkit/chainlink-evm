@@ -98,7 +98,7 @@ type TestNodePoolConfig struct {
 	NodeLeaseDuration                      time.Duration
 	NodeIsSyncingEnabledVal                bool
 	NodeFinalizedBlockPollInterval         time.Duration
-	HistoricalBalanceCheckAddressVal       string
+	HistoricalBalanceCheckAddressVal       *evmtypes.EIP55Address
 	NodeErrors                             config.ClientErrors
 	EnforceRepeatableReadVal               bool
 	NodeDeathDeclarationDelay              time.Duration
@@ -124,7 +124,7 @@ func (tc TestNodePoolConfig) FinalizedBlockPollInterval() time.Duration {
 	return tc.NodeFinalizedBlockPollInterval
 }
 
-func (tc TestNodePoolConfig) HistoricalBalanceCheckAddress() string {
+func (tc TestNodePoolConfig) HistoricalBalanceCheckAddress() *evmtypes.EIP55Address {
 	return tc.HistoricalBalanceCheckAddressVal
 }
 

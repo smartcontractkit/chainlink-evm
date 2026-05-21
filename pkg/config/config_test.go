@@ -370,7 +370,7 @@ func TestNodePoolConfig(t *testing.T) {
 	require.False(t, cfg.EVM().NodePool().NodeIsSyncingEnabled())
 	require.True(t, cfg.EVM().NodePool().EnforceRepeatableRead())
 	require.Equal(t, time.Minute, cfg.EVM().NodePool().DeathDeclarationDelay())
-	require.Equal(t, "0x0000000000000000000000000000000000000000", cfg.EVM().NodePool().HistoricalBalanceCheckAddress())
+	require.Equal(t, ptr(types.MustEIP55Address("0x0000000000000000000000000000000000000000")), cfg.EVM().NodePool().HistoricalBalanceCheckAddress())
 }
 
 func TestClientErrorsConfig(t *testing.T) {

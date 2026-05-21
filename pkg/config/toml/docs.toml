@@ -476,7 +476,7 @@ FinalizedBlockPollInterval = '5s' # Default
 # - `FinalityTagEnabled = true`: use `finalized` tag
 # - `FinalityTagEnabled = false`: use `latest - FinalityDepth`
 # The check is only active when `FinalizedStateCheckFailureThreshold > 0`.
-HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000001' # Example
+HistoricalBalanceCheckAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 # FinalizedStateCheckFailureThreshold is the number of consecutive failures of the finalized state availability check
 # before the node is marked as FinalizedStateNotAvailable.
 # Set to 0 to disable the check.

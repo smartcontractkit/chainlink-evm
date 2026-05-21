@@ -24,6 +24,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
+	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 )
 
@@ -462,7 +463,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: probeAddress,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
 			},
 			FinalityTagsEnabled: true,
 			ChainID:             chainID,
@@ -492,7 +493,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: probeAddress,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
 			},
 			FinalityTagsEnabled: false,
 			FinalityDepth:       4,
@@ -522,7 +523,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: probeAddress,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
 				NodeErrors:                       &clientErrors,
 			},
 			FinalityTagsEnabled: true,
@@ -553,7 +554,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: probeAddress,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
 				NodeErrors:                       &clientErrors,
 			},
 			FinalityTagsEnabled: true,
@@ -584,7 +585,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: probeAddress,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
 				NodeErrors:                       &clientErrors,
 			},
 			FinalityTagsEnabled: true,

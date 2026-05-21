@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
+	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
 type NodePoolConfig struct {
@@ -42,11 +43,8 @@ func (n *NodePoolConfig) FinalizedBlockPollInterval() time.Duration {
 	return n.C.FinalizedBlockPollInterval.Duration()
 }
 
-func (n *NodePoolConfig) HistoricalBalanceCheckAddress() string {
-	if n.C.HistoricalBalanceCheckAddress == nil {
-		return ""
-	}
-	return n.C.HistoricalBalanceCheckAddress.String()
+func (n *NodePoolConfig) HistoricalBalanceCheckAddress() *types.EIP55Address {
+	return n.C.HistoricalBalanceCheckAddress
 }
 
 func (n *NodePoolConfig) NewHeadsPollInterval() time.Duration {

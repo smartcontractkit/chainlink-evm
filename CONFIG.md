@@ -955,7 +955,7 @@ SyncThreshold = 5 # Default
 LeaseDuration = '0s' # Default
 NodeIsSyncingEnabled = false # Default
 FinalizedBlockPollInterval = '5s' # Default
-HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000001' # Example
+HistoricalBalanceCheckAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 FinalizedStateCheckFailureThreshold = 0 # Default
 EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
@@ -1045,7 +1045,7 @@ Set to 0 to disable.
 
 ### HistoricalBalanceCheckAddress
 ```toml
-HistoricalBalanceCheckAddress = '0x0000000000000000000000000000000000000001' # Example
+HistoricalBalanceCheckAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
 ```
 HistoricalBalanceCheckAddress is the probe account for the finalized-state availability check.
 The check executes `eth_getBalance` for this address at the latest finalized block.

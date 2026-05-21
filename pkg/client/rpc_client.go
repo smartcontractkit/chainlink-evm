@@ -146,7 +146,7 @@ func NewRPCClient(
 		finalityTagEnabled:             supportsFinalityTags,
 		finalityDepth:                  finalityDepth,
 		safeDepth:                      safeDepth,
-		historicalBalanceCheckAddress:  common.HexToAddress(cfg.HistoricalBalanceCheckAddress()),
+		historicalBalanceCheckAddress:  nodePoolHistoricalBalanceCheckAddress(cfg),
 		externalRequestMaxResponseSize: externalRequestMaxResponseSize,
 	}
 	r.cfg = cfg
@@ -190,6 +190,13 @@ func NewRPCClient(
 	}
 	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock, r.getRPCDomain(), isSendOnly, rpcBaseMetrics)
 	return r
+}
+
+func nodePoolHistoricalBalanceCheckAddress(cfg config.NodePool) common.Address {
+	if addr := cfg.HistoricalBalanceCheckAddress(); addr != nil {
+		return addr.Address()
+	}
+	return common.Address{}
 }
 
 func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err error) {

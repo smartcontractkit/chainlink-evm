@@ -215,7 +215,7 @@ type NodePool interface {
 	LeaseDuration() time.Duration
 	NodeIsSyncingEnabled() bool
 	FinalizedBlockPollInterval() time.Duration
-	HistoricalBalanceCheckAddress() string
+	HistoricalBalanceCheckAddress() *types.EIP55Address
 	Errors() ClientErrors
 	EnforceRepeatableRead() bool
 	DeathDeclarationDelay() time.Duration
