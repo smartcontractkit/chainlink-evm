@@ -223,7 +223,11 @@ func TestDocs(t *testing.T) {
 		// GasEstimator SendAddress is only set if EstimateLimit is enabled
 		docDefaults.GasEstimator.SenderAddress = nil
 
+		// HistoricalBalanceCheckAddress is documented as # Example; fallback.toml supplies the runtime default.
+		docDefaults.NodePool.HistoricalBalanceCheckAddress = nil
+
 		fallbackDefaults := Defaults(nil)
+		fallbackDefaults.NodePool.HistoricalBalanceCheckAddress = nil
 		assertTOML(t, fallbackDefaults, docDefaults.Chain)
 	})
 }
