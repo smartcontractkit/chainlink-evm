@@ -34,8 +34,8 @@ func Test_ORM(t *testing.T) {
 	t.Run("LoadChannelDefinitions", func(t *testing.T) {
 		t.Run("returns zero values if nothing in database", func(t *testing.T) {
 			pd, err := orm.LoadChannelDefinitions(ctx, addr1, donID1)
-			assert.NoError(t, err)
-			assert.Nil(t, pd)
+			require.NoError(t, err)
+			require.Nil(t, pd)
 		})
 		t.Run("loads channel definitions from database for the given don ID", func(t *testing.T) {
 			expectedBlockNum := rand.Int63()

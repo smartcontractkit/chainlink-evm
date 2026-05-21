@@ -863,11 +863,12 @@ func (c *channelDefinitionCache) persistLoop() {
 		case <-c.chStop:
 			// Try one final persist with a short-ish timeout, then return
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-			defer cancel()
 			if memoryVersion, persistedVersion, err := c.persist(ctx); err != nil {
 				c.lggr.Errorw("Failed to persist channel definitions on shutdown",
 					"err", err, "memoryVersion", memoryVersion, "persistedVersion", persistedVersion)
 			}
+			// Call cancel explicitly to avoid calling defer inside the for loop.
+			cancel()
 			return
 		}
 	}
