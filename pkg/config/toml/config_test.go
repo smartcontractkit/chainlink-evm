@@ -198,7 +198,9 @@ func TestDocs(t *testing.T) {
 		docDefaults.Workflow.FromAddress = nil
 		docDefaults.Workflow.ForwarderAddress = nil
 		docDefaults.Workflow.GasLimitDefault = &gasLimitDefault
+		finalizedStateUnavailable := docDefaults.NodePool.Errors.FinalizedStateUnavailable
 		docDefaults.NodePool.Errors = ClientErrors{}
+		docDefaults.NodePool.Errors.FinalizedStateUnavailable = finalizedStateUnavailable
 
 		// Transactions.AutoPurge configs are only set if the feature is enabled
 		docDefaults.Transactions.AutoPurge.DetectionApiUrl = nil
