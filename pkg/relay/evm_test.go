@@ -1,4 +1,4 @@
-package evm_test
+package relay_test
 
 import (
 	"testing"
@@ -57,7 +57,7 @@ nil CapabilitiesRegistry`,
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := evm.RelayerOpts{
+			c := relay.RelayerOpts{
 				DS:                   tt.fields.DS,
 				EVMKeystore:          tt.fields.EVMKeystore,
 				CSAKeystore:          tt.fields.CSAKeystore,

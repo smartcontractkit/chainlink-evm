@@ -1,4 +1,4 @@
-package evm_test
+package relay_test
 
 import (
 	"encoding/hex"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	consensustypes "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
-	"github.com/smartcontractkit/chainlink-evm/pkg/evm"
+	"github.com/smartcontractkit/chainlink-evm/pkg/relay"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-protos/cre/go/values"
 )
@@ -40,7 +40,7 @@ func TestEVMEncoder_SingleField(t *testing.T) {
 	}
 	wrapped, err := values.NewMap(config)
 	require.NoError(t, err)
-	enc, err := evm.NewEVMEncoder(wrapped)
+	enc, err := relay.NewEVMEncoder(wrapped)
 	require.NoError(t, err)
 
 	// output of a DF2.0 aggregator + metadata fields appended by OCR
@@ -75,7 +75,7 @@ func TestEVMEncoder_TwoFields(t *testing.T) {
 	}
 	wrapped, err := values.NewMap(config)
 	require.NoError(t, err)
-	enc, err := evm.NewEVMEncoder(wrapped)
+	enc, err := relay.NewEVMEncoder(wrapped)
 	require.NoError(t, err)
 
 	// output of a DF2.0 aggregator + metadata fields appended by OCR
@@ -111,7 +111,7 @@ func TestEVMEncoder_Tuple(t *testing.T) {
 	}
 	wrapped, err := values.NewMap(config)
 	require.NoError(t, err)
-	enc, err := evm.NewEVMEncoder(wrapped)
+	enc, err := relay.NewEVMEncoder(wrapped)
 	require.NoError(t, err)
 
 	// output of a DF2.0 aggregator + metadata fields appended by OCR
@@ -150,7 +150,7 @@ func TestEVMEncoder_ListOfTuples(t *testing.T) {
 	}
 	wrapped, err := values.NewMap(config)
 	require.NoError(t, err)
-	enc, err := evm.NewEVMEncoder(wrapped)
+	enc, err := relay.NewEVMEncoder(wrapped)
 	require.NoError(t, err)
 
 	// output of a DF2.0 aggregator + metadata fields appended by OCR
@@ -192,7 +192,7 @@ func TestEVMEncoder_InvalidIDs(t *testing.T) {
 	}
 	wrapped, err := values.NewMap(config)
 	require.NoError(t, err)
-	enc, err := evm.NewEVMEncoder(wrapped)
+	enc, err := relay.NewEVMEncoder(wrapped)
 	require.NoError(t, err)
 
 	// output of a DF2.0 aggregator + metadata fields appended by OCR
@@ -226,7 +226,7 @@ func TestEVMEncoder_SubABI(t *testing.T) {
 	}
 	wrapped, err := values.NewMap(config)
 	require.NoError(t, err)
-	enc, err := evm.NewEVMEncoder(wrapped)
+	enc, err := relay.NewEVMEncoder(wrapped)
 	require.NoError(t, err)
 
 	type SubReport struct {
