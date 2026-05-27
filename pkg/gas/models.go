@@ -87,46 +87,34 @@ func NewEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype ch
 		return nil, fmt.Errorf("failed to initialize L1 oracle: %w", err)
 	}
 
-	var newEstimator func(logger.Logger) EvmEstimator
+	var newEstimator EvmEstimator
 	switch s {
 	case "Arbitrum":
 		arbOracle, err := rollups.NewArbitrumL1GasOracle(lggr, ethClient)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize Arbitrum L1 oracle: %w", err)
 		}
-		newEstimator = func(l logger.Logger) EvmEstimator {
-			return NewArbitrumEstimator(lggr, geCfg, ethClient, arbOracle)
-		}
+		newEstimator = NewArbitrumEstimator(lggr, geCfg, ethClient, arbOracle)
 	case "BlockHistory":
-		newEstimator = func(l logger.Logger) EvmEstimator {
-			return NewBlockHistoryEstimator(lggr, ethClient, chaintype, geCfg, bh, chainID, l1Oracle)
-		}
+		newEstimator = NewBlockHistoryEstimator(lggr, ethClient, chaintype, geCfg, bh, chainID, l1Oracle)
 	case "FixedPrice":
-		newEstimator = func(l logger.Logger) EvmEstimator {
-			return NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)
-		}
+		newEstimator = NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)
 	case "L2Suggested", "SuggestedPrice":
-		newEstimator = func(l logger.Logger) EvmEstimator {
-			return NewSuggestedPriceEstimator(lggr, ethClient, geCfg, l1Oracle)
-		}
+		newEstimator = NewSuggestedPriceEstimator(lggr, ethClient, geCfg, l1Oracle)
 	case "FeeHistory":
-		newEstimator = func(l logger.Logger) EvmEstimator {
-			ccfg := FeeHistoryEstimatorConfig{
-				BumpPercent:      geCfg.BumpPercent(),
-				CacheTimeout:     geCfg.FeeHistory().CacheTimeout(),
-				EIP1559:          geCfg.EIP1559DynamicFees(),
-				BlockHistorySize: uint64(geCfg.BlockHistory().BlockHistorySize()),
-				RewardPercentile: float64(geCfg.BlockHistory().TransactionPercentile()),
-			}
-			return NewFeeHistoryEstimator(lggr, ethClient, ccfg, chainID, l1Oracle)
+		ccfg := FeeHistoryEstimatorConfig{
+			BumpPercent:      geCfg.BumpPercent(),
+			CacheTimeout:     geCfg.FeeHistory().CacheTimeout(),
+			EIP1559:          geCfg.EIP1559DynamicFees(),
+			BlockHistorySize: uint64(geCfg.BlockHistory().BlockHistorySize()),
+			RewardPercentile: float64(geCfg.BlockHistory().TransactionPercentile()),
 		}
-
+		newEstimator = NewFeeHistoryEstimator(lggr, ethClient, ccfg, chainID, l1Oracle)
 	default:
 		lggr.Warnf("GasEstimator: unrecognised mode '%s', falling back to FixedPriceEstimator", s)
-		newEstimator = func(l logger.Logger) EvmEstimator {
-			return NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)
-		}
+		newEstimator = NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)
 	}
+
 	return NewEvmFeeEstimator(lggr, newEstimator, df, geCfg, ethClient), nil
 }
 
@@ -198,17 +186,17 @@ type evmFeeEstimator struct {
 	lggr logger.Logger
 	EvmEstimator
 	EIP1559Enabled bool
-	geCfg          GasEstimatorConfig
+	geCfg          LimitEstimationConfig
 	ethClient      FeeEstimatorClient
 }
 
 var _ EvmFeeEstimator = (*evmFeeEstimator)(nil)
 
-func NewEvmFeeEstimator(lggr logger.Logger, newEstimator func(logger.Logger) EvmEstimator, eip1559Enabled bool, geCfg GasEstimatorConfig, ethClient FeeEstimatorClient) EvmFeeEstimator {
+func NewEvmFeeEstimator(lggr logger.Logger, estimator EvmEstimator, eip1559Enabled bool, geCfg LimitEstimationConfig, ethClient FeeEstimatorClient) EvmFeeEstimator {
 	lggr = logger.Named(lggr, "WrappedEvmEstimator")
 	return &evmFeeEstimator{
 		lggr:           lggr,
-		EvmEstimator:   newEstimator(lggr),
+		EvmEstimator:   estimator,
 		EIP1559Enabled: eip1559Enabled,
 		geCfg:          geCfg,
 		ethClient:      ethClient,
@@ -434,20 +422,8 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 	return
 }
 
-type GasEstimatorConfig interface {
-	EIP1559DynamicFees() bool
-	BumpPercent() uint16
-	BumpThreshold() uint64
-	BumpMin() *assets.Wei
-	FeeCapDefault() *assets.Wei
-	LimitMax() uint64
+type LimitEstimationConfig interface {
 	LimitMultiplier() float32
-	PriceDefault() *assets.Wei
-	TipCapDefault() *assets.Wei
-	TipCapMin() *assets.Wei
-	PriceMin() *assets.Wei
-	PriceMax() *assets.Wei
-	Mode() string
 	EstimateLimit() bool
 	SenderAddress() *evmtypes.EIP55Address
 }
@@ -459,20 +435,11 @@ type bumpConfig interface {
 	TipCapDefault() *assets.Wei
 }
 
-// BumpLegacyGasPriceOnly will increase the price
-func BumpLegacyGasPriceOnly(cfg bumpConfig, lggr logger.SugaredLogger, currentGasPrice, originalGasPrice *assets.Wei, maxGasPriceWei *assets.Wei) (gasPrice *assets.Wei, err error) {
-	gasPrice, err = bumpGasPrice(cfg, lggr, currentGasPrice, originalGasPrice, maxGasPriceWei)
-	if err != nil {
-		return nil, err
-	}
-	return
-}
-
-// bumpGasPrice computes the next gas price to attempt as the largest of:
+// BumpLegacyGasPriceOnly computes the next gas price to attempt as the largest of:
 // - A configured percentage bump (EVM.GasEstimator.BumpPercent) on top of the baseline price.
 // - A configured fixed amount of Wei (ETH_GAS_PRICE_WEI) on top of the baseline price.
 // The baseline price is the maximum of the previous gas price attempt and the node's current gas price.
-func bumpGasPrice(cfg bumpConfig, lggr logger.SugaredLogger, currentGasPrice, originalGasPrice, maxGasPriceWei *assets.Wei) (*assets.Wei, error) {
+func BumpLegacyGasPriceOnly(cfg bumpConfig, lggr logger.SugaredLogger, currentGasPrice, originalGasPrice *assets.Wei, maxGasPriceWei *assets.Wei) (*assets.Wei, error) {
 	maxGasPrice := getMaxGasPrice(maxGasPriceWei, cfg.PriceMax())
 	bumpedGasPrice := bumpFeePrice(originalGasPrice, cfg.BumpPercent(), cfg.BumpMin())
 
@@ -493,16 +460,7 @@ func bumpGasPrice(cfg bumpConfig, lggr logger.SugaredLogger, currentGasPrice, or
 	return bumpedGasPrice, nil
 }
 
-// BumpDynamicFeeOnly bumps the tip cap and max gas price if necessary
-func BumpDynamicFeeOnly(config bumpConfig, feeCapBufferBlocks uint16, lggr logger.SugaredLogger, currentTipCap, currentBaseFee *assets.Wei, originalFee DynamicFee, maxGasPriceWei *assets.Wei) (bumped DynamicFee, err error) {
-	bumped, err = bumpDynamicFee(config, feeCapBufferBlocks, lggr, currentTipCap, currentBaseFee, originalFee, maxGasPriceWei)
-	if err != nil {
-		return bumped, err
-	}
-	return
-}
-
-// bumpDynamicFee computes the next tip cap to attempt as the largest of:
+// BumpDynamicFeeOnly computes the next tip cap to attempt as the largest of:
 // - A configured percentage bump (EVM.GasEstimator.BumpPercent) on top of the baseline tip cap.
 // - A configured fixed amount of Wei (ETH_GAS_PRICE_WEI) on top of the baseline tip cap.
 // The baseline tip cap is the maximum of the previous tip cap attempt and the node's current tip cap.
@@ -512,7 +470,7 @@ func BumpDynamicFeeOnly(config bumpConfig, feeCapBufferBlocks uint16, lggr logge
 // the Tip only. Unfortunately due to a flaw of how EIP-1559 is implemented we
 // have to bump FeeCap by at least 10% each time we bump the tip cap.
 // See: https://github.com/ethereum/go-ethereum/issues/24284
-func bumpDynamicFee(cfg bumpConfig, feeCapBufferBlocks uint16, lggr logger.SugaredLogger, currentTipCap, currentBaseFee *assets.Wei, originalFee DynamicFee, maxGasPriceWei *assets.Wei) (bumpedFee DynamicFee, err error) {
+func BumpDynamicFeeOnly(cfg bumpConfig, feeCapBufferBlocks uint16, lggr logger.SugaredLogger, currentTipCap, currentBaseFee *assets.Wei, originalFee DynamicFee, maxGasPriceWei *assets.Wei) (bumpedFee DynamicFee, err error) {
 	maxGasPrice := getMaxGasPrice(maxGasPriceWei, cfg.PriceMax())
 	baselineTipCap := assets.MaxWei(originalFee.GasTipCap, cfg.TipCapDefault())
 	bumpedTipCap := bumpFeePrice(baselineTipCap, cfg.BumpPercent(), cfg.BumpMin())
