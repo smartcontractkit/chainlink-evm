@@ -397,6 +397,7 @@ func Test_Eth_Errors_Fatal(t *testing.T) {
 		{"Intrinsic gas exceeds gas limit", true, "Besu"},
 		{"Transaction gas limit exceeds block gas limit", true, "Besu"},
 		{"Invalid signature", true, "Besu"},
+		{"Transaction gas limit cap exceeded", true, "Besu"},
 
 		{"insufficient funds for transfer", false, "Erigon"},
 		{"exceeds block gas limit", true, "Erigon"},
