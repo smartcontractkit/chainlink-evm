@@ -185,7 +185,7 @@ func TestWrappedEvmEstimator(t *testing.T) {
 		oracle.On("Start", mock.Anything).Return(nil).Once()
 		oracle.On("Close").Return(nil).Once()
 
-		evmEstimator.On("L1Oracle", mock.Anything).Return(nil).Twice()
+		evmEstimator.On("L1Oracle").Return(nil).Twice()
 
 		estimator := gas.NewEvmFeeEstimator(lggr, evmEstimator, false, geCfg, nil)
 		err := estimator.Start(ctx)
@@ -193,7 +193,7 @@ func TestWrappedEvmEstimator(t *testing.T) {
 		err = estimator.Close()
 		require.NoError(t, err)
 
-		evmEstimator.On("L1Oracle", mock.Anything).Return(oracle).Twice()
+		evmEstimator.On("L1Oracle").Return(oracle).Twice()
 
 		estimator = gas.NewEvmFeeEstimator(lggr, evmEstimator, false, geCfg, nil)
 		err = estimator.Start(ctx)
