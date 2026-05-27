@@ -119,7 +119,7 @@ var geth = ClientErrors{
 
 // Besu
 // See: https://github.com/hyperledger/besu/blob/81f25e15f9891787829b532f2fb38c8c43fd6b2e/ethereum/api/src/main/java/org/hyperledger/besu/ethereum/api/jsonrpc/internal/response/JsonRpcError.java
-var besuFatal = regexp.MustCompile(`^(Intrinsic gas exceeds gas limit|Transaction gas limit exceeds block gas limit|Invalid signature)$`)
+var besuFatal = regexp.MustCompile(`^(Intrinsic gas exceeds gas limit|Transaction gas limit exceeds block gas limit|Invalid signature|Transaction gas limit cap exceeded)$`)
 var besu = ClientErrors{
 	NonceTooLow:                       regexp.MustCompile(`^Nonce too low$`),
 	ReplacementTransactionUnderpriced: regexp.MustCompile(`^Replacement transaction underpriced$`),
