@@ -186,13 +186,13 @@ type evmFeeEstimator struct {
 	lggr logger.Logger
 	EvmEstimator
 	EIP1559Enabled bool
-	geCfg          GasEstimationConfig
+	geCfg          LimitEstimationConfig
 	ethClient      FeeEstimatorClient
 }
 
 var _ EvmFeeEstimator = (*evmFeeEstimator)(nil)
 
-func NewEvmFeeEstimator(lggr logger.Logger, estimator EvmEstimator, eip1559Enabled bool, geCfg GasEstimationConfig, ethClient FeeEstimatorClient) EvmFeeEstimator {
+func NewEvmFeeEstimator(lggr logger.Logger, estimator EvmEstimator, eip1559Enabled bool, geCfg LimitEstimationConfig, ethClient FeeEstimatorClient) EvmFeeEstimator {
 	lggr = logger.Named(lggr, "WrappedEvmEstimator")
 	return &evmFeeEstimator{
 		lggr:           lggr,
@@ -422,7 +422,7 @@ func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64,
 	return
 }
 
-type GasEstimationConfig interface {
+type LimitEstimationConfig interface {
 	LimitMultiplier() float32
 	EstimateLimit() bool
 	SenderAddress() *evmtypes.EIP55Address
