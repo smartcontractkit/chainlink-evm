@@ -1215,7 +1215,8 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 				t.Run("callback set by ctor", func(t *testing.T) {
 					evmcfg := configtest.NewChainScopedConfig(t, nil)
 					estimator := gas.NewEvmFeeEstimator(
-						lggr, gas.NewFixedPriceEstimator(evmcfg.EVM().GasEstimator(), nil, evmcfg.EVM().GasEstimator().BlockHistory().EIP1559FeeCapBufferBlocks(), lggr, nil),
+						lggr,
+						gas.NewFixedPriceEstimator(evmcfg.EVM().GasEstimator(), nil, evmcfg.EVM().GasEstimator().BlockHistory().EIP1559FeeCapBufferBlocks(), lggr, nil),
 						evmcfg.EVM().GasEstimator().EIP1559DynamicFees(),
 						evmcfg.EVM().GasEstimator(),
 						ethClient,
