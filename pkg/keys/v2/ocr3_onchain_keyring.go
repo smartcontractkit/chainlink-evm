@@ -10,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/smartcontractkit/libocr/offchainreporting2/types"
 
 	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
@@ -45,7 +46,7 @@ func CreateOCR3OnchainKeyring[RI any](ctx context.Context, ks keystore.Keystore,
 		return nil, err
 	}
 	addr := crypto.PubkeyToAddress(*publicKey)
-	return &evmOnchainKeyring2[RI]{ks: ks, addr: addr, keyPath: onchainKeyPath}, nil
+	return &OnchainKeyring2ToGenericAdapter[RI]{K: &evmOnchainKeyring2{ks: ks, addr: addr, keyPath: onchainKeyPath}}, nil
 }
 
 func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]ocr3types.OnchainKeyring2[RI], error) {
@@ -73,20 +74,22 @@ func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, 
 			return nil, err
 		}
 		addr := crypto.PubkeyToAddress(*publicKey)
-		keyrings = append(keyrings, &evmOnchainKeyring2[RI]{ks: ks, addr: addr, keyPath: keyPath})
+		keyrings = append(keyrings, &OnchainKeyring2ToGenericAdapter[RI]{K: &evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}})
 	}
 	return keyrings, nil
 }
 
-var _ ocr3types.OnchainKeyring2[struct{}] = &evmOnchainKeyring2[struct{}]{}
+var _ ocr3types.OnchainKeyring2[struct{}] = &OnchainKeyring2ToGenericAdapter[struct{}]{K: &evmOnchainKeyring2{}}
 
-type evmOnchainKeyring2[RI any] struct {
+var _ OnchainKeyring2Genericless = &evmOnchainKeyring2{}
+
+type evmOnchainKeyring2 struct {
 	ks      keystore.Keystore
 	addr    common.Address
 	keyPath keystore.KeyPath
 }
 
-func (e *evmOnchainKeyring2[RI]) Sign(configDigest ocrtypes.ConfigDigest, seqNr uint64, report ocr3types.ReportWithInfo[RI]) (signature []byte, err error) {
+func (e *evmOnchainKeyring2) Sign(configDigest ocrtypes.ConfigDigest, seqNr uint64, report types.Report) (signature []byte, err error) {
 	hash := hashReport(configDigest, seqNr, report)
 	signResp, err := e.ks.Sign(context.Background(), keystore.SignRequest{
 		KeyName: e.keyPath.String(),
@@ -98,7 +101,7 @@ func (e *evmOnchainKeyring2[RI]) Sign(configDigest ocrtypes.ConfigDigest, seqNr 
 	return compressSignature(signResp.Signature), nil
 }
 
-func (e *evmOnchainKeyring2[RI]) Verify(publicKey ocrtypes.OnchainPublicKey, configDigest ocrtypes.ConfigDigest, seqNr uint64, report ocr3types.ReportWithInfo[RI], signature []byte) bool {
+func (e *evmOnchainKeyring2) Verify(publicKey ocrtypes.OnchainPublicKey, configDigest ocrtypes.ConfigDigest, seqNr uint64, report types.Report, signature []byte) bool {
 	hash := hashReport(configDigest, seqNr, report)
 	recoveredPublicKey, err := crypto.SigToPub(hash, uncompressSignature(signature))
 	if err != nil {
@@ -108,17 +111,59 @@ func (e *evmOnchainKeyring2[RI]) Verify(publicKey ocrtypes.OnchainPublicKey, con
 	return bytes.Equal(publicKey, signerAddress[:])
 }
 
-func (e *evmOnchainKeyring2[RI]) Has(publicKey ocrtypes.OnchainPublicKey) bool {
+func (e *evmOnchainKeyring2) Has(publicKey ocrtypes.OnchainPublicKey) bool {
 	return bytes.Equal(publicKey, e.addr.Bytes())
 }
 
-func (e *evmOnchainKeyring2[RI]) MaxSignatureLength() int {
+func (e *evmOnchainKeyring2) MaxSignatureLength() int {
 	return 64
 }
 
-func (e *evmOnchainKeyring2[RI]) DebugIdentifier() string {
+func (e *evmOnchainKeyring2) DebugIdentifier() string {
 	return fmt.Sprintf("addr = %s, path = %s", e.addr.Hex(), e.keyPath.String())
 }
+
+type OnchainKeyring2Genericless interface {
+	Sign(configDigest ocrtypes.ConfigDigest, seqNr uint64, report types.Report) (signature []byte, err error)
+	Verify(publicKey ocrtypes.OnchainPublicKey, configDigest ocrtypes.ConfigDigest, seqNr uint64, report types.Report, signature []byte) bool
+	Has(publicKey ocrtypes.OnchainPublicKey) bool
+	MaxSignatureLength() int
+	DebugIdentifier() string
+}
+
+type OnchainKeyring2[RI any] interface {
+	Sign(c ocrtypes.ConfigDigest, seqNr uint64, r ocr3types.ReportWithInfo[RI]) (signature []byte, err error)
+	Verify(pk ocrtypes.OnchainPublicKey, c ocrtypes.ConfigDigest, seqNr uint64, r ocr3types.ReportWithInfo[RI], signature []byte) bool
+	Has(key ocrtypes.OnchainPublicKey) bool
+	MaxSignatureLength() int
+	DebugIdentifier() string
+}
+
+type OnchainKeyring2ToGenericAdapter[RI any] struct {
+	K OnchainKeyring2Genericless
+}
+
+func (o *OnchainKeyring2ToGenericAdapter[RI]) Sign(c ocrtypes.ConfigDigest, seqNr uint64, r ocr3types.ReportWithInfo[RI]) (signature []byte, err error) {
+	return o.K.Sign(c, seqNr, r.Report)
+}
+
+func (o *OnchainKeyring2ToGenericAdapter[RI]) Verify(pk ocrtypes.OnchainPublicKey, c ocrtypes.ConfigDigest, seqNr uint64, r ocr3types.ReportWithInfo[RI], signature []byte) bool {
+	return o.K.Verify(pk, c, seqNr, r.Report, signature)
+}
+
+func (o *OnchainKeyring2ToGenericAdapter[RI]) Has(key ocrtypes.OnchainPublicKey) bool {
+	return o.K.Has(key)
+}
+
+func (o *OnchainKeyring2ToGenericAdapter[RI]) MaxSignatureLength() int {
+	return o.K.MaxSignatureLength()
+}
+
+func (o *OnchainKeyring2ToGenericAdapter[RI]) DebugIdentifier() string {
+	return o.K.DebugIdentifier()
+}
+
+var _ ocr3types.OnchainKeyring2[struct{}] = &OnchainKeyring2ToGenericAdapter[struct{}]{}
 
 // Compresses the given ECDSA signature in its internal format (r, s, v) into the
 // corresponding compressed format (r, s'), where s' in {s, n-s} depending on v.
@@ -163,10 +208,10 @@ func uncompressSignature(sig []byte) []byte {
 // is that we hash the sequence number `seqNr` instead of `epoch||round||extraHash`.
 // Domain separation is guaranteed because the result of this function is a Keccak hash computed over 96 bytes
 // while the aforementioned OCR2 function is a Keccak hash computed over 128 bytes.
-func hashReport[RI any](configDigest ocrtypes.ConfigDigest, seqNr uint64, report ocr3types.ReportWithInfo[RI]) []byte {
+func hashReport(configDigest ocrtypes.ConfigDigest, seqNr uint64, report types.Report) []byte {
 	data := make([]byte, 96)
 	copy(data, configDigest[:])
 	binary.BigEndian.PutUint64(data[56:64], seqNr)
-	copy(data[64:96], crypto.Keccak256(report.Report))
+	copy(data[64:96], crypto.Keccak256(report))
 	return crypto.Keccak256(data)
 }
