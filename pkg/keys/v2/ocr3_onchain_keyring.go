@@ -16,6 +16,7 @@ import (
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 
 	"github.com/smartcontractkit/chainlink-common/keystore"
+	"github.com/smartcontractkit/chainlink-common/keystore/ocr3"
 )
 
 // CreateOCR3OnchainKeyring creates a new OCR3 onchain keyring.
@@ -46,7 +47,7 @@ func CreateOCR3OnchainKeyring[RI any](ctx context.Context, ks keystore.Keystore,
 		return nil, err
 	}
 	addr := crypto.PubkeyToAddress(*publicKey)
-	return &OnchainKeyring2ToGenericAdapter[RI]{K: &evmOnchainKeyring2{ks: ks, addr: addr, keyPath: onchainKeyPath}}, nil
+	return &ocr3.OnchainKeyring2ToGenericAdapter[RI]{K: &evmOnchainKeyring2{ks: ks, addr: addr, keyPath: onchainKeyPath}}, nil
 }
 
 func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]ocr3types.OnchainKeyring2[RI], error) {
@@ -74,14 +75,14 @@ func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, 
 			return nil, err
 		}
 		addr := crypto.PubkeyToAddress(*publicKey)
-		keyrings = append(keyrings, &OnchainKeyring2ToGenericAdapter[RI]{K: &evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}})
+		keyrings = append(keyrings, &ocr3.OnchainKeyring2ToGenericAdapter[RI]{K: &evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}})
 	}
 	return keyrings, nil
 }
 
-var _ ocr3types.OnchainKeyring2[struct{}] = &OnchainKeyring2ToGenericAdapter[struct{}]{K: &evmOnchainKeyring2{}}
+var _ ocr3types.OnchainKeyring2[struct{}] = &ocr3.OnchainKeyring2ToGenericAdapter[struct{}]{K: &evmOnchainKeyring2{}}
 
-var _ OnchainKeyring2Genericless = &evmOnchainKeyring2{}
+var _ ocr3.OnchainKeyring2Genericless = &evmOnchainKeyring2{}
 
 type evmOnchainKeyring2 struct {
 	ks      keystore.Keystore
@@ -122,48 +123,6 @@ func (e *evmOnchainKeyring2) MaxSignatureLength() int {
 func (e *evmOnchainKeyring2) DebugIdentifier() string {
 	return fmt.Sprintf("addr = %s, path = %s", e.addr.Hex(), e.keyPath.String())
 }
-
-type OnchainKeyring2Genericless interface {
-	Sign(configDigest ocrtypes.ConfigDigest, seqNr uint64, report types.Report) (signature []byte, err error)
-	Verify(publicKey ocrtypes.OnchainPublicKey, configDigest ocrtypes.ConfigDigest, seqNr uint64, report types.Report, signature []byte) bool
-	Has(publicKey ocrtypes.OnchainPublicKey) bool
-	MaxSignatureLength() int
-	DebugIdentifier() string
-}
-
-type OnchainKeyring2[RI any] interface {
-	Sign(c ocrtypes.ConfigDigest, seqNr uint64, r ocr3types.ReportWithInfo[RI]) (signature []byte, err error)
-	Verify(pk ocrtypes.OnchainPublicKey, c ocrtypes.ConfigDigest, seqNr uint64, r ocr3types.ReportWithInfo[RI], signature []byte) bool
-	Has(key ocrtypes.OnchainPublicKey) bool
-	MaxSignatureLength() int
-	DebugIdentifier() string
-}
-
-type OnchainKeyring2ToGenericAdapter[RI any] struct {
-	K OnchainKeyring2Genericless
-}
-
-func (o *OnchainKeyring2ToGenericAdapter[RI]) Sign(c ocrtypes.ConfigDigest, seqNr uint64, r ocr3types.ReportWithInfo[RI]) (signature []byte, err error) {
-	return o.K.Sign(c, seqNr, r.Report)
-}
-
-func (o *OnchainKeyring2ToGenericAdapter[RI]) Verify(pk ocrtypes.OnchainPublicKey, c ocrtypes.ConfigDigest, seqNr uint64, r ocr3types.ReportWithInfo[RI], signature []byte) bool {
-	return o.K.Verify(pk, c, seqNr, r.Report, signature)
-}
-
-func (o *OnchainKeyring2ToGenericAdapter[RI]) Has(key ocrtypes.OnchainPublicKey) bool {
-	return o.K.Has(key)
-}
-
-func (o *OnchainKeyring2ToGenericAdapter[RI]) MaxSignatureLength() int {
-	return o.K.MaxSignatureLength()
-}
-
-func (o *OnchainKeyring2ToGenericAdapter[RI]) DebugIdentifier() string {
-	return o.K.DebugIdentifier()
-}
-
-var _ ocr3types.OnchainKeyring2[struct{}] = &OnchainKeyring2ToGenericAdapter[struct{}]{}
 
 // Compresses the given ECDSA signature in its internal format (r, s, v) into the
 // corresponding compressed format (r, s'), where s' in {s, n-s} depending on v.
