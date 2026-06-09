@@ -10,9 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-common/keystore"
 	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
+
+	"github.com/smartcontractkit/chainlink-common/keystore"
 )
 
 var _ keystore.Storage = &TestMemoryStorage{}
@@ -53,7 +54,7 @@ func TestSignVerifyTestVectorsOnchain(t *testing.T) {
 		publicKey, err := crypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
 		require.NoError(t, err)
 		addr := crypto.PubkeyToAddress(*publicKey)
-		kr := evmOnchainKeyring2[struct{}]{
+		kr := evmOnchainKeyring2{
 			ks:      ks,
 			keyPath: keystore.KeyPath{tv.signingKey[:4]},
 			addr:    addr,
@@ -66,7 +67,7 @@ func TestSignVerifyTestVectorsOnchain(t *testing.T) {
 		report := ocr3types.ReportWithInfo[struct{}]{
 			Report: reportBytes,
 		}
-		sig, err := kr.Sign(configDigest, tv.seqNr, report)
+		sig, err := kr.Sign(configDigest, tv.seqNr, report.Report)
 		require.NoError(t, err)
 		addressBytes, err := hex.DecodeString(tv.address)
 		require.NoError(t, err)
@@ -75,9 +76,9 @@ func TestSignVerifyTestVectorsOnchain(t *testing.T) {
 		require.NoError(t, err)
 		if tv.sigValid {
 			require.Equal(t, sig, sigBytes)
-			require.True(t, kr.Verify(addressBytes, configDigest, tv.seqNr, report, sigBytes))
+			require.True(t, kr.Verify(addressBytes, configDigest, tv.seqNr, report.Report, sigBytes))
 		} else {
-			require.False(t, kr.Verify(addressBytes, configDigest, tv.seqNr, report, sigBytes))
+			require.False(t, kr.Verify(addressBytes, configDigest, tv.seqNr, report.Report, sigBytes))
 		}
 	}
 }
