@@ -267,18 +267,18 @@ func (r *RPCClient) Dial(callerCtx context.Context) error {
 	promEVMPoolRPCNodeDials.WithLabelValues(r.chainID.String(), r.name).Inc()
 	lggr := r.rpcLog
 	if ws != nil {
-		lggr = lggr.With("wsuri", ws.uri.Redacted())
+		lggr = lggr.With("wsuri", shortenURL(ws.uri))
 		wsrpc, err := rpc.DialWebsocket(ctx, ws.uri.String(), "")
 		if err != nil {
 			promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
-			return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing websocket: %v", ws.uri.Redacted()))
+			return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing websocket: %v", shortenURL(ws.uri)))
 		}
 
 		r.ws.Store(&rawclient{uri: ws.uri, rpc: wsrpc, geth: ethclient.NewClient(wsrpc)})
 	}
 
 	if httpClient != nil {
-		lggr = lggr.With("httpuri", httpClient.uri.Redacted())
+		lggr = lggr.With("httpuri", shortenURL(httpClient.uri))
 		if err := r.DialHTTP(callerCtx); err != nil {
 			return err
 		}
@@ -297,7 +297,7 @@ func (r *RPCClient) DialHTTP(ctx context.Context) error {
 
 	httpClient := r.http.Load()
 	promEVMPoolRPCNodeDials.WithLabelValues(r.chainID.String(), r.name).Inc()
-	lggr := r.rpcLog.With("httpuri", httpClient.uri.Redacted())
+	lggr := r.rpcLog.With("httpuri", shortenURL(httpClient.uri))
 	lggr.Debugw("RPC dial: evmclient.Client#dial")
 
 	httpRPC, err := rpc.DialOptions(ctx, httpClient.uri.String(), rpc.WithHTTPClient(&http.Client{
@@ -305,7 +305,7 @@ func (r *RPCClient) DialHTTP(ctx context.Context) error {
 	}))
 	if err != nil {
 		promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
-		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", httpClient.uri.Redacted()))
+		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", shortenURL(httpClient.uri)))
 	}
 
 	httpClient.rpc = httpRPC
@@ -331,13 +331,20 @@ func (r *RPCClient) String() string {
 	s := fmt.Sprintf("(%s)%s", r.tier.String(), r.name)
 	ws := r.ws.Load()
 	if ws != nil {
-		s = s + ":" + ws.uri.Redacted()
+		s = s + ":" + shortenURL(ws.uri)
 	}
 	http := r.http.Load()
 	if http != nil {
-		s = s + ":" + http.uri.Redacted()
+		s = s + ":" + shortenURL(http.uri)
 	}
 	return s
+}
+
+func shortenURL(uri url.URL) string {
+	if uri.Scheme == "" || uri.Host == "" {
+		return ""
+	}
+	return uri.Scheme + "://" + uri.Host
 }
 
 func (r *RPCClient) logResult(
