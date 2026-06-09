@@ -598,3 +598,81 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 		require.NotErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
 	})
 }
+
+func TestShortenURL(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		uri  url.URL
+		want string
+	}{
+		{
+			name: "https url with path",
+			uri: url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/secret/token/chainName/mainnet",
+			},
+			want: "https://example.com",
+		},
+		{
+			name: "missing scheme",
+			uri: url.URL{
+				Host: "example.com",
+			},
+			want: "",
+		},
+		{
+			name: "missing host",
+			uri: url.URL{
+				Scheme: "https",
+			},
+			want: "",
+		},
+		{
+			name: "empty url",
+			uri:  url.URL{},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := shortenURL(tt.uri)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRPCClientString_RedactsURLPaths(t *testing.T) {
+	t.Parallel()
+
+	wsURI, err := url.Parse("wss://rpc-provider.example.com/sensitive/path/ws")
+	require.NoError(t, err)
+
+	httpURI, err := url.Parse("https://rpc-provider.example.com/sensitive/path/http")
+	require.NoError(t, err)
+
+	r := &RPCClient{
+		name:             "test-rpc-client",
+		tier:             multinode.Primary,
+		shortenedWsURI:   shortenURL(*wsURI),
+		shortenedHTTPURI: shortenURL(*httpURI),
+	}
+
+	got := r.String()
+
+	require.Equal(
+		t,
+		"(primary)test-rpc-client:wss://rpc-provider.example.com:https://rpc-provider.example.com",
+		got,
+	)
+
+	require.NotContains(t, got, "sensitive")
+	require.NotContains(t, got, "/path/")
+	require.NotContains(t, got, "/ws")
+	require.NotContains(t, got, "/http")
+}
