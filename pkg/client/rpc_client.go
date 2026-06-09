@@ -111,6 +111,9 @@ type RPCClient struct {
 
 	beholderMetrics *rpcClientMetrics
 
+	shortenedWsURI   string
+	shortenedHTTPURI string
+
 	ws        atomic.Pointer[rawclient]
 	limitedWS atomic.Pointer[rawclient] // ws client with limited response size
 	http      atomic.Pointer[rawclient]
@@ -157,10 +160,12 @@ func NewRPCClient(
 	r.finalizedBlockPollInterval = cfg.FinalizedBlockPollInterval()
 	r.newHeadsPollInterval = cfg.NewHeadsPollInterval()
 	if wsuri != nil {
+		r.shortenedWsURI = shortenURL(*wsuri)
 		r.ws.Store(&rawclient{uri: *wsuri})
 		r.limitedWS.Store(&rawclient{uri: *wsuri})
 	}
 	if httpuri != nil {
+		r.shortenedHTTPURI = shortenURL(*httpuri)
 		r.http.Store(&rawclient{uri: *httpuri})
 	}
 	lggr = logger.Named(lggr, "Client")
@@ -267,18 +272,18 @@ func (r *RPCClient) Dial(callerCtx context.Context) error {
 	promEVMPoolRPCNodeDials.WithLabelValues(r.chainID.String(), r.name).Inc()
 	lggr := r.rpcLog
 	if ws != nil {
-		lggr = lggr.With("wsuri", shortenURL(ws.uri))
+		lggr = lggr.With("wsuri", r.shortenedWsURI)
 		wsrpc, err := rpc.DialWebsocket(ctx, ws.uri.String(), "")
 		if err != nil {
 			promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
-			return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing websocket: %v", shortenURL(ws.uri)))
+			return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing websocket: %v", r.shortenedWsURI))
 		}
 
 		r.ws.Store(&rawclient{uri: ws.uri, rpc: wsrpc, geth: ethclient.NewClient(wsrpc)})
 	}
 
 	if httpClient != nil {
-		lggr = lggr.With("httpuri", shortenURL(httpClient.uri))
+		lggr = lggr.With("httpuri", r.shortenedHTTPURI)
 		if err := r.DialHTTP(callerCtx); err != nil {
 			return err
 		}
@@ -297,7 +302,7 @@ func (r *RPCClient) DialHTTP(ctx context.Context) error {
 
 	httpClient := r.http.Load()
 	promEVMPoolRPCNodeDials.WithLabelValues(r.chainID.String(), r.name).Inc()
-	lggr := r.rpcLog.With("httpuri", shortenURL(httpClient.uri))
+	lggr := r.rpcLog.With("httpuri", r.shortenedHTTPURI)
 	lggr.Debugw("RPC dial: evmclient.Client#dial")
 
 	httpRPC, err := rpc.DialOptions(ctx, httpClient.uri.String(), rpc.WithHTTPClient(&http.Client{
@@ -305,7 +310,7 @@ func (r *RPCClient) DialHTTP(ctx context.Context) error {
 	}))
 	if err != nil {
 		promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
-		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", shortenURL(httpClient.uri)))
+		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", r.shortenedHTTPURI))
 	}
 
 	httpClient.rpc = httpRPC
@@ -329,13 +334,11 @@ func (r *RPCClient) Close() {
 
 func (r *RPCClient) String() string {
 	s := fmt.Sprintf("(%s)%s", r.tier.String(), r.name)
-	ws := r.ws.Load()
-	if ws != nil {
-		s = s + ":" + shortenURL(ws.uri)
+	if r.shortenedWsURI != "" {
+		s += ":" + r.shortenedWsURI
 	}
-	http := r.http.Load()
-	if http != nil {
-		s = s + ":" + shortenURL(http.uri)
+	if r.shortenedHTTPURI != "" {
+		s += ":" + r.shortenedHTTPURI
 	}
 	return s
 }

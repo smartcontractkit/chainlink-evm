@@ -657,12 +657,11 @@ func TestRPCClientString_RedactsURLPaths(t *testing.T) {
 	require.NoError(t, err)
 
 	r := &RPCClient{
-		name: "test-rpc-client",
-		tier: multinode.Primary,
+		name:             "test-rpc-client",
+		tier:             multinode.Primary,
+		shortenedWsURI:   shortenURL(*wsURI),
+		shortenedHTTPURI: shortenURL(*httpURI),
 	}
-
-	r.ws.Store(&rawclient{uri: *wsURI})
-	r.http.Store(&rawclient{uri: *httpURI})
 
 	got := r.String()
 
