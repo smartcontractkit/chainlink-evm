@@ -47,7 +47,7 @@ func CreateOCR3OnchainKeyring[RI any](ctx context.Context, ks keystore.Keystore,
 		return nil, err
 	}
 	addr := crypto.PubkeyToAddress(*publicKey)
-	return &ocr3.OnchainKeyring2ToGenericAdapter[RI]{K: &evmOnchainKeyring2{ks: ks, addr: addr, keyPath: onchainKeyPath}}, nil
+	return ocr3.AsOCR3OnchainKeyring2[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: onchainKeyPath}), nil
 }
 
 func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]ocr3types.OnchainKeyring2[RI], error) {
@@ -75,14 +75,12 @@ func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, 
 			return nil, err
 		}
 		addr := crypto.PubkeyToAddress(*publicKey)
-		keyrings = append(keyrings, &ocr3.OnchainKeyring2ToGenericAdapter[RI]{K: &evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}})
+		keyrings = append(keyrings, ocr3.AsOCR3OnchainKeyring2[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}))
 	}
 	return keyrings, nil
 }
 
-var _ ocr3types.OnchainKeyring2[struct{}] = &ocr3.OnchainKeyring2ToGenericAdapter[struct{}]{K: &evmOnchainKeyring2{}}
-
-var _ ocr3.OnchainKeyring2Genericless = &evmOnchainKeyring2{}
+var _ ocr3.OnchainKeyring2 = &evmOnchainKeyring2{}
 
 type evmOnchainKeyring2 struct {
 	ks      keystore.Keystore
