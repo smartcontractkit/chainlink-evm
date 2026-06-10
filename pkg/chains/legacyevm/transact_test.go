@@ -63,5 +63,6 @@ func TestChain_TransactWithBalanceCheck(t *testing.T) {
 	client.EXPECT().BalanceAt(ctx, from, (*big.Int)(nil)).Return(big.NewInt(1000), nil).Once()
 	gasEstimator.EXPECT().GetMaxCost(ctx, (assets.Eth)(*amount), []byte(nil), cfg.EVM().GasEstimator().LimitTransfer(), cfg.EVM().GasEstimator().PriceMax(), &from, &to).Return(big.NewInt(1000), nil).Once()
 	txManager.EXPECT().SendNativeToken(ctx, c.id, from, to, *amount, cfg.EVM().GasEstimator().LimitTransfer()).Return(txmgr.Tx{}, nil).Once()
+
 	require.NoError(t, c.Transact(ctx, from.String(), to.String(), amount, true))
 }
