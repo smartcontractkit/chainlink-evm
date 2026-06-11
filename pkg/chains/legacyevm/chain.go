@@ -468,7 +468,7 @@ func (c *chain) Transact(ctx context.Context, from, to string, amount *big.Int, 
 		return errors.New("amount cannot be nil")
 	}
 	if amount.Sign() <= 0 {
-		return errors.New("amount cannot be negative")
+		return errors.New("amount should be positive")
 	}
 	if !ethcommon.IsHexAddress(from) {
 		return fmt.Errorf("invalid from address: %s", from)
@@ -486,7 +486,7 @@ func (c *chain) Transact(ctx context.Context, from, to string, amount *big.Int, 
 		if err != nil {
 			return fmt.Errorf("failed to get balance for address %s: %w", from, err)
 		}
-		maxPrice := c.cfg.EVM().GasEstimator().PriceMaxKey(toAddress)
+		maxPrice := c.cfg.EVM().GasEstimator().PriceMaxKey(fromAddress)
 		estimator := c.GasEstimator()
 		amountWithFees, err := estimator.GetMaxCost(ctx, (assets.Eth)(*amount), nil, gasLimit, maxPrice, &fromAddress, &toAddress)
 		if err != nil {
