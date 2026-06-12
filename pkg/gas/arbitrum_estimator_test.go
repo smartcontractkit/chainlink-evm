@@ -49,7 +49,7 @@ func TestArbitrumEstimator(t *testing.T) {
 	const maxGasLimit uint64 = 500_000
 	calldata := []byte{0x00, 0x00, 0x01, 0x02, 0x03}
 	const gasLimit uint64 = 80000
-	const gasPriceBufferPercentage = 50
+	const gasPriceBufferPercentage = 75
 	const bumpPercent = 10
 	var bumpMin = assets.NewWei(big.NewInt(1))
 
@@ -235,7 +235,7 @@ func TestArbitrumEstimator(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, gasPrice)
 		// Again, a normal l2_suggested_estimator would return 42, but arbitrum_estimator adds a buffer.
-		assert.Equal(t, "63 wei", gasPrice.String())
+		assert.Equal(t, "73 wei", gasPrice.String())
 		assert.Equal(t, expLimit, chainSpecificGasLimit, "expected %d but got %d", expLimit, chainSpecificGasLimit)
 	})
 
