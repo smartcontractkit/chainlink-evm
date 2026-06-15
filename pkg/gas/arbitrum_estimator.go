@@ -46,13 +46,15 @@ type arbitrumEstimator struct {
 	l1Oracle rollups.ArbL1GasOracle
 }
 
+const pollPeriod = 2 * time.Second
+
 func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient FeeEstimatorClient, l1Oracle rollups.ArbL1GasOracle) EvmEstimator {
 	lggr = logger.Named(lggr, "ArbitrumEstimator")
 
 	return &arbitrumEstimator{
 		cfg:            cfg,
-		EvmEstimator:   NewSuggestedPriceEstimator(lggr, ethClient, cfg, l1Oracle),
-		pollPeriod:     2 * time.Second,
+		EvmEstimator:   NewSuggestedPriceEstimatorWithPollPeriod(lggr, ethClient, cfg, l1Oracle, pollPeriod),
+		pollPeriod:     pollPeriod,
 		logger:         lggr,
 		chForceRefetch: make(chan (chan struct{})),
 		chInitialised:  make(chan struct{}),
@@ -96,7 +98,7 @@ func (a *arbitrumEstimator) HealthReport() map[string]error {
 // GetLegacyGas estimates both the gas price and the gas limit.
 //   - Price is delegated to the embedded SuggestedPriceEstimator.
 //   - Limit is computed from the dynamic values perL2Tx and perL1CalldataUnit, provided by the getPricesInArbGas() method
-//     of the precompilie contract at ArbGasInfoAddress. perL2Tx is a constant amount of gas, and perL1CalldataUnit is
+//     of the precompile contract at ArbGasInfoAddress. perL2Tx is a constant amount of gas, and perL1CalldataUnit is
 //     multiplied by the length of the tx calldata. The sum of these two values plus the original l2GasLimit is returned.
 func (a *arbitrumEstimator) GetLegacyGas(ctx context.Context, calldata []byte, l2GasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
 	gasPrice, _, err = a.EvmEstimator.GetLegacyGas(ctx, calldata, l2GasLimit, maxGasPriceWei, opts...)

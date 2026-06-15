@@ -54,11 +54,18 @@ type SuggestedPriceEstimator struct {
 	l1Oracle rollups.L1Oracle
 }
 
+const defaultPollPeriod = 10 * time.Second
+
 // NewSuggestedPriceEstimator returns a new Estimator which uses the suggested gas price.
 func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle) EvmEstimator {
+	return NewSuggestedPriceEstimatorWithPollPeriod(lggr, client, cfg, l1Oracle, defaultPollPeriod)
+}
+
+// NewSuggestedPriceEstimatorWithPollPeriod returns a new Estimator which uses the suggested gas price, polling at the given interval.
+func NewSuggestedPriceEstimatorWithPollPeriod(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle, pollPeriod time.Duration) EvmEstimator {
 	return &SuggestedPriceEstimator{
 		client:         client,
-		pollPeriod:     10 * time.Second,
+		pollPeriod:     pollPeriod,
 		logger:         logger.Named(lggr, "SuggestedPriceEstimator"),
 		cfg:            cfg,
 		chForceRefetch: make(chan (chan struct{})),
