@@ -58,7 +58,7 @@ type SuggestedPriceEstimator struct {
 const defaultPollPeriod = 10 * time.Second
 
 // NewSuggestedPriceEstimator returns a new Estimator which uses the suggested gas price.
-func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle, chainType chaintype.ChainType) EvmEstimator {
+func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, chainType chaintype.ChainType, l1Oracle rollups.L1Oracle) EvmEstimator {
 	pollPeriod := defaultPollPeriod
 	if chainType == chaintype.ChainArbitrum {
 		pollPeriod = arbitrumPollPeriod

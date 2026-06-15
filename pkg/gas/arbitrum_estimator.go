@@ -54,7 +54,7 @@ func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient FeeEstima
 
 	return &arbitrumEstimator{
 		cfg:            cfg,
-		EvmEstimator:   NewSuggestedPriceEstimator(lggr, ethClient, cfg, l1Oracle, chaintype.ChainArbitrum),
+		EvmEstimator:   NewSuggestedPriceEstimator(lggr, ethClient, cfg, chaintype.ChainArbitrum, l1Oracle),
 		pollPeriod:     arbitrumPollPeriod,
 		logger:         lggr,
 		chForceRefetch: make(chan (chan struct{})),
