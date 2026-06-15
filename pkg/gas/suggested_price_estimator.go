@@ -67,7 +67,7 @@ func NewSuggestedPriceEstimatorWithPollPeriod(lggr logger.Logger, client FeeEsti
 		pollPeriod = defaultPollPeriod
 	}
 
-	lggr.Infof("Creating SuggestedPriceEstimator with poll period: %s", pollPeriod)
+	lggr.Infow("Creating SuggestedPriceEstimator", "pollPeriod", pollPeriod)
 	return &SuggestedPriceEstimator{
 		client:         client,
 		pollPeriod:     pollPeriod,
