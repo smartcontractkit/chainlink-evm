@@ -46,15 +46,15 @@ type arbitrumEstimator struct {
 	l1Oracle rollups.ArbL1GasOracle
 }
 
-const pollPeriod = 2 * time.Second
+const arbitrumPollPeriod = 2 * time.Second
 
 func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient FeeEstimatorClient, l1Oracle rollups.ArbL1GasOracle) EvmEstimator {
 	lggr = logger.Named(lggr, "ArbitrumEstimator")
 
 	return &arbitrumEstimator{
 		cfg:            cfg,
-		EvmEstimator:   NewSuggestedPriceEstimatorWithPollPeriod(lggr, ethClient, cfg, l1Oracle, pollPeriod),
-		pollPeriod:     pollPeriod,
+		EvmEstimator:   NewSuggestedPriceEstimatorWithPollPeriod(lggr, ethClient, cfg, l1Oracle, arbitrumPollPeriod),
+		pollPeriod:     arbitrumPollPeriod,
 		logger:         lggr,
 		chForceRefetch: make(chan (chan struct{})),
 		chInitialised:  make(chan struct{}),

@@ -63,6 +63,11 @@ func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, c
 
 // NewSuggestedPriceEstimatorWithPollPeriod returns a new Estimator which uses the suggested gas price, polling at the given interval.
 func NewSuggestedPriceEstimatorWithPollPeriod(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle, pollPeriod time.Duration) EvmEstimator {
+	if pollPeriod <= 0 {
+		pollPeriod = defaultPollPeriod
+	}
+
+	lggr.Infof("Creating SuggestedPriceEstimator with poll period: %s", pollPeriod)
 	return &SuggestedPriceEstimator{
 		client:         client,
 		pollPeriod:     pollPeriod,
