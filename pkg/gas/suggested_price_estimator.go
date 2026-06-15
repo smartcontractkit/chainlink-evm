@@ -16,6 +16,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/rollups"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
@@ -57,14 +58,10 @@ type SuggestedPriceEstimator struct {
 const defaultPollPeriod = 10 * time.Second
 
 // NewSuggestedPriceEstimator returns a new Estimator which uses the suggested gas price.
-func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle) EvmEstimator {
-	return NewSuggestedPriceEstimatorWithPollPeriod(lggr, client, cfg, l1Oracle, defaultPollPeriod)
-}
-
-// NewSuggestedPriceEstimatorWithPollPeriod returns a new Estimator which uses the suggested gas price, polling at the given interval.
-func NewSuggestedPriceEstimatorWithPollPeriod(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle, pollPeriod time.Duration) EvmEstimator {
-	if pollPeriod <= 0 {
-		pollPeriod = defaultPollPeriod
+func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle, chainType chaintype.ChainType) EvmEstimator {
+	pollPeriod := defaultPollPeriod
+	if chainType == chaintype.ChainArbitrum {
+		pollPeriod = arbitrumPollPeriod
 	}
 
 	lggr.Infow("Creating SuggestedPriceEstimator", "pollPeriod", pollPeriod)
