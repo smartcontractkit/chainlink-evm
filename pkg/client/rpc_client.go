@@ -1412,7 +1412,7 @@ func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
 	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
-// Matches URLs and captures only the scheme + host, allowing path segments (e.g. API keys) to be stripped via replacement with "$1/".
+// Matches URLs to redact them and avoid leaking API keys
 var rpcURLRegexp = regexp.MustCompile(`https?://[^\s"']+`)
 
 func sanitizeRPCError(err error) error {
