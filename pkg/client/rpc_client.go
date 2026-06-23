@@ -1412,14 +1412,30 @@ func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
 	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
+type sanitizedError struct {
+	err error
+	msg string
+}
+
+func (e sanitizedError) Error() string {
+	return e.msg
+}
+
+func (e sanitizedError) Unwrap() error {
+	return e.err
+}
+
 // Matches full HTTP(S)/WS(S) URLs so provider URLs, paths, query params, credentials, and API keys can be redacted from errors.
-var rpcURLRegexp = regexp.MustCompile(`(?:https?|wss?)://[^\s"']+/?`)
+var rpcURLRegexp = regexp.MustCompile(`(?i)(?:https?|wss?)://[^\s"']+`)
 
 func sanitizeRPCError(err error) error {
 	if err == nil {
 		return nil
 	}
-	return errors.New(rpcURLRegexp.ReplaceAllString(err.Error(), "[REDACTED URL]"))
+	return sanitizedError{
+		err: err,
+		msg: rpcURLRegexp.ReplaceAllString(err.Error(), "[REDACTED URL]"),
+	}
 }
 
 func (r *RPCClient) wrapRPCClientError(err error) error {
@@ -1427,7 +1443,10 @@ func (r *RPCClient) wrapRPCClientError(err error) error {
 		r.rpcLog.Trace("Call succeeded")
 		return nil
 	}
-	if pkgerrors.Cause(err).Error() == "context deadline exceeded" {
+	// Use errors.Is to walk the full Unwrap chain. A timeout surfaces as a *url.Error
+	// wrapping context.DeadlineExceeded; pkgerrors.Cause only follows the pkg/errors
+	// Cause() interface, which *url.Error does not implement, so it never matched.
+	if errors.Is(err, context.DeadlineExceeded) {
 		err = pkgerrors.Wrap(err, "remote node timed out")
 	}
 

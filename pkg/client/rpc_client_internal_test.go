@@ -39,43 +39,45 @@ func TestSanitizeRPCError(t *testing.T) {
 	}{
 		{
 			name: "https url with path",
-			err:  errors.New(`Post "https://test-cl-03.test.xyz/dOnOtLeAkAnyOfThis/doNotLeak/test/mainnet/": context deadline exceeded`),
+			err:  fmt.Errorf(`Post "https://test-cl-03.test.xyz/dOnOtLeAkAnyOfThis/doNotLeak/test/mainnet/": %w`, context.DeadlineExceeded),
 			want: `Post "[REDACTED URL]": context deadline exceeded`,
 		},
 		{
 			name: "http url with path",
-			err:  errors.New(`Post "http://secret.com/doNotLeak/": context deadline exceeded`),
+			err:  fmt.Errorf(`Post "http://secret.com/doNotLeak/": %w`, context.DeadlineExceeded),
 			want: `Post "[REDACTED URL]": context deadline exceeded`,
 		},
 		{
 			name: "ws url with path",
-			err:  errors.New(`dial "ws://secret.com/doNotLeak/": context deadline exceeded`),
+			err:  fmt.Errorf(`dial "ws://secret.com/doNotLeak/": %w`, context.DeadlineExceeded),
 			want: `dial "[REDACTED URL]": context deadline exceeded`,
 		},
 		{
 			name: "wss url with path",
-			err:  errors.New(`dial "wss://secret.com/doNotLeak/": context deadline exceeded`),
+			err:  fmt.Errorf(`dial "wss://secret.com/doNotLeak/": %w`, context.DeadlineExceeded),
 			want: `dial "[REDACTED URL]": context deadline exceeded`,
 		},
 		{
 			name: "https url with user info",
-			err:  errors.New(`Post "https://user:pass@secret.com/": context deadline exceeded`),
+			err:  fmt.Errorf(`Post "https://user:pass@secret.com/": %w`, context.DeadlineExceeded),
 			want: `Post "[REDACTED URL]": context deadline exceeded`,
 		},
 		{
 			name: "multiple urls",
-			err:  errors.New(`primary http://secret.com/doNotLeak/ fallback wss://secret.com/doNotLeak/ failed`),
-			want: `primary [REDACTED URL] fallback [REDACTED URL] failed`,
+			err:  fmt.Errorf(`primary http://secret.com/doNotLeak/ fallback wss://secret.com/doNotLeak/ failed: %w`, context.DeadlineExceeded),
+			want: `primary [REDACTED URL] fallback [REDACTED URL] failed: context deadline exceeded`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sanitized := sanitizeRPCError(tt.err)
+
 			require.EqualError(t, sanitized, tt.want)
 			require.NotContains(t, sanitized.Error(), "doNotLeak")
 			require.NotContains(t, sanitized.Error(), "user:pass")
 			require.NotContains(t, sanitized.Error(), "secret.com")
+			require.ErrorIs(t, sanitized, context.DeadlineExceeded)
 		})
 	}
 }
@@ -99,6 +101,12 @@ func TestRPCClient_WrapRPCClientError_TimeoutIsWrappedAndSanitized(t *testing.T)
 	require.NotContains(t, wrapped.Error(), "user:pass")
 	require.NotContains(t, wrapped.Error(), "test-cl-03.test.xyz")
 	require.NotContains(t, wrapped.Error(), "dOnOtLeAkAnyOfThis")
+
+	// The timeout must be detected through the *url.Error -> context.DeadlineExceeded
+	// chain and surfaced as "remote node timed out".
+	require.ErrorContains(t, wrapped, "remote node timed out")
+	// The error type must be preserved so callers can still match the timeout.
+	require.ErrorIs(t, wrapped, context.DeadlineExceeded)
 }
 
 func TestRPCClient_MakeLogsValid(t *testing.T) {
