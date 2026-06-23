@@ -1412,6 +1412,16 @@ func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
 	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
+// Matches URLs and captures only the scheme + host, allowing path segments (e.g. API keys) to be stripped via replacement with "$1/".
+var rpcURLPathRegexp = regexp.MustCompile(`(https?://[^/\s"']+)/[^"'\s]*`)
+
+func sanitizeRPCError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return errors.New(rpcURLPathRegexp.ReplaceAllString(err.Error(), "$1/"))
+}
+
 func (r *RPCClient) wrapRPCClientError(err error) error {
 	if err == nil {
 		r.rpcLog.Trace("Call succeeded")
@@ -1420,6 +1430,11 @@ func (r *RPCClient) wrapRPCClientError(err error) error {
 	if pkgerrors.Cause(err).Error() == "context deadline exceeded" {
 		err = pkgerrors.Wrap(err, "remote node timed out")
 	}
+
+	// Convert to a sanitized string error before logging or returning.
+	// This prevents provider API keys embedded in URL paths from leaking.
+	err = sanitizeRPCError(err)
+
 	r.rpcLog.Infow("RPC call failed", "error", err)
 	// Do not include any RPC specific data into the error as in CRE product it must be returned back to a workflow user
 	return pkgerrors.Wrap(err, "RPC call failed")

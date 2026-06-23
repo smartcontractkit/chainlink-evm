@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -27,6 +28,36 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
+
+func TestSanitizeRPCError(t *testing.T) {
+	t.Parallel()
+
+	err := errors.New(`Post "https://test-cl-03.test.xyz/dOnOtLeAkAnyOfThis/doNotLeak/test/mainnet/": context deadline exceeded`)
+
+	sanitized := sanitizeRPCError(err)
+
+	require.EqualError(t, sanitized,
+		`Post "https://test-cl-03.test.xyz/": context deadline exceeded`,
+	)
+}
+
+func TestRPCClient_WrapRPCClientError_TimeoutIsWrappedAndSanitized(t *testing.T) {
+	t.Parallel()
+
+	rpcClient := NewTestRPCClient(t, RPCClientOpts{})
+
+	err := &url.Error{
+		Op:  "Post",
+		URL: "https://test-cl-03.test.xyz/dOnOtLeAkAnyOfThis/doNotLeak/test/mainnet/",
+		Err: context.DeadlineExceeded,
+	}
+
+	wrapped := rpcClient.wrapRPCClientError(err)
+
+	require.ErrorContains(t, wrapped, "RPC call failed")
+	require.ErrorContains(t, wrapped, `https://test-cl-03.test.xyz/`)
+	require.NotContains(t, wrapped.Error(), "dOnOtLeAkAnyOfThis")
+}
 
 func TestRPCClient_MakeLogsValid(t *testing.T) {
 	chainTypes := []struct {
