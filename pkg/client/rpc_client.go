@@ -1412,8 +1412,8 @@ func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
 	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
-// Matches URLs to redact them and avoid leaking API keys
-var rpcURLRegexp = regexp.MustCompile(`https?://[^\s"']+`)
+// Matches full HTTP(S)/WS(S) URLs so provider URLs, paths, query params, credentials, and API keys can be redacted from errors.
+var rpcURLRegexp = regexp.MustCompile(`(?:https?|wss?)://[^\s"']+/?`)
 
 func sanitizeRPCError(err error) error {
 	if err == nil {
