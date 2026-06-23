@@ -37,7 +37,7 @@ func TestSanitizeRPCError(t *testing.T) {
 	sanitized := sanitizeRPCError(err)
 
 	require.EqualError(t, sanitized,
-		`Post "https://test-cl-03.test.xyz/": context deadline exceeded`,
+		`Post "[REDACTED URL]": context deadline exceeded`,
 	)
 }
 
@@ -55,7 +55,8 @@ func TestRPCClient_WrapRPCClientError_TimeoutIsWrappedAndSanitized(t *testing.T)
 	wrapped := rpcClient.wrapRPCClientError(err)
 
 	require.ErrorContains(t, wrapped, "RPC call failed")
-	require.ErrorContains(t, wrapped, `https://test-cl-03.test.xyz/`)
+	require.ErrorContains(t, wrapped, "[REDACTED URL]")
+	require.NotContains(t, wrapped.Error(), "https://test-cl-03.test.xyz")
 	require.NotContains(t, wrapped.Error(), "dOnOtLeAkAnyOfThis")
 }
 

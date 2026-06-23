@@ -1413,13 +1413,13 @@ func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
 }
 
 // Matches URLs and captures only the scheme + host, allowing path segments (e.g. API keys) to be stripped via replacement with "$1/".
-var rpcURLPathRegexp = regexp.MustCompile(`(https?://[^/\s"']+)/[^"'\s]*`)
+var rpcURLRegexp = regexp.MustCompile(`https?://[^\s"']+`)
 
 func sanitizeRPCError(err error) error {
 	if err == nil {
 		return nil
 	}
-	return errors.New(rpcURLPathRegexp.ReplaceAllString(err.Error(), "$1/"))
+	return errors.New(rpcURLRegexp.ReplaceAllString(err.Error(), "[REDACTED URL]"))
 }
 
 func (r *RPCClient) wrapRPCClientError(err error) error {
