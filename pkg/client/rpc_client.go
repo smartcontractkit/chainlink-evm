@@ -1413,15 +1413,28 @@ func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
 }
 
 type sanitizedError struct {
-	err error
-	msg string
+	err error  // original error, retained for chain traversal/classification
+	msg string // redacted, safe-to-display message
 }
 
 func (e sanitizedError) Error() string {
 	return e.msg
 }
 
+// Unwrap and Cause expose the original error so both the standard library
+// (errors.Is/errors.As) and pkg/errors (pkgerrors.Cause) can still traverse to
+// the underlying RPC error. This is required for error classification in
+// errors.go — e.g. ExtractRPCError marshals pkgerrors.Cause(err) into a
+// JsonError, and isFatalSendError matches against pkgerrors.Cause(err).Error() —
+// and for sentinel matching such as ethereum.NotFound and context.DeadlineExceeded.
+//
+// Only the Error() string is redacted. That is the value logged and returned to
+// workflow users, which is where the provider URL/API key was leaking.
 func (e sanitizedError) Unwrap() error {
+	return e.err
+}
+
+func (e sanitizedError) Cause() error {
 	return e.err
 }
 
