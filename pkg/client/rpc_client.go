@@ -1443,9 +1443,6 @@ func (r *RPCClient) wrapRPCClientError(err error) error {
 		r.rpcLog.Trace("Call succeeded")
 		return nil
 	}
-	// Use errors.Is to walk the full Unwrap chain. A timeout surfaces as a *url.Error
-	// wrapping context.DeadlineExceeded; pkgerrors.Cause only follows the pkg/errors
-	// Cause() interface, which *url.Error does not implement, so it never matched.
 	if errors.Is(err, context.DeadlineExceeded) {
 		err = pkgerrors.Wrap(err, "remote node timed out")
 	}
