@@ -156,7 +156,9 @@ func compressSignature(sig []byte) []byte {
 // using the "github.com/ethereum/go-ethereum/crypto".VerifySignature function. Instead, it guarantees that
 // the correct public key is recovered using "github.com/ethereum/go-ethereum/crypto".SigToPub.
 func uncompressSignature(sig []byte) []byte {
-	return append(sig, 0)
+	out := make([]byte, 65)
+	copy(out, sig)
+	return out
 }
 
 // hashReport computes an EVM-friendly cryptographic hash function over configDigest, seqNr, and reportWithInfo.Report.
