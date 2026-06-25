@@ -58,6 +58,7 @@ contract AutomationReceiver is ReceiverTemplate {
     }
     if (!s_callAllowed[target][selector]) revert CallNotAllowed(target, selector);
 
+    // solhint-disable-next-line avoid-low-level-calls
     (bool success, bytes memory returnData) = target.call(data);
     if (success) {
       emit CallExecuted(target, selector, returnData);
