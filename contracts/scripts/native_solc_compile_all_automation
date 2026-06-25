@@ -63,3 +63,4 @@ compileContract automation-compile-23 upkeeps/EthBalanceMonitor
 compileContract automation-compile-23 v2_3/AutomationUtils2_3
 compileContract automation-compile-23 interfaces/v2_3/IAutomationRegistryMaster2_3
 compileContract automation-compile-23 testhelpers/MockETHUSDAggregator
+compileContract automation-compile-23 AutomationReceiver

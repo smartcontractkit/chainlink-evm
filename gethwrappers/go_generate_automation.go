@@ -24,6 +24,7 @@ package gethwrappers
 //go:generate go run ./generation/wrap.go automation IChainModule i_chain_module
 //go:generate go run ./generation/wrap.go automation IAutomationV21PlusCommon i_automation_v21_plus_common
 //go:generate go run ./generation/wrap.go automation MockETHUSDAggregator mock_ethusd_aggregator_wrapper
+//go:generate go run ./generation/generate_automation/wrap.go AutomationReceiver AutomationReceiver automation_receiver
 
 //go:generate go run ./generation/wrap.go automation ILogAutomation i_log_automation
 //go:generate go run ./generation/wrap.go automation AutomationForwarderLogic automation_forwarder_logic
