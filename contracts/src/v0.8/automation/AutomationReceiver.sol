@@ -30,7 +30,9 @@ contract AutomationReceiver is ReceiverTemplate {
   error MissingSelector();
   error CallNotAllowed(address target, bytes4 selector);
 
-  constructor(address _forwarder) ReceiverTemplate(_forwarder) {}
+  constructor(
+    address _forwarder
+  ) ReceiverTemplate(_forwarder) {}
 
   /// @notice Allow or disallow the receiver to call `selector` on `target`. Owner-only.
   function setCallAllowed(address target, bytes4 selector, bool allowed) external onlyOwner {
@@ -46,7 +48,9 @@ contract AutomationReceiver is ReceiverTemplate {
 
   /// @notice Decodes and executes the call encoded in the CRE report.
   /// @param report ABI-encoded (address target, bytes data).
-  function _processReport(bytes calldata report) internal override {
+  function _processReport(
+    bytes calldata report
+  ) internal override {
     (address target, bytes memory data) = abi.decode(report, (address, bytes));
 
     if (target == address(0)) revert InvalidTargetAddress();

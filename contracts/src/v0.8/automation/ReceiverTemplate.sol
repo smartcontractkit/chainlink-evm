@@ -31,7 +31,9 @@ abstract contract ReceiverTemplate is IReceiver, Ownable {
   event ExpectedWorkflowIdUpdated(bytes32 indexed previousId, bytes32 indexed newId);
   event SecurityWarning(string message);
 
-  constructor(address _forwarderAddress) Ownable() {
+  constructor(
+    address _forwarderAddress
+  ) Ownable() {
     if (_forwarderAddress == address(0)) revert InvalidForwarderAddress();
     s_forwarderAddress = _forwarderAddress;
     emit ForwarderAddressUpdated(address(0), _forwarderAddress);
@@ -77,20 +79,26 @@ abstract contract ReceiverTemplate is IReceiver, Ownable {
     _processReport(report);
   }
 
-  function setForwarderAddress(address _forwarder) external onlyOwner {
+  function setForwarderAddress(
+    address _forwarder
+  ) external onlyOwner {
     address previousForwarder = s_forwarderAddress;
     if (_forwarder == address(0)) emit SecurityWarning("Forwarder address set to zero - contract is now INSECURE");
     s_forwarderAddress = _forwarder;
     emit ForwarderAddressUpdated(previousForwarder, _forwarder);
   }
 
-  function setExpectedAuthor(address _author) external onlyOwner {
+  function setExpectedAuthor(
+    address _author
+  ) external onlyOwner {
     address previousAuthor = s_expectedAuthor;
     s_expectedAuthor = _author;
     emit ExpectedAuthorUpdated(previousAuthor, _author);
   }
 
-  function setExpectedWorkflowName(string calldata _name) external onlyOwner {
+  function setExpectedWorkflowName(
+    string calldata _name
+  ) external onlyOwner {
     bytes10 previousName = s_expectedWorkflowName;
     if (bytes(_name).length == 0) {
       s_expectedWorkflowName = bytes10(0);
@@ -107,13 +115,17 @@ abstract contract ReceiverTemplate is IReceiver, Ownable {
     emit ExpectedWorkflowNameUpdated(previousName, s_expectedWorkflowName);
   }
 
-  function setExpectedWorkflowId(bytes32 _id) external onlyOwner {
+  function setExpectedWorkflowId(
+    bytes32 _id
+  ) external onlyOwner {
     bytes32 previousId = s_expectedWorkflowId;
     s_expectedWorkflowId = _id;
     emit ExpectedWorkflowIdUpdated(previousId, _id);
   }
 
-  function _bytesToHexString(bytes memory data) private pure returns (bytes memory) {
+  function _bytesToHexString(
+    bytes memory data
+  ) private pure returns (bytes memory) {
     bytes memory hexString = new bytes(data.length * 2);
     for (uint256 i = 0; i < data.length; i++) {
       hexString[i * 2] = HEX_CHARS[uint8(data[i] >> 4)];
@@ -133,10 +145,14 @@ abstract contract ReceiverTemplate is IReceiver, Ownable {
     return (workflowId, workflowName, workflowOwner);
   }
 
-  function _processReport(bytes calldata report) internal virtual;
+  function _processReport(
+    bytes calldata report
+  ) internal virtual;
 
   /// @inheritdoc IERC165
-  function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override returns (bool) {
     return interfaceId == type(IReceiver).interfaceId || interfaceId == type(IERC165).interfaceId;
   }
 }
