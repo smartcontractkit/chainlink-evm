@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
+import {ITypeAndVersion} from "../shared/interfaces/ITypeAndVersion.sol";
 import {ReceiverTemplate} from "./ReceiverTemplate.sol";
 
 /**
@@ -19,7 +20,8 @@ import {ReceiverTemplate} from "./ReceiverTemplate.sol";
  *
  *      Migration rule of thumb: inbound authorizes the workflow; outbound authorizes the action.
  */
-contract AutomationReceiver is ReceiverTemplate {
+contract AutomationReceiver is ITypeAndVersion, ReceiverTemplate {
+  string public constant override typeAndVersion = "AutomationReceiver 1.0.0";
   mapping(address target => mapping(bytes4 selector => bool allowed)) private s_callAllowed;
 
   event CallExecuted(address indexed target, bytes4 indexed selector, bytes returnData);

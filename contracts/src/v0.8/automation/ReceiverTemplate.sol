@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
 import {IERC165} from "../vendor/IERC165.sol";
 import {IReceiver} from "./IReceiver.sol";
-import {Ownable} from "@openzeppelin/contracts@4.8.3/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts@5.3.0/access/Ownable.sol";
 
 /// @title ReceiverTemplate - Abstract receiver with optional permission controls
 /// @notice Provides flexible, updatable security checks for receiving workflow reports
@@ -33,7 +33,7 @@ abstract contract ReceiverTemplate is IReceiver, Ownable {
 
   constructor(
     address _forwarderAddress
-  ) Ownable() {
+  ) Ownable(msg.sender) {
     if (_forwarderAddress == address(0)) revert InvalidForwarderAddress();
     s_forwarderAddress = _forwarderAddress;
     emit ForwarderAddressUpdated(address(0), _forwarderAddress);
