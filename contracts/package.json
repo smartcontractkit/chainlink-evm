@@ -11,8 +11,7 @@
     "publish-beta": "pnpm publish --tag beta",
     "publish-prod": "pnpm publish --tag latest",
     "solhint": "solhint --max-warnings 0 \"./src/v0.8/**/*.sol\"",
-    "solhint-test": "solhint --config \".solhint-test.json\"  --ignore-path \".solhintignore-test\" --max-warnings 0 \"./src/v0.8/**/*.sol\"",
-    "hardhat": "hardhat compile"
+    "solhint-test": "solhint --config \".solhint-test.json\"  --ignore-path \".solhintignore-test\" --max-warnings 0 \"./src/v0.8/**/*.sol\""
   },
   "files": [
     "src/v0.8",
@@ -37,10 +36,6 @@
     },
     "onlyBuiltDependencies": []
   },
-  "engines": {
-    "node": ">=22",
-    "pnpm": ">=10"
-  },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
     "@changesets/get-github-info": "^0.7.0",
@@ -61,6 +56,10 @@
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@scroll-tech/contracts": "2.0.0",
     "@zksync/contracts": "github:matter-labs/era-contracts#446d391d34bdb48255d5f8fef8a8248925fc98b9"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
   },
   "type": "module"
 }
