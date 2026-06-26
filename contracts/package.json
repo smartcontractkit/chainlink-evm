@@ -33,12 +33,6 @@
     "overrides": {
       "@openzeppelin/contracts-upgradeable": "4.9.6",
       "@openzeppelin/contracts": "4.9.6",
-      "cookie": "^0.7.0",
-      "minimatch@3.1.2>brace-expansion": "^1.1.12",
-      "minimatch@5.1.6>brace-expansion": "^2.0.2",
-      "minimatch@9.0.5>brace-expansion": "^2.0.2",
-      "solhint>js-yaml": "^4.1.1",
-      "read-yaml-file>js-yaml": "^3.14.2",
       "tmp": "^0.2.4"
     },
     "onlyBuiltDependencies": []
