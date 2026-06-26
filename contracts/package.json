@@ -11,7 +11,8 @@
     "publish-beta": "pnpm publish --tag beta",
     "publish-prod": "pnpm publish --tag latest",
     "solhint": "solhint --max-warnings 0 \"./src/v0.8/**/*.sol\"",
-    "solhint-test": "solhint --config \".solhint-test.json\"  --ignore-path \".solhintignore-test\" --max-warnings 0 \"./src/v0.8/**/*.sol\""
+    "solhint-test": "solhint --config \".solhint-test.json\"  --ignore-path \".solhintignore-test\" --max-warnings 0 \"./src/v0.8/**/*.sol\"",
+    "hardhat": "hardhat compile"
   },
   "files": [
     "src/v0.8",
@@ -50,10 +51,10 @@
     "@changesets/cli": "^2.29.8",
     "@changesets/get-github-info": "^0.7.0",
     "abi-to-sol": "^0.8.0",
-    "hardhat": "^3.0.17",
-    "solhint": "^6.0.2",
+    "hardhat": "^3.9.0",
+    "solhint": "^6.2.3",
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1",
-    "tsx": "^4.21.0"
+    "tsx": "^4.22.4"
   },
   "dependencies": {
     "@arbitrum/nitro-contracts": "3.0.0",
