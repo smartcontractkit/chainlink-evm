@@ -66,6 +66,8 @@
 
 # At the end, match any files missed by the patterns above
 /contracts/scripts/native_solc_compile_all_events_mock @smartcontractkit/dev-services
+# Remove ownership of these files as they are auto generated and already asserted to be correct.
+/**/generated-wrapper-dependency-versions-do-not-edit.txt
 
 # CI/CD
 /.github/** @smartcontractkit/devex-cicd @smartcontractkit/devex-tooling @smartcontractkit/core @smartcontractkit/core-solidity
