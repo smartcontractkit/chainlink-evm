@@ -1,4 +1,4 @@
-GETH_VERSION: 1.17.0
+GETH_VERSION: 1.17.3
 arbitrum_cross_domain_forwarder: ../../contracts/solc/l2ep/ArbitrumCrossDomainForwarder/ArbitrumCrossDomainForwarder.sol/ArbitrumCrossDomainForwarder.abi.json ../../contracts/solc/l2ep/ArbitrumCrossDomainForwarder/ArbitrumCrossDomainForwarder.sol/ArbitrumCrossDomainForwarder.bin b9a42ecb8b5bcee81fdc33b565422297b4e2163b16afbc1a400ec2f169b54e5c
 arbitrum_cross_domain_governor: ../../contracts/solc/l2ep/ArbitrumCrossDomainGovernor/ArbitrumCrossDomainGovernor.sol/ArbitrumCrossDomainGovernor.abi.json ../../contracts/solc/l2ep/ArbitrumCrossDomainGovernor/ArbitrumCrossDomainGovernor.sol/ArbitrumCrossDomainGovernor.bin 3ff6d00db86e8abd60ca27a3018806e078c701815fb02b48d3a9f8e3f924d307
 arbitrum_sequencer_uptime_feed: ../../contracts/solc/l2ep/ArbitrumSequencerUptimeFeed/ArbitrumSequencerUptimeFeed.sol/ArbitrumSequencerUptimeFeed.abi.json ../../contracts/solc/l2ep/ArbitrumSequencerUptimeFeed/ArbitrumSequencerUptimeFeed.sol/ArbitrumSequencerUptimeFeed.bin 6915fa8112161f20792c33c3e5df4fdd917284f743be05699c54b1f2a0b45910
