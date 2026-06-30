@@ -29,15 +29,9 @@
       "@openzeppelin/contracts": "4.9.6"
     }
   },
-  "engines": {
-    "node": ">=22",
-    "pnpm": ">=10"
-  },
+
   "devDependencies": {
-    "@changesets/cli": "^2.29.8",
-    "@changesets/get-github-info": "^0.7.0",
     "solhint": "^6.0.2",
-    "semver": "^7.7.3",
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1"
   },
   "dependencies": {
@@ -45,6 +39,10 @@
     "@openzeppelin/contracts-5.0.2": "npm:@openzeppelin/contracts@5.0.2",
     "@openzeppelin/contracts-5.1.0": "npm:@openzeppelin/contracts@5.1.0",
     "@chainlink/contracts": "1.5.0"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
   },
   "type": "module"
 }

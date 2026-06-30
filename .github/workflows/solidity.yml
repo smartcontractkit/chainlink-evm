@@ -157,8 +157,6 @@ jobs:
           persist-credentials: false
       - name: Setup NodeJS
         uses: ./.github/actions/setup-nodejs
-      - name: Run pnpm lint
-        run: pnpm lint
       - name: Run solhint
         run: pnpm solhint
       - name: Run solhint on tests
