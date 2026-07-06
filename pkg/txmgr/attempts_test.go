@@ -226,6 +226,13 @@ func TestTxm_NewPurgeAttempt(t *testing.T) {
 	cks := txmgr.NewEvmTxAttemptBuilder(*big.NewInt(1), gc, kst, est)
 	lggr := logger.Test(t)
 
+	t.Run("returns error when tx has no attempts", func(t *testing.T) {
+		etx := txmgr.Tx{ID: 42}
+		_, err := cks.NewPurgeTxAttempt(t.Context(), etx, lggr)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot purge tx 42: no previous attempts")
+	})
+
 	t.Run("creates legacy purge attempt with fields if previous attempt is legacy", func(t *testing.T) {
 		n := evmtypes.Nonce(0)
 		etx := txmgr.Tx{Sequence: &n, FromAddress: addr, EncodedPayload: []byte{1, 2, 3}}
