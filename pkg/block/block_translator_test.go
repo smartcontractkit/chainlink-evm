@@ -43,7 +43,7 @@ func Test_BlockTranslator(t *testing.T) {
 		bt := block.NewBlockTranslator(ChainArbitrumMainnet(t).EVM().ChainType(), ethClient, lggr)
 		assert.IsType(t, &block.ArbitrumBlockTranslator{}, bt)
 
-		bt = block.NewBlockTranslator(ChainArbitrumRinkeby(t).EVM().ChainType(), ethClient, lggr)
+		bt = block.NewBlockTranslator(ChainArbitrumSepolia(t).EVM().ChainType(), ethClient, lggr)
 		assert.IsType(t, &block.ArbitrumBlockTranslator{}, bt)
 	})
 }
@@ -51,7 +51,7 @@ func Test_BlockTranslator(t *testing.T) {
 func ChainEthMainnet(t *testing.T) config.ChainScopedConfig      { return scopedConfig(t, 1) }
 func ChainOptimismMainnet(t *testing.T) config.ChainScopedConfig { return scopedConfig(t, 10) }
 func ChainArbitrumMainnet(t *testing.T) config.ChainScopedConfig { return scopedConfig(t, 42161) }
-func ChainArbitrumRinkeby(t *testing.T) config.ChainScopedConfig { return scopedConfig(t, 421611) }
+func ChainArbitrumSepolia(t *testing.T) config.ChainScopedConfig { return scopedConfig(t, 421614) }
 
 func scopedConfig(t *testing.T, chainID int64) config.ChainScopedConfig {
 	id := sqlutil.NewI(chainID)

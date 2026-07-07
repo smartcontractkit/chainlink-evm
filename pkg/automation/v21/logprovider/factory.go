@@ -72,7 +72,7 @@ func (o *LogTriggersOptions) Defaults(finalityDepth int64) {
 
 func (o *LogTriggersOptions) defaultBlockRate() uint32 {
 	switch o.chainID.Int64() {
-	case 42161, 421613, 421614: // Arbitrum, Arb Goerli, Arb Sepolia
+	case 42161, 421614: // Arbitrum, Arb Sepolia
 		return 2
 	default:
 		return 1
@@ -81,9 +81,9 @@ func (o *LogTriggersOptions) defaultBlockRate() uint32 {
 
 func (o *LogTriggersOptions) defaultLogLimit() uint32 {
 	switch o.chainID.Int64() {
-	case 1, 4, 5, 42, 11155111: // Eth, Rinkeby, Goerli, Kovan, Sepolia
+	case 1, 11155111: // Eth, Sepolia
 		return 20
-	case 10, 420, 11155420, 56, 97, 137, 80001, 80002, 43114, 43113, 8453, 84531, 84532: // Optimism, OP Goerli, OP Sepolia, BSC, BSC Test, Polygon, Mumbai, Amoy, Avax, Avax Fuji, Base, Base Goerli, Base Sepolia
+	case 10, 11155420, 56, 97, 137, 80002, 43114, 43113, 8453, 84532: // Optimism, OP Sepolia, BSC, BSC Test, Polygon, Amoy, Avax, Avax Fuji, Base, Base Sepolia
 		return 4
 	default:
 		return 1
