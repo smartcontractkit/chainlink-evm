@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
 import {IERC165} from "./IERC165.sol";
 import {IReceiver} from "./IReceiver.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts@5.1.0/access/Ownable.sol";
 
 /// @title ReceiverTemplate - Abstract receiver with optional permission controls
 /// @notice Provides flexible, updatable security checks for receiving workflow reports
