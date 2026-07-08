@@ -550,7 +550,7 @@ type Transactions struct {
 
 	AutoPurge                 AutoPurgeConfig                 `toml:",omitempty"`
 	HederaBroadcastValidation HederaBroadcastValidationConfig `toml:",omitempty"`
-	TransactionManagerV2      TransactionManagerV2Config    `toml:",omitempty"`
+	TransactionManagerV2      TransactionManagerV2Config      `toml:",omitempty"`
 }
 
 func (t *Transactions) setFrom(f *Transactions) {
