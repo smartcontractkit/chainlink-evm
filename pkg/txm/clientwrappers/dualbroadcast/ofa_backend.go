@@ -184,8 +184,8 @@ func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transact
 // Each OFA has 10 values spaced 10 units apart for the gas limit so there is room for feed-specific tiers per OFA in the future.
 // Unfortunately, the per-OFA attempts are not tracked by the txm. We can track them by looking at the individual logs per attempt stored.
 func (d *ofaBackend) createAttemptWithOFAGasTier(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) (*types.Attempt, error) {
-	if tx.Nonce == nil {
-		return nil, fmt.Errorf("failed to create tiered attempt for txID: %v: nonce empty", tx.ID)
+	if tx == nil || attempt == nil || tx.Nonce == nil {
+		return nil, fmt.Errorf("failed to create tiered attempt: tx %v, attempt %v", tx, attempt)
 	}
 	if !attempt.Fee.ValidDynamic() {
 		return nil, errors.New("attempt is not a dynamic fee attempt") // We could potentially support legacy transactions, but dynamic transactions are the default so this is ok.

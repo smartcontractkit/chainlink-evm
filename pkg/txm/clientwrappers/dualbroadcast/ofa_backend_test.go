@@ -231,7 +231,7 @@ func TestSendBundle_UsesLatestAttemptPerTransaction(t *testing.T) {
 	require.NoError(t, mErr)
 	client := newFlashbotsClient(logger.Test(t), rpc, testKeyStore(), customURL, txStore, false, metrics)
 
-	err = client.sendBundle(context.Background(), fromAddress, nil)
+	err = client.sendBundle(t.Context(), fromAddress, nil)
 	require.NoError(t, err)
 
 	var req struct {
