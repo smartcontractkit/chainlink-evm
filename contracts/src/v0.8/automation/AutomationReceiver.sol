@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "./ReceiverTemplate.sol";
+import {ReceiverTemplate} from "./ReceiverTemplate.sol";
 import {Pausable} from "@openzeppelin/contracts@5.1.0/utils/Pausable.sol";
 
 /**
@@ -384,8 +384,10 @@ contract AutomationReceiver is ReceiverTemplate, Pausable {
       if (gasleft() < required) {
         revert InsufficientGas(gasleft(), required);
       }
+      // solhint-disable-next-line avoid-low-level-calls
       (success, returnData) = target.call{gas: consumerGasLimit}(data);
     } else {
+      // solhint-disable-next-line avoid-low-level-calls
       (success, returnData) = target.call(data);
     }
 
