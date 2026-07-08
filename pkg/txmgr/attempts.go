@@ -87,7 +87,10 @@ func (c *evmTxAttemptBuilder) NewBumpTxAttempt(ctx context.Context, etx Tx, prev
 func (c *evmTxAttemptBuilder) NewPurgeTxAttempt(ctx context.Context, etx Tx, lggr logger.Logger) (attempt TxAttempt, err error) {
 	// Use the LimitDefault since this is an empty tx
 	gasLimit := c.feeConfig.LimitDefault()
-	// Transactions being purged will always have a previous attempt since it had to have been broadcasted before at least once
+	if len(etx.TxAttempts) == 0 {
+		return attempt, fmt.Errorf("cannot purge tx %d: no previous attempts", etx.ID)
+	}
+	// Use the first previous attempt to derive the purge attempt's bumped fee and tx type.
 	previousAttempt := etx.TxAttempts[0]
 	keySpecificMaxGasPriceWei := c.feeConfig.PriceMaxKey(etx.FromAddress)
 	bumpedFee, _, err := c.EvmFeeEstimator.BumpFee(ctx, previousAttempt.TxFee, etx.FeeLimit, keySpecificMaxGasPriceWei, newEvmPriorAttempts(etx.TxAttempts))

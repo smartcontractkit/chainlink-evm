@@ -352,9 +352,15 @@ func (d *stuckTxDetector) detectStuckTransactionsScroll(ctx context.Context, txs
 	// Return all transactions marked with status 1 signaling they have been skipped due to overflow
 	var stuckTx []Tx
 	for hash, status := range scrollResp.Data {
-		if status == 1 {
-			stuckTx = append(stuckTx, attemptHashMap[hash])
+		if status != 1 {
+			continue
 		}
+		tx, ok := attemptHashMap[hash]
+		if !ok {
+			d.lggr.Warnw("scroll stuck tx API returned unknown hash", "hash", hash)
+			continue
+		}
+		stuckTx = append(stuckTx, tx)
 	}
 
 	return stuckTx, nil
