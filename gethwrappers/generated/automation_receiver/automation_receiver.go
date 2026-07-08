@@ -31,8 +31,8 @@ var (
 )
 
 var AutomationReceiverMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_forwarder\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getExpectedAuthor\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getExpectedWorkflowId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getExpectedWorkflowName\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes10\",\"internalType\":\"bytes10\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getForwarderAddress\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isCallAllowed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onReport\",\"inputs\":[{\"name\":\"metadata\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"report\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"owner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setCallAllowed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"allowed\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setExpectedAuthor\",\"inputs\":[{\"name\":\"_author\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setExpectedWorkflowId\",\"inputs\":[{\"name\":\"_id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setExpectedWorkflowName\",\"inputs\":[{\"name\":\"_name\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setForwarderAddress\",\"inputs\":[{\"name\":\"_forwarder\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"transferOwnership\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"typeAndVersion\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"CallAllowedSet\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"allowed\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CallExecuted\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"returnData\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CallFailed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"reason\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ExpectedAuthorUpdated\",\"inputs\":[{\"name\":\"previousAuthor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newAuthor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ExpectedWorkflowIdUpdated\",\"inputs\":[{\"name\":\"previousId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"newId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ExpectedWorkflowNameUpdated\",\"inputs\":[{\"name\":\"previousName\",\"type\":\"bytes10\",\"indexed\":true,\"internalType\":\"bytes10\"},{\"name\":\"newName\",\"type\":\"bytes10\",\"indexed\":true,\"internalType\":\"bytes10\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ForwarderAddressUpdated\",\"inputs\":[{\"name\":\"previousForwarder\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newForwarder\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SecurityWarning\",\"inputs\":[{\"name\":\"message\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"CallNotAllowed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}]},{\"type\":\"error\",\"name\":\"InvalidAuthor\",\"inputs\":[{\"name\":\"received\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expected\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidForwarderAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSender\",\"inputs\":[{\"name\":\"sender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expected\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidTargetAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidWorkflowId\",\"inputs\":[{\"name\":\"received\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expected\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidWorkflowName\",\"inputs\":[{\"name\":\"received\",\"type\":\"bytes10\",\"internalType\":\"bytes10\"},{\"name\":\"expected\",\"type\":\"bytes10\",\"internalType\":\"bytes10\"}]},{\"type\":\"error\",\"name\":\"MissingSelector\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OwnableInvalidOwner\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"OwnableUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WorkflowNameRequiresAuthorValidation\",\"inputs\":[]}]",
-	Bin: "0x608060405234801562000010575f80fd5b506040516200198a3803806200198a83398101604081905262000033916200012c565b8033806200005a57604051631e4fbdf760e01b81525f600482015260240160405180910390fd5b6200006581620000dd565b506001600160a01b0381166200008d5760405162e0775560e61b815260040160405180910390fd5b600180546001600160a01b0319166001600160a01b0383169081179091556040515f907f039ad854736757070884dd787ef1a7f58db33546639d1f3efddcf4a33fb8997e908290a350506200015b565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b5f602082840312156200013d575f80fd5b81516001600160a01b038116811462000154575f80fd5b9392505050565b61182180620001695f395ff3fe608060405234801561000f575f80fd5b50600436106100fb575f3560e01c80639c1c77ca11610093578063d60c884b11610063578063d60c884b146102f8578063d777cc6d1461030b578063f2fde38b1461031e578063f5c793ef14610331575f80fd5b80639c1c77ca14610270578063a619d81814610283578063bc1fc27a146102d2578063c3c44ac2146102e5575f80fd5b8063715018a6116100ce578063715018a6146101cd578063797c8d69146101d7578063805f2132146102405780638da5cb5b14610253575f80fd5b806301ffc9a7146100ff578063181f5a77146101275780633397cf67146101705780633441856f146101af575b5f80fd5b61011261010d36600461139f565b610342565b60405190151581526020015b60405180910390f35b6101636040518060400160405280601881526020017f4175746f6d6174696f6e526563656976657220312e302e30000000000000000081525081565b60405161011e919061142a565b60025473ffffffffffffffffffffffffffffffffffffffff165b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200161011e565b60015473ffffffffffffffffffffffffffffffffffffffff1661018a565b6101d56103da565b005b6101126101e536600461145d565b73ffffffffffffffffffffffffffffffffffffffff82165f9081526004602090815260408083207fffffffff000000000000000000000000000000000000000000000000000000008516845290915290205460ff1692915050565b6101d561024e3660046114d5565b6103ed565b5f5473ffffffffffffffffffffffffffffffffffffffff1661018a565b6101d561027e36600461153c565b6107ac565b60025474010000000000000000000000000000000000000000900460b01b6040517fffffffffffffffffffff00000000000000000000000000000000000000000000909116815260200161011e565b6101d56102e0366004611586565b6108ba565b6101d56102f33660046115c5565b610b28565b6101d56103063660046115dc565b610b68565b6101d56103193660046115dc565b610be6565b6101d561032c3660046115dc565b610d13565b60035460405190815260200161011e565b5f7fffffffff0000000000000000000000000000000000000000000000000000000082167f805f21320000000000000000000000000000000000000000000000000000000014806103d457507fffffffff0000000000000000000000000000000000000000000000000000000082167f01ffc9a700000000000000000000000000000000000000000000000000000000145b92915050565b6103e2610d76565b6103eb5f610dc8565b565b60015473ffffffffffffffffffffffffffffffffffffffff161580159061042c575060015473ffffffffffffffffffffffffffffffffffffffff163314155b1561048a576001546040517fe1130dba00000000000000000000000000000000000000000000000000000000815233600482015273ffffffffffffffffffffffffffffffffffffffff90911660248201526044015b60405180910390fd5b6003541515806104b1575060025473ffffffffffffffffffffffffffffffffffffffff1615155b806104fa575060025474010000000000000000000000000000000000000000900460b01b7fffffffffffffffffffff000000000000000000000000000000000000000000001615155b1561079c575f805f61054087878080601f0160208091040260200160405190810160405280939291908181526020018383808284375f92019190915250610e3c92505050565b60035492955090935091501580159061055b57506003548314155b156105a0576003546040517f9bfa39ba000000000000000000000000000000000000000000000000000000008152610481918591600401918252602082015260400190565b60025473ffffffffffffffffffffffffffffffffffffffff16158015906105e2575060025473ffffffffffffffffffffffffffffffffffffffff828116911614155b1561063d576002546040517fb8a98af800000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff80841660048301529091166024820152604401610481565b60025474010000000000000000000000000000000000000000900460b01b7fffffffffffffffffffff0000000000000000000000000000000000000000000016156107985760025473ffffffffffffffffffffffffffffffffffffffff166106d1576040517f4847901100000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b6002547fffffffffffffffffffff000000000000000000000000000000000000000000008381167401000000000000000000000000000000000000000090920460b01b1614610798576002546040517f6c4609a60000000000000000000000000000000000000000000000000000000081527fffffffffffffffffffff0000000000000000000000000000000000000000000084811660048301527401000000000000000000000000000000000000000090920460b01b9091166024820152604401610481565b5050505b6107a68282610e55565b50505050565b6107b4610d76565b73ffffffffffffffffffffffffffffffffffffffff8316610801576040517ff1a492cc00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b73ffffffffffffffffffffffffffffffffffffffff83165f8181526004602090815260408083207fffffffff0000000000000000000000000000000000000000000000000000000087168085529083529281902080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001686151590811790915590519081529192917f0925d576b7c865d78d7fe746ae46d080d64b9e6b04db5f034f71a79c41dda2e7910160405180910390a3505050565b6108c2610d76565b60025474010000000000000000000000000000000000000000900460b01b5f82900361096357600280547fffff00000000000000000000ffffffffffffffffffffffffffffffffffffffff1690556040515f907fffffffffffffffffffff000000000000000000000000000000000000000000008316907f1e7ddd09d504c82dcfc784a464b167469f5aad967606ec4822d848ef9141dfa5908390a3505050565b5f600284846040516109769291906115f7565b602060405180830381855afa158015610991573d5f803e3d5ffd5b5050506040513d601f19601f820116820180604052508101906109b49190611606565b90505f6109e1826040516020016109cd91815260200190565b60405160208183030381529060405261111c565b60408051600a8082528183019092529192505f91906020820181803683370190505090505f5b600a811015610a7557828181518110610a2257610a2261164a565b602001015160f81c60f81b828281518110610a3f57610a3f61164a565b60200101907effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff191690815f1a905350600101610a07565b50610a7f81611677565b600280547fffff00000000000000000000ffffffffffffffffffffffffffffffffffffffff167401000000000000000000000000000000000000000060b093841c81029190911791829055604051910490911b7fffffffffffffffffffff0000000000000000000000000000000000000000000090811691908616907f1e7ddd09d504c82dcfc784a464b167469f5aad967606ec4822d848ef9141dfa5905f90a3505050505050565b610b30610d76565b6003805490829055604051829082907f0dbedcdf21925e053b4c574eae180d7f2883235ab4976ecc0873598a2a999b03905f90a35050565b610b70610d76565b6002805473ffffffffffffffffffffffffffffffffffffffff8381167fffffffffffffffffffffffff0000000000000000000000000000000000000000831681179093556040519116919082907f3321cda85c145617e47418aa14255e9dcbec53a753778e57591703b89a3cad31905f90a35050565b610bee610d76565b60015473ffffffffffffffffffffffffffffffffffffffff908116908216610c9e577f704da7db165c79c1e33d542c079333bbde970a733032d2f95fec8fb7d770cbf7604051610c959060208082526038908201527f466f7277617264657220616464726573732073657420746f207a65726f202d2060408201527f636f6e7472616374206973206e6f7720494e5345435552450000000000000000606082015260800190565b60405180910390a15b600180547fffffffffffffffffffffffff00000000000000000000000000000000000000001673ffffffffffffffffffffffffffffffffffffffff84811691821790925560405190918316907f039ad854736757070884dd787ef1a7f58db33546639d1f3efddcf4a33fb8997e905f90a35050565b610d1b610d76565b73ffffffffffffffffffffffffffffffffffffffff8116610d6a576040517f1e4fbdf70000000000000000000000000000000000000000000000000000000081525f6004820152602401610481565b610d7381610dc8565b50565b5f5473ffffffffffffffffffffffffffffffffffffffff1633146103eb576040517f118cdaa7000000000000000000000000000000000000000000000000000000008152336004820152602401610481565b5f805473ffffffffffffffffffffffffffffffffffffffff8381167fffffffffffffffffffffffff0000000000000000000000000000000000000000831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b60208101516040820151604a83015160601c9193909250565b5f80610e63838501856116c6565b909250905073ffffffffffffffffffffffffffffffffffffffff8216610eb5576040517ff1a492cc00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b600481511015610ef1576040517f47d7741900000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b60208181015173ffffffffffffffffffffffffffffffffffffffff84165f9081526004835260408082207fffffffff0000000000000000000000000000000000000000000000000000000084168352909352919091205460ff16610fc1576040517f805043f900000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff841660048201527fffffffff0000000000000000000000000000000000000000000000000000000082166024820152604401610481565b5f808473ffffffffffffffffffffffffffffffffffffffff1684604051610fe891906117a2565b5f604051808303815f865af19150503d805f8114611021576040519150601f19603f3d011682016040523d82523d5f602084013e611026565b606091505b509150915081156110a457827bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19168573ffffffffffffffffffffffffffffffffffffffff167fbe82131bb3404498c769b0511da41a4ad409fa7152562c2b6669241cbe3bb88483604051611097919061142a565b60405180910390a3611113565b827bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19168573ffffffffffffffffffffffffffffffffffffffff167fefa88af289a36b936ccacf9bd9eaaa185775cd54ae263973d3579c01111593b68360405161110a919061142a565b60405180910390a35b50505050505050565b60605f8251600261112d91906117ea565b67ffffffffffffffff8111156111455761114561161d565b6040519080825280601f01601f19166020018201604052801561116f576020820181803683370190505b5090505f5b8351811015611364576040518060400160405280601081526020017f303132333435363738396162636465660000000000000000000000000000000081525060048583815181106111c7576111c761164a565b016020015182517fff0000000000000000000000000000000000000000000000000000000000000090911690911c60f81c9081106112075761120761164a565b01602001517fff00000000000000000000000000000000000000000000000000000000000000168261123a8360026117ea565b8151811061124a5761124a61164a565b60200101907effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff191690815f1a9053506040518060400160405280601081526020017f30313233343536373839616263646566000000000000000000000000000000008152508482815181106112c0576112c061164a565b602091010151815160f89190911c600f169081106112e0576112e061164a565b01602001517fff0000000000000000000000000000000000000000000000000000000000000016826113138360026117ea565b61131e906001611801565b8151811061132e5761132e61164a565b60200101907effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff191690815f1a905350600101611174565b5092915050565b80357fffffffff000000000000000000000000000000000000000000000000000000008116811461139a575f80fd5b919050565b5f602082840312156113af575f80fd5b6113b88261136b565b9392505050565b5f5b838110156113d95781810151838201526020016113c1565b50505f910152565b5f81518084526113f88160208601602086016113bf565b601f017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0169290920160200192915050565b602081525f6113b860208301846113e1565b73ffffffffffffffffffffffffffffffffffffffff81168114610d73575f80fd5b5f806040838503121561146e575f80fd5b82356114798161143c565b91506114876020840161136b565b90509250929050565b5f8083601f8401126114a0575f80fd5b50813567ffffffffffffffff8111156114b7575f80fd5b6020830191508360208285010111156114ce575f80fd5b9250929050565b5f805f80604085870312156114e8575f80fd5b843567ffffffffffffffff808211156114ff575f80fd5b61150b88838901611490565b90965094506020870135915080821115611523575f80fd5b5061153087828801611490565b95989497509550505050565b5f805f6060848603121561154e575f80fd5b83356115598161143c565b92506115676020850161136b565b91506040840135801515811461157b575f80fd5b809150509250925092565b5f8060208385031215611597575f80fd5b823567ffffffffffffffff8111156115ad575f80fd5b6115b985828601611490565b90969095509350505050565b5f602082840312156115d5575f80fd5b5035919050565b5f602082840312156115ec575f80fd5b81356113b88161143c565b818382375f9101908152919050565b5f60208284031215611616575f80fd5b5051919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b7f4e487b71000000000000000000000000000000000000000000000000000000005f52603260045260245ffd5b5f815160208301517fffffffffffffffffffff000000000000000000000000000000000000000000008082169350600a8310156116be57808184600a0360031b1b83161693505b505050919050565b5f80604083850312156116d7575f80fd5b82356116e28161143c565b9150602083013567ffffffffffffffff808211156116fe575f80fd5b818501915085601f830112611711575f80fd5b8135818111156117235761172361161d565b604051601f82017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0908116603f011681019083821181831017156117695761176961161d565b81604052828152886020848701011115611781575f80fd5b826020860160208301375f6020848301015280955050505050509250929050565b5f82516117b38184602087016113bf565b9190910192915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b80820281158282048414176103d4576103d46117bd565b808201808211156103d4576103d46117bd56fea164736f6c6343000818000a",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_forwarder\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getBlockNumberCheck\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"enabled\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"lastReportBlock\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getConsumerGasLimit\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getExpectedAuthor\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getExpectedWorkflowId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getExpectedWorkflowName\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes10\",\"internalType\":\"bytes10\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getForwarderAddress\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isCallAllowed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onReport\",\"inputs\":[{\"name\":\"metadata\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"report\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"owner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pause\",\"inputs\":[{\"name\":\"retryable\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"paused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"retryableWhilePaused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setBlockNumberCheck\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"enabled\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"initialBlockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setCallAllowed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"allowed\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setConsumerGasLimit\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"gasLimit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setExpectedAuthor\",\"inputs\":[{\"name\":\"_author\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setExpectedWorkflowId\",\"inputs\":[{\"name\":\"_id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setExpectedWorkflowName\",\"inputs\":[{\"name\":\"_name\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setForwarderAddress\",\"inputs\":[{\"name\":\"_forwarder\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"transferOwnership\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"BlockNumberCheckSet\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"enabled\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"},{\"name\":\"initialBlockNumber\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CallAllowedSet\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"allowed\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CallExecuted\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"returnData\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CallFailed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"reason\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ConsumerGasLimitSet\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"previousLimit\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"newLimit\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ExpectedAuthorUpdated\",\"inputs\":[{\"name\":\"previousAuthor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newAuthor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ExpectedWorkflowIdUpdated\",\"inputs\":[{\"name\":\"previousId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"newId\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ExpectedWorkflowNameUpdated\",\"inputs\":[{\"name\":\"previousName\",\"type\":\"bytes10\",\"indexed\":true,\"internalType\":\"bytes10\"},{\"name\":\"newName\",\"type\":\"bytes10\",\"indexed\":true,\"internalType\":\"bytes10\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ForwarderAddressUpdated\",\"inputs\":[{\"name\":\"previousForwarder\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newForwarder\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Paused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ReportSkippedWhilePaused\",\"inputs\":[],\"anonymous\":false},{\"type\":\"event\",\"name\":\"SecurityWarning\",\"inputs\":[{\"name\":\"message\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StaleReportSkipped\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"indexed\":true,\"internalType\":\"bytes4\"},{\"name\":\"reportBlockNumber\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"lastReportBlock\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Unpaused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"CallNotAllowed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"selector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}]},{\"type\":\"error\",\"name\":\"EnforcedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpectedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InsufficientGas\",\"inputs\":[{\"name\":\"available\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"required\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidAuthor\",\"inputs\":[{\"name\":\"received\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expected\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidForwarderAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSender\",\"inputs\":[{\"name\":\"sender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expected\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidTargetAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidWorkflowId\",\"inputs\":[{\"name\":\"received\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expected\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidWorkflowName\",\"inputs\":[{\"name\":\"received\",\"type\":\"bytes10\",\"internalType\":\"bytes10\"},{\"name\":\"expected\",\"type\":\"bytes10\",\"internalType\":\"bytes10\"}]},{\"type\":\"error\",\"name\":\"MissingSelector\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OwnableInvalidOwner\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"OwnableUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"TargetHasNoCode\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WorkflowIdentityNotConfigured\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WorkflowNameRequiresAuthorValidation\",\"inputs\":[]}]",
+	Bin: "0x608060405234801561000f575f80fd5b506040516124d03803806124d083398101604081905261002e9161012c565b80338061005457604051631e4fbdf760e01b81525f600482015260240160405180910390fd5b61005d816100dd565b506001600160a01b0381166100845760405162e0775560e61b815260040160405180910390fd5b600180546001600160a01b0319166001600160a01b0383169081179091556040515f907f039ad854736757070884dd787ef1a7f58db33546639d1f3efddcf4a33fb8997e908290a350506004805460ff19169055610159565b5f80546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b5f6020828403121561013c575f80fd5b81516001600160a01b0381168114610152575f80fd5b9392505050565b61236a806101665f395ff3fe608060405234801561000f575f80fd5b5060043610610184575f3560e01c80638da5cb5b116100dd578063c3c44ac211610088578063d8fb859411610063578063d8fb859414610429578063f2fde38b14610453578063f5c793ef14610466575f80fd5b8063c3c44ac2146103f0578063d60c884b14610403578063d777cc6d14610416575f80fd5b8063b25de11e116100b8578063b25de11e146103bf578063bc1fc27a146103ca578063c2f7510d146103dd575f80fd5b80638da5cb5b146103405780639c1c77ca1461035d578063a619d81814610370575f80fd5b80635c975abb1161013d578063797c8d6911610118578063797c8d6914610250578063805f2132146102b9578063851ca9c1146102cc575f80fd5b80635c975abb1461022a578063715018a61461023557806375483caf1461023d575f80fd5b80633397cf671161016d5780633397cf67146101c55780633441856f146102045780633f4ba83a14610222575f80fd5b806301ffc9a71461018857806302329a29146101b0575b5f80fd5b61019b610196366004611def565b61046e565b60405190151581526020015b60405180910390f35b6101c36101be366004611e1e565b610506565b005b60025473ffffffffffffffffffffffffffffffffffffffff165b60405173ffffffffffffffffffffffffffffffffffffffff90911681526020016101a7565b60015473ffffffffffffffffffffffffffffffffffffffff166101df565b6101c3610545565b60045460ff1661019b565b6101c3610557565b6101c361024b366004611e58565b610568565b61019b61025e366004611ea2565b73ffffffffffffffffffffffffffffffffffffffff82165f9081526005602090815260408083207fffffffff000000000000000000000000000000000000000000000000000000008516845290915290205460ff1692915050565b6101c36102c7366004611f13565b6106ec565b6103326102da366004611ea2565b73ffffffffffffffffffffffffffffffffffffffff82165f9081526006602090815260408083207fffffffff000000000000000000000000000000000000000000000000000000008516845290915290205492915050565b6040519081526020016101a7565b5f5473ffffffffffffffffffffffffffffffffffffffff166101df565b6101c361036b366004611f7f565b610aab565b60025474010000000000000000000000000000000000000000900460b01b6040517fffffffffffffffffffff0000000000000000000000000000000000000000000090911681526020016101a7565b60095460ff1661019b565b6101c36103d8366004611fc1565b610c2a565b6101c36103eb366004612000565b610e98565b6101c36103fe36600461203c565b610f85565b6101c3610411366004612053565b610fc5565b6101c3610424366004612053565b611043565b61043c610437366004611ea2565b611170565b6040805192151583526020830191909152016101a7565b6101c3610461366004612053565b6111e5565b600354610332565b5f7fffffffff0000000000000000000000000000000000000000000000000000000082167f805f213200000000000000000000000000000000000000000000000000000000148061050057507fffffffff0000000000000000000000000000000000000000000000000000000082167f01ffc9a700000000000000000000000000000000000000000000000000000000145b92915050565b61050e611245565b600980547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0016821515179055610542611297565b50565b61054d611245565b61055561131c565b565b61055f611245565b6105555f611373565b610570611245565b73ffffffffffffffffffffffffffffffffffffffff84166105bd576040517ff1a492cc00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b73ffffffffffffffffffffffffffffffffffffffff84165f9081526007602090815260408083207fffffffff0000000000000000000000000000000000000000000000000000000087168452909152812080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001684151517905582610643575f610651565b811561064f5781610651565b435b73ffffffffffffffffffffffffffffffffffffffff86165f8181526008602090815260408083207fffffffff000000000000000000000000000000000000000000000000000000008a16808552908352928190208590558051881515815291820185905293945090927ff19a6052943cc4c32e1644d475a7b4e6f517bcae63159220028f5de68d6d0364910160405180910390a35050505050565b60015473ffffffffffffffffffffffffffffffffffffffff161580159061072b575060015473ffffffffffffffffffffffffffffffffffffffff163314155b15610789576001546040517fe1130dba00000000000000000000000000000000000000000000000000000000815233600482015273ffffffffffffffffffffffffffffffffffffffff90911660248201526044015b60405180910390fd5b6003541515806107b0575060025473ffffffffffffffffffffffffffffffffffffffff1615155b806107f9575060025474010000000000000000000000000000000000000000900460b01b7fffffffffffffffffffff000000000000000000000000000000000000000000001615155b15610a9b575f805f61083f87878080601f0160208091040260200160405190810160405280939291908181526020018383808284375f920191909152506113e792505050565b60035492955090935091501580159061085a57506003548314155b1561089f576003546040517f9bfa39ba000000000000000000000000000000000000000000000000000000008152610780918591600401918252602082015260400190565b60025473ffffffffffffffffffffffffffffffffffffffff16158015906108e1575060025473ffffffffffffffffffffffffffffffffffffffff828116911614155b1561093c576002546040517fb8a98af800000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff80841660048301529091166024820152604401610780565b60025474010000000000000000000000000000000000000000900460b01b7fffffffffffffffffffff000000000000000000000000000000000000000000001615610a975760025473ffffffffffffffffffffffffffffffffffffffff166109d0576040517f4847901100000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b6002547fffffffffffffffffffff000000000000000000000000000000000000000000008381167401000000000000000000000000000000000000000090920460b01b1614610a97576002546040517f6c4609a60000000000000000000000000000000000000000000000000000000081527fffffffffffffffffffff0000000000000000000000000000000000000000000084811660048301527401000000000000000000000000000000000000000090920460b01b9091166024820152604401610780565b5050505b610aa58282611400565b50505050565b610ab3611245565b73ffffffffffffffffffffffffffffffffffffffff8316610b00576040517ff1a492cc00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b808015610b22575073ffffffffffffffffffffffffffffffffffffffff83163b155b15610b71576040517ffff2336100000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff84166004820152602401610780565b73ffffffffffffffffffffffffffffffffffffffff83165f8181526005602090815260408083207fffffffff0000000000000000000000000000000000000000000000000000000087168085529083529281902080547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001686151590811790915590519081529192917f0925d576b7c865d78d7fe746ae46d080d64b9e6b04db5f034f71a79c41dda2e7910160405180910390a3505050565b610c32611245565b60025474010000000000000000000000000000000000000000900460b01b5f829003610cd357600280547fffff00000000000000000000ffffffffffffffffffffffffffffffffffffffff1690556040515f907fffffffffffffffffffff000000000000000000000000000000000000000000008316907f1e7ddd09d504c82dcfc784a464b167469f5aad967606ec4822d848ef9141dfa5908390a3505050565b5f60028484604051610ce692919061206e565b602060405180830381855afa158015610d01573d5f803e3d5ffd5b5050506040513d601f19601f82011682018060405250810190610d24919061207d565b90505f610d5182604051602001610d3d91815260200190565b604051602081830303815290604052611af3565b60408051600a8082528183019092529192505f91906020820181803683370190505090505f5b600a811015610de557828181518110610d9257610d926120c1565b602001015160f81c60f81b828281518110610daf57610daf6120c1565b60200101907effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff191690815f1a905350600101610d77565b50610def816120ee565b600280547fffff00000000000000000000ffffffffffffffffffffffffffffffffffffffff167401000000000000000000000000000000000000000060b093841c81029190911791829055604051910490911b7fffffffffffffffffffff0000000000000000000000000000000000000000000090811691908616907f1e7ddd09d504c82dcfc784a464b167469f5aad967606ec4822d848ef9141dfa5905f90a3505050505050565b610ea0611245565b73ffffffffffffffffffffffffffffffffffffffff8316610eed576040517ff1a492cc00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b73ffffffffffffffffffffffffffffffffffffffff83165f8181526006602090815260408083207fffffffff00000000000000000000000000000000000000000000000000000000871680855290835292819020805490869055815181815292830186905293917ff3f16b36d6fb2a97e5e66d28e758a4d457e80197e1d455f692a96be32091fa3a910160405180910390a350505050565b610f8d611245565b6003805490829055604051829082907f0dbedcdf21925e053b4c574eae180d7f2883235ab4976ecc0873598a2a999b03905f90a35050565b610fcd611245565b6002805473ffffffffffffffffffffffffffffffffffffffff8381167fffffffffffffffffffffffff0000000000000000000000000000000000000000831681179093556040519116919082907f3321cda85c145617e47418aa14255e9dcbec53a753778e57591703b89a3cad31905f90a35050565b61104b611245565b60015473ffffffffffffffffffffffffffffffffffffffff9081169082166110fb577f704da7db165c79c1e33d542c079333bbde970a733032d2f95fec8fb7d770cbf76040516110f29060208082526038908201527f466f7277617264657220616464726573732073657420746f207a65726f202d2060408201527f636f6e7472616374206973206e6f7720494e5345435552450000000000000000606082015260800190565b60405180910390a15b600180547fffffffffffffffffffffffff00000000000000000000000000000000000000001673ffffffffffffffffffffffffffffffffffffffff84811691821790925560405190918316907f039ad854736757070884dd787ef1a7f58db33546639d1f3efddcf4a33fb8997e905f90a35050565b73ffffffffffffffffffffffffffffffffffffffff82165f8181526007602090815260408083207fffffffff000000000000000000000000000000000000000000000000000000008616808552908352818420549484526008835281842090845290915290205460ff909116905b9250929050565b6111ed611245565b73ffffffffffffffffffffffffffffffffffffffff811661123c576040517f1e4fbdf70000000000000000000000000000000000000000000000000000000081525f6004820152602401610780565b61054281611373565b5f5473ffffffffffffffffffffffffffffffffffffffff163314610555576040517f118cdaa7000000000000000000000000000000000000000000000000000000008152336004820152602401610780565b61129f611d42565b600480547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001660011790557f62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a2586112f23390565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200160405180910390a1565b611324611d7f565b600480547fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001690557f5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa336112f2565b5f805473ffffffffffffffffffffffffffffffffffffffff8381167fffffffffffffffffffffffff0000000000000000000000000000000000000000831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b60208101516040820151604a83015160601c9193909250565b60045460ff16156114745760095460ff1615611448576040517fd93c066500000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b6040517ff37c389ae9f5e13dbbef9f62b1ad0893e89c865ee834b2e221d11ebcf3cacd51905f90a15050565b60015473ffffffffffffffffffffffffffffffffffffffff166114c3576040517f381dd54000000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b600354158015611530575060025473ffffffffffffffffffffffffffffffffffffffff161580611530575060025474010000000000000000000000000000000000000000900460b01b7fffffffffffffffffffff0000000000000000000000000000000000000000000016155b15611567576040517f8ec26f9a00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f80806115768486018661215a565b9194509250905073ffffffffffffffffffffffffffffffffffffffff83166115ca576040517ff1a492cc00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b600481511015611606576040517f47d7741900000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b60208181015173ffffffffffffffffffffffffffffffffffffffff85165f9081526005835260408082207fffffffff0000000000000000000000000000000000000000000000000000000084168352909352919091205460ff166116d6576040517f805043f900000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff851660048201527fffffffff0000000000000000000000000000000000000000000000000000000082166024820152604401610780565b73ffffffffffffffffffffffffffffffffffffffff84165f9081526007602090815260408083207fffffffff000000000000000000000000000000000000000000000000000000008516845290915290205460ff161561185e5773ffffffffffffffffffffffffffffffffffffffff84165f9081526008602090815260408083207fffffffff0000000000000000000000000000000000000000000000000000000085168452909152902054808410156118085760408051858152602081018390527fffffffff0000000000000000000000000000000000000000000000000000000084169173ffffffffffffffffffffffffffffffffffffffff8816917f96e22437f0b9d1dfe909221668f6ad9813c1128b60a7b4b3dee74e4248df834a910160405180910390a350505050505050565b5073ffffffffffffffffffffffffffffffffffffffff84165f9081526008602090815260408083207fffffffff000000000000000000000000000000000000000000000000000000008516845290915290208390555b73ffffffffffffffffffffffffffffffffffffffff84165f9081526006602090815260408083207fffffffff00000000000000000000000000000000000000000000000000000000851684529091528120549060608215611996575f611b586118c8603f86612292565b6118d290866122ca565b6118dc91906122ca565b9050805a1015611924575a6040517f23e228cb000000000000000000000000000000000000000000000000000000008152600481019190915260248101829052604401610780565b8773ffffffffffffffffffffffffffffffffffffffff16848760405161194a91906122dd565b5f604051808303815f8787f1925050503d805f8114611984576040519150601f19603f3d011682016040523d82523d5f602084013e611989565b606091505b509093509150611a009050565b8673ffffffffffffffffffffffffffffffffffffffff16856040516119bb91906122dd565b5f604051808303815f865af19150503d805f81146119f4576040519150601f19603f3d011682016040523d82523d5f602084013e6119f9565b606091505b5090925090505b8115611a7957837bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19168773ffffffffffffffffffffffffffffffffffffffff167fbe82131bb3404498c769b0511da41a4ad409fa7152562c2b6669241cbe3bb88483604051611a6c91906122f3565b60405180910390a3611ae8565b837bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19168773ffffffffffffffffffffffffffffffffffffffff167fefa88af289a36b936ccacf9bd9eaaa185775cd54ae263973d3579c01111593b683604051611adf91906122f3565b60405180910390a35b505050505050505050565b60605f82516002611b049190612346565b67ffffffffffffffff811115611b1c57611b1c612094565b6040519080825280601f01601f191660200182016040528015611b46576020820181803683370190505b5090505f5b8351811015611d3b576040518060400160405280601081526020017f30313233343536373839616263646566000000000000000000000000000000008152506004858381518110611b9e57611b9e6120c1565b016020015182517fff0000000000000000000000000000000000000000000000000000000000000090911690911c60f81c908110611bde57611bde6120c1565b01602001517fff000000000000000000000000000000000000000000000000000000000000001682611c11836002612346565b81518110611c2157611c216120c1565b60200101907effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff191690815f1a9053506040518060400160405280601081526020017f3031323334353637383961626364656600000000000000000000000000000000815250848281518110611c9757611c976120c1565b602091010151815160f89190911c600f16908110611cb757611cb76120c1565b01602001517fff000000000000000000000000000000000000000000000000000000000000001682611cea836002612346565b611cf59060016122ca565b81518110611d0557611d056120c1565b60200101907effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff191690815f1a905350600101611b4b565b5092915050565b60045460ff1615610555576040517fd93c066500000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b60045460ff16610555576040517f8dfc202b00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b80357fffffffff0000000000000000000000000000000000000000000000000000000081168114611dea575f80fd5b919050565b5f60208284031215611dff575f80fd5b611e0882611dbb565b9392505050565b80358015158114611dea575f80fd5b5f60208284031215611e2e575f80fd5b611e0882611e0f565b73ffffffffffffffffffffffffffffffffffffffff81168114610542575f80fd5b5f805f8060808587031215611e6b575f80fd5b8435611e7681611e37565b9350611e8460208601611dbb565b9250611e9260408601611e0f565b9396929550929360600135925050565b5f8060408385031215611eb3575f80fd5b8235611ebe81611e37565b9150611ecc60208401611dbb565b90509250929050565b5f8083601f840112611ee5575f80fd5b50813567ffffffffffffffff811115611efc575f80fd5b6020830191508360208285010111156111de575f80fd5b5f805f8060408587031215611f26575f80fd5b843567ffffffffffffffff811115611f3c575f80fd5b611f4887828801611ed5565b909550935050602085013567ffffffffffffffff811115611f67575f80fd5b611f7387828801611ed5565b95989497509550505050565b5f805f60608486031215611f91575f80fd5b8335611f9c81611e37565b9250611faa60208501611dbb565b9150611fb860408501611e0f565b90509250925092565b5f8060208385031215611fd2575f80fd5b823567ffffffffffffffff811115611fe8575f80fd5b611ff485828601611ed5565b90969095509350505050565b5f805f60608486031215612012575f80fd5b833561201d81611e37565b925061202b60208501611dbb565b929592945050506040919091013590565b5f6020828403121561204c575f80fd5b5035919050565b5f60208284031215612063575f80fd5b8135611e0881611e37565b818382375f9101908152919050565b5f6020828403121561208d575f80fd5b5051919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b7f4e487b71000000000000000000000000000000000000000000000000000000005f52603260045260245ffd5b805160208201517fffffffffffffffffffff0000000000000000000000000000000000000000000081169190600a821015612153577fffffffffffffffffffff000000000000000000000000000000000000000000008083600a0360031b1b82161692505b5050919050565b5f805f6060848603121561216c575f80fd5b833561217781611e37565b925060208401359150604084013567ffffffffffffffff811115612199575f80fd5b8401601f810186136121a9575f80fd5b803567ffffffffffffffff8111156121c3576121c3612094565b6040517fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0603f7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f8501160116810181811067ffffffffffffffff8211171561222f5761222f612094565b604052818152828201602001881015612246575f80fd5b816020840160208301375f602083830101528093505050509250925092565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b5f826122c5577f4e487b71000000000000000000000000000000000000000000000000000000005f52601260045260245ffd5b500490565b8082018082111561050057610500612265565b5f82518060208501845e5f920191825250919050565b602081525f82518060208401528060208501604085015e5f6040828501015260407fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f83011684010191505092915050565b80820281158282048414176105005761050061226556fea164736f6c634300081a000a",
 }
 
 var AutomationReceiverABI = AutomationReceiverMetaData.ABI
@@ -171,6 +171,58 @@ func (_AutomationReceiver *AutomationReceiverTransactorRaw) Transact(opts *bind.
 	return _AutomationReceiver.Contract.contract.Transact(opts, method, params...)
 }
 
+func (_AutomationReceiver *AutomationReceiverCaller) GetBlockNumberCheck(opts *bind.CallOpts, target common.Address, selector [4]byte) (GetBlockNumberCheck,
+
+	error) {
+	var out []interface{}
+	err := _AutomationReceiver.contract.Call(opts, &out, "getBlockNumberCheck", target, selector)
+
+	outstruct := new(GetBlockNumberCheck)
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Enabled = *abi.ConvertType(out[0], new(bool)).(*bool)
+	outstruct.LastReportBlock = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+
+	return *outstruct, err
+
+}
+
+func (_AutomationReceiver *AutomationReceiverSession) GetBlockNumberCheck(target common.Address, selector [4]byte) (GetBlockNumberCheck,
+
+	error) {
+	return _AutomationReceiver.Contract.GetBlockNumberCheck(&_AutomationReceiver.CallOpts, target, selector)
+}
+
+func (_AutomationReceiver *AutomationReceiverCallerSession) GetBlockNumberCheck(target common.Address, selector [4]byte) (GetBlockNumberCheck,
+
+	error) {
+	return _AutomationReceiver.Contract.GetBlockNumberCheck(&_AutomationReceiver.CallOpts, target, selector)
+}
+
+func (_AutomationReceiver *AutomationReceiverCaller) GetConsumerGasLimit(opts *bind.CallOpts, target common.Address, selector [4]byte) (*big.Int, error) {
+	var out []interface{}
+	err := _AutomationReceiver.contract.Call(opts, &out, "getConsumerGasLimit", target, selector)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+func (_AutomationReceiver *AutomationReceiverSession) GetConsumerGasLimit(target common.Address, selector [4]byte) (*big.Int, error) {
+	return _AutomationReceiver.Contract.GetConsumerGasLimit(&_AutomationReceiver.CallOpts, target, selector)
+}
+
+func (_AutomationReceiver *AutomationReceiverCallerSession) GetConsumerGasLimit(target common.Address, selector [4]byte) (*big.Int, error) {
+	return _AutomationReceiver.Contract.GetConsumerGasLimit(&_AutomationReceiver.CallOpts, target, selector)
+}
+
 func (_AutomationReceiver *AutomationReceiverCaller) GetExpectedAuthor(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
 	err := _AutomationReceiver.contract.Call(opts, &out, "getExpectedAuthor")
@@ -303,6 +355,50 @@ func (_AutomationReceiver *AutomationReceiverCallerSession) Owner() (common.Addr
 	return _AutomationReceiver.Contract.Owner(&_AutomationReceiver.CallOpts)
 }
 
+func (_AutomationReceiver *AutomationReceiverCaller) Paused(opts *bind.CallOpts) (bool, error) {
+	var out []interface{}
+	err := _AutomationReceiver.contract.Call(opts, &out, "paused")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+func (_AutomationReceiver *AutomationReceiverSession) Paused() (bool, error) {
+	return _AutomationReceiver.Contract.Paused(&_AutomationReceiver.CallOpts)
+}
+
+func (_AutomationReceiver *AutomationReceiverCallerSession) Paused() (bool, error) {
+	return _AutomationReceiver.Contract.Paused(&_AutomationReceiver.CallOpts)
+}
+
+func (_AutomationReceiver *AutomationReceiverCaller) RetryableWhilePaused(opts *bind.CallOpts) (bool, error) {
+	var out []interface{}
+	err := _AutomationReceiver.contract.Call(opts, &out, "retryableWhilePaused")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+func (_AutomationReceiver *AutomationReceiverSession) RetryableWhilePaused() (bool, error) {
+	return _AutomationReceiver.Contract.RetryableWhilePaused(&_AutomationReceiver.CallOpts)
+}
+
+func (_AutomationReceiver *AutomationReceiverCallerSession) RetryableWhilePaused() (bool, error) {
+	return _AutomationReceiver.Contract.RetryableWhilePaused(&_AutomationReceiver.CallOpts)
+}
+
 func (_AutomationReceiver *AutomationReceiverCaller) SupportsInterface(opts *bind.CallOpts, interfaceId [4]byte) (bool, error) {
 	var out []interface{}
 	err := _AutomationReceiver.contract.Call(opts, &out, "supportsInterface", interfaceId)
@@ -325,28 +421,6 @@ func (_AutomationReceiver *AutomationReceiverCallerSession) SupportsInterface(in
 	return _AutomationReceiver.Contract.SupportsInterface(&_AutomationReceiver.CallOpts, interfaceId)
 }
 
-func (_AutomationReceiver *AutomationReceiverCaller) TypeAndVersion(opts *bind.CallOpts) (string, error) {
-	var out []interface{}
-	err := _AutomationReceiver.contract.Call(opts, &out, "typeAndVersion")
-
-	if err != nil {
-		return *new(string), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(string)).(*string)
-
-	return out0, err
-
-}
-
-func (_AutomationReceiver *AutomationReceiverSession) TypeAndVersion() (string, error) {
-	return _AutomationReceiver.Contract.TypeAndVersion(&_AutomationReceiver.CallOpts)
-}
-
-func (_AutomationReceiver *AutomationReceiverCallerSession) TypeAndVersion() (string, error) {
-	return _AutomationReceiver.Contract.TypeAndVersion(&_AutomationReceiver.CallOpts)
-}
-
 func (_AutomationReceiver *AutomationReceiverTransactor) OnReport(opts *bind.TransactOpts, metadata []byte, report []byte) (*types.Transaction, error) {
 	return _AutomationReceiver.contract.Transact(opts, "onReport", metadata, report)
 }
@@ -357,6 +431,18 @@ func (_AutomationReceiver *AutomationReceiverSession) OnReport(metadata []byte, 
 
 func (_AutomationReceiver *AutomationReceiverTransactorSession) OnReport(metadata []byte, report []byte) (*types.Transaction, error) {
 	return _AutomationReceiver.Contract.OnReport(&_AutomationReceiver.TransactOpts, metadata, report)
+}
+
+func (_AutomationReceiver *AutomationReceiverTransactor) Pause(opts *bind.TransactOpts, retryable bool) (*types.Transaction, error) {
+	return _AutomationReceiver.contract.Transact(opts, "pause", retryable)
+}
+
+func (_AutomationReceiver *AutomationReceiverSession) Pause(retryable bool) (*types.Transaction, error) {
+	return _AutomationReceiver.Contract.Pause(&_AutomationReceiver.TransactOpts, retryable)
+}
+
+func (_AutomationReceiver *AutomationReceiverTransactorSession) Pause(retryable bool) (*types.Transaction, error) {
+	return _AutomationReceiver.Contract.Pause(&_AutomationReceiver.TransactOpts, retryable)
 }
 
 func (_AutomationReceiver *AutomationReceiverTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
@@ -371,6 +457,18 @@ func (_AutomationReceiver *AutomationReceiverTransactorSession) RenounceOwnershi
 	return _AutomationReceiver.Contract.RenounceOwnership(&_AutomationReceiver.TransactOpts)
 }
 
+func (_AutomationReceiver *AutomationReceiverTransactor) SetBlockNumberCheck(opts *bind.TransactOpts, target common.Address, selector [4]byte, enabled bool, initialBlockNumber *big.Int) (*types.Transaction, error) {
+	return _AutomationReceiver.contract.Transact(opts, "setBlockNumberCheck", target, selector, enabled, initialBlockNumber)
+}
+
+func (_AutomationReceiver *AutomationReceiverSession) SetBlockNumberCheck(target common.Address, selector [4]byte, enabled bool, initialBlockNumber *big.Int) (*types.Transaction, error) {
+	return _AutomationReceiver.Contract.SetBlockNumberCheck(&_AutomationReceiver.TransactOpts, target, selector, enabled, initialBlockNumber)
+}
+
+func (_AutomationReceiver *AutomationReceiverTransactorSession) SetBlockNumberCheck(target common.Address, selector [4]byte, enabled bool, initialBlockNumber *big.Int) (*types.Transaction, error) {
+	return _AutomationReceiver.Contract.SetBlockNumberCheck(&_AutomationReceiver.TransactOpts, target, selector, enabled, initialBlockNumber)
+}
+
 func (_AutomationReceiver *AutomationReceiverTransactor) SetCallAllowed(opts *bind.TransactOpts, target common.Address, selector [4]byte, allowed bool) (*types.Transaction, error) {
 	return _AutomationReceiver.contract.Transact(opts, "setCallAllowed", target, selector, allowed)
 }
@@ -381,6 +479,18 @@ func (_AutomationReceiver *AutomationReceiverSession) SetCallAllowed(target comm
 
 func (_AutomationReceiver *AutomationReceiverTransactorSession) SetCallAllowed(target common.Address, selector [4]byte, allowed bool) (*types.Transaction, error) {
 	return _AutomationReceiver.Contract.SetCallAllowed(&_AutomationReceiver.TransactOpts, target, selector, allowed)
+}
+
+func (_AutomationReceiver *AutomationReceiverTransactor) SetConsumerGasLimit(opts *bind.TransactOpts, target common.Address, selector [4]byte, gasLimit *big.Int) (*types.Transaction, error) {
+	return _AutomationReceiver.contract.Transact(opts, "setConsumerGasLimit", target, selector, gasLimit)
+}
+
+func (_AutomationReceiver *AutomationReceiverSession) SetConsumerGasLimit(target common.Address, selector [4]byte, gasLimit *big.Int) (*types.Transaction, error) {
+	return _AutomationReceiver.Contract.SetConsumerGasLimit(&_AutomationReceiver.TransactOpts, target, selector, gasLimit)
+}
+
+func (_AutomationReceiver *AutomationReceiverTransactorSession) SetConsumerGasLimit(target common.Address, selector [4]byte, gasLimit *big.Int) (*types.Transaction, error) {
+	return _AutomationReceiver.Contract.SetConsumerGasLimit(&_AutomationReceiver.TransactOpts, target, selector, gasLimit)
 }
 
 func (_AutomationReceiver *AutomationReceiverTransactor) SetExpectedAuthor(opts *bind.TransactOpts, _author common.Address) (*types.Transaction, error) {
@@ -441,6 +551,156 @@ func (_AutomationReceiver *AutomationReceiverSession) TransferOwnership(newOwner
 
 func (_AutomationReceiver *AutomationReceiverTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _AutomationReceiver.Contract.TransferOwnership(&_AutomationReceiver.TransactOpts, newOwner)
+}
+
+func (_AutomationReceiver *AutomationReceiverTransactor) Unpause(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _AutomationReceiver.contract.Transact(opts, "unpause")
+}
+
+func (_AutomationReceiver *AutomationReceiverSession) Unpause() (*types.Transaction, error) {
+	return _AutomationReceiver.Contract.Unpause(&_AutomationReceiver.TransactOpts)
+}
+
+func (_AutomationReceiver *AutomationReceiverTransactorSession) Unpause() (*types.Transaction, error) {
+	return _AutomationReceiver.Contract.Unpause(&_AutomationReceiver.TransactOpts)
+}
+
+type AutomationReceiverBlockNumberCheckSetIterator struct {
+	Event *AutomationReceiverBlockNumberCheckSet
+
+	contract *bind.BoundContract
+	event    string
+
+	logs chan types.Log
+	sub  ethereum.Subscription
+	done bool
+	fail error
+}
+
+func (it *AutomationReceiverBlockNumberCheckSetIterator) Next() bool {
+
+	if it.fail != nil {
+		return false
+	}
+
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AutomationReceiverBlockNumberCheckSet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+
+	select {
+	case log := <-it.logs:
+		it.Event = new(AutomationReceiverBlockNumberCheckSet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+func (it *AutomationReceiverBlockNumberCheckSetIterator) Error() error {
+	return it.fail
+}
+
+func (it *AutomationReceiverBlockNumberCheckSetIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+type AutomationReceiverBlockNumberCheckSet struct {
+	Target             common.Address
+	Selector           [4]byte
+	Enabled            bool
+	InitialBlockNumber *big.Int
+	Raw                types.Log
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) FilterBlockNumberCheckSet(opts *bind.FilterOpts, target []common.Address, selector [][4]byte) (*AutomationReceiverBlockNumberCheckSetIterator, error) {
+
+	var targetRule []interface{}
+	for _, targetItem := range target {
+		targetRule = append(targetRule, targetItem)
+	}
+	var selectorRule []interface{}
+	for _, selectorItem := range selector {
+		selectorRule = append(selectorRule, selectorItem)
+	}
+
+	logs, sub, err := _AutomationReceiver.contract.FilterLogs(opts, "BlockNumberCheckSet", targetRule, selectorRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AutomationReceiverBlockNumberCheckSetIterator{contract: _AutomationReceiver.contract, event: "BlockNumberCheckSet", logs: logs, sub: sub}, nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) WatchBlockNumberCheckSet(opts *bind.WatchOpts, sink chan<- *AutomationReceiverBlockNumberCheckSet, target []common.Address, selector [][4]byte) (event.Subscription, error) {
+
+	var targetRule []interface{}
+	for _, targetItem := range target {
+		targetRule = append(targetRule, targetItem)
+	}
+	var selectorRule []interface{}
+	for _, selectorItem := range selector {
+		selectorRule = append(selectorRule, selectorItem)
+	}
+
+	logs, sub, err := _AutomationReceiver.contract.WatchLogs(opts, "BlockNumberCheckSet", targetRule, selectorRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+
+				event := new(AutomationReceiverBlockNumberCheckSet)
+				if err := _AutomationReceiver.contract.UnpackLog(event, "BlockNumberCheckSet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) ParseBlockNumberCheckSet(log types.Log) (*AutomationReceiverBlockNumberCheckSet, error) {
+	event := new(AutomationReceiverBlockNumberCheckSet)
+	if err := _AutomationReceiver.contract.UnpackLog(event, "BlockNumberCheckSet", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
 
 type AutomationReceiverCallAllowedSetIterator struct {
@@ -848,6 +1108,144 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchCallFailed(opts *bin
 func (_AutomationReceiver *AutomationReceiverFilterer) ParseCallFailed(log types.Log) (*AutomationReceiverCallFailed, error) {
 	event := new(AutomationReceiverCallFailed)
 	if err := _AutomationReceiver.contract.UnpackLog(event, "CallFailed", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+type AutomationReceiverConsumerGasLimitSetIterator struct {
+	Event *AutomationReceiverConsumerGasLimitSet
+
+	contract *bind.BoundContract
+	event    string
+
+	logs chan types.Log
+	sub  ethereum.Subscription
+	done bool
+	fail error
+}
+
+func (it *AutomationReceiverConsumerGasLimitSetIterator) Next() bool {
+
+	if it.fail != nil {
+		return false
+	}
+
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AutomationReceiverConsumerGasLimitSet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+
+	select {
+	case log := <-it.logs:
+		it.Event = new(AutomationReceiverConsumerGasLimitSet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+func (it *AutomationReceiverConsumerGasLimitSetIterator) Error() error {
+	return it.fail
+}
+
+func (it *AutomationReceiverConsumerGasLimitSetIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+type AutomationReceiverConsumerGasLimitSet struct {
+	Target        common.Address
+	Selector      [4]byte
+	PreviousLimit *big.Int
+	NewLimit      *big.Int
+	Raw           types.Log
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) FilterConsumerGasLimitSet(opts *bind.FilterOpts, target []common.Address, selector [][4]byte) (*AutomationReceiverConsumerGasLimitSetIterator, error) {
+
+	var targetRule []interface{}
+	for _, targetItem := range target {
+		targetRule = append(targetRule, targetItem)
+	}
+	var selectorRule []interface{}
+	for _, selectorItem := range selector {
+		selectorRule = append(selectorRule, selectorItem)
+	}
+
+	logs, sub, err := _AutomationReceiver.contract.FilterLogs(opts, "ConsumerGasLimitSet", targetRule, selectorRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AutomationReceiverConsumerGasLimitSetIterator{contract: _AutomationReceiver.contract, event: "ConsumerGasLimitSet", logs: logs, sub: sub}, nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) WatchConsumerGasLimitSet(opts *bind.WatchOpts, sink chan<- *AutomationReceiverConsumerGasLimitSet, target []common.Address, selector [][4]byte) (event.Subscription, error) {
+
+	var targetRule []interface{}
+	for _, targetItem := range target {
+		targetRule = append(targetRule, targetItem)
+	}
+	var selectorRule []interface{}
+	for _, selectorItem := range selector {
+		selectorRule = append(selectorRule, selectorItem)
+	}
+
+	logs, sub, err := _AutomationReceiver.contract.WatchLogs(opts, "ConsumerGasLimitSet", targetRule, selectorRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+
+				event := new(AutomationReceiverConsumerGasLimitSet)
+				if err := _AutomationReceiver.contract.UnpackLog(event, "ConsumerGasLimitSet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) ParseConsumerGasLimitSet(log types.Log) (*AutomationReceiverConsumerGasLimitSet, error) {
+	event := new(AutomationReceiverConsumerGasLimitSet)
+	if err := _AutomationReceiver.contract.UnpackLog(event, "ConsumerGasLimitSet", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -1534,6 +1932,239 @@ func (_AutomationReceiver *AutomationReceiverFilterer) ParseOwnershipTransferred
 	return event, nil
 }
 
+type AutomationReceiverPausedIterator struct {
+	Event *AutomationReceiverPaused
+
+	contract *bind.BoundContract
+	event    string
+
+	logs chan types.Log
+	sub  ethereum.Subscription
+	done bool
+	fail error
+}
+
+func (it *AutomationReceiverPausedIterator) Next() bool {
+
+	if it.fail != nil {
+		return false
+	}
+
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AutomationReceiverPaused)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+
+	select {
+	case log := <-it.logs:
+		it.Event = new(AutomationReceiverPaused)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+func (it *AutomationReceiverPausedIterator) Error() error {
+	return it.fail
+}
+
+func (it *AutomationReceiverPausedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+type AutomationReceiverPaused struct {
+	Account common.Address
+	Raw     types.Log
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) FilterPaused(opts *bind.FilterOpts) (*AutomationReceiverPausedIterator, error) {
+
+	logs, sub, err := _AutomationReceiver.contract.FilterLogs(opts, "Paused")
+	if err != nil {
+		return nil, err
+	}
+	return &AutomationReceiverPausedIterator{contract: _AutomationReceiver.contract, event: "Paused", logs: logs, sub: sub}, nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) WatchPaused(opts *bind.WatchOpts, sink chan<- *AutomationReceiverPaused) (event.Subscription, error) {
+
+	logs, sub, err := _AutomationReceiver.contract.WatchLogs(opts, "Paused")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+
+				event := new(AutomationReceiverPaused)
+				if err := _AutomationReceiver.contract.UnpackLog(event, "Paused", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) ParsePaused(log types.Log) (*AutomationReceiverPaused, error) {
+	event := new(AutomationReceiverPaused)
+	if err := _AutomationReceiver.contract.UnpackLog(event, "Paused", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+type AutomationReceiverReportSkippedWhilePausedIterator struct {
+	Event *AutomationReceiverReportSkippedWhilePaused
+
+	contract *bind.BoundContract
+	event    string
+
+	logs chan types.Log
+	sub  ethereum.Subscription
+	done bool
+	fail error
+}
+
+func (it *AutomationReceiverReportSkippedWhilePausedIterator) Next() bool {
+
+	if it.fail != nil {
+		return false
+	}
+
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AutomationReceiverReportSkippedWhilePaused)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+
+	select {
+	case log := <-it.logs:
+		it.Event = new(AutomationReceiverReportSkippedWhilePaused)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+func (it *AutomationReceiverReportSkippedWhilePausedIterator) Error() error {
+	return it.fail
+}
+
+func (it *AutomationReceiverReportSkippedWhilePausedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+type AutomationReceiverReportSkippedWhilePaused struct {
+	Raw types.Log
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) FilterReportSkippedWhilePaused(opts *bind.FilterOpts) (*AutomationReceiverReportSkippedWhilePausedIterator, error) {
+
+	logs, sub, err := _AutomationReceiver.contract.FilterLogs(opts, "ReportSkippedWhilePaused")
+	if err != nil {
+		return nil, err
+	}
+	return &AutomationReceiverReportSkippedWhilePausedIterator{contract: _AutomationReceiver.contract, event: "ReportSkippedWhilePaused", logs: logs, sub: sub}, nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) WatchReportSkippedWhilePaused(opts *bind.WatchOpts, sink chan<- *AutomationReceiverReportSkippedWhilePaused) (event.Subscription, error) {
+
+	logs, sub, err := _AutomationReceiver.contract.WatchLogs(opts, "ReportSkippedWhilePaused")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+
+				event := new(AutomationReceiverReportSkippedWhilePaused)
+				if err := _AutomationReceiver.contract.UnpackLog(event, "ReportSkippedWhilePaused", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) ParseReportSkippedWhilePaused(log types.Log) (*AutomationReceiverReportSkippedWhilePaused, error) {
+	event := new(AutomationReceiverReportSkippedWhilePaused)
+	if err := _AutomationReceiver.contract.UnpackLog(event, "ReportSkippedWhilePaused", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 type AutomationReceiverSecurityWarningIterator struct {
 	Event *AutomationReceiverSecurityWarning
 
@@ -1651,14 +2282,278 @@ func (_AutomationReceiver *AutomationReceiverFilterer) ParseSecurityWarning(log 
 	return event, nil
 }
 
+type AutomationReceiverStaleReportSkippedIterator struct {
+	Event *AutomationReceiverStaleReportSkipped
+
+	contract *bind.BoundContract
+	event    string
+
+	logs chan types.Log
+	sub  ethereum.Subscription
+	done bool
+	fail error
+}
+
+func (it *AutomationReceiverStaleReportSkippedIterator) Next() bool {
+
+	if it.fail != nil {
+		return false
+	}
+
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AutomationReceiverStaleReportSkipped)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+
+	select {
+	case log := <-it.logs:
+		it.Event = new(AutomationReceiverStaleReportSkipped)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+func (it *AutomationReceiverStaleReportSkippedIterator) Error() error {
+	return it.fail
+}
+
+func (it *AutomationReceiverStaleReportSkippedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+type AutomationReceiverStaleReportSkipped struct {
+	Target            common.Address
+	Selector          [4]byte
+	ReportBlockNumber *big.Int
+	LastReportBlock   *big.Int
+	Raw               types.Log
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) FilterStaleReportSkipped(opts *bind.FilterOpts, target []common.Address, selector [][4]byte) (*AutomationReceiverStaleReportSkippedIterator, error) {
+
+	var targetRule []interface{}
+	for _, targetItem := range target {
+		targetRule = append(targetRule, targetItem)
+	}
+	var selectorRule []interface{}
+	for _, selectorItem := range selector {
+		selectorRule = append(selectorRule, selectorItem)
+	}
+
+	logs, sub, err := _AutomationReceiver.contract.FilterLogs(opts, "StaleReportSkipped", targetRule, selectorRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AutomationReceiverStaleReportSkippedIterator{contract: _AutomationReceiver.contract, event: "StaleReportSkipped", logs: logs, sub: sub}, nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) WatchStaleReportSkipped(opts *bind.WatchOpts, sink chan<- *AutomationReceiverStaleReportSkipped, target []common.Address, selector [][4]byte) (event.Subscription, error) {
+
+	var targetRule []interface{}
+	for _, targetItem := range target {
+		targetRule = append(targetRule, targetItem)
+	}
+	var selectorRule []interface{}
+	for _, selectorItem := range selector {
+		selectorRule = append(selectorRule, selectorItem)
+	}
+
+	logs, sub, err := _AutomationReceiver.contract.WatchLogs(opts, "StaleReportSkipped", targetRule, selectorRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+
+				event := new(AutomationReceiverStaleReportSkipped)
+				if err := _AutomationReceiver.contract.UnpackLog(event, "StaleReportSkipped", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) ParseStaleReportSkipped(log types.Log) (*AutomationReceiverStaleReportSkipped, error) {
+	event := new(AutomationReceiverStaleReportSkipped)
+	if err := _AutomationReceiver.contract.UnpackLog(event, "StaleReportSkipped", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+type AutomationReceiverUnpausedIterator struct {
+	Event *AutomationReceiverUnpaused
+
+	contract *bind.BoundContract
+	event    string
+
+	logs chan types.Log
+	sub  ethereum.Subscription
+	done bool
+	fail error
+}
+
+func (it *AutomationReceiverUnpausedIterator) Next() bool {
+
+	if it.fail != nil {
+		return false
+	}
+
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AutomationReceiverUnpaused)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+
+	select {
+	case log := <-it.logs:
+		it.Event = new(AutomationReceiverUnpaused)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+func (it *AutomationReceiverUnpausedIterator) Error() error {
+	return it.fail
+}
+
+func (it *AutomationReceiverUnpausedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+type AutomationReceiverUnpaused struct {
+	Account common.Address
+	Raw     types.Log
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) FilterUnpaused(opts *bind.FilterOpts) (*AutomationReceiverUnpausedIterator, error) {
+
+	logs, sub, err := _AutomationReceiver.contract.FilterLogs(opts, "Unpaused")
+	if err != nil {
+		return nil, err
+	}
+	return &AutomationReceiverUnpausedIterator{contract: _AutomationReceiver.contract, event: "Unpaused", logs: logs, sub: sub}, nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) WatchUnpaused(opts *bind.WatchOpts, sink chan<- *AutomationReceiverUnpaused) (event.Subscription, error) {
+
+	logs, sub, err := _AutomationReceiver.contract.WatchLogs(opts, "Unpaused")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+
+				event := new(AutomationReceiverUnpaused)
+				if err := _AutomationReceiver.contract.UnpackLog(event, "Unpaused", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+func (_AutomationReceiver *AutomationReceiverFilterer) ParseUnpaused(log types.Log) (*AutomationReceiverUnpaused, error) {
+	event := new(AutomationReceiverUnpaused)
+	if err := _AutomationReceiver.contract.UnpackLog(event, "Unpaused", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+type GetBlockNumberCheck struct {
+	Enabled         bool
+	LastReportBlock *big.Int
+}
+
 func (_AutomationReceiver *AutomationReceiver) ParseLog(log types.Log) (generated.AbigenLog, error) {
 	switch log.Topics[0] {
+	case _AutomationReceiver.abi.Events["BlockNumberCheckSet"].ID:
+		return _AutomationReceiver.ParseBlockNumberCheckSet(log)
 	case _AutomationReceiver.abi.Events["CallAllowedSet"].ID:
 		return _AutomationReceiver.ParseCallAllowedSet(log)
 	case _AutomationReceiver.abi.Events["CallExecuted"].ID:
 		return _AutomationReceiver.ParseCallExecuted(log)
 	case _AutomationReceiver.abi.Events["CallFailed"].ID:
 		return _AutomationReceiver.ParseCallFailed(log)
+	case _AutomationReceiver.abi.Events["ConsumerGasLimitSet"].ID:
+		return _AutomationReceiver.ParseConsumerGasLimitSet(log)
 	case _AutomationReceiver.abi.Events["ExpectedAuthorUpdated"].ID:
 		return _AutomationReceiver.ParseExpectedAuthorUpdated(log)
 	case _AutomationReceiver.abi.Events["ExpectedWorkflowIdUpdated"].ID:
@@ -1669,12 +2564,24 @@ func (_AutomationReceiver *AutomationReceiver) ParseLog(log types.Log) (generate
 		return _AutomationReceiver.ParseForwarderAddressUpdated(log)
 	case _AutomationReceiver.abi.Events["OwnershipTransferred"].ID:
 		return _AutomationReceiver.ParseOwnershipTransferred(log)
+	case _AutomationReceiver.abi.Events["Paused"].ID:
+		return _AutomationReceiver.ParsePaused(log)
+	case _AutomationReceiver.abi.Events["ReportSkippedWhilePaused"].ID:
+		return _AutomationReceiver.ParseReportSkippedWhilePaused(log)
 	case _AutomationReceiver.abi.Events["SecurityWarning"].ID:
 		return _AutomationReceiver.ParseSecurityWarning(log)
+	case _AutomationReceiver.abi.Events["StaleReportSkipped"].ID:
+		return _AutomationReceiver.ParseStaleReportSkipped(log)
+	case _AutomationReceiver.abi.Events["Unpaused"].ID:
+		return _AutomationReceiver.ParseUnpaused(log)
 
 	default:
 		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
 	}
+}
+
+func (AutomationReceiverBlockNumberCheckSet) Topic() common.Hash {
+	return common.HexToHash("0xf19a6052943cc4c32e1644d475a7b4e6f517bcae63159220028f5de68d6d0364")
 }
 
 func (AutomationReceiverCallAllowedSet) Topic() common.Hash {
@@ -1687,6 +2594,10 @@ func (AutomationReceiverCallExecuted) Topic() common.Hash {
 
 func (AutomationReceiverCallFailed) Topic() common.Hash {
 	return common.HexToHash("0xefa88af289a36b936ccacf9bd9eaaa185775cd54ae263973d3579c01111593b6")
+}
+
+func (AutomationReceiverConsumerGasLimitSet) Topic() common.Hash {
+	return common.HexToHash("0xf3f16b36d6fb2a97e5e66d28e758a4d457e80197e1d455f692a96be32091fa3a")
 }
 
 func (AutomationReceiverExpectedAuthorUpdated) Topic() common.Hash {
@@ -1709,8 +2620,24 @@ func (AutomationReceiverOwnershipTransferred) Topic() common.Hash {
 	return common.HexToHash("0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0")
 }
 
+func (AutomationReceiverPaused) Topic() common.Hash {
+	return common.HexToHash("0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258")
+}
+
+func (AutomationReceiverReportSkippedWhilePaused) Topic() common.Hash {
+	return common.HexToHash("0xf37c389ae9f5e13dbbef9f62b1ad0893e89c865ee834b2e221d11ebcf3cacd51")
+}
+
 func (AutomationReceiverSecurityWarning) Topic() common.Hash {
 	return common.HexToHash("0x704da7db165c79c1e33d542c079333bbde970a733032d2f95fec8fb7d770cbf7")
+}
+
+func (AutomationReceiverStaleReportSkipped) Topic() common.Hash {
+	return common.HexToHash("0x96e22437f0b9d1dfe909221668f6ad9813c1128b60a7b4b3dee74e4248df834a")
+}
+
+func (AutomationReceiverUnpaused) Topic() common.Hash {
+	return common.HexToHash("0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa")
 }
 
 func (_AutomationReceiver *AutomationReceiver) Address() common.Address {
@@ -1718,6 +2645,12 @@ func (_AutomationReceiver *AutomationReceiver) Address() common.Address {
 }
 
 type AutomationReceiverInterface interface {
+	GetBlockNumberCheck(opts *bind.CallOpts, target common.Address, selector [4]byte) (GetBlockNumberCheck,
+
+		error)
+
+	GetConsumerGasLimit(opts *bind.CallOpts, target common.Address, selector [4]byte) (*big.Int, error)
+
 	GetExpectedAuthor(opts *bind.CallOpts) (common.Address, error)
 
 	GetExpectedWorkflowId(opts *bind.CallOpts) ([32]byte, error)
@@ -1730,15 +2663,23 @@ type AutomationReceiverInterface interface {
 
 	Owner(opts *bind.CallOpts) (common.Address, error)
 
-	SupportsInterface(opts *bind.CallOpts, interfaceId [4]byte) (bool, error)
+	Paused(opts *bind.CallOpts) (bool, error)
 
-	TypeAndVersion(opts *bind.CallOpts) (string, error)
+	RetryableWhilePaused(opts *bind.CallOpts) (bool, error)
+
+	SupportsInterface(opts *bind.CallOpts, interfaceId [4]byte) (bool, error)
 
 	OnReport(opts *bind.TransactOpts, metadata []byte, report []byte) (*types.Transaction, error)
 
+	Pause(opts *bind.TransactOpts, retryable bool) (*types.Transaction, error)
+
 	RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error)
 
+	SetBlockNumberCheck(opts *bind.TransactOpts, target common.Address, selector [4]byte, enabled bool, initialBlockNumber *big.Int) (*types.Transaction, error)
+
 	SetCallAllowed(opts *bind.TransactOpts, target common.Address, selector [4]byte, allowed bool) (*types.Transaction, error)
+
+	SetConsumerGasLimit(opts *bind.TransactOpts, target common.Address, selector [4]byte, gasLimit *big.Int) (*types.Transaction, error)
 
 	SetExpectedAuthor(opts *bind.TransactOpts, _author common.Address) (*types.Transaction, error)
 
@@ -1749,6 +2690,14 @@ type AutomationReceiverInterface interface {
 	SetForwarderAddress(opts *bind.TransactOpts, _forwarder common.Address) (*types.Transaction, error)
 
 	TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error)
+
+	Unpause(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	FilterBlockNumberCheckSet(opts *bind.FilterOpts, target []common.Address, selector [][4]byte) (*AutomationReceiverBlockNumberCheckSetIterator, error)
+
+	WatchBlockNumberCheckSet(opts *bind.WatchOpts, sink chan<- *AutomationReceiverBlockNumberCheckSet, target []common.Address, selector [][4]byte) (event.Subscription, error)
+
+	ParseBlockNumberCheckSet(log types.Log) (*AutomationReceiverBlockNumberCheckSet, error)
 
 	FilterCallAllowedSet(opts *bind.FilterOpts, target []common.Address, selector [][4]byte) (*AutomationReceiverCallAllowedSetIterator, error)
 
@@ -1767,6 +2716,12 @@ type AutomationReceiverInterface interface {
 	WatchCallFailed(opts *bind.WatchOpts, sink chan<- *AutomationReceiverCallFailed, target []common.Address, selector [][4]byte) (event.Subscription, error)
 
 	ParseCallFailed(log types.Log) (*AutomationReceiverCallFailed, error)
+
+	FilterConsumerGasLimitSet(opts *bind.FilterOpts, target []common.Address, selector [][4]byte) (*AutomationReceiverConsumerGasLimitSetIterator, error)
+
+	WatchConsumerGasLimitSet(opts *bind.WatchOpts, sink chan<- *AutomationReceiverConsumerGasLimitSet, target []common.Address, selector [][4]byte) (event.Subscription, error)
+
+	ParseConsumerGasLimitSet(log types.Log) (*AutomationReceiverConsumerGasLimitSet, error)
 
 	FilterExpectedAuthorUpdated(opts *bind.FilterOpts, previousAuthor []common.Address, newAuthor []common.Address) (*AutomationReceiverExpectedAuthorUpdatedIterator, error)
 
@@ -1798,11 +2753,35 @@ type AutomationReceiverInterface interface {
 
 	ParseOwnershipTransferred(log types.Log) (*AutomationReceiverOwnershipTransferred, error)
 
+	FilterPaused(opts *bind.FilterOpts) (*AutomationReceiverPausedIterator, error)
+
+	WatchPaused(opts *bind.WatchOpts, sink chan<- *AutomationReceiverPaused) (event.Subscription, error)
+
+	ParsePaused(log types.Log) (*AutomationReceiverPaused, error)
+
+	FilterReportSkippedWhilePaused(opts *bind.FilterOpts) (*AutomationReceiverReportSkippedWhilePausedIterator, error)
+
+	WatchReportSkippedWhilePaused(opts *bind.WatchOpts, sink chan<- *AutomationReceiverReportSkippedWhilePaused) (event.Subscription, error)
+
+	ParseReportSkippedWhilePaused(log types.Log) (*AutomationReceiverReportSkippedWhilePaused, error)
+
 	FilterSecurityWarning(opts *bind.FilterOpts) (*AutomationReceiverSecurityWarningIterator, error)
 
 	WatchSecurityWarning(opts *bind.WatchOpts, sink chan<- *AutomationReceiverSecurityWarning) (event.Subscription, error)
 
 	ParseSecurityWarning(log types.Log) (*AutomationReceiverSecurityWarning, error)
+
+	FilterStaleReportSkipped(opts *bind.FilterOpts, target []common.Address, selector [][4]byte) (*AutomationReceiverStaleReportSkippedIterator, error)
+
+	WatchStaleReportSkipped(opts *bind.WatchOpts, sink chan<- *AutomationReceiverStaleReportSkipped, target []common.Address, selector [][4]byte) (event.Subscription, error)
+
+	ParseStaleReportSkipped(log types.Log) (*AutomationReceiverStaleReportSkipped, error)
+
+	FilterUnpaused(opts *bind.FilterOpts) (*AutomationReceiverUnpausedIterator, error)
+
+	WatchUnpaused(opts *bind.WatchOpts, sink chan<- *AutomationReceiverUnpaused) (event.Subscription, error)
+
+	ParseUnpaused(log types.Log) (*AutomationReceiverUnpaused, error)
 
 	ParseLog(log types.Log) (generated.AbigenLog, error)
 
