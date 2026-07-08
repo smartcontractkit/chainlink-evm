@@ -155,6 +155,13 @@ ReaperThreshold = '168h' # Default
 # ResendAfterThreshold controls how long to wait before re-broadcasting a transaction that has not yet been confirmed.
 ResendAfterThreshold = '1m' # Default
 
+[Transactions.HederaBroadcastValidation]
+# SequencePollTimeout is the total time to poll the mined nonce after a successful Hedera send.
+# Unset keeps legacy single-check behavior. When set, TXM polls until the nonce advances or the timeout elapses.
+SequencePollTimeout = '30s' # Example (CCIP)
+# SequencePollInterval is the delay between mined nonce checks while polling. Defaults to 2s in TXM when unset.
+SequencePollInterval = '2s' # Example
+
 [Transactions.AutoPurge]
 # Enabled enables or disables automatically purging transactions that have been idenitified as terminally stuck (will never be included on-chain). This feature is only expected to be used by ZK chains.
 Enabled = false # Default

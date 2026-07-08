@@ -116,6 +116,8 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
+	unknown.Transactions.HederaBroadcastValidation.SequencePollTimeout = new(config.Duration)
+	unknown.Transactions.HederaBroadcastValidation.SequencePollInterval = new(config.Duration)
 	unknown.GasEstimator.BlockHistory.EIP1559FeeCapBufferBlocks = ptr[uint16](10)
 	unknown.GasEstimator.SenderAddress = asEIP55Address(t, "0xae4E781a6218A8031764928E88d457937A954fC3")
 	oracleType := DAOracleOPStack
@@ -216,6 +218,9 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
 		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
 		docDefaults.Transactions.TransactionManagerV2.FeeBoost = nil
+
+		// HederaBroadcastValidation configs are optional and only documented as examples
+		docDefaults.Transactions.HederaBroadcastValidation = HederaBroadcastValidationConfig{}
 
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
@@ -341,6 +346,10 @@ var fullConfig = EVMConfig{
 				Threshold:       ptr[uint32](42),
 				MinAttempts:     ptr[uint32](13),
 				DetectionApiUrl: config.MustParseURL("http://example.net"),
+			},
+			HederaBroadcastValidation: HederaBroadcastValidationConfig{
+				SequencePollTimeout:  config.MustNewDuration(30 * time.Second),
+				SequencePollInterval: config.MustNewDuration(2 * time.Second),
 			},
 			TransactionManagerV2: TransactionManagerV2Config{
 				Enabled:                       ptr(false),

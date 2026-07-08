@@ -101,6 +101,22 @@ func (t *transactionsConfig) AutoPurge() AutoPurgeConfig {
 	return &autoPurgeConfig{c: t.c.AutoPurge}
 }
 
+func (t *transactionsConfig) HederaSequencePollTimeout() *time.Duration {
+	if t.c.HederaBroadcastValidation.SequencePollTimeout == nil {
+		return nil
+	}
+	d := t.c.HederaBroadcastValidation.SequencePollTimeout.Duration()
+	return &d
+}
+
+func (t *transactionsConfig) HederaSequencePollInterval() *time.Duration {
+	if t.c.HederaBroadcastValidation.SequencePollInterval == nil {
+		return nil
+	}
+	d := t.c.HederaBroadcastValidation.SequencePollInterval.Duration()
+	return &d
+}
+
 type autoPurgeConfig struct {
 	c toml.AutoPurgeConfig
 }

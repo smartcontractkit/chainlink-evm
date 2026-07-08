@@ -30,6 +30,11 @@ EstimateLimit = true
 # Accounting for Node syncs & avoid re-sending txns before fetching the receipt, setting to 2m
 ResendAfterThreshold = '2m'
 
+# Optional: wait for mined nonce to advance after a successful send before gas-bumping.
+# Omit to keep legacy single-check behavior. CCIP example: 30s timeout, 2s poll interval.
+# [Transactions.HederaBroadcastValidation]
+# SequencePollTimeout = '30s'
+# SequencePollInterval = '2s'
 
 [NodePool]
 SyncThreshold = 10

@@ -171,6 +171,9 @@ func (t *transactionsConfig) ReaperThreshold() time.Duration       { return t.e.
 func (t *transactionsConfig) ResendAfterThreshold() time.Duration  { return t.e.ResendAfterThreshold }
 func (t *transactionsConfig) AutoPurge() evmconfig.AutoPurgeConfig { return t.autoPurge }
 
+func (t *transactionsConfig) HederaSequencePollTimeout() *time.Duration  { return nil }
+func (t *transactionsConfig) HederaSequencePollInterval() *time.Duration { return nil }
+
 type autoPurgeConfig struct {
 	evmconfig.AutoPurgeConfig
 }

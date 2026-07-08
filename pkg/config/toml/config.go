@@ -532,6 +532,9 @@ func (c *Transactions) ValidateConfig() (err error) {
 			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "AutoPurge.Threshold", Value: 0, Msg: "cannot be 0 if auto-purge feature is enabled"})
 		}
 	}
+	if err2 := c.HederaBroadcastValidation.ValidateConfig(); err2 != nil {
+		err = multierr.Append(err, err2)
+	}
 	return
 }
 
@@ -545,8 +548,9 @@ type Transactions struct {
 	ResendAfterThreshold *commonconfig.Duration
 	ConfirmationTimeout  *commonconfig.Duration
 
-	AutoPurge            AutoPurgeConfig            `toml:",omitempty"`
-	TransactionManagerV2 TransactionManagerV2Config `toml:",omitempty"`
+	AutoPurge                 AutoPurgeConfig                 `toml:",omitempty"`
+	HederaBroadcastValidation HederaBroadcastValidationConfig `toml:",omitempty"`
+	TransactionManagerV2      TransactionManagerV2Config    `toml:",omitempty"`
 }
 
 func (t *Transactions) setFrom(f *Transactions) {
@@ -575,6 +579,7 @@ func (t *Transactions) setFrom(f *Transactions) {
 		t.ConfirmationTimeout = v
 	}
 	t.AutoPurge.setFrom(&f.AutoPurge)
+	t.HederaBroadcastValidation.setFrom(&f.HederaBroadcastValidation)
 	t.TransactionManagerV2.setFrom(&f.TransactionManagerV2)
 }
 
@@ -598,6 +603,35 @@ func (a *AutoPurgeConfig) setFrom(f *AutoPurgeConfig) {
 	if v := f.DetectionApiUrl; v != nil {
 		a.DetectionApiUrl = v
 	}
+}
+
+// HederaBroadcastValidationConfig controls optional post-send mined-nonce polling on Hedera.
+// Unset or zero SequencePollTimeout keeps legacy single-check behavior.
+type HederaBroadcastValidationConfig struct {
+	SequencePollTimeout  *commonconfig.Duration `toml:",omitempty"`
+	SequencePollInterval *commonconfig.Duration `toml:",omitempty"`
+}
+
+func (h *HederaBroadcastValidationConfig) setFrom(f *HederaBroadcastValidationConfig) {
+	if v := f.SequencePollTimeout; v != nil {
+		h.SequencePollTimeout = v
+	}
+	if v := f.SequencePollInterval; v != nil {
+		h.SequencePollInterval = v
+	}
+}
+
+func (h *HederaBroadcastValidationConfig) ValidateConfig() (err error) {
+	if h.SequencePollTimeout != nil && h.SequencePollTimeout.Duration() <= 0 {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "HederaBroadcastValidation.SequencePollTimeout", Value: h.SequencePollTimeout, Msg: "must be greater than zero when set"})
+	}
+	if h.SequencePollInterval != nil && h.SequencePollInterval.Duration() <= 0 {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "HederaBroadcastValidation.SequencePollInterval", Value: h.SequencePollInterval, Msg: "must be greater than zero when set"})
+	}
+	if h.SequencePollInterval != nil && (h.SequencePollTimeout == nil || h.SequencePollTimeout.Duration() <= 0) {
+		err = multierr.Append(err, commonconfig.ErrMissing{Name: "HederaBroadcastValidation.SequencePollTimeout", Msg: "must be set when SequencePollInterval is set"})
+	}
+	return
 }
 
 type TransactionManagerV2Config struct {

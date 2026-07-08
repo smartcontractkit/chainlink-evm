@@ -43,6 +43,10 @@ Threshold = 42
 MinAttempts = 13
 DetectionApiUrl = 'http://example.net'
 
+[Transactions.HederaBroadcastValidation]
+SequencePollTimeout = '30s'
+SequencePollInterval = '2s'
+
 [Transactions.TransactionManagerV2]
 Enabled = false
 BlockTime = '42s'
