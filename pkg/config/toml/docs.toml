@@ -158,7 +158,7 @@ ResendAfterThreshold = '1m' # Default
 [Transactions.HederaBroadcastValidation]
 # SequencePollTimeout is the total time to poll the mined nonce after a successful Hedera send.
 # Unset keeps legacy single-check behavior. When set, TXM polls until the nonce advances or the timeout elapses.
-SequencePollTimeout = '30s' # Example (CCIP)
+SequencePollTimeout = '30s' # Example
 # SequencePollInterval is the delay between mined nonce checks while polling. Defaults to 2s in TXM when unset.
 SequencePollInterval = '2s' # Example
 

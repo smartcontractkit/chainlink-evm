@@ -357,6 +357,27 @@ ResendAfterThreshold = '1m' # Default
 ```
 ResendAfterThreshold controls how long to wait before re-broadcasting a transaction that has not yet been confirmed.
 
+## Transactions.HederaBroadcastValidation
+```toml
+[Transactions.HederaBroadcastValidation]
+SequencePollTimeout = '30s' # Example
+SequencePollInterval = '2s' # Example
+```
+
+
+### SequencePollTimeout
+```toml
+SequencePollTimeout = '30s' # Example
+```
+SequencePollTimeout is the total time to poll the mined nonce after a successful Hedera send.
+Unset keeps legacy single-check behavior. When set, TXM polls until the nonce advances or the timeout elapses.
+
+### SequencePollInterval
+```toml
+SequencePollInterval = '2s' # Example
+```
+SequencePollInterval is the delay between mined nonce checks while polling. Defaults to 2s in TXM when unset.
+
 ## Transactions.AutoPurge
 ```toml
 [Transactions.AutoPurge]
