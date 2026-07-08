@@ -119,7 +119,7 @@ var geth = ClientErrors{
 
 // Besu
 // See: https://github.com/hyperledger/besu/blob/81f25e15f9891787829b532f2fb38c8c43fd6b2e/ethereum/api/src/main/java/org/hyperledger/besu/ethereum/api/jsonrpc/internal/response/JsonRpcError.java
-var besuFatal = regexp.MustCompile(`^(Intrinsic gas exceeds gas limit|Transaction gas limit exceeds block gas limit|Invalid signature)$`)
+var besuFatal = regexp.MustCompile(`^(Intrinsic gas exceeds gas limit|Transaction gas limit exceeds block gas limit|Invalid signature|Transaction gas limit cap exceeded)$`)
 var besu = ClientErrors{
 	NonceTooLow:                       regexp.MustCompile(`^Nonce too low$`),
 	ReplacementTransactionUnderpriced: regexp.MustCompile(`^Replacement transaction underpriced$`),
@@ -273,7 +273,7 @@ var aStar = ClientErrors{
 
 var mantle = ClientErrors{
 	InsufficientEth:                   regexp.MustCompile(`(: |^)'*insufficient funds for gas \* price \+ value`),
-	Fatal:                             regexp.MustCompile(`(: |^)'*invalid sender`),
+	Fatal:                             regexp.MustCompile(`(: |^)'*(invalid sender|intrinsic gas too low|exceeds block gas limit)`),
 	NonceTooLow:                       regexp.MustCompile(`(: |^)'*nonce too low`),
 	ReplacementTransactionUnderpriced: regexp.MustCompile(`(: |^)'*replacement transaction underpriced`),
 	TransactionAlreadyInMempool:       regexp.MustCompile(`(: |^)'*already known`),
@@ -312,6 +312,12 @@ var jovay = ClientErrors{
 	NonceTooLow: regexp.MustCompile(`TX_REPLAY_ATTACK`), // Jovay returns for nonce-too-low (already-confirmed nonce)
 }
 
+var cronos = ClientErrors{
+	NonceTooLow:                 regexp.MustCompile(`invalid nonce; got \d+, expected \d+`),
+	TransactionAlreadyInMempool: regexp.MustCompile(`tx already in mempool`),
+	ServiceUnavailable:          regexp.MustCompile(`eth_sendRawTransaction does not exist/is not available`),
+}
+
 const TerminallyStuckMsg = "transaction terminally stuck"
 
 // Tx.Error messages that are set internally so they are not chain or client specific
@@ -319,7 +325,7 @@ var internal = ClientErrors{
 	TerminallyStuck: regexp.MustCompile(TerminallyStuckMsg),
 }
 
-var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, jovay, internal}
+var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, jovay, cronos, internal}
 
 // ClientErrorRegexes returns a map of compiled regexes for each error type
 func ClientErrorRegexes(errsRegex config.ClientErrors) *ClientErrors {

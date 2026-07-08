@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -24,7 +26,88 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
+	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
+
+func TestSanitizeRPCError(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{
+			name: "https url with path",
+			err:  fmt.Errorf(`Post "https://test-cl-03.test.xyz/dOnOtLeAkAnyOfThis/doNotLeak/test/mainnet/": %w`, context.DeadlineExceeded),
+			want: `Post "[REDACTED URL]": context deadline exceeded`,
+		},
+		{
+			name: "http url with path",
+			err:  fmt.Errorf(`Post "http://secret.com/doNotLeak/": %w`, context.DeadlineExceeded),
+			want: `Post "[REDACTED URL]": context deadline exceeded`,
+		},
+		{
+			name: "ws url with path",
+			err:  fmt.Errorf(`dial "ws://secret.com/doNotLeak/": %w`, context.DeadlineExceeded),
+			want: `dial "[REDACTED URL]": context deadline exceeded`,
+		},
+		{
+			name: "wss url with path",
+			err:  fmt.Errorf(`dial "wss://secret.com/doNotLeak/": %w`, context.DeadlineExceeded),
+			want: `dial "[REDACTED URL]": context deadline exceeded`,
+		},
+		{
+			name: "https url with user info",
+			err:  fmt.Errorf(`Post "https://user:pass@secret.com/": %w`, context.DeadlineExceeded),
+			want: `Post "[REDACTED URL]": context deadline exceeded`,
+		},
+		{
+			name: "multiple urls",
+			err:  fmt.Errorf(`primary http://secret.com/doNotLeak/ fallback wss://secret.com/doNotLeak/ failed: %w`, context.DeadlineExceeded),
+			want: `primary [REDACTED URL] fallback [REDACTED URL] failed: context deadline exceeded`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sanitized := sanitizeRPCError(tt.err)
+
+			require.EqualError(t, sanitized, tt.want)
+			require.NotContains(t, sanitized.Error(), "doNotLeak")
+			require.NotContains(t, sanitized.Error(), "user:pass")
+			require.NotContains(t, sanitized.Error(), "secret.com")
+			require.ErrorIs(t, sanitized, context.DeadlineExceeded)
+		})
+	}
+}
+
+func TestRPCClient_WrapRPCClientError_TimeoutIsWrappedAndSanitized(t *testing.T) {
+	t.Parallel()
+
+	rpcClient := NewTestRPCClient(t, RPCClientOpts{})
+
+	err := &url.Error{
+		Op:  "Post",
+		URL: "https://user:pass@test-cl-03.test.xyz/dOnOtLeAkAnyOfThis/doNotLeak/test/mainnet/",
+		Err: context.DeadlineExceeded,
+	}
+
+	wrapped := rpcClient.wrapRPCClientError(err)
+
+	require.ErrorContains(t, wrapped, "RPC call failed")
+	require.ErrorContains(t, wrapped, "[REDACTED URL]")
+	require.NotContains(t, wrapped.Error(), "https://")
+	require.NotContains(t, wrapped.Error(), "user:pass")
+	require.NotContains(t, wrapped.Error(), "test-cl-03.test.xyz")
+	require.NotContains(t, wrapped.Error(), "dOnOtLeAkAnyOfThis")
+
+	// The timeout must be detected through the *url.Error -> context.DeadlineExceeded
+	// chain and surfaced as "remote node timed out".
+	require.ErrorContains(t, wrapped, "remote node timed out")
+	// The error type must be preserved so callers can still match the timeout.
+	require.ErrorIs(t, wrapped, context.DeadlineExceeded)
+}
 
 func TestRPCClient_MakeLogsValid(t *testing.T) {
 	chainTypes := []struct {
@@ -435,4 +518,242 @@ func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
 
 func ptr[T any](v T) *T {
 	return &v
+}
+
+func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
+	t.Parallel()
+	chainID := big.NewInt(1337)
+	probeAddress := "0x0000000000000000000000000000000000000001"
+	expectedAddress := common.HexToAddress(probeAddress).String()
+
+	t.Run("uses finalized tag when enabled", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				require.Equal(t, expectedAddress, params.Array()[0].String())
+				require.Equal(t, "finalized", params.Array()[1].String())
+				resp.Result = `"0x0"`
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.NoError(t, err)
+	})
+
+	t.Run("uses latest-finalityDepth when finality tags disabled", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_blockNumber":
+				resp.Result = `"0x14"` // 20
+			case "eth_getBalance":
+				require.Equal(t, expectedAddress, params.Array()[0].String())
+				require.Equal(t, "0x10", params.Array()[1].String()) // 20 - 4
+				resp.Result = `"0x0"`
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+			},
+			FinalityTagsEnabled: false,
+			FinalityDepth:       4,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.NoError(t, err)
+	})
+
+	t.Run("returns ErrFinalizedStateUnavailable when error matches fallback default regex", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				resp.Error.Message = "historical state unavailable for this node"
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		clientErrors := NewTestClientErrors()
+		clientErrors.finalizedStateUnavailable = "(: |^)(missing trie node|state not available|historical state unavailable)"
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+				NodeErrors:                       &clientErrors,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.Error(t, err)
+		require.ErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
+	})
+
+	t.Run("returns ErrFinalizedStateUnavailable when error matches regex", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				resp.Error.Message = "missing trie node"
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		clientErrors := NewTestClientErrors()
+		clientErrors.finalizedStateUnavailable = "missing trie node"
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+				NodeErrors:                       &clientErrors,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.Error(t, err)
+		require.ErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
+	})
+
+	t.Run("returns generic error when error does not match regex", func(t *testing.T) {
+		t.Parallel()
+		wsURL := testutils.NewWSServer(t, chainID, func(method string, _ gjson.Result) (resp testutils.JSONRPCResponse) {
+			switch method {
+			case "eth_getBalance":
+				resp.Error.Message = "connection reset"
+			default:
+				require.Fail(t, "unexpected method: "+method)
+			}
+			return
+		}).WSURL()
+
+		clientErrors := NewTestClientErrors()
+		clientErrors.finalizedStateUnavailable = "missing trie node"
+
+		rpcClient := NewDialedTestRPCClient(t, RPCClientOpts{
+			HTTP: wsURL,
+			Cfg: &TestNodePoolConfig{
+				NodeFinalizedBlockPollInterval:   1 * time.Second,
+				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+				NodeErrors:                       &clientErrors,
+			},
+			FinalityTagsEnabled: true,
+			ChainID:             chainID,
+		})
+
+		err := rpcClient.CheckFinalizedStateAvailability(t.Context())
+		require.Error(t, err)
+		require.ErrorContains(t, err, "fetching balance")
+		require.NotErrorIs(t, err, multinode.ErrFinalizedStateUnavailable)
+	})
+}
+
+func TestShortenURL(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		uri  url.URL
+		want string
+	}{
+		{
+			name: "https url with path",
+			uri: url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/secret/token/chainName/mainnet",
+			},
+			want: "https://example.com",
+		},
+		{
+			name: "missing scheme",
+			uri: url.URL{
+				Host: "example.com",
+			},
+			want: "",
+		},
+		{
+			name: "missing host",
+			uri: url.URL{
+				Scheme: "https",
+			},
+			want: "",
+		},
+		{
+			name: "empty url",
+			uri:  url.URL{},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := shortenURL(tt.uri)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRPCClientString_RedactsURLPaths(t *testing.T) {
+	t.Parallel()
+
+	wsURI, err := url.Parse("wss://rpc-provider.example.com/sensitive/path/ws")
+	require.NoError(t, err)
+
+	httpURI, err := url.Parse("https://rpc-provider.example.com/sensitive/path/http")
+	require.NoError(t, err)
+
+	r := &RPCClient{
+		name:             "test-rpc-client",
+		tier:             multinode.Primary,
+		shortenedWsURI:   shortenURL(*wsURI),
+		shortenedHTTPURI: shortenURL(*httpURI),
+	}
+
+	got := r.String()
+
+	require.Equal(
+		t,
+		"(primary)test-rpc-client:wss://rpc-provider.example.com:https://rpc-provider.example.com",
+		got,
+	)
+
+	require.NotContains(t, got, "sensitive")
+	require.NotContains(t, got, "/path/")
+	require.NotContains(t, got, "/ws")
+	require.NotContains(t, got, "/http")
 }

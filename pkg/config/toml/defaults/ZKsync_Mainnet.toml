@@ -9,7 +9,7 @@ FinalizedBlockOffset = 2
 
 [GasEstimator]
 LimitDefault = 100_000_000
-PriceMax = 18446744073709551615
+PriceMax = '1000 gwei'
 PriceMin = 0
 
 [GasEstimator.DAOracle]

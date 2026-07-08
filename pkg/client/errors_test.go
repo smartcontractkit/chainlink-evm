@@ -52,6 +52,7 @@ func Test_Eth_Errors(t *testing.T) {
 			{"[Request ID: 2e952947-ffad-408b-aed9-35f3ed152001] Nonce too low. Provided nonce: 15, current nonce: 15", true, "hedera"},
 			{"failed to forward tx to sequencer, please try again. Error message: 'nonce too low'", true, "Mantle"},
 			{"RPC call failed: TX_REPLAY_ATTACK", true, "Jovay"},
+			{"invalid nonce; got 3135, expected 3136: invalid sequence: invalid sequence", true, "Cronos"},
 		}
 
 		for _, test := range tests {
@@ -150,6 +151,7 @@ func Test_Eth_Errors(t *testing.T) {
 			{"tx already exists in cache", true, "Sei"},
 			{"failed to forward tx to sequencer, please try again. Error message: 'already known'", true, "Mantle"},
 			{"tx already exists in cache", true, "Sei"},
+			{"tx already in mempool", true, "Cronos"},
 		}
 		for _, test := range tests {
 			err = evmclient.NewSendErrorS(test.message)
@@ -254,6 +256,7 @@ func Test_Eth_Errors(t *testing.T) {
 			{"client error service unavailable", true, "tomlConfig"},
 			{"[Request ID: 825608a8-fd8a-4b5b-aea7-92999509306d] Error invoking RPC: [Request ID: 825608a8-fd8a-4b5b-aea7-92999509306d] Transaction execution returns a null value for transaction", true, "hedera"},
 			{"call failed: 503 Service Temporarily Unavailable: <html>\r\n<head><title>503 Service Temporarily Unavailable</title></head>\r\n<body>\r\n<center><h1>503 Service Temporarily Unavailable</h1></center>\r\n</body>\r\n</html>\r\n", true, "Arbitrum"},
+			{"RPC call failed: The method eth_sendRawTransaction does not exist/is not available", true, "Cronos"},
 		}
 		for _, test := range tests {
 			err = evmclient.NewSendErrorS(test.message)
@@ -394,6 +397,7 @@ func Test_Eth_Errors_Fatal(t *testing.T) {
 		{"Intrinsic gas exceeds gas limit", true, "Besu"},
 		{"Transaction gas limit exceeds block gas limit", true, "Besu"},
 		{"Invalid signature", true, "Besu"},
+		{"Transaction gas limit cap exceeded", true, "Besu"},
 
 		{"insufficient funds for transfer", false, "Erigon"},
 		{"exceeds block gas limit", true, "Erigon"},
@@ -446,6 +450,8 @@ func Test_Eth_Errors_Fatal(t *testing.T) {
 		{"Failed to serialize transaction: oversized data. max: 1000000; actual: 1000000", true, "zkSync"},
 
 		{"failed to forward tx to sequencer, please try again. Error message: 'invalid sender'", true, "Mantle"},
+		{"failed to forward tx to sequencer, err: 'intrinsic gas too low: gas 5000000, minimum needed 93897576'", true, "Mantle"},
+		{"failed to forward tx to sequencer, err: 'exceeds block gas limit'", true, "Mantle"},
 
 		{"client error fatal", true, "tomlConfig"},
 		{"[Request ID: d9711488-4c1e-4af2-bc1f-7969913d7b60] Error invoking RPC: transaction 0.0.4425573@1718213476.914320044 failed precheck with status INVALID_SIGNATURE", true, "hedera"},

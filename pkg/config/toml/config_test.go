@@ -48,6 +48,32 @@ func TestEVMConfig_ValidateConfig(t *testing.T) {
 	}
 }
 
+func TestEVMConfig_ValidateInvalidConfig(t *testing.T) {
+	testCases := []struct {
+		Name          string
+		MakeInvalid   func(cfg *Chain)
+		ExpectedError string
+	}{
+		{
+			Name: "LogBackfillBatchSize must be > 0",
+			MakeInvalid: func(cfg *Chain) {
+				cfg.LogBackfillBatchSize = ptr[uint32](0)
+			},
+			ExpectedError: "LogBackfillBatchSize: invalid value (0): must be greater than 0",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			var cfg Chain
+			cfg.SetFrom(&fallback)
+			tc.MakeInvalid(&cfg)
+			err := cfg.ValidateConfig()
+			require.Error(t, err)
+			require.ErrorContains(t, err, tc.ExpectedError)
+		})
+	}
+}
+
 func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
 	name := "fake"
 	id := DefaultIDs[0]
@@ -86,6 +112,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
 	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
 	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
+	unknown.Transactions.TransactionManagerV2.FeeBoost = ptr(false)
 	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
@@ -121,6 +148,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		ServiceUnavailable:                ptr("unavailable"),
 		TooManyResults:                    ptr("too-many"),
 		MissingBlocks:                     ptr("missing"),
+		FinalizedStateUnavailable:         ptr("finalized-unavailable"),
 	}
 
 	configtest.AssertFieldsNotNil(t, unknown)
@@ -170,7 +198,9 @@ func TestDocs(t *testing.T) {
 		docDefaults.Workflow.FromAddress = nil
 		docDefaults.Workflow.ForwarderAddress = nil
 		docDefaults.Workflow.GasLimitDefault = &gasLimitDefault
+		finalizedStateUnavailable := docDefaults.NodePool.Errors.FinalizedStateUnavailable
 		docDefaults.NodePool.Errors = ClientErrors{}
+		docDefaults.NodePool.Errors.FinalizedStateUnavailable = finalizedStateUnavailable
 
 		// Transactions.AutoPurge configs are only set if the feature is enabled
 		docDefaults.Transactions.AutoPurge.DetectionApiUrl = nil
@@ -185,6 +215,7 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = nil
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
 		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
+		docDefaults.Transactions.TransactionManagerV2.FeeBoost = nil
 
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
@@ -192,7 +223,11 @@ func TestDocs(t *testing.T) {
 		// GasEstimator SendAddress is only set if EstimateLimit is enabled
 		docDefaults.GasEstimator.SenderAddress = nil
 
+		// HistoricalBalanceCheckAddress is documented as # Example; fallback.toml supplies the runtime default.
+		docDefaults.NodePool.HistoricalBalanceCheckAddress = nil
+
 		fallbackDefaults := Defaults(nil)
+		fallbackDefaults.NodePool.HistoricalBalanceCheckAddress = nil
 		assertTOML(t, fallbackDefaults, docDefaults.Chain)
 	})
 }
@@ -316,6 +351,7 @@ var fullConfig = EVMConfig{
 				CustomURL:                     config.MustParseURL("http://txs.org"),
 				CustomURLs:                    []*config.URL{config.MustParseURL("http://txs.org"), config.MustParseURL("http://txs.org/secondary")},
 				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
+				FeeBoost:                      ptr(true),
 			},
 		},
 
@@ -330,19 +366,21 @@ var fullConfig = EVMConfig{
 		},
 
 		NodePool: NodePool{
-			PollFailureThreshold:           ptr[uint32](5),
-			PollSuccessThreshold:           ptr[uint32](0),
-			PollInterval:                   config.MustNewDuration(time.Minute),
-			SelectionMode:                  ptr(multinode.NodeSelectionModeHighestHead),
-			SyncThreshold:                  ptr[uint32](13),
-			LeaseDuration:                  config.MustNewDuration(0),
-			NodeIsSyncingEnabled:           ptr(true),
-			FinalizedBlockPollInterval:     config.MustNewDuration(time.Second),
-			EnforceRepeatableRead:          ptr(true),
-			DeathDeclarationDelay:          config.MustNewDuration(time.Minute),
-			VerifyChainID:                  ptr(true),
-			NewHeadsPollInterval:           config.MustNewDuration(0),
-			ExternalRequestMaxResponseSize: ptr[uint32](10),
+			PollFailureThreshold:                ptr[uint32](5),
+			PollSuccessThreshold:                ptr[uint32](0),
+			PollInterval:                        config.MustNewDuration(time.Minute),
+			SelectionMode:                       ptr(multinode.NodeSelectionModeHighestHead),
+			SyncThreshold:                       ptr[uint32](13),
+			LeaseDuration:                       config.MustNewDuration(0),
+			NodeIsSyncingEnabled:                ptr(true),
+			FinalizedBlockPollInterval:          config.MustNewDuration(time.Second),
+			HistoricalBalanceCheckAddress:       ptr(types.MustEIP55Address("0x0000000000000000000000000000000000000001")),
+			EnforceRepeatableRead:               ptr(true),
+			DeathDeclarationDelay:               config.MustNewDuration(time.Minute),
+			VerifyChainID:                       ptr(true),
+			NewHeadsPollInterval:                config.MustNewDuration(0),
+			ExternalRequestMaxResponseSize:      ptr[uint32](10),
+			FinalizedStateCheckFailureThreshold: ptr[uint32](3),
 			Errors: ClientErrors{
 				NonceTooLow:                       ptr[string]("(: |^)nonce too low"),
 				NonceTooHigh:                      ptr[string]("(: |^)nonce too high"),
@@ -360,6 +398,7 @@ var fullConfig = EVMConfig{
 				ServiceUnavailable:                ptr[string]("(: |^)service unavailable"),
 				TooManyResults:                    ptr[string]("(: |^)too many results"),
 				MissingBlocks:                     ptr[string]("(: |^)invalid block range"),
+				FinalizedStateUnavailable:         ptr[string]("(: |^)(missing trie node|state not available|historical state unavailable)"),
 			},
 		},
 		OCR: OCR{

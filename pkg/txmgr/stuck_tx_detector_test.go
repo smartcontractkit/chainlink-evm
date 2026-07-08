@@ -521,6 +521,30 @@ func TestStuckTxDetector_DetectStuckTransactionsScroll(t *testing.T) {
 		require.Len(t, txs, 1)
 		require.Equal(t, tx1.ID, txs[0].ID)
 	})
+
+	t.Run("ignores unknown hashes returned by the scroll API", func(t *testing.T) {
+		fromAddress := testutils.NewAddress()
+		tx1 := mustInsertUnconfirmedTxWithBroadcastAttempts(t, txStore, 0, fromAddress, 1, blockNum, tenGwei)
+		attempts1 := tx1.TxAttempts[0]
+
+		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			_, _ = fmt.Fprintf(res, `{"errcode": 0,"errmsg": "","data": {"%s": 1, "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef": 1}}`, attempts1.Hash)
+		}))
+		defer func() { testServer.Close() }()
+		testURL, err := url.Parse(testServer.URL)
+		require.NoError(t, err)
+
+		autoPurgeCfg := testAutoPurgeConfig{
+			enabled:         true,
+			detectionApiUrl: testURL,
+		}
+		stuckTxDetector := txmgr.NewStuckTxDetector(lggr, testutils.FixtureChainID, chaintype.ChainScroll, assets.NewWei(assets.NewEth(100).ToInt()), autoPurgeCfg, feeEstimator, txStore, ethClient)
+
+		txs, err := stuckTxDetector.DetectStuckTransactions(ctx, []common.Address{fromAddress}, blockNum)
+		require.NoError(t, err)
+		require.Len(t, txs, 1)
+		require.Equal(t, tx1.ID, txs[0].ID)
+	})
 }
 
 func mustInsertUnconfirmedTxWithBroadcastAttempts(t testing.TB, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, numAttempts uint32, latestBroadcastBlockNum int64, latestGasPrice *assets.Wei) txmgr.Tx {

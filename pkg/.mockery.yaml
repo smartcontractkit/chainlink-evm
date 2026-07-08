@@ -73,6 +73,7 @@ packages:
   github.com/smartcontractkit/chainlink-evm/pkg/txmgr:
     interfaces:
       EvmTxStore:
+      ChainReceipt:
   github.com/smartcontractkit/chainlink-evm/pkg/log:
     interfaces:
       AbigenContract:
@@ -114,3 +115,13 @@ packages:
       Codec:
         config:
           dir: read/mocks
+  github.com/smartcontractkit/chainlink-evm/pkg/automation/v21:
+    interfaces:
+      Registry:
+      HttpClient:
+  github.com/smartcontractkit/chainlink-evm/pkg/automation/v21/core:
+    interfaces:
+      UpkeepStateReader:
+  github.com/smartcontractkit/chainlink-evm/pkg/keys:
+    interfaces:
+      AddressLister:

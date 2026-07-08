@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -105,9 +106,13 @@ type RPCClient struct {
 	finalityTagEnabled             bool
 	finalityDepth                  uint32
 	safeDepth                      uint32
+	historicalBalanceCheckAddress  common.Address
 	externalRequestMaxResponseSize uint32
 
 	beholderMetrics *rpcClientMetrics
+
+	shortenedWsURI   string
+	shortenedHTTPURI string
 
 	ws        atomic.Pointer[rawclient]
 	limitedWS atomic.Pointer[rawclient] // ws client with limited response size
@@ -144,6 +149,7 @@ func NewRPCClient(
 		finalityTagEnabled:             supportsFinalityTags,
 		finalityDepth:                  finalityDepth,
 		safeDepth:                      safeDepth,
+		historicalBalanceCheckAddress:  nodePoolHistoricalBalanceCheckAddress(cfg),
 		externalRequestMaxResponseSize: externalRequestMaxResponseSize,
 	}
 	r.cfg = cfg
@@ -154,10 +160,12 @@ func NewRPCClient(
 	r.finalizedBlockPollInterval = cfg.FinalizedBlockPollInterval()
 	r.newHeadsPollInterval = cfg.NewHeadsPollInterval()
 	if wsuri != nil {
+		r.shortenedWsURI = shortenURL(*wsuri)
 		r.ws.Store(&rawclient{uri: *wsuri})
 		r.limitedWS.Store(&rawclient{uri: *wsuri})
 	}
 	if httpuri != nil {
+		r.shortenedHTTPURI = shortenURL(*httpuri)
 		r.http.Store(&rawclient{uri: *httpuri})
 	}
 	lggr = logger.Named(lggr, "Client")
@@ -180,19 +188,20 @@ func NewRPCClient(
 		lggr.Error("RPC client is configured with only WebSocket URL. If this CL Node serves external requests, it must also have an HTTP URL configured. Otherwise, there is a serious DDoS risk.")
 	}
 
-	var rpcURL string
-	if wsuri != nil {
-		rpcURL = wsuri.String()
-	} else if httpuri != nil {
-		rpcURL = httpuri.String()
-	}
 	isSendOnly := tier == multinode.Secondary
 	var rpcBaseMetrics frameworkmetrics.RPCClientMetrics
 	if r.beholderMetrics != nil {
 		rpcBaseMetrics = r.beholderMetrics.rpcClientMetrics
 	}
-	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock, rpcURL, isSendOnly, rpcBaseMetrics)
+	r.RPCClientBase = multinode.NewRPCClientBase[*evmtypes.Head](cfg, QueryTimeout, lggr, r.latestBlock, r.latestFinalizedBlock, r.getRPCDomain(), isSendOnly, rpcBaseMetrics)
 	return r
+}
+
+func nodePoolHistoricalBalanceCheckAddress(cfg config.NodePool) common.Address {
+	if addr := cfg.HistoricalBalanceCheckAddress(); addr != nil {
+		return addr.Address()
+	}
+	return common.Address{}
 }
 
 func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err error) {
@@ -202,6 +211,52 @@ func (r *RPCClient) ClientVersion(ctx context.Context) (version string, err erro
 	}
 	r.rpcLog.Debugf("client version: %s", version)
 	return version, nil
+}
+
+// CheckFinalizedStateAvailability verifies if the RPC can serve historical state at the finalized block.
+// Returns multinode.ErrFinalizedStateUnavailable if the error matches the FinalizedStateUnavailable pattern from config.
+func (r *RPCClient) CheckFinalizedStateAvailability(ctx context.Context) error {
+	var blockNumber *big.Int
+	if r.finalityTagEnabled {
+		blockNumber = big.NewInt(rpc.FinalizedBlockNumber.Int64())
+	} else {
+		latestBlock, err := r.BlockNumber(ctx)
+		if err != nil {
+			return fmt.Errorf("fetching latest block number failed: %w", err)
+		}
+		latest := new(big.Int).SetUint64(latestBlock)
+		depth := new(big.Int).SetUint64(uint64(r.finalityDepth))
+		if latest.Cmp(depth) > 0 {
+			blockNumber = new(big.Int).Sub(latest, depth)
+		} else {
+			blockNumber = big.NewInt(0)
+		}
+	}
+	_, err := r.BalanceAt(ctx, r.historicalBalanceCheckAddress, blockNumber)
+	if err != nil {
+		if r.isFinalizedStateUnavailableError(err) {
+			return fmt.Errorf("%w: %w", multinode.ErrFinalizedStateUnavailable, err)
+		}
+		return fmt.Errorf("fetching balance for address %s at block %s failed: %w", r.historicalBalanceCheckAddress.String(), blockNumber.String(), err)
+	}
+	return nil
+}
+
+func (r *RPCClient) isFinalizedStateUnavailableError(err error) bool {
+	if err == nil {
+		return false
+	}
+	pattern := r.clientErrors.FinalizedStateUnavailable()
+	if pattern == "" {
+		r.rpcLog.Critical("FinalizedStateUnavailable regex pattern is empty; finalized state availability check is effectively disabled")
+		return false
+	}
+	re, compileErr := regexp.Compile(pattern)
+	if compileErr != nil {
+		r.rpcLog.Criticalw("FinalizedStateUnavailable regex pattern is invalid; finalized state availability check is effectively disabled", "pattern", pattern, "err", compileErr)
+		return false
+	}
+	return re.MatchString(err.Error())
 }
 
 func (r *RPCClient) Dial(callerCtx context.Context) error {
@@ -217,18 +272,18 @@ func (r *RPCClient) Dial(callerCtx context.Context) error {
 	promEVMPoolRPCNodeDials.WithLabelValues(r.chainID.String(), r.name).Inc()
 	lggr := r.rpcLog
 	if ws != nil {
-		lggr = lggr.With("wsuri", ws.uri.Redacted())
+		lggr = lggr.With("wsuri", r.shortenedWsURI)
 		wsrpc, err := rpc.DialWebsocket(ctx, ws.uri.String(), "")
 		if err != nil {
 			promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
-			return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing websocket: %v", ws.uri.Redacted()))
+			return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing websocket: %v", r.shortenedWsURI))
 		}
 
 		r.ws.Store(&rawclient{uri: ws.uri, rpc: wsrpc, geth: ethclient.NewClient(wsrpc)})
 	}
 
 	if httpClient != nil {
-		lggr = lggr.With("httpuri", httpClient.uri.Redacted())
+		lggr = lggr.With("httpuri", r.shortenedHTTPURI)
 		if err := r.DialHTTP(callerCtx); err != nil {
 			return err
 		}
@@ -247,7 +302,7 @@ func (r *RPCClient) DialHTTP(ctx context.Context) error {
 
 	httpClient := r.http.Load()
 	promEVMPoolRPCNodeDials.WithLabelValues(r.chainID.String(), r.name).Inc()
-	lggr := r.rpcLog.With("httpuri", httpClient.uri.Redacted())
+	lggr := r.rpcLog.With("httpuri", r.shortenedHTTPURI)
 	lggr.Debugw("RPC dial: evmclient.Client#dial")
 
 	httpRPC, err := rpc.DialOptions(ctx, httpClient.uri.String(), rpc.WithHTTPClient(&http.Client{
@@ -255,7 +310,7 @@ func (r *RPCClient) DialHTTP(ctx context.Context) error {
 	}))
 	if err != nil {
 		promEVMPoolRPCNodeDialsFailed.WithLabelValues(r.chainID.String(), r.name).Inc()
-		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", httpClient.uri.Redacted()))
+		return r.wrapRPCClientError(pkgerrors.Wrapf(err, "error while dialing HTTP: %v", r.shortenedHTTPURI))
 	}
 
 	httpClient.rpc = httpRPC
@@ -279,15 +334,20 @@ func (r *RPCClient) Close() {
 
 func (r *RPCClient) String() string {
 	s := fmt.Sprintf("(%s)%s", r.tier.String(), r.name)
-	ws := r.ws.Load()
-	if ws != nil {
-		s = s + ":" + ws.uri.Redacted()
+	if r.shortenedWsURI != "" {
+		s += ":" + r.shortenedWsURI
 	}
-	http := r.http.Load()
-	if http != nil {
-		s = s + ":" + http.uri.Redacted()
+	if r.shortenedHTTPURI != "" {
+		s += ":" + r.shortenedHTTPURI
 	}
 	return s
+}
+
+func shortenURL(uri url.URL) string {
+	if uri.Scheme == "" || uri.Host == "" {
+		return ""
+	}
+	return uri.Scheme + "://" + uri.Host
 }
 
 func (r *RPCClient) logResult(
@@ -341,7 +401,11 @@ func (r *RPCClient) getRPCDomain() string {
 	if http != nil {
 		return http.uri.Host
 	}
-	return r.ws.Load().uri.Host
+	ws := r.ws.Load()
+	if ws != nil {
+		return ws.uri.Host
+	}
+	return ""
 }
 
 func (r *RPCClient) isChainType(chainType chaintype.ChainType) bool {
@@ -1348,14 +1412,58 @@ func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
 	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
+type sanitizedError struct {
+	err error  // original error, retained for chain traversal/classification
+	msg string // redacted, safe-to-display message
+}
+
+func (e sanitizedError) Error() string {
+	return e.msg
+}
+
+// Unwrap and Cause expose the original error so both the standard library
+// (errors.Is/errors.As) and pkg/errors (pkgerrors.Cause) can still traverse to
+// the underlying RPC error. This is required for error classification in
+// errors.go — e.g. ExtractRPCError marshals pkgerrors.Cause(err) into a
+// JsonError, and isFatalSendError matches against pkgerrors.Cause(err).Error() —
+// and for sentinel matching such as ethereum.NotFound and context.DeadlineExceeded.
+//
+// Only the Error() string is redacted. That is the value logged and returned to
+// workflow users, which is where the provider URL/API key was leaking.
+func (e sanitizedError) Unwrap() error {
+	return e.err
+}
+
+func (e sanitizedError) Cause() error {
+	return e.err
+}
+
+// Matches full HTTP(S)/WS(S) URLs so provider URLs, paths, query params, credentials, and API keys can be redacted from errors.
+var rpcURLRegexp = regexp.MustCompile(`(?i)(?:https?|wss?)://[^\s"']+`)
+
+func sanitizeRPCError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return sanitizedError{
+		err: err,
+		msg: rpcURLRegexp.ReplaceAllString(err.Error(), "[REDACTED URL]"),
+	}
+}
+
 func (r *RPCClient) wrapRPCClientError(err error) error {
 	if err == nil {
 		r.rpcLog.Trace("Call succeeded")
 		return nil
 	}
-	if pkgerrors.Cause(err).Error() == "context deadline exceeded" {
+	if errors.Is(err, context.DeadlineExceeded) {
 		err = pkgerrors.Wrap(err, "remote node timed out")
 	}
+
+	// Convert to a sanitized string error before logging or returning.
+	// This prevents provider API keys embedded in URL paths from leaking.
+	err = sanitizeRPCError(err)
+
 	r.rpcLog.Infow("RPC call failed", "error", err)
 	// Do not include any RPC specific data into the error as in CRE product it must be returned back to a workflow user
 	return pkgerrors.Wrap(err, "RPC call failed")

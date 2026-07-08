@@ -35,8 +35,9 @@ var (
 
 // processHeadTimeout represents a sanity limit on how long ProcessHead should take to complete
 const (
-	processHeadTimeout            = 10 * time.Minute
-	attemptsCacheRefreshThreshold = 5
+	processHeadTimeout                    = 10 * time.Minute
+	attemptsCacheRefreshThreshold         = 5
+	oldestNonTerminalTxAgeObserveInterval = time.Minute
 )
 
 type finalizerTxStore interface {
@@ -91,8 +92,9 @@ type evmFinalizer struct {
 	stopCh services.StopChan
 	wg     sync.WaitGroup
 
-	lastProcessedFinalizedBlockNum int64
-	resumeCallback                 resumeCallback
+	lastProcessedFinalizedBlockNum      int64
+	lastOldestNonTerminalTxAgeObserveAt time.Time
+	resumeCallback                      resumeCallback
 
 	attemptsCache         []TxAttempt
 	attemptsCacheHitCount int
@@ -208,7 +210,11 @@ func (f *evmFinalizer) ProcessHead(ctx context.Context, head *types.Head) error 
 		f.lggr.Errorf("failed to resume pending task runs: %s", err.Error())
 	}
 	err = f.processFinalizedHead(ctx, latestFinalizedHead)
-	f.observeOldestNonTerminalTxAge(ctx)
+	now := time.Now()
+	if now.Sub(f.lastOldestNonTerminalTxAgeObserveAt) >= oldestNonTerminalTxAgeObserveInterval {
+		f.observeOldestNonTerminalTxAge(ctx)
+		f.lastOldestNonTerminalTxAgeObserveAt = now
+	}
 	return err
 }
 

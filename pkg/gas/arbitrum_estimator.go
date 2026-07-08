@@ -15,6 +15,7 @@ import (
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/rollups"
 )
 
@@ -46,13 +47,15 @@ type arbitrumEstimator struct {
 	l1Oracle rollups.ArbL1GasOracle
 }
 
+const arbitrumPollPeriod = 2 * time.Second
+
 func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient FeeEstimatorClient, l1Oracle rollups.ArbL1GasOracle) EvmEstimator {
 	lggr = logger.Named(lggr, "ArbitrumEstimator")
 
 	return &arbitrumEstimator{
 		cfg:            cfg,
-		EvmEstimator:   NewSuggestedPriceEstimator(lggr, ethClient, cfg, l1Oracle),
-		pollPeriod:     10 * time.Second,
+		EvmEstimator:   NewSuggestedPriceEstimator(lggr, ethClient, cfg, chaintype.ChainArbitrum, l1Oracle),
+		pollPeriod:     arbitrumPollPeriod,
 		logger:         lggr,
 		chForceRefetch: make(chan (chan struct{})),
 		chInitialised:  make(chan struct{}),
@@ -96,7 +99,7 @@ func (a *arbitrumEstimator) HealthReport() map[string]error {
 // GetLegacyGas estimates both the gas price and the gas limit.
 //   - Price is delegated to the embedded SuggestedPriceEstimator.
 //   - Limit is computed from the dynamic values perL2Tx and perL1CalldataUnit, provided by the getPricesInArbGas() method
-//     of the precompilie contract at ArbGasInfoAddress. perL2Tx is a constant amount of gas, and perL1CalldataUnit is
+//     of the precompile contract at ArbGasInfoAddress. perL2Tx is a constant amount of gas, and perL1CalldataUnit is
 //     multiplied by the length of the tx calldata. The sum of these two values plus the original l2GasLimit is returned.
 func (a *arbitrumEstimator) GetLegacyGas(ctx context.Context, calldata []byte, l2GasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
 	gasPrice, _, err = a.EvmEstimator.GetLegacyGas(ctx, calldata, l2GasLimit, maxGasPriceWei, opts...)
@@ -153,7 +156,7 @@ func (a *arbitrumEstimator) GetMaxLegacyGas(ctx context.Context, calldata []byte
 // the block's base fee. If the base fee increases rapidly there is a chance the suggested gas price will fall under that value, resulting in a fee too low error.
 // We use gasPriceWithBuffer to increase the estimated gas price by some percentage to avoid fee too low errors. Eventually, only the base fee will be paid, regardless of the price.
 func (a *arbitrumEstimator) gasPriceWithBuffer(gasPrice *assets.Wei, maxGasPriceWei *assets.Wei) *assets.Wei {
-	const gasPriceBufferPercentage = 50
+	const gasPriceBufferPercentage = 90
 
 	gasPrice = gasPrice.AddPercentage(gasPriceBufferPercentage)
 	if gasPrice.Cmp(maxGasPriceWei) > 0 {

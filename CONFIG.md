@@ -402,6 +402,7 @@ DualBroadcast = false # Example
 ReadRequestsToMultipleNodes = false # Example
 Bundles = false # Example
 FastlaneAuctionRequestTimeout = '5s' # Example
+FeeBoost = false # Example
 ```
 
 
@@ -452,6 +453,12 @@ Bundles enables sending bundles for auctioning (not compatible with all OFAs).
 FastlaneAuctionRequestTimeout = '5s' # Example
 ```
 FastlaneAuctionRequestTimeout configures the HTTP request timeout for Fastlane Atlas auction requests. Defaults to 5s if not set.
+
+### FeeBoost
+```toml
+FeeBoost = false # Example
+```
+FeeBoost enables using GetMaxFee instead of GetFee for all TxM v2 transaction attempts. This makes SVR transactions as aggressive as possible with gas pricing. Only active when DualBroadcast is also enabled.
 
 ## BalanceMonitor
 ```toml
@@ -948,6 +955,8 @@ SyncThreshold = 5 # Default
 LeaseDuration = '0s' # Default
 NodeIsSyncingEnabled = false # Default
 FinalizedBlockPollInterval = '5s' # Default
+HistoricalBalanceCheckAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
+FinalizedStateCheckFailureThreshold = 0 # Default
 EnforceRepeatableRead = true # Default
 DeathDeclarationDelay = '1m' # Default
 NewHeadsPollInterval = '0s' # Default
@@ -1034,6 +1043,26 @@ reported based on latest block and finality depth.
 
 Set to 0 to disable.
 
+### HistoricalBalanceCheckAddress
+```toml
+HistoricalBalanceCheckAddress = '0x2a3e23c6f242F5345320814aC8a1b4E58707D292' # Example
+```
+HistoricalBalanceCheckAddress is the probe account for the finalized-state availability check.
+The check executes `eth_getBalance` for this address at the latest finalized block.
+If omitted, defaults to the zero address (`0x0000000000000000000000000000000000000000`).
+Finalized block selection follows chain finality settings:
+- `FinalityTagEnabled = true`: use `finalized` tag
+- `FinalityTagEnabled = false`: use `latest - FinalityDepth`
+The check is only active when `FinalizedStateCheckFailureThreshold > 0`.
+
+### FinalizedStateCheckFailureThreshold
+```toml
+FinalizedStateCheckFailureThreshold = 0 # Default
+```
+FinalizedStateCheckFailureThreshold is the number of consecutive failures of the finalized state availability check
+before the node is marked as FinalizedStateNotAvailable.
+Set to 0 to disable the check.
+
 ### EnforceRepeatableRead
 ```toml
 EnforceRepeatableRead = true # Default
@@ -1099,6 +1128,7 @@ Fatal = '(: |^)fatal' # Example
 ServiceUnavailable = '(: |^)service unavailable' # Example
 TooManyResults = '(: |^)too many results' # Example
 MissingBlocks = '(: |^)invalid block range' # Example
+FinalizedStateUnavailable = '(: |^)(missing trie node|state not available|historical state unavailable)' # Default
 ```
 Errors enable the node to provide custom regex patterns to match against error messages from RPCs.
 
@@ -1197,6 +1227,12 @@ TooManyResults is a regex pattern to match an eth_getLogs error indicating the r
 MissingBlocks = '(: |^)invalid block range' # Example
 ```
 MissingBlocks is a regex pattern to match an eth_getLogs error indicating the rpc server is permanently missing some blocks in the requested block range
+
+### FinalizedStateUnavailable
+```toml
+FinalizedStateUnavailable = '(: |^)(missing trie node|state not available|historical state unavailable)' # Default
+```
+FinalizedStateUnavailable is a regex pattern to match errors indicating the RPC cannot serve historical state at the finalized block (e.g., pruned/non-archive node)
 
 ## OCR
 ```toml

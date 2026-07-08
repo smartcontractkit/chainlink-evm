@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
+	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
 type NodePoolConfig struct {
@@ -42,6 +43,10 @@ func (n *NodePoolConfig) FinalizedBlockPollInterval() time.Duration {
 	return n.C.FinalizedBlockPollInterval.Duration()
 }
 
+func (n *NodePoolConfig) HistoricalBalanceCheckAddress() *types.EIP55Address {
+	return n.C.HistoricalBalanceCheckAddress
+}
+
 func (n *NodePoolConfig) NewHeadsPollInterval() time.Duration {
 	return n.C.NewHeadsPollInterval.Duration()
 }
@@ -65,4 +70,11 @@ func (n *NodePoolConfig) ExternalRequestMaxResponseSize() uint32 {
 		return 0
 	}
 	return *n.C.ExternalRequestMaxResponseSize
+}
+
+func (n *NodePoolConfig) FinalizedStateCheckFailureThreshold() uint32 {
+	if n.C.FinalizedStateCheckFailureThreshold == nil {
+		return 0
+	}
+	return *n.C.FinalizedStateCheckFailureThreshold
 }

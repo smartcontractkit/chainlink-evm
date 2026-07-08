@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"strconv"
 
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	gotoml "github.com/pelletier/go-toml/v2"
 	"go.uber.org/multierr"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mailbox"
+	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/chains"
 	"github.com/smartcontractkit/chainlink-evm/pkg/chains/tron"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
@@ -236,6 +238,12 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 		if opts.GenLogPoller != nil {
 			logPoller = opts.GenLogPoller(chainID)
 		} else {
+			var metrics *logpoller.PromBeholderMetrics
+			metrics, err = logpoller.NewPromBeholderMetrics(chainID.String(), chainselectors.FamilyEVM)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create log poller metrics: %w", err)
+			}
+
 			lpOpts := logpoller.Opts{
 				PollPeriod:               cfg.EVM().LogPollInterval(),
 				UseFinalityTag:           cfg.EVM().FinalityTagEnabled(),
@@ -247,9 +255,11 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 				BackupPollerBlockDelay:   int64(cfg.EVM().BackupLogPollerBlockDelay()),
 				ClientErrors:             cfg.EVM().NodePool().Errors(),
 				SkipEmptyBlocks:          cfg.EVM().LogPollerSkipEmptyBlocks(),
+				Metrics:                  metrics,
 			}
 
-			lpORM, err := logpoller.NewObservedORM(chainID, opts.DS, l)
+			var lpORM *logpoller.ObservedORM
+			lpORM, err = logpoller.NewObservedORM(chainID, opts.DS, l)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create logpoller observed ORM: %w", err)
 			}
@@ -454,7 +464,43 @@ func (c *chain) HealthReport() map[string]error {
 }
 
 func (c *chain) Transact(ctx context.Context, from, to string, amount *big.Int, balanceCheck bool) error {
-	return errors.New("LOOPP not yet supported")
+	if amount == nil {
+		return errors.New("amount cannot be nil")
+	}
+	if amount.Sign() <= 0 {
+		return errors.New("amount should be positive")
+	}
+	if !ethcommon.IsHexAddress(from) {
+		return fmt.Errorf("invalid from address: %s", from)
+	}
+	if !ethcommon.IsHexAddress(to) {
+		return fmt.Errorf("invalid to address: %s", to)
+	}
+
+	fromAddress := ethcommon.HexToAddress(from)
+	toAddress := ethcommon.HexToAddress(to)
+
+	gasLimit := c.cfg.EVM().GasEstimator().LimitTransfer()
+	if balanceCheck {
+		balance, err := c.client.BalanceAt(ctx, fromAddress, nil)
+		if err != nil {
+			return fmt.Errorf("failed to get balance for address %s: %w", from, err)
+		}
+		maxPrice := c.cfg.EVM().GasEstimator().PriceMaxKey(fromAddress)
+		estimator := c.GasEstimator()
+		amountWithFees, err := estimator.GetMaxCost(ctx, (assets.Eth)(*amount), nil, gasLimit, maxPrice, &fromAddress, &toAddress)
+		if err != nil {
+			return fmt.Errorf("failed to get max cost for transfer: %w", err)
+		}
+		if balance.Cmp(amountWithFees) < 0 {
+			return fmt.Errorf("insufficient balance for transfer: from=%s balance=%s amount=%s amountWithFees=%s", from, balance, amount, amountWithFees)
+		}
+	}
+	_, err := c.txm.SendNativeToken(ctx, c.id, fromAddress, toAddress, *amount, gasLimit)
+	if err != nil {
+		return fmt.Errorf("failed to send native token: %w", err)
+	}
+	return nil
 }
 
 // Replay signals that the poller should resume from a new block. Blocks until the replay is complete.

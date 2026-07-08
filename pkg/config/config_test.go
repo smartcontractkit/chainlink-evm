@@ -308,14 +308,11 @@ func TestChainScopedConfig_Profiles(t *testing.T) {
 	}{
 		{"default", 0, 500000, "0.00001"},
 		{"mainnet", 1, 500000, "0.1"},
-		{"kovan", 42, 500000, "0.1"},
 
 		{"optimism", 10, 500000, "0.00001"},
 		{"optimism", 69, 500000, "0.00001"},
-		{"optimism", 420, 500000, "0.00001"},
 
 		{"bscMainnet", 56, 500000, "0.00001"},
-		{"hecoMainnet", 128, 500000, "0.00001"},
 		{"fantomMainnet", 250, 500000, "0.00001"},
 		{"fantomTestnet", 4002, 500000, "0.00001"},
 		{"polygonMatic", 800001, 500000, "0.00001"},
@@ -370,6 +367,7 @@ func TestNodePoolConfig(t *testing.T) {
 	require.False(t, cfg.EVM().NodePool().NodeIsSyncingEnabled())
 	require.True(t, cfg.EVM().NodePool().EnforceRepeatableRead())
 	require.Equal(t, time.Minute, cfg.EVM().NodePool().DeathDeclarationDelay())
+	require.Equal(t, ptr(types.MustEIP55Address("0x0000000000000000000000000000000000000000")), cfg.EVM().NodePool().HistoricalBalanceCheckAddress())
 }
 
 func TestClientErrorsConfig(t *testing.T) {
@@ -416,6 +414,11 @@ func TestClientErrorsConfig(t *testing.T) {
 		assert.Equal(t, "client error fatal", errors.Fatal())
 		assert.Equal(t, "client error service unavailable", errors.ServiceUnavailable())
 		assert.Equal(t, "client error too many results", errors.TooManyResults())
+	})
+
+	t.Run("FinalizedStateUnavailable uses fallback default", func(t *testing.T) {
+		cfg := configtest.NewChainScopedConfig(t, nil)
+		assert.Equal(t, "(: |^)(missing trie node|state not available|historical state unavailable)", cfg.EVM().NodePool().Errors().FinalizedStateUnavailable())
 	})
 }
 
