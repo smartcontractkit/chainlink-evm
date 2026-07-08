@@ -136,11 +136,17 @@ type logPoller struct {
 	filterDirty     bool
 	cachedAddresses []common.Address
 	cachedEventSigs []common.Hash
+	filtersLoaded   bool
 
 	replayStart    chan int64
 	replayComplete chan error
 	stopCh         services.StopChan
 	wg             sync.WaitGroup
+	// ensures that jobs outside main loop do not run concurrently with it.
+	// Mainly needed to simplify mental model and exclude concurrent changes to the blocks table, while handling reorgs.
+	// Pruning of old blocks is intentionally excluded from this lock, because they are much older
+	// than a block range that could be affected by a reorg.
+	runMu sync.Mutex
 	// This flag is raised whenever the log poller detects that the chain's finality has been violated.
 	// It can happen when reorg is deeper than the latest finalized block that LogPoller saw in a previous PollAndSave tick.
 	// Usually the only way to recover is to manually remove the offending logs and block from the database.
@@ -675,72 +681,82 @@ func (lp *logPoller) run() {
 		lp.lggr.Infow("Backup log poller disabled")
 	}
 
-	filtersLoaded := false
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case fromBlockReq := <-lp.replayStart:
-			lp.handleReplayRequest(ctx, fromBlockReq, filtersLoaded)
+			lp.handleReplayRequest(ctx, fromBlockReq)
 		case <-logPollTicker.C:
-			if !filtersLoaded {
-				if err := lp.loadFilters(ctx); err != nil {
-					lp.lggr.Errorw("Failed loading filters in main logpoller loop, retrying later", "err", err)
-					continue
-				}
-				filtersLoaded = true
-			}
-
-			// Always start from the latest block in the db.
-			var start int64
-			lastProcessed, err := lp.orm.SelectLatestBlock(ctx)
-			if err != nil {
-				if !pkgerrors.Is(err, sql.ErrNoRows) {
-					// Assume transient db reading issue, retry forever.
-					lp.lggr.Errorw("unable to get starting block", "err", err)
-					continue
-				}
-				// Otherwise this is the first poll _ever_ on a new chain.
-				// Only safe thing to do is to start at the first finalized block.
-				_, latestFinalizedBlockNumber, err := lp.latestAndFinalizedBlocks(ctx)
-				if err != nil {
-					lp.lggr.Warnw("Unable to get latest for first poll", "err", err)
-					continue
-				}
-				// Starting at the first finalized block. We do not backfill the first finalized block.
-				start = latestFinalizedBlockNumber
-			} else {
-				lp.metrics.RecordLastProcessedBlock(ctx, lastProcessed.BlockNumber)
-				start = lastProcessed.BlockNumber + 1
-			}
-			lp.PollAndSaveLogs(ctx, start, false)
+			lp.tickPoll(ctx)
 		case <-backupLogPollCh:
-			// Backup log poller:  this serves as an emergency backup to protect against eventual-consistency behavior
-			// of an rpc node (seen occasionally on optimism, but possibly could happen on other chains?).  If the first
-			// time we request a block, no logs or incomplete logs come back, this ensures that every log is eventually
-			// re-requested after it is finalized. This doesn't add much overhead, because we can request all of them
-			// in one shot, since we don't need to worry about re-orgs after finality depth, and it runs far less
-			// frequently than the primary log poller (instead of roughly once per block it runs once roughly once every
-			// lp.backupPollerDelay blocks--with default settings about 100x less frequently).
-
-			if !filtersLoaded {
-				lp.lggr.Warnw("Backup log poller ran before filters loaded, skipping")
-				continue
-			}
-			err := lp.BackupPollAndSaveLogs(ctx)
-			switch {
-			case errors.Is(err, commontypes.ErrFinalityViolated):
-				// BackupPoll only declares finality violation and does not resolve it, as it's possible that processed range
-				// does not contain the violation.
-				lp.lggr.Criticalw("Backup poll failed due to finality violation", "err", err)
-				lp.finalityViolated.Store(true)
-				lp.SvcErrBuffer.Append(err)
-			case err != nil:
-				lp.lggr.Errorw("Backup poller failed, retrying later", "err", err)
-			}
+			lp.tickBackupPoll(ctx)
 		}
 	}
+}
+
+func (lp *logPoller) tickBackupPoll(ctx context.Context) {
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
+	// Backup log poller:  this serves as an emergency backup to protect against eventual-consistency behavior
+	// of an rpc node (seen occasionally on optimism, but possibly could happen on other chains?).  If the first
+	// time we request a block, no logs or incomplete logs come back, this ensures that every log is eventually
+	// re-requested after it is finalized. This doesn't add much overhead, because we can request all of them
+	// in one shot, since we don't need to worry about re-orgs after finality depth, and it runs far less
+	// frequently than the primary log poller (instead of roughly once per block it runs once roughly once every
+	// lp.backupPollerDelay blocks--with default settings about 100x less frequently).
+
+	if !lp.filtersLoaded {
+		lp.lggr.Warnw("Backup log poller ran before filters loaded, skipping")
+		return
+	}
+	err := lp.BackupPollAndSaveLogs(ctx)
+	switch {
+	case errors.Is(err, commontypes.ErrFinalityViolated):
+		// BackupPoll only declares finality violation and does not resolve it, as it's possible that processed range
+		// does not contain the violation.
+		lp.lggr.Criticalw("Backup poll failed due to finality violation", "err", err)
+		lp.finalityViolated.Store(true)
+		lp.SvcErrBuffer.Append(err)
+	case err != nil:
+		lp.lggr.Errorw("Backup poller failed, retrying later", "err", err)
+	}
+}
+
+func (lp *logPoller) tickPoll(ctx context.Context) {
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
+	if !lp.filtersLoaded {
+		if err := lp.loadFilters(ctx); err != nil {
+			lp.lggr.Errorw("Failed loading filters in main logpoller loop, retrying later", "err", err)
+			return
+		}
+		lp.filtersLoaded = true
+	}
+
+	// Always start from the latest block in the db.
+	var start int64
+	lastProcessed, err := lp.orm.SelectLatestBlock(ctx)
+	if err != nil {
+		if !pkgerrors.Is(err, sql.ErrNoRows) {
+			// Assume transient db reading issue, retry forever.
+			lp.lggr.Errorw("unable to get starting block", "err", err)
+			return
+		}
+		// Otherwise this is the first poll _ever_ on a new chain.
+		// Only safe thing to do is to start at the first finalized block.
+		_, latestFinalizedBlockNumber, err := lp.latestAndFinalizedBlocks(ctx)
+		if err != nil {
+			lp.lggr.Warnw("Unable to get latest for first poll", "err", err)
+			return
+		}
+		// Starting at the first finalized block. We do not backfill the first finalized block.
+		start = latestFinalizedBlockNumber
+	} else {
+		lp.metrics.RecordLastProcessedBlock(ctx, lastProcessed.BlockNumber)
+		start = lastProcessed.BlockNumber + 1
+	}
+	lp.PollAndSaveLogs(ctx, start, false)
 }
 
 func (lp *logPoller) backgroundWorkerRun() {
@@ -809,13 +825,17 @@ func (lp *logPoller) backgroundWorkerRun() {
 	}
 }
 
-func (lp *logPoller) handleReplayRequest(ctx context.Context, fromBlockReq int64, filtersLoaded bool) {
+func (lp *logPoller) handleReplayRequest(ctx context.Context, fromBlockReq int64) {
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
 	fromBlock, err := lp.GetReplayFromBlock(ctx, fromBlockReq)
 	if err == nil {
-		if !filtersLoaded {
+		if !lp.filtersLoaded {
 			lp.lggr.Warnw("Received replayReq before filters loaded", "fromBlock", fromBlock, "requested", fromBlockReq)
 			if err = lp.loadFilters(ctx); err != nil {
 				lp.lggr.Errorw("Failed loading filters during Replay", "err", err, "fromBlock", fromBlock)
+			} else {
+				lp.filtersLoaded = true
 			}
 		}
 		if err == nil {
