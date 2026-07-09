@@ -49,7 +49,14 @@ func CreateOCR3OnchainKeyringIgnoringRI[RI any](ctx context.Context, ks keystore
 	return ocr3util.AsOCR3OnchainKeyring2IgnoringRI[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: onchainKeyPath}), nil
 }
 
-func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]ocr3types.OnchainKeyring2[RI], error) {
+// OCR3OnchainKeyringWithPublicKey pairs an OCR3 onchain keyring with the public
+// key (an EVM address) that it signs with.
+type OCR3OnchainKeyringWithPublicKey[RI any] struct {
+	Keyring   ocr3types.OnchainKeyring2[RI]
+	PublicKey common.Address
+}
+
+func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]OCR3OnchainKeyringWithPublicKey[RI], error) {
 	var names []string
 	if len(keyringNames) > 0 {
 		for _, krn := range keyringNames {
@@ -63,7 +70,7 @@ func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, 
 		return nil, err
 	}
 
-	keyrings := make([]ocr3types.OnchainKeyring2[RI], 0, len(resp.Keys))
+	keyrings := make([]OCR3OnchainKeyringWithPublicKey[RI], 0, len(resp.Keys))
 	for _, key := range resp.Keys {
 		if !strings.HasPrefix(key.KeyInfo.Name, keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain).String()) {
 			continue
@@ -74,7 +81,10 @@ func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, 
 			return nil, err
 		}
 		addr := crypto.PubkeyToAddress(*publicKey)
-		keyrings = append(keyrings, ocr3util.AsOCR3OnchainKeyring2IgnoringRI[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}))
+		keyrings = append(keyrings, OCR3OnchainKeyringWithPublicKey[RI]{
+			Keyring:   ocr3util.AsOCR3OnchainKeyring2IgnoringRI[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}),
+			PublicKey: addr,
+		})
 	}
 	return keyrings, nil
 }
