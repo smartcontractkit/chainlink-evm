@@ -19,12 +19,19 @@ import (
 	"github.com/smartcontractkit/chainlink-common/keystore/ocr3util"
 )
 
+// OCR3OnchainKeyringWithPublicKey pairs an OCR3 onchain keyring with the public
+// key (an EVM address) that it signs from.
+type OCR3OnchainKeyringWithPublicKey[RI any] struct {
+	Keyring   ocr3types.OnchainKeyring2[RI]
+	PublicKey common.Address
+}
+
 // CreateOCR3OnchainKeyringIgnoringRI creates a new OCR3 onchain keyring.
 // Note that key names are prefixed with PrefixEVM and PrefixOCR2Onchain (to preserve compatibility with OCR2).
 // For example, a key named "test-key" will be stored at the path "evm/ocr2_onchain/test-key".
 // Be careful! The generic RI parameter is not used anywhere in the implementation. It acts as a defensive interface boundary to avoid signing a wrong type of reports.
 // If you have security-critical information in RI, you should make your own ocr3types.OnchainKeyring2 that does use the information in RI for signing.
-func CreateOCR3OnchainKeyringIgnoringRI[RI any](ctx context.Context, ks keystore.Keystore, keyringName string) (ocr3types.OnchainKeyring2[RI], error) {
+func CreateOCR3OnchainKeyringIgnoringRI[RI any](ctx context.Context, ks keystore.Keystore, keyringName string) (OCR3OnchainKeyringWithPublicKey[RI], error) {
 	onchainKeyPath := keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain, keyringName)
 	createReq := keystore.CreateKeysRequest{
 		Keys: []keystore.CreateKeyRequest{
@@ -36,20 +43,25 @@ func CreateOCR3OnchainKeyringIgnoringRI[RI any](ctx context.Context, ks keystore
 	}
 	resp, err := ks.CreateKeys(ctx, createReq)
 	if err != nil {
-		return nil, err
+		return OCR3OnchainKeyringWithPublicKey[RI]{}, err
 	}
 	if len(resp.Keys) != 1 {
-		return nil, fmt.Errorf("expected 1 key, got %d", len(resp.Keys))
+		return OCR3OnchainKeyringWithPublicKey[RI]{}, fmt.Errorf("expected 1 key, got %d", len(resp.Keys))
 	}
 	publicKey, err := crypto.UnmarshalPubkey(resp.Keys[0].KeyInfo.PublicKey)
 	if err != nil {
-		return nil, err
+		return OCR3OnchainKeyringWithPublicKey[RI]{}, err
 	}
 	addr := crypto.PubkeyToAddress(*publicKey)
-	return ocr3util.AsOCR3OnchainKeyring2IgnoringRI[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: onchainKeyPath}), nil
+	return OCR3OnchainKeyringWithPublicKey[RI]{
+		Keyring:   ocr3util.AsOCR3OnchainKeyring2IgnoringRI[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: onchainKeyPath}),
+		PublicKey: addr,
+	}, nil
 }
 
-func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]ocr3types.OnchainKeyring2[RI], error) {
+// Be careful! The generic RI parameter is not used anywhere in the implementation. It acts as a defensive interface boundary to avoid signing a wrong type of reports.
+// If you have security-critical information in RI, you should make your own ocr3types.OnchainKeyring2 that does use the information in RI for signing.
+func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]OCR3OnchainKeyringWithPublicKey[RI], error) {
 	var names []string
 	if len(keyringNames) > 0 {
 		for _, krn := range keyringNames {
@@ -63,7 +75,7 @@ func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, 
 		return nil, err
 	}
 
-	keyrings := make([]ocr3types.OnchainKeyring2[RI], 0, len(resp.Keys))
+	keyrings := make([]OCR3OnchainKeyringWithPublicKey[RI], 0, len(resp.Keys))
 	for _, key := range resp.Keys {
 		if !strings.HasPrefix(key.KeyInfo.Name, keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain).String()) {
 			continue
@@ -74,7 +86,10 @@ func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, 
 			return nil, err
 		}
 		addr := crypto.PubkeyToAddress(*publicKey)
-		keyrings = append(keyrings, ocr3util.AsOCR3OnchainKeyring2IgnoringRI[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}))
+		keyrings = append(keyrings, OCR3OnchainKeyringWithPublicKey[RI]{
+			Keyring:   ocr3util.AsOCR3OnchainKeyring2IgnoringRI[RI](&evmOnchainKeyring2{ks: ks, addr: addr, keyPath: keyPath}),
+			PublicKey: addr,
+		})
 	}
 	return keyrings, nil
 }
