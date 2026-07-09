@@ -31,6 +31,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/heads/headstest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller/internal/log_emitter"
@@ -2146,4 +2147,152 @@ func BenchmarkFilter100_10(b *testing.B) {
 }
 func BenchmarkFilter1000_100(b *testing.B) {
 	benchmarkFilter(b, 1000, 100, 100)
+}
+
+func skipToBlockOpts() Opts {
+	return Opts{
+		UseFinalityTag:           false,
+		FinalityDepth:            2,
+		BackfillBatchSize:        3,
+		RPCBatchSize:             2,
+		KeepFinalizedBlocksDepth: 1000,
+		PollPeriod:               time.Hour,
+	}
+}
+
+func expectFinalizedAnchorHeader(t *testing.T, ec *clienttest.Client, anchorBlockNumber int64) {
+	t.Helper()
+	ec.EXPECT().HeaderByNumberWithOpts(
+		mock.Anything,
+		big.NewInt(anchorBlockNumber),
+		evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized},
+	).RunAndReturn(func(_ context.Context, _ *big.Int, _ evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
+		head := newHeadVal(anchorBlockNumber)
+		hdr := evmtypes.Header(head)
+		return &hdr, nil
+	}).Once()
+}
+
+func expectStoreNewFinalizedCheckpoint(t *testing.T, orm *MockORM, anchorBlockNumber, minBlockToPrune int64) {
+	t.Helper()
+	orm.EXPECT().StoreNewFinalizedCheckpoint(
+		mock.Anything,
+		mock.MatchedBy(func(b Block) bool {
+			return b.BlockNumber == anchorBlockNumber &&
+				b.BlockHash == hashOf(anchorBlockNumber) &&
+				b.FinalizedBlockNumber == anchorBlockNumber &&
+				b.SafeBlockNumber == anchorBlockNumber
+		}),
+		minBlockToPrune,
+	).Return(nil).Once()
+}
+
+func Test_skipToBlock(t *testing.T) {
+	t.Parallel()
+	ctx := testutils.Context(t)
+
+	t.Run("invalid block number", func(t *testing.T) {
+		t.Parallel()
+		m := newMockedLP(t, skipToBlockOpts())
+		err := m.LP.SkipToBlock(ctx, 1)
+		require.ErrorContains(t, err, "must be >= 2")
+	})
+
+	t.Run("disabled log poller returns error", func(t *testing.T) {
+		t.Parallel()
+		err := LogPollerDisabled.SkipToBlock(ctx, 2)
+		require.ErrorIs(t, err, ErrDisabled)
+	})
+
+	t.Run("RPC fetch error", func(t *testing.T) {
+		t.Parallel()
+		m := newMockedLP(t, skipToBlockOpts())
+		m.Client.EXPECT().HeaderByNumberWithOpts(
+			mock.Anything,
+			big.NewInt(2),
+			evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized},
+		).Return(nil, errors.New("rpc unavailable")).Once()
+
+		err := m.LP.SkipToBlock(ctx, 3)
+		require.ErrorContains(t, err, "failed to fetch anchor block 2 from RPC")
+		require.ErrorContains(t, err, "rpc unavailable")
+	})
+
+	t.Run("invalid anchor header", func(t *testing.T) {
+		t.Parallel()
+		m := newMockedLP(t, skipToBlockOpts())
+		m.Client.EXPECT().HeaderByNumberWithOpts(
+			mock.Anything,
+			big.NewInt(2),
+			evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized},
+		).RunAndReturn(func(_ context.Context, _ *big.Int, _ evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
+			head := newHeadVal(2)
+			head.Hash = common.Hash{}
+			return (*evmtypes.Header)(&head), nil
+		}).Once()
+
+		err := m.LP.SkipToBlock(ctx, 3)
+		require.ErrorContains(t, err, "failed to validate anchor block 2")
+	})
+
+	t.Run("forward skip on empty DB", func(t *testing.T) {
+		t.Parallel()
+		m := newMockedLP(t, skipToBlockOpts())
+		expectFinalizedAnchorHeader(t, m.Client, 2)
+		m.ORM.EXPECT().SelectLatestBlock(mock.Anything).Return(nil, sql.ErrNoRows).Once()
+		expectStoreNewFinalizedCheckpoint(t, m.ORM, 2, 2)
+
+		require.NoError(t, m.LP.SkipToBlock(ctx, 3))
+		assert.Equal(t, int64(2), m.LP.backupPollerNextBlock)
+	})
+
+	t.Run("Happy path", func(t *testing.T) {
+		t.Parallel()
+		m := newMockedLP(t, skipToBlockOpts())
+		expectFinalizedAnchorHeader(t, m.Client, 5)
+		m.ORM.EXPECT().SelectLatestBlock(mock.Anything).Return(&Block{
+			BlockNumber:          4,
+			FinalizedBlockNumber: 2,
+			SafeBlockNumber:      2,
+		}, nil).Once()
+		expectStoreNewFinalizedCheckpoint(t, m.ORM, 5, 3)
+
+		require.NoError(t, m.LP.SkipToBlock(ctx, 6))
+	})
+
+	t.Run("backward skip removes blocks from anchor onward", func(t *testing.T) {
+		t.Parallel()
+		m := newMockedLP(t, skipToBlockOpts())
+		expectFinalizedAnchorHeader(t, m.Client, 2)
+		m.ORM.EXPECT().SelectLatestBlock(mock.Anything).Return(&Block{
+			BlockNumber:          4,
+			FinalizedBlockNumber: 3,
+			SafeBlockNumber:      3,
+		}, nil).Once()
+		expectStoreNewFinalizedCheckpoint(t, m.ORM, 2, 2)
+
+		require.NoError(t, m.LP.SkipToBlock(ctx, 3))
+	})
+
+	t.Run("select latest block error", func(t *testing.T) {
+		t.Parallel()
+		m := newMockedLP(t, skipToBlockOpts())
+		expectFinalizedAnchorHeader(t, m.Client, 2)
+		m.ORM.EXPECT().SelectLatestBlock(mock.Anything).Return(nil, errors.New("db unavailable")).Once()
+
+		err := m.LP.SkipToBlock(ctx, 3)
+		require.ErrorContains(t, err, "failed to select latest block")
+	})
+
+	t.Run("store checkpoint error", func(t *testing.T) {
+		t.Parallel()
+		m := newMockedLP(t, skipToBlockOpts())
+		expectFinalizedAnchorHeader(t, m.Client, 2)
+		m.ORM.EXPECT().SelectLatestBlock(mock.Anything).Return(nil, sql.ErrNoRows).Once()
+		m.ORM.EXPECT().StoreNewFinalizedCheckpoint(mock.Anything, mock.Anything, int64(2)).
+			Return(errors.New("db write failed")).Once()
+
+		err := m.LP.SkipToBlock(ctx, 3)
+		require.ErrorContains(t, err, "failed to store new finalized checkpoint")
+	})
 }

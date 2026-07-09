@@ -129,3 +129,7 @@ func (d disabled) FindLCA(ctx context.Context) (*Block, error) {
 func (d disabled) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error {
 	return ErrDisabled
 }
+
+func (d disabled) SkipToBlock(ctx context.Context, blockNumber int64) error {
+	return ErrDisabled
+}

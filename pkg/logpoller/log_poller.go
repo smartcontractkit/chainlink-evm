@@ -30,6 +30,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mathutil"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
@@ -55,6 +56,10 @@ type LogPoller interface {
 	GetBlocksRange(ctx context.Context, numbers []uint64) ([]Block, error)
 	FindLCA(ctx context.Context) (*Block, error)
 	DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error
+	// SkipToBlock repositions the poller to start processing from blockNumber (T).
+	// Block T-1 is fetched from RPC and saved as the anchor; the next poll resumes from T.
+	// Returns an error if T-1 is not finalized on chain.
+	SkipToBlock(ctx context.Context, blockNumber int64) error
 
 	// General querying
 	Logs(ctx context.Context, start, end int64, eventSig common.Hash, address common.Address) ([]Log, error)
@@ -91,6 +96,7 @@ type LogPollerTest interface {
 
 type Client interface {
 	HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error)
+	HeaderByNumberWithOpts(ctx context.Context, number *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error)
 	HeadByHash(ctx context.Context, n common.Hash) (*evmtypes.Head, error)
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
@@ -1870,15 +1876,7 @@ func (lp *logPoller) batchFetchBlocks(ctx context.Context, blocksRequested []uin
 		}
 
 		for _, head := range fetched1 {
-			lpBlock := Block{
-				EVMChainID:           head.EVMChainID,
-				BlockHash:            head.Hash,
-				BlockNumber:          head.Number,
-				BlockTimestamp:       head.Timestamp,
-				FinalizedBlockNumber: head.Number, // always finalized; only matters if this block is returned by LatestBlock()
-				SafeBlockNumber:      head.Number,
-				CreatedAt:            head.CreatedAt,
-			}
+			lpBlock := finalizedHeadToBlock(head)
 			logPollerBlocks[uint64(head.Number)] = lpBlock //nolint:gosec // G115
 			if chainValidationHead == nil || chainValidationHead.BlockNumber < lpBlock.BlockNumber {
 				chainValidationHead = &lpBlock
@@ -1887,6 +1885,18 @@ func (lp *logPoller) batchFetchBlocks(ctx context.Context, blocksRequested []uin
 	}
 
 	return logPollerBlocks, nil
+}
+
+func finalizedHeadToBlock(head *evmtypes.Head) Block {
+	return Block{
+		EVMChainID:           head.EVMChainID,
+		BlockHash:            head.Hash,
+		BlockNumber:          head.Number,
+		BlockTimestamp:       head.Timestamp,
+		FinalizedBlockNumber: head.Number, // always finalized; only matters if this block is returned by LatestBlock()
+		SafeBlockNumber:      head.Number,
+		CreatedAt:            head.CreatedAt,
+	}
 }
 
 func ensureIdenticalBlocksBatches(fetched1, fetched2 map[uint64]*evmtypes.Head) error {
@@ -1918,16 +1928,27 @@ func validateBlockResponse(r rpc.BatchElem) (*evmtypes.Head, error) {
 	if !is {
 		return nil, pkgerrors.Errorf("expected result to be a %T, got %T", &evmtypes.Head{}, r.Result)
 	}
+
+	err := validateHead(block)
+	if err != nil {
+		return nil, err
+	}
+
+	return block, nil
+}
+
+func validateHead(block *evmtypes.Head) error {
 	if block == nil {
-		return nil, pkgerrors.New("invariant violation: got nil block")
+		return pkgerrors.New("invariant violation: got nil block")
 	}
 	if block.Hash == (common.Hash{}) {
-		return nil, pkgerrors.Errorf("missing block hash for block number: %d", block.Number)
+		return pkgerrors.Errorf("missing block hash for block number: %d", block.Number)
 	}
 	if block.Number < 0 {
-		return nil, pkgerrors.Errorf("expected block number to be >= to 0, got %d", block.Number)
+		return pkgerrors.Errorf("expected block number to be >= to 0, got %d", block.Number)
 	}
-	return block, nil
+
+	return nil
 }
 
 // IndexedLogsWithSigsExcluding returns the set difference(A-B) of logs with signature sigA and sigB, matching is done on the topics index
@@ -1941,6 +1962,51 @@ func (lp *logPoller) IndexedLogsWithSigsExcluding(ctx context.Context, address c
 // DeleteLogsAndBlocksAfter - removes blocks and logs starting from the specified block
 func (lp *logPoller) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error {
 	return lp.orm.DeleteLogsAndBlocksAfter(ctx, start)
+}
+
+// SkipToBlock repositions the poller to start processing from blockNumber (T).
+// Block T-1 is fetched from RPC and saved as the anchor; the next poll resumes from T.
+// Returns an error if T-1 is not finalized on chain.
+func (lp *logPoller) SkipToBlock(ctx context.Context, blockNumber int64) error {
+	if blockNumber < 2 {
+		return fmt.Errorf("invalid skip block number %d, must be >= 2", blockNumber)
+	}
+
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
+
+	anchorBlockNumber := blockNumber - 1
+
+	anchorHead, err := lp.ec.HeaderByNumberWithOpts(ctx, big.NewInt(anchorBlockNumber), evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized})
+	if err != nil {
+		return fmt.Errorf("failed to fetch anchor block %d from RPC: %w", anchorBlockNumber, err)
+	}
+
+	err = validateHead((*evmtypes.Head)(anchorHead))
+	if err != nil {
+		return fmt.Errorf("failed to validate anchor block %d: %w", anchorBlockNumber, err)
+	}
+
+	anchorBlock := finalizedHeadToBlock((*evmtypes.Head)(anchorHead))
+
+	latest, err := lp.orm.SelectLatestBlock(ctx)
+	if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("failed to select latest block: %w", err)
+	}
+
+	minBlockToPrune := anchorBlockNumber
+	if latest != nil && latest.FinalizedBlockNumber < minBlockToPrune {
+		minBlockToPrune = latest.FinalizedBlockNumber + 1
+	}
+
+	err = lp.orm.StoreNewFinalizedCheckpoint(ctx, anchorBlock, minBlockToPrune)
+	if err != nil {
+		return fmt.Errorf("failed to store new finalized checkpoint: %w", err)
+	}
+	lp.backupPollerNextBlock = anchorBlockNumber
+
+	lp.lggr.Infof("Skipped to block %d. Next poll starts at %d", anchorBlockNumber, blockNumber)
+	return nil
 }
 
 func (lp *logPoller) FindLCA(ctx context.Context) (*Block, error) {

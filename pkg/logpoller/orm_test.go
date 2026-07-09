@@ -2505,7 +2505,8 @@ func TestSelectLatestFinalizedBlock(t *testing.T) {
 type execCountingSQLxDB struct {
 	*sqlx.DB
 
-	poolExecContext atomic.Int32
+	poolExecContext      atomic.Int32
+	poolNamedExecContext atomic.Int32
 }
 
 func (d *execCountingSQLxDB) PoolExecContextCount() int32 {
@@ -2515,6 +2516,15 @@ func (d *execCountingSQLxDB) PoolExecContextCount() int32 {
 func (d *execCountingSQLxDB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	d.poolExecContext.Add(1)
 	return d.DB.ExecContext(ctx, query, args...)
+}
+
+func (d *execCountingSQLxDB) NamedExecContext(ctx context.Context, query string, arg any) (sql.Result, error) {
+	d.poolNamedExecContext.Add(1)
+	return d.DB.NamedExecContext(ctx, query, arg)
+}
+
+func (d *execCountingSQLxDB) PoolDirectOpCount() int32 {
+	return d.poolExecContext.Load() + d.poolNamedExecContext.Load()
 }
 
 var _ sqlutil.DataSource = (*execCountingSQLxDB)(nil)
@@ -2536,4 +2546,135 @@ func TestDSORM_DeleteLogsAndBlocksAfter_usesTransactionalDataSource(t *testing.T
 	require.Zero(t, wrapped.PoolExecContextCount(),
 		"DeleteLogsAndBlocksAfter must run DELETEs on the transaction DataSource (orm.ds), not the outer pool; "+
 			"otherwise the two deletes are not atomic and this counter would be 2")
+}
+
+func insertBlockRangeWithLogs(
+	t *testing.T,
+	ctx context.Context,
+	th TestHarness,
+	orm logpoller.ORM,
+	start, end int64,
+) {
+	t.Helper()
+
+	var blocks []logpoller.Block
+	var logs []logpoller.Log
+	for i := start; i <= end; i++ {
+		hash := common.HexToHash(fmt.Sprintf("0x%04x", i))
+		blocks = append(blocks, logpoller.Block{
+			EVMChainID:           sqlutil.New(th.ChainID),
+			BlockHash:            hash,
+			BlockNumber:          i,
+			BlockTimestamp:       time.Unix(i*10, 0),
+			FinalizedBlockNumber: i - 2,
+			SafeBlockNumber:      i - 2,
+		})
+		logs = append(logs, GenLog(th.ChainID, 0, i, hash.String(), EmitterABI.Events["Log1"].ID.Bytes(), th.EmitterAddress1))
+	}
+	require.NoError(t, orm.InsertLogsWithBlocks(ctx, logs, blocks))
+}
+
+func finalizedCheckpointBlock(chainID *big.Int, blockNumber int64, hash common.Hash) logpoller.Block {
+	return logpoller.Block{
+		EVMChainID:           sqlutil.New(chainID),
+		BlockHash:            hash,
+		BlockNumber:          blockNumber,
+		BlockTimestamp:       time.Unix(blockNumber*10, 0),
+		FinalizedBlockNumber: blockNumber,
+		SafeBlockNumber:      blockNumber,
+	}
+}
+
+func requireNoBlock(t *testing.T, ctx context.Context, orm logpoller.ORM, blockNumber int64) {
+	t.Helper()
+	_, err := orm.SelectBlockByNumber(ctx, blockNumber)
+	require.Error(t, err)
+	require.True(t, pkgerrors.Is(err, sql.ErrNoRows))
+}
+
+func TestDSORM_StoreNewFinalizedCheckpoint(t *testing.T) {
+	t.Parallel()
+	testutils.SkipShortDB(t)
+
+	ctx := testutils.Context(t)
+
+	t.Run("forward skip prunes from minBlockToPrune and stores anchor", func(t *testing.T) {
+		th := SetupTH(t, lpOpts)
+		o1 := th.ORM
+		insertBlockRangeWithLogs(t, ctx, th, o1, 1, 4)
+
+		anchor := finalizedCheckpointBlock(th.ChainID, 5, common.HexToHash("0x0005"))
+		require.NoError(t, o1.StoreNewFinalizedCheckpoint(ctx, anchor, 3))
+
+		b, err := o1.SelectBlockByNumber(ctx, 5)
+		require.NoError(t, err)
+		require.Equal(t, int64(5), b.BlockNumber)
+		require.Equal(t, common.HexToHash("0x0005"), b.BlockHash)
+		require.Equal(t, int64(5), b.FinalizedBlockNumber)
+
+		for _, n := range []int64{1, 2} {
+			_, err := o1.SelectBlockByNumber(ctx, n)
+			require.NoError(t, err)
+		}
+		for _, n := range []int64{3, 4} {
+			requireNoBlock(t, ctx, o1, n)
+		}
+
+		logs, err := o1.SelectLogsByBlockRange(ctx, 1, 5)
+		require.NoError(t, err)
+		require.Len(t, logs, 2)
+		for _, lg := range logs {
+			require.Less(t, lg.BlockNumber, int64(3))
+		}
+	})
+
+	t.Run("empty DB stores anchor only", func(t *testing.T) {
+		th := SetupTH(t, lpOpts)
+		o1 := th.ORM
+		anchor := finalizedCheckpointBlock(th.ChainID, 5, common.HexToHash("0x0005"))
+		require.NoError(t, o1.StoreNewFinalizedCheckpoint(ctx, anchor, 5))
+
+		b, err := o1.SelectBlockByNumber(ctx, 5)
+		require.NoError(t, err)
+		require.Equal(t, int64(5), b.BlockNumber)
+
+		logs, err := o1.SelectLogsByBlockRange(ctx, 1, 5)
+		require.NoError(t, err)
+		require.Empty(t, logs)
+	})
+
+	t.Run("does not affect other chain", func(t *testing.T) {
+		th := SetupTH(t, lpOpts)
+		o1 := th.ORM
+		o2 := th.ORM2
+		insertBlockRangeWithLogs(t, ctx, th, o1, 1, 4)
+		require.NoError(t, o2.InsertBlock(ctx, common.HexToHash("0x9999"), 10, time.Now(), 10, 10))
+
+		anchor := finalizedCheckpointBlock(th.ChainID, 2, common.HexToHash("0x0002"))
+		require.NoError(t, o1.StoreNewFinalizedCheckpoint(ctx, anchor, 2))
+
+		b, err := o2.SelectBlockByNumber(ctx, 10)
+		require.NoError(t, err)
+		require.Equal(t, int64(10), b.BlockNumber)
+	})
+}
+
+func TestDSORM_StoreNewFinalizedCheckpoint_usesTransactionalDataSource(t *testing.T) {
+	t.Parallel()
+	testutils.SkipShortDB(t)
+
+	ctx := testutils.Context(t)
+	base := testutils.NewSqlxDB(t)
+	require.NotNil(t, base)
+	wrapped := &execCountingSQLxDB{DB: base}
+
+	chainID := testutils.NewRandomEVMChainID()
+	orm := logpoller.NewORM(chainID, wrapped, logger.Test(t))
+
+	anchor := finalizedCheckpointBlock(chainID, 5, common.HexToHash("0x0005"))
+	require.NoError(t, orm.StoreNewFinalizedCheckpoint(ctx, anchor, 5))
+
+	require.Zero(t, wrapped.PoolDirectOpCount(),
+		"StoreNewFinalizedCheckpoint must run DELETEs and INSERT on the transaction DataSource (orm.ds), not the outer pool; "+
+			"otherwise the prune and checkpoint write are not atomic and this counter would be 3")
 }

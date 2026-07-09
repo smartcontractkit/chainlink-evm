@@ -67,6 +67,8 @@ type ORM interface {
 
 	// FilteredLogs accepts chainlink-common filtering DSL.
 	FilteredLogs(ctx context.Context, filter []query.Expression, limitAndSort query.LimitAndSort, queryName string) ([]Log, error)
+
+	StoreNewFinalizedCheckpoint(ctx context.Context, block Block, minBlockToPrune int64) error
 }
 
 type DSORM struct {
@@ -114,6 +116,10 @@ func (o *DSORM) InsertBlock(ctx context.Context, blockHash common.Hash, blockNum
 }
 
 func (o *DSORM) InsertBlocks(ctx context.Context, blocks []Block) error {
+	return insertBlocks(ctx, o, blocks)
+}
+
+func insertBlocks(ctx context.Context, o *DSORM, blocks []Block) error {
 	const q = `INSERT INTO evm.log_poller_blocks
 				(evm_chain_id, block_hash, block_number, block_timestamp, finalized_block_number, created_at, safe_block_number)
       		VALUES (:evm_chain_id, :block_hash, :block_number, :block_timestamp, :finalized_block_number, NOW(), :safe_block_number)
@@ -411,38 +417,57 @@ func (o *DSORM) DeleteBlocksBefore(ctx context.Context, end int64, limit int64) 
 	return q.ExecPagedQuery(ctx, limit, end)
 }
 
+func (o *DSORM) StoreNewFinalizedCheckpoint(ctx context.Context, block Block, minBlockToPrune int64) error {
+	return o.Transact(ctx, func(orm *DSORM) error {
+		err := deleteLogsAndBlockAfter(ctx, orm, minBlockToPrune)
+		if err != nil {
+			return fmt.Errorf("failed to delete logs and block after minBlockToPrune %d: %w", minBlockToPrune, err)
+		}
+
+		err = insertBlocks(ctx, orm, []Block{block})
+		if err != nil {
+			return fmt.Errorf("failed to insert new finalized checkpoint block %d: %w", block.BlockNumber, err)
+		}
+		return nil
+	})
+}
+
 func (o *DSORM) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error {
 	// These deletes are bounded by reorg depth, so they are
 	// fast and should not slow down the log readers.
 	return o.Transact(ctx, func(orm *DSORM) error {
-		// Applying upper bound filter is critical for Postgres performance (especially for evm.logs table)
-		// because it allows the planner to properly estimate the number of rows to be scanned.
-		// If not applied, these queries can become very slow. After some critical number
-		// of logs, Postgres will try to scan all the logs in the index by block_number.
-		// Latency without upper bound filter can be orders of magnitude higher for large number of logs.
-		_, err := orm.ds.ExecContext(ctx, `DELETE FROM evm.log_poller_blocks
+		return deleteLogsAndBlockAfter(ctx, orm, start)
+	})
+}
+
+func deleteLogsAndBlockAfter(ctx context.Context, orm *DSORM, start int64) error {
+	// Applying upper bound filter is critical for Postgres performance (especially for evm.logs table)
+	// because it allows the planner to properly estimate the number of rows to be scanned.
+	// If not applied, these queries can become very slow. After some critical number
+	// of logs, Postgres will try to scan all the logs in the index by block_number.
+	// Latency without upper bound filter can be orders of magnitude higher for large number of logs.
+	_, err := orm.ds.ExecContext(ctx, `DELETE FROM evm.log_poller_blocks
        						WHERE evm_chain_id = $1
 							AND block_number >= $2
 							AND block_number <= (SELECT MAX(block_number)
 						 		FROM evm.log_poller_blocks
 						 		WHERE evm_chain_id = $1)`,
-			sqlutil.New(o.chainID), start)
-		if err != nil {
-			o.lggr.Warnw("Unable to clear reorged blocks, retrying", "err", err)
-			return err
-		}
+		sqlutil.New(orm.chainID), start)
+	if err != nil {
+		orm.lggr.Warnw("Unable to clear reorged blocks, retrying", "err", err)
+		return err
+	}
 
-		_, err = orm.ds.ExecContext(ctx, `DELETE FROM evm.logs
+	_, err = orm.ds.ExecContext(ctx, `DELETE FROM evm.logs
        						WHERE evm_chain_id = $1
 							AND block_number >= $2
 							AND block_number <= (SELECT MAX(block_number) FROM evm.logs WHERE evm_chain_id = $1)`,
-			sqlutil.New(o.chainID), start)
-		if err != nil {
-			o.lggr.Warnw("Unable to clear reorged logs, retrying", "err", err)
-			return err
-		}
-		return nil
-	})
+		sqlutil.New(orm.chainID), start)
+	if err != nil {
+		orm.lggr.Warnw("Unable to clear reorged logs, retrying", "err", err)
+		return err
+	}
+	return nil
 }
 
 type Exp struct {
