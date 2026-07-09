@@ -20,7 +20,7 @@ import (
 )
 
 // OCR3OnchainKeyringWithPublicKey pairs an OCR3 onchain keyring with the public
-// key (an EVM address) that it signs with.
+// key (an EVM address) that it signs from.
 type OCR3OnchainKeyringWithPublicKey[RI any] struct {
 	Keyring   ocr3types.OnchainKeyring2[RI]
 	PublicKey common.Address
