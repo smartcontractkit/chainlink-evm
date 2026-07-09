@@ -59,6 +59,8 @@ func CreateOCR3OnchainKeyringIgnoringRI[RI any](ctx context.Context, ks keystore
 	}, nil
 }
 
+// Be careful! The generic RI parameter is not used anywhere in the implementation. It acts as a defensive interface boundary to avoid signing a wrong type of reports.
+// If you have security-critical information in RI, you should make your own ocr3types.OnchainKeyring2 that does use the information in RI for signing.
 func ListOCR3OnchainKeyrings[RI any](ctx context.Context, ks keystore.Keystore, keyringNames ...string) ([]OCR3OnchainKeyringWithPublicKey[RI], error) {
 	var names []string
 	if len(keyringNames) > 0 {
