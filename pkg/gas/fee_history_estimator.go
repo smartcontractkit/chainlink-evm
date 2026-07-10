@@ -240,6 +240,8 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 	// eth_feeHistory doesn't return the latest baseFee of the range but rather the latest + 1, because it can be derived from the existing
 	// values. Source: https://github.com/ethereum/go-ethereum/blob/b0f66e34ca2a4ea7ae23475224451c8c9a569826/eth/gasprice/feehistory.go#L235
 	// nextBlock is the latest returned + 1 to be aligned with the base fee value.
+	// If the fee history base fee list is empty, we use the cached next base fee to continue updating priorityFeeThresholdWei
+	// We are intentionally ignoring the nil base fee error here to avoid blocking a valid update of the next base fee
 	nextBaseFee, err := f.getNextBaseFee()
 	if len(feeHistory.BaseFee) != 0 {
 		nextBaseFee = assets.NewWei(feeHistory.BaseFee[len(feeHistory.BaseFee)-1])
