@@ -237,6 +237,14 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 		return err
 	}
 
+	// Some RPC providers return a 200/success response with an empty (or short) BaseFee
+	// array instead of an error, e.g. when a deep/archive range can't be served or the
+	// upstream doesn't fully support eth_feeHistory. Treat that the same as an RPC error
+	// instead of indexing into an empty slice below.
+	if len(feeHistory.BaseFee) == 0 {
+		return fmt.Errorf("eth_feeHistory returned an empty baseFeePerGas array for chain %s", f.chainID.String())
+	}
+
 	// eth_feeHistory doesn't return the latest baseFee of the range but rather the latest + 1, because it can be derived from the existing
 	// values. Source: https://github.com/ethereum/go-ethereum/blob/b0f66e34ca2a4ea7ae23475224451c8c9a569826/eth/gasprice/feehistory.go#L235
 	// nextBlock is the latest returned + 1 to be aligned with the base fee value.
