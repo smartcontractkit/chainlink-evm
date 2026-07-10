@@ -243,6 +243,9 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 	// If the fee history base fee list is empty, we use the cached next base fee to continue updating priorityFeeThresholdWei
 	// We are intentionally ignoring the nil base fee error here to avoid blocking a valid update of the next base fee
 	nextBaseFee, err := f.getNextBaseFee()
+	if err != nil {
+		return err
+	}
 	if len(feeHistory.BaseFee) != 0 {
 		nextBaseFee = assets.NewWei(feeHistory.BaseFee[len(feeHistory.BaseFee)-1])
 	}
