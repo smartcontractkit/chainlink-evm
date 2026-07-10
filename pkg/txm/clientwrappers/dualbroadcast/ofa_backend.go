@@ -20,6 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -176,6 +177,9 @@ func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transact
 	start := time.Now()
 	_, err = d.postJSONRPC(ctx, tx.FromAddress, body, meta)
 	d.metrics.RecordSendTx(ctx, time.Since(start), err)
+	if emitErr := txm.EmitTxMessage(ctx, d.metrics.chainID, attemptWithOFAGasTier.Hash, tx.FromAddress, tx); emitErr != nil {
+		d.lggr.Errorw("Beholder error emitting tx message", "err", emitErr, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
+	}
 
 	return err
 }

@@ -195,6 +195,10 @@ func (m *txmMetrics) SetRPCNonce(ctx context.Context, address common.Address, no
 }
 
 func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
+	return EmitTxMessage(ctx, m.chainID.String(), txHash, fromAddress, tx)
+}
+
+func EmitTxMessage(ctx context.Context, chainID string, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return fmt.Errorf("failed to get meta for tx %s: %w", txHash, err)
@@ -221,7 +225,7 @@ func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, from
 		ToAddress:           toAddress.String(),
 		Nonce:               strconv.FormatUint(*tx.Nonce, 10),
 		CreatedAt:           time.Now().UnixMicro(),
-		ChainId:             m.chainID.String(),
+		ChainId:             chainID,
 		FeedAddress:         destAddress,
 		DualBroadcastParams: dualBroadcastParams,
 	}
