@@ -21,17 +21,19 @@
 /contracts/**/*keeper* @smartcontractkit/dev-services
 /contracts/**/*upkeep* @smartcontractkit/dev-services
 /contracts/**/*automation* @smartcontractkit/dev-services
+/contracts/**/*automation-cre* @smartcontractkit/cld-vault
 /contracts/**/*functions* @smartcontractkit/dev-services
 /contracts/**/*l2ep* @smartcontractkit/data-growth
 /contracts/**/*llo-feeds* @smartcontractkit/data-streams-engineers
 /contracts/**/*operatorforwarder* @smartcontractkit/data-feeds-engineers
 /contracts/**/*data-feeds* @smartcontractkit/data-feeds-engineers
 /contracts/**/*vrf* @smartcontractkit/dev-services
-/contracts/**/*keystone* @smartcontractkit/cre-onchain
-/contracts/**/*workflow* @smartcontractkit/cre-onchain
+/contracts/**/*keystone* @smartcontractkit/cld-vault
+/contracts/**/*workflow* @smartcontractkit/cld-vault
 /contracts/**/*payments* @smartcontractkit/payments
 
 /contracts/src/v0.8/automation @smartcontractkit/dev-services
+/contracts/src/v0.8/automation-cre @smartcontractkit/cld-vault
 /contracts/src/v0.8/functions @smartcontractkit/dev-services
 /contracts/src/v0.8/l2ep @smartcontractkit/data-growth
 /contracts/src/v0.8/llo-feeds @smartcontractkit/data-streams-engineers
@@ -41,7 +43,7 @@
 /contracts/src/v0.8/shared @smartcontractkit/core-solidity
 /contracts/src/v0.8/vrf @smartcontractkit/dev-services
 /contracts/src/v0.8/payments @smartcontractkit/payments
-/contracts/cre @smartcontractkit/cre-onchain
+/contracts/cre @smartcontractkit/cld-vault
 
 /gethwrappers @smartcontractkit/core-solidity
 /gethwrappers/functions @smartcontractkit/dev-services
@@ -56,6 +58,7 @@
 /gethwrappers/keeper @smartcontractkit/dev-services
 /gethwrappers/upkeep @smartcontractkit/dev-services
 /gethwrappers/automation @smartcontractkit/dev-services
+/gethwrappers/automation-cre @smartcontractkit/cld-vault
 /gethwrappers/l2ep @smartcontractkit/data-growth
 /gethwrappers/vrf @smartcontractkit/dev-services
 

@@ -6,6 +6,7 @@ package gethwrappers
 //go:generate ../contracts/scripts/native_solc_compile_all
 
 //go:generate go generate go_generate_automation.go
+//go:generate go generate go_generate_automation_cre.go
 //go:generate go generate go_generate_vrf.go
 
 //go:generate go generate ./functions
