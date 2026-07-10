@@ -236,6 +236,9 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 	if err != nil {
 		return err
 	}
+	if feeHistory == nil {
+		return errors.New("feeHistory result is nil")
+	}
 
 	// If the BaseFee list is empty, maintain the cached base fee to continue updating priorityFeeThresholdWei
 	f.nextBaseFeeMu.RLock()
