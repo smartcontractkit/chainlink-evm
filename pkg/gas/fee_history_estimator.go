@@ -236,11 +236,24 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 	if err != nil {
 		return err
 	}
+	if feeHistory == nil {
+		return errors.New("feeHistory result is nil")
+	}
 
-	// eth_feeHistory doesn't return the latest baseFee of the range but rather the latest + 1, because it can be derived from the existing
-	// values. Source: https://github.com/ethereum/go-ethereum/blob/b0f66e34ca2a4ea7ae23475224451c8c9a569826/eth/gasprice/feehistory.go#L235
-	// nextBlock is the latest returned + 1 to be aligned with the base fee value.
-	nextBaseFee := assets.NewWei(feeHistory.BaseFee[len(feeHistory.BaseFee)-1])
+	// If the BaseFee list is empty, maintain the cached base fee to continue updating priorityFeeThresholdWei
+	f.nextBaseFeeMu.RLock()
+	nextBaseFee := f.nextBaseFee
+	f.nextBaseFeeMu.RUnlock()
+	if len(feeHistory.BaseFee) != 0 {
+		// eth_feeHistory doesn't return the latest baseFee of the range but rather the latest + 1, because it can be derived from the existing
+		// values. Source: https://github.com/ethereum/go-ethereum/blob/b0f66e34ca2a4ea7ae23475224451c8c9a569826/eth/gasprice/feehistory.go#L235
+		// nextBlock is the latest returned + 1 to be aligned with the base fee value.
+		nextBaseFee = assets.NewWei(feeHistory.BaseFee[len(feeHistory.BaseFee)-1])
+	}
+	// If the cached base fee is nil and the BaseFee list is empty, return an error since a proper next base fee isn't set
+	if nextBaseFee == nil {
+		return errors.New("nextBaseFee not set")
+	}
 	nextBlock := big.NewInt(0).Add(feeHistory.OldestBlock, big.NewInt(int64(f.config.BlockHistorySize)))
 
 	// If BlockHistorySize is 0 it means priority fees will be ignored from the calculations, so we set them to 0.
