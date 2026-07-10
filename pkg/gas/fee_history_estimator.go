@@ -237,6 +237,10 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 		return err
 	}
 
+	if len(feeHistory.BaseFee) == 0 {
+		return errors.New("fee history returned empty base fee")
+	}
+
 	// eth_feeHistory doesn't return the latest baseFee of the range but rather the latest + 1, because it can be derived from the existing
 	// values. Source: https://github.com/ethereum/go-ethereum/blob/b0f66e34ca2a4ea7ae23475224451c8c9a569826/eth/gasprice/feehistory.go#L235
 	// nextBlock is the latest returned + 1 to be aligned with the base fee value.

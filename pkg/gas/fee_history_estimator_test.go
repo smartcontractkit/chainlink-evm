@@ -259,6 +259,20 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		assert.ErrorContains(t, err, "dynamic price not set")
 	})
 
+	t.Run("returns error when fee history has empty base fee", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		feeHistoryResult := &ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			BaseFee:     []*big.Int{},
+		}
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(feeHistoryResult, nil).Once()
+
+		cfg := gas.FeeHistoryEstimatorConfig{BlockHistorySize: 1}
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		err := u.RefreshDynamicPrice()
+		assert.ErrorContains(t, err, "empty base fee")
+	})
+
 	t.Run("will return max price if tip cap or fee cap exceed it", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
 		baseFee := big.NewInt(1)
