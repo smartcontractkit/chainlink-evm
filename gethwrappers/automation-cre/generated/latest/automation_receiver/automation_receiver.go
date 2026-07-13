@@ -5,7 +5,6 @@ package automation_receiver
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated"
 )
 
 var (
@@ -2542,44 +2540,6 @@ type GetBlockNumberCheck struct {
 	LastReportBlock *big.Int
 }
 
-func (_AutomationReceiver *AutomationReceiver) ParseLog(log types.Log) (generated.AbigenLog, error) {
-	switch log.Topics[0] {
-	case _AutomationReceiver.abi.Events["BlockNumberCheckSet"].ID:
-		return _AutomationReceiver.ParseBlockNumberCheckSet(log)
-	case _AutomationReceiver.abi.Events["CallAllowedSet"].ID:
-		return _AutomationReceiver.ParseCallAllowedSet(log)
-	case _AutomationReceiver.abi.Events["CallExecuted"].ID:
-		return _AutomationReceiver.ParseCallExecuted(log)
-	case _AutomationReceiver.abi.Events["CallFailed"].ID:
-		return _AutomationReceiver.ParseCallFailed(log)
-	case _AutomationReceiver.abi.Events["ConsumerGasLimitSet"].ID:
-		return _AutomationReceiver.ParseConsumerGasLimitSet(log)
-	case _AutomationReceiver.abi.Events["ExpectedAuthorUpdated"].ID:
-		return _AutomationReceiver.ParseExpectedAuthorUpdated(log)
-	case _AutomationReceiver.abi.Events["ExpectedWorkflowIdUpdated"].ID:
-		return _AutomationReceiver.ParseExpectedWorkflowIdUpdated(log)
-	case _AutomationReceiver.abi.Events["ExpectedWorkflowNameUpdated"].ID:
-		return _AutomationReceiver.ParseExpectedWorkflowNameUpdated(log)
-	case _AutomationReceiver.abi.Events["ForwarderAddressUpdated"].ID:
-		return _AutomationReceiver.ParseForwarderAddressUpdated(log)
-	case _AutomationReceiver.abi.Events["OwnershipTransferred"].ID:
-		return _AutomationReceiver.ParseOwnershipTransferred(log)
-	case _AutomationReceiver.abi.Events["Paused"].ID:
-		return _AutomationReceiver.ParsePaused(log)
-	case _AutomationReceiver.abi.Events["ReportSkippedWhilePaused"].ID:
-		return _AutomationReceiver.ParseReportSkippedWhilePaused(log)
-	case _AutomationReceiver.abi.Events["SecurityWarning"].ID:
-		return _AutomationReceiver.ParseSecurityWarning(log)
-	case _AutomationReceiver.abi.Events["StaleReportSkipped"].ID:
-		return _AutomationReceiver.ParseStaleReportSkipped(log)
-	case _AutomationReceiver.abi.Events["Unpaused"].ID:
-		return _AutomationReceiver.ParseUnpaused(log)
-
-	default:
-		return nil, fmt.Errorf("abigen wrapper received unknown log topic: %v", log.Topics[0])
-	}
-}
-
 func (AutomationReceiverBlockNumberCheckSet) Topic() common.Hash {
 	return common.HexToHash("0xf19a6052943cc4c32e1644d475a7b4e6f517bcae63159220028f5de68d6d0364")
 }
@@ -2782,8 +2742,6 @@ type AutomationReceiverInterface interface {
 	WatchUnpaused(opts *bind.WatchOpts, sink chan<- *AutomationReceiverUnpaused) (event.Subscription, error)
 
 	ParseUnpaused(log types.Log) (*AutomationReceiverUnpaused, error)
-
-	ParseLog(log types.Log) (generated.AbigenLog, error)
 
 	Address() common.Address
 }
