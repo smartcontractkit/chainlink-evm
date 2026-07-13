@@ -1,0 +1,2 @@
+GETH_VERSION: 1.17.3
+automation_receiver: ../../contracts/solc/automation-cre/AutomationReceiver/AutomationReceiver.sol/AutomationReceiver.abi.json ../../contracts/solc/automation-cre/AutomationReceiver/AutomationReceiver.sol/AutomationReceiver.bin c8d03ed089c8a4734d4cb7146852b3b323177dc0d47f7f3c23d436af3c3a062b
