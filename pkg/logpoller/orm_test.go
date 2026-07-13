@@ -2550,7 +2550,6 @@ func TestDSORM_DeleteLogsAndBlocksAfter_usesTransactionalDataSource(t *testing.T
 
 func insertBlockRangeWithLogs(
 	t *testing.T,
-	ctx context.Context,
 	th TestHarness,
 	orm logpoller.ORM,
 	start, end int64,
@@ -2571,7 +2570,7 @@ func insertBlockRangeWithLogs(
 		})
 		logs = append(logs, GenLog(th.ChainID, 0, i, hash.String(), EmitterABI.Events["Log1"].ID.Bytes(), th.EmitterAddress1))
 	}
-	require.NoError(t, orm.InsertLogsWithBlocks(ctx, logs, blocks))
+	require.NoError(t, orm.InsertLogsWithBlocks(t.Context(), logs, blocks))
 }
 
 func finalizedCheckpointBlock(chainID *big.Int, blockNumber int64, hash common.Hash) logpoller.Block {
@@ -2585,9 +2584,9 @@ func finalizedCheckpointBlock(chainID *big.Int, blockNumber int64, hash common.H
 	}
 }
 
-func requireNoBlock(t *testing.T, ctx context.Context, orm logpoller.ORM, blockNumber int64) {
+func requireNoBlock(t *testing.T, orm logpoller.ORM, blockNumber int64) {
 	t.Helper()
-	_, err := orm.SelectBlockByNumber(ctx, blockNumber)
+	_, err := orm.SelectBlockByNumber(t.Context(), blockNumber)
 	require.Error(t, err)
 	require.True(t, pkgerrors.Is(err, sql.ErrNoRows))
 }
@@ -2596,31 +2595,29 @@ func TestDSORM_StoreNewFinalizedCheckpoint(t *testing.T) {
 	t.Parallel()
 	testutils.SkipShortDB(t)
 
-	ctx := testutils.Context(t)
-
 	t.Run("forward skip prunes from minBlockToPrune and stores anchor", func(t *testing.T) {
 		th := SetupTH(t, lpOpts)
 		o1 := th.ORM
-		insertBlockRangeWithLogs(t, ctx, th, o1, 1, 4)
+		insertBlockRangeWithLogs(t, th, o1, 1, 4)
 
 		anchor := finalizedCheckpointBlock(th.ChainID, 5, common.HexToHash("0x0005"))
-		require.NoError(t, o1.StoreNewFinalizedCheckpoint(ctx, anchor, 3))
+		require.NoError(t, o1.StoreNewFinalizedCheckpoint(t.Context(), anchor, 3))
 
-		b, err := o1.SelectBlockByNumber(ctx, 5)
+		b, err := o1.SelectBlockByNumber(t.Context(), 5)
 		require.NoError(t, err)
 		require.Equal(t, int64(5), b.BlockNumber)
 		require.Equal(t, common.HexToHash("0x0005"), b.BlockHash)
 		require.Equal(t, int64(5), b.FinalizedBlockNumber)
 
 		for _, n := range []int64{1, 2} {
-			_, err := o1.SelectBlockByNumber(ctx, n)
+			_, err = o1.SelectBlockByNumber(t.Context(), n)
 			require.NoError(t, err)
 		}
 		for _, n := range []int64{3, 4} {
-			requireNoBlock(t, ctx, o1, n)
+			requireNoBlock(t, o1, n)
 		}
 
-		logs, err := o1.SelectLogsByBlockRange(ctx, 1, 5)
+		logs, err := o1.SelectLogsByBlockRange(t.Context(), 1, 5)
 		require.NoError(t, err)
 		require.Len(t, logs, 2)
 		for _, lg := range logs {
@@ -2632,13 +2629,13 @@ func TestDSORM_StoreNewFinalizedCheckpoint(t *testing.T) {
 		th := SetupTH(t, lpOpts)
 		o1 := th.ORM
 		anchor := finalizedCheckpointBlock(th.ChainID, 5, common.HexToHash("0x0005"))
-		require.NoError(t, o1.StoreNewFinalizedCheckpoint(ctx, anchor, 5))
+		require.NoError(t, o1.StoreNewFinalizedCheckpoint(t.Context(), anchor, 5))
 
-		b, err := o1.SelectBlockByNumber(ctx, 5)
+		b, err := o1.SelectBlockByNumber(t.Context(), 5)
 		require.NoError(t, err)
 		require.Equal(t, int64(5), b.BlockNumber)
 
-		logs, err := o1.SelectLogsByBlockRange(ctx, 1, 5)
+		logs, err := o1.SelectLogsByBlockRange(t.Context(), 1, 5)
 		require.NoError(t, err)
 		require.Empty(t, logs)
 	})
@@ -2647,13 +2644,13 @@ func TestDSORM_StoreNewFinalizedCheckpoint(t *testing.T) {
 		th := SetupTH(t, lpOpts)
 		o1 := th.ORM
 		o2 := th.ORM2
-		insertBlockRangeWithLogs(t, ctx, th, o1, 1, 4)
-		require.NoError(t, o2.InsertBlock(ctx, common.HexToHash("0x9999"), 10, time.Now(), 10, 10))
+		insertBlockRangeWithLogs(t, th, o1, 1, 4)
+		require.NoError(t, o2.InsertBlock(t.Context(), common.HexToHash("0x9999"), 10, time.Now(), 10, 10))
 
 		anchor := finalizedCheckpointBlock(th.ChainID, 2, common.HexToHash("0x0002"))
-		require.NoError(t, o1.StoreNewFinalizedCheckpoint(ctx, anchor, 2))
+		require.NoError(t, o1.StoreNewFinalizedCheckpoint(t.Context(), anchor, 2))
 
-		b, err := o2.SelectBlockByNumber(ctx, 10)
+		b, err := o2.SelectBlockByNumber(t.Context(), 10)
 		require.NoError(t, err)
 		require.Equal(t, int64(10), b.BlockNumber)
 	})

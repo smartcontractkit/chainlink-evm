@@ -2167,9 +2167,8 @@ func expectFinalizedAnchorHeader(t *testing.T, ec *clienttest.Client, anchorBloc
 		big.NewInt(anchorBlockNumber),
 		evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized},
 	).RunAndReturn(func(_ context.Context, _ *big.Int, _ evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error) {
-		head := newHeadVal(anchorBlockNumber)
-		hdr := evmtypes.Header(head)
-		return &hdr, nil
+		head := newHead(anchorBlockNumber)
+		return (*evmtypes.Header)(head), nil
 	}).Once()
 }
 
