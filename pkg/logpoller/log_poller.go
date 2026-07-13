@@ -760,6 +760,7 @@ func (lp *logPoller) tickPoll(ctx context.Context) {
 		start = latestFinalizedBlockNumber
 	} else {
 		lp.metrics.RecordLastProcessedBlock(ctx, lastProcessed.BlockNumber)
+		lp.lggr.Debugw("New poll tick", "last_processed", lastProcessed.BlockNumber, "finalized_block", lastProcessed.FinalizedBlockNumber)
 		start = lastProcessed.BlockNumber + 1
 	}
 	lp.PollAndSaveLogs(ctx, start, false)
@@ -1974,6 +1975,9 @@ func (lp *logPoller) SkipToBlock(ctx context.Context, blockNumber int64) error {
 
 	lp.runMu.Lock()
 	defer lp.runMu.Unlock()
+	if ctx.Err() != nil {
+		return fmt.Errorf("aborted, SkipToBlock request cancelled: %w", ctx.Err())
+	}
 
 	anchorBlockNumber := blockNumber - 1
 
