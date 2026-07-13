@@ -2565,8 +2565,8 @@ func insertBlockRangeWithLogs(
 			BlockHash:            hash,
 			BlockNumber:          i,
 			BlockTimestamp:       time.Unix(i*10, 0),
-			FinalizedBlockNumber: i - 2,
-			SafeBlockNumber:      i - 2,
+			FinalizedBlockNumber: max(i-2, 0),
+			SafeBlockNumber:      max(i-2, 0),
 		})
 		logs = append(logs, GenLog(th.ChainID, 0, i, hash.String(), EmitterABI.Events["Log1"].ID.Bytes(), th.EmitterAddress1))
 	}
