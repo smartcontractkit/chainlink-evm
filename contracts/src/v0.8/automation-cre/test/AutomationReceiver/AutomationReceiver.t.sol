@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+// solhint-disable gas-custom-errors,interface-starts-with-i,chainlink-solidity/all-caps-constant-storage-variables,chainlink-solidity/prefix-storage-variables-with-s-underscore
+
 import {AutomationReceiver} from "../../AutomationReceiver.sol";
 import {ReceiverTemplate} from "../../ReceiverTemplate.sol";
 import {Ownable} from "@openzeppelin/contracts@5.1.0/access/Ownable.sol";

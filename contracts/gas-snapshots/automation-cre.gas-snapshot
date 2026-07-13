@@ -24,3 +24,7 @@ AutomationReceiverTest:test_setCallAllowed_RevocationSkipsCodeCheck() (gas: 1354
 AutomationReceiverTest:test_setConsumerGasLimit_IsPerPair() (gas: 44609)
 AutomationReceiverTest:test_setConsumerGasLimit_SetAndGet() (gas: 29639)
 AutomationReceiverTest:test_unpause_ResumesDelivery() (gas: 148797)
+ReceiverTemplateTest:test_onReport_AcceptsWhenMetadataMatches() (gas: 1169308)
+ReceiverTemplateTest:test_setExpectedAuthor_ClearingAuthorWhileNameSetDoesNotRevert() (gas: 1072363)
+ReceiverTemplateTest:test_setExpectedWorkflowName_CanBeSetWithoutAuthor() (gas: 1067209)
+ReceiverTemplateTest:test_setForwarderAddress_ZeroSucceedsAtTemplateLevel() (gas: 998852)
