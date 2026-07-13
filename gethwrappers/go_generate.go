@@ -4,7 +4,7 @@ package gethwrappers
 
 // Make sure solidity compiler artifacts are up-to-date. Only output stdout on failure.
 //go:generate ../contracts/scripts/native_solc_compile_all
-//go:generate ../contracts/scripts/native_solc_compile_all_automation_cre
+//go:generate ../contracts/scripts/native_solc_compile_all_automation-cre
 
 //go:generate go generate go_generate_automation.go
 //go:generate go generate go_generate_automation_cre.go
