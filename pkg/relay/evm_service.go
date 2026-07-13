@@ -373,6 +373,13 @@ func (e *evmService) GetLatestLPBlock(ctx context.Context) (*evm.LPBlock, error)
 	}, nil
 }
 
+func (e *evmService) LPSkipToBlock(ctx context.Context, blockNumber int64) error {
+	if err := e.chain.LogPoller().SkipToBlock(ctx, blockNumber); err != nil {
+		return fmt.Errorf("failed to skip log poller to block %d: %w", blockNumber, err)
+	}
+	return nil
+}
+
 func (r *Relayer) GetForwarderForEOA(ctx context.Context, eoa, ocr2AggregatorID evm.Address, pluginType string) (forwarder evm.Address, err error) {
 	if pluginType == string(commontypes.Median) {
 		return r.chain.TxManager().GetForwarderForEOAOCR2Feeds(ctx, eoa, ocr2AggregatorID)
