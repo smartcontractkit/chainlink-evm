@@ -7,17 +7,25 @@ import {Ownable} from "@openzeppelin/contracts@5.1.0/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts@5.1.0/utils/Pausable.sol";
 
 interface Vm {
-  function prank(address msgSender) external;
+  function prank(
+    address msgSender
+  ) external;
 
-  function expectRevert(bytes4 revertData) external;
+  function expectRevert(
+    bytes4 revertData
+  ) external;
 
-  function expectRevert(bytes calldata revertData) external;
+  function expectRevert(
+    bytes calldata revertData
+  ) external;
 
   /// @dev Marks `target` cold, as if it had never been accessed in the current transaction.
   ///      Used to simulate production delivery, where setCallAllowed ran in an earlier
   ///      transaction and the target account is therefore cold at delivery time — unlike a
   ///      same-transaction Foundry test, which would otherwise leave it warm.
-  function cool(address target) external;
+  function cool(
+    address target
+  ) external;
 }
 
 /// @dev Minimal Automation-style target. `performUpkeep` records the last performData and
@@ -27,11 +35,15 @@ contract MockUpkeep {
   uint256 public performCount;
   bytes public lastPerformData;
 
-  function setShouldRevert(bool value) external {
+  function setShouldRevert(
+    bool value
+  ) external {
     shouldRevert = value;
   }
 
-  function performUpkeep(bytes calldata performData) external {
+  function performUpkeep(
+    bytes calldata performData
+  ) external {
     if (shouldRevert) {
       revert("upkeep failed");
     }
@@ -44,7 +56,9 @@ contract MockUpkeep {
 contract MockGasHog {
   uint256 public callCount;
 
-  function performUpkeep(bytes calldata) external {
+  function performUpkeep(
+    bytes calldata
+  ) external {
     callCount++;
   }
 }
@@ -53,14 +67,18 @@ contract MockGasHog {
 contract MockGasRecorder {
   uint256 public gasOnEntry;
 
-  function performUpkeep(bytes calldata) external {
+  function performUpkeep(
+    bytes calldata
+  ) external {
     gasOnEntry = gasleft();
   }
 }
 
 /// @dev Worst case for GAS_OVERHEAD: consumes every unit of forwarded gas and reverts (OOG).
 contract MockGasBurner {
-  function performUpkeep(bytes calldata) external pure {
+  function performUpkeep(
+    bytes calldata
+  ) external pure {
     // solhint-disable-next-line no-empty-blocks
     while (true) {}
   }
@@ -95,7 +113,9 @@ contract AutomationReceiverTest {
   }
 
   // ─── helpers ────────────────────────────────────────────────
-  function _performCall(bytes memory performData) private pure returns (bytes memory) {
+  function _performCall(
+    bytes memory performData
+  ) private pure returns (bytes memory) {
     return abi.encodeWithSignature("performUpkeep(bytes)", performData);
   }
 
@@ -103,11 +123,7 @@ contract AutomationReceiverTest {
     return abi.encode(tgt, uint256(0), callData);
   }
 
-  function _reportAtBlock(
-    address tgt,
-    uint256 blockNumber,
-    bytes memory callData
-  ) private pure returns (bytes memory) {
+  function _reportAtBlock(address tgt, uint256 blockNumber, bytes memory callData) private pure returns (bytes memory) {
     return abi.encode(tgt, blockNumber, callData);
   }
 
@@ -115,7 +131,9 @@ contract AutomationReceiverTest {
     return abi.encodePacked(wfId, bytes10(0), wfOwner);
   }
 
-  function _deliver(bytes memory report) private {
+  function _deliver(
+    bytes memory report
+  ) private {
     vm.prank(FORWARDER);
     receiver.onReport(_metadata(WORKFLOW_ID, WORKFLOW_OWNER), report);
   }
@@ -176,8 +194,7 @@ contract AutomationReceiverTest {
 
     vm.prank(FORWARDER);
     freshReceiver.onReport(
-      abi.encodePacked(bytes32(0), wfName, WORKFLOW_OWNER),
-      _report(address(target), _performCall(hex"01"))
+      abi.encodePacked(bytes32(0), wfName, WORKFLOW_OWNER), _report(address(target), _performCall(hex"01"))
     );
 
     _assertEq(target.performCount(), 1);
@@ -212,8 +229,7 @@ contract AutomationReceiverTest {
     bytes10 wfName = freshReceiver.getExpectedWorkflowName();
     vm.prank(FORWARDER);
     freshReceiver.onReport(
-      abi.encodePacked(WORKFLOW_ID, wfName, WORKFLOW_OWNER),
-      _report(address(target), _performCall(hex"01"))
+      abi.encodePacked(WORKFLOW_ID, wfName, WORKFLOW_OWNER), _report(address(target), _performCall(hex"01"))
     );
 
     _assertEq(target.performCount(), 1);
@@ -504,7 +520,7 @@ contract AutomationReceiverTest {
 
   function test_onReport_GasOverheadCoversWorstCaseGasBurningConsumer() external {
     receiver.setCallAllowed(address(gasBurner), PERFORM_SELECTOR, true);
-    uint256 limit = 1_000;
+    uint256 limit = 1000;
     receiver.setConsumerGasLimit(address(gasBurner), PERFORM_SELECTOR, limit);
     bytes memory report = _report(address(gasBurner), _performCall(hex""));
 
@@ -668,11 +684,15 @@ contract AutomationReceiverTest {
     if (actual != expected) revert("bytes32 mismatch");
   }
 
-  function _assertTrue(bool value) private pure {
+  function _assertTrue(
+    bool value
+  ) private pure {
     if (!value) revert("expected true");
   }
 
-  function _assertFalse(bool value) private pure {
+  function _assertFalse(
+    bool value
+  ) private pure {
     if (value) revert("expected false");
   }
 }
