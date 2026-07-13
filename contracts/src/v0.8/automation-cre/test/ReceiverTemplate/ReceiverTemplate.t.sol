@@ -72,6 +72,13 @@ contract ReceiverTemplateTest {
     receiver.setExpectedWorkflowName("game-resolution");
   }
 
+  function test_setExpectedWorkflowName_ClearWithEmptyString() external {
+    MockReceiver receiver = new MockReceiver(FORWARDER);
+    receiver.setExpectedWorkflowName("game-resolution");
+    receiver.setExpectedWorkflowName("");
+    if (receiver.getExpectedWorkflowName() != bytes10(0)) revert("expected empty workflow name");
+  }
+
   /// @dev Clearing the author while a workflow name is set does not revert on the setter itself.
   function test_setExpectedAuthor_ClearingAuthorWhileNameSetDoesNotRevert() external {
     MockReceiver receiver = new MockReceiver(FORWARDER);
