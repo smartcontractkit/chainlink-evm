@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// solhint-disable gas-custom-errors,interface-starts-with-i,chainlink-solidity/all-caps-constant-storage-variables,chainlink-solidity/prefix-storage-variables-with-s-underscore
+// solhint-disable
+// gas-custom-errors,interface-starts-with-i,chainlink-solidity/all-caps-constant-storage-variables,chainlink-solidity/prefix-storage-variables-with-s-underscore
 
 import {AutomationReceiver} from "../../AutomationReceiver.sol";
+
+import {IReceiver} from "../../IReceiver.sol";
 import {ReceiverTemplate} from "../../ReceiverTemplate.sol";
 import {Ownable} from "@openzeppelin/contracts@5.1.0/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts@5.1.0/utils/Pausable.sol";
@@ -673,6 +676,26 @@ contract AutomationReceiverTest {
     _assertEq(lastBlock, 100);
   }
 
+  // ─── supportsInterface ───────────────────────────────────────
+  function test_supportsInterface_ERC165() external {
+    _assertTrue(receiver.supportsInterface(0x01ffc9a7));
+  }
+
+  function test_supportsInterface_IReceiver() external {
+    _assertTrue(receiver.supportsInterface(type(IReceiver).interfaceId));
+  }
+
+  function test_supportsInterface_ReturnsFalseForUnknown() external {
+    _assertFalse(receiver.supportsInterface(0xdeadbeef));
+  }
+
+  // ─── getters ────────────────────────────────────────────────
+  function test_getters_ReflectState() external {
+    _assertEq(receiver.getForwarderAddress(), FORWARDER);
+    _assertEq(receiver.getExpectedAuthor(), WORKFLOW_OWNER);
+    _assertEq(receiver.getExpectedWorkflowId(), WORKFLOW_ID);
+  }
+
   // ─── tiny assertion helpers (no forge-std dependency) ───────
   function _invalidSenderSelector() private pure returns (bytes4) {
     return bytes4(keccak256("InvalidSender(address,address)"));
@@ -684,6 +707,10 @@ contract AutomationReceiverTest {
 
   function _assertEq(bytes32 actual, bytes32 expected) private pure {
     if (actual != expected) revert("bytes32 mismatch");
+  }
+
+  function _assertEq(address actual, address expected) private pure {
+    if (actual != expected) revert("address mismatch");
   }
 
   function _assertTrue(

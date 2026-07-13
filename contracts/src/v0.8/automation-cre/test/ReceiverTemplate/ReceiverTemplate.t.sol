@@ -107,6 +107,61 @@ contract ReceiverTemplateTest {
     receiver.onReport(metadata, "report");
   }
 
+  function test_onReport_RevertWhen_WrongWorkflowId() external {
+    MockReceiver receiver = new MockReceiver(FORWARDER);
+    receiver.setExpectedWorkflowId(WORKFLOW_ID);
+
+    bytes32 wrongId = bytes32(uint256(0x9999));
+    bytes memory metadata = abi.encodePacked(wrongId, _workflowName(""), AUTHOR);
+
+    vm.expectRevert(abi.encodeWithSelector(ReceiverTemplate.InvalidWorkflowId.selector, wrongId, WORKFLOW_ID));
+    vm.prank(FORWARDER);
+    receiver.onReport(metadata, "report");
+  }
+
+  function test_onReport_RevertWhen_WorkflowNameSetButAuthorMissing() external {
+    MockReceiver receiver = new MockReceiver(FORWARDER);
+    receiver.setExpectedWorkflowName("game-resolution");
+
+    bytes memory metadata = abi.encodePacked(bytes32(0), _workflowName("game-resolution"), address(0));
+
+    vm.expectRevert(ReceiverTemplate.WorkflowNameRequiresAuthorValidation.selector);
+    vm.prank(FORWARDER);
+    receiver.onReport(metadata, "report");
+  }
+
+  function test_onReport_RevertWhen_WrongWorkflowName() external {
+    MockReceiver receiver = new MockReceiver(FORWARDER);
+    receiver.setExpectedAuthor(AUTHOR);
+    receiver.setExpectedWorkflowName("game-resolution");
+
+    bytes10 wrongName = _workflowName("other-workflow");
+    bytes memory metadata = abi.encodePacked(bytes32(0), wrongName, AUTHOR);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(ReceiverTemplate.InvalidWorkflowName.selector, wrongName, _workflowName("game-resolution"))
+    );
+    vm.prank(FORWARDER);
+    receiver.onReport(metadata, "report");
+  }
+
+  function test_getters_ReflectState() external {
+    MockReceiver receiver = new MockReceiver(FORWARDER);
+    receiver.setExpectedAuthor(AUTHOR);
+    receiver.setExpectedWorkflowId(WORKFLOW_ID);
+    receiver.setExpectedWorkflowName("game-resolution");
+
+    _assertEq(receiver.getForwarderAddress(), FORWARDER);
+    _assertEq(receiver.getExpectedAuthor(), AUTHOR);
+    _assertEq(receiver.getExpectedWorkflowId(), WORKFLOW_ID);
+  }
+
+  function test_supportsInterface() external {
+    MockReceiver receiver = new MockReceiver(FORWARDER);
+    // IReceiver interfaceId
+    _assertTrue(receiver.supportsInterface(0x01ffc9a7)); // ERC165
+  }
+
   function _workflowName(
     string memory name
   ) private pure returns (bytes10) {
@@ -133,5 +188,15 @@ contract ReceiverTemplateTest {
 
   function _assertEq(bytes32 actual, bytes32 expected) private pure {
     if (actual != expected) revert("bytes32 mismatch");
+  }
+
+  function _assertEq(address actual, address expected) private pure {
+    if (actual != expected) revert("address mismatch");
+  }
+
+  function _assertTrue(
+    bool value
+  ) private pure {
+    if (!value) revert("expected true");
   }
 }
