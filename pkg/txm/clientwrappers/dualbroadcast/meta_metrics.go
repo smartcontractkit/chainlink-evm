@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -73,7 +74,7 @@ func (m *MetaMetrics) RecordStatusCode(ctx context.Context, statusCode int, feed
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("statusCode", strconv.Itoa(statusCode)),
-			attribute.String("contract_address", feedAddress),
+			attribute.String("contract_address", strings.ToLower(feedAddress)),
 		),
 	)
 }
@@ -83,7 +84,7 @@ func (m *MetaMetrics) RecordLatency(ctx context.Context, duration time.Duration,
 	m.latencyHistogram.Record(ctx, duration.Milliseconds(),
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
-			attribute.String("contract_address", feedAddress),
+			attribute.String("contract_address", strings.ToLower(feedAddress)),
 		),
 	)
 }
@@ -93,7 +94,7 @@ func (m *MetaMetrics) RecordBidsReceived(ctx context.Context, bidCount int, feed
 	m.bidHistogram.Record(ctx, int64(bidCount),
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
-			attribute.String("contract_address", feedAddress),
+			attribute.String("contract_address", strings.ToLower(feedAddress)),
 		),
 	)
 }
@@ -104,7 +105,7 @@ func (m *MetaMetrics) RecordSendRequestError(ctx context.Context, feedAddress st
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("errorType", "send_request"),
-			attribute.String("contract_address", feedAddress),
+			attribute.String("contract_address", strings.ToLower(feedAddress)),
 		),
 	)
 }
@@ -115,7 +116,7 @@ func (m *MetaMetrics) RecordSendOperationError(ctx context.Context, feedAddress 
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("errorType", "send_operation"),
-			attribute.String("contract_address", feedAddress),
+			attribute.String("contract_address", strings.ToLower(feedAddress)),
 		),
 	)
 }
