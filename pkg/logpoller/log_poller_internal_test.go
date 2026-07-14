@@ -2242,7 +2242,7 @@ func Test_skipToBlock(t *testing.T) {
 		expectStoreNewFinalizedCheckpoint(t, m.ORM, 2, 2)
 
 		require.NoError(t, m.LP.SkipToBlock(ctx, 3))
-		assert.Equal(t, int64(2), m.LP.backupPollerNextBlock)
+		assert.Equal(t, int64(3), m.LP.backupPollerNextBlock)
 	})
 
 	t.Run("Happy path", func(t *testing.T) {
@@ -2259,7 +2259,7 @@ func Test_skipToBlock(t *testing.T) {
 		require.NoError(t, m.LP.SkipToBlock(ctx, 6))
 	})
 
-	t.Run("backward skip removes blocks from anchor onward", func(t *testing.T) {
+	t.Run("backward skip is not allowed", func(t *testing.T) {
 		t.Parallel()
 		m := newMockedLP(t, skipToBlockOpts())
 		expectFinalizedAnchorHeader(t, m.Client, 2)
@@ -2268,9 +2268,7 @@ func Test_skipToBlock(t *testing.T) {
 			FinalizedBlockNumber: 3,
 			SafeBlockNumber:      3,
 		}, nil).Once()
-		expectStoreNewFinalizedCheckpoint(t, m.ORM, 2, 2)
-
-		require.NoError(t, m.LP.SkipToBlock(ctx, 3))
+		require.ErrorContains(t, m.LP.SkipToBlock(ctx, 3), "skipping to a block 2 that is older than previously finalized 3 is not allowed. Use explicit remove-blocks to delete blocks")
 	})
 
 	t.Run("select latest block error", func(t *testing.T) {

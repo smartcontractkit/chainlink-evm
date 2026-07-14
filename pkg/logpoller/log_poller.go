@@ -1973,12 +1973,6 @@ func (lp *logPoller) SkipToBlock(ctx context.Context, blockNumber int64) error {
 		return fmt.Errorf("invalid skip block number %d, must be >= 2", blockNumber)
 	}
 
-	lp.runMu.Lock()
-	defer lp.runMu.Unlock()
-	if ctx.Err() != nil {
-		return fmt.Errorf("aborted, SkipToBlock request cancelled: %w", ctx.Err())
-	}
-
 	anchorBlockNumber := blockNumber - 1
 
 	anchorHead, err := lp.ec.HeaderByNumberWithOpts(ctx, big.NewInt(anchorBlockNumber), evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized})
@@ -1993,13 +1987,22 @@ func (lp *logPoller) SkipToBlock(ctx context.Context, blockNumber int64) error {
 
 	anchorBlock := finalizedHeadToBlock((*evmtypes.Head)(anchorHead))
 
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
+	if ctx.Err() != nil {
+		return fmt.Errorf("aborted, SkipToBlock request cancelled: %w", ctx.Err())
+	}
+
 	latest, err := lp.orm.SelectLatestBlock(ctx)
 	if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("failed to select latest block: %w", err)
 	}
 
 	minBlockToPrune := anchorBlockNumber
-	if latest != nil && latest.FinalizedBlockNumber < minBlockToPrune {
+	if latest != nil {
+		if latest.FinalizedBlockNumber >= minBlockToPrune {
+			return fmt.Errorf("skipping to a block %d that is older than previously finalized %d is not allowed. Use explicit remove-blocks to delete blocks", anchorBlockNumber, latest.FinalizedBlockNumber)
+		}
 		minBlockToPrune = latest.FinalizedBlockNumber + 1
 	}
 
@@ -2007,7 +2010,7 @@ func (lp *logPoller) SkipToBlock(ctx context.Context, blockNumber int64) error {
 	if err != nil {
 		return fmt.Errorf("failed to store new finalized checkpoint: %w", err)
 	}
-	lp.backupPollerNextBlock = anchorBlockNumber
+	lp.backupPollerNextBlock = blockNumber
 
 	lp.lggr.Infof("Skipped to block %d. Next poll starts at %d", anchorBlockNumber, blockNumber)
 	return nil
