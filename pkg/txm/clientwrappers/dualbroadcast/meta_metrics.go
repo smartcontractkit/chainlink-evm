@@ -68,49 +68,54 @@ func NewMetaMetrics(chainID string, lggr logger.Logger) (*MetaMetrics, error) {
 }
 
 // RecordStatusCode records the HTTP status code from Meta endpoint
-func (m *MetaMetrics) RecordStatusCode(ctx context.Context, statusCode int) {
+func (m *MetaMetrics) RecordStatusCode(ctx context.Context, statusCode int, feedAddress string) {
 	m.statusCodeCounter.Add(ctx, 1,
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("statusCode", strconv.Itoa(statusCode)),
+			attribute.String("contract_address", feedAddress),
 		),
 	)
 }
 
 // RecordLatency records the latency of Meta endpoint requests
-func (m *MetaMetrics) RecordLatency(ctx context.Context, duration time.Duration) {
+func (m *MetaMetrics) RecordLatency(ctx context.Context, duration time.Duration, feedAddress string) {
 	m.latencyHistogram.Record(ctx, duration.Milliseconds(),
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
+			attribute.String("contract_address", feedAddress),
 		),
 	)
 }
 
 // RecordBidsReceived records the distribution of bids per transaction
-func (m *MetaMetrics) RecordBidsReceived(ctx context.Context, bidCount int) {
+func (m *MetaMetrics) RecordBidsReceived(ctx context.Context, bidCount int, feedAddress string) {
 	m.bidHistogram.Record(ctx, int64(bidCount),
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
+			attribute.String("contract_address", feedAddress),
 		),
 	)
 }
 
 // RecordSendRequestError records errors from SendRequest method
-func (m *MetaMetrics) RecordSendRequestError(ctx context.Context) {
+func (m *MetaMetrics) RecordSendRequestError(ctx context.Context, feedAddress string) {
 	m.errorCounter.Add(ctx, 1,
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("errorType", "send_request"),
+			attribute.String("contract_address", feedAddress),
 		),
 	)
 }
 
 // RecordSendOperationError records errors from SendOperation method
-func (m *MetaMetrics) RecordSendOperationError(ctx context.Context) {
+func (m *MetaMetrics) RecordSendOperationError(ctx context.Context, feedAddress string) {
 	m.errorCounter.Add(ctx, 1,
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("errorType", "send_operation"),
+			attribute.String("contract_address", feedAddress),
 		),
 	)
 }

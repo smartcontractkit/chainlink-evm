@@ -40,12 +40,14 @@ func TestMetaMetrics(t *testing.T) {
 
 		ctx := t.Context()
 
+		feedAddress := "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
 		// Test that these don't panic - all metrics methods
-		metrics.RecordStatusCode(ctx, 200)
-		metrics.RecordLatency(ctx, time.Millisecond*100)
-		metrics.RecordBidsReceived(ctx, 5)
-		metrics.RecordSendRequestError(ctx)
-		metrics.RecordSendOperationError(ctx)
+		metrics.RecordStatusCode(ctx, 200, feedAddress)
+		metrics.RecordLatency(ctx, time.Millisecond*100, feedAddress)
+		metrics.RecordBidsReceived(ctx, 5, feedAddress)
+		metrics.RecordSendRequestError(ctx, feedAddress)
+		metrics.RecordSendOperationError(ctx, feedAddress)
 	})
 }
 
