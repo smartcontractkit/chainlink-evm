@@ -74,7 +74,7 @@ func (m *MetaMetrics) RecordStatusCode(ctx context.Context, statusCode int, feed
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("statusCode", strconv.Itoa(statusCode)),
-			attribute.String("contract_address", strings.ToLower(feedAddress)),
+			attribute.String("feedAddress", strings.ToLower(feedAddress)),
 		),
 	)
 }
