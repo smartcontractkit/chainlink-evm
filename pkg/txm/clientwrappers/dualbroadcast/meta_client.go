@@ -193,27 +193,27 @@ func (a *MetaClient) PendingNonceAt(ctx context.Context, address common.Address)
 // 2. Sends the first attempt if it's a meta transaction and it has broadcasted before. This covers RPC errors.
 // 3. Sends an empty transaction to the mempool to clear the nonce.
 func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
-	txMeta, err := tx.GetMeta()
+	meta, err := tx.GetMeta()
 	if err != nil {
 		return err
 	}
 
 	// #1
-	if txMeta != nil &&
-		txMeta.DualBroadcast != nil && *txMeta.DualBroadcast && txMeta.DualBroadcastParams != nil && txMeta.FwdrDestAddress != nil &&
+	if meta != nil &&
+		meta.DualBroadcast != nil && *meta.DualBroadcast && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil &&
 		tx.AttemptCount == 1 && !tx.IsPurgeable {
 		// Auction & Validate
-		meta, err := a.SendRequest(ctx, tx, attempt, *txMeta.DualBroadcastParams, tx.ToAddress, *txMeta.FwdrDestAddress)
+		response, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress, *meta.FwdrDestAddress)
 		if err != nil {
-			a.metrics.RecordSendRequestError(ctx, *txMeta.FwdrDestAddress)
+			a.metrics.RecordSendRequestError(ctx, *meta.FwdrDestAddress)
 			a.metrics.emitAtlasError(ctx, "send_request", a.customURL, err, tx)
 			a.lifecycleMetrics.IncrementLifecycleFailure(ctx, txm.StageAuction)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, errors.Join(err, ErrAuction))
 		}
 		// Send Metacall
-		if meta != nil {
-			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
-				a.metrics.RecordSendOperationError(ctx, *txMeta.FwdrDestAddress)
+		if response != nil {
+			if err := a.SendOperation(ctx, tx, attempt, *response); err != nil {
+				a.metrics.RecordSendOperationError(ctx, *meta.FwdrDestAddress)
 				a.metrics.emitAtlasError(ctx, "send_operation", a.customURL, err, tx)
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
