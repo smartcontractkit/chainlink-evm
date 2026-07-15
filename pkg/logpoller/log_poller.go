@@ -1965,6 +1965,15 @@ func (lp *logPoller) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) 
 	return lp.orm.DeleteLogsAndBlocksAfter(ctx, start)
 }
 
+func (lp *logPoller) headerByNumberWithOpts(ctx context.Context, number *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Head, error) {
+	anchorHead, err := lp.ec.HeaderByNumberWithOpts(ctx, number, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return (*evmtypes.Head)(anchorHead), nil
+}
+
 // SkipToBlock repositions the poller to start processing from blockNumber (T).
 // Block T-1 is fetched from RPC and saved as the anchor; the next poll resumes from T.
 // Returns an error if T-1 is not finalized on chain.
@@ -1975,17 +1984,17 @@ func (lp *logPoller) SkipToBlock(ctx context.Context, blockNumber int64) error {
 
 	anchorBlockNumber := blockNumber - 1
 
-	anchorHead, err := lp.ec.HeaderByNumberWithOpts(ctx, big.NewInt(anchorBlockNumber), evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized})
+	anchorHead, err := lp.headerByNumberWithOpts(ctx, big.NewInt(anchorBlockNumber), evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized})
 	if err != nil {
 		return fmt.Errorf("failed to fetch anchor block %d from RPC: %w", anchorBlockNumber, err)
 	}
 
-	err = validateHead((*evmtypes.Head)(anchorHead))
+	err = validateHead(anchorHead)
 	if err != nil {
 		return fmt.Errorf("failed to validate anchor block %d: %w", anchorBlockNumber, err)
 	}
 
-	anchorBlock := finalizedHeadToBlock((*evmtypes.Head)(anchorHead))
+	anchorBlock := finalizedHeadToBlock(anchorHead)
 
 	lp.runMu.Lock()
 	defer lp.runMu.Unlock()
