@@ -116,7 +116,7 @@ func (m *MetaMetrics) RecordSendOperationError(ctx context.Context, feedAddress 
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
 			attribute.String("errorType", "send_operation"),
-			attribute.String("contract_address", strings.ToLower(feedAddress)),
+			attribute.String("feedAddress", strings.ToLower(feedAddress)),
 		),
 	)
 }
