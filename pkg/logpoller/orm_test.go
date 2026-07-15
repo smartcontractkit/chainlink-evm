@@ -2660,7 +2660,6 @@ func TestDSORM_StoreNewFinalizedCheckpoint_usesTransactionalDataSource(t *testin
 	t.Parallel()
 	testutils.SkipShortDB(t)
 
-	ctx := testutils.Context(t)
 	base := testutils.NewSqlxDB(t)
 	require.NotNil(t, base)
 	wrapped := &execCountingSQLxDB{DB: base}
@@ -2669,7 +2668,7 @@ func TestDSORM_StoreNewFinalizedCheckpoint_usesTransactionalDataSource(t *testin
 	orm := logpoller.NewORM(chainID, wrapped, logger.Test(t))
 
 	anchor := finalizedCheckpointBlock(chainID, 5, common.HexToHash("0x0005"))
-	require.NoError(t, orm.StoreNewFinalizedCheckpoint(ctx, anchor, 5))
+	require.NoError(t, orm.StoreNewFinalizedCheckpoint(t.Context(), anchor, 5))
 
 	require.Zero(t, wrapped.PoolDirectOpCount(),
 		"StoreNewFinalizedCheckpoint must run DELETEs and INSERT on the transaction DataSource (orm.ds), not the outer pool; "+

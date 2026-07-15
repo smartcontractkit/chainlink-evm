@@ -11,6 +11,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 )
 
+// Deprecated: use [*testing.T.Context]
 // Context returns a context with the test's deadline, if available.
 func Context(tb testing.TB) context.Context {
 	return tests.Context(tb)

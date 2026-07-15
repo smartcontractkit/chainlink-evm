@@ -2188,18 +2188,17 @@ func expectStoreNewFinalizedCheckpoint(t *testing.T, orm *MockORM, anchorBlockNu
 
 func Test_skipToBlock(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
 
 	t.Run("invalid block number", func(t *testing.T) {
 		t.Parallel()
 		m := newMockedLP(t, skipToBlockOpts())
-		err := m.LP.SkipToBlock(ctx, 1)
+		err := m.LP.SkipToBlock(t.Context(), 1)
 		require.ErrorContains(t, err, "must be >= 2")
 	})
 
 	t.Run("disabled log poller returns error", func(t *testing.T) {
 		t.Parallel()
-		err := LogPollerDisabled.SkipToBlock(ctx, 2)
+		err := LogPollerDisabled.SkipToBlock(t.Context(), 2)
 		require.ErrorIs(t, err, ErrDisabled)
 	})
 
@@ -2212,7 +2211,7 @@ func Test_skipToBlock(t *testing.T) {
 			evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized},
 		).Return(nil, errors.New("rpc unavailable")).Once()
 
-		err := m.LP.SkipToBlock(ctx, 3)
+		err := m.LP.SkipToBlock(t.Context(), 3)
 		require.ErrorContains(t, err, "failed to fetch anchor block 2 from RPC")
 		require.ErrorContains(t, err, "rpc unavailable")
 	})
@@ -2230,7 +2229,7 @@ func Test_skipToBlock(t *testing.T) {
 			return (*evmtypes.Header)(&head), nil
 		}).Once()
 
-		err := m.LP.SkipToBlock(ctx, 3)
+		err := m.LP.SkipToBlock(t.Context(), 3)
 		require.ErrorContains(t, err, "failed to validate anchor block 2")
 	})
 
@@ -2241,7 +2240,7 @@ func Test_skipToBlock(t *testing.T) {
 		m.ORM.EXPECT().SelectLatestBlock(mock.Anything).Return(nil, sql.ErrNoRows).Once()
 		expectStoreNewFinalizedCheckpoint(t, m.ORM, 2, 2)
 
-		require.NoError(t, m.LP.SkipToBlock(ctx, 3))
+		require.NoError(t, m.LP.SkipToBlock(t.Context(), 3))
 		assert.Equal(t, int64(3), m.LP.backupPollerNextBlock)
 	})
 
@@ -2256,7 +2255,7 @@ func Test_skipToBlock(t *testing.T) {
 		}, nil).Once()
 		expectStoreNewFinalizedCheckpoint(t, m.ORM, 5, 3)
 
-		require.NoError(t, m.LP.SkipToBlock(ctx, 6))
+		require.NoError(t, m.LP.SkipToBlock(t.Context(), 6))
 	})
 
 	t.Run("backward skip is not allowed", func(t *testing.T) {
@@ -2268,7 +2267,7 @@ func Test_skipToBlock(t *testing.T) {
 			FinalizedBlockNumber: 3,
 			SafeBlockNumber:      3,
 		}, nil).Once()
-		require.ErrorContains(t, m.LP.SkipToBlock(ctx, 3), "skipping to a block 2 that is older than previously finalized 3 is not allowed. Use explicit remove-blocks to delete blocks")
+		require.ErrorContains(t, m.LP.SkipToBlock(t.Context(), 3), "skipping to a block 2 that is older than previously finalized 3 is not allowed. Use explicit remove-blocks to delete blocks")
 	})
 
 	t.Run("select latest block error", func(t *testing.T) {
@@ -2277,7 +2276,7 @@ func Test_skipToBlock(t *testing.T) {
 		expectFinalizedAnchorHeader(t, m.Client, 2)
 		m.ORM.EXPECT().SelectLatestBlock(mock.Anything).Return(nil, errors.New("db unavailable")).Once()
 
-		err := m.LP.SkipToBlock(ctx, 3)
+		err := m.LP.SkipToBlock(t.Context(), 3)
 		require.ErrorContains(t, err, "failed to select latest block")
 	})
 
@@ -2289,7 +2288,7 @@ func Test_skipToBlock(t *testing.T) {
 		m.ORM.EXPECT().StoreNewFinalizedCheckpoint(mock.Anything, mock.Anything, int64(2)).
 			Return(errors.New("db write failed")).Once()
 
-		err := m.LP.SkipToBlock(ctx, 3)
+		err := m.LP.SkipToBlock(t.Context(), 3)
 		require.ErrorContains(t, err, "failed to store new finalized checkpoint")
 	})
 }
