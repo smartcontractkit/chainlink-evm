@@ -84,7 +84,7 @@ func (m *MetaMetrics) RecordLatency(ctx context.Context, duration time.Duration,
 	m.latencyHistogram.Record(ctx, duration.Milliseconds(),
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
-			attribute.String("contract_address", strings.ToLower(feedAddress)),
+			attribute.String("feedAddress", strings.ToLower(feedAddress)),
 		),
 	)
 }
