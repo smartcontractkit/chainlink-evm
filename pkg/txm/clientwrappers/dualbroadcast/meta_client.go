@@ -331,10 +331,6 @@ type Metacalldata struct {
 }
 
 func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, txMeta *types.TxMeta, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
-	if txMeta == nil || txMeta.FwdrDestAddress == nil || txMeta.DualBroadcastParams == nil {
-		return nil, errors.New("missing tx meta fields for dual broadcast request")
-	}
-
 	m := []byte{97, 116, 108, 97, 115, 95, 111, 101, 118, 65, 117, 99, 116, 105, 111, 110}
 
 	cid := hexutil.Uint64(a.chainID.Uint64())
