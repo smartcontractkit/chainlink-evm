@@ -94,7 +94,7 @@ func (m *MetaMetrics) RecordBidsReceived(ctx context.Context, bidCount int, feed
 	m.bidHistogram.Record(ctx, int64(bidCount),
 		metric.WithAttributes(
 			attribute.String("chainID", m.chainID),
-			attribute.String("contract_address", strings.ToLower(feedAddress)),
+			attribute.String("feedAddress", strings.ToLower(feedAddress)),
 		),
 	)
 }

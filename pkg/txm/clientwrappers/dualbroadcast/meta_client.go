@@ -21,7 +21,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -194,19 +193,19 @@ func (a *MetaClient) PendingNonceAt(ctx context.Context, address common.Address)
 // 2. Sends the first attempt if it's a meta transaction and it has broadcasted before. This covers RPC errors.
 // 3. Sends an empty transaction to the mempool to clear the nonce.
 func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error {
-	meta, err := tx.GetMeta()
+	txMeta, err := tx.GetMeta()
 	if err != nil {
 		return err
 	}
 
 	// #1
-	if meta != nil &&
-		meta.DualBroadcast != nil && *meta.DualBroadcast && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil &&
+	if txMeta != nil &&
+		txMeta.DualBroadcast != nil && *txMeta.DualBroadcast && txMeta.DualBroadcastParams != nil && txMeta.FwdrDestAddress != nil &&
 		tx.AttemptCount == 1 && !tx.IsPurgeable {
 		// Auction & Validate
-		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
+		meta, err := a.SendRequest(ctx, tx, attempt, txMeta, tx.ToAddress)
 		if err != nil {
-			a.metrics.RecordSendRequestError(ctx, tx.ToAddress.Hex())
+			a.metrics.RecordSendRequestError(ctx, txMeta.FwdrDestAddress.Hex())
 			a.metrics.emitAtlasError(ctx, "send_request", a.customURL, err, tx)
 			a.lifecycleMetrics.IncrementLifecycleFailure(ctx, txm.StageAuction)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, errors.Join(err, ErrAuction))
@@ -214,7 +213,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		// Send Metacall
 		if meta != nil {
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
-				a.metrics.RecordSendOperationError(ctx, tx.ToAddress.Hex())
+				a.metrics.RecordSendOperationError(ctx, txMeta.FwdrDestAddress.Hex())
 				a.metrics.emitAtlasError(ctx, "send_operation", a.customURL, err, tx)
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
@@ -331,7 +330,7 @@ type Metacalldata struct {
 	GasRefundBeneficiary common.Address
 }
 
-func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams string, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
+func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, txMeta *types.TxMeta, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
 	m := []byte{97, 116, 108, 97, 115, 95, 111, 101, 118, 65, 117, 99, 116, 105, 111, 110}
 
 	cid := hexutil.Uint64(a.chainID.Uint64())
@@ -388,20 +387,18 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 
 	latency := time.Since(requestStartTime)
 
-	feedAddress := tx.ToAddress.Hex()
-
 	// Record latency
-	a.metrics.RecordLatency(ctx, latency, feedAddress)
+	a.metrics.RecordLatency(ctx, latency, txMeta.FwdrDestAddress.Hex())
 
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			a.lggr.Info("Auction Request Context Deadline Exceeded")
 			// mark status code "7" as context deadline exceeded
 			// definitive source of context-exceeded requests
-			a.metrics.RecordStatusCode(ctx, 7, feedAddress)
+			a.metrics.RecordStatusCode(ctx, 7, txMeta.FwdrDestAddress.Hex())
 		} else {
 			// mark status code "0" as all other errors to track the # of attempts
-			a.metrics.RecordStatusCode(ctx, 0, feedAddress)
+			a.metrics.RecordStatusCode(ctx, 0, txMeta.FwdrDestAddress.Hex())
 		}
 
 		return nil, fmt.Errorf("failed to send POST request with latency %s: %w", latency, err)
@@ -410,7 +407,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	defer resp.Body.Close()
 
 	// Record status code
-	a.metrics.RecordStatusCode(ctx, resp.StatusCode, feedAddress)
+	a.metrics.RecordStatusCode(ctx, resp.StatusCode, txMeta.FwdrDestAddress.Hex())
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
@@ -430,7 +427,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	if response.Error.ErrorMessage != "" {
 		a.metrics.emitAtlasUserOp(ctx, response.Error.Data.UserOpHash, tx, requestStartTime.UnixMicro(), responseReceivedAt)
 		if strings.Contains(response.Error.ErrorMessage, NoSolverOps) || strings.Contains(response.Error.ErrorMessage, NoSolverOpsAfterSimulation) {
-			a.metrics.RecordBidsReceived(ctx, 0, feedAddress)
+			a.metrics.RecordBidsReceived(ctx, 0, txMeta.FwdrDestAddress.Hex())
 			return nil, nil
 		}
 		return nil, errors.New(response.Error.ErrorMessage)
@@ -441,7 +438,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	// Record bid count (number of solver operations received)
-	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS), feedAddress)
+	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS), txMeta.FwdrDestAddress.Hex())
 	userOpHash := common.Hash{}
 	if response.Result.DO != nil {
 		userOpHash = response.Result.DO.UserOpHash
@@ -452,7 +449,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 		a.lggr.Info("Response: ", string(r))
 	}
 
-	return VerifyResponse(response.Result.MetacalldataResponse, dualBroadcastParams, tx.Data, tx.FromAddress, fwdrDestAddress)
+	return VerifyResponse(response.Result.MetacalldataResponse, *txMeta.DualBroadcastParams, tx.Data, tx.FromAddress, fwdrDestAddress)
 }
 
 func VerifyResponse(metacalldata MetacalldataResponse, dualBroadcastParams string, txData []byte, fromAddress common.Address, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
