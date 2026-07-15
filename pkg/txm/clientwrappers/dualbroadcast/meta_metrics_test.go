@@ -40,7 +40,7 @@ func TestMetaMetrics(t *testing.T) {
 
 		ctx := t.Context()
 
-		feedAddress := "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+		feedAddress := common.HexToAddress("0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 
 		// Test that these don't panic - all metrics methods
 		metrics.RecordStatusCode(ctx, 200, feedAddress)

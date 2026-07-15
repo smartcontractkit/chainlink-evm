@@ -205,7 +205,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		// Auction & Validate
 		meta, err := a.SendRequest(ctx, tx, attempt, txMeta, tx.ToAddress)
 		if err != nil {
-			a.metrics.RecordSendRequestError(ctx, txMeta.FwdrDestAddress.Hex())
+			a.metrics.RecordSendRequestError(ctx, *txMeta.FwdrDestAddress)
 			a.metrics.emitAtlasError(ctx, "send_request", a.customURL, err, tx)
 			a.lifecycleMetrics.IncrementLifecycleFailure(ctx, txm.StageAuction)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, errors.Join(err, ErrAuction))
@@ -213,7 +213,7 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		// Send Metacall
 		if meta != nil {
 			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
-				a.metrics.RecordSendOperationError(ctx, txMeta.FwdrDestAddress.Hex())
+				a.metrics.RecordSendOperationError(ctx, *txMeta.FwdrDestAddress)
 				a.metrics.emitAtlasError(ctx, "send_operation", a.customURL, err, tx)
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
@@ -392,17 +392,17 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	latency := time.Since(requestStartTime)
 
 	// Record latency
-	a.metrics.RecordLatency(ctx, latency, txMeta.FwdrDestAddress.Hex())
+	a.metrics.RecordLatency(ctx, latency, *txMeta.FwdrDestAddress)
 
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			a.lggr.Info("Auction Request Context Deadline Exceeded")
 			// mark status code "7" as context deadline exceeded
 			// definitive source of context-exceeded requests
-			a.metrics.RecordStatusCode(ctx, 7, txMeta.FwdrDestAddress.Hex())
+			a.metrics.RecordStatusCode(ctx, 7, *txMeta.FwdrDestAddress)
 		} else {
 			// mark status code "0" as all other errors to track the # of attempts
-			a.metrics.RecordStatusCode(ctx, 0, txMeta.FwdrDestAddress.Hex())
+			a.metrics.RecordStatusCode(ctx, 0, *txMeta.FwdrDestAddress)
 		}
 
 		return nil, fmt.Errorf("failed to send POST request with latency %s: %w", latency, err)
@@ -411,7 +411,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	defer resp.Body.Close()
 
 	// Record status code
-	a.metrics.RecordStatusCode(ctx, resp.StatusCode, txMeta.FwdrDestAddress.Hex())
+	a.metrics.RecordStatusCode(ctx, resp.StatusCode, *txMeta.FwdrDestAddress)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
@@ -431,7 +431,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	if response.Error.ErrorMessage != "" {
 		a.metrics.emitAtlasUserOp(ctx, response.Error.Data.UserOpHash, tx, requestStartTime.UnixMicro(), responseReceivedAt)
 		if strings.Contains(response.Error.ErrorMessage, NoSolverOps) || strings.Contains(response.Error.ErrorMessage, NoSolverOpsAfterSimulation) {
-			a.metrics.RecordBidsReceived(ctx, 0, txMeta.FwdrDestAddress.Hex())
+			a.metrics.RecordBidsReceived(ctx, 0, *txMeta.FwdrDestAddress)
 			return nil, nil
 		}
 		return nil, errors.New(response.Error.ErrorMessage)
@@ -442,7 +442,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	// Record bid count (number of solver operations received)
-	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS), txMeta.FwdrDestAddress.Hex())
+	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS), *txMeta.FwdrDestAddress)
 	userOpHash := common.Hash{}
 	if response.Result.DO != nil {
 		userOpHash = response.Result.DO.UserOpHash
