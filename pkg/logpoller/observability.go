@@ -102,6 +102,12 @@ func (o *ObservedORM) DeleteExpiredLogs(ctx context.Context, limit int64) (int64
 	})
 }
 
+func (o *ObservedORM) StoreNewFinalizedCheckpoint(ctx context.Context, block Block, minBlockToPrune int64) error {
+	return withObservedExec(ctx, o, "StoreNewFinalizedCheckpoint", metrics.Create, func() error {
+		return o.ORM.StoreNewFinalizedCheckpoint(ctx, block, minBlockToPrune)
+	})
+}
+
 func (o *ObservedORM) SelectUnmatchedLogIDs(ctx context.Context, limit int64) (ids []uint64, err error) {
 	return withObservedQueryAndResults[uint64](ctx, o, "SelectUnmatchedLogIDs", func() ([]uint64, error) {
 		return o.ORM.SelectUnmatchedLogIDs(ctx, limit)

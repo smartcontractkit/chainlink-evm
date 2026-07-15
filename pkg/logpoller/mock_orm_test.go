@@ -2197,6 +2197,54 @@ func (_c *MockORM_SelectUnmatchedLogIDs_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// StoreNewFinalizedCheckpoint provides a mock function with given fields: ctx, block, minBlockToPrune
+func (_m *MockORM) StoreNewFinalizedCheckpoint(ctx context.Context, block Block, minBlockToPrune int64) error {
+	ret := _m.Called(ctx, block, minBlockToPrune)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StoreNewFinalizedCheckpoint")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, Block, int64) error); ok {
+		r0 = rf(ctx, block, minBlockToPrune)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockORM_StoreNewFinalizedCheckpoint_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StoreNewFinalizedCheckpoint'
+type MockORM_StoreNewFinalizedCheckpoint_Call struct {
+	*mock.Call
+}
+
+// StoreNewFinalizedCheckpoint is a helper method to define mock.On call
+//   - ctx context.Context
+//   - block Block
+//   - minBlockToPrune int64
+func (_e *MockORM_Expecter) StoreNewFinalizedCheckpoint(ctx interface{}, block interface{}, minBlockToPrune interface{}) *MockORM_StoreNewFinalizedCheckpoint_Call {
+	return &MockORM_StoreNewFinalizedCheckpoint_Call{Call: _e.mock.On("StoreNewFinalizedCheckpoint", ctx, block, minBlockToPrune)}
+}
+
+func (_c *MockORM_StoreNewFinalizedCheckpoint_Call) Run(run func(ctx context.Context, block Block, minBlockToPrune int64)) *MockORM_StoreNewFinalizedCheckpoint_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(Block), args[2].(int64))
+	})
+	return _c
+}
+
+func (_c *MockORM_StoreNewFinalizedCheckpoint_Call) Return(_a0 error) *MockORM_StoreNewFinalizedCheckpoint_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockORM_StoreNewFinalizedCheckpoint_Call) RunAndReturn(run func(context.Context, Block, int64) error) *MockORM_StoreNewFinalizedCheckpoint_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockORM creates a new instance of MockORM. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockORM(t interface {

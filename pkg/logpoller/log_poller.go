@@ -30,6 +30,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
+	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/mathutil"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
@@ -55,6 +56,10 @@ type LogPoller interface {
 	GetBlocksRange(ctx context.Context, numbers []uint64) ([]Block, error)
 	FindLCA(ctx context.Context) (*Block, error)
 	DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error
+	// SkipToBlock repositions the poller to start processing from blockNumber (T).
+	// Block T-1 is fetched from RPC and saved as the anchor; the next poll resumes from T.
+	// Returns an error if T-1 is not finalized on chain.
+	SkipToBlock(ctx context.Context, blockNumber int64) error
 
 	// General querying
 	Logs(ctx context.Context, start, end int64, eventSig common.Hash, address common.Address) ([]Log, error)
@@ -91,6 +96,7 @@ type LogPollerTest interface {
 
 type Client interface {
 	HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error)
+	HeaderByNumberWithOpts(ctx context.Context, number *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Header, error)
 	HeadByHash(ctx context.Context, n common.Hash) (*evmtypes.Head, error)
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
@@ -136,11 +142,17 @@ type logPoller struct {
 	filterDirty     bool
 	cachedAddresses []common.Address
 	cachedEventSigs []common.Hash
+	filtersLoaded   bool
 
 	replayStart    chan int64
 	replayComplete chan error
 	stopCh         services.StopChan
 	wg             sync.WaitGroup
+	// ensures that jobs outside main loop do not run concurrently with it.
+	// Mainly needed to simplify mental model and exclude concurrent changes to the blocks table, while handling reorgs.
+	// Pruning of old blocks is intentionally excluded from this lock, because they are much older
+	// than a block range that could be affected by a reorg.
+	runMu sync.Mutex
 	// This flag is raised whenever the log poller detects that the chain's finality has been violated.
 	// It can happen when reorg is deeper than the latest finalized block that LogPoller saw in a previous PollAndSave tick.
 	// Usually the only way to recover is to manually remove the offending logs and block from the database.
@@ -675,72 +687,83 @@ func (lp *logPoller) run() {
 		lp.lggr.Infow("Backup log poller disabled")
 	}
 
-	filtersLoaded := false
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case fromBlockReq := <-lp.replayStart:
-			lp.handleReplayRequest(ctx, fromBlockReq, filtersLoaded)
+			lp.handleReplayRequest(ctx, fromBlockReq)
 		case <-logPollTicker.C:
-			if !filtersLoaded {
-				if err := lp.loadFilters(ctx); err != nil {
-					lp.lggr.Errorw("Failed loading filters in main logpoller loop, retrying later", "err", err)
-					continue
-				}
-				filtersLoaded = true
-			}
-
-			// Always start from the latest block in the db.
-			var start int64
-			lastProcessed, err := lp.orm.SelectLatestBlock(ctx)
-			if err != nil {
-				if !pkgerrors.Is(err, sql.ErrNoRows) {
-					// Assume transient db reading issue, retry forever.
-					lp.lggr.Errorw("unable to get starting block", "err", err)
-					continue
-				}
-				// Otherwise this is the first poll _ever_ on a new chain.
-				// Only safe thing to do is to start at the first finalized block.
-				_, latestFinalizedBlockNumber, err := lp.latestAndFinalizedBlocks(ctx)
-				if err != nil {
-					lp.lggr.Warnw("Unable to get latest for first poll", "err", err)
-					continue
-				}
-				// Starting at the first finalized block. We do not backfill the first finalized block.
-				start = latestFinalizedBlockNumber
-			} else {
-				lp.metrics.RecordLastProcessedBlock(ctx, lastProcessed.BlockNumber)
-				start = lastProcessed.BlockNumber + 1
-			}
-			lp.PollAndSaveLogs(ctx, start, false)
+			lp.tickPoll(ctx)
 		case <-backupLogPollCh:
-			// Backup log poller:  this serves as an emergency backup to protect against eventual-consistency behavior
-			// of an rpc node (seen occasionally on optimism, but possibly could happen on other chains?).  If the first
-			// time we request a block, no logs or incomplete logs come back, this ensures that every log is eventually
-			// re-requested after it is finalized. This doesn't add much overhead, because we can request all of them
-			// in one shot, since we don't need to worry about re-orgs after finality depth, and it runs far less
-			// frequently than the primary log poller (instead of roughly once per block it runs once roughly once every
-			// lp.backupPollerDelay blocks--with default settings about 100x less frequently).
-
-			if !filtersLoaded {
-				lp.lggr.Warnw("Backup log poller ran before filters loaded, skipping")
-				continue
-			}
-			err := lp.BackupPollAndSaveLogs(ctx)
-			switch {
-			case errors.Is(err, commontypes.ErrFinalityViolated):
-				// BackupPoll only declares finality violation and does not resolve it, as it's possible that processed range
-				// does not contain the violation.
-				lp.lggr.Criticalw("Backup poll failed due to finality violation", "err", err)
-				lp.finalityViolated.Store(true)
-				lp.SvcErrBuffer.Append(err)
-			case err != nil:
-				lp.lggr.Errorw("Backup poller failed, retrying later", "err", err)
-			}
+			lp.tickBackupPoll(ctx)
 		}
 	}
+}
+
+func (lp *logPoller) tickBackupPoll(ctx context.Context) {
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
+	// Backup log poller:  this serves as an emergency backup to protect against eventual-consistency behavior
+	// of an rpc node (seen occasionally on optimism, but possibly could happen on other chains?).  If the first
+	// time we request a block, no logs or incomplete logs come back, this ensures that every log is eventually
+	// re-requested after it is finalized. This doesn't add much overhead, because we can request all of them
+	// in one shot, since we don't need to worry about re-orgs after finality depth, and it runs far less
+	// frequently than the primary log poller (instead of roughly once per block it runs once roughly once every
+	// lp.backupPollerDelay blocks--with default settings about 100x less frequently).
+
+	if !lp.filtersLoaded {
+		lp.lggr.Warnw("Backup log poller ran before filters loaded, skipping")
+		return
+	}
+	err := lp.BackupPollAndSaveLogs(ctx)
+	switch {
+	case errors.Is(err, commontypes.ErrFinalityViolated):
+		// BackupPoll only declares finality violation and does not resolve it, as it's possible that processed range
+		// does not contain the violation.
+		lp.lggr.Criticalw("Backup poll failed due to finality violation", "err", err)
+		lp.finalityViolated.Store(true)
+		lp.SvcErrBuffer.Append(err)
+	case err != nil:
+		lp.lggr.Errorw("Backup poller failed, retrying later", "err", err)
+	}
+}
+
+func (lp *logPoller) tickPoll(ctx context.Context) {
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
+	if !lp.filtersLoaded {
+		if err := lp.loadFilters(ctx); err != nil {
+			lp.lggr.Errorw("Failed loading filters in main logpoller loop, retrying later", "err", err)
+			return
+		}
+		lp.filtersLoaded = true
+	}
+
+	// Always start from the latest block in the db.
+	var start int64
+	lastProcessed, err := lp.orm.SelectLatestBlock(ctx)
+	if err != nil {
+		if !pkgerrors.Is(err, sql.ErrNoRows) {
+			// Assume transient db reading issue, retry forever.
+			lp.lggr.Errorw("unable to get starting block", "err", err)
+			return
+		}
+		// Otherwise this is the first poll _ever_ on a new chain.
+		// Only safe thing to do is to start at the first finalized block.
+		_, latestFinalizedBlockNumber, err := lp.latestAndFinalizedBlocks(ctx)
+		if err != nil {
+			lp.lggr.Warnw("Unable to get latest for first poll", "err", err)
+			return
+		}
+		// Starting at the first finalized block. We do not backfill the first finalized block.
+		start = latestFinalizedBlockNumber
+	} else {
+		lp.metrics.RecordLastProcessedBlock(ctx, lastProcessed.BlockNumber)
+		lp.lggr.Debugw("New poll tick", "last_processed", lastProcessed.BlockNumber, "finalized_block", lastProcessed.FinalizedBlockNumber)
+		start = lastProcessed.BlockNumber + 1
+	}
+	lp.PollAndSaveLogs(ctx, start, false)
 }
 
 func (lp *logPoller) backgroundWorkerRun() {
@@ -809,13 +832,17 @@ func (lp *logPoller) backgroundWorkerRun() {
 	}
 }
 
-func (lp *logPoller) handleReplayRequest(ctx context.Context, fromBlockReq int64, filtersLoaded bool) {
+func (lp *logPoller) handleReplayRequest(ctx context.Context, fromBlockReq int64) {
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
 	fromBlock, err := lp.GetReplayFromBlock(ctx, fromBlockReq)
 	if err == nil {
-		if !filtersLoaded {
+		if !lp.filtersLoaded {
 			lp.lggr.Warnw("Received replayReq before filters loaded", "fromBlock", fromBlock, "requested", fromBlockReq)
 			if err = lp.loadFilters(ctx); err != nil {
 				lp.lggr.Errorw("Failed loading filters during Replay", "err", err, "fromBlock", fromBlock)
+			} else {
+				lp.filtersLoaded = true
 			}
 		}
 		if err == nil {
@@ -1850,15 +1877,7 @@ func (lp *logPoller) batchFetchBlocks(ctx context.Context, blocksRequested []uin
 		}
 
 		for _, head := range fetched1 {
-			lpBlock := Block{
-				EVMChainID:           head.EVMChainID,
-				BlockHash:            head.Hash,
-				BlockNumber:          head.Number,
-				BlockTimestamp:       head.Timestamp,
-				FinalizedBlockNumber: head.Number, // always finalized; only matters if this block is returned by LatestBlock()
-				SafeBlockNumber:      head.Number,
-				CreatedAt:            head.CreatedAt,
-			}
+			lpBlock := finalizedHeadToBlock(head)
 			logPollerBlocks[uint64(head.Number)] = lpBlock //nolint:gosec // G115
 			if chainValidationHead == nil || chainValidationHead.BlockNumber < lpBlock.BlockNumber {
 				chainValidationHead = &lpBlock
@@ -1867,6 +1886,18 @@ func (lp *logPoller) batchFetchBlocks(ctx context.Context, blocksRequested []uin
 	}
 
 	return logPollerBlocks, nil
+}
+
+func finalizedHeadToBlock(head *evmtypes.Head) Block {
+	return Block{
+		EVMChainID:           head.EVMChainID,
+		BlockHash:            head.Hash,
+		BlockNumber:          head.Number,
+		BlockTimestamp:       head.Timestamp,
+		FinalizedBlockNumber: head.Number, // always finalized; only matters if this block is returned by LatestBlock()
+		SafeBlockNumber:      head.Number,
+		CreatedAt:            head.CreatedAt,
+	}
 }
 
 func ensureIdenticalBlocksBatches(fetched1, fetched2 map[uint64]*evmtypes.Head) error {
@@ -1898,16 +1929,27 @@ func validateBlockResponse(r rpc.BatchElem) (*evmtypes.Head, error) {
 	if !is {
 		return nil, pkgerrors.Errorf("expected result to be a %T, got %T", &evmtypes.Head{}, r.Result)
 	}
+
+	err := validateHead(block)
+	if err != nil {
+		return nil, err
+	}
+
+	return block, nil
+}
+
+func validateHead(block *evmtypes.Head) error {
 	if block == nil {
-		return nil, pkgerrors.New("invariant violation: got nil block")
+		return pkgerrors.New("invariant violation: got nil block")
 	}
 	if block.Hash == (common.Hash{}) {
-		return nil, pkgerrors.Errorf("missing block hash for block number: %d", block.Number)
+		return pkgerrors.Errorf("missing block hash for block number: %d", block.Number)
 	}
 	if block.Number < 0 {
-		return nil, pkgerrors.Errorf("expected block number to be >= to 0, got %d", block.Number)
+		return pkgerrors.Errorf("expected block number to be >= to 0, got %d", block.Number)
 	}
-	return block, nil
+
+	return nil
 }
 
 // IndexedLogsWithSigsExcluding returns the set difference(A-B) of logs with signature sigA and sigB, matching is done on the topics index
@@ -1921,6 +1963,66 @@ func (lp *logPoller) IndexedLogsWithSigsExcluding(ctx context.Context, address c
 // DeleteLogsAndBlocksAfter - removes blocks and logs starting from the specified block
 func (lp *logPoller) DeleteLogsAndBlocksAfter(ctx context.Context, start int64) error {
 	return lp.orm.DeleteLogsAndBlocksAfter(ctx, start)
+}
+
+func (lp *logPoller) headerByNumberWithOpts(ctx context.Context, number *big.Int, opts evmtypes.HeaderByNumberOpts) (*evmtypes.Head, error) {
+	anchorHead, err := lp.ec.HeaderByNumberWithOpts(ctx, number, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return (*evmtypes.Head)(anchorHead), nil
+}
+
+// SkipToBlock repositions the poller to start processing from blockNumber (T).
+// Block T-1 is fetched from RPC and saved as the anchor; the next poll resumes from T.
+// Returns an error if T-1 is not finalized on chain.
+func (lp *logPoller) SkipToBlock(ctx context.Context, blockNumber int64) error {
+	if blockNumber < 2 {
+		return fmt.Errorf("invalid skip block number %d, must be >= 2", blockNumber)
+	}
+
+	anchorBlockNumber := blockNumber - 1
+
+	anchorHead, err := lp.headerByNumberWithOpts(ctx, big.NewInt(anchorBlockNumber), evmtypes.HeaderByNumberOpts{ConfidenceLevel: primitives.Finalized})
+	if err != nil {
+		return fmt.Errorf("failed to fetch anchor block %d from RPC: %w", anchorBlockNumber, err)
+	}
+
+	err = validateHead(anchorHead)
+	if err != nil {
+		return fmt.Errorf("failed to validate anchor block %d: %w", anchorBlockNumber, err)
+	}
+
+	anchorBlock := finalizedHeadToBlock(anchorHead)
+
+	lp.runMu.Lock()
+	defer lp.runMu.Unlock()
+	if ctx.Err() != nil {
+		return fmt.Errorf("aborted, SkipToBlock request cancelled: %w", ctx.Err())
+	}
+
+	latest, err := lp.orm.SelectLatestBlock(ctx)
+	if err != nil && !pkgerrors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("failed to select latest block: %w", err)
+	}
+
+	minBlockToPrune := anchorBlockNumber
+	if latest != nil {
+		if latest.FinalizedBlockNumber >= minBlockToPrune {
+			return fmt.Errorf("skipping to a block %d that is older than previously finalized %d is not allowed. Use explicit remove-blocks to delete blocks", anchorBlockNumber, latest.FinalizedBlockNumber)
+		}
+		minBlockToPrune = latest.FinalizedBlockNumber + 1
+	}
+
+	err = lp.orm.StoreNewFinalizedCheckpoint(ctx, anchorBlock, minBlockToPrune)
+	if err != nil {
+		return fmt.Errorf("failed to store new finalized checkpoint: %w", err)
+	}
+	lp.backupPollerNextBlock = blockNumber
+
+	lp.lggr.Infof("Skipped to block %d. Next poll starts at %d", anchorBlockNumber, blockNumber)
+	return nil
 }
 
 func (lp *logPoller) FindLCA(ctx context.Context) (*Block, error) {
