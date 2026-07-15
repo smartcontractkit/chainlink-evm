@@ -100,7 +100,7 @@ func NewEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype ch
 	case "FixedPrice":
 		newEstimator = NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)
 	case "L2Suggested", "SuggestedPrice":
-		newEstimator = NewSuggestedPriceEstimator(lggr, ethClient, geCfg, l1Oracle)
+		newEstimator = NewSuggestedPriceEstimator(lggr, ethClient, geCfg, chaintype, l1Oracle)
 	case "FeeHistory":
 		ccfg := FeeHistoryEstimatorConfig{
 			BumpPercent:      geCfg.BumpPercent(),

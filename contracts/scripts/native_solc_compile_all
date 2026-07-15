@@ -14,6 +14,6 @@ SCRIPTPATH="$(
 # For each product we have a native_solc_compile_all_$product script
 # These scripts can be run individually, or all together with this script.
 # To add new CL products, simply write a native_solc_compile_all_$product script and add it to the list below.
-for product in automation functions llo-feeds operatorforwarder payments shared vrf data-feeds l2ep; do
+for product in automation automation-cre functions llo-feeds operatorforwarder payments shared vrf data-feeds l2ep; do
     $SCRIPTPATH/native_solc_compile_all_$product
 done

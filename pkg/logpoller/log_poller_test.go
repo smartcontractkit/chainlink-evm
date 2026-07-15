@@ -1474,6 +1474,7 @@ func TestLogPoller_DBErrorHandling(t *testing.T) {
 	ec := backend.Client()
 	_, _, emitter, err := log_emitter.DeployLogEmitter(owner, ec)
 	require.NoError(t, err)
+	backend.Commit()
 	_, err = emitter.EmitLog1(owner, []*big.Int{big.NewInt(9)})
 	require.NoError(t, err)
 	_, err = emitter.EmitLog1(owner, []*big.Int{big.NewInt(7)})

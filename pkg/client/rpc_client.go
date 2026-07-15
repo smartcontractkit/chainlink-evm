@@ -1412,14 +1412,58 @@ func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
 	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
+type sanitizedError struct {
+	err error  // original error, retained for chain traversal/classification
+	msg string // redacted, safe-to-display message
+}
+
+func (e sanitizedError) Error() string {
+	return e.msg
+}
+
+// Unwrap and Cause expose the original error so both the standard library
+// (errors.Is/errors.As) and pkg/errors (pkgerrors.Cause) can still traverse to
+// the underlying RPC error. This is required for error classification in
+// errors.go — e.g. ExtractRPCError marshals pkgerrors.Cause(err) into a
+// JsonError, and isFatalSendError matches against pkgerrors.Cause(err).Error() —
+// and for sentinel matching such as ethereum.NotFound and context.DeadlineExceeded.
+//
+// Only the Error() string is redacted. That is the value logged and returned to
+// workflow users, which is where the provider URL/API key was leaking.
+func (e sanitizedError) Unwrap() error {
+	return e.err
+}
+
+func (e sanitizedError) Cause() error {
+	return e.err
+}
+
+// Matches full HTTP(S)/WS(S) URLs so provider URLs, paths, query params, credentials, and API keys can be redacted from errors.
+var rpcURLRegexp = regexp.MustCompile(`(?i)(?:https?|wss?)://[^\s"']+`)
+
+func sanitizeRPCError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return sanitizedError{
+		err: err,
+		msg: rpcURLRegexp.ReplaceAllString(err.Error(), "[REDACTED URL]"),
+	}
+}
+
 func (r *RPCClient) wrapRPCClientError(err error) error {
 	if err == nil {
 		r.rpcLog.Trace("Call succeeded")
 		return nil
 	}
-	if pkgerrors.Cause(err).Error() == "context deadline exceeded" {
+	if errors.Is(err, context.DeadlineExceeded) {
 		err = pkgerrors.Wrap(err, "remote node timed out")
 	}
+
+	// Convert to a sanitized string error before logging or returning.
+	// This prevents provider API keys embedded in URL paths from leaking.
+	err = sanitizeRPCError(err)
+
 	r.rpcLog.Infow("RPC call failed", "error", err)
 	// Do not include any RPC specific data into the error as in CRE product it must be returned back to a workflow user
 	return pkgerrors.Wrap(err, "RPC call failed")

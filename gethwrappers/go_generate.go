@@ -8,6 +8,7 @@ package gethwrappers
 //go:generate go generate go_generate_automation.go
 //go:generate go generate go_generate_vrf.go
 
+//go:generate go generate ./automation-cre
 //go:generate go generate ./functions
 //go:generate go generate ./llo-feeds
 //go:generate go generate ./operatorforwarder

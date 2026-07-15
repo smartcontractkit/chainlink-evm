@@ -21,6 +21,7 @@
 /contracts/**/*keeper* @smartcontractkit/dev-services
 /contracts/**/*upkeep* @smartcontractkit/dev-services
 /contracts/**/*automation* @smartcontractkit/dev-services
+/contracts/**/*automation-cre* @smartcontractkit/cld-vault
 /contracts/**/*functions* @smartcontractkit/dev-services
 /contracts/**/*l2ep* @smartcontractkit/data-growth
 /contracts/**/*llo-feeds* @smartcontractkit/data-streams-engineers
@@ -32,6 +33,7 @@
 /contracts/**/*payments* @smartcontractkit/payments
 
 /contracts/src/v0.8/automation @smartcontractkit/dev-services
+/contracts/src/v0.8/automation-cre @smartcontractkit/cld-vault
 /contracts/src/v0.8/functions @smartcontractkit/dev-services
 /contracts/src/v0.8/l2ep @smartcontractkit/data-growth
 /contracts/src/v0.8/llo-feeds @smartcontractkit/data-streams-engineers
@@ -56,6 +58,7 @@
 /gethwrappers/keeper @smartcontractkit/dev-services
 /gethwrappers/upkeep @smartcontractkit/dev-services
 /gethwrappers/automation @smartcontractkit/dev-services
+/gethwrappers/automation-cre @smartcontractkit/cld-vault
 /gethwrappers/l2ep @smartcontractkit/data-growth
 /gethwrappers/vrf @smartcontractkit/dev-services
 
@@ -66,6 +69,8 @@
 
 # At the end, match any files missed by the patterns above
 /contracts/scripts/native_solc_compile_all_events_mock @smartcontractkit/dev-services
+# Remove ownership of these files as they are auto generated and already asserted to be correct.
+/**/generated-wrapper-dependency-versions-do-not-edit.txt
 
 # CI/CD
 /.github/** @smartcontractkit/devex-cicd @smartcontractkit/devex-tooling @smartcontractkit/core @smartcontractkit/core-solidity

@@ -20,7 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
+	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -32,6 +32,9 @@ const rpcTimeout = 10 * time.Second
 
 // ofa selects URL shape, signing headers, logger name, and bundle behavior.
 type ofa uint8
+
+// ofaGasTierSpace is the entire space reserved for gas limit tiering.
+const ofaGasTierSpace = 100
 
 // ofa represents the type of OFA backend: Flashbots or Nova. Meta (Fastlane Atlas) is separate from this at the moment.
 const (
@@ -66,9 +69,14 @@ type postError struct {
 	Message string `json:"message,omitempty"`
 }
 
-// FlashbotsTxStore is required when bundle sending is enabled for Flashbots.
-type FlashbotsTxStore interface {
+// ofaBackendTxStore is required when bundle sending is enabled for Flashbots.
+type ofaBackendTxStore interface {
 	FetchUnconfirmedTransactions(context.Context, common.Address) ([]*types.Transaction, error)
+}
+
+type ofaBackendKeyStore interface {
+	SignMessage(ctx context.Context, address common.Address, message []byte) ([]byte, error)
+	SignTx(ctx context.Context, fromAddress common.Address, tx *evmtypes.Transaction) (*evmtypes.Transaction, error)
 }
 
 // ofaBackend is an HTTP JSON-RPC OFA backend (Flashbots MEV-Share, Nova RPC)
@@ -77,15 +85,15 @@ type ofaBackend struct {
 	c         ofaBackendRPCClient
 	customURL *url.URL
 	ofa       ofa
-	keystore  keys.MessageSigner // Only if authentication is required
+	keystore  ofaBackendKeyStore
 	metrics   ofaMetrics
-	txStore   FlashbotsTxStore
+	txStore   ofaBackendTxStore
 	bundles   bool
 }
 
 var _ multiOfaBackend = (*ofaBackend)(nil)
 
-func newFlashbotsClient(lggr logger.Logger, c ofaBackendRPCClient, keystore keys.MessageSigner, customURL *url.URL, txStore FlashbotsTxStore, bundlesEnabled bool, metrics ofaMetrics) *ofaBackend {
+func newFlashbotsClient(lggr logger.Logger, c ofaBackendRPCClient, keystore ofaBackendKeyStore, customURL *url.URL, txStore ofaBackendTxStore, bundlesEnabled bool, metrics ofaMetrics) *ofaBackend {
 	return &ofaBackend{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.FlashbotsClient")),
 		c:         c,
@@ -98,12 +106,13 @@ func newFlashbotsClient(lggr logger.Logger, c ofaBackendRPCClient, keystore keys
 	}
 }
 
-func newNovaClient(lggr logger.Logger, c ofaBackendRPCClient, customURL *url.URL, metrics ofaMetrics) *ofaBackend {
+func newNovaClient(lggr logger.Logger, c ofaBackendRPCClient, customURL *url.URL, metrics ofaMetrics, keystore ofaBackendKeyStore) *ofaBackend {
 	return &ofaBackend{
 		lggr:      logger.Sugared(logger.Named(lggr, "Txm.NovaClient")),
 		c:         c,
 		customURL: customURL,
 		ofa:       ofaNova,
+		keystore:  keystore,
 		metrics:   metrics,
 	}
 }
@@ -153,12 +162,13 @@ func (d *ofaBackend) SendTransaction(ctx context.Context, tx *types.Transaction,
 	return nil
 }
 
-func (d *ofaBackend) Label() string {
-	return d.ofa.name()
-}
-
 func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transaction, attempt *types.Attempt, meta *types.TxMeta) error {
-	data, err := attempt.SignedTransaction.MarshalBinary()
+	attemptWithOFAGasTier, err := d.createAttemptWithOFAGasTier(ctx, tx, attempt)
+	if err != nil {
+		return err
+	}
+
+	data, err := attemptWithOFAGasTier.SignedTransaction.MarshalBinary()
 	if err != nil {
 		return err
 	}
@@ -167,8 +177,66 @@ func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transact
 	start := time.Now()
 	_, err = d.postJSONRPC(ctx, tx.FromAddress, body, meta)
 	d.metrics.RecordSendTx(ctx, time.Since(start), err)
+	if emitErr := txm.EmitTxMessage(ctx, d.metrics.chainID, attemptWithOFAGasTier.Hash, tx.FromAddress, tx); emitErr != nil {
+		d.lggr.Errorw("Beholder error emitting tx message", "err", emitErr, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
+	}
 
 	return err
+}
+
+// createAttemptWithOFAGasTier creates an OFA-specific gas tiered attempt that has a different gas limit for each OFA backend, by reserving the last two digits.
+// Each OFA has 10 values spaced 10 units apart for the gas limit so there is room for feed-specific tiers per OFA in the future.
+// Unfortunately, the per-OFA attempts are not tracked by the txm. We can track them by looking at the individual logs per attempt stored.
+func (d *ofaBackend) createAttemptWithOFAGasTier(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) (*types.Attempt, error) {
+	if tx == nil || attempt == nil || tx.Nonce == nil {
+		return nil, fmt.Errorf("failed to create tiered attempt: tx %v, attempt %v", tx, attempt)
+	}
+	if !attempt.Fee.ValidDynamic() {
+		return nil, errors.New("attempt is not a dynamic fee attempt") // We could potentially support legacy transactions, but dynamic transactions are the default so this is ok.
+	}
+
+	ofaGasTier, err := d.ofa.ofaGasTier(attempt.GasLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	dynamicTx := evmtypes.DynamicFeeTx{
+		ChainID:   tx.ChainID,
+		Nonce:     *tx.Nonce,
+		To:        &tx.ToAddress,
+		Value:     tx.Value,
+		Gas:       ofaGasTier,
+		GasFeeCap: attempt.Fee.GasFeeCap.ToInt(),
+		GasTipCap: attempt.Fee.GasTipCap.ToInt(),
+		Data:      tx.Data,
+	}
+
+	signedTx, err := d.keystore.SignTx(ctx, tx.FromAddress, evmtypes.NewTx(&dynamicTx))
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign tiered attempt for txID: %v: %w", tx.ID, err)
+	}
+
+	d.lggr.Infow("Intercepting attempt for tx", "txID", tx.ID, "hash", signedTx.Hash(), "toAddress", tx.ToAddress, "gasLimit", ofaGasTier,
+		"TipCap", attempt.Fee.GasTipCap, "FeeCap", attempt.Fee.GasFeeCap, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr), "ofa", d.ofa.name())
+
+	tieredAttempt := *attempt
+	tieredAttempt.Hash = signedTx.Hash()
+	tieredAttempt.GasLimit = ofaGasTier
+	tieredAttempt.SignedTransaction = signedTx
+	return &tieredAttempt, nil
+}
+
+func (k ofa) ofaGasTier(gasLimit uint64) (uint64, error) {
+	suffix := (uint64(k) + 1) * 10
+	if suffix >= ofaGasTierSpace {
+		return 0, fmt.Errorf("cannot calculate OFA gas limit tier for %s: suffix %d is not in the range 0-%d", k.name(), suffix, ofaGasTierSpace-1)
+	}
+	tieredLimit := gasLimit - gasLimit%ofaGasTierSpace + suffix
+	// If the tiered limit is less than the original gas limit, add the tiering space so we never underestimate.
+	if tieredLimit < gasLimit {
+		tieredLimit += ofaGasTierSpace
+	}
+	return tieredLimit, nil
 }
 
 func (d *ofaBackend) postJSONRPC(ctx context.Context, from common.Address, body []byte, meta *types.TxMeta) (json.RawMessage, error) {

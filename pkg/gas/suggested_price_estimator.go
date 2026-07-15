@@ -16,6 +16,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/rollups"
 	"github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
@@ -54,11 +55,19 @@ type SuggestedPriceEstimator struct {
 	l1Oracle rollups.L1Oracle
 }
 
+const defaultPollPeriod = 10 * time.Second
+
 // NewSuggestedPriceEstimator returns a new Estimator which uses the suggested gas price.
-func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, l1Oracle rollups.L1Oracle) EvmEstimator {
+func NewSuggestedPriceEstimator(lggr logger.Logger, client FeeEstimatorClient, cfg suggestedPriceConfig, chainType chaintype.ChainType, l1Oracle rollups.L1Oracle) EvmEstimator {
+	pollPeriod := defaultPollPeriod
+	if chainType == chaintype.ChainArbitrum {
+		pollPeriod = arbitrumPollPeriod
+	}
+
+	lggr.Infow("Creating SuggestedPriceEstimator", "pollPeriod", pollPeriod)
 	return &SuggestedPriceEstimator{
 		client:         client,
-		pollPeriod:     10 * time.Second,
+		pollPeriod:     pollPeriod,
 		logger:         logger.Named(lggr, "SuggestedPriceEstimator"),
 		cfg:            cfg,
 		chForceRefetch: make(chan (chan struct{})),
