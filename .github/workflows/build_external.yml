@@ -24,8 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: smartcontractkit/.github
-          # TODO: pin to a commit SHA once the get-refs-from-pr-body.js PR is merged into smartcontractkit/.github.
-          ref: feature/get-ref-from-pr-body
+          ref: 79a5c885eba3814105eb7f4848b611e4e42dd55e
           persist-credentials: false
           sparse-checkout: tools/scripts/get-refs-from-pr-body.js
           sparse-checkout-cone-mode: false
