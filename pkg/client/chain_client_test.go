@@ -522,12 +522,25 @@ func TestEthClient_SendTransaction_WithSecondaryURLs(t *testing.T) {
 
 	ethClient := mustNewChainClient(t, wsURL, *sendonlyURL, *sendonlyURL)
 
-	err = ethClient.SendTransaction(tests.Context(t), tx)
+	// Wait for all nodes (primary + both sendonly) to be Alive before sending.
+	// Sendonly nodes only receive the broadcast once they've been verified, so
+	// sending before then would race and the transaction would never reach both.
+	require.Eventually(t, func() bool {
+		var alive int
+		for _, state := range ethClient.NodeStates() {
+			if state == "Alive" {
+				alive++
+			}
+		}
+		return alive == 3
+	}, tests.WaitTimeout(t), 100*time.Millisecond, "not all nodes became alive")
+
+	err = ethClient.SendTransaction(t.Context(), tx)
 	require.NoError(t, err)
 
 	// Unfortunately it's a bit tricky to test this, since there is no
 	// synchronization. We have to rely on timing instead.
-	require.Eventually(t, func() bool { return service.sentCount.Load() == int32(2) }, tests.WaitTimeout(t), 500*time.Millisecond)
+	require.Eventually(t, func() bool { return service.sentCount.Load() == int32(2) }, tests.WaitTimeout(t), 100*time.Millisecond)
 }
 
 type sendTxService struct {
