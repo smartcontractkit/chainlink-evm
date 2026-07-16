@@ -52,6 +52,7 @@ func TestEmitTxMessage(t *testing.T) {
 			expectedHash,
 			fromAddress,
 			tx,
+			0,
 		)
 		require.NoError(t, err)
 
@@ -101,6 +102,7 @@ func TestEmitTxMessage(t *testing.T) {
 			expectedHash,
 			fromAddress,
 			tx,
+			0,
 		)
 		require.NoError(t, err)
 
@@ -129,6 +131,7 @@ func TestEmitTxMessage(t *testing.T) {
 		expectedNonce := uint64(7)
 		expectedChain := testutils.FixtureChainID
 		expectedParams := "hint=calldata&hint=logs&builder=flashbots"
+		expectedGasLimit := uint64(210000)
 		isDualBroadcast := true
 
 		metaBytes, err := json.Marshal(types.TxMeta{
@@ -149,7 +152,7 @@ func TestEmitTxMessage(t *testing.T) {
 		}
 
 		// WHEN
-		err = txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx)
+		err = txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx, expectedGasLimit)
 		require.NoError(t, err)
 
 		// THEN
@@ -162,6 +165,41 @@ func TestEmitTxMessage(t *testing.T) {
 
 		require.NotNil(t, actualMessage.DualBroadcastParams)
 		assert.Equal(t, expectedParams, *actualMessage.DualBroadcastParams)
+		require.NotNil(t, actualMessage.GasLimit)
+		assert.Equal(t, expectedGasLimit, *actualMessage.GasLimit)
+	})
+
+	t.Run("does not set gas_limit when gasLimit is zero", func(t *testing.T) {
+		// GIVEN
+		ctx := t.Context()
+		beholderTester := beholdertest.NewObserver(t)
+
+		fromAddress := testutils.NewAddress()
+		expectedNonce := uint64(9)
+		expectedChain := testutils.FixtureChainID
+
+		txmMetrics := NewTxmMetrics(logger.Test(t), expectedChain)
+
+		tx := &types.Transaction{
+			IsPurgeable: false,
+			FromAddress: fromAddress,
+			ToAddress:   testutils.NewAddress(),
+			Nonce:       &expectedNonce,
+		}
+
+		// WHEN
+		err := txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx, 0)
+		require.NoError(t, err)
+
+		// THEN
+		messages := beholderTester.Messages(t)
+		assert.Len(t, messages, 1)
+
+		var actualMessage svrv1.TxMessage
+		err = proto.Unmarshal(messages[0].Body, &actualMessage)
+		require.NoError(t, err)
+
+		assert.Nil(t, actualMessage.GasLimit)
 	})
 
 	t.Run("does not set dual_broadcast_params for a primary (non-dual-broadcast) tx", func(t *testing.T) {
@@ -184,7 +222,7 @@ func TestEmitTxMessage(t *testing.T) {
 		}
 
 		// WHEN
-		err := txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx)
+		err := txmMetrics.EmitTxMessage(ctx, common.Hash{}, fromAddress, tx, 0)
 		require.NoError(t, err)
 
 		// THEN
@@ -245,5 +283,5 @@ func TestNoopTxmMetrics(t *testing.T) {
 		m.RecordTimeUntilTxConfirmed(ctx, 1)
 		m.SetRPCNonce(ctx, address, nonce)
 	})
-	assert.NoError(t, m.EmitTxMessage(ctx, common.Hash{}, address, &types.Transaction{Nonce: &nonce}))
+	assert.NoError(t, m.EmitTxMessage(ctx, common.Hash{}, address, &types.Transaction{Nonce: &nonce}, 0))
 }
