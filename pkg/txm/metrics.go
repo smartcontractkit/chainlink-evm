@@ -58,7 +58,7 @@ type Metrics interface {
 	ReachedMaxAttempts(context.Context, bool)
 	RecordTimeUntilTxConfirmed(context.Context, float64)
 	SetRPCNonce(context.Context, common.Address, uint64)
-	EmitTxMessage(context.Context, common.Hash, common.Address, *types.Transaction) error
+	EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction, gasLimit uint64) error
 }
 
 // txmMetrics is the default metrics recorder for the TXMv2 transaction lifecycle.
@@ -194,11 +194,11 @@ func (m *txmMetrics) SetRPCNonce(ctx context.Context, address common.Address, no
 	m.rpcNonce.Record(ctx, int64(nonce))
 }
 
-func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
-	return EmitTxMessage(ctx, m.chainID.String(), txHash, fromAddress, tx)
+func (m *txmMetrics) EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction, gasLimit uint64) error {
+	return EmitTxMessage(ctx, m.chainID.String(), txHash, fromAddress, tx, gasLimit)
 }
 
-func EmitTxMessage(ctx context.Context, chainID string, txHash common.Hash, fromAddress common.Address, tx *types.Transaction) error {
+func EmitTxMessage(ctx context.Context, chainID string, txHash common.Hash, fromAddress common.Address, tx *types.Transaction, gasLimit uint64) error {
 	meta, err := tx.GetMeta()
 	if err != nil {
 		return fmt.Errorf("failed to get meta for tx %s: %w", txHash, err)
@@ -228,6 +228,10 @@ func EmitTxMessage(ctx context.Context, chainID string, txHash common.Hash, from
 		ChainId:             chainID,
 		FeedAddress:         destAddress,
 		DualBroadcastParams: dualBroadcastParams,
+	}
+
+	if gasLimit != 0 {
+		message.GasLimit = &gasLimit
 	}
 
 	messageBytes, err := proto.Marshal(message)
@@ -262,6 +266,6 @@ func (noopTxmMetrics) RecordTimeUntilTxConfirmed(context.Context, float64) {}
 
 func (noopTxmMetrics) SetRPCNonce(context.Context, common.Address, uint64) {}
 
-func (noopTxmMetrics) EmitTxMessage(context.Context, common.Hash, common.Address, *types.Transaction) error {
+func (noopTxmMetrics) EmitTxMessage(context.Context, common.Hash, common.Address, *types.Transaction, uint64) error {
 	return nil
 }

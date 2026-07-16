@@ -686,8 +686,8 @@ github.com/smartcontractkit/chainlink-protos/linking-service/go v0.0.0-202605122
 github.com/smartcontractkit/chainlink-protos/linking-service/go v0.0.0-20260512230622-65f10f4cd305/go.mod h1:qSTSwX3cBP3FKQwQacdjArqv0g6QnukjV4XuzO6UyoY=
 github.com/smartcontractkit/chainlink-protos/node-platform v0.0.0-20260709145319-7782fb89eb16 h1:/vkKPJoweLkRd56V4YHGRAtTG4+/JAlgklGEfvH6l4c=
 github.com/smartcontractkit/chainlink-protos/node-platform v0.0.0-20260709145319-7782fb89eb16/go.mod h1:dkR2uYg9XYJuT1JASkPzWE51jjFkVb86P7a/yXe5/GM=
-github.com/smartcontractkit/chainlink-protos/svr v1.2.0 h1:7jjgqRgORQS/ikL3z0ZgJy95pzjhR9LuU1TVWg4BZ78=
-github.com/smartcontractkit/chainlink-protos/svr v1.2.0/go.mod h1:TcOliTQU6r59DwG4lo3U+mFM9WWyBHGuFkkxQpvSujo=
+github.com/smartcontractkit/chainlink-protos/svr v1.3.0 h1:vOw+MbXtkPK8l/hA7uLASIgCwv05YzmuoIMuOXPa+g0=
+github.com/smartcontractkit/chainlink-protos/svr v1.3.0/go.mod h1:TcOliTQU6r59DwG4lo3U+mFM9WWyBHGuFkkxQpvSujo=
 github.com/smartcontractkit/chainlink-protos/workflows/go v0.0.0-20260528173149-f5b8336b19d9 h1:LQy2j2+TdKLSWsUTUYuqmQPn8kjqCLjGI3ZJYGtDc08=
 github.com/smartcontractkit/chainlink-protos/workflows/go v0.0.0-20260528173149-f5b8336b19d9/go.mod h1:GTpDgyK0OObf7jpch6p8N281KxN92wbB8serZhU9yRc=
 github.com/smartcontractkit/chainlink-tron/relayer v0.0.11-0.20250815105909-75499abc4335 h1:7bxYNrPpygn8PUSBiEKn8riMd7CXMi/4bjTy0fHhcrY=

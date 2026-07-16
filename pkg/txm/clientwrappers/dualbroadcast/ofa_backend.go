@@ -177,7 +177,7 @@ func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transact
 	start := time.Now()
 	_, err = d.postJSONRPC(ctx, tx.FromAddress, body, meta)
 	d.metrics.RecordSendTx(ctx, time.Since(start), err)
-	if emitErr := txm.EmitTxMessage(ctx, d.metrics.chainID, attemptWithOFAGasTier.Hash, tx.FromAddress, tx); emitErr != nil {
+	if emitErr := txm.EmitTxMessage(ctx, d.metrics.chainID, attemptWithOFAGasTier.Hash, tx.FromAddress, tx, attemptWithOFAGasTier.GasLimit); emitErr != nil {
 		d.lggr.Errorw("Beholder error emitting tx message", "err", emitErr, "transactionLifecycleID", tx.GetTransactionLifecycleID(d.lggr))
 	}
 
