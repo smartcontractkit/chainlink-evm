@@ -58,7 +58,7 @@ type Metrics interface {
 	ReachedMaxAttempts(context.Context, bool)
 	RecordTimeUntilTxConfirmed(context.Context, float64)
 	SetRPCNonce(context.Context, common.Address, uint64)
-	EmitTxMessage(ctx context.Context, txHash common.Hash, fromAddress common.Address, tx *types.Transaction, gasLimit uint64) error
+	EmitTxMessage(context.Context, common.Hash, common.Address, *types.Transaction, uint64) error
 }
 
 // txmMetrics is the default metrics recorder for the TXMv2 transaction lifecycle.
@@ -219,6 +219,11 @@ func EmitTxMessage(ctx context.Context, chainID string, txHash common.Hash, from
 		dualBroadcastParams = meta.DualBroadcastParams
 	}
 
+	var gasLimitPtr *uint64
+	if gasLimit != 0 {
+		gasLimitPtr = &gasLimit
+	}
+
 	message := &svrv1.TxMessage{
 		Hash:                txHash.String(),
 		FromAddress:         fromAddress.String(),
@@ -228,10 +233,7 @@ func EmitTxMessage(ctx context.Context, chainID string, txHash common.Hash, from
 		ChainId:             chainID,
 		FeedAddress:         destAddress,
 		DualBroadcastParams: dualBroadcastParams,
-	}
-
-	if gasLimit != 0 {
-		message.GasLimit = &gasLimit
+		GasLimit:            gasLimitPtr,
 	}
 
 	messageBytes, err := proto.Marshal(message)
