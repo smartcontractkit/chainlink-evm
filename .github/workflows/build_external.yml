@@ -58,7 +58,7 @@ jobs:
           path: chainlink-evm
 
       - name: Checkout the chainlink core repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: smartcontractkit/chainlink
           ref: ${{ needs.init.outputs.core-ref }}
