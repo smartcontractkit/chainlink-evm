@@ -31,7 +31,7 @@ jobs:
           path: dot_github
       - name: Get refs from PR body
         id: set-git-refs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const script = require(`${process.env.GITHUB_WORKSPACE}/dot_github/tools/scripts/get-refs-from-pr-body.js`)
