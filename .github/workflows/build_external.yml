@@ -21,7 +21,7 @@ jobs:
     steps:
       # Checkout the shared scripts from the smartcontractkit/.github repo.
       - name: Checkout shared .github scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: smartcontractkit/.github
           ref: 79a5c885eba3814105eb7f4848b611e4e42dd55e
