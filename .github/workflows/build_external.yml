@@ -19,23 +19,12 @@ jobs:
     outputs:
       core-ref: ${{ steps.set-git-refs.outputs.core-ref }}
     steps:
-      # Checkout the shared scripts from the smartcontractkit/.github repo.
-      - name: Checkout shared .github scripts
-        uses: actions/checkout@v7
-        with:
-          repository: smartcontractkit/.github
-          ref: 79a5c885eba3814105eb7f4848b611e4e42dd55e
-          persist-credentials: false
-          sparse-checkout: tools/scripts/get-refs-from-pr-body.js
-          sparse-checkout-cone-mode: false
-          path: dot_github
       - name: Get refs from PR body
         id: set-git-refs
-        uses: actions/github-script@v9
+        uses: smartcontractkit/.github/actions/get-refs-from-pr-body@get-refs-from-pr-body/v1
         with:
-          script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/dot_github/tools/scripts/get-refs-from-pr-body.js`)
-            await script({ github, context, core })
+          sigscanner-url: ${{ secrets.SIGSCANNER_URL }}
+          sigscanner-api-key: ${{ secrets.SIGSCANNER_API_KEY }}
 
   build-chainlink:
     needs: init
