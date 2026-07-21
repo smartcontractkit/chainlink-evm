@@ -2,7 +2,6 @@ package keys
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"math/big"
@@ -98,7 +97,7 @@ func (s *store) CheckEnabled(ctx context.Context, address common.Address) error 
 		return fmt.Errorf("failed to get accounts: %w", err)
 	}
 	if !slices.Contains(as, address.String()) {
-		return errors.New("not enabled")
+		return fmt.Errorf("address %s is not enabled in keystore", address)
 	}
 	return nil
 }
