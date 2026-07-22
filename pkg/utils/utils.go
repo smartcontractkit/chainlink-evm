@@ -14,7 +14,6 @@ import (
 	"github.com/jpillora/backoff"
 	"golang.org/x/crypto/sha3"
 
-	"github.com/smartcontractkit/chainlink-common/keystore/corekeys/vrfkey/secp256k1"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/hex"
 )
 
@@ -115,7 +114,12 @@ func Uint256ToBytes32(n *big.Int) []byte {
 
 // MustHash returns the keccak256 hash, or panics on failure.
 func MustHash(in string) common.Hash {
-	return secp256k1.MustKeccakHash(in)
+	hash := sha3.NewLegacyKeccak256()
+	_, err := hash.Write([]byte(in))
+	if err != nil {
+		panic(err)
+	}
+	return common.BytesToHash(hash.Sum(nil))
 }
 
 // HexToUint256 returns the uint256 represented by s, or an error if it doesn't
