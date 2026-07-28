@@ -268,7 +268,7 @@ func (f *FeeHistoryEstimator) RefreshDynamicPrice() error {
 		for _, reward := range feeHistory.Reward {
 			// reward needs to have values for two percentiles. Some chains may return an empty slice instead of 0x0 values, so we use
 			// continue instead of throwing an error.
-			if len(reward) < 2 {
+			if len(reward) < 2 || reward[0] == nil || reward[1] == nil {
 				continue
 			}
 			// We'll calculate the average of non-zero priority fees
