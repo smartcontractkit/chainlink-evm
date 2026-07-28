@@ -21,7 +21,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
-
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -204,17 +203,17 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		meta.DualBroadcast != nil && *meta.DualBroadcast && meta.DualBroadcastParams != nil && meta.FwdrDestAddress != nil &&
 		tx.AttemptCount == 1 && !tx.IsPurgeable {
 		// Auction & Validate
-		meta, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress)
+		response, err := a.SendRequest(ctx, tx, attempt, *meta.DualBroadcastParams, tx.ToAddress, *meta.FwdrDestAddress)
 		if err != nil {
-			a.metrics.RecordSendRequestError(ctx)
+			a.metrics.RecordSendRequestError(ctx, *meta.FwdrDestAddress)
 			a.metrics.emitAtlasError(ctx, "send_request", a.customURL, err, tx)
 			a.lifecycleMetrics.IncrementLifecycleFailure(ctx, txm.StageAuction)
 			return fmt.Errorf("error sending request for transactionID(%d): %w", tx.ID, errors.Join(err, ErrAuction))
 		}
 		// Send Metacall
-		if meta != nil {
-			if err := a.SendOperation(ctx, tx, attempt, *meta); err != nil {
-				a.metrics.RecordSendOperationError(ctx)
+		if response != nil {
+			if err := a.SendOperation(ctx, tx, attempt, *response); err != nil {
+				a.metrics.RecordSendOperationError(ctx, *meta.FwdrDestAddress)
 				a.metrics.emitAtlasError(ctx, "send_operation", a.customURL, err, tx)
 				return fmt.Errorf("failed to send operation for transactionID(%d): %w", tx.ID, err)
 			}
@@ -331,7 +330,7 @@ type Metacalldata struct {
 	GasRefundBeneficiary common.Address
 }
 
-func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams string, fwdrDestAddress common.Address) (*MetacalldataResponse, error) {
+func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transaction, attempt *types.Attempt, dualBroadcastParams string, fwdrDestAddress, feedAddress common.Address) (*MetacalldataResponse, error) {
 	m := []byte{97, 116, 108, 97, 115, 95, 111, 101, 118, 65, 117, 99, 116, 105, 111, 110}
 
 	cid := hexutil.Uint64(a.chainID.Uint64())
@@ -389,17 +388,17 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	latency := time.Since(requestStartTime)
 
 	// Record latency
-	a.metrics.RecordLatency(ctx, latency)
+	a.metrics.RecordLatency(ctx, latency, feedAddress)
 
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			a.lggr.Info("Auction Request Context Deadline Exceeded")
 			// mark status code "7" as context deadline exceeded
 			// definitive source of context-exceeded requests
-			a.metrics.RecordStatusCode(ctx, 7)
+			a.metrics.RecordStatusCode(ctx, 7, feedAddress)
 		} else {
 			// mark status code "0" as all other errors to track the # of attempts
-			a.metrics.RecordStatusCode(ctx, 0)
+			a.metrics.RecordStatusCode(ctx, 0, feedAddress)
 		}
 
 		return nil, fmt.Errorf("failed to send POST request with latency %s: %w", latency, err)
@@ -408,7 +407,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	defer resp.Body.Close()
 
 	// Record status code
-	a.metrics.RecordStatusCode(ctx, resp.StatusCode)
+	a.metrics.RecordStatusCode(ctx, resp.StatusCode, feedAddress)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
@@ -428,7 +427,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	if response.Error.ErrorMessage != "" {
 		a.metrics.emitAtlasUserOp(ctx, response.Error.Data.UserOpHash, tx, requestStartTime.UnixMicro(), responseReceivedAt)
 		if strings.Contains(response.Error.ErrorMessage, NoSolverOps) || strings.Contains(response.Error.ErrorMessage, NoSolverOpsAfterSimulation) {
-			a.metrics.RecordBidsReceived(ctx, 0)
+			a.metrics.RecordBidsReceived(ctx, 0, feedAddress)
 			return nil, nil
 		}
 		return nil, errors.New(response.Error.ErrorMessage)
@@ -439,7 +438,7 @@ func (a *MetaClient) SendRequest(parentCtx context.Context, tx *types.Transactio
 	}
 
 	// Record bid count (number of solver operations received)
-	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS))
+	a.metrics.RecordBidsReceived(ctx, len(response.Result.SOS), feedAddress)
 	userOpHash := common.Hash{}
 	if response.Result.DO != nil {
 		userOpHash = response.Result.DO.UserOpHash
