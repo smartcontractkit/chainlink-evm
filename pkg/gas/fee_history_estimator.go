@@ -224,7 +224,7 @@ func (f *FeeHistoryEstimator) GetMaxDynamicFee(maxPrice *assets.Wei) (fee Dynami
 		return fee, err
 	}
 	maxFeeCap := nextBaseFee.AddPercentage(BaseFeeBufferPercentage).Add(priorityFeeThreshold)
-	return DynamicFee{GasFeeCap: maxFeeCap, GasTipCap: priorityFeeThreshold}, nil
+	return DynamicFee{GasFeeCap: assets.WeiMin(maxFeeCap, maxPrice), GasTipCap: assets.WeiMin(priorityFeeThreshold, maxPrice)}, nil
 }
 
 // RefreshDynamicPrice uses eth_feeHistory to fetch the baseFee of the next block and the Nth maxPriorityFeePerGas percentiles
