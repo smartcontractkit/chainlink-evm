@@ -26,6 +26,7 @@ const (
 	MinimumBumpPercentage   = 10 // based on geth's spec
 	ConnectivityPercentile  = 85
 	BaseFeeBufferPercentage = 40
+	MinimumCacheTimeout     = 250 * time.Millisecond
 )
 
 type FeeHistoryEstimatorConfig struct {
@@ -95,6 +96,9 @@ func (f *FeeHistoryEstimator) Start(context.Context) error {
 		if f.config.EIP1559 && f.config.RewardPercentile > ConnectivityPercentile {
 			return fmt.Errorf("RewardPercentile: %s is greater than maximum allowed percentile: %s",
 				strconv.FormatUint(uint64(f.config.RewardPercentile), 10), strconv.Itoa(ConnectivityPercentile))
+		}
+		if f.config.CacheTimeout < MinimumCacheTimeout {
+			return fmt.Errorf("CacheTimeout: %s must be at least %s", f.config.CacheTimeout, MinimumCacheTimeout)
 		}
 		f.wg.Add(1)
 		go f.run()
