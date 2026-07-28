@@ -82,7 +82,7 @@ func NewFeeHistoryEstimator(lggr logger.Logger, client feeHistoryEstimatorClient
 		metrics:   newFeeHistoryEstimatorMetrics(l, chainID),
 		wg:        new(sync.WaitGroup),
 		stopCh:    make(chan struct{}),
-		refreshCh: make(chan struct{}),
+		refreshCh: make(chan struct{}, 1),
 	}
 }
 
@@ -336,7 +336,7 @@ func (f *FeeHistoryEstimator) BumpLegacyGas(ctx context.Context, originalGasPric
 	if err != nil {
 		return nil, 0, err
 	}
-	f.IfStarted(func() { f.refreshCh <- struct{}{} })
+	f.IfStarted(func() { f.signalNonBlockingRefresh() })
 
 	bumpedGasPrice := originalGasPrice.AddPercentage(f.config.BumpPercent)
 	bumpedGasPrice, err = LimitBumpedFee(originalGasPrice, currentGasPrice, bumpedGasPrice, maxPrice)
@@ -363,7 +363,7 @@ func (f *FeeHistoryEstimator) BumpDynamicFee(ctx context.Context, originalFee Dy
 				err = refreshErr
 				return
 			}
-			f.refreshCh <- struct{}{}
+			f.signalNonBlockingRefresh()
 			bumped, err = f.GetDynamicFee(ctx, maxPrice)
 		}) {
 			return bumped, errors.New("estimator not started")
@@ -456,6 +456,13 @@ func (f *FeeHistoryEstimator) getNextBaseFee() (*assets.Wei, error) {
 		return f.nextBaseFee, errors.New("nextBaseFee not set")
 	}
 	return f.nextBaseFee, nil
+}
+
+func (f *FeeHistoryEstimator) signalNonBlockingRefresh() {
+	select {
+	case f.refreshCh <- struct{}{}:
+	default:
+	}
 }
 
 func (f *FeeHistoryEstimator) Name() string                                      { return f.logger.Name() }
