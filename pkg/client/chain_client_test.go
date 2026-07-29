@@ -969,7 +969,7 @@ func TestEthClient_ErroringClient(t *testing.T) {
 	_, err = erroringClient.TokenBalance(ctx, common.Address{}, common.Address{})
 	require.Equal(t, multinode.ErrNodeError, err)
 
-	_, err = erroringClient.TransactionByHash(ctx, common.Hash{})
+	_, _, err = erroringClient.TransactionByHash(ctx, common.Hash{})
 	require.Equal(t, multinode.ErrNodeError, err)
 
 	_, err = erroringClient.TransactionReceipt(ctx, common.Hash{})

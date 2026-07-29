@@ -174,9 +174,9 @@ func (nc *NullClient) TransactionReceiptWithOpts(ctx context.Context, txHash com
 	return nil, nil
 }
 
-func (nc *NullClient) TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, error) {
+func (nc *NullClient) TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
 	nc.lggr.Debug("TransactionByHash")
-	return nil, nil
+	return nil, false, nil
 }
 
 func (nc *NullClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error) {

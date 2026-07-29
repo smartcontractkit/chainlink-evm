@@ -79,7 +79,7 @@ type Client interface {
 	PendingNonceAtWithFallback(ctx context.Context, account common.Address) (uint64, error)
 	NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error)
 	NonceAtWithFallback(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error)
-	TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, error)
+	TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, isPending bool, err error)
 	TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (*types.Transaction, error)
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
 	TransactionReceiptWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionReceiptOpts) (*evmtypes.Receipt, error)
@@ -580,10 +580,10 @@ func (c *chainClient) TokenBalance(ctx context.Context, address common.Address, 
 	return r.TokenBalance(ctx, address, contractAddress)
 }
 
-func (c *chainClient) TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, error) {
+func (c *chainClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, isPending bool, err error) {
 	r, err := c.multiNode.SelectRPC(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	return r.TransactionByHash(ctx, txHash)
 }

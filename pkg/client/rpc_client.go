@@ -643,11 +643,16 @@ func (r *RPCClient) TransactionReceiptGeth(ctx context.Context, txHash common.Ha
 	return r.TransactionReceiptGethWithOpts(ctx, txHash, evmtypes.TransactionReceiptOpts{})
 }
 
-func (r *RPCClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, err error) {
-	return r.TransactionByHashWithOpts(ctx, txHash, evmtypes.TransactionByHashOpts{IsExternalRequest: false})
+func (r *RPCClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, isPending bool, err error) {
+	return r.transactionByHashWithOpts(ctx, txHash, evmtypes.TransactionByHashOpts{IsExternalRequest: false})
 }
 
 func (r *RPCClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (tx *types.Transaction, err error) {
+	tx, _, err = r.transactionByHashWithOpts(ctx, txHash, opts)
+	return
+}
+
+func (r *RPCClient) transactionByHashWithOpts(ctx context.Context, txHash common.Hash, opts evmtypes.TransactionByHashOpts) (tx *types.Transaction, isPending bool, err error) {
 	ctx = r.wrapCtx(ctx, opts.IsExternalRequest)
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
@@ -656,7 +661,7 @@ func (r *RPCClient) TransactionByHashWithOpts(ctx context.Context, txHash common
 	lggr.Debug("RPC call: evmclient.Client#TransactionByHash")
 
 	start := time.Now()
-	tx, _, err = client.geth.TransactionByHash(ctx, txHash)
+	tx, isPending, err = client.geth.TransactionByHash(ctx, txHash)
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 

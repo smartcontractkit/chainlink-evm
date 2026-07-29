@@ -118,3 +118,4 @@ vendor/*
 contracts/lcov.info
 contracts/out/
 /cache
+.claude

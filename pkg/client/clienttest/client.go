@@ -2395,7 +2395,7 @@ func (_c *Client_TokenBalance_Call) RunAndReturn(run func(context.Context, commo
 }
 
 // TransactionByHash provides a mock function with given fields: ctx, txHash
-func (_m *Client) TransactionByHash(ctx context.Context, txHash common.Hash) (*coretypes.Transaction, error) {
+func (_m *Client) TransactionByHash(ctx context.Context, txHash common.Hash) (*coretypes.Transaction, bool, error) {
 	ret := _m.Called(ctx, txHash)
 
 	if len(ret) == 0 {
@@ -2403,8 +2403,9 @@ func (_m *Client) TransactionByHash(ctx context.Context, txHash common.Hash) (*c
 	}
 
 	var r0 *coretypes.Transaction
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) (*coretypes.Transaction, error)); ok {
+	var r1 bool
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) (*coretypes.Transaction, bool, error)); ok {
 		return rf(ctx, txHash)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) *coretypes.Transaction); ok {
@@ -2415,13 +2416,19 @@ func (_m *Client) TransactionByHash(ctx context.Context, txHash common.Hash) (*c
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, common.Hash) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, common.Hash) bool); ok {
 		r1 = rf(ctx, txHash)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(bool)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, common.Hash) error); ok {
+		r2 = rf(ctx, txHash)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // Client_TransactionByHash_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransactionByHash'
@@ -2443,12 +2450,12 @@ func (_c *Client_TransactionByHash_Call) Run(run func(ctx context.Context, txHas
 	return _c
 }
 
-func (_c *Client_TransactionByHash_Call) Return(_a0 *coretypes.Transaction, _a1 error) *Client_TransactionByHash_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *Client_TransactionByHash_Call) Return(tx *coretypes.Transaction, isPending bool, err error) *Client_TransactionByHash_Call {
+	_c.Call.Return(tx, isPending, err)
 	return _c
 }
 
-func (_c *Client_TransactionByHash_Call) RunAndReturn(run func(context.Context, common.Hash) (*coretypes.Transaction, error)) *Client_TransactionByHash_Call {
+func (_c *Client_TransactionByHash_Call) RunAndReturn(run func(context.Context, common.Hash) (*coretypes.Transaction, bool, error)) *Client_TransactionByHash_Call {
 	_c.Call.Return(run)
 	return _c
 }
