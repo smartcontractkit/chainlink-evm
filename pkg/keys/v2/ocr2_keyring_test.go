@@ -38,6 +38,32 @@ var _ median.DataSource = (*helper)(nil)
 var _ ocrtypes.Database = (*helper)(nil)
 var _ nettypes.DiscovererDatabase = (*memoryDiscovererDatabase)(nil)
 
+func TestOCR2OnchainKeyringVerifyUsesPublicKeyAddress(t *testing.T) {
+	ctx := context.Background()
+	ks, err := commonks.LoadKeystore(ctx, commonks.NewMemoryStorage(), "test-password", commonks.WithScryptParams(commonks.FastScryptParams))
+	require.NoError(t, err)
+
+	signerKeyring, err := evmks.CreateOCR2OnchainKeyring(ctx, ks, "test-onchain-signer")
+	require.NoError(t, err)
+	otherKeyring, err := evmks.CreateOCR2OnchainKeyring(ctx, ks, "test-onchain-other")
+	require.NoError(t, err)
+
+	reportCtx := ocrtypes.ReportContext{
+		ReportTimestamp: ocrtypes.ReportTimestamp{
+			ConfigDigest: ocrtypes.ConfigDigest{1, 2, 3},
+			Epoch:        4,
+			Round:        5,
+		},
+		ExtraHash: [32]byte{6, 7, 8},
+	}
+	report := ocrtypes.Report("report")
+	signature, err := signerKeyring.Sign(reportCtx, report)
+	require.NoError(t, err)
+
+	require.True(t, signerKeyring.Verify(signerKeyring.PublicKey(), reportCtx, report, signature))
+	require.False(t, signerKeyring.Verify(otherKeyring.PublicKey(), reportCtx, report, signature))
+}
+
 type memoryDiscovererDatabase struct {
 	announcements map[string][]byte
 }

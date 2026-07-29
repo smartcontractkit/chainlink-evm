@@ -2,15 +2,17 @@
 package keys
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/chainlink-common/keystore"
-	evmutil "github.com/smartcontractkit/libocr/offchainreporting2plus/chains/evmutil"
+	"github.com/smartcontractkit/libocr/offchainreporting2plus/chains/evmutil"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
+
+	"github.com/smartcontractkit/chainlink-common/keystore"
 )
 
 const (
@@ -117,17 +119,8 @@ func (k *evmOnchainKeyring) Verify(publicKey ocrtypes.OnchainPublicKey, reportCt
 	if err != nil {
 		return false
 	}
-	pubKey := crypto.S256().Marshal(authorPubkey.X, authorPubkey.Y)
-	verifyResp, err := k.ks.Verify(context.Background(), keystore.VerifyRequest{
-		KeyType:   keystore.ECDSA_S256,
-		PublicKey: pubKey,
-		Data:      sigData,
-		Signature: signature,
-	})
-	if err != nil {
-		return false
-	}
-	return verifyResp.Valid
+	signerAddress := crypto.PubkeyToAddress(*authorPubkey)
+	return bytes.Equal(publicKey, signerAddress[:])
 }
 
 func (k *evmOnchainKeyring) MaxSignatureLength() int {
