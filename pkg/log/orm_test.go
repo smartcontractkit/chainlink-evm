@@ -34,7 +34,7 @@ func TestORM_broadcasts(t *testing.T) {
 	listener := &mockListener{jobID}
 
 	rawLog := randomLog(t)
-	queryArgs := []interface{}{rawLog.BlockHash, rawLog.BlockNumber, rawLog.Index, listener.JobID(), testutils.FixtureChainID.String()}
+	queryArgs := []any{rawLog.BlockHash, rawLog.BlockNumber, rawLog.Index, listener.JobID(), testutils.FixtureChainID.String()}
 
 	// No rows
 	res, err := db.Exec(selectQuery, queryArgs...)
@@ -200,7 +200,6 @@ func TestORM_Reinitialize(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			db := testutils.NewSqlxDB(t)
 			ctx := testutils.Context(t)

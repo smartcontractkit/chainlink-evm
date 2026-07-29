@@ -67,7 +67,7 @@ func TestORM_TrimOldHeads(t *testing.T) {
 	db := testutils.NewSqlxDB(t)
 	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		head := testutils.Head(i)
 		require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
 	}
@@ -83,7 +83,7 @@ func TestORM_TrimOldHeads(t *testing.T) {
 
 	// uncle block was loaded too
 	require.Len(t, heads, 6)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		require.LessOrEqual(t, int64(5), heads[i].Number)
 	}
 }
@@ -93,7 +93,7 @@ func TestORM_TrimOldHeads_Batch(t *testing.T) {
 	db := testutils.NewSqlxDB(t)
 	orm := heads.NewORM(*testutils.FixtureChainID, db, 2)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		head := testutils.Head(i)
 		require.NoError(t, orm.IdempotentInsertHead(t.Context(), head))
 	}
@@ -115,7 +115,7 @@ func TestORM_TrimOldHeads_Batch(t *testing.T) {
 
 	// uncle block was loaded too
 	require.Len(t, heads, 3)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		require.LessOrEqual(t, int64(7), heads[i].Number)
 	}
 }
@@ -127,7 +127,7 @@ func TestORM_HeadByHash(t *testing.T) {
 	orm := heads.NewORM(*testutils.FixtureChainID, db, 0)
 
 	var hash common.Hash
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		head := testutils.Head(i)
 		if i == 5 {
 			hash = head.Hash

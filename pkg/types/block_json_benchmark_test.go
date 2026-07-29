@@ -21,12 +21,12 @@ func makeTestBlock(nTx int) *Block {
 		b := make([]byte, 8)
 		binary.LittleEndian.PutUint64(b, uint64(x))
 
-		for i := 0; i < 4; i++ {
+		for range 4 {
 			out = append(out, b...)
 		}
 		return common.BytesToHash(out)
 	}
-	for i := 0; i < nTx; i++ {
+	for i := range nTx {
 		wei := assets.NewWei(big.NewInt(int64(i)))
 		txns[i] = Transaction{
 			GasPrice:             wei,

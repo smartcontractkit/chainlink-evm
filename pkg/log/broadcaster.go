@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -348,13 +349,14 @@ func (b *broadcaster) startResubscribeLoop() {
 		// - HeadTracker saving the heads to DB asynchronously versus LogBroadcaster, where a head
 		//   (or more heads on fast chains) may be saved but not yet processed by LB
 		//   using BlockBackfillDepth makes sure the backfill will be dependent on the per-chain configuration
-		from := highestSavedHead.Number -
-			int64(b.registrations.highestNumConfirmations) -
-			int64(b.config.BlockBackfillDepth())
-		if from < 0 {
-			from = 0
+		if backfillDepth := b.config.BlockBackfillDepth(); backfillDepth > math.MaxInt64 {
+			logger.Sugared(b.logger).Criticalw("BlockBackfillDepth overflows int64", "blockBackfillDepth", b.config.BlockBackfillDepth())
+		} else {
+			from := max(highestSavedHead.Number-
+				int64(b.registrations.highestNumConfirmations)-
+				int64(backfillDepth), 0)
+			b.backfillBlockNumber = sql.NullInt64{Int64: from, Valid: true}
 		}
-		b.backfillBlockNumber = sql.NullInt64{Int64: from, Valid: true}
 	}
 
 	// Remove leftover unconsumed logs, maybe update pending broadcasts, and backfill sooner if necessary.
@@ -597,16 +599,10 @@ func (b *broadcaster) onNewHeads() {
 
 		b.lastSeenHeadNumber.Store(latestHead.Number)
 
-		keptLogsDepth := b.config.FinalityDepth()
-		if b.registrations.highestNumConfirmations > keptLogsDepth {
-			keptLogsDepth = b.registrations.highestNumConfirmations
-		}
+		keptLogsDepth := max(b.registrations.highestNumConfirmations, b.config.FinalityDepth())
 
 		latestBlockNum := latestHead.Number
-		keptDepth := latestBlockNum - int64(keptLogsDepth)
-		if keptDepth < 0 {
-			keptDepth = 0
-		}
+		keptDepth := max(latestBlockNum-int64(keptLogsDepth), 0)
 
 		ctx, cancel := b.chStop.NewCtx()
 		defer cancel()

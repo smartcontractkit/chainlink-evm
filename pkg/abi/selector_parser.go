@@ -146,7 +146,7 @@ func parseCompositeType(unescapedSelector string) ([]abi.ArgumentMarshaling, str
 }
 
 // type-name rule
-func parseType(unescapedSelector string) (interface{}, string, error) {
+func parseType(unescapedSelector string) (any, string, error) {
 	if len(unescapedSelector) == 0 {
 		return nil, "", errors.New("empty type")
 	}

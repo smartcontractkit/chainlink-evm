@@ -143,7 +143,7 @@ type dbReceiptPlus struct {
 
 func fromDBReceipts(rs []DbReceipt) []*types.Receipt {
 	receipts := make([]*types.Receipt, len(rs))
-	for i := 0; i < len(rs); i++ {
+	for i := range rs {
 		receipts[i] = DbReceiptToEvmReceipt(&rs[i])
 	}
 	return receipts
@@ -151,7 +151,7 @@ func fromDBReceipts(rs []DbReceipt) []*types.Receipt {
 
 func fromDBReceiptsPlus(rs []dbReceiptPlus) []ReceiptPlus {
 	receipts := make([]ReceiptPlus, len(rs))
-	for i := 0; i < len(rs); i++ {
+	for i := range rs {
 		receipts[i] = ReceiptPlus{
 			ID:           rs[i].ID,
 			Receipt:      &rs[i].Receipt,
@@ -163,7 +163,7 @@ func fromDBReceiptsPlus(rs []dbReceiptPlus) []ReceiptPlus {
 
 func toOnchainReceipt(rs []*types.Receipt) []rawOnchainReceipt {
 	receipts := make([]rawOnchainReceipt, len(rs))
-	for i := 0; i < len(rs); i++ {
+	for i := range rs {
 		receipts[i] = *rs[i]
 	}
 	return receipts
@@ -924,7 +924,7 @@ func (o *evmTxStore) SaveFetchedReceipts(ctx context.Context, r []*types.Receipt
 	// Should be self-explanatory. If we got a receipt, the eth_tx is confirmed.
 	//
 	var valueStrs []string
-	var valueArgs []interface{}
+	var valueArgs []any
 	for _, r := range receipts {
 		var receiptJSON []byte
 		receiptJSON, err = json.Marshal(r)

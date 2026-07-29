@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"maps"
 	"math/big"
 	"math/rand/v2"
 	"sort"
@@ -21,7 +22,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
 	pkgerrors "github.com/pkg/errors"
-	"golang.org/x/exp/maps"
 
 	caperrors "github.com/smartcontractkit/chainlink-common/pkg/capabilities/errors"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -259,11 +259,11 @@ func (filter *Filter) Contains(other *Filter) bool {
 	if other.MaxLogsKept != filter.MaxLogsKept {
 		return false
 	}
-	addresses := make(map[common.Address]interface{})
+	addresses := make(map[common.Address]any)
 	for _, addr := range filter.Addresses {
 		addresses[addr] = struct{}{}
 	}
-	events := make(map[common.Hash]interface{})
+	events := make(map[common.Hash]any)
 	for _, ev := range filter.EventSigs {
 		events[ev] = struct{}{}
 	}
@@ -567,15 +567,13 @@ func (lp *logPoller) recvReplayComplete() {
 
 // Asynchronous wrapper for Replay()
 func (lp *logPoller) ReplayAsync(fromBlock int64) {
-	lp.wg.Add(1)
-	go func() {
-		defer lp.wg.Done()
+	lp.wg.Go(func() {
 		ctx, cancel := lp.stopCh.NewCtx()
 		defer cancel()
 		if err := lp.Replay(ctx, fromBlock); err != nil {
 			lp.lggr.Error(err)
 		}
-	}()
+	})
 }
 
 func (lp *logPoller) Start(context.Context) error {
@@ -1701,9 +1699,7 @@ func (lp *logPoller) GetBlocksRange(ctx context.Context, numbers []uint64) ([]Bl
 	if err != nil {
 		return nil, err
 	}
-	for num, b := range blocksFoundFromRPC {
-		blocksFound[num] = b
-	}
+	maps.Copy(blocksFound, blocksFoundFromRPC)
 
 	blocks := make([]Block, 0, len(numbers))
 	var blocksNotFound []uint64
@@ -1742,10 +1738,9 @@ func (lp *logPoller) fillRemainingBlocksFromRPC(
 			"remainingBlocks", remainingBlocks)
 	}
 
-	batchSize := lp.rpcBatchSize - 2 // subtract 2 to leave room for 2 reference requests added in lp.fetchBlocks()
-	if batchSize < 1 {
-		batchSize = 1
-	}
+	batchSize := max(
+		// subtract 2 to leave room for 2 reference requests added in lp.fetchBlocks()
+		lp.rpcBatchSize-2, 1)
 
 	return lp.batchFetchBlocks(ctx, remainingBlocks, batchSize)
 }
@@ -1754,7 +1749,7 @@ func (lp *logPoller) fillRemainingBlocksFromRPC(
 func newBlockReq(num string) rpc.BatchElem {
 	return rpc.BatchElem{
 		Method: "eth_getBlockByNumber",
-		Args:   []interface{}{num, false},
+		Args:   []any{num, false},
 		Result: &evmtypes.Head{},
 	}
 }
@@ -1849,10 +1844,7 @@ func (lp *logPoller) batchFetchBlocks(ctx context.Context, blocksRequested []uin
 
 	var logPollerBlocks = make(map[uint64]Block, len(blocksRequested))
 	for i := 0; i < len(blocksRequested); i += int(batchSize) {
-		j := i + int(batchSize)
-		if j > len(blocksRequested) {
-			j = len(blocksRequested)
-		}
+		j := min(i+int(batchSize), len(blocksRequested))
 
 		// As batch requests are not atomic, there is a chance that some of the blocks were replaced due to a reorg once we've observed them.
 		// Example:

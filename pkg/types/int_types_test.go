@@ -39,8 +39,8 @@ func TestIntTypes(t *testing.T) {
 
 func assertBigIntBounds(t *testing.T, tpe *ABIEncodingType, min, max *big.Int) {
 	t.Helper()
-	assert.Equal(t, reflect.TypeOf(min), tpe.native)
-	assert.True(t, tpe.checked.ConvertibleTo(reflect.TypeOf(min)))
+	assert.Equal(t, reflect.TypeFor[*big.Int](), tpe.native)
+	assert.True(t, tpe.checked.ConvertibleTo(reflect.TypeFor[*big.Int]()))
 	minMinusOne := new(big.Int).Sub(min, big.NewInt(1))
 	maxPlusOne := new(big.Int).Add(max, big.NewInt(1))
 	sbi := reflect.ValueOf(min).Convert(tpe.checked).Interface().(SizedBigInt)

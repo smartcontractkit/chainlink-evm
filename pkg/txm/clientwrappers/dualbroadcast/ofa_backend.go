@@ -122,7 +122,7 @@ func (d *ofaBackend) NonceAt(ctx context.Context, address common.Address, blockN
 }
 
 func (d *ofaBackend) PendingNonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex()))
+	body := fmt.Appendf(nil, `{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["%s","pending"], "id":1}`, address.Hex())
 	raw, err := d.postJSONRPC(ctx, address, body, nil)
 	if err != nil {
 		return 0, fmt.Errorf("%s eth_getTransactionCount failed: %w", d.ofa.name(), err)
@@ -173,7 +173,7 @@ func (d *ofaBackend) sendDualBroadcastTx(ctx context.Context, tx *types.Transact
 		return err
 	}
 
-	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data)))
+	body := fmt.Appendf(nil, `{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"], "id":1}`, hexutil.Encode(data))
 	start := time.Now()
 	_, err = d.postJSONRPC(ctx, tx.FromAddress, body, meta)
 	d.metrics.RecordSendTx(ctx, time.Since(start), err)

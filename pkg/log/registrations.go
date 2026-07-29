@@ -440,9 +440,7 @@ func (r *handler) sendLog(ctx context.Context, log types.Log, latestHead *evmtyp
 		// must copy function pointer here since range pointer (sub) may not be
 		// used in goroutine below
 		handleLog := sub.listener.HandleLog
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			handleLog(ctx, &broadcast{
 				latestBlockNumber,
 				latestHead.Hash,
@@ -454,7 +452,7 @@ func (r *handler) sendLog(ctx context.Context, log types.Log, latestHead *evmtyp
 				jobID,
 				r.evmChainID,
 			})
-		}()
+		})
 	}
 	wg.Wait()
 }

@@ -53,9 +53,9 @@ func GetProjectRoot() (rootPath string) {
 			if parseErr != nil {
 				Exit("failed to parse go.mod", parseErr)
 			}
-			if strings.HasPrefix(modPath, orgPrefix) {
+			if after, ok := strings.CutPrefix(modPath, orgPrefix); ok {
 				// remainder must be a single segment (the repo name)
-				remainder := strings.TrimPrefix(modPath, orgPrefix)
+				remainder := after
 				if remainder != "" && !strings.Contains(remainder, "/") {
 					return dir
 				}
@@ -88,7 +88,7 @@ func TempDir(dirPrefix string) (string, func()) {
 // BoxOutput formats its arguments as fmt.Printf, and encloses them in a box of
 // arrows pointing at their content, in order to better highlight it. See
 // ExampleBoxOutput
-func BoxOutput(errorMsgTemplate string, errorMsgValues ...interface{}) string {
+func BoxOutput(errorMsgTemplate string, errorMsgValues ...any) string {
 	errorMsgTemplate = fmt.Sprintf(errorMsgTemplate, errorMsgValues...)
 	lines := strings.Split(errorMsgTemplate, "\n")
 	maxlen := 0
@@ -98,18 +98,19 @@ func BoxOutput(errorMsgTemplate string, errorMsgValues ...interface{}) string {
 		}
 	}
 	internalLength := maxlen + 4
-	output := "↘" + strings.Repeat("↓", internalLength) + "↙\n" // top line
-	output += "→  " + strings.Repeat(" ", maxlen) + "  ←\n"
+	var output strings.Builder
+	output.WriteString("↘" + strings.Repeat("↓", internalLength) + "↙\n") // top line
+	output.WriteString("→  " + strings.Repeat(" ", maxlen) + "  ←\n")
 	readme := strings.Repeat("README ", maxlen/7)
-	output += "→  " + readme + strings.Repeat(" ", maxlen-len(readme)) + "  ←\n"
-	output += "→  " + strings.Repeat(" ", maxlen) + "  ←\n"
+	output.WriteString("→  " + readme + strings.Repeat(" ", maxlen-len(readme)) + "  ←\n")
+	output.WriteString("→  " + strings.Repeat(" ", maxlen) + "  ←\n")
 	for _, line := range lines {
-		output += "→  " + line + strings.Repeat(" ", maxlen-len(line)) + "  ←\n"
+		output.WriteString("→  " + line + strings.Repeat(" ", maxlen-len(line)) + "  ←\n")
 	}
-	output += "→  " + strings.Repeat(" ", maxlen) + "  ←\n"
-	output += "→  " + readme + strings.Repeat(" ", maxlen-len(readme)) + "  ←\n"
-	output += "→  " + strings.Repeat(" ", maxlen) + "  ←\n"
-	return "\n" + output + "↗" + strings.Repeat("↑", internalLength) + "↖" + // bottom line
+	output.WriteString("→  " + strings.Repeat(" ", maxlen) + "  ←\n")
+	output.WriteString("→  " + readme + strings.Repeat(" ", maxlen-len(readme)) + "  ←\n")
+	output.WriteString("→  " + strings.Repeat(" ", maxlen) + "  ←\n")
+	return "\n" + output.String() + "↗" + strings.Repeat("↑", internalLength) + "↖" + // bottom line
 		"\n\n"
 }
 
@@ -119,7 +120,7 @@ func readModulePathFromGoMod(goModPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, raw := range strings.Split(string(bs), "\n") {
+	for raw := range strings.SplitSeq(string(bs), "\n") {
 		line := strings.TrimSpace(raw)
 		if !strings.HasPrefix(line, "module ") {
 			continue

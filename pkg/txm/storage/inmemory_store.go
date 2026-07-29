@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"math/big"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -262,7 +263,7 @@ func (m *InMemoryStore) MarkConfirmedAndReorgedTransactions(latestNonce uint64) 
 			m.address, maxQueuedTransactions, pruneSubset, prunedTxIDs)
 	}
 	sort.Slice(confirmedTransactions, func(i, j int) bool { return confirmedTransactions[i].ID < confirmedTransactions[j].ID })
-	sort.Slice(unconfirmedTransactionIDs, func(i, j int) bool { return unconfirmedTransactionIDs[i] < unconfirmedTransactionIDs[j] })
+	slices.Sort(unconfirmedTransactionIDs)
 	return confirmedTransactions, unconfirmedTransactionIDs, nil
 }
 
@@ -355,7 +356,7 @@ func (m *InMemoryStore) pruneConfirmedTransactions() []uint64 {
 	if len(noncesToPrune) == 0 {
 		return nil
 	}
-	sort.Slice(noncesToPrune, func(i, j int) bool { return noncesToPrune[i] < noncesToPrune[j] })
+	slices.Sort(noncesToPrune)
 	minNonce := noncesToPrune[len(noncesToPrune)/pruneSubset]
 
 	var txIDsToPrune []uint64
@@ -367,7 +368,7 @@ func (m *InMemoryStore) pruneConfirmedTransactions() []uint64 {
 		}
 	}
 
-	sort.Slice(txIDsToPrune, func(i, j int) bool { return txIDsToPrune[i] < txIDsToPrune[j] })
+	slices.Sort(txIDsToPrune)
 	return txIDsToPrune
 }
 

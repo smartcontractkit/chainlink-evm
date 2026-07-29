@@ -66,7 +66,7 @@ func (e Eth) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []byte(fmt.Sprintf(`"%s"`, value)), nil
+	return fmt.Appendf(nil, `"%s"`, value), nil
 }
 
 // MarshalText implements the encoding.TextMarshaler interface.
@@ -107,7 +107,7 @@ func (e *Eth) ToInt() *big.Int {
 }
 
 // Scan reads the database value and returns an instance.
-func (e *Eth) Scan(value interface{}) error {
+func (e *Eth) Scan(value any) error {
 	return (*sqlutil.Big)(e).Scan(value)
 }
 

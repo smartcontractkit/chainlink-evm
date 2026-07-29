@@ -56,7 +56,7 @@ func populateDatabase(t testing.TB, o logpoller.ORM, chainID *big.Int) (common.H
 	for j := 1; j < 100; j++ {
 		var logs []logpoller.Log
 		// Max we can insert per batch
-		for i := 0; i < 1000; i++ {
+		for i := range 1000 {
 			addr := address1
 			if (i+(1000*j))%2 == 0 {
 				addr = address2
@@ -169,7 +169,7 @@ func TestLogPoller_Integration(t *testing.T) {
 	require.Len(t, th.LogPoller.Filter(nil, nil, nil).Topics, 1)
 
 	// Emit some logs in blocks 3->7.
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		_, err1 := th.Emitter1.EmitLog1(th.Owner, []*big.Int{big.NewInt(int64(i))})
 		require.NoError(t, err1)
 		_, err1 = th.Emitter1.EmitLog2(th.Owner, []*big.Int{big.NewInt(int64(i))})
@@ -412,7 +412,7 @@ func TestLogPoller_BackupPollAndSaveLogsWithPollerNotWorking(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 
 	// Emit some logs in blocks
-	for i := 0; i < emittedLogs; i++ {
+	for i := range emittedLogs {
 		if i == 30 {
 			// Call PollAndSave with no filters are registered.  We call it on block 31, so that
 			// it misses the logs for blocks 2 - 31 but marks block 0 as finalized (rather than 32)
@@ -480,7 +480,7 @@ func TestLogPoller_BackupPollAndSaveLogsWithDeepBlockDelay(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 
 	// Emit some logs in blocks
-	for i := 0; i < emittedLogs; i++ {
+	for i := range emittedLogs {
 		_, err := th.Emitter1.EmitLog1(th.Owner, []*big.Int{big.NewInt(int64(i))})
 		require.NoError(t, err)
 		th.Backend.Commit()
@@ -733,7 +733,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 				simulatedClient := client.NewSimulatedBackendClient(t, backend, chainID)
 				ht := headstest.NewSimulatedHeadTracker(simulatedClient, lpOpts.UseFinalityTag, lpOpts.FinalityDepth)
 				lp := logpoller.NewLogPoller(orm, simulatedClient, lggr, ht, lpOpts)
-				for i := 0; i < finalityDepth; i++ { // Have enough blocks that we could reorg the full finalityDepth-1.
+				for range finalityDepth { // Have enough blocks that we could reorg the full finalityDepth-1.
 					backend.Commit()
 				}
 				currentBlockNumber := int64(1)
@@ -744,7 +744,7 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 					return false
 				}
 				// Randomly pick to mine or reorg
-				for i := 0; i < numChainInserts; i++ {
+				for i := range numChainInserts {
 					if localRand.Int63()%2 == 0 {
 						// Mine blocks
 						for j := uint64(0); j < mineOrReorg[i]; j++ {
@@ -1423,7 +1423,7 @@ func TestGetReplayFromBlock(t *testing.T) {
 	}
 	th := SetupTH(t, lpOpts)
 	// Commit a few blocks
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		th.Backend.Commit()
 	}
 
@@ -1438,7 +1438,7 @@ func TestGetReplayFromBlock(t *testing.T) {
 	require.Equal(t, int64(12), nextBlock)
 
 	// Commit a few more so chain is ahead.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		th.Backend.Commit()
 	}
 	// Should take min(latest, requested), in this case latest.
@@ -1728,7 +1728,7 @@ func Test_PollAndQueryFinalizedBlocks(t *testing.T) {
 	require.NoError(t, err)
 
 	// Generate block that will be finalized
-	for i := 0; i < firstBatchLen; i++ {
+	for i := range firstBatchLen {
 		_, err1 := th.Emitter1.EmitLog1(th.Owner, []*big.Int{big.NewInt(int64(i))})
 		require.NoError(t, err1)
 		th.Backend.Commit()
@@ -1742,7 +1742,7 @@ func Test_PollAndQueryFinalizedBlocks(t *testing.T) {
 	th.finalizeThroughBlock(t, h.Number.Int64())
 
 	// Generate next blocks, not marked as finalized
-	for i := 0; i < secondBatchLen; i++ {
+	for i := range secondBatchLen {
 		_, err1 := th.Emitter1.EmitLog1(th.Owner, []*big.Int{big.NewInt(int64(i))})
 		require.NoError(t, err1)
 		th.Backend.Commit()
@@ -1887,7 +1887,7 @@ func Test_CreatedAfterQueriesWithBackfill(t *testing.T) {
 			genesisBlockTime := time.Unix(int64(header.Time), 0) //nolint:gosec // G115 false positive
 
 			// Emit some logs in blocks
-			for i := 0; i < emittedLogs; i++ {
+			for i := range emittedLogs {
 				_, err2 := th.Emitter1.EmitLog1(th.Owner, []*big.Int{big.NewInt(int64(i))})
 				require.NoError(t, err2)
 				th.Backend.Commit()

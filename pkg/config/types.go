@@ -73,7 +73,7 @@ type PollingFilter struct {
 
 type ChainContractReader struct {
 	ContractABI           string `json:"contractABI" toml:"contractABI"`
-	ContractPollingFilter `json:"contractPollingFilter,omitempty" toml:"contractPollingFilter,omitempty"`
+	ContractPollingFilter `json:"contractPollingFilter" toml:"contractPollingFilter,omitempty"`
 	// key is genericName from config
 	Configs map[string]*ChainReaderDefinition `json:"configs" toml:"configs"`
 }

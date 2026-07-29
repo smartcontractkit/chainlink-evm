@@ -13,7 +13,8 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils"
+	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
+
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -244,7 +245,7 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 			broadcastCh = time.After(broadcastWithBackoff.Duration())
 		} else {
 			broadcastWithBackoff.Reset()
-			broadcastCh = time.After(utils.WithJitter(broadcastInterval))
+			broadcastCh = time.After(timeutil.JitterPct(0.1).Apply(broadcastInterval))
 		}
 		select {
 		case <-ctx.Done():

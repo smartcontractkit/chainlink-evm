@@ -25,24 +25,24 @@ func TestTransaction_GetMeta(t *testing.T) {
 			name: "successful parse with all fields",
 			meta: func() *sqlutil.JSON {
 				meta := TxMeta{
-					JobID:               ptr(int32(123)),
+					JobID:               new(int32(123)),
 					FailOnRevert:        null.BoolFrom(true),
 					RequestID:           &common.Hash{1},
 					RequestTxHash:       &common.Hash{2},
 					RequestIDs:          []common.Hash{{3}, {4}},
 					RequestTxHashes:     []common.Hash{{5}, {6}},
-					MaxLink:             ptr("1000000000000000000"),
-					SubID:               ptr(uint64(5)),
-					GlobalSubID:         ptr("abc123"),
-					MaxEth:              ptr("2000000000000000000"),
-					ForceFulfilled:      ptr(true),
-					UpkeepID:            ptr("7890"),
-					WorkflowExecutionID: ptr("workflow1"),
+					MaxLink:             new("1000000000000000000"),
+					SubID:               new(uint64(5)),
+					GlobalSubID:         new("abc123"),
+					MaxEth:              new("2000000000000000000"),
+					ForceFulfilled:      new(true),
+					UpkeepID:            new("7890"),
+					WorkflowExecutionID: new("workflow1"),
 					FwdrDestAddress:     &common.Address{7},
 					MessageIDs:          []string{"msg1", "msg2"},
 					SeqNumbers:          []uint64{1, 2},
-					DualBroadcast:       ptr(true),
-					DualBroadcastParams: ptr("params123"),
+					DualBroadcast:       new(true),
+					DualBroadcastParams: new("params123"),
 				}
 				b, err := json.Marshal(meta)
 				require.NoError(t, err)
@@ -50,24 +50,24 @@ func TestTransaction_GetMeta(t *testing.T) {
 				return &j
 			}(),
 			expected: &TxMeta{
-				JobID:               ptr(int32(123)),
+				JobID:               new(int32(123)),
 				FailOnRevert:        null.BoolFrom(true),
 				RequestID:           &common.Hash{1},
 				RequestTxHash:       &common.Hash{2},
 				RequestIDs:          []common.Hash{{3}, {4}},
 				RequestTxHashes:     []common.Hash{{5}, {6}},
-				MaxLink:             ptr("1000000000000000000"),
-				SubID:               ptr(uint64(5)),
-				GlobalSubID:         ptr("abc123"),
-				MaxEth:              ptr("2000000000000000000"),
-				ForceFulfilled:      ptr(true),
-				UpkeepID:            ptr("7890"),
-				WorkflowExecutionID: ptr("workflow1"),
+				MaxLink:             new("1000000000000000000"),
+				SubID:               new(uint64(5)),
+				GlobalSubID:         new("abc123"),
+				MaxEth:              new("2000000000000000000"),
+				ForceFulfilled:      new(true),
+				UpkeepID:            new("7890"),
+				WorkflowExecutionID: new("workflow1"),
 				FwdrDestAddress:     &common.Address{7},
 				MessageIDs:          []string{"msg1", "msg2"},
 				SeqNumbers:          []uint64{1, 2},
-				DualBroadcast:       ptr(true),
-				DualBroadcastParams: ptr("params123"),
+				DualBroadcast:       new(true),
+				DualBroadcastParams: new("params123"),
 			},
 			wantErr: false,
 		},
@@ -107,5 +107,3 @@ func TestTransaction_GetMeta(t *testing.T) {
 		})
 	}
 }
-
-func ptr[T any](t T) *T { return &t }

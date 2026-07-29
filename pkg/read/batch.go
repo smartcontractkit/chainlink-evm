@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -51,11 +52,11 @@ type Call struct {
 }
 
 func (c BatchCall) String() string {
-	callString := ""
+	var callString strings.Builder
 	for _, call := range c {
-		callString += call.String() + "\n"
+		callString.WriteString(call.String() + "\n")
 	}
-	return callString
+	return callString.String()
 }
 
 // Implement the String method for the Call struct

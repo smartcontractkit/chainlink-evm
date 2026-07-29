@@ -145,12 +145,13 @@ func (cwh *ClientWithContractHistory) CallContract(ctx context.Context, msg ethe
 type valsWithCall map[int64]valWithCall
 
 func (v valsWithCall) String() string {
-	result := "valsWithCall{\n"
+	var result strings.Builder
+	result.WriteString("valsWithCall{\n")
 	for key, val := range v {
-		result += fmt.Sprintf("  Blocknumber: %d, Value: %s\n", key, val.String())
+		fmt.Fprintf(&result, "  Blocknumber: %d, Value: %s\n", key, val.String())
 	}
-	result += "}"
-	return result
+	result.WriteString("}")
+	return result.String()
 }
 
 type valWithCall struct {

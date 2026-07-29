@@ -32,7 +32,7 @@ type suggestedPriceConfig interface {
 }
 
 type suggestedPriceEstimatorClient interface {
-	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
+	CallContext(ctx context.Context, result any, method string, args ...any) error
 }
 
 // SuggestedPriceEstimator is an Estimator which uses the suggested gas price from eth_gasPrice.

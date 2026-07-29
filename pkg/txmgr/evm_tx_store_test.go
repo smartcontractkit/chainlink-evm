@@ -1396,7 +1396,7 @@ func TestORM_GetAbandonedTransactionsByBatch(t *testing.T) {
 	t.Run("get batches of transactions", func(t *testing.T) {
 		var batchSize uint = 10
 		numTxes := 55
-		for i := 0; i < numTxes; i++ {
+		for range numTxes {
 			_ = mustCreateUnstartedGeneratedTx(t, txStore, fromAddress, ethClient.ConfiguredChainID())
 		}
 
@@ -1764,7 +1764,7 @@ func TestORM_PruneUnstartedTxQueue(t *testing.T) {
 	t.Run("does not prune if queue has not exceeded capacity-1", func(t *testing.T) {
 		subject1 := uuid.New()
 		strategy1 := txmgrcommon.NewDropOldestStrategy(subject1, uint32(5))
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			mustCreateUnstartedGeneratedTx(t, txStore, fromAddress, testutils.FixtureChainID, txRequestWithStrategy(strategy1))
 		}
 		AssertCountPerSubject(t, txStore, int64(4), subject1)
@@ -1773,7 +1773,7 @@ func TestORM_PruneUnstartedTxQueue(t *testing.T) {
 	t.Run("prunes if queue has exceeded capacity-1", func(t *testing.T) {
 		subject2 := uuid.New()
 		strategy2 := txmgrcommon.NewDropOldestStrategy(subject2, uint32(3))
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			mustCreateUnstartedGeneratedTx(t, txStore, fromAddress, testutils.FixtureChainID, txRequestWithStrategy(strategy2))
 		}
 		AssertCountPerSubject(t, txStore, int64(2), subject2)

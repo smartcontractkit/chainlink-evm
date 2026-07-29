@@ -12,7 +12,7 @@ import (
 )
 
 type simulatorClient interface {
-	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
+	CallContext(ctx context.Context, result any, method string, args ...any) error
 }
 
 // ZK chains can return an out-of-counters error
@@ -29,8 +29,8 @@ func simulateTransactionDefault(ctx context.Context, client simulatorClient, msg
 	return client.CallContext(ctx, &result, "eth_estimateGas", toCallArg(msg), "pending")
 }
 
-func toCallArg(msg ethereum.CallMsg) interface{} {
-	arg := map[string]interface{}{
+func toCallArg(msg ethereum.CallMsg) any {
+	arg := map[string]any{
 		"from": msg.From,
 		"to":   msg.To,
 	}

@@ -104,10 +104,7 @@ func (sub *ethSubscriber) backfillLogs(fromBlockOverride sql.NullInt64, addresse
 		// On ethereum its 15MB [https://github.com/ethereum/go-ethereum/blob/master/rpc/websocket.go#L40]
 		batchSize := int64(sub.config.LogBackfillBatchSize())
 		for from := q.FromBlock.Int64(); from <= latestHeight; from += batchSize {
-			to := from + batchSize - 1
-			if to > latestHeight {
-				to = latestHeight
-			}
+			to := min(from+batchSize-1, latestHeight)
 			q.FromBlock = big.NewInt(from)
 			q.ToBlock = big.NewInt(to)
 

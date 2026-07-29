@@ -131,7 +131,7 @@ func (c *evmTxmClient) BatchGetReceipts(ctx context.Context, attempts []TxAttemp
 		res := &types.Receipt{}
 		req := rpc.BatchElem{
 			Method: "eth_getTransactionReceipt",
-			Args:   []interface{}{attempt.Hash},
+			Args:   []any{attempt.Hash},
 			Result: res,
 		}
 		txReceipt = append(txReceipt, res)

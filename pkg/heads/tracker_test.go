@@ -78,13 +78,13 @@ func TestHeadTracker_MarkFinalized_MarksAndTrimsTable(t *testing.T) {
 
 	db := testutils.NewSqlxDB(t)
 	config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.HeadTracker.HistoryDepth = ptr[uint32](100)
+		c.HeadTracker.HistoryDepth = new(uint32(100))
 	})
 
 	ethClient := clienttest.NewClientWithDefaultChainID(t)
 	orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
-	for idx := 0; idx < 200; idx++ {
+	for idx := range 200 {
 		require.NoError(t, orm.IdempotentInsertHead(tests.Context(t), testutils.Head(idx)))
 	}
 
@@ -206,7 +206,7 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 	t.Run("Finality violation on block hash mismatch", func(t *testing.T) {
 		db := testutils.NewSqlxDB(t)
 		config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.FinalityTagEnabled = ptr(true)
+			c.FinalityTagEnabled = new(true)
 		})
 		orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
@@ -258,10 +258,10 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 	t.Run("Finality violation on old block", func(t *testing.T) {
 		db := testutils.NewSqlxDB(t)
 		config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.FinalityTagEnabled = ptr(true)
-			c.FinalityDepth = ptr(uint32(0))
+			c.FinalityTagEnabled = new(true)
+			c.FinalityDepth = new(uint32(0))
 			// finalty violation on old block possible only with finalty tag
-			c.HeadTracker.FinalityTagBypass = ptr(true)
+			c.HeadTracker.FinalityTagBypass = new(true)
 		})
 		orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
@@ -318,8 +318,8 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 	t.Run("Correctly handled old block with no finalty tag", func(t *testing.T) {
 		db := testutils.NewSqlxDB(t)
 		config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.FinalityTagEnabled = ptr(true)
-			c.FinalityDepth = ptr(uint32(0))
+			c.FinalityTagEnabled = new(true)
+			c.FinalityDepth = new(uint32(0))
 		})
 		orm := evmheads.NewORM(*testutils.FixtureChainID, db, 0)
 
@@ -391,8 +391,8 @@ func TestHeadTracker_Start(t *testing.T) {
 			if opts.FinalityTagEnable != nil {
 				c.FinalityTagEnabled = opts.FinalityTagEnable
 			}
-			c.HeadTracker.HistoryDepth = ptr[uint32](historyDepth)
-			c.FinalityDepth = ptr[uint32](finalityDepth)
+			c.HeadTracker.HistoryDepth = new(uint32(historyDepth))
+			c.FinalityDepth = new(uint32(finalityDepth))
 			if opts.MaxAllowedFinalityDepth != nil {
 				c.HeadTracker.MaxAllowedFinalityDepth = opts.MaxAllowedFinalityDepth
 			}
@@ -424,7 +424,7 @@ func TestHeadTracker_Start(t *testing.T) {
 		tests.AssertLogEventually(t, ht.observer, "Got nil initial head")
 	})
 	t.Run("Starts even if fails to get finalizedHead", func(t *testing.T) {
-		ht := newHeadTracker(t, opts{FinalityTagEnable: ptr(true), FinalityTagBypass: ptr(false)})
+		ht := newHeadTracker(t, opts{FinalityTagEnable: new(true), FinalityTagBypass: new(false)})
 		head := testutils.Head(1000)
 		ht.ethClient.On("HeadByNumber", mock.Anything, (*big.Int)(nil)).Return(head, nil).Once()
 		ht.ethClient.On("LatestFinalizedBlock", mock.Anything).Return(nil, errors.New("failed to load latest finalized")).Once()
@@ -432,7 +432,7 @@ func TestHeadTracker_Start(t *testing.T) {
 		tests.AssertLogEventually(t, ht.observer, "Error handling initial head")
 	})
 	t.Run("Starts even if latest finalizedHead is nil", func(t *testing.T) {
-		ht := newHeadTracker(t, opts{FinalityTagEnable: ptr(true), FinalityTagBypass: ptr(false)})
+		ht := newHeadTracker(t, opts{FinalityTagEnable: new(true), FinalityTagBypass: new(false)})
 		head := testutils.Head(1000)
 		ht.ethClient.On("HeadByNumber", mock.Anything, (*big.Int)(nil)).Return(head, nil).Once()
 		ht.ethClient.On("LatestFinalizedBlock", mock.Anything).Return(nil, nil).Once()
@@ -484,22 +484,22 @@ func TestHeadTracker_Start(t *testing.T) {
 	}{
 		{
 			Name: "Happy path (Chain FT is disabled & Tracker's FT is disabled)",
-			Opts: opts{FinalityTagEnable: ptr(false), FinalityTagBypass: ptr(true)},
+			Opts: opts{FinalityTagEnable: new(false), FinalityTagBypass: new(true)},
 			Run:  happyPathFD,
 		},
 		{
 			Name: "Happy path (Chain FT is disabled & Tracker's FT is enabled, but ignored)",
-			Opts: opts{FinalityTagEnable: ptr(false), FinalityTagBypass: ptr(false)},
+			Opts: opts{FinalityTagEnable: new(false), FinalityTagBypass: new(false)},
 			Run:  happyPathFD,
 		},
 		{
 			Name: "Happy path (Chain FT is enabled & Tracker's FT is disabled)",
-			Opts: opts{FinalityTagEnable: ptr(true), FinalityTagBypass: ptr(true)},
+			Opts: opts{FinalityTagEnable: new(true), FinalityTagBypass: new(true)},
 			Run:  happyPathFD,
 		},
 		{
 			Name: "Happy path (Chain FT is enabled)",
-			Opts: opts{FinalityTagEnable: ptr(true), FinalityTagBypass: ptr(false)},
+			Opts: opts{FinalityTagEnable: new(true), FinalityTagBypass: new(false)},
 			Run:  happyPathFT,
 		},
 	}
@@ -650,7 +650,7 @@ func TestHeadTracker_Start_LoadsLatestChain(t *testing.T) {
 		testutils.Head(3),
 	}
 	var parentHash common.Hash
-	for i := 0; i < len(heads); i++ {
+	for i := range heads {
 		if parentHash != (common.Hash{}) {
 			heads[i].ParentHash = parentHash
 		}
@@ -707,9 +707,9 @@ func TestHeadTracker_SwitchesToLongestChainWithHeadSamplingEnabled(t *testing.T)
 	db := testutils.NewSqlxDB(t)
 
 	config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.FinalityDepth = ptr[uint32](50)
+		c.FinalityDepth = new(uint32(50))
 		// Need to set the buffer to something large since we inject a lot of heads at once and otherwise they will be dropped
-		c.HeadTracker.MaxBufferSize = ptr[uint32](100)
+		c.HeadTracker.MaxBufferSize = new(uint32(100))
 		c.HeadTracker.SamplingInterval = commonconfig.MustNewDuration(2500 * time.Millisecond)
 	})
 
@@ -828,9 +828,9 @@ func TestHeadTracker_SwitchesToLongestChainWithHeadSamplingDisabled(t *testing.T
 	db := testutils.NewSqlxDB(t)
 
 	config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.FinalityDepth = ptr[uint32](50)
+		c.FinalityDepth = new(uint32(50))
 		// Need to set the buffer to something large since we inject a lot of heads at once and otherwise they will be dropped
-		c.HeadTracker.MaxBufferSize = ptr[uint32](100)
+		c.HeadTracker.MaxBufferSize = new(uint32(100))
 		c.HeadTracker.SamplingInterval = commonconfig.MustNewDuration(0)
 	})
 
@@ -1035,12 +1035,12 @@ func testHeadTrackerBackfill(t *testing.T, newORM func(t *testing.T) evmheads.OR
 	}
 	newHeadTrackerUniverse := func(t *testing.T, opts opts) *headTrackerUniverse {
 		evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.FinalityTagEnabled = ptr(opts.FinalityTagEnabled)
-			c.FinalizedBlockOffset = ptr(opts.FinalizedBlockOffset)
-			c.FinalityDepth = ptr(opts.FinalityDepth)
-			c.HeadTracker.FinalityTagBypass = ptr(false)
+			c.FinalityTagEnabled = new(opts.FinalityTagEnabled)
+			c.FinalizedBlockOffset = new(opts.FinalizedBlockOffset)
+			c.FinalityDepth = new(opts.FinalityDepth)
+			c.HeadTracker.FinalityTagBypass = new(false)
 			if opts.MaxAllowedFinalityDepth > 0 {
-				c.HeadTracker.MaxAllowedFinalityDepth = ptr(opts.MaxAllowedFinalityDepth)
+				c.HeadTracker.MaxAllowedFinalityDepth = new(opts.MaxAllowedFinalityDepth)
 			}
 		})
 
@@ -1350,11 +1350,11 @@ func TestHeadTracker_LatestSafeBlock(t *testing.T) {
 
 	newHeadTrackerUniverse := func(t *testing.T, opts opts) *headTrackerUniverse {
 		evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.FinalityTagEnabled = ptr(opts.FinalityTagEnabled)
-			c.FinalizedBlockOffset = ptr(opts.FinalizedBlockOffset)
-			c.FinalityDepth = ptr(opts.FinalityDepth)
-			c.SafeDepth = ptr(opts.SafeDepth)
-			c.SafeTagSupported = ptr(opts.SafeTagSupported)
+			c.FinalityTagEnabled = new(opts.FinalityTagEnabled)
+			c.FinalizedBlockOffset = new(opts.FinalizedBlockOffset)
+			c.FinalityDepth = new(opts.FinalityDepth)
+			c.SafeDepth = new(opts.SafeDepth)
+			c.SafeTagSupported = new(opts.SafeTagSupported)
 		})
 
 		db := testutils.NewSqlxDB(t)
@@ -1486,9 +1486,9 @@ func TestHeadTracker_LatestAndFinalizedBlock(t *testing.T) {
 
 	newHeadTrackerUniverse := func(t *testing.T, opts opts) *headTrackerUniverse {
 		evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.FinalityTagEnabled = ptr(opts.FinalityTagEnabled)
-			c.FinalizedBlockOffset = ptr(opts.FinalizedBlockOffset)
-			c.FinalityDepth = ptr(opts.FinalityDepth)
+			c.FinalityTagEnabled = new(opts.FinalityTagEnabled)
+			c.FinalizedBlockOffset = new(opts.FinalizedBlockOffset)
+			c.FinalityDepth = new(opts.FinalityDepth)
 		})
 
 		db := testutils.NewSqlxDB(t)
@@ -1681,8 +1681,6 @@ func (u *headTrackerUniverse) Stop(t *testing.T) {
 	require.NoError(t, u.mailMon.Close())
 }
 
-func ptr[T any](t T) *T { return &t }
-
 // headBuffer - stores heads in sequence, with increasing timestamps
 type headBuffer struct {
 	t     *testing.T
@@ -1744,7 +1742,7 @@ func (b *blocks) ForkAt(t *testing.T, blockNum int64, numHashes int) *blocks {
 		t.Fatalf("Not enough length for block num: %v", blockNum)
 	}
 
-	for i := int64(0); i < blockNum; i++ {
+	for i := range blockNum {
 		forked.Heads[i] = b.Heads[i]
 	}
 

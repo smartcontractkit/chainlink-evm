@@ -109,7 +109,7 @@ func WrapItemType(contractName, itemType string, isParams bool) string {
 	return fmt.Sprintf("return.%s.%s", contractName, itemType)
 }
 
-var bigIntType = reflect.TypeOf((*big.Int)(nil))
+var bigIntType = reflect.TypeFor[*big.Int]()
 
 func sizeVerifyBigIntHook(from, to reflect.Type, data any) (any, error) {
 	if from.Implements(evmtypes.SizedBigIntType()) &&
@@ -146,7 +146,7 @@ func sizeVerifyBigIntHook(from, to reflect.Type, data any) (any, error) {
 
 func decodeAccountAndAllowArraySliceHook(from, to reflect.Type, data any) (any, error) {
 	if from.Kind() == reflect.String &&
-		(to == reflect.TypeOf(common.Address{}) || to == reflect.TypeOf(&common.Address{})) {
+		(to == reflect.TypeFor[common.Address]() || to == reflect.TypeFor[*common.Address]()) {
 		return decodeAddress(data)
 	}
 

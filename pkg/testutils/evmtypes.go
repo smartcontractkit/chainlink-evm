@@ -59,7 +59,7 @@ func randomBytes(n int) []byte {
 }
 
 // Head given the value convert it into an Head
-func Head(val interface{}) *evmtypes.Head {
+func Head(val any) *evmtypes.Head {
 	var h evmtypes.Head
 	switch t := val.(type) {
 	case int:

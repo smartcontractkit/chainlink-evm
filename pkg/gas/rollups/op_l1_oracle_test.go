@@ -77,11 +77,11 @@ func TestOPL1Oracle_ReadV1GasPrice(t *testing.T) {
 				require.Len(t, rpcElements, 2)
 				for _, rE := range rpcElements {
 					require.Equal(t, "eth_call", rE.Method)
-					require.Equal(t, oracleAddress, rE.Args[0].(map[string]interface{})["to"])
+					require.Equal(t, oracleAddress, rE.Args[0].(map[string]any)["to"])
 					require.Equal(t, "latest", rE.Args[1])
 				}
-				require.Equal(t, hexutil.Bytes(isFjordCalldata), rpcElements[0].Args[0].(map[string]interface{})["data"])
-				require.Equal(t, hexutil.Bytes(isEcotoneCalldata), rpcElements[1].Args[0].(map[string]interface{})["data"])
+				require.Equal(t, hexutil.Bytes(isFjordCalldata), rpcElements[0].Args[0].(map[string]any)["data"])
+				require.Equal(t, hexutil.Bytes(isEcotoneCalldata), rpcElements[1].Args[0].(map[string]any)["data"])
 				isUpgraded := "0x0000000000000000000000000000000000000000000000000000000000000000"
 				if tc.isFjordError {
 					rpcElements[0].Error = errors.New("test error")
@@ -139,11 +139,11 @@ func setupUpgradeCheck(t *testing.T, oracleAddress string, isFjord, isEcotone bo
 		require.Len(t, rpcElements, 2)
 		for _, rE := range rpcElements {
 			require.Equal(t, "eth_call", rE.Method)
-			require.Equal(t, oracleAddress, rE.Args[0].(map[string]interface{})["to"])
+			require.Equal(t, oracleAddress, rE.Args[0].(map[string]any)["to"])
 			require.Equal(t, "latest", rE.Args[1])
 		}
-		require.Equal(t, hexutil.Bytes(isFjordCalldata), rpcElements[0].Args[0].(map[string]interface{})["data"])
-		require.Equal(t, hexutil.Bytes(isEcotoneCalldata), rpcElements[1].Args[0].(map[string]interface{})["data"])
+		require.Equal(t, hexutil.Bytes(isFjordCalldata), rpcElements[0].Args[0].(map[string]any)["data"])
+		require.Equal(t, hexutil.Bytes(isEcotoneCalldata), rpcElements[1].Args[0].(map[string]any)["data"])
 
 		rpcElements[0].Result = boolToHexMap[isFjord]
 		rpcElements[1].Result = boolToHexMap[isEcotone]
@@ -189,15 +189,15 @@ func mockBatchContractCall(t *testing.T, ethClient *mocks.L1OracleClient, oracle
 
 		for _, rE := range rpcElements {
 			require.Equal(t, "eth_call", rE.Method)
-			require.Equal(t, oracleAddress, rE.Args[0].(map[string]interface{})["to"])
+			require.Equal(t, oracleAddress, rE.Args[0].(map[string]any)["to"])
 			require.Equal(t, "latest", rE.Args[1])
 		}
 
-		require.Equal(t, hexutil.Bytes(l1BaseFeeCalldata), rpcElements[0].Args[0].(map[string]interface{})["data"])
-		require.Equal(t, hexutil.Bytes(l1BaseFeeScalarCalldata), rpcElements[1].Args[0].(map[string]interface{})["data"])
-		require.Equal(t, hexutil.Bytes(blobBaseFeeCalldata), rpcElements[2].Args[0].(map[string]interface{})["data"])
-		require.Equal(t, hexutil.Bytes(blobBaseFeeScalarCalldata), rpcElements[3].Args[0].(map[string]interface{})["data"])
-		require.Equal(t, hexutil.Bytes(decimalsCalldata), rpcElements[4].Args[0].(map[string]interface{})["data"])
+		require.Equal(t, hexutil.Bytes(l1BaseFeeCalldata), rpcElements[0].Args[0].(map[string]any)["data"])
+		require.Equal(t, hexutil.Bytes(l1BaseFeeScalarCalldata), rpcElements[1].Args[0].(map[string]any)["data"])
+		require.Equal(t, hexutil.Bytes(blobBaseFeeCalldata), rpcElements[2].Args[0].(map[string]any)["data"])
+		require.Equal(t, hexutil.Bytes(blobBaseFeeScalarCalldata), rpcElements[3].Args[0].(map[string]any)["data"])
+		require.Equal(t, hexutil.Bytes(decimalsCalldata), rpcElements[4].Args[0].(map[string]any)["data"])
 
 		res1 := common.BigToHash(baseFeeVal).Hex()
 		res2 := common.BigToHash(baseFeeScalarVal).Hex()

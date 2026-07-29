@@ -18,6 +18,7 @@ import (
 
 	commonassets "github.com/smartcontractkit/chainlink-common/pkg/assets"
 	"github.com/smartcontractkit/chainlink-common/pkg/config"
+	"github.com/smartcontractkit/chainlink-common/pkg/config/configdoc"
 	"github.com/smartcontractkit/chainlink-common/pkg/config/configtest"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
@@ -57,7 +58,7 @@ func TestEVMConfig_ValidateInvalidConfig(t *testing.T) {
 		{
 			Name: "LogBackfillBatchSize must be > 0",
 			MakeInvalid: func(cfg *Chain) {
-				cfg.LogBackfillBatchSize = ptr[uint32](0)
+				cfg.LogBackfillBatchSize = new(uint32(0))
 			},
 			ExpectedError: "LogBackfillBatchSize: invalid value (0): must be greater than 0",
 		},
@@ -86,7 +87,7 @@ func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
 			HTTPURL: config.MustParseURL("http://foo.test"),
 		}},
 	}
-	evmCfg.RPCDefaultBatchSize = ptr[uint32](0)
+	evmCfg.RPCDefaultBatchSize = new(uint32(0))
 	err := config.Validate(evmCfg)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "RPCDefaultBatchSize")
@@ -104,51 +105,51 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	require.NoError(t, err)
 	unknown.Workflow.FromAddress = &addr
 	unknown.Workflow.ForwarderAddress = &addr
-	unknown.Workflow.GasLimitDefault = ptr(uint64(400000))
+	unknown.Workflow.GasLimitDefault = new(uint64(400000))
 	unknown.Transactions.TransactionManagerV2.BlockTime = new(config.Duration)
 	unknown.Transactions.TransactionManagerV2.CustomURL = new(config.URL)
 	unknown.Transactions.TransactionManagerV2.CustomURLs = []*config.URL{new(config.URL)}
-	unknown.Transactions.TransactionManagerV2.DualBroadcast = ptr(false)
-	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = ptr(false)
-	unknown.Transactions.TransactionManagerV2.Bundles = ptr(false)
+	unknown.Transactions.TransactionManagerV2.DualBroadcast = new(false)
+	unknown.Transactions.TransactionManagerV2.ReadRequestsToMultipleNodes = new(false)
+	unknown.Transactions.TransactionManagerV2.Bundles = new(false)
 	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
-	unknown.Transactions.TransactionManagerV2.FeeBoost = ptr(false)
-	unknown.Transactions.AutoPurge.Threshold = ptr(uint32(0))
-	unknown.Transactions.AutoPurge.MinAttempts = ptr(uint32(0))
+	unknown.Transactions.TransactionManagerV2.FeeBoost = new(false)
+	unknown.Transactions.AutoPurge.Threshold = new(uint32(0))
+	unknown.Transactions.AutoPurge.MinAttempts = new(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
-	unknown.GasEstimator.BlockHistory.EIP1559FeeCapBufferBlocks = ptr[uint16](10)
+	unknown.GasEstimator.BlockHistory.EIP1559FeeCapBufferBlocks = new(uint16(10))
 	unknown.GasEstimator.SenderAddress = asEIP55Address(t, "0xae4E781a6218A8031764928E88d457937A954fC3")
 	oracleType := DAOracleOPStack
 	unknown.GasEstimator.DAOracle.OracleType = &oracleType
 	unknown.GasEstimator.DAOracle.OracleAddress = new(types.EIP55Address)
 	unknown.GasEstimator.DAOracle.CustomGasPriceCalldata = new(string)
 	unknown.GasEstimator.LimitJobType = GasLimitJobType{
-		OCR:    ptr[uint32](7),
-		OCR2:   ptr[uint32](13),
-		DR:     ptr[uint32](25),
-		VRF:    ptr[uint32](37),
-		FM:     ptr[uint32](42),
-		Keeper: ptr[uint32](51),
+		OCR:    new(uint32(7)),
+		OCR2:   new(uint32(13)),
+		DR:     new(uint32(25)),
+		VRF:    new(uint32(37)),
+		FM:     new(uint32(42)),
+		Keeper: new(uint32(51)),
 	}
-	unknown.GasEstimator.BumpTxDepth = ptr[uint32](15)
+	unknown.GasEstimator.BumpTxDepth = new(uint32(15))
 	unknown.NodePool.Errors = ClientErrors{
-		NonceTooLow:                       ptr("too-low"),
-		NonceTooHigh:                      ptr("too-high"),
-		ReplacementTransactionUnderpriced: ptr("under"),
-		LimitReached:                      ptr("limit"),
-		TransactionAlreadyInMempool:       ptr("already"),
-		TerminallyUnderpriced:             ptr("terminal"),
-		InsufficientEth:                   ptr("insufficient"),
-		TxFeeExceedsCap:                   ptr("exceeds"),
-		L2FeeTooLow:                       ptr("low-fee"),
-		L2FeeTooHigh:                      ptr("high-fee"),
-		L2Full:                            ptr("full"),
-		TransactionAlreadyMined:           ptr("mined"),
-		Fatal:                             ptr("fatal"),
-		ServiceUnavailable:                ptr("unavailable"),
-		TooManyResults:                    ptr("too-many"),
-		MissingBlocks:                     ptr("missing"),
-		FinalizedStateUnavailable:         ptr("finalized-unavailable"),
+		NonceTooLow:                       new("too-low"),
+		NonceTooHigh:                      new("too-high"),
+		ReplacementTransactionUnderpriced: new("under"),
+		LimitReached:                      new("limit"),
+		TransactionAlreadyInMempool:       new("already"),
+		TerminallyUnderpriced:             new("terminal"),
+		InsufficientEth:                   new("insufficient"),
+		TxFeeExceedsCap:                   new("exceeds"),
+		L2FeeTooLow:                       new("low-fee"),
+		L2FeeTooHigh:                      new("high-fee"),
+		L2Full:                            new("full"),
+		TransactionAlreadyMined:           new("mined"),
+		Fatal:                             new("fatal"),
+		ServiceUnavailable:                new("unavailable"),
+		TooManyResults:                    new("too-many"),
+		MissingBlocks:                     new("missing"),
+		FinalizedStateUnavailable:         new("finalized-unavailable"),
 	}
 
 	configtest.AssertFieldsNotNil(t, unknown)
@@ -161,7 +162,7 @@ func TestDocs(t *testing.T) {
 
 	t.Run("aligned", func(t *testing.T) {
 		var docDefaults EVMConfig
-		require.NoError(t, configtest.DocDefaultsOnly(strings.NewReader(docsTOML), &docDefaults, config.DecodeTOML))
+		require.NoError(t, configdoc.DefaultsOnly(strings.NewReader(docsTOML), &docDefaults, config.DecodeTOML))
 
 		require.Equal(t, chaintype.ChainType(""), docDefaults.ChainType.ChainType())
 		docDefaults.ChainType = nil
@@ -237,36 +238,36 @@ var fullTOML string
 
 var fullConfig = EVMConfig{
 	ChainID: sqlutil.NewI(42),
-	Enabled: ptr(false),
+	Enabled: new(false),
 	Chain: Chain{
-		AutoCreateKey: ptr(false),
+		AutoCreateKey: new(false),
 		BalanceMonitor: BalanceMonitor{
-			Enabled: ptr(true),
+			Enabled: new(true),
 		},
-		BlockBackfillDepth:   ptr[uint32](100),
-		BlockBackfillSkip:    ptr(true),
+		BlockBackfillDepth:   new(uint32(100)),
+		BlockBackfillSkip:    new(true),
 		ChainType:            chaintype.NewConfig("Optimism"),
-		FinalityDepth:        ptr[uint32](42),
-		SafeDepth:            ptr[uint32](10),
-		FinalityTagEnabled:   ptr[bool](true),
-		SafeTagSupported:     ptr[bool](true),
-		FlagsContractAddress: ptr(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
-		FinalizedBlockOffset: ptr[uint32](16),
+		FinalityDepth:        new(uint32(42)),
+		SafeDepth:            new(uint32(10)),
+		FinalityTagEnabled:   new(true),
+		SafeTagSupported:     new(true),
+		FlagsContractAddress: new(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
+		FinalizedBlockOffset: new(uint32(16)),
 
 		GasEstimator: GasEstimator{
-			Mode:               ptr("SuggestedPrice"),
-			EIP1559DynamicFees: ptr(true),
-			BumpPercent:        ptr[uint16](10),
-			BumpThreshold:      ptr[uint32](6),
-			BumpTxDepth:        ptr[uint32](6),
+			Mode:               new("SuggestedPrice"),
+			EIP1559DynamicFees: new(true),
+			BumpPercent:        new(uint16(10)),
+			BumpThreshold:      new(uint32(6)),
+			BumpTxDepth:        new(uint32(6)),
 			BumpMin:            assets.NewWeiI(100),
 			FeeCapDefault:      assets.NewWeiI(math.MaxInt64),
-			LimitDefault:       ptr[uint64](12),
-			LimitMax:           ptr[uint64](17),
-			LimitMultiplier:    ptr(decimal.RequireFromString("1.234")),
-			LimitTransfer:      ptr[uint64](100),
-			EstimateLimit:      ptr(false),
-			SenderAddress:      ptr(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
+			LimitDefault:       new(uint64(12)),
+			LimitMax:           new(uint64(17)),
+			LimitMultiplier:    new(decimal.RequireFromString("1.234")),
+			LimitTransfer:      new(uint64(100)),
+			EstimateLimit:      new(false),
+			SenderAddress:      new(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
 			TipCapDefault:      assets.NewWeiI(2),
 			TipCapMin:          assets.NewWeiI(1),
 			PriceDefault:       assets.NewWeiI(math.MaxInt64),
@@ -274,27 +275,27 @@ var fullConfig = EVMConfig{
 			PriceMin:           assets.NewWeiI(13),
 
 			DAOracle: DAOracle{
-				OracleType:             ptr(DAOracleOPStack),
-				OracleAddress:          ptr(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
-				CustomGasPriceCalldata: ptr("0x1234asdf"),
+				OracleType:             new(DAOracleOPStack),
+				OracleAddress:          new(types.MustEIP55Address("0xae4E781a6218A8031764928E88d457937A954fC3")),
+				CustomGasPriceCalldata: new("0x1234asdf"),
 			},
 
 			LimitJobType: GasLimitJobType{
-				OCR:    ptr[uint32](1001),
-				DR:     ptr[uint32](1002),
-				VRF:    ptr[uint32](1003),
-				FM:     ptr[uint32](1004),
-				Keeper: ptr[uint32](1005),
-				OCR2:   ptr[uint32](1006),
+				OCR:    new(uint32(1001)),
+				DR:     new(uint32(1002)),
+				VRF:    new(uint32(1003)),
+				FM:     new(uint32(1004)),
+				Keeper: new(uint32(1005)),
+				OCR2:   new(uint32(1006)),
 			},
 
 			BlockHistory: BlockHistoryEstimator{
-				BatchSize:                 ptr[uint32](17),
-				BlockHistorySize:          ptr[uint16](12),
-				CheckInclusionBlocks:      ptr[uint16](18),
-				CheckInclusionPercentile:  ptr[uint16](19),
-				EIP1559FeeCapBufferBlocks: ptr[uint16](13),
-				TransactionPercentile:     ptr[uint16](15),
+				BatchSize:                 new(uint32(17)),
+				BlockHistorySize:          new(uint16(12)),
+				CheckInclusionBlocks:      new(uint16(18)),
+				CheckInclusionPercentile:  new(uint16(19)),
+				EIP1559FeeCapBufferBlocks: new(uint16(13)),
+				TransactionPercentile:     new(uint16(15)),
 			},
 			FeeHistory: FeeHistoryEstimator{
 				CacheTimeout: config.MustNewDuration(time.Second),
@@ -303,106 +304,106 @@ var fullConfig = EVMConfig{
 
 		KeySpecific: []KeySpecific{
 			{
-				Key: ptr(types.MustEIP55Address("0x2a3e23c6f242F5345320814aC8a1b4E58707D292")),
+				Key: new(types.MustEIP55Address("0x2a3e23c6f242F5345320814aC8a1b4E58707D292")),
 				GasEstimator: KeySpecificGasEstimator{
 					PriceMax: assets.NewWei(new(stdbig.Int).SetBytes([]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF})),
 				},
 			},
 		},
 
-		LinkContractAddress:          ptr(types.MustEIP55Address("0x538aAaB4ea120b2bC2fe5D296852D948F07D849e")),
-		LogBackfillBatchSize:         ptr[uint32](17),
+		LinkContractAddress:          new(types.MustEIP55Address("0x538aAaB4ea120b2bC2fe5D296852D948F07D849e")),
+		LogBackfillBatchSize:         new(uint32(17)),
 		LogPollInterval:              config.MustNewDuration(time.Minute),
-		LogPollerSkipEmptyBlocks:     ptr(false),
-		LogKeepBlocksDepth:           ptr[uint32](100000),
-		LogPrunePageSize:             ptr[uint32](0),
-		BackupLogPollerBlockDelay:    ptr[uint64](532),
+		LogPollerSkipEmptyBlocks:     new(false),
+		LogKeepBlocksDepth:           new(uint32(100000)),
+		LogPrunePageSize:             new(uint32(0)),
+		BackupLogPollerBlockDelay:    new(uint64(532)),
 		MinContractPayment:           commonassets.NewLinkFromJuels(math.MaxInt64),
-		MinIncomingConfirmations:     ptr[uint32](13),
-		NonceAutoSync:                ptr(true),
+		MinIncomingConfirmations:     new(uint32(13)),
+		NonceAutoSync:                new(true),
 		NoNewHeadsThreshold:          config.MustNewDuration(time.Minute),
-		OperatorFactoryAddress:       ptr(types.MustEIP55Address("0xa5B85635Be42F21f94F28034B7DA440EeFF0F418")),
-		LogBroadcasterEnabled:        ptr(true),
-		RPCDefaultBatchSize:          ptr[uint32](17),
-		RPCBlockQueryDelay:           ptr[uint16](10),
+		OperatorFactoryAddress:       new(types.MustEIP55Address("0xa5B85635Be42F21f94F28034B7DA440EeFF0F418")),
+		LogBroadcasterEnabled:        new(true),
+		RPCDefaultBatchSize:          new(uint32(17)),
+		RPCBlockQueryDelay:           new(uint16(10)),
 		NoNewFinalizedHeadsThreshold: config.MustNewDuration(time.Hour),
 
 		Transactions: Transactions{
-			Enabled:              ptr(true),
-			MaxInFlight:          ptr[uint32](19),
-			MaxQueued:            ptr[uint32](99),
+			Enabled:              new(true),
+			MaxInFlight:          new(uint32(19)),
+			MaxQueued:            new(uint32(99)),
 			ReaperInterval:       config.MustNewDuration(time.Minute),
 			ReaperThreshold:      config.MustNewDuration(time.Minute),
 			ResendAfterThreshold: config.MustNewDuration(time.Hour),
 			ConfirmationTimeout:  config.MustNewDuration(time.Minute),
-			ForwardersEnabled:    ptr(true),
+			ForwardersEnabled:    new(true),
 			AutoPurge: AutoPurgeConfig{
-				Enabled:         ptr(false),
-				Threshold:       ptr[uint32](42),
-				MinAttempts:     ptr[uint32](13),
+				Enabled:         new(false),
+				Threshold:       new(uint32(42)),
+				MinAttempts:     new(uint32(13)),
 				DetectionApiUrl: config.MustParseURL("http://example.net"),
 			},
 			TransactionManagerV2: TransactionManagerV2Config{
-				Enabled:                       ptr(false),
-				DualBroadcast:                 ptr(true),
-				ReadRequestsToMultipleNodes:   ptr(false),
-				Bundles:                       ptr(false),
+				Enabled:                       new(false),
+				DualBroadcast:                 new(true),
+				ReadRequestsToMultipleNodes:   new(false),
+				Bundles:                       new(false),
 				BlockTime:                     config.MustNewDuration(42 * time.Second),
 				CustomURL:                     config.MustParseURL("http://txs.org"),
 				CustomURLs:                    []*config.URL{config.MustParseURL("http://txs.org"), config.MustParseURL("http://txs.org/secondary")},
 				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
-				FeeBoost:                      ptr(true),
+				FeeBoost:                      new(true),
 			},
 		},
 
 		HeadTracker: HeadTracker{
-			HistoryDepth:            ptr[uint32](15),
-			MaxBufferSize:           ptr[uint32](17),
+			HistoryDepth:            new(uint32(15)),
+			MaxBufferSize:           new(uint32(17)),
 			SamplingInterval:        config.MustNewDuration(time.Hour),
-			FinalityTagBypass:       ptr[bool](false),
-			MaxAllowedFinalityDepth: ptr[uint32](1500),
-			PersistenceEnabled:      ptr(false),
-			PersistenceBatchSize:    ptr[int64](100),
+			FinalityTagBypass:       new(false),
+			MaxAllowedFinalityDepth: new(uint32(1500)),
+			PersistenceEnabled:      new(false),
+			PersistenceBatchSize:    new(int64(100)),
 		},
 
 		NodePool: NodePool{
-			PollFailureThreshold:                ptr[uint32](5),
-			PollSuccessThreshold:                ptr[uint32](0),
+			PollFailureThreshold:                new(uint32(5)),
+			PollSuccessThreshold:                new(uint32(0)),
 			PollInterval:                        config.MustNewDuration(time.Minute),
-			SelectionMode:                       ptr(multinode.NodeSelectionModeHighestHead),
-			SyncThreshold:                       ptr[uint32](13),
+			SelectionMode:                       new(multinode.NodeSelectionModeHighestHead),
+			SyncThreshold:                       new(uint32(13)),
 			LeaseDuration:                       config.MustNewDuration(0),
-			NodeIsSyncingEnabled:                ptr(true),
+			NodeIsSyncingEnabled:                new(true),
 			FinalizedBlockPollInterval:          config.MustNewDuration(time.Second),
-			HistoricalBalanceCheckAddress:       ptr(types.MustEIP55Address("0x0000000000000000000000000000000000000001")),
-			EnforceRepeatableRead:               ptr(true),
+			HistoricalBalanceCheckAddress:       new(types.MustEIP55Address("0x0000000000000000000000000000000000000001")),
+			EnforceRepeatableRead:               new(true),
 			DeathDeclarationDelay:               config.MustNewDuration(time.Minute),
-			VerifyChainID:                       ptr(true),
+			VerifyChainID:                       new(true),
 			NewHeadsPollInterval:                config.MustNewDuration(0),
-			ExternalRequestMaxResponseSize:      ptr[uint32](10),
-			FinalizedStateCheckFailureThreshold: ptr[uint32](3),
+			ExternalRequestMaxResponseSize:      new(uint32(10)),
+			FinalizedStateCheckFailureThreshold: new(uint32(3)),
 			Errors: ClientErrors{
-				NonceTooLow:                       ptr[string]("(: |^)nonce too low"),
-				NonceTooHigh:                      ptr[string]("(: |^)nonce too high"),
-				ReplacementTransactionUnderpriced: ptr[string]("(: |^)replacement transaction underpriced"),
-				LimitReached:                      ptr[string]("(: |^)limit reached"),
-				TransactionAlreadyInMempool:       ptr[string]("(: |^)transaction already in mempool"),
-				TerminallyUnderpriced:             ptr[string]("(: |^)terminally underpriced"),
-				InsufficientEth:                   ptr[string]("(: |^)insufficient eth"),
-				TxFeeExceedsCap:                   ptr[string]("(: |^)tx fee exceeds cap"),
-				L2FeeTooLow:                       ptr[string]("(: |^)l2 fee too low"),
-				L2FeeTooHigh:                      ptr[string]("(: |^)l2 fee too high"),
-				L2Full:                            ptr[string]("(: |^)l2 full"),
-				TransactionAlreadyMined:           ptr[string]("(: |^)transaction already mined"),
-				Fatal:                             ptr[string]("(: |^)fatal"),
-				ServiceUnavailable:                ptr[string]("(: |^)service unavailable"),
-				TooManyResults:                    ptr[string]("(: |^)too many results"),
-				MissingBlocks:                     ptr[string]("(: |^)invalid block range"),
-				FinalizedStateUnavailable:         ptr[string]("(: |^)(missing trie node|state not available|historical state unavailable)"),
+				NonceTooLow:                       new("(: |^)nonce too low"),
+				NonceTooHigh:                      new("(: |^)nonce too high"),
+				ReplacementTransactionUnderpriced: new("(: |^)replacement transaction underpriced"),
+				LimitReached:                      new("(: |^)limit reached"),
+				TransactionAlreadyInMempool:       new("(: |^)transaction already in mempool"),
+				TerminallyUnderpriced:             new("(: |^)terminally underpriced"),
+				InsufficientEth:                   new("(: |^)insufficient eth"),
+				TxFeeExceedsCap:                   new("(: |^)tx fee exceeds cap"),
+				L2FeeTooLow:                       new("(: |^)l2 fee too low"),
+				L2FeeTooHigh:                      new("(: |^)l2 fee too high"),
+				L2Full:                            new("(: |^)l2 full"),
+				TransactionAlreadyMined:           new("(: |^)transaction already mined"),
+				Fatal:                             new("(: |^)fatal"),
+				ServiceUnavailable:                new("(: |^)service unavailable"),
+				TooManyResults:                    new("(: |^)too many results"),
+				MissingBlocks:                     new("(: |^)invalid block range"),
+				FinalizedStateUnavailable:         new("(: |^)(missing trie node|state not available|historical state unavailable)"),
 			},
 		},
 		OCR: OCR{
-			ContractConfirmations:              ptr[uint16](11),
+			ContractConfirmations:              new(uint16(11)),
 			ContractTransmitterTransmitTimeout: config.MustNewDuration(time.Minute),
 			DatabaseTimeout:                    config.MustNewDuration(time.Second),
 			DeltaCOverride:                     config.MustNewDuration(time.Hour),
@@ -411,27 +412,27 @@ var fullConfig = EVMConfig{
 		},
 		OCR2: OCR2{
 			Automation: Automation{
-				GasLimit: ptr[uint32](540),
+				GasLimit: new(uint32(540)),
 			},
 		},
 		Workflow: Workflow{
-			FromAddress:       ptr(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
-			ForwarderAddress:  ptr(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
-			GasLimitDefault:   ptr[uint64](400000),
-			TxAcceptanceState: ptr(commontypes.Unconfirmed),
+			FromAddress:       new(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),
+			ForwarderAddress:  new(types.MustEIP55Address("0x9FBDa871d559710256a2502A2517b794B482Db40")),
+			GasLimitDefault:   new(uint64(400000)),
+			TxAcceptanceState: new(commontypes.Unconfirmed),
 			PollPeriod:        config.MustNewDuration(2 * time.Second),
 			AcceptanceTimeout: config.MustNewDuration(30 * time.Second),
 		},
 	},
 	Nodes: EVMNodes{
 		{
-			Name:              ptr("foo"),
+			Name:              new("foo"),
 			HTTPURL:           config.MustParseURL("https://foo.web"),
 			WSURL:             config.MustParseURL("wss://web.socket/test/foo"),
 			HTTPURLExtraWrite: config.MustParseURL("https://foo.web/extra"),
-			SendOnly:          ptr(false),
-			Order:             ptr[int32](0),
-			IsLoadBalancedRPC: ptr(false),
+			SendOnly:          new(false),
+			Order:             new(int32(0)),
+			IsLoadBalancedRPC: new(false),
 		},
 	},
 }
@@ -444,10 +445,6 @@ func TestTOMLConfig_SetFrom(t *testing.T) {
 	var config EVMConfig
 	config.SetFrom(&fullConfig)
 	require.Equal(t, fullConfig, config)
-}
-
-func ptr[T any](t T) *T {
-	return &t
 }
 
 func assertTOML[T any](t *testing.T, fallback, docs T) {

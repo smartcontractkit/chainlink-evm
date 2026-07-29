@@ -231,7 +231,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	var peerKeyrings []*ragep2p.PeerKeyring
 	var oracleTxOpts []*bind.TransactOpts
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		onchainKeyring, err2 := evmks.CreateOCR2OnchainKeyring(ctx, ks, fmt.Sprintf("test-onchain-keyring-%d", i))
 		require.NoError(t, err2)
 		offchainKeyring, err2 := ocr2offchain.CreateOCR2OffchainKeyring(ctx, ks, fmt.Sprintf("test-offchain-keyring-%d", i))
@@ -333,7 +333,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 		Addrs:  []string{fmt.Sprintf("127.0.0.1:%d", peerPorts[0])},
 	})
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		listenAddr := fmt.Sprintf("127.0.0.1:%d", peerPorts[i])
 
 		peer, err2 := networking.NewPeer(networking.PeerConfig{
@@ -378,7 +378,7 @@ func TestOCR2Keyring_Integration(t *testing.T) {
 	}()
 	defer close(stopMining)
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		h := &helper{
 			backend:      backend,
 			lggr:         lggr,

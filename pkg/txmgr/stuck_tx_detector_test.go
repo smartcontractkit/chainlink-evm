@@ -451,7 +451,7 @@ func TestStuckTxDetector_DetectStuckTransactionsZkEVM(t *testing.T) {
 	})
 
 	t.Run("skips stuck tx detection for transactions that do not have enough attempts", func(t *testing.T) {
-		autoPurgeCfg.minAttempts = ptr(uint32(2))
+		autoPurgeCfg.minAttempts = new(uint32(2))
 		stuckTxDetector := txmgr.NewStuckTxDetector(lggr, testutils.FixtureChainID, chaintype.ChainZkEvm, assets.NewWei(assets.NewEth(100).ToInt()), autoPurgeCfg, feeEstimator, txStore, ethClient)
 		// Insert tx with enough attempts for detection
 		fromAddress1 := testutils.NewAddress()
@@ -503,7 +503,7 @@ func TestStuckTxDetector_DetectStuckTransactionsScroll(t *testing.T) {
 		attempts2 := tx2.TxAttempts[0]
 
 		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			_, err := res.Write([]byte(fmt.Sprintf(`{"errcode": 0,"errmsg": "","data": {"%s": 1, "%s": 0}}`, attempts1.Hash, attempts2.Hash)))
+			_, err := res.Write(fmt.Appendf(nil, `{"errcode": 0,"errmsg": "","data": {"%s": 1, "%s": 0}}`, attempts1.Hash, attempts2.Hash))
 			require.NoError(t, err)
 		}))
 		defer func() { testServer.Close() }()
@@ -634,7 +634,7 @@ func (t testAutoPurgeConfig) Threshold() *uint32        { return t.threshold }
 func (t testAutoPurgeConfig) MinAttempts() *uint32      { return t.minAttempts }
 func (t testAutoPurgeConfig) DetectionApiUrl() *url.URL { return t.detectionApiUrl }
 
-func matchBatchElemParams(req []rpc.BatchElem, arg interface{}, method string) bool {
+func matchBatchElemParams(req []rpc.BatchElem, arg any, method string) bool {
 	return len(req) == 1 && req[0].Method == method &&
 		len(req[0].Args) == 1 && req[0].Args[0] == arg
 }

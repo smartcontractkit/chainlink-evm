@@ -32,7 +32,7 @@ type SimulatedClient interface {
 	SendTransaction(ctx context.Context, tx *types.Transaction, attempt *types.Attempt) error
 	CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
-	CallContext(ctx context.Context, result interface{}, method string, args ...any) error
+	CallContext(ctx context.Context, result any, method string, args ...any) error
 	HeadByNumber(ctx context.Context, n *big.Int) (*evmtypes.Head, error)
 	EstimateGas(ctx context.Context, call ethereum.CallMsg) (uint64, error)
 	SuggestGasPrice(ctx context.Context) (*big.Int, error)
@@ -142,7 +142,7 @@ func (s *backendSimulatedClient) BatchCallContext(ctx context.Context, b []rpc.B
 	panic("not implemented")
 }
 
-func (s *backendSimulatedClient) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
+func (s *backendSimulatedClient) CallContext(ctx context.Context, result any, method string, args ...any) error {
 	panic("not implemented")
 }
 

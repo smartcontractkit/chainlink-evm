@@ -16,30 +16,30 @@ import (
 func TestClientConfigBuilder(t *testing.T) {
 	t.Parallel()
 
-	selectionMode := ptr("HighestHead")
+	selectionMode := new("HighestHead")
 	leaseDuration := 0 * time.Second
-	pollFailureThreshold := ptr(uint32(5))
-	pollSuccessThreshold := ptr(uint32(3))
+	pollFailureThreshold := new(uint32(5))
+	pollSuccessThreshold := new(uint32(3))
 	pollInterval := 10 * time.Second
-	syncThreshold := ptr(uint32(5))
-	nodeIsSyncingEnabled := ptr(false)
+	syncThreshold := new(uint32(5))
+	nodeIsSyncingEnabled := new(false)
 	chainTypeStr := ""
-	finalizedBlockOffset := ptr[uint32](16)
-	enforceRepeatableRead := ptr(true)
+	finalizedBlockOffset := new(uint32(16))
+	enforceRepeatableRead := new(true)
 	deathDeclarationDelay := time.Second * 3
 	noNewFinalizedBlocksThreshold := time.Second
 	confirmationTimeout := time.Second * 60
 	nodeConfigs := []client.NodeConfig{
 		{
-			Name:    ptr("foo"),
-			WSURL:   ptr("ws://foo.test"),
-			HTTPURL: ptr("http://foo.test"),
+			Name:    new("foo"),
+			WSURL:   new("ws://foo.test"),
+			HTTPURL: new("http://foo.test"),
 		},
 	}
-	finalityDepth := ptr(uint32(10))
-	safeDepth := ptr(uint32(6))
-	finalityTagEnabled := ptr(true)
-	SafeTagSupported := ptr(true)
+	finalityDepth := new(uint32(10))
+	safeDepth := new(uint32(6))
+	finalityTagEnabled := new(true)
+	SafeTagSupported := new(true)
 	noNewHeadsThreshold := time.Second
 	newHeadsPollInterval := 0 * time.Second
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(selectionMode, leaseDuration, chainTypeStr, nodeConfigs,
@@ -84,14 +84,14 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("parsing unique node configs succeeds", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:    ptr("foo1"),
-				WSURL:   ptr("ws://foo1.test"),
-				HTTPURL: ptr("http://foo1.test"),
+				Name:    new("foo1"),
+				WSURL:   new("ws://foo1.test"),
+				HTTPURL: new("http://foo1.test"),
 			},
 			{
-				Name:    ptr("foo2"),
-				WSURL:   ptr("ws://foo2.test"),
-				HTTPURL: ptr("http://foo2.test"),
+				Name:    new("foo2"),
+				WSURL:   new("ws://foo2.test"),
+				HTTPURL: new("http://foo2.test"),
 			},
 		}
 		tomlNodes, err := client.ParseTestNodeConfigs(nodeConfigs)
@@ -102,8 +102,8 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("ws can be optional", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:    ptr("foo1"),
-				HTTPURL: ptr("http://foo1.test"),
+				Name:    new("foo1"),
+				HTTPURL: new("http://foo1.test"),
 			},
 		}
 		_, err := client.ParseTestNodeConfigs(nodeConfigs)
@@ -113,8 +113,8 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("parsing missing http url fails", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:  ptr("foo1"),
-				WSURL: ptr("ws://foo1.test"),
+				Name:  new("foo1"),
+				WSURL: new("ws://foo1.test"),
 			},
 		}
 		_, err := client.ParseTestNodeConfigs(nodeConfigs)
@@ -124,9 +124,9 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("parsing invalid ws url fails", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:    ptr("foo1"),
-				WSURL:   ptr("http://foo1.test"),
-				HTTPURL: ptr("http://foo1.test"),
+				Name:    new("foo1"),
+				WSURL:   new("http://foo1.test"),
+				HTTPURL: new("http://foo1.test"),
 			},
 		}
 		_, err := client.ParseTestNodeConfigs(nodeConfigs)
@@ -136,9 +136,9 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("parsing duplicate http url fails", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:    ptr("foo1"),
-				WSURL:   ptr("ws://foo1.test"),
-				HTTPURL: ptr("ws://foo1.test"),
+				Name:    new("foo1"),
+				WSURL:   new("ws://foo1.test"),
+				HTTPURL: new("ws://foo1.test"),
 			},
 		}
 		_, err := client.ParseTestNodeConfigs(nodeConfigs)
@@ -148,14 +148,14 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("parsing duplicate node names fails", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:    ptr("foo1"),
-				WSURL:   ptr("ws://foo1.test"),
-				HTTPURL: ptr("http://foo1.test"),
+				Name:    new("foo1"),
+				WSURL:   new("ws://foo1.test"),
+				HTTPURL: new("http://foo1.test"),
 			},
 			{
-				Name:    ptr("foo1"),
-				WSURL:   ptr("ws://foo2.test"),
-				HTTPURL: ptr("http://foo2.test"),
+				Name:    new("foo1"),
+				WSURL:   new("ws://foo2.test"),
+				HTTPURL: new("http://foo2.test"),
 			},
 		}
 		_, err := client.ParseTestNodeConfigs(nodeConfigs)
@@ -165,14 +165,14 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("parsing duplicate node ws urls fails", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:    ptr("foo1"),
-				WSURL:   ptr("ws://foo1.test"),
-				HTTPURL: ptr("http://foo1.test"),
+				Name:    new("foo1"),
+				WSURL:   new("ws://foo1.test"),
+				HTTPURL: new("http://foo1.test"),
 			},
 			{
-				Name:    ptr("foo2"),
-				WSURL:   ptr("ws://foo2.test"),
-				HTTPURL: ptr("http://foo1.test"),
+				Name:    new("foo2"),
+				WSURL:   new("ws://foo2.test"),
+				HTTPURL: new("http://foo1.test"),
 			},
 		}
 		_, err := client.ParseTestNodeConfigs(nodeConfigs)
@@ -182,14 +182,14 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("parsing duplicate node http urls fails", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:    ptr("foo1"),
-				WSURL:   ptr("ws://foo1.test"),
-				HTTPURL: ptr("http://foo1.test"),
+				Name:    new("foo1"),
+				WSURL:   new("ws://foo1.test"),
+				HTTPURL: new("http://foo1.test"),
 			},
 			{
-				Name:    ptr("foo2"),
-				WSURL:   ptr("ws://foo1.test"),
-				HTTPURL: ptr("http://foo2.test"),
+				Name:    new("foo2"),
+				WSURL:   new("ws://foo1.test"),
+				HTTPURL: new("http://foo2.test"),
 			},
 		}
 		_, err := client.ParseTestNodeConfigs(nodeConfigs)
@@ -199,15 +199,13 @@ func TestNodeConfigs(t *testing.T) {
 	t.Run("parsing order too large fails", func(t *testing.T) {
 		nodeConfigs := []client.NodeConfig{
 			{
-				Name:    ptr("foo1"),
-				WSURL:   ptr("ws://foo1.test"),
-				HTTPURL: ptr("http://foo1.test"),
-				Order:   ptr(int32(101)),
+				Name:    new("foo1"),
+				WSURL:   new("ws://foo1.test"),
+				HTTPURL: new("http://foo1.test"),
+				Order:   new(int32(101)),
 			},
 		}
 		_, err := client.ParseTestNodeConfigs(nodeConfigs)
 		require.Error(t, err)
 	})
 }
-
-func ptr[T any](t T) *T { return &t }

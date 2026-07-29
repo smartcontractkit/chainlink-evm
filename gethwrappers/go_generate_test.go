@@ -138,7 +138,7 @@ func getProjectRoot(t *testing.T) (rootPath string) {
 	return
 }
 
-func JustError(_ interface{}, err error) error {
+func JustError(_ any, err error) error {
 	return err
 }
 

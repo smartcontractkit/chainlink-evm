@@ -15,8 +15,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/utils"
 )
 
-func ptr[T any](t T) *T { return &t }
-
 type TestDatabaseConfig struct {
 	DatabaseConfig
 	defaultQueryTimeout time.Duration
@@ -134,12 +132,12 @@ func (e *TestEvmConfig) GasEstimator() evmconfig.GasEstimator {
 type TestLimitJobTypeConfig struct {
 }
 
-func (l *TestLimitJobTypeConfig) OCR() *uint32    { return ptr(uint32(0)) }
-func (l *TestLimitJobTypeConfig) OCR2() *uint32   { return ptr(uint32(0)) }
-func (l *TestLimitJobTypeConfig) DR() *uint32     { return ptr(uint32(0)) }
-func (l *TestLimitJobTypeConfig) FM() *uint32     { return ptr(uint32(0)) }
-func (l *TestLimitJobTypeConfig) Keeper() *uint32 { return ptr(uint32(0)) }
-func (l *TestLimitJobTypeConfig) VRF() *uint32    { return ptr(uint32(0)) }
+func (l *TestLimitJobTypeConfig) OCR() *uint32    { return new(uint32(0)) }
+func (l *TestLimitJobTypeConfig) OCR2() *uint32   { return new(uint32(0)) }
+func (l *TestLimitJobTypeConfig) DR() *uint32     { return new(uint32(0)) }
+func (l *TestLimitJobTypeConfig) FM() *uint32     { return new(uint32(0)) }
+func (l *TestLimitJobTypeConfig) Keeper() *uint32 { return new(uint32(0)) }
+func (l *TestLimitJobTypeConfig) VRF() *uint32    { return new(uint32(0)) }
 
 type TestBlockHistoryConfig struct {
 	evmconfig.BlockHistory

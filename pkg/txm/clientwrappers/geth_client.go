@@ -28,7 +28,7 @@ func (g *GethClient) BatchCallContext(ctx context.Context, b []rpc.BatchElem) er
 	return g.Client.Client().BatchCallContext(ctx, b)
 }
 
-func (g *GethClient) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
+func (g *GethClient) CallContext(ctx context.Context, result any, method string, args ...any) error {
 	return g.Client.Client().CallContext(ctx, result, method, args...)
 }
 
@@ -40,7 +40,7 @@ func (g *GethClient) CallContract(ctx context.Context, message ethereum.CallMsg,
 
 func (g *GethClient) HeadByNumber(ctx context.Context, number *big.Int) (*evmtypes.Head, error) {
 	hexNumber := client.ToBlockNumArg(number)
-	args := []interface{}{hexNumber, false}
+	args := []any{hexNumber, false}
 	head := new(evmtypes.Head)
 	err := g.CallContext(ctx, head, "eth_getBlockByNumber", args...)
 	return head, err

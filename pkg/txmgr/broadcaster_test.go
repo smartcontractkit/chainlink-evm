@@ -413,7 +413,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Success(t *testing.T) {
 
 	rnd := int64(1000000000 + rand.Intn(5000))
 	evmcfg = configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.GasEstimator.EIP1559DynamicFees = ptr(true)
+		c.GasEstimator.EIP1559DynamicFees = new(true)
 		c.GasEstimator.TipCapDefault = assets.NewWeiI(rnd)
 		c.GasEstimator.FeeCapDefault = assets.NewWeiI(rnd + 1)
 		c.GasEstimator.PriceMax = assets.NewWeiI(rnd + 2)
@@ -477,7 +477,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Success(t *testing.T) {
 			ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
 				return tx.Nonce() == uint64(344) && tx.Value().Cmp(big.NewInt(442)) == 0
 			}), fromAddress).Return(multinode.Successful, nil).Once()
-			ethClient.On("CallContext", mock.Anything, mock.AnythingOfType("*hexutil.Bytes"), "eth_call", mock.MatchedBy(func(callarg map[string]interface{}) bool {
+			ethClient.On("CallContext", mock.Anything, mock.AnythingOfType("*hexutil.Bytes"), "eth_call", mock.MatchedBy(func(callarg map[string]any) bool {
 				if fmt.Sprintf("%s", callarg["value"]) == "0x1ba" { // 442
 					assert.Equal(t, txRequest.FromAddress, callarg["from"])
 					assert.Equal(t, &txRequest.ToAddress, callarg["to"])
@@ -510,7 +510,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Success(t *testing.T) {
 			ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
 				return tx.Nonce() == uint64(345) && tx.Value().Cmp(big.NewInt(542)) == 0
 			}), fromAddress).Return(multinode.Successful, nil).Once()
-			ethClient.On("CallContext", mock.Anything, mock.AnythingOfType("*hexutil.Bytes"), "eth_call", mock.MatchedBy(func(callarg map[string]interface{}) bool {
+			ethClient.On("CallContext", mock.Anything, mock.AnythingOfType("*hexutil.Bytes"), "eth_call", mock.MatchedBy(func(callarg map[string]any) bool {
 				return fmt.Sprintf("%s", callarg["value"]) == "0x21e" // 542
 			}), "latest").Return(errors.New("this is not a revert, something unexpected went wrong")).Once()
 
@@ -535,7 +535,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Success(t *testing.T) {
 				Message: "oh no, it reverted",
 				Data:    []byte{42, 166, 34},
 			}
-			ethClient.On("CallContext", mock.Anything, mock.AnythingOfType("*hexutil.Bytes"), "eth_call", mock.MatchedBy(func(callarg map[string]interface{}) bool {
+			ethClient.On("CallContext", mock.Anything, mock.AnythingOfType("*hexutil.Bytes"), "eth_call", mock.MatchedBy(func(callarg map[string]any) bool {
 				return fmt.Sprintf("%s", callarg["value"]) == "0x282" // 642
 			}), "latest").Return(&jerr).Once()
 
@@ -1174,7 +1174,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 
 			t.Run("with erroring callback bails out", func(t *testing.T) {
 				require.NoError(t, txStore.InsertTx(t.Context(), &etx))
-				fn := func(ctx context.Context, id uuid.UUID, result interface{}, err error) error {
+				fn := func(ctx context.Context, id uuid.UUID, result any, err error) error {
 					return errors.New("something exploded in the callback")
 				}
 
@@ -1191,7 +1191,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 			})
 
 			t.Run("calls resume with error", func(t *testing.T) {
-				fn := func(ctx context.Context, id uuid.UUID, result interface{}, err error) error {
+				fn := func(ctx context.Context, id uuid.UUID, result any, err error) error {
 					require.Equal(t, id, trID)
 					require.Nil(t, result)
 					require.Error(t, err)
@@ -1548,7 +1548,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 		// validation)
 		evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 			c.GasEstimator.BumpMin = assets.NewWeiI(0)
-			c.GasEstimator.BumpPercent = ptr[uint16](0)
+			c.GasEstimator.BumpPercent = new(uint16(0))
 		})
 		eb2 := NewTestEthBroadcaster(t, txStore, ethClient, ethKeyStore, dbListenerCfg, evmcfg.EVM(), &testCheckerFactory{}, false, nonceTracker)
 		mustCreateUnstartedTx(t, txStore, fromAddress, toAddress, encodedPayload, gasLimit, value, testutils.FixtureChainID)
@@ -1636,9 +1636,9 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 		// to zero (even though that should not be possible due to config
 		// validation)
 		evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.GasEstimator.EIP1559DynamicFees = ptr(true)
+			c.GasEstimator.EIP1559DynamicFees = new(true)
 			c.GasEstimator.BumpMin = assets.NewWeiI(0)
-			c.GasEstimator.BumpPercent = ptr[uint16](0)
+			c.GasEstimator.BumpPercent = new(uint16(0))
 		})
 		localNextNonce := getLocalNextNonce(t, nonceTracker, fromAddress)
 		ethClient.On("NonceAt", mock.Anything, fromAddress, mock.Anything).Return(localNextNonce, nil).Once()
@@ -1669,7 +1669,7 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 		gasTipCapDefault := assets.NewWeiI(42)
 
 		evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.GasEstimator.EIP1559DynamicFees = ptr(true)
+			c.GasEstimator.EIP1559DynamicFees = new(true)
 			c.GasEstimator.TipCapDefault = gasTipCapDefault
 		})
 		localNextNonce := getLocalNextNonce(t, nonceTracker, fromAddress)
@@ -1714,8 +1714,8 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_GasEstimationError(t *testing.T) 
 
 	const limitMultiplier = float32(1.25)
 	config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.GasEstimator.EstimateLimit = ptr(true)                                      // Enabled gas limit estimation
-		c.GasEstimator.LimitMultiplier = ptr(decimal.NewFromFloat32(limitMultiplier)) // Set LimitMultiplier for the buffer
+		c.GasEstimator.EstimateLimit = new(true)                                      // Enabled gas limit estimation
+		c.GasEstimator.LimitMultiplier = new(decimal.NewFromFloat32(limitMultiplier)) // Set LimitMultiplier for the buffer
 	})
 	ethClient.On("NonceAt", mock.Anything, fromAddress, mock.Anything).Return(uint64(0), nil).Once()
 	lggr := logger.Test(t)
@@ -1844,7 +1844,7 @@ func TestEthBroadcaster_SyncNonce(t *testing.T) {
 
 	lggr, observed := logger.TestObserved(t, zapcore.DebugLevel)
 	evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.NonceAutoSync = ptr(true)
+		c.NonceAutoSync = new(true)
 	})
 	evmTxmCfg := txmgr.NewEvmTxmConfig(evmcfg.EVM())
 	txStore := txmgrtest.NewTestTxStore(t, db)

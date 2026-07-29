@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"sync"
 	"time"
 
@@ -73,7 +74,7 @@ type finalizerMetrics interface {
 	RecordOldestNonTerminalTxAgeSeconds(ctx context.Context, seconds float64)
 }
 
-type resumeCallback = func(context.Context, uuid.UUID, interface{}, error) error
+type resumeCallback = func(context.Context, uuid.UUID, any, error) error
 
 // Finalizer handles processing new finalized blocks and marking transactions as finalized accordingly in the TXM DB
 type evmFinalizer struct {
@@ -567,7 +568,7 @@ func (f *evmFinalizer) ResumePendingTaskRuns(ctx context.Context, latest, finali
 	}
 	for _, data := range receiptsPlus {
 		var taskErr error
-		var output interface{}
+		var output any
 		if data.FailOnRevert && data.Receipt.GetStatus() == 0 {
 			taskErr = fmt.Errorf("transaction %s reverted on-chain", data.Receipt.GetTxHash())
 		} else {
@@ -734,13 +735,7 @@ func (f *evmFinalizer) filterAttemptsCache(receipts []*evmtypes.Receipt) {
 	}
 	// Filter out attempts for tx with found receipts from the existing attempts cache
 	for _, attempt := range f.attemptsCache {
-		foundATxID := false
-		for _, txID := range txIDsWithReceipts {
-			if attempt.TxID == txID {
-				foundATxID = true
-				break
-			}
-		}
+		foundATxID := slices.Contains(txIDsWithReceipts, attempt.TxID)
 		if !foundATxID {
 			attemptsWithoutReceipts = append(attemptsWithoutReceipts, attempt)
 		}

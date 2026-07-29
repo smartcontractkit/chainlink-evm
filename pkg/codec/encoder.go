@@ -85,7 +85,7 @@ func RepresentArray(item reflect.Value, info types.CodecEntry) (any, error) {
 	}
 
 	checkedElm := checkedType.Elem()
-	for i := 0; i < length; i++ {
+	for i := range length {
 		tmp := reflect.New(checkedElm)
 		if err := MapstructureDecode(item.Index(i).Interface(), tmp.Interface()); err != nil {
 			return nil, err
@@ -125,7 +125,7 @@ func UnrollItem(item reflect.Value, info types.CodecEntry) ([]any, error) {
 	length := item.NumField()
 	values := make([]any, length)
 	iType := item.Type()
-	for i := 0; i < length; i++ {
+	for i := range length {
 		if iType.Field(i).IsExported() {
 			values[i] = item.Field(i).Interface()
 		}

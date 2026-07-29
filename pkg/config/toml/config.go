@@ -128,11 +128,8 @@ func (cs EVMConfigs) Chains(ids ...string) (r []commontypes.ChainStatus, total i
 		chainID := ch.ChainID.String()
 		if len(ids) > 0 {
 			var match bool
-			for _, id := range ids {
-				if id == chainID {
-					match = true
-					break
-				}
+			if slices.Contains(ids, chainID) {
+				match = true
 			}
 			if !match {
 				continue

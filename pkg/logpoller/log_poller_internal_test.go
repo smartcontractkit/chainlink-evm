@@ -51,7 +51,6 @@ func validateFiltersTable(t *testing.T, lp *logPoller, orm ORM) {
 	require.NoError(t, err)
 	require.Equal(t, len(filters), len(lp.filters))
 	for name, dbFilter := range filters {
-		dbFilter := dbFilter
 		memFilter, ok := lp.filters[name]
 		require.True(t, ok)
 		assert.Truef(t, memFilter.Contains(&dbFilter),
@@ -572,25 +571,21 @@ func TestLogPoller_Replay(t *testing.T) {
 		defer func() { wg.Wait() }()
 		ec.On("FilterLogs", mock.Anything, mock.Anything).Once().Return([]types.Log{log1}, nil).Run(func(args mock.Arguments) {
 			head.Store(newHead(4))
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				assert.ErrorIs(t, lp.Replay(rctx, 4), ErrReplayInProgress)
 				close(cancelled)
-			}()
+			})
 		})
 		ec.On("FilterLogs", mock.Anything, mock.Anything).Once().Return([]types.Log{log1}, nil).Run(func(args mock.Arguments) {
 			rcancel()
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				select {
 				case lp.replayStart <- 4:
 					close(pass)
 				case <-ctx.Done():
 					return
 				}
-			}()
+			})
 			// We cannot return until we're sure that Replay() received the cancellation signal,
 			// otherwise replayComplete<- might be sent first
 			<-cancelled
@@ -2121,13 +2116,13 @@ func benchmarkFilter(b *testing.B, nFilters, nAddresses, nEvents int) {
 	contractCode := []byte{0x60, 0x80, 0x60, 0x40, 0x52}
 	ec.On("CodeAt", mock.Anything, mock.Anything, (*big.Int)(nil)).Return(contractCode, nil).Maybe()
 	lp := NewLogPoller(orm, ec, lggr, nil, lpOpts)
-	for i := 0; i < nFilters; i++ {
+	for range nFilters {
 		var addresses []common.Address
 		var events []common.Hash
-		for j := 0; j < nAddresses; j++ {
+		for j := range nAddresses {
 			addresses = append(addresses, common.BigToAddress(big.NewInt(int64(j+1))))
 		}
-		for j := 0; j < nEvents; j++ {
+		for j := range nEvents {
 			events = append(events, common.BigToHash(big.NewInt(int64(j+1))))
 		}
 		err := lp.RegisterFilter(testutils.Context(b), Filter{Name: "my Filter", EventSigs: events, Addresses: addresses})

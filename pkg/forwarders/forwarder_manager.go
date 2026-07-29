@@ -113,10 +113,8 @@ func (f *FwdMgr) ForwarderFor(ctx context.Context, addr common.Address) (forward
 			f.logger.Errorw("Failed to get forwarder senders", "forwarder", fwdr.Address, "err", err)
 			continue
 		}
-		for _, eoa := range eoas {
-			if eoa == addr {
-				return fwdr.Address, nil
-			}
+		if slices.Contains(eoas, addr) {
+			return fwdr.Address, nil
 		}
 	}
 	return common.Address{}, ErrForwarderForEOANotFound
@@ -152,10 +150,8 @@ func (f *FwdMgr) ForwarderForOCR2Feeds(ctx context.Context, eoa, ocr2Aggregator 
 			f.logger.Errorw("Failed to get forwarder senders", "forwarder", fwdr.Address, "err", err)
 			continue
 		}
-		for _, addr := range eoas {
-			if addr == eoa {
-				return fwdr.Address, nil
-			}
+		if slices.Contains(eoas, eoa) {
+			return fwdr.Address, nil
 		}
 	}
 	return common.Address{}, ErrForwarderForEOANotFound
