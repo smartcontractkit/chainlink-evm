@@ -56,7 +56,7 @@ func TestFeeHistoryEstimatorLifecycle(t *testing.T) {
 		assert.ErrorContains(t, u.Start(t.Context()), "RewardPercentile")
 	})
 
-	t.Run("fails to start if CacheTimeout is not more than MinimumCacheTimeout", func(t *testing.T) {
+	t.Run("fails to start if CacheTimeout is less than MinimumCacheTimeout", func(t *testing.T) {
 		cfg := gas.FeeHistoryEstimatorConfig{
 			BumpPercent:      20,
 			RewardPercentile: 10,
@@ -236,9 +236,18 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		maxPriorityFeePerGas1 := big.NewInt(33)
 		maxPriorityFeePerGas2 := big.NewInt(20)
 
+		// first one represents market price and second one connectivity price
+		// empty and nil entries are skipped
+		reward := [][]*big.Int{
+			{maxPriorityFeePerGas1, big.NewInt(5)},
+			{maxPriorityFeePerGas2, big.NewInt(5)},
+			{},
+			{nil, big.NewInt(5)},
+			{big.NewInt(5), nil},
+		}
 		feeHistoryResult := &ethereum.FeeHistory{
 			OldestBlock:  big.NewInt(1),
-			Reward:       [][]*big.Int{{maxPriorityFeePerGas1, big.NewInt(5)}, {maxPriorityFeePerGas2, big.NewInt(5)}, {}}, // first one represents market price and second one connectivity price
+			Reward:       reward,
 			BaseFee:      []*big.Int{baseFee, baseFee},
 			GasUsedRatio: nil,
 		}
