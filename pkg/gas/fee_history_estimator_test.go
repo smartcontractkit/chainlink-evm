@@ -56,7 +56,7 @@ func TestFeeHistoryEstimatorLifecycle(t *testing.T) {
 		assert.ErrorContains(t, u.Start(t.Context()), "RewardPercentile")
 	})
 
-	t.Run("fails to start if CacheTimeout is not more than 0", func(t *testing.T) {
+	t.Run("fails to start if CacheTimeout is not more than MinimumCacheTimeout", func(t *testing.T) {
 		cfg := gas.FeeHistoryEstimatorConfig{
 			BumpPercent:      20,
 			RewardPercentile: 10,

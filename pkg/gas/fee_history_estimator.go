@@ -26,7 +26,7 @@ const (
 	MinimumBumpPercentage   = 10 // based on geth's spec
 	ConnectivityPercentile  = 85
 	BaseFeeBufferPercentage = 40
-	MinimumCacheTimeout     = 250 * time.Millisecond
+	MinimumCacheTimeout     = 500 * time.Millisecond
 )
 
 type FeeHistoryEstimatorConfig struct {
