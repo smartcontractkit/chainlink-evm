@@ -572,11 +572,11 @@ func TestTxm_Reset(t *testing.T) {
 
 	txStore := txmgrtest.NewTestTxStore(t, db)
 	// 4 confirmed tx from addr1
-	for i := int64(0); i < 4; i++ {
+	for i := range int64(4) {
 		txmgrtest.MustInsertConfirmedEthTxWithLegacyAttempt(t, txStore, i, i*42+1, addr)
 	}
 	// 2 confirmed from addr2
-	for i := int64(0); i < 2; i++ {
+	for i := range int64(2) {
 		txmgrtest.MustInsertConfirmedEthTxWithLegacyAttempt(t, txStore, i, i*42+1, addr2)
 	}
 
@@ -592,7 +592,7 @@ func TestTxm_Reset(t *testing.T) {
 	require.NoError(t, err)
 
 	txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 2, addr2)
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		txmgrtest.MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t, txStore, 4+int64(i), addr)
 	}
 
@@ -1052,7 +1052,7 @@ func mustInsertFatalErrorEthTx(t testing.TB, txStore txmgr.TestEvmTxStore, fromA
 	return etx
 }
 
-func mustInsertUnconfirmedEthTxWithAttemptState(t testing.TB, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, txAttemptState txmgrtypes.TxAttemptState, opts ...interface{}) txmgr.Tx {
+func mustInsertUnconfirmedEthTxWithAttemptState(t testing.TB, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, txAttemptState txmgrtypes.TxAttemptState, opts ...any) txmgr.Tx {
 	etx := txmgrtest.MustInsertUnconfirmedEthTx(t, txStore, nonce, fromAddress, opts...)
 	attempt := txmgrtest.NewLegacyEthTxAttempt(t, etx.ID)
 	ctx := tests.Context(t)
@@ -1070,7 +1070,7 @@ func mustInsertUnconfirmedEthTxWithAttemptState(t testing.TB, txStore txmgr.Test
 	return etx
 }
 
-func mustInsertUnconfirmedEthTxWithBroadcastDynamicFeeAttempt(t *testing.T, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, opts ...interface{}) txmgr.Tx {
+func mustInsertUnconfirmedEthTxWithBroadcastDynamicFeeAttempt(t *testing.T, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, opts ...any) txmgr.Tx {
 	etx := txmgrtest.MustInsertUnconfirmedEthTx(t, txStore, nonce, fromAddress, opts...)
 	attempt := txmgrtest.NewDynamicFeeEthTxAttempt(t, etx.ID)
 	ctx := tests.Context(t)

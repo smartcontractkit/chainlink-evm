@@ -83,7 +83,7 @@ func extractDecoding(info types.CodecEntry, raw []byte) (any, error) {
 }
 
 func setElements(length int, rDecode reflect.Value, iInto reflect.Value) error {
-	for i := 0; i < length; i++ {
+	for i := range length {
 		if err := MapstructureDecode(rDecode.Index(i).Interface(), iInto.Index(i).Addr().Interface()); err != nil {
 			return err
 		}

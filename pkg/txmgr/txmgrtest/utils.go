@@ -39,7 +39,7 @@ func NewEthTx(fromAddress common.Address) txmgr.Tx {
 	}
 }
 
-func MustInsertUnconfirmedEthTx(t testing.TB, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, opts ...interface{}) txmgr.Tx {
+func MustInsertUnconfirmedEthTx(t testing.TB, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, opts ...any) txmgr.Tx {
 	broadcastAt := time.Now()
 	chainID := evmtestutils.FixtureChainID
 	for _, opt := range opts {
@@ -62,7 +62,7 @@ func MustInsertUnconfirmedEthTx(t testing.TB, txStore txmgr.TestEvmTxStore, nonc
 	return etx
 }
 
-func MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t *testing.T, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, opts ...interface{}) txmgr.Tx {
+func MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t *testing.T, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, opts ...any) txmgr.Tx {
 	etx := MustInsertUnconfirmedEthTx(t, txStore, nonce, fromAddress, opts...)
 	attempt := NewLegacyEthTxAttempt(t, etx.ID)
 	ctx := evmtestutils.Context(t)

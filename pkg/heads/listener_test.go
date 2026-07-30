@@ -145,7 +145,6 @@ func Test_HeadListener_SubscriptionErr(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			lggr := logger.Test(t)
 			ethClient := clienttest.NewClientWithDefaultChainID(t)

@@ -34,7 +34,7 @@ func SkipShortDB(tb testing.TB) {
 	tests.SkipShort(tb, "DB dependency")
 }
 
-func MustExec(t *testing.T, ds sqlutil.DataSource, stmt string, args ...interface{}) {
+func MustExec(t *testing.T, ds sqlutil.DataSource, stmt string, args ...any) {
 	require.NoError(t, utils.JustError(ds.ExecContext(Context(t), stmt, args...)))
 }
 

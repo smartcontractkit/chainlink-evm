@@ -45,7 +45,7 @@ type OCR2KeeperProviderOpts struct {
 
 // OCR2KeeperProvider provides all components needed for a OCR2Keeper plugin.
 type OCR2KeeperProvider interface {
-	commontypes.Plugin
+	commontypes.PluginProvider
 	Registry() automation.Registry
 	Encoder() automation.Encoder
 	TransmitEventProvider() automation.EventProvider

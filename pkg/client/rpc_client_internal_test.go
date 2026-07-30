@@ -500,11 +500,11 @@ func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
 	}
 
 	if opts.RPCTimeout == nil {
-		opts.RPCTimeout = ptr(QueryTimeout)
+		opts.RPCTimeout = new(QueryTimeout)
 	}
 
 	if opts.LargePayloadRPCTimeout == nil {
-		opts.LargePayloadRPCTimeout = ptr(QueryTimeout)
+		opts.LargePayloadRPCTimeout = new(QueryTimeout)
 	}
 
 	if opts.Name == "" {
@@ -514,10 +514,6 @@ func NewTestRPCClient(t *testing.T, opts RPCClientOpts) *RPCClient {
 	return NewRPCClient(opts.Cfg, opts.Lggr, opts.WS, opts.HTTP, opts.Name, opts.ID, opts.ChainID, opts.Tier,
 		*opts.LargePayloadRPCTimeout, *opts.RPCTimeout, opts.ChainType, opts.FinalityTagsEnabled, opts.FinalityDepth,
 		opts.SafeDepth, opts.ExternalRequestMaxResponseSize)
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }
 
 func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
@@ -544,7 +540,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+				HistoricalBalanceCheckAddressVal: new(evmtypes.MustEIP55Address(probeAddress)),
 			},
 			FinalityTagsEnabled: true,
 			ChainID:             chainID,
@@ -574,7 +570,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+				HistoricalBalanceCheckAddressVal: new(evmtypes.MustEIP55Address(probeAddress)),
 			},
 			FinalityTagsEnabled: false,
 			FinalityDepth:       4,
@@ -604,7 +600,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+				HistoricalBalanceCheckAddressVal: new(evmtypes.MustEIP55Address(probeAddress)),
 				NodeErrors:                       &clientErrors,
 			},
 			FinalityTagsEnabled: true,
@@ -635,7 +631,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+				HistoricalBalanceCheckAddressVal: new(evmtypes.MustEIP55Address(probeAddress)),
 				NodeErrors:                       &clientErrors,
 			},
 			FinalityTagsEnabled: true,
@@ -666,7 +662,7 @@ func TestRPCClient_CheckFinalizedStateAvailability(t *testing.T) {
 			HTTP: wsURL,
 			Cfg: &TestNodePoolConfig{
 				NodeFinalizedBlockPollInterval:   1 * time.Second,
-				HistoricalBalanceCheckAddressVal: ptr(evmtypes.MustEIP55Address(probeAddress)),
+				HistoricalBalanceCheckAddressVal: new(evmtypes.MustEIP55Address(probeAddress)),
 				NodeErrors:                       &clientErrors,
 			},
 			FinalityTagsEnabled: true,

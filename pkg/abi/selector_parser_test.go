@@ -31,7 +31,7 @@ import (
 
 func TestParseSelector(t *testing.T) {
 	t.Parallel()
-	mkType := func(types ...interface{}) []abi.ArgumentMarshaling {
+	mkType := func(types ...any) []abi.ArgumentMarshaling {
 		var result []abi.ArgumentMarshaling
 		for i, typeOrComponents := range types {
 			name := fmt.Sprintf("name%d", i)
@@ -87,7 +87,7 @@ func TestParseSelector(t *testing.T) {
 
 func TestParseSelectorWithNames(t *testing.T) {
 	t.Parallel()
-	mkType := func(name string, typeOrComponents interface{}) abi.ArgumentMarshaling {
+	mkType := func(name string, typeOrComponents any) abi.ArgumentMarshaling {
 		if typeName, ok := typeOrComponents.(string); ok {
 			return abi.ArgumentMarshaling{Name: name, Type: typeName, InternalType: typeName, Components: nil, Indexed: false}
 		} else if components, ok := typeOrComponents.([]abi.ArgumentMarshaling); ok {

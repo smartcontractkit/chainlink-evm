@@ -152,7 +152,7 @@ func drainChannel[T any](ch chan T) {
 // collectTriggers collects all available triggers from a channel up to maxCount
 func collectTriggers(ch chan types.Trigger, maxCount int) []types.Trigger {
 	triggers := make([]types.Trigger, 0, maxCount)
-	for i := 0; i < maxCount; i++ {
+	for range maxCount {
 		select {
 		case trigger := <-ch:
 			triggers = append(triggers, trigger)
@@ -1107,14 +1107,14 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 				2: {
 					ReportFormat: llotypes.ReportFormatJSON,
 					Streams:      []llotypes.Stream{{StreamID: 2, Aggregator: llotypes.AggregatorMedian}},
-					Opts:         []byte(fmt.Sprintf(`{"feedId":"%s"}`, feedID2.Hex())),
+					Opts:         fmt.Appendf(nil, `{"feedId":"%s"}`, feedID2.Hex()),
 					Source:       SourceOwner,
 					Tombstone:    true,
 				},
 				3: {
 					ReportFormat: llotypes.ReportFormatJSON,
 					Streams:      []llotypes.Stream{{StreamID: 3, Aggregator: llotypes.AggregatorMedian}},
-					Opts:         []byte(fmt.Sprintf(`{"feedId":"%s"}`, feedID3.Hex())),
+					Opts:         fmt.Appendf(nil, `{"feedId":"%s"}`, feedID3.Hex()),
 					Source:       SourceOwner,
 					Tombstone:    true,
 				},

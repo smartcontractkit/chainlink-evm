@@ -3,16 +3,19 @@ package channeldefinitions
 import (
 	"bytes"
 	"context"
+	"crypto/sha3"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"maps"
 	"math/big"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -24,7 +27,6 @@ import (
 	"github.com/jpillora/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"golang.org/x/crypto/sha3"
 
 	clhttp "github.com/smartcontractkit/chainlink-common/pkg/http"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
@@ -558,9 +560,7 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 	for channelID := range newDefinitions {
 		channelIDs = append(channelIDs, channelID)
 	}
-	sort.Slice(channelIDs, func(i, j int) bool {
-		return channelIDs[i] < channelIDs[j]
-	})
+	slices.Sort(channelIDs)
 
 	for _, channelID := range channelIDs {
 		def := newDefinitions[channelID]
@@ -790,7 +790,7 @@ func (c *channelDefinitionCache) fetchChannelDefinitions(ctx context.Context, tr
 	// Use a teeReader to avoid excessive copying
 	teeReader := io.TeeReader(reader, &buf)
 
-	hash := sha3.New256()
+	hash := hash.Hash(sha3.New256())
 	// Stream the data directly into the hash and copy to buf as we go
 	if _, err := io.Copy(hash, teeReader); err != nil {
 		return nil, fmt.Errorf("failed to read channel definitions response body from %s: %w", trigger.URL, err)

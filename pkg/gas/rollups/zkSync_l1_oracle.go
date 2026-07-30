@@ -14,7 +14,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils"
+	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
@@ -123,7 +123,7 @@ func (o *zkSyncL1Oracle) refresh() (t *time.Timer) {
 }
 
 func (o *zkSyncL1Oracle) refreshWithError() (t *time.Timer, err error) {
-	t = time.NewTimer(utils.WithJitter(o.pollPeriod))
+	t = time.NewTimer(timeutil.JitterPct(0.1).Apply(o.pollPeriod))
 
 	ctx, cancel := o.chStop.CtxWithTimeout(client.QueryTimeout)
 	defer cancel()

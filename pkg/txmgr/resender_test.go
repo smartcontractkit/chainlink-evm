@@ -148,7 +148,7 @@ func Test_EthResender_Start(t *testing.T) {
 		// This can be anything as long as it isn't zero
 		c.Transactions.ResendAfterThreshold = commonconfig.MustNewDuration(42 * time.Hour)
 		// Set batch size low to test batching
-		c.RPCDefaultBatchSize = ptr[uint32](1)
+		c.RPCDefaultBatchSize = new(uint32(1))
 	})
 
 	txStore := txmgrtest.NewTestTxStore(t, db)

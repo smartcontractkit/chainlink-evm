@@ -269,7 +269,6 @@ func TestTxReceipt_ReceiptIndicatesRunLogFulfillment(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			b, err := os.ReadFile(test.path)
 			require.NoError(t, err)
@@ -344,7 +343,6 @@ func TestHead_UnmarshalJSON(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			var head Head
 			err := head.UnmarshalJSON([]byte(test.json))
@@ -386,7 +384,6 @@ func TestHead_MarshalJSON(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			bs, err := test.head.MarshalJSON()
 			require.NoError(t, err)
@@ -1200,7 +1197,7 @@ func TestHash_UnmarshalJSON(t *testing.T) {
 		t.Parallel()
 
 		expectedHash := utils.NewHash()
-		jsonData := []byte(fmt.Sprintf(`"%s"`, expectedHash.Hex()))
+		jsonData := fmt.Appendf(nil, `"%s"`, expectedHash.Hex())
 
 		var hash Hash
 		err := json.Unmarshal(jsonData, &hash)

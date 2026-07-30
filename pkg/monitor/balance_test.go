@@ -207,7 +207,7 @@ func TestBalanceMonitor_FewerRPCCallsWhenBehind(t *testing.T) {
 		Return(big.NewInt(42), nil)
 
 	// Do the thing multiple times
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		bm.OnNewLongestChain(tests.Context(t), head)
 	}
 

@@ -56,7 +56,6 @@ func TestUtils_IsEmptyAddress(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -153,7 +152,7 @@ func TestCheckUint256(t *testing.T) {
 func TestRandUint256(t *testing.T) {
 	t.Parallel()
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		uint256 := utils.RandUint256()
 		assert.NoError(t, utils.CheckUint256(uint256))
 	}

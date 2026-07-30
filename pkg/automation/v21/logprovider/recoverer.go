@@ -21,14 +21,14 @@ import (
 	"github.com/smartcontractkit/chainlink-automation/pkg/v3/types"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
+	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 	ocr2keepers "github.com/smartcontractkit/chainlink-common/pkg/types/automation"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils"
-	"github.com/smartcontractkit/chainlink-evm/pkg/client"
-	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/automation/v21/core"
 	"github.com/smartcontractkit/chainlink-evm/pkg/automation/v21/prommetrics"
 	"github.com/smartcontractkit/chainlink-evm/pkg/automation/v21/threadcontrol"
+	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 )
 
 var (
@@ -171,7 +171,7 @@ func (r *logRecoverer) Start(ctx context.Context) error {
 				select {
 				case <-blockTimeTicker.C:
 					r.updateBlockTime(ctx)
-					blockTimeTicker.Reset(utils.WithJitter(blockTimeUpdateCadence))
+					blockTimeTicker.Reset(timeutil.JitterPct(0.1).Apply(blockTimeUpdateCadence))
 				case <-ctx.Done():
 					return
 				}

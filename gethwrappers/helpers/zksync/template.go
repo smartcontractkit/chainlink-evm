@@ -13,7 +13,7 @@ import (
 )
 
 // this file is used as a template. see wrap_zk_bytecode.go before editing
-func DeployPlaceholderContractNameZk(deployOpts *accounts.TransactOpts, client *clients.Client, wallet *accounts.Wallet, backend bind.ContractBackend, args ...interface{}) (common.Address, *types.Receipt, *PlaceholderContractName, error) { //nolint:lll // this is a template
+func DeployPlaceholderContractNameZk(deployOpts *accounts.TransactOpts, client *clients.Client, wallet *accounts.Wallet, backend bind.ContractBackend, args ...any) (common.Address, *types.Receipt, *PlaceholderContractName, error) { //nolint:lll // this is a template
 	var calldata []byte
 	if len(args) > 0 {
 		abi, err := PlaceholderContractNameMetaData.GetAbi()

@@ -266,7 +266,7 @@ func (w *Wei) AddPercentage(percentage uint16) *Wei {
 }
 
 // Scan reads the database value and returns an instance.
-func (w *Wei) Scan(value interface{}) error {
+func (w *Wei) Scan(value any) error {
 	return (*sqlutil.Big)(w).Scan(value)
 }
 

@@ -189,7 +189,6 @@ func TestEthClient_BalanceAt(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 				switch method {
@@ -265,7 +264,6 @@ func TestEthClient_GetERC20Balance(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			contractAddress := testutils.NewAddress()
 			userAddress := testutils.NewAddress()
@@ -408,7 +406,6 @@ func TestEthClient_HeaderByNumber(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			wsURL := testutils.NewWSServer(t, testutils.FixtureChainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
 				switch method {
@@ -832,12 +829,12 @@ func TestEthClient_BatchCallContext(t *testing.T) {
 		b := []rpc.BatchElem{
 			{
 				Method: "eth_call",
-				Args:   []interface{}{0},
+				Args:   []any{0},
 				Result: "",
 			},
 			{
 				Method: "eth_call",
-				Args:   []interface{}{1},
+				Args:   []any{1},
 				Result: "",
 			},
 		}

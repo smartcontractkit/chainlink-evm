@@ -53,7 +53,7 @@ func batchSendTransactions(
 		}
 		req := rpc.BatchElem{
 			Method: "eth_sendRawTransaction",
-			Args:   []interface{}{hexutil.Encode(txBytes)},
+			Args:   []any{hexutil.Encode(txBytes)},
 			Result: &common.Hash{},
 		}
 		reqs[i] = req
@@ -66,10 +66,7 @@ func batchSendTransactions(
 	}
 
 	for i := 0; i < len(reqs); i += batchSize {
-		j := i + batchSize
-		if j > len(reqs) {
-			j = len(reqs)
-		}
+		j := min(i+batchSize, len(reqs))
 
 		logger.Debugw(fmt.Sprintf("Batch sending transactions %v thru %v", i, j))
 

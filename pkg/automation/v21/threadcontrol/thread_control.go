@@ -33,24 +33,20 @@ type threadControl struct {
 }
 
 func (tc *threadControl) Go(fn func(context.Context)) {
-	tc.threadsWG.Add(1)
-	go func() {
-		defer tc.threadsWG.Done()
+	tc.threadsWG.Go(func() {
 		ctx, cancel := tc.stop.NewCtx()
 		defer cancel()
 		fn(ctx)
-	}()
+	})
 }
 
 func (tc *threadControl) GoCtx(ctx context.Context, fn func(context.Context)) {
-	tc.threadsWG.Add(1)
-	go func() {
-		defer tc.threadsWG.Done()
+	tc.threadsWG.Go(func() {
 		// Create a new context that is cancelled when either parent context is cancelled or stop is closed.
 		ctx2, cancel := tc.stop.Ctx(ctx)
 		defer cancel()
 		fn(ctx2)
-	}()
+	})
 }
 
 func (tc *threadControl) Close() {

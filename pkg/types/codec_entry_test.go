@@ -179,7 +179,7 @@ func TestCodecEntry(t *testing.T) {
 	t.Run("Not return values makes struct{}", func(t *testing.T) {
 		entry := NewCodecEntry(abi.Arguments{}, nil, nil)
 		require.NoError(t, entry.Init())
-		assert.Equal(t, reflect.TypeOf(struct{}{}), entry.CheckedType())
+		assert.Equal(t, reflect.TypeFor[struct{}](), entry.CheckedType())
 		native, err := entry.ToNative(reflect.ValueOf(&struct{}{}))
 		require.NoError(t, err)
 		assert.Equal(t, struct{}{}, native.Interface())
@@ -217,11 +217,11 @@ func TestCodecEntry(t *testing.T) {
 		f0 := ct.Field(0)
 		assert.Equal(t, "F0", f0.Name)
 		assert.Equal(t, "F0", args[0].Name)
-		assert.Equal(t, reflect.TypeOf((*int64)(nil)), f0.Type)
+		assert.Equal(t, reflect.TypeFor[*int64](), f0.Type)
 		f1 := ct.Field(1)
 		assert.Equal(t, "F1", f1.Name)
 		assert.Equal(t, "F1", args[1].Name)
-		assert.Equal(t, reflect.TypeOf((*int32)(nil)), f1.Type)
+		assert.Equal(t, reflect.TypeFor[*int32](), f1.Type)
 	})
 
 	t.Run("Unnamed parameters adds _Xes at the end if their location name is taken", func(t *testing.T) {
@@ -238,11 +238,11 @@ func TestCodecEntry(t *testing.T) {
 		require.Equal(t, 2, len(args))
 		f0 := ct.Field(0)
 		assert.Equal(t, "F1", f0.Name)
-		assert.Equal(t, reflect.TypeOf((*int64)(nil)), f0.Type)
+		assert.Equal(t, reflect.TypeFor[*int64](), f0.Type)
 		f1 := ct.Field(1)
 		assert.Equal(t, "F1_X", f1.Name)
 		assert.Equal(t, "F1_X", args[1].Name)
-		assert.Equal(t, reflect.TypeOf((*int32)(nil)), f1.Type)
+		assert.Equal(t, reflect.TypeFor[*int32](), f1.Type)
 	})
 
 	t.Run("Multiple abi arguments with the same name returns an error", func(t *testing.T) {
@@ -259,7 +259,7 @@ func TestCodecEntry(t *testing.T) {
 		require.NoError(t, entry.Init())
 		checkedField, ok := entry.CheckedType().FieldByName("Name")
 		require.True(t, ok)
-		assert.Equal(t, reflect.TypeOf((*int16)(nil)), checkedField.Type)
+		assert.Equal(t, reflect.TypeFor[*int16](), checkedField.Type)
 		native, err := entry.ToNative(reflect.New(entry.CheckedType()))
 		require.NoError(t, err)
 		assertHaveSameStructureAndNames(t, native.Type(), entry.CheckedType())
@@ -276,12 +276,12 @@ func TestCodecEntry(t *testing.T) {
 			{Name: "Array", Type: arrayType, Indexed: true},
 		}
 
-		for i := 0; i < len(abiArgs); i++ {
+		for i := range abiArgs {
 			entry := NewCodecEntry(abi.Arguments{abiArgs[i]}, nil, nil)
 			require.NoError(t, entry.Init())
 			nativeField, ok := entry.CheckedType().FieldByName(abiArgs[i].Name)
 			require.True(t, ok)
-			assert.Equal(t, reflect.TypeOf(&common.Hash{}), nativeField.Type)
+			assert.Equal(t, reflect.TypeFor[*common.Hash](), nativeField.Type)
 			native, err := entry.ToNative(reflect.New(entry.CheckedType()))
 			require.NoError(t, err)
 			assertHaveSameStructureAndNames(t, native.Type(), entry.CheckedType())
@@ -330,7 +330,7 @@ func TestCodecEntry(t *testing.T) {
 
 // sized and bi must be the same pointer.
 func setAndVerifyLimit(t *testing.T, sbi SizedBigInt, bi *big.Int, field reflect.Value) {
-	require.Same(t, reflect.NewAt(reflect.TypeOf(big.Int{}), reflect.ValueOf(sbi).UnsafePointer()).Interface(), bi)
+	require.Same(t, reflect.NewAt(reflect.TypeFor[big.Int](), reflect.ValueOf(sbi).UnsafePointer()).Interface(), bi)
 	field.Set(reflect.ValueOf(sbi))
 	assert.NoError(t, sbi.Verify())
 	bi.Add(bi, big.NewInt(1))
@@ -354,7 +354,7 @@ func assertHaveSameStructureAndNames(t *testing.T, t1, t2 reflect.Type) {
 	case reflect.Struct:
 		numFields := t1.NumField()
 		require.Equal(t, numFields, t2.NumField())
-		for i := 0; i < numFields; i++ {
+		for i := range numFields {
 			require.Equal(t, t1.Field(i).Name, t2.Field(i).Name)
 			assertHaveSameStructureAndNames(t, t1.Field(i).Type, t2.Field(i).Type)
 		}

@@ -206,11 +206,11 @@ func getNativeAndCheckedTypesForArg(arg *abi.Argument) (reflect.Type, reflect.Ty
 	if arg.Indexed {
 		switch arg.Type.T {
 		case abi.StringTy:
-			return reflect.TypeOf(common.Hash{}), reflect.TypeOf(common.Hash{}), nil
+			return reflect.TypeFor[common.Hash](), reflect.TypeFor[common.Hash](), nil
 		case abi.ArrayTy:
 			u8, _ := GetAbiEncodingType("uint8")
 			if arg.Type.Elem.GetType() == u8.native {
-				return reflect.TypeOf(common.Hash{}), reflect.TypeOf(common.Hash{}), nil
+				return reflect.TypeFor[common.Hash](), reflect.TypeFor[common.Hash](), nil
 			}
 			fallthrough
 		case abi.SliceTy, abi.TupleTy, abi.FixedPointTy, abi.FunctionTy:

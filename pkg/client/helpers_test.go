@@ -190,8 +190,8 @@ func NewChainClientWithTestNode(
 		ID:                     id,
 		ChainID:                chainID,
 		Tier:                   multinode.Primary,
-		RPCTimeout:             ptr(client.QueryTimeout),
-		LargePayloadRPCTimeout: ptr(client.QueryTimeout),
+		RPCTimeout:             new(client.QueryTimeout),
+		LargePayloadRPCTimeout: new(client.QueryTimeout),
 	})
 
 	n := multinode.NewNode[*big.Int, *evmtypes.Head, *RPCClient](
@@ -210,8 +210,8 @@ func NewChainClientWithTestNode(
 			ID:                     id,
 			ChainID:                chainID,
 			Tier:                   multinode.Secondary,
-			RPCTimeout:             ptr(client.QueryTimeout),
-			LargePayloadRPCTimeout: ptr(client.QueryTimeout),
+			RPCTimeout:             new(client.QueryTimeout),
+			LargePayloadRPCTimeout: new(client.QueryTimeout),
 		})
 		s := multinode.NewSendOnlyNode[*big.Int, *RPCClient](
 			logger.Test(t), multiNodeMetrics, u, fmt.Sprintf("eth-sendonly-%d", i), chainID, rpc)

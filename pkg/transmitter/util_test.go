@@ -32,7 +32,7 @@ func TestGetGasLimitFrom(t *testing.T) {
 		{
 			name:                "uses OCR2 override when set",
 			defaultGasLimit:     500000,
-			ocr2GasLimit:        uint32Ptr(400000),
+			ocr2GasLimit:        new(uint32(400000)),
 			relayConfigGasLimit: nil,
 			pluginGasLimit:      nil,
 			expectedGasLimit:    400000,
@@ -41,8 +41,8 @@ func TestGetGasLimitFrom(t *testing.T) {
 		{
 			name:                "relayconfig gas limit overrides OCR2 gas limit",
 			defaultGasLimit:     500000,
-			ocr2GasLimit:        uint32Ptr(400000),
-			relayConfigGasLimit: uint32Ptr(300000),
+			ocr2GasLimit:        new(uint32(400000)),
+			relayConfigGasLimit: new(uint32(300000)),
 			pluginGasLimit:      nil,
 			expectedGasLimit:    300000,
 			description:         "Relay config gas limit should override OCR2 gas limit",
@@ -50,9 +50,9 @@ func TestGetGasLimitFrom(t *testing.T) {
 		{
 			name:                "plugin gas limit overrides relay config gas limit",
 			defaultGasLimit:     500000,
-			ocr2GasLimit:        uint32Ptr(400000),
-			relayConfigGasLimit: uint32Ptr(300000),
-			pluginGasLimit:      uint32Ptr(200000),
+			ocr2GasLimit:        new(uint32(400000)),
+			relayConfigGasLimit: new(uint32(300000)),
+			pluginGasLimit:      new(uint32(200000)),
 			expectedGasLimit:    200000,
 			description:         "Plugin gas limit should override relay config gas limit",
 		},
@@ -60,7 +60,7 @@ func TestGetGasLimitFrom(t *testing.T) {
 			name:                "relay config gas limit overrides default",
 			defaultGasLimit:     500000,
 			ocr2GasLimit:        nil,
-			relayConfigGasLimit: uint32Ptr(300000),
+			relayConfigGasLimit: new(uint32(300000)),
 			pluginGasLimit:      nil,
 			expectedGasLimit:    300000,
 			description:         "Relay config gas limit should override default limit",
@@ -70,16 +70,16 @@ func TestGetGasLimitFrom(t *testing.T) {
 			defaultGasLimit:     500000,
 			ocr2GasLimit:        nil,
 			relayConfigGasLimit: nil,
-			pluginGasLimit:      uint32Ptr(200000),
+			pluginGasLimit:      new(uint32(200000)),
 			expectedGasLimit:    200000,
 			description:         "Plugin gas limit should override default limit",
 		},
 		{
 			name:                "plugin gas limit overrides OCR2 gas limit",
 			defaultGasLimit:     500000,
-			ocr2GasLimit:        uint32Ptr(400000),
+			ocr2GasLimit:        new(uint32(400000)),
 			relayConfigGasLimit: nil,
-			pluginGasLimit:      uint32Ptr(200000),
+			pluginGasLimit:      new(uint32(200000)),
 			expectedGasLimit:    200000,
 			description:         "Plugin gas limit should override OCR2 limit",
 		},
@@ -107,6 +107,7 @@ func TestGetGasLimitFrom(t *testing.T) {
 	}
 }
 
+//go:fix inline
 func uint32Ptr(v uint32) *uint32 {
-	return &v
+	return new(v)
 }

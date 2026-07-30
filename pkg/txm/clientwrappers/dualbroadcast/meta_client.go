@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -516,12 +517,7 @@ func VerifyResponse(metacalldata MetacalldataResponse, dualBroadcastParams strin
 
 // isValidDApp checks if the given address is in the list of valid dApps
 func isValidDApp(addr common.Address, validDApps []common.Address) bool {
-	for _, dApp := range validDApps {
-		if addr == dApp {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validDApps, addr)
 }
 
 func VerifyMetadata(txData []byte, fromAddress common.Address, result Metacalldata, fwdrDestAddress common.Address, dApps []common.Address, to common.Address, metacalldata MetacalldataResponse) (*MetacalldataResponse, error) {

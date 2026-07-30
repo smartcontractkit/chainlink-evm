@@ -357,7 +357,7 @@ func (r *RPCClient) logResult(
 	callDuration time.Duration,
 	rpcDomain,
 	callName string,
-	results ...interface{},
+	results ...any,
 ) {
 	lggr = logger.With(lggr, "duration", callDuration, "rpcDomain", rpcDomain, "callName", callName)
 	chainID := r.chainID.String()
@@ -415,7 +415,7 @@ func (r *RPCClient) isChainType(chainType chaintype.ChainType) bool {
 // RPC wrappers
 
 // CallContext implementation
-func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
+func (r *RPCClient) CallContext(ctx context.Context, result any, method string, args ...any) error {
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With(
@@ -439,7 +439,7 @@ func (r *RPCClient) CallContext(ctx context.Context, result interface{}, method 
 // massively increases log volume even when the batch fails.
 type batchElemLog struct {
 	Method string
-	Args   []interface{}
+	Args   []any
 	Error  error
 }
 
@@ -540,7 +540,7 @@ func isRequestingFinalizedBlock(el rpc.BatchElem) bool {
 func (r *RPCClient) SubscribeToHeads(ctx context.Context) (ch <-chan *evmtypes.Head, sub multinode.Subscription, err error) {
 	ctx, cancel, chStopInFlight, ws, _ := r.acquireQueryCtx(ctx, r.rpcTimeout)
 	defer cancel()
-	args := []interface{}{rpcSubscriptionMethodNewHeads}
+	args := []any{rpcSubscriptionMethodNewHeads}
 	start := time.Now()
 	lggr := r.newRqLggr().With("args", args)
 
@@ -746,7 +746,7 @@ func (r *RPCClient) latestFinalizedBlock(ctx context.Context) (head *evmtypes.He
 	return
 }
 
-func (r *RPCClient) astarLatestFinalizedBlock(ctx context.Context, result interface{}) (err error) {
+func (r *RPCClient) astarLatestFinalizedBlock(ctx context.Context, result any) (err error) {
 	var hashResult string
 	err = r.CallContext(ctx, &hashResult, "chain_getFinalizedHead")
 	if err != nil {
@@ -822,7 +822,7 @@ func (r *RPCClient) HeaderByNumberWithOpts(ctx context.Context, blockNumber *big
 	var head *evmtypes.Head
 	err := r.doWithConfidence(ctx, rpc.BatchElem{
 		Method: "eth_getBlockByNumber",
-		Args:   []interface{}{ToBackwardCompatibleBlockNumArg(blockNumber), false},
+		Args:   []any{ToBackwardCompatibleBlockNumArg(blockNumber), false},
 		Result: &head, // double point so that head can be initialized
 	}, blockNumber, opts.ConfidenceLevel)
 	if err != nil {
@@ -837,11 +837,11 @@ func (r *RPCClient) HeaderByNumberWithOpts(ctx context.Context, blockNumber *big
 	return (*evmtypes.Header)(head), nil
 }
 
-func (r *RPCClient) ethGetBlockByNumber(ctx context.Context, number string, result interface{}) (err error) {
+func (r *RPCClient) ethGetBlockByNumber(ctx context.Context, number string, result any) (err error) {
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.rpcTimeout)
 	defer cancel()
 	const method = "eth_getBlockByNumber"
-	args := []interface{}{number, false}
+	args := []any{number, false}
 	lggr := r.newRqLggr().With(
 		"method", method,
 		"args", args,
@@ -1035,7 +1035,7 @@ func (r *RPCClient) CodeAt(ctx context.Context, account common.Address, blockNum
 	return
 }
 
-func (r *RPCClient) EstimateGas(ctx context.Context, c interface{}) (gas uint64, err error) {
+func (r *RPCClient) EstimateGas(ctx context.Context, c any) (gas uint64, err error) {
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	call := c.(ethereum.CallMsg)
@@ -1078,7 +1078,7 @@ func (r *RPCClient) SuggestGasPrice(ctx context.Context) (price *big.Int, err er
 	return
 }
 
-func (r *RPCClient) CallContract(ctx context.Context, msg interface{}, blockNumber *big.Int) (val []byte, err error) {
+func (r *RPCClient) CallContract(ctx context.Context, msg any, blockNumber *big.Int) (val []byte, err error) {
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("callMsg", msg, "blockNumber", blockNumber)
@@ -1123,7 +1123,7 @@ func (r *RPCClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallM
 	var hex hexutil.Bytes
 	err := r.doWithConfidence(ctx, rpc.BatchElem{
 		Method: "eth_call",
-		Args:   []interface{}{r.prepareCallArgs(msg), ToBackwardCompatibleBlockNumArg(blockNumber)},
+		Args:   []any{r.prepareCallArgs(msg), ToBackwardCompatibleBlockNumArg(blockNumber)},
 		Result: &hex,
 	}, blockNumber, opts.ConfidenceLevel)
 	if err != nil {
@@ -1132,7 +1132,7 @@ func (r *RPCClient) CallContractWithOpts(ctx context.Context, msg ethereum.CallM
 	return hex, nil
 }
 
-func (r *RPCClient) PendingCallContract(ctx context.Context, msg interface{}) (val []byte, err error) {
+func (r *RPCClient) PendingCallContract(ctx context.Context, msg any) (val []byte, err error) {
 	ctx, cancel, client := r.makeLiveQueryCtxAndSafeGetClient(ctx, r.largePayloadRPCTimeout)
 	defer cancel()
 	lggr := r.newRqLggr().With("callMsg", msg)
@@ -1218,7 +1218,7 @@ func (r *RPCClient) BalanceAtWithOpts(ctx context.Context, account common.Addres
 	var result hexutil.Big
 	err := r.doWithConfidence(ctx, rpc.BatchElem{
 		Method: "eth_getBalance",
-		Args:   []interface{}{account, ToBackwardCompatibleBlockNumArg(blockNumber)},
+		Args:   []any{account, ToBackwardCompatibleBlockNumArg(blockNumber)},
 		Result: &result,
 	}, blockNumber, opts.ConfidenceLevel)
 	if err != nil {
@@ -1335,7 +1335,7 @@ func (r *RPCClient) FilterLogsWithOpts(ctx context.Context, q ethereum.FilterQue
 
 	err = r.doWithConfidence(ctx, rpc.BatchElem{
 		Method: "eth_getLogs",
-		Args:   []interface{}{arg},
+		Args:   []any{arg},
 		Result: &result,
 	}, q.ToBlock, opts.ConfidenceLevel)
 	if err != nil {
@@ -1408,7 +1408,7 @@ func (r *RPCClient) newRqLggr() logger.SugaredLogger {
 }
 
 // PrepareCallArgs prepares the call arguments for RPC calls with chain-specific handling
-func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) interface{} {
+func (r *RPCClient) prepareCallArgs(msg ethereum.CallMsg) any {
 	return toBackwardCompatibleCallArgWithChainTypeSupport(msg, r.chainType)
 }
 
@@ -1636,7 +1636,7 @@ func (r *RPCClient) doWithConfidence(ctx context.Context, request rpc.BatchElem,
 	// BatchElems are copied, so request and blockRequest values wont change, but requests[0] and requests[1] will
 	requests := []rpc.BatchElem{request, {
 		Method: "eth_getBlockByNumber",
-		Args:   []interface{}{ToBackwardCompatibleBlockNumArg(big.NewInt(referencedBlockNumber.Int64())), false},
+		Args:   []any{ToBackwardCompatibleBlockNumArg(big.NewInt(referencedBlockNumber.Int64())), false},
 		Result: &referencedHead,
 	}}
 	err = r.BatchCallContext(ctx, requests)

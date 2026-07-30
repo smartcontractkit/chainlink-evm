@@ -86,7 +86,7 @@ func TestLogPoller_Batching(t *testing.T) {
 	// Inserts are limited to 65535 parameters. A log being 10 parameters this results in
 	// a maximum of 6553 log inserts per tx. As inserting more than 6553 would result in
 	// an error without batching, this test makes sure batching is enabled.
-	for i := 0; i < 15000; i++ {
+	for i := range 15000 {
 		logs = append(logs, GenLog(th.ChainID, int64(i+1), 1, "0x3", EmitterABI.Events["Log1"].ID.Bytes(), th.EmitterAddress1))
 	}
 	require.NoError(t, th.ORM.InsertLogs(ctx, logs))
@@ -103,7 +103,7 @@ func TestLogPoller_Blocks_Batching(t *testing.T) {
 	var blocks []logpoller.Block
 	var logs []logpoller.Log
 	const numBlocks = 2000
-	for i := 0; i < numBlocks; i++ {
+	for i := range numBlocks {
 		blockHash := common.HexToHash(fmt.Sprintf("0x%d", i+1))
 		blocks = append(blocks, logpoller.Block{
 			EVMChainID:  sqlutil.New(th.ChainID),
@@ -583,7 +583,7 @@ func TestORM_SelectExcessLogs(t *testing.T) {
 	blockHashes := []common.Hash{common.HexToHash("0x1234"), common.HexToHash("0x1235"), common.HexToHash("0x1236")}
 
 	// Insert blocks for active chain
-	for i := int64(0); i < 3; i++ {
+	for i := range int64(3) {
 		blockNumber := 10 + i
 		require.NoError(t, o1.InsertBlock(ctx, blockHashes[i], blockNumber, time.Now(), blockNumber, blockNumber))
 		b1, err := o1.SelectBlockByHash(ctx, blockHashes[i])
@@ -597,7 +597,7 @@ func TestORM_SelectExcessLogs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(17), b.BlockNumber)
 
-	for i := int64(0); i < 7; i++ {
+	for i := range int64(7) {
 		require.NoError(t, o1.InsertLogs(ctx, []logpoller.Log{
 			{
 				EVMChainID:     sqlutil.New(th.ChainID),
@@ -1512,7 +1512,7 @@ func BenchmarkLogs(b *testing.B) {
 	ctx := testutils.Context(b)
 	var lgs []logpoller.Log
 	addr := common.HexToAddress("0x1234")
-	for i := 0; i < 10_000; i++ {
+	for i := range 10_000 {
 		lgs = append(lgs, logpoller.Log{
 			EVMChainID:  sqlutil.New(th.ChainID),
 			LogIndex:    int64(i),
@@ -2181,7 +2181,7 @@ func TestInsertLogsInTx(t *testing.T) {
 	o := logpoller.NewORM(chainID, db, logger.Test(t))
 
 	logs := make([]logpoller.Log, maxLogsSize, maxLogsSize+1)
-	for i := 0; i < maxLogsSize; i++ {
+	for i := range maxLogsSize {
 		logs[i] = GenLog(chainID, int64(i+1), int64(i+1), utils.RandomAddress().String(), event[:], address)
 	}
 	invalidLog := GenLog(chainID, -10, -10, utils.RandomAddress().String(), event[:], address)
@@ -2337,7 +2337,7 @@ func Benchmark_LogsDataWordBetween(b *testing.B) {
 	commitReportAccepted := utils.RandomBytes32()
 
 	var dbLogs []logpoller.Log
-	for i := 0; i < numberOfReports; i++ {
+	for i := range numberOfReports {
 		data := make([]byte, 64)
 		// MinSeqNr
 		data = append(data, logpoller.EvmWord(uint64(numberOfMessagesPerReport*i+1)).Bytes()...)
@@ -2398,9 +2398,9 @@ func Benchmark_DeleteExpiredLogs(b *testing.B) {
 	})
 	require.NoError(b, err)
 
-	for j := 0; j < 5; j++ {
+	for range 5 {
 		var dbLogs []logpoller.Log
-		for i := 0; i < numberOfReports; i++ {
+		for i := range numberOfReports {
 			dbLogs = append(dbLogs, logpoller.Log{
 				EVMChainID:     sqlutil.New(chainId),
 				LogIndex:       int64(i + 1),

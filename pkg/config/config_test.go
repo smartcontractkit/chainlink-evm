@@ -55,7 +55,7 @@ func TestChainScopedConfig(t *testing.T) {
 		randomOtherAddr := utils.NewAddress()
 		cfg2 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 			c.KeySpecific = toml.KeySpecificConfig{
-				{Key: ptr(types.EIP55AddressFromAddress(randomOtherAddr)),
+				{Key: new(types.EIP55AddressFromAddress(randomOtherAddr)),
 					GasEstimator: toml.KeySpecificGasEstimator{
 						PriceMax: assets.GWei(850),
 					},
@@ -90,7 +90,7 @@ func TestChainScopedConfig(t *testing.T) {
 				t.Run(tt.name, func(t *testing.T) {
 					cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 						c.KeySpecific = toml.KeySpecificConfig{
-							{Key: ptr(types.EIP55AddressFromAddress(addr)),
+							{Key: new(types.EIP55AddressFromAddress(addr)),
 								GasEstimator: toml.KeySpecificGasEstimator{
 									PriceMax: tt.val,
 								},
@@ -108,7 +108,7 @@ func TestChainScopedConfig(t *testing.T) {
 			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 				c.GasEstimator.PriceMax = chainSpecificPrice
 				c.KeySpecific = toml.KeySpecificConfig{
-					{Key: ptr(types.EIP55AddressFromAddress(addr)),
+					{Key: new(types.EIP55AddressFromAddress(addr)),
 						GasEstimator: toml.KeySpecificGasEstimator{
 							PriceMax: keySpecificPrice,
 						},
@@ -124,7 +124,7 @@ func TestChainScopedConfig(t *testing.T) {
 			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 				c.GasEstimator.PriceMax = chainSpecificPrice
 				c.KeySpecific = toml.KeySpecificConfig{
-					{Key: ptr(types.EIP55AddressFromAddress(addr)),
+					{Key: new(types.EIP55AddressFromAddress(addr)),
 						GasEstimator: toml.KeySpecificGasEstimator{
 							PriceMax: keySpecificPrice,
 						},
@@ -138,7 +138,7 @@ func TestChainScopedConfig(t *testing.T) {
 			keySpecificPrice := assets.GWei(900)
 			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 				c.KeySpecific = toml.KeySpecificConfig{
-					{Key: ptr(types.EIP55AddressFromAddress(addr)),
+					{Key: new(types.EIP55AddressFromAddress(addr)),
 						GasEstimator: toml.KeySpecificGasEstimator{
 							PriceMax: keySpecificPrice,
 						},
@@ -154,7 +154,7 @@ func TestChainScopedConfig(t *testing.T) {
 			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 				c.GasEstimator.PriceMax = chainSpecificPrice
 				c.KeySpecific = toml.KeySpecificConfig{
-					{Key: ptr(types.EIP55AddressFromAddress(addr)),
+					{Key: new(types.EIP55AddressFromAddress(addr)),
 						GasEstimator: toml.KeySpecificGasEstimator{
 							PriceMax: keySpecificPrice,
 						},
@@ -184,7 +184,7 @@ func TestChainScopedConfig(t *testing.T) {
 			addr := utils.NewAddress()
 
 			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-				c.LinkContractAddress = ptr(types.EIP55AddressFromAddress(addr))
+				c.LinkContractAddress = new(types.EIP55AddressFromAddress(addr))
 			})
 
 			assert.Equal(t, addr.String(), cfg3.EVM().LinkContractAddress())
@@ -200,7 +200,7 @@ func TestChainScopedConfig(t *testing.T) {
 			val := utils.NewAddress()
 
 			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-				c.OperatorFactoryAddress = ptr(types.EIP55AddressFromAddress(val))
+				c.OperatorFactoryAddress = new(types.EIP55AddressFromAddress(val))
 			})
 
 			assert.Equal(t, val.String(), cfg3.EVM().OperatorFactoryAddress())
@@ -215,7 +215,7 @@ func TestChainScopedConfig(t *testing.T) {
 		t.Run("verify LogBroadcasterEnabled is set correctly", func(t *testing.T) {
 			val := false
 			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-				c.LogBroadcasterEnabled = ptr(val)
+				c.LogBroadcasterEnabled = new(val)
 			})
 
 			assert.False(t, cfg3.EVM().LogBroadcasterEnabled())
@@ -230,7 +230,7 @@ func TestChainScopedConfig(t *testing.T) {
 		t.Run("verify EVM.Transactions.Enabled is set correctly", func(t *testing.T) {
 			val := false
 			cfg3 := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-				c.Transactions.Enabled = ptr(val)
+				c.Transactions.Enabled = new(val)
 			})
 
 			assert.False(t, cfg3.EVM().Transactions().Enabled())
@@ -367,7 +367,7 @@ func TestNodePoolConfig(t *testing.T) {
 	require.False(t, cfg.EVM().NodePool().NodeIsSyncingEnabled())
 	require.True(t, cfg.EVM().NodePool().EnforceRepeatableRead())
 	require.Equal(t, time.Minute, cfg.EVM().NodePool().DeathDeclarationDelay())
-	require.Equal(t, ptr(types.MustEIP55Address("0x0000000000000000000000000000000000000000")), cfg.EVM().NodePool().HistoricalBalanceCheckAddress())
+	require.Equal(t, new(types.MustEIP55Address("0x0000000000000000000000000000000000000000")), cfg.EVM().NodePool().HistoricalBalanceCheckAddress())
 }
 
 func TestClientErrorsConfig(t *testing.T) {
@@ -379,21 +379,21 @@ func TestClientErrorsConfig(t *testing.T) {
 			c.ChainID = id
 			c.NodePool = toml.NodePool{
 				Errors: toml.ClientErrors{
-					NonceTooLow:                       ptr("client error nonce too low"),
-					NonceTooHigh:                      ptr("client error nonce too high"),
-					ReplacementTransactionUnderpriced: ptr("client error replacement underpriced"),
-					LimitReached:                      ptr("client error limit reached"),
-					TransactionAlreadyInMempool:       ptr("client error transaction already in mempool"),
-					TerminallyUnderpriced:             ptr("client error terminally underpriced"),
-					InsufficientEth:                   ptr("client error insufficient eth"),
-					TxFeeExceedsCap:                   ptr("client error tx fee exceeds cap"),
-					L2FeeTooLow:                       ptr("client error l2 fee too low"),
-					L2FeeTooHigh:                      ptr("client error l2 fee too high"),
-					L2Full:                            ptr("client error l2 full"),
-					TransactionAlreadyMined:           ptr("client error transaction already mined"),
-					Fatal:                             ptr("client error fatal"),
-					ServiceUnavailable:                ptr("client error service unavailable"),
-					TooManyResults:                    ptr("client error too many results"),
+					NonceTooLow:                       new("client error nonce too low"),
+					NonceTooHigh:                      new("client error nonce too high"),
+					ReplacementTransactionUnderpriced: new("client error replacement underpriced"),
+					LimitReached:                      new("client error limit reached"),
+					TransactionAlreadyInMempool:       new("client error transaction already in mempool"),
+					TerminallyUnderpriced:             new("client error terminally underpriced"),
+					InsufficientEth:                   new("client error insufficient eth"),
+					TxFeeExceedsCap:                   new("client error tx fee exceeds cap"),
+					L2FeeTooLow:                       new("client error l2 fee too low"),
+					L2FeeTooHigh:                      new("client error l2 fee too high"),
+					L2Full:                            new("client error l2 full"),
+					TransactionAlreadyMined:           new("client error transaction already mined"),
+					Fatal:                             new("client error fatal"),
+					ServiceUnavailable:                new("client error service unavailable"),
+					TooManyResults:                    new("client error too many results"),
 				},
 			}
 		})
@@ -421,5 +421,3 @@ func TestClientErrorsConfig(t *testing.T) {
 		assert.Equal(t, "(: |^)(missing trie node|state not available|historical state unavailable)", cfg.EVM().NodePool().Errors().FinalizedStateUnavailable())
 	})
 }
-
-func ptr[T any](t T) *T { return &t }

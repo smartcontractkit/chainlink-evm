@@ -377,10 +377,7 @@ func (r *RangeQueryer[T]) ExecPagedQuery(ctx context.Context, limit, end int64) 
 	// Remove up to limit blocks at a time, until we've reached the limit or removed everything eligible for deletion
 	var upper int64
 	for lower := start; rowsAffected < limit; lower = upper + 1 {
-		upper = lower + limit - 1
-		if upper > end {
-			upper = end
-		}
+		upper = min(lower+limit-1, end)
 
 		rows, err2 := r.query(ctx, r, lower, upper)
 		if err2 != nil {

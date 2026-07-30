@@ -44,7 +44,7 @@ type Client interface {
 	LINKBalance(ctx context.Context, address common.Address, linkAddress common.Address) (*commonassets.Link, error)
 
 	// Wrapped RPC methods
-	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
+	CallContext(ctx context.Context, result any, method string, args ...any) error
 	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	// BatchCallContextAll calls BatchCallContext for every single node including
 	// sendonlys.
@@ -256,7 +256,7 @@ func (c *chainClient) BlockByNumber(ctx context.Context, number *big.Int) (b *ty
 	return r.BlockByNumberGeth(ctx, number)
 }
 
-func (c *chainClient) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
+func (c *chainClient) CallContext(ctx context.Context, result any, method string, args ...any) error {
 	r, err := c.multiNode.SelectRPC(ctx)
 	if err != nil {
 		return err

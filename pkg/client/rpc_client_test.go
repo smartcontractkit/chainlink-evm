@@ -240,7 +240,7 @@ func TestRPCClient_SubscribeToHeads(t *testing.T) {
 		defer rpc.Close()
 		require.NoError(t, rpc.Dial(ctx))
 		var wg sync.WaitGroup
-		for i := 0; i < numberOfAttempts; i++ {
+		for range numberOfAttempts {
 			_, sub, err := rpc.SubscribeToHeads(tests.Context(t))
 			require.NoError(t, err)
 			wg.Add(2)
@@ -837,13 +837,11 @@ func TestRpcClientLargePayloadTimeout(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		testCase := testCase
 		t.Run(testCase.Name, func(t *testing.T) {
 			t.Parallel()
 			// use background context to ensure that the DeadlineExceeded is caused by timeout we've set on request
 			// level, instead of one that was set on test level.
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 
 			chainID := big.NewInt(123456)
 			rpcURL := testutils.NewWSServer(t, chainID, func(method string, params gjson.Result) (resp testutils.JSONRPCResponse) {
@@ -855,7 +853,7 @@ func TestRpcClientLargePayloadTimeout(t *testing.T) {
 			// use something unreasonably large for RPC timeout to ensure that we use largePayloadRPCTimeout
 			const rpcTimeout = time.Hour
 			const largePayloadRPCTimeout = tests.TestInterval
-			rpc := client.NewTestRPCClient(t, client.RPCClientOpts{WS: rpcURL, LargePayloadRPCTimeout: ptr(largePayloadRPCTimeout), RPCTimeout: ptr(rpcTimeout)})
+			rpc := client.NewTestRPCClient(t, client.RPCClientOpts{WS: rpcURL, LargePayloadRPCTimeout: new(largePayloadRPCTimeout), RPCTimeout: new(rpcTimeout)})
 			require.NoError(t, rpc.Dial(ctx))
 			defer rpc.Close()
 			err := testCase.Fn(ctx, rpc)
@@ -973,7 +971,7 @@ func TestAstarCustomFinality(t *testing.T) {
 				result := &evmtypes.Head{}
 				req := rpc.BatchElem{
 					Method: "eth_getBlockByNumber",
-					Args:   []interface{}{rpc.FinalizedBlockNumber.String(), false},
+					Args:   []any{rpc.FinalizedBlockNumber.String(), false},
 					Result: result,
 				}
 				err := rpcClient.BatchCallContext(ctx, []rpc.BatchElem{
@@ -992,7 +990,7 @@ func TestAstarCustomFinality(t *testing.T) {
 				result := &evmtypes.Head{}
 				req := rpc.BatchElem{
 					Method: "eth_getBlockByNumber",
-					Args:   []interface{}{rpc.FinalizedBlockNumber, false},
+					Args:   []any{rpc.FinalizedBlockNumber, false},
 					Result: result,
 				}
 				err := rpcClient.BatchCallContext(ctx, []rpc.BatchElem{req})

@@ -558,7 +558,7 @@ func TestPruneConfirmedTransactions(t *testing.T) {
 	fromAddress := testutils.NewAddress()
 	m := NewInMemoryStore(logger.Test(t), fromAddress, testutils.FixtureChainID)
 	total := 5
-	for i := 0; i < total; i++ {
+	for i := range total {
 		//nolint:gosec // this won't overflow
 		_, err := insertConfirmedTransaction(m, uint64(i))
 		require.NoError(t, err)

@@ -11,8 +11,8 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
+	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 	ocr2keepers "github.com/smartcontractkit/chainlink-common/pkg/types/automation"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/automation/v21/core"
 	"github.com/smartcontractkit/chainlink-evm/pkg/automation/v21/threadcontrol"
@@ -110,7 +110,7 @@ func (u *upkeepStateStore) Start(pctx context.Context) error {
 			ticker := services.NewTicker(u.cleanCadence)
 			defer ticker.Stop()
 
-			flushTicker := newTickerFn(utils.WithJitter(flushCadence))
+			flushTicker := newTickerFn(timeutil.JitterPct(0.1).Apply(flushCadence))
 			defer flushTicker.Stop()
 
 			for {
@@ -122,7 +122,7 @@ func (u *upkeepStateStore) Start(pctx context.Context) error {
 					ticker.Reset()
 				case <-flushTicker.C:
 					u.flush(ctx)
-					flushTicker.Reset(utils.WithJitter(flushCadence))
+					flushTicker.Reset(timeutil.JitterPct(0.1).Apply(flushCadence))
 				case <-ctx.Done():
 					u.flush(ctx)
 					return

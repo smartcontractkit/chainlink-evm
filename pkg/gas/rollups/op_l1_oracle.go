@@ -300,7 +300,7 @@ func (o *optimismL1Oracle) checkForUpgrade(ctx context.Context) error {
 		{
 			Method: "eth_call",
 			Args: []any{
-				map[string]interface{}{
+				map[string]any{
 					"from": common.Address{},
 					"to":   o.daOracleAddress.String(),
 					"data": hexutil.Bytes(o.isFjordCalldata),
@@ -312,7 +312,7 @@ func (o *optimismL1Oracle) checkForUpgrade(ctx context.Context) error {
 		{
 			Method: "eth_call",
 			Args: []any{
-				map[string]interface{}{
+				map[string]any{
 					"from": common.Address{},
 					"to":   o.daOracleAddress.String(),
 					"data": hexutil.Bytes(o.isEcotoneCalldata),
@@ -376,7 +376,7 @@ func (o *optimismL1Oracle) getEcotoneFjordGasPrice(ctx context.Context) (*big.In
 		{
 			Method: "eth_call",
 			Args: []any{
-				map[string]interface{}{
+				map[string]any{
 					"from": common.Address{},
 					"to":   o.daOracleAddress.String(),
 					"data": hexutil.Bytes(o.l1BaseFeeCalldata),
@@ -388,7 +388,7 @@ func (o *optimismL1Oracle) getEcotoneFjordGasPrice(ctx context.Context) (*big.In
 		{
 			Method: "eth_call",
 			Args: []any{
-				map[string]interface{}{
+				map[string]any{
 					"from": common.Address{},
 					"to":   o.daOracleAddress.String(),
 					"data": hexutil.Bytes(o.baseFeeScalarCalldata),
@@ -400,7 +400,7 @@ func (o *optimismL1Oracle) getEcotoneFjordGasPrice(ctx context.Context) (*big.In
 		{
 			Method: "eth_call",
 			Args: []any{
-				map[string]interface{}{
+				map[string]any{
 					"from": common.Address{},
 					"to":   o.daOracleAddress.String(),
 					"data": hexutil.Bytes(o.blobBaseFeeCalldata),
@@ -412,7 +412,7 @@ func (o *optimismL1Oracle) getEcotoneFjordGasPrice(ctx context.Context) (*big.In
 		{
 			Method: "eth_call",
 			Args: []any{
-				map[string]interface{}{
+				map[string]any{
 					"from": common.Address{},
 					"to":   o.daOracleAddress.String(),
 					"data": hexutil.Bytes(o.blobBaseFeeScalarCalldata),
@@ -424,7 +424,7 @@ func (o *optimismL1Oracle) getEcotoneFjordGasPrice(ctx context.Context) (*big.In
 		{
 			Method: "eth_call",
 			Args: []any{
-				map[string]interface{}{
+				map[string]any{
 					"from": common.Address{},
 					"to":   o.daOracleAddress.String(),
 					"data": hexutil.Bytes(o.decimalsCalldata),

@@ -113,7 +113,7 @@ func (c *SimulatedBackendClient) Close() {}
 // The simulated client avoids the old block error from the simulated backend by
 // passing `nil` to `CallContract` when calling `CallContext` or `BatchCallContext`
 // and will not return an error when an old block is used.
-func (c *SimulatedBackendClient) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
+func (c *SimulatedBackendClient) CallContext(ctx context.Context, result any, method string, args ...any) error {
 	switch method {
 	case "eth_getTransactionReceipt":
 		return c.ethGetTransactionReceipt(ctx, result, args...)
@@ -214,7 +214,7 @@ func (c *SimulatedBackendClient) TransactionByHashWithOpts(ctx context.Context, 
 	return
 }
 
-func (c *SimulatedBackendClient) blockNumber(ctx context.Context, number interface{}) (blockNumber *big.Int, err error) {
+func (c *SimulatedBackendClient) blockNumber(ctx context.Context, number any) (blockNumber *big.Int, err error) {
 	switch n := number.(type) {
 	case string:
 		switch n {
@@ -487,7 +487,7 @@ func (e *revertError) ErrorCode() int {
 }
 
 // ErrorData returns the hex encoded revert reason.
-func (e *revertError) ErrorData() interface{} {
+func (e *revertError) ErrorData() any {
 	return e.reason
 }
 
@@ -569,7 +569,7 @@ func (c *SimulatedBackendClient) BatchCallContext(ctx context.Context, b []rpc.B
 	}
 
 	for i, elem := range b {
-		var method func(context.Context, interface{}, ...interface{}) error
+		var method func(context.Context, any, ...any) error
 		switch elem.Method {
 		case "eth_getTransactionReceipt":
 			method = c.ethGetTransactionReceipt
@@ -636,7 +636,7 @@ func (c *SimulatedBackendClient) fetchHeader(ctx context.Context, blockNumOrTag 
 	}
 }
 
-func (c *SimulatedBackendClient) ethGetTransactionReceipt(ctx context.Context, result interface{}, args ...interface{}) error {
+func (c *SimulatedBackendClient) ethGetTransactionReceipt(ctx context.Context, result any, args ...any) error {
 	if len(args) != 1 {
 		return fmt.Errorf("SimulatedBackendClient expected 1 arg, got %d for eth_getTransactionReceipt", len(args))
 	}
@@ -666,7 +666,7 @@ func (c *SimulatedBackendClient) ethGetTransactionReceipt(ctx context.Context, r
 	return nil
 }
 
-func (c *SimulatedBackendClient) ethGetBlockByNumber(ctx context.Context, result interface{}, args ...interface{}) error {
+func (c *SimulatedBackendClient) ethGetBlockByNumber(ctx context.Context, result any, args ...any) error {
 	if len(args) != 2 {
 		return fmt.Errorf("SimulatedBackendClient expected 2 args, got %d for eth_getBlockByNumber", len(args))
 	}
@@ -700,12 +700,12 @@ func (c *SimulatedBackendClient) ethGetBlockByNumber(ctx context.Context, result
 
 	return nil
 }
-func (c *SimulatedBackendClient) ethEstimateGas(ctx context.Context, result interface{}, args ...interface{}) error {
+func (c *SimulatedBackendClient) ethEstimateGas(ctx context.Context, result any, args ...any) error {
 	if len(args) != 2 {
 		return fmt.Errorf("SimulatedBackendClient expected 2 args, got %d for eth_estimateGas", len(args))
 	}
 
-	params, ok := args[0].(map[string]interface{})
+	params, ok := args[0].(map[string]any)
 	if !ok {
 		return fmt.Errorf("SimulatedBackendClient expected first arg to be map[string]interface{} for eth_call, got: %T", args[0])
 	}
@@ -732,12 +732,12 @@ func (c *SimulatedBackendClient) ethEstimateGas(ctx context.Context, result inte
 	return nil
 }
 
-func (c *SimulatedBackendClient) ethCall(ctx context.Context, result interface{}, args ...interface{}) error {
+func (c *SimulatedBackendClient) ethCall(ctx context.Context, result any, args ...any) error {
 	if len(args) != 2 {
 		return fmt.Errorf("SimulatedBackendClient expected 2 args, got %d for eth_call", len(args))
 	}
 
-	params, ok := args[0].(map[string]interface{})
+	params, ok := args[0].(map[string]any)
 	if !ok {
 		return fmt.Errorf("SimulatedBackendClient expected first arg to be map[string]interface{} for eth_call, got: %T", args[0])
 	}
@@ -767,7 +767,7 @@ func (c *SimulatedBackendClient) ethCall(ctx context.Context, result interface{}
 	return nil
 }
 
-func (c *SimulatedBackendClient) ethGetHeaderByNumber(ctx context.Context, result interface{}, args ...interface{}) error {
+func (c *SimulatedBackendClient) ethGetHeaderByNumber(ctx context.Context, result any, args ...any) error {
 	if len(args) != 1 {
 		return fmt.Errorf("SimulatedBackendClient expected 1 arg, got %d for eth_getHeaderByNumber", len(args))
 	}
@@ -812,14 +812,14 @@ func (c *SimulatedBackendClient) LatestFinalizedBlock(ctx context.Context) (*evm
 	return head, nil
 }
 
-func (c *SimulatedBackendClient) ethGetLogs(ctx context.Context, result interface{}, args ...interface{}) error {
+func (c *SimulatedBackendClient) ethGetLogs(ctx context.Context, result any, args ...any) error {
 	var from, to *big.Int
 	var hash *common.Hash
 	var err error
 	var addresses []common.Address
 	var topics [][]common.Hash
 
-	params := args[0].(map[string]interface{})
+	params := args[0].(map[string]any)
 	if blockHash, ok := params["blockHash"]; ok {
 		hash, err = interfaceToHash(blockHash)
 		if err != nil {
@@ -886,7 +886,7 @@ func (c *SimulatedBackendClient) CheckTxValidity(ctx context.Context, from commo
 	return nil
 }
 
-func toCallMsg(params map[string]interface{}) ethereum.CallMsg {
+func toCallMsg(params map[string]any) ethereum.CallMsg {
 	var callMsg ethereum.CallMsg
 	toAddr, err := interfaceToAddress(params["to"])
 	if err != nil {
@@ -962,7 +962,7 @@ func toCallMsg(params map[string]interface{}) ethereum.CallMsg {
 	return callMsg
 }
 
-func interfaceToAddress(value interface{}) (common.Address, error) {
+func interfaceToAddress(value any) (common.Address, error) {
 	switch v := value.(type) {
 	case common.Address:
 		return v, nil
@@ -988,7 +988,7 @@ func interfaceToAddress(value interface{}) (common.Address, error) {
 	}
 }
 
-func interfaceToHash(value interface{}) (*common.Hash, error) {
+func interfaceToHash(value any) (*common.Hash, error) {
 	switch v := value.(type) {
 	case common.Hash:
 		return &v, nil

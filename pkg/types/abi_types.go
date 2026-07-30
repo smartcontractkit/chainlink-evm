@@ -10,52 +10,52 @@ import (
 
 var typeMap = map[string]*ABIEncodingType{
 	"bool": {
-		native:  reflect.TypeOf(true),
-		checked: reflect.TypeOf(true),
+		native:  reflect.TypeFor[bool](),
+		checked: reflect.TypeFor[bool](),
 	},
 	"int8": {
-		native:  reflect.TypeOf(int8(0)),
-		checked: reflect.TypeOf(int8(0)),
+		native:  reflect.TypeFor[int8](),
+		checked: reflect.TypeFor[int8](),
 	},
 	"int16": {
-		native:  reflect.TypeOf(int16(0)),
-		checked: reflect.TypeOf(int16(0)),
+		native:  reflect.TypeFor[int16](),
+		checked: reflect.TypeFor[int16](),
 	},
 	"int32": {
-		native:  reflect.TypeOf(int32(0)),
-		checked: reflect.TypeOf(int32(0)),
+		native:  reflect.TypeFor[int32](),
+		checked: reflect.TypeFor[int32](),
 	},
 	"int64": {
-		native:  reflect.TypeOf(int64(0)),
-		checked: reflect.TypeOf(int64(0)),
+		native:  reflect.TypeFor[int64](),
+		checked: reflect.TypeFor[int64](),
 	},
 	"uint8": {
-		native:  reflect.TypeOf(uint8(0)),
-		checked: reflect.TypeOf(uint8(0)),
+		native:  reflect.TypeFor[uint8](),
+		checked: reflect.TypeFor[uint8](),
 	},
 	"uint16": {
-		native:  reflect.TypeOf(uint16(0)),
-		checked: reflect.TypeOf(uint16(0)),
+		native:  reflect.TypeFor[uint16](),
+		checked: reflect.TypeFor[uint16](),
 	},
 	"uint32": {
-		native:  reflect.TypeOf(uint32(0)),
-		checked: reflect.TypeOf(uint32(0)),
+		native:  reflect.TypeFor[uint32](),
+		checked: reflect.TypeFor[uint32](),
 	},
 	"uint64": {
-		native:  reflect.TypeOf(uint64(0)),
-		checked: reflect.TypeOf(uint64(0)),
+		native:  reflect.TypeFor[uint64](),
+		checked: reflect.TypeFor[uint64](),
 	},
 	"string": {
-		native:  reflect.TypeOf(""),
-		checked: reflect.TypeOf(""),
+		native:  reflect.TypeFor[string](),
+		checked: reflect.TypeFor[string](),
 	},
 	"address": {
-		native:  reflect.TypeOf(common.Address{}),
-		checked: reflect.TypeOf(common.Address{}),
+		native:  reflect.TypeFor[common.Address](),
+		checked: reflect.TypeFor[common.Address](),
 	},
 	"bytes": {
-		native:  reflect.TypeOf([]byte{}),
-		checked: reflect.TypeOf([]byte{}),
+		native:  reflect.TypeFor[[]byte](),
+		checked: reflect.TypeFor[[]byte](),
 	},
 }
 

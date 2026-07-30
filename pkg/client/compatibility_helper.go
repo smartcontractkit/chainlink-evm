@@ -32,8 +32,8 @@ func ToBackwardCompatibleBlockNumArg(number *big.Int) string {
 
 // COPIED FROM go-ethereum/ethclient/gethclient - must be kept up to date!
 // Modified to include legacy 'data' as well as 'input' in order to support non-compliant servers.
-func ToBackwardCompatibleCallArg(msg ethereum.CallMsg) interface{} {
-	arg := map[string]interface{}{
+func ToBackwardCompatibleCallArg(msg ethereum.CallMsg) any {
+	arg := map[string]any{
 		"from": msg.From,
 		"to":   msg.To,
 	}
@@ -60,9 +60,9 @@ func ToBackwardCompatibleCallArg(msg ethereum.CallMsg) interface{} {
 }
 
 // Helper function that adds support for explicit modifications of call args for a given chain type
-func toBackwardCompatibleCallArgWithChainTypeSupport(msg ethereum.CallMsg, chainType chaintype.ChainType) interface{} {
+func toBackwardCompatibleCallArgWithChainTypeSupport(msg ethereum.CallMsg, chainType chaintype.ChainType) any {
 	backwardsCompatibleCallArg := ToBackwardCompatibleCallArg(msg)
-	callArgs, ok := backwardsCompatibleCallArg.(map[string]interface{})
+	callArgs, ok := backwardsCompatibleCallArg.(map[string]any)
 	if !ok {
 		return backwardsCompatibleCallArg
 	}
@@ -75,8 +75,8 @@ func toBackwardCompatibleCallArgWithChainTypeSupport(msg ethereum.CallMsg, chain
 }
 
 // COPIED FROM go-ethereum/ethclient/gethclient - must be kept up to date!
-func toFilterArg(q ethereum.FilterQuery) (interface{}, error) {
-	arg := map[string]interface{}{
+func toFilterArg(q ethereum.FilterQuery) (any, error) {
+	arg := map[string]any{
 		"address": q.Addresses,
 		"topics":  q.Topics,
 	}

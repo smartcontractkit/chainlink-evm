@@ -65,7 +65,7 @@ func (o *orm) WasBroadcastConsumed(ctx context.Context, blockHash common.Hash, l
 		AND job_id = $3
 		AND evm_chain_id = $4
     `
-	args := []interface{}{
+	args := []any{
 		blockHash,
 		logIndex,
 		jobID,

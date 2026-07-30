@@ -71,17 +71,13 @@ func TestFilterStore_Concurrency(t *testing.T) {
 	s := NewUpkeepFilterStore()
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		s.AddActiveUpkeeps(upkeepFilter{upkeepID: big.NewInt(1)})
 		s.AddActiveUpkeeps(upkeepFilter{upkeepID: big.NewInt(2)})
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	})
+	wg.Go(func() {
 		s.AddActiveUpkeeps(upkeepFilter{upkeepID: big.NewInt(2)})
-	}()
+	})
 
 	go func() {
 		_ = s.GetIDs(nil)

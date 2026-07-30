@@ -411,7 +411,7 @@ func (d *stuckTxDetector) detectFraudTransactionsZircuit(ctx context.Context, tx
 		var result zircuitResponse
 		txReqs[i] = rpc.BatchElem{
 			Method: "zirc_isQuarantined",
-			Args: []interface{}{
+			Args: []any{
 				latestAttemptHash,
 			},
 			Result: &result,
@@ -467,17 +467,17 @@ func (d *stuckTxDetector) detectStuckTransactionsZkEVM(ctx context.Context, txs 
 
 	txReqs := make([]rpc.BatchElem, len(filteredTx))
 	txHashMap := make(map[common.Hash]Tx)
-	txRes := make([]*map[string]interface{}, len(filteredTx))
+	txRes := make([]*map[string]any, len(filteredTx))
 
 	// Build batch request elems to perform
 	// Does not need to be separated out into smaller batches
 	// Max number of transactions to check is equal to the number of enabled addresses which is a relatively small amount
 	for i, tx := range filteredTx {
 		latestAttemptHash := tx.TxAttempts[0].Hash
-		var result map[string]interface{}
+		var result map[string]any
 		txReqs[i] = rpc.BatchElem{
 			Method: "eth_getTransactionByHash",
-			Args: []interface{}{
+			Args: []any{
 				latestAttemptHash,
 			},
 			Result: &result,

@@ -711,9 +711,9 @@ func TestEthConfirmer_RebroadcastWhereNecessary_WithConnectivityCheck(t *testing
 
 	t.Run("should retry previous attempt if connectivity check failed for legacy transactions", func(t *testing.T) {
 		ccfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.GasEstimator.EIP1559DynamicFees = ptr(false)
-			c.GasEstimator.BlockHistory.BlockHistorySize = ptr[uint16](2)
-			c.GasEstimator.BlockHistory.CheckInclusionBlocks = ptr[uint16](4)
+			c.GasEstimator.EIP1559DynamicFees = new(false)
+			c.GasEstimator.BlockHistory.BlockHistorySize = new(uint16(2))
+			c.GasEstimator.BlockHistory.CheckInclusionBlocks = new(uint16(4))
 		})
 
 		ctx := t.Context()
@@ -756,9 +756,9 @@ func TestEthConfirmer_RebroadcastWhereNecessary_WithConnectivityCheck(t *testing
 
 	t.Run("should retry previous attempt if connectivity check failed for dynamic transactions", func(t *testing.T) {
 		ccfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.GasEstimator.EIP1559DynamicFees = ptr(true)
-			c.GasEstimator.BlockHistory.BlockHistorySize = ptr[uint16](2)
-			c.GasEstimator.BlockHistory.CheckInclusionBlocks = ptr[uint16](4)
+			c.GasEstimator.EIP1559DynamicFees = new(true)
+			c.GasEstimator.BlockHistory.BlockHistorySize = new(uint16(2))
+			c.GasEstimator.BlockHistory.CheckInclusionBlocks = new(uint16(4))
 		})
 
 		ctx := t.Context()
@@ -1456,15 +1456,15 @@ func TestEthConfirmer_RebroadcastWhereNecessary_WhenOutOfEth(t *testing.T) {
 	})
 
 	t.Run("resubmitting due to insufficient eth is not limited by EVM.GasEstimator.BumpTxDepth", func(t *testing.T) {
-		depth := 2
+		depth := uint32(2)
 		etxCount := 4
 
 		evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-			c.GasEstimator.BumpTxDepth = ptr(uint32(depth))
+			c.GasEstimator.BumpTxDepth = new(depth)
 		})
 		ec := newEthConfirmer(t, txStore, ethClient, evmcfg, ethKeyStore, nil)
 
-		for i := 0; i < etxCount; i++ {
+		for range etxCount {
 			n := nonce
 			mustInsertUnconfirmedEthTxWithInsufficientEthAttempt(t, txStore, nonce, fromAddress)
 			ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *types.Transaction) bool {
@@ -1659,10 +1659,10 @@ func TestEthConfirmer_ProcessStuckTransactions(t *testing.T) {
 	autoPurgeMinAttempts := uint32(3)
 	limitDefault := uint64(100)
 	evmcfg := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.GasEstimator.LimitDefault = ptr(limitDefault)
-		c.Transactions.AutoPurge.Enabled = ptr(true)
-		c.Transactions.AutoPurge.Threshold = ptr(autoPurgeThreshold)
-		c.Transactions.AutoPurge.MinAttempts = ptr(autoPurgeMinAttempts)
+		c.GasEstimator.LimitDefault = new(limitDefault)
+		c.Transactions.AutoPurge.Enabled = new(true)
+		c.Transactions.AutoPurge.Threshold = new(autoPurgeThreshold)
+		c.Transactions.AutoPurge.MinAttempts = new(autoPurgeMinAttempts)
 	})
 	ge := evmcfg.EVM().GasEstimator()
 	txBuilder := txmgr.NewEvmTxAttemptBuilder(*ethClient.ConfiguredChainID(), ge, ethKeyStore, feeEstimator)
@@ -1670,7 +1670,7 @@ func TestEthConfirmer_ProcessStuckTransactions(t *testing.T) {
 	metrics, err := txmgr.NewEVMTxmMetrics(ethClient.ConfiguredChainID().String())
 	require.NoError(t, err)
 	ec := txmgr.NewEvmConfirmer(txStore, txmgr.NewEvmTxmClient(ethClient, nil), txmgr.NewEvmTxmFeeConfig(ge), evmcfg.EVM().Transactions(), confirmerConfig{}, ethKeyStore, txBuilder, lggr, stuckTxDetector, metrics)
-	fn := func(ctx context.Context, id uuid.UUID, result interface{}, err error) error {
+	fn := func(ctx context.Context, id uuid.UUID, result any, err error) error {
 		require.ErrorContains(t, err, client.TerminallyStuckMsg)
 		return nil
 	}
@@ -1734,8 +1734,6 @@ func TestEthConfirmer_ProcessStuckTransactions(t *testing.T) {
 		require.True(t, dbTx.CallbackCompleted)
 	})
 }
-
-func ptr[T any](t T) *T { return &t }
 
 func newEthConfirmer(t testing.TB, txStore txmgr.EvmTxStore, ethClient client.Client, config evmconfig.ChainScopedConfig, ks keys.ChainStore, fn txmgrcommon.ResumeCallback) *txmgr.Confirmer {
 	lggr := logger.Test(t)

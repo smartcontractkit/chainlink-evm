@@ -114,7 +114,7 @@ func TestBroadcaster_ResubscribesOnAddOrRemoveContract(t *testing.T) {
 
 	helper.register(listener, newMockContract(t), numConfirmations)
 
-	for i := 0; i < numContracts; i++ {
+	for range numContracts {
 		listener := helper.newLogListenerWithJob("")
 		helper.register(listener, newMockContract(t), 1)
 	}
@@ -277,7 +277,7 @@ func TestBroadcaster_BackfillUnconsumedAfterCrash(t *testing.T) {
 
 	t.Run("pool two logs from subscription, then shut down", func(t *testing.T) {
 		helper := newBroadcasterHelper(t, 0, 1, logs, func(c *toml.EVMConfig) {
-			c.FinalityDepth = ptr[uint32](confs)
+			c.FinalityDepth = new(uint32(confs))
 		})
 		ctx := testutils.Context(t)
 		orm := log.NewORM(helper.db, *testutils.FixtureChainID)
@@ -303,7 +303,7 @@ func TestBroadcaster_BackfillUnconsumedAfterCrash(t *testing.T) {
 	})
 	t.Run("backfill pool with both, then broadcast one, but don't consume", func(t *testing.T) {
 		helper := newBroadcasterHelper(t, 2, 1, logs, func(c *toml.EVMConfig) {
-			c.FinalityDepth = ptr[uint32](confs)
+			c.FinalityDepth = new(uint32(confs))
 		})
 		ctx := testutils.Context(t)
 		orm := log.NewORM(helper.db, *testutils.FixtureChainID)
@@ -330,7 +330,7 @@ func TestBroadcaster_BackfillUnconsumedAfterCrash(t *testing.T) {
 	})
 	t.Run("backfill pool and broadcast two, but only consume one", func(t *testing.T) {
 		helper := newBroadcasterHelper(t, 4, 1, logs, func(c *toml.EVMConfig) {
-			c.FinalityDepth = ptr[uint32](confs)
+			c.FinalityDepth = new(uint32(confs))
 		})
 		ctx := testutils.Context(t)
 		orm := log.NewORM(helper.db, *testutils.FixtureChainID)
@@ -355,7 +355,7 @@ func TestBroadcaster_BackfillUnconsumedAfterCrash(t *testing.T) {
 	})
 	t.Run("backfill pool, broadcast and consume one", func(t *testing.T) {
 		helper := newBroadcasterHelper(t, 7, 1, logs[1:], func(c *toml.EVMConfig) {
-			c.FinalityDepth = ptr[uint32](confs)
+			c.FinalityDepth = new(uint32(confs))
 		})
 		ctx := testutils.Context(t)
 		orm := log.NewORM(helper.db, *testutils.FixtureChainID)
@@ -426,8 +426,8 @@ func TestBroadcaster_ShallowBackfillOnNodeStart(t *testing.T) {
 	chchRawLogs := make(chan testutils.RawSub[types.Log], backfillTimes)
 	mockEth := newMockEthClient(t, chchRawLogs, blockHeight, expectedCalls)
 	helper := newBroadcasterHelperWithEthClient(t, mockEth.EthClient, head(lastStoredBlockHeight), func(c *toml.EVMConfig) {
-		c.BlockBackfillSkip = ptr(true)
-		c.BlockBackfillDepth = ptr[uint32](15)
+		c.BlockBackfillSkip = new(true)
+		c.BlockBackfillDepth = new(uint32(15))
 	})
 	helper.mockEth = mockEth
 
@@ -476,7 +476,7 @@ func TestBroadcaster_BackfillInBatches(t *testing.T) {
 	chchRawLogs := make(chan testutils.RawSub[types.Log], backfillTimes)
 	mockEth := newMockEthClient(t, chchRawLogs, blockHeight, expectedCalls)
 	helper := newBroadcasterHelperWithEthClient(t, mockEth.EthClient, head(lastStoredBlockHeight), func(c *toml.EVMConfig) {
-		c.LogBackfillBatchSize = ptr(uint32(batchSize))
+		c.LogBackfillBatchSize = new(uint32(batchSize))
 	})
 	helper.mockEth = mockEth
 
@@ -533,7 +533,7 @@ func TestBroadcaster_BackfillALargeNumberOfLogs(t *testing.T) {
 
 	blocks := newBlocks(t, 7)
 	backfilledLogs := make([]types.Log, 0)
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		aLog := blocks.LogOnBlockNum(0, contract1.Address())
 		backfilledLogs = append(backfilledLogs, aLog)
 	}
@@ -549,7 +549,7 @@ func TestBroadcaster_BackfillALargeNumberOfLogs(t *testing.T) {
 	chchRawLogs := make(chan testutils.RawSub[types.Log], backfillTimes)
 	mockEth := newMockEthClient(t, chchRawLogs, blockHeight, expectedCalls)
 	helper := newBroadcasterHelperWithEthClient(t, mockEth.EthClient, head(lastStoredBlockHeight), func(c *toml.EVMConfig) {
-		c.LogBackfillBatchSize = ptr(batchSize)
+		c.LogBackfillBatchSize = new(batchSize)
 	})
 	helper.mockEth = mockEth
 
@@ -709,7 +709,7 @@ func TestBroadcaster_BroadcastsAtCorrectHeights(t *testing.T) {
 func TestBroadcaster_DeletesOldLogsAfterNumberOfHeads(t *testing.T) {
 	const blockHeight int64 = 0
 	helper := newBroadcasterHelper(t, blockHeight, 1, nil, func(c *toml.EVMConfig) {
-		c.FinalityDepth = ptr[uint32](1)
+		c.FinalityDepth = new(uint32(1))
 	})
 	helper.start()
 	defer helper.stop()
@@ -760,7 +760,7 @@ func TestBroadcaster_DeletesOldLogsAfterNumberOfHeads(t *testing.T) {
 func TestBroadcaster_DeletesOldLogsOnlyAfterFinalityDepth(t *testing.T) {
 	const blockHeight int64 = 0
 	helper := newBroadcasterHelper(t, blockHeight, 1, nil, func(c *toml.EVMConfig) {
-		c.FinalityDepth = ptr[uint32](4)
+		c.FinalityDepth = new(uint32(4))
 	})
 	helper.start()
 	defer helper.stop()
@@ -811,7 +811,7 @@ func TestBroadcaster_DeletesOldLogsOnlyAfterFinalityDepth(t *testing.T) {
 func TestBroadcaster_FilterByTopicValues(t *testing.T) {
 	const blockHeight int64 = 0
 	helper := newBroadcasterHelper(t, blockHeight, 1, nil, func(c *toml.EVMConfig) {
-		c.FinalityDepth = ptr[uint32](3)
+		c.FinalityDepth = new(uint32(3))
 	})
 	helper.start()
 	defer helper.stop()
@@ -891,7 +891,7 @@ func TestBroadcaster_FilterByTopicValues(t *testing.T) {
 func TestBroadcaster_BroadcastsWithOneDelayedLog(t *testing.T) {
 	const blockHeight int64 = 0
 	helper := newBroadcasterHelper(t, blockHeight, 1, nil, func(c *toml.EVMConfig) {
-		c.FinalityDepth = ptr[uint32](2)
+		c.FinalityDepth = new(uint32(2))
 	})
 	helper.start()
 
@@ -971,7 +971,7 @@ func TestBroadcaster_BroadcastsAtCorrectHeightsWithLogsEarlierThanHeads(t *testi
 func TestBroadcaster_BroadcastsAtCorrectHeightsWithHeadsEarlierThanLogs(t *testing.T) {
 	const blockHeight int64 = 0
 	helper := newBroadcasterHelper(t, blockHeight, 1, nil, func(c *toml.EVMConfig) {
-		c.FinalityDepth = ptr[uint32](2)
+		c.FinalityDepth = new(uint32(2))
 	})
 	helper.start()
 
@@ -1228,12 +1228,11 @@ func TestBroadcaster_ReceivesAllLogsWhenResubscribing(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			const backfillDepth = 5
 			helper := newBroadcasterHelper(t, int64(test.blockHeight1), 2, nil, func(c *toml.EVMConfig) {
 				// something other than default
-				c.BlockBackfillDepth = ptr[uint32](backfillDepth)
+				c.BlockBackfillDepth = new(uint32(backfillDepth))
 			})
 
 			helper.start()
@@ -1432,7 +1431,7 @@ func TestBroadcaster_ProcessesLogsFromReorgsAndMissedHead(t *testing.T) {
 		log3R1Removed = blocksForked.LogOnBlockNumWithIndexRemoved(3, 0, addr)
 		log3R2Removed = blocksForked.LogOnBlockNumWithIndexRemoved(3, 1, addr)
 
-		events = []interface{}{
+		events = []any{
 			blocks.Head(0), log0,
 			log1, // head1 missing
 			blocks.Head(2), log2,
@@ -1645,8 +1644,6 @@ func TestBroadcaster_BroadcastsWithZeroConfirmations(t *testing.T) {
 	}, 1*time.Second, DBPollingInterval).Should(gomega.BeTrue())
 }
 
-func ptr[T any](t T) *T { return &t }
-
 func newBroadcasterHelper(t *testing.T, blockHeight int64, timesSubscribe int, filterLogsResult []types.Log, overridesFn func(c *toml.EVMConfig)) *broadcasterHelper {
 	// ensure we check before registering any mock Cleanup assertions
 	testutils.SkipShortDB(t)
@@ -1668,7 +1665,7 @@ func newBroadcasterHelper(t *testing.T, blockHeight int64, timesSubscribe int, f
 
 func newBroadcasterHelperWithEthClient(t *testing.T, ethClient client.Client, highestSeenHead *evmtypes.Head, overridesFn func(c *toml.EVMConfig)) *broadcasterHelper {
 	config := configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
-		c.FinalityDepth = ptr[uint32](10)
+		c.FinalityDepth = new(uint32(10))
 
 		if overridesFn != nil {
 			overridesFn(c)
@@ -2052,7 +2049,7 @@ func (b *blocks) ForkAt(t *testing.T, blockNum int64, numHashes int) *blocks {
 		t.Fatalf("Not enough length for block num: %v", blockNum)
 	}
 
-	for i := int64(0); i < blockNum; i++ {
+	for i := range blockNum {
 		forked.Heads[i] = b.Heads[i]
 	}
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -68,13 +69,14 @@ func stringOrNull[T any](t *T) string {
 }
 
 func (t *Transaction) PrintWithAttempts() string {
-	attempts := " Attempts: ["
+	var attempts strings.Builder
+	attempts.WriteString(" Attempts: [")
 	for _, a := range t.Attempts {
-		attempts += a.String() + ", "
+		attempts.WriteString(a.String() + ", ")
 	}
-	attempts += "]"
+	attempts.WriteString("]")
 
-	return t.String() + attempts
+	return t.String() + attempts.String()
 }
 
 func (t *Transaction) FindAttemptByHash(attemptHash common.Hash) (*Attempt, error) {
@@ -167,7 +169,7 @@ type TxRequest struct {
 type TxMeta struct {
 	// Pipeline
 	JobID        *int32    `json:"JobID,omitempty"`
-	FailOnRevert null.Bool `json:"FailOnRevert,omitempty"`
+	FailOnRevert null.Bool `json:"FailOnRevert"`
 
 	// VRF
 	RequestID               *common.Hash  `json:"RequestID,omitempty"`

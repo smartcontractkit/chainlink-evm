@@ -450,7 +450,7 @@ func calcFeeCap(latestAvailableBaseFeePerGas *assets.Wei, bufferBlocks int, tipC
 	baseFee.SetInt(latestAvailableBaseFeePerGas.ToInt())
 	// Find out the worst case base fee before we should bump
 	multiplier := big.NewFloat(maxBaseFeeIncreasePerBlock)
-	for i := 0; i < bufferBlocks; i++ {
+	for range bufferBlocks {
 		baseFee.Mul(baseFee, multiplier)
 	}
 
@@ -562,29 +562,24 @@ func (b *BlockHistoryEstimator) calculateGasPriceTipCap(ctx context.Context, lgg
 	}
 
 	gasPriceGwei := percentileGasPrice.Text("gwei")
-	lggrFields := []interface{}{
-		"gasPriceWei", percentileGasPrice,
+	lggr = lggr.With("gasPriceWei", percentileGasPrice,
 		"gasPriceGWei", gasPriceGwei,
 		"maxGasPriceWei", b.eConfig.PriceMax(),
 		"headNum", head.Number,
 		"priceBlocks", numsForPrice,
-	}
+	)
 	b.setPercentileGasPrice(percentileGasPrice)
 
 	percentileLabel := fmt.Sprintf("%v%%", percentile)
 	b.metrics.RecordSetGasPrice(ctx, percentileLabel, float64(percentileGasPrice.Int64()))
 
 	if !eip1559 {
-		lggr.Debugw(fmt.Sprintf("Setting new default GasPrice: %v Gwei", gasPriceGwei), lggrFields...)
+		lggr.Debugw(fmt.Sprintf("Setting new default GasPrice: %v Gwei", gasPriceGwei))
 		return
 	}
 
 	tipCapGwei := percentileTipCap.Text("gwei")
-	lggrFields = append(lggrFields, []interface{}{
-		"tipCapWei", percentileTipCap,
-		"tipCapGwei", tipCapGwei,
-	}...)
-	lggr.Debugw(fmt.Sprintf("Setting new default prices, GasPrice: %v Gwei, TipCap: %v Gwei", gasPriceGwei, tipCapGwei), lggrFields...)
+	lggr.Debugw(fmt.Sprintf("Setting new default prices, GasPrice: %v Gwei, TipCap: %v Gwei", gasPriceGwei, tipCapGwei), "tipCapWei", percentileTipCap, "tipCapGwei", tipCapGwei)
 	b.setPercentileTipCap(percentileTipCap)
 
 	b.metrics.RecordSetTipCap(ctx, percentileLabel, float64(percentileTipCap.Int64()))
@@ -617,26 +612,20 @@ func (b *BlockHistoryEstimator) calculateMaxPercentileGasPriceTipCap(lggr logger
 	}
 
 	maxPercentileGasPriceGwei := maxPercentileGasPrice.Text("gwei")
-	lggrFields := []interface{}{
-		"maxPercentileGasPriceWei", maxPercentileGasPrice,
+	lggr = lggr.With("maxPercentileGasPriceWei", maxPercentileGasPrice,
 		"maxPercentileGasPriceGwei", maxPercentileGasPriceGwei,
 		"headNum", head.Number,
-		"maxPercentileBlocks", numsForMaxPrices,
-	}
+		"maxPercentileBlocks", numsForMaxPrices)
 
 	b.setMaxPercentileGasPrice(maxPercentileGasPrice)
 
 	if !eip1559 {
-		lggr.Debugw(fmt.Sprintf("Setting new max percentile GasPrice: %v Gwei", maxPercentileGasPriceGwei), lggrFields...)
+		lggr.Debugw(fmt.Sprintf("Setting new max percentile GasPrice: %v Gwei", maxPercentileGasPriceGwei))
 		return
 	}
 
 	maxPercentileTipCapGwei := maxPercentileTipCap.Text("gwei")
-	lggrFields = append(lggrFields, []interface{}{
-		"maxPercentileTipCapWei", maxPercentileTipCap,
-		"maxPercentileTipCapGwei", maxPercentileTipCapGwei,
-	}...)
-	lggr.Debugw(fmt.Sprintf("Setting new default prices, max percentile GasPrice: %v Gwei, max percentile TipCap: %v Gwei", maxPercentileGasPriceGwei, maxPercentileTipCapGwei), lggrFields...)
+	lggr.Debugw(fmt.Sprintf("Setting new default prices, max percentile GasPrice: %v Gwei, max percentile TipCap: %v Gwei", maxPercentileGasPriceGwei, maxPercentileTipCapGwei), "maxPercentileTipCapWei", maxPercentileTipCap, "maxPercentileTipCapGwei", maxPercentileTipCapGwei)
 	b.setMaxPercentileTipCap(maxPercentileTipCap)
 }
 
@@ -659,10 +648,7 @@ func (b *BlockHistoryEstimator) FetchBlocks(ctx context.Context, head *evmtypes.
 	if highestBlockToFetch < 0 {
 		return fmt.Errorf("BlockHistoryEstimator: cannot fetch, current block height %v is lower than EVM.RPCBlockQueryDelay=%v", head.Number, blockDelay)
 	}
-	lowestBlockToFetch := head.Number - historySize - blockDelay + 1
-	if lowestBlockToFetch < 0 {
-		lowestBlockToFetch = 0
-	}
+	lowestBlockToFetch := max(head.Number-historySize-blockDelay+1, 0)
 
 	blocks := make(map[int64]evmtypes.Block)
 	earliestInChain := head.EarliestInChain()
@@ -689,7 +675,7 @@ func (b *BlockHistoryEstimator) FetchBlocks(ctx context.Context, head *evmtypes.
 
 		req := rpc.BatchElem{
 			Method: "eth_getBlockByNumber",
-			Args:   []interface{}{Int64ToHex(i), true},
+			Args:   []any{Int64ToHex(i), true},
 			Result: &evmtypes.Block{},
 		}
 		reqs = append(reqs, req)
@@ -773,10 +759,7 @@ func (b *BlockHistoryEstimator) batchFetch(ctx context.Context, reqs []rpc.Batch
 	}
 
 	for i := 0; i < len(reqs); i += batchSize {
-		j := i + batchSize
-		if j > len(reqs) {
-			j = len(reqs)
-		}
+		j := min(i+batchSize, len(reqs))
 
 		b.logger.Tracew(fmt.Sprintf("Batch fetching blocks %v thru %v", HexToInt64(reqs[i].Args[0]), HexToInt64(reqs[j-1].Args[0])))
 
@@ -999,7 +982,7 @@ func Int64ToHex(n int64) string {
 
 // HexToInt64 performs the inverse of Int64ToHex
 // Returns 0 on invalid input
-func HexToInt64(input interface{}) int64 {
+func HexToInt64(input any) int64 {
 	switch v := input.(type) {
 	case string:
 		big, err := hexutil.DecodeBig(v)

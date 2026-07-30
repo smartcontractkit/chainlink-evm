@@ -293,7 +293,7 @@ func TestFinalizer_ResumePendingRuns(t *testing.T) {
 	t.Run("doesn't process task runs that are not suspended (possibly already previously resumed)", func(t *testing.T) {
 		fromAddress := testutils.NewAddress()
 		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, rpcBatchSize, false, txStore, txmClient, ht, metrics)
-		finalizer.SetResumeCallback(func(context.Context, uuid.UUID, interface{}, error) error {
+		finalizer.SetResumeCallback(func(context.Context, uuid.UUID, any, error) error {
 			t.Fatal("No value expected")
 			return nil
 		})
@@ -315,7 +315,7 @@ func TestFinalizer_ResumePendingRuns(t *testing.T) {
 	t.Run("doesn't process task runs where the receipt is younger than minConfirmations", func(t *testing.T) {
 		fromAddress := testutils.NewAddress()
 		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, rpcBatchSize, false, txStore, txmClient, ht, metrics)
-		finalizer.SetResumeCallback(func(context.Context, uuid.UUID, interface{}, error) error {
+		finalizer.SetResumeCallback(func(context.Context, uuid.UUID, any, error) error {
 			t.Fatal("No value expected")
 			return nil
 		})
@@ -334,12 +334,12 @@ func TestFinalizer_ResumePendingRuns(t *testing.T) {
 	})
 
 	t.Run("processes transactions with receipts older than minConfirmations", func(t *testing.T) {
-		ch := make(chan interface{})
+		ch := make(chan any)
 		nonce := types.Nonce(3)
 		var err error
 		fromAddress := testutils.NewAddress()
 		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, rpcBatchSize, false, txStore, txmClient, ht, metrics)
-		finalizer.SetResumeCallback(func(ctx context.Context, id uuid.UUID, value interface{}, thisErr error) error {
+		finalizer.SetResumeCallback(func(ctx context.Context, id uuid.UUID, value any, thisErr error) error {
 			err = thisErr
 			ch <- value
 			return nil
@@ -393,7 +393,7 @@ func TestFinalizer_ResumePendingRuns(t *testing.T) {
 		nonce := types.Nonce(4)
 		fromAddress := testutils.NewAddress()
 		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, rpcBatchSize, false, txStore, txmClient, ht, metrics)
-		finalizer.SetResumeCallback(func(ctx context.Context, id uuid.UUID, value interface{}, err error) error {
+		finalizer.SetResumeCallback(func(ctx context.Context, id uuid.UUID, value any, err error) error {
 			ch <- data{value, err}
 			return nil
 		})
@@ -441,7 +441,7 @@ func TestFinalizer_ResumePendingRuns(t *testing.T) {
 		nonce := types.Nonce(5)
 		fromAddress := testutils.NewAddress()
 		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, rpcBatchSize, false, txStore, txmClient, ht, metrics)
-		finalizer.SetResumeCallback(func(ctx context.Context, id uuid.UUID, value interface{}, err error) error {
+		finalizer.SetResumeCallback(func(ctx context.Context, id uuid.UUID, value any, err error) error {
 			return errors.New("error")
 		})
 		servicetest.Run(t, finalizer)
@@ -927,7 +927,7 @@ func TestFinalizer_FetchAndStoreReceipts_batching(t *testing.T) {
 
 		var attempts []txmgr.TxAttempt
 		// Total of 5 attempts should lead to 3 batched fetches (2, 2, 1)v
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			attempt := newBroadcastLegacyEthTxAttempt(t, etx.ID, int64(i+2))
 			attempt.BroadcastBeforeBlockNum = &head.Number
 			require.NoError(t, txStore.InsertTxAttempt(ctx, &attempt))
@@ -1119,7 +1119,7 @@ func TestFinalizer_ProcessOldTxsWithoutReceipts(t *testing.T) {
 		txStore := txmgrtest.NewTestTxStore(t, db)
 		fromAddress := testutils.NewAddress()
 		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, 1, true, txStore, txmClient, ht, metrics)
-		finalizer.SetResumeCallback(func(context.Context, uuid.UUID, interface{}, error) error { return nil })
+		finalizer.SetResumeCallback(func(context.Context, uuid.UUID, any, error) error { return nil })
 
 		// Insert confirmed transaction with pending task run
 		etx := txmgrtest.NewEthTx(fromAddress)
@@ -1153,7 +1153,7 @@ func TestFinalizer_ProcessOldTxsWithoutReceipts(t *testing.T) {
 		txStore := txmgrtest.NewTestTxStore(t, db)
 		fromAddress := testutils.NewAddress()
 		finalizer := txmgr.NewEvmFinalizer(logger.Test(t), testutils.FixtureChainID, 1, true, txStore, txmClient, ht, metrics)
-		finalizer.SetResumeCallback(func(context.Context, uuid.UUID, interface{}, error) error { return errors.New("failure") })
+		finalizer.SetResumeCallback(func(context.Context, uuid.UUID, any, error) error { return errors.New("failure") })
 
 		// Insert confirmed transaction with pending task run
 		etx := txmgrtest.NewEthTx(fromAddress)
@@ -1183,7 +1183,7 @@ func TestFinalizer_ProcessOldTxsWithoutReceipts(t *testing.T) {
 	})
 }
 
-func matchTranscationReceipt(req rpc.BatchElem, arg interface{}) bool {
+func matchTranscationReceipt(req rpc.BatchElem, arg any) bool {
 	return req.Method == "eth_getTransactionReceipt" &&
 		len(req.Args) == 1 && req.Args[0] == arg
 }

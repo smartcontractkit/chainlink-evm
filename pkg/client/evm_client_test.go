@@ -26,16 +26,16 @@ func TestNewEvmClient(t *testing.T) {
 	t.Parallel()
 
 	noNewHeadsThreshold := 3 * time.Minute
-	selectionMode := ptr("HighestHead")
+	selectionMode := new("HighestHead")
 	leaseDuration := 0 * time.Second
-	pollFailureThreshold := ptr(uint32(5))
-	pollSuccessThreshold := ptr(uint32(0))
+	pollFailureThreshold := new(uint32(5))
+	pollSuccessThreshold := new(uint32(0))
 	pollInterval := 10 * time.Second
-	syncThreshold := ptr(uint32(5))
-	nodeIsSyncingEnabled := ptr(false)
+	syncThreshold := new(uint32(5))
+	nodeIsSyncingEnabled := new(false)
 	chainTypeStr := ""
-	finalizedBlockOffset := ptr[uint32](16)
-	enforceRepeatableRead := ptr(true)
+	finalizedBlockOffset := new(uint32(16))
+	enforceRepeatableRead := new(true)
 	deathDeclarationDelay := time.Second * 3
 	noNewFinalizedBlocksThreshold := time.Second * 5
 	finalizedBlockPollInterval := time.Second * 4
@@ -43,15 +43,15 @@ func TestNewEvmClient(t *testing.T) {
 	confirmationTimeout := time.Second * 60
 	nodeConfigs := []client.NodeConfig{
 		{
-			Name:    ptr("foo"),
-			WSURL:   ptr("ws://foo.test"),
-			HTTPURL: ptr("http://foo.test"),
+			Name:    new("foo"),
+			WSURL:   new("ws://foo.test"),
+			HTTPURL: new("http://foo.test"),
 		},
 	}
-	finalityDepth := ptr(uint32(10))
-	safeDepth := ptr(uint32(6))
-	finalityTagEnabled := ptr(true)
-	SafeTagSupported := ptr(true)
+	finalityDepth := new(uint32(10))
+	safeDepth := new(uint32(6))
+	finalityTagEnabled := new(true)
+	SafeTagSupported := new(true)
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(selectionMode, leaseDuration, chainTypeStr, nodeConfigs,
 		pollFailureThreshold, pollSuccessThreshold, pollInterval, syncThreshold, nodeIsSyncingEnabled, noNewHeadsThreshold, finalityDepth,
 		finalityTagEnabled, SafeTagSupported, finalizedBlockOffset, enforceRepeatableRead, deathDeclarationDelay, noNewFinalizedBlocksThreshold,
@@ -69,19 +69,19 @@ func TestChainClientMetrics(t *testing.T) {
 
 	nodeConfigs := []client.NodeConfig{
 		{
-			Name:    ptr("BlueEVMPrimaryNode"),
-			WSURL:   ptr("ws://no-blue-node"),
-			HTTPURL: ptr("http://no-blue-node"),
+			Name:    new("BlueEVMPrimaryNode"),
+			WSURL:   new("ws://no-blue-node"),
+			HTTPURL: new("http://no-blue-node"),
 		},
 		{
-			Name:    ptr("YellowEVMPrimaryNode"),
-			WSURL:   ptr("ws://no-yellow-node"),
-			HTTPURL: ptr("http://no-yellow-node"),
+			Name:    new("YellowEVMPrimaryNode"),
+			WSURL:   new("ws://no-yellow-node"),
+			HTTPURL: new("http://no-yellow-node"),
 		},
 	}
-	chainCfg, nodePool, nodes, err := client.NewClientConfigs(ptr("HighestHead"), time.Duration(0), "", nodeConfigs,
-		ptr[uint32](5), ptr[uint32](0), 10*time.Second, ptr[uint32](5), ptr(false), time.Minute, ptr[uint32](5), ptr(false), ptr(false),
-		ptr[uint32](5), ptr(false), 10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second, 60*time.Second, ptr[uint32](10))
+	chainCfg, nodePool, nodes, err := client.NewClientConfigs(new("HighestHead"), time.Duration(0), "", nodeConfigs,
+		new(uint32(5)), new(uint32(0)), 10*time.Second, new(uint32(5)), new(false), time.Minute, new(uint32(5)), new(false), new(false),
+		new(uint32(5)), new(false), 10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second, 60*time.Second, new(uint32(10)))
 	require.NoError(t, err)
 
 	chainID := big.NewInt(68472)

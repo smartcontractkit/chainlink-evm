@@ -93,7 +93,7 @@ func Test_FailForMoreThan1000Retries(t *testing.T) {
 	mockTxManager := mocks.NewMockEvmTxManager(t)
 	checker := NewTxmStatusChecker(mockTxManager.GetTransactionStatus)
 
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		mockTxManager.On("GetTransactionStatus", ctx, fmt.Sprintf("test-message-id-%d", i)).Return(types.Finalized, nil)
 	}
 

@@ -101,7 +101,7 @@ func (o *DSORM) FindForwardersByChain(ctx context.Context, evmChainId sqlutil.Bi
 func (o *DSORM) FindForwardersInListByChain(ctx context.Context, evmChainId sqlutil.Big, addrs []common.Address) ([]Forwarder, error) {
 	var fwdrs []Forwarder
 
-	arg := map[string]interface{}{
+	arg := map[string]any{
 		"addresses": addrs,
 		"chainid":   evmChainId,
 	}
