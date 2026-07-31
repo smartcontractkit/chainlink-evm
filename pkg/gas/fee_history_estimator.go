@@ -51,7 +51,7 @@ type FeeHistoryEstimatorConfig struct {
 	RewardPercentile float64
 }
 
-// dynamicFeeCache holds the cached results of a single RefreshDynamicPrice round.
+// dynamicFeeCache holds the cached results of a single RefreshDynamicFee round.
 type dynamicFeeCache struct {
 	dynamicFee           DynamicFee
 	priorityFeeThreshold *assets.Wei
@@ -226,7 +226,7 @@ func (f *FeeHistoryEstimator) getGasPrice() (*assets.Wei, error) {
 
 // GetDynamicFee will fetch the cached dynamic prices.
 func (f *FeeHistoryEstimator) GetDynamicFee(ctx context.Context, maxPrice *assets.Wei) (fee DynamicFee, err error) {
-	if fee, err = f.getDynamicFeeCache().getDynamicFee(); err != nil {
+	if fee, err = f.getDynamicFeeCacheCopy().getDynamicFee(); err != nil {
 		return
 	}
 
@@ -244,7 +244,7 @@ func (f *FeeHistoryEstimator) GetDynamicFee(ctx context.Context, maxPrice *asset
 }
 
 func (f *FeeHistoryEstimator) GetMaxDynamicFee(maxPrice *assets.Wei) (fee DynamicFee, err error) {
-	cache := f.getDynamicFeeCache()
+	cache := f.getDynamicFeeCacheCopy()
 	priorityFeeThreshold, err := cache.getPriorityFeeThreshold()
 	if err != nil {
 		return fee, err
@@ -275,7 +275,7 @@ func (f *FeeHistoryEstimator) RefreshDynamicFee() error {
 	}
 
 	// Start from the currently cached values so that partial responses only overwrite what they actually carry.
-	cache := f.getDynamicFeeCache()
+	cache := f.getDynamicFeeCacheCopy()
 
 	var nextBlock *big.Int
 	// If the BaseFee list is empty, maintain the cached base fee to continue updating the priority fee threshold.
@@ -300,7 +300,7 @@ func (f *FeeHistoryEstimator) RefreshDynamicFee() error {
 
 	// The two priority fees are always cached as a pair. priorityFeeThreshold is a higher percentile of the very same
 	// sample as maxPriorityFeePerGas, so within a response maxPriorityFeePerGas <= priorityFeeThreshold always holds.
-	// Mixing values from different rounds could invert that and make BumpDynamicFee report a bogus connectivity issue.
+	// Mixing values from different rounds could invert that and make BumpDynamicFee report a false positive connectivity issue.
 	if maxPriorityFeePerGas != nil && priorityFeeThreshold != nil {
 		if maxPriorityFeePerGas.Cmp(priorityFeeThreshold) > 0 {
 			// Only reachable if the RPC returns non-monotonic percentiles. Raise the threshold to keep bumping possible.
@@ -316,9 +316,7 @@ func (f *FeeHistoryEstimator) RefreshDynamicFee() error {
 			"blocks", len(feeHistory.Reward), "maxPriorityFeePerGas", maxPriorityFeePerGas, "priorityFeeThreshold", priorityFeeThreshold)
 	}
 
-	// The fee cap is recomputed even when the priority fees above were retained, because the base fee moves much
-	// faster than they do. It can only be set once a priority fee has been cached at least once, so that the
-	// dynamic fee is never published half-populated.
+	// The fee cap is recomputed even when the priority fees above were retained, to incorporate the latest base fee.
 	if cache.dynamicFee.GasTipCap != nil {
 		cache.dynamicFee.GasFeeCap = cache.nextBaseFee.AddPercentage(f.baseFeeBufferPercentage()).Add(cache.dynamicFee.GasTipCap)
 		f.metrics.RecordMaxFeePerGas(ctx, float64(cache.dynamicFee.GasFeeCap.Int64()))
@@ -372,7 +370,7 @@ func calcPriorityFees(rewards [][]*big.Int) (avg *assets.Wei, threshold *assets.
 }
 
 // baseFeeBufferPercentage returns the safety buffer applied on top of the latest base fee. BlockHistorySize of 0 is used
-// as the signal for a chain without a mempool, which is the only signal the estimator has for it.
+// as the signal for a chain without a mempool.
 func (f *FeeHistoryEstimator) baseFeeBufferPercentage() uint16 {
 	if f.config.BlockHistorySize == 0 {
 		return NoMempoolBaseFeeBufferPercentage
@@ -380,7 +378,7 @@ func (f *FeeHistoryEstimator) baseFeeBufferPercentage() uint16 {
 	return BaseFeeBufferPercentage
 }
 
-func (f *FeeHistoryEstimator) getDynamicFeeCache() dynamicFeeCache {
+func (f *FeeHistoryEstimator) getDynamicFeeCacheCopy() dynamicFeeCache {
 	f.dynamicMu.RLock()
 	defer f.dynamicMu.RUnlock()
 	return f.dynamicFeeCache
@@ -440,7 +438,7 @@ func (f *FeeHistoryEstimator) BumpDynamicFee(ctx context.Context, originalFee Dy
 			fees.ErrBump, originalFee.GasFeeCap, originalFee.GasTipCap, maxPrice)
 	}
 
-	cache := f.getDynamicFeeCache()
+	cache := f.getDynamicFeeCacheCopy()
 	currentDynamicFee, err := cache.getDynamicFee()
 	if err != nil {
 		return

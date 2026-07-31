@@ -304,7 +304,7 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		assert.Equal(t, maxPrice, dynamicFee.GasTipCap)
 	})
 
-	t.Run("applies the wider staleness buffer when there is no mempool", func(t *testing.T) {
+	t.Run("applies the NoMempoolBaseFeeBufferPercentage when there is no mempool", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
 		baseFee := big.NewInt(100)
 		maxPrice := assets.NewWeiI(1000)
@@ -316,8 +316,7 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		}
 		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(feeHistoryResult, nil).Once()
 
-		// BlockHistorySize of 0 signals a chain without a mempool, where the buffer covers cache staleness
-		// rather than time to inclusion, so it is wider than the default one.
+		// BlockHistorySize of 0 signals a chain without a mempool, so buffer is increased.
 		cfg := gas.FeeHistoryEstimatorConfig{BlockHistorySize: 0, EIP1559: true}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
@@ -330,7 +329,6 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		assert.Positive(t, dynamicFee.GasFeeCap.Cmp(assets.NewWei(baseFee).AddPercentage(gas.BaseFeeBufferPercentage)),
 			"the no-mempool buffer must be wider than the default one")
 
-		// GetMaxDynamicFee has no priority ladder to climb here, so it agrees with the market fee.
 		maxFee, err := u.GetMaxDynamicFee(maxPrice)
 		require.NoError(t, err)
 		assert.Equal(t, dynamicFee.GasFeeCap, maxFee.GasFeeCap)
