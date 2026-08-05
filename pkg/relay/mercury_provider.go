@@ -8,7 +8,6 @@ import (
 
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/triggers"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
@@ -56,7 +55,6 @@ func NewMercuryProvider(
 	csaKeystore coretypes.Keystore,
 	mercuryPool wsrpc.Pool,
 	mercuryORM mercury.ORM,
-	triggerCapability *triggers.MercuryTriggerService,
 ) (*mercuryProvider, error) {
 	reportCodecV2 := reportcodecv2.NewReportCodec(*relayConfig.FeedID, lggr.Named("ReportCodecV2"))
 	reportCodecV3 := reportcodecv3.NewReportCodec(*relayConfig.FeedID, lggr.Named("ReportCodecV3"))
@@ -101,7 +99,7 @@ func NewMercuryProvider(
 	if err != nil {
 		return nil, err
 	}
-	transmitter := mercury.NewTransmitter(lggr, transmitterCfg, clients, csaPub, jobID, *relayConfig.FeedID, mercuryORM, transmitterCodec, benchmarkPriceDecoder, triggerCapability)
+	transmitter := mercury.NewTransmitter(lggr, transmitterCfg, clients, csaPub, jobID, *relayConfig.FeedID, mercuryORM, transmitterCodec, benchmarkPriceDecoder)
 	return &mercuryProvider{
 		cp,
 		codec,
