@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Get refs from PR body
         id: set-git-refs
-        uses: smartcontractkit/.github/actions/get-refs-from-pr-body@v1
+        uses: smartcontractkit/.github/actions/get-refs-from-pr-body@get-refs-from-pr-body/v1
         with:
           sigscanner-url: ${{ secrets.SIGSCANNER_URL }}
           sigscanner-api-key: ${{ secrets.SIGSCANNER_API_KEY }}
