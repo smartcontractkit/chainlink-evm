@@ -34,7 +34,7 @@ import (
 	llotypes "github.com/smartcontractkit/chainlink-common/pkg/types/llo"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query/primitives"
-	"github.com/smartcontractkit/chainlink-data-streams/llo/types"
+	"github.com/smartcontractkit/chainlink-data-streams/llo/channelsource"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/llo-feeds/generated/channel_config_store"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 )
@@ -105,7 +105,7 @@ func init() {
 }
 
 type ChannelDefinitionCacheORM interface {
-	LoadChannelDefinitions(ctx context.Context, addr common.Address, donID uint32) (pd *types.PersistedDefinitions, err error)
+	LoadChannelDefinitions(ctx context.Context, addr common.Address, donID uint32) (pd *channelsource.PersistedDefinitions, err error)
 	StoreChannelDefinitions(ctx context.Context, addr common.Address, donID, version uint32, dfns json.RawMessage, blockNum int64, format uint32) (err error)
 	CleanupChannelDefinitions(ctx context.Context, addr common.Address, donID uint32) error
 }
@@ -135,15 +135,15 @@ func WithLogPollInterval(d time.Duration) Option {
 // It tracks the latest block number processed, the version (for owner sources), and
 // source definitions keyed by source ID.
 type Definitions struct {
-	LastBlockNum int64                             // The latest block number from which channel definitions were processed
-	Version      uint32                            // The version number from the owner source (only updated for SourceOwner)
-	Sources      map[uint32]types.SourceDefinition // Channel definitions grouped by source ID
+	LastBlockNum int64                                     // The latest block number from which channel definitions were processed
+	Version      uint32                                    // The version number from the owner source (only updated for SourceOwner)
+	Sources      map[uint32]channelsource.SourceDefinition // Channel definitions grouped by source ID
 }
 
 // channelDefinitionCache maintains an in-memory cache of channel definitions fetched from on-chain
 // events and external URLs. It polls the blockchain for new channel definition events, fetches
 // definitions from URLs, verifies SHA hashes, merges definitions from multiple sources according
-// to authority rules, and persists source definitions (map[uint32]types.SourceDefinition) to the database.
+// to authority rules, and persists source definitions (map[uint32]channelsource.SourceDefinition) to the database.
 type channelDefinitionCache struct {
 	services.StateMachine
 
@@ -162,7 +162,7 @@ type channelDefinitionCache struct {
 	lggr             logger.SugaredLogger
 	initialBlockNum  int64
 
-	fetchTriggerCh chan types.Trigger
+	fetchTriggerCh chan channelsource.Trigger
 
 	definitionsMu sync.RWMutex
 	definitions   Definitions
@@ -196,11 +196,11 @@ func NewChannelDefinitionCache(lggr logger.Logger, orm ChannelDefinitionCacheORM
 		donID:           donID,
 		donIDTopic:      common.BigToHash(big.NewInt(int64(donID))),
 		lggr:            logger.Sugared(lggr).Named("ChannelDefinitionCache").With("addr", addr, "fromBlock", fromBlock),
-		fetchTriggerCh:  make(chan types.Trigger, 1),
+		fetchTriggerCh:  make(chan channelsource.Trigger, 1),
 		initialBlockNum: fromBlock,
 		chStop:          make(chan struct{}),
 		definitions: Definitions{
-			Sources: make(map[uint32]types.SourceDefinition),
+			Sources: make(map[uint32]channelsource.SourceDefinition),
 		},
 	}
 
@@ -251,15 +251,15 @@ func (c *channelDefinitionCache) Start(ctx context.Context) error {
 			return err
 		}
 
-		var pd *types.PersistedDefinitions
+		var pd *channelsource.PersistedDefinitions
 		if pd, err = c.orm.LoadChannelDefinitions(ctx, c.addr, c.donID); err != nil {
 			return err
 		}
 
-		c.definitions.Sources = make(map[uint32]types.SourceDefinition)
+		c.definitions.Sources = make(map[uint32]channelsource.SourceDefinition)
 		if pd != nil {
 			if pd.Format == MultiChannelDefinitionsFormat {
-				var sources map[uint32]types.SourceDefinition
+				var sources map[uint32]channelsource.SourceDefinition
 				if sources, err = decodePersistedSourceDefinitions(pd.Definitions); err != nil {
 					return err
 				}
@@ -447,7 +447,7 @@ func (c *channelDefinitionCache) scanFromBlockNum() int64 {
 // the fetch channel for asynchronous processing by fetchLatestLoop.
 func (c *channelDefinitionCache) processLogs(logs []logpoller.Log) {
 	for _, log := range logs {
-		var trigger types.Trigger
+		var trigger channelsource.Trigger
 		switch log.EventSig {
 		case NewChannelDefinition:
 			unpacked, err := c.unpackOwnerLog(log)
@@ -456,7 +456,7 @@ func (c *channelDefinitionCache) processLogs(logs []logpoller.Log) {
 				c.lggr.Warnw("Failed to unpack owner log", "err", err, "blockNumber", log.BlockNumber)
 				continue
 			}
-			trigger = types.Trigger{
+			trigger = channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      unpacked.Url,
 				SHA:      unpacked.Sha,
@@ -472,7 +472,7 @@ func (c *channelDefinitionCache) processLogs(logs []logpoller.Log) {
 				c.lggr.Warnw("Failed to unpack adder log", "err", err, "blockNumber", log.BlockNumber)
 				continue
 			}
-			trigger = types.Trigger{
+			trigger = channelsource.Trigger{
 				Source:   unpacked.ChannelAdderId,
 				URL:      unpacked.Url,
 				SHA:      unpacked.Sha,
@@ -645,7 +645,7 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 func (c *channelDefinitionCache) fetchLatestLoop() {
 	defer c.wg.Done()
 
-	var trigger types.Trigger
+	var trigger channelsource.Trigger
 	for {
 		select {
 		case trigger = <-c.fetchTriggerCh:
@@ -663,7 +663,7 @@ func (c *channelDefinitionCache) fetchLatestLoop() {
 // fetchRetryTimeout is reached or the cache is stopped (context cache shutdown).
 // This isolates retry logic from the main fetch loop, allowing it to continue processing new triggers
 // while retries occur in the background.
-func (c *channelDefinitionCache) fetchLoop(trigger types.Trigger) {
+func (c *channelDefinitionCache) fetchLoop(trigger channelsource.Trigger) {
 	defer c.wg.Done()
 	var err error
 	b := newHTTPFetchBackoff()
@@ -702,7 +702,7 @@ func (c *channelDefinitionCache) fetchLoop(trigger types.Trigger) {
 // Returns an error if fetching, SHA verification, or JSON decoding fails. Note that adder limit
 // checks occur during merging in Definitions(), where violations are handled by logging warnings
 // and stopping processing for that source, not by returning errors.
-func (c *channelDefinitionCache) fetchAndSetChannelDefinitions(ctx context.Context, trigger types.Trigger) error {
+func (c *channelDefinitionCache) fetchAndSetChannelDefinitions(ctx context.Context, trigger channelsource.Trigger) error {
 	defs, err := c.fetchChannelDefinitions(ctx, trigger)
 	if err != nil {
 		return fmt.Errorf("failed to fetch channel definitions: %w", err)
@@ -722,7 +722,7 @@ func (c *channelDefinitionCache) fetchAndSetChannelDefinitions(ctx context.Conte
 		}
 	}
 
-	c.definitions.Sources[trigger.Source] = types.SourceDefinition{
+	c.definitions.Sources[trigger.Source] = channelsource.SourceDefinition{
 		Trigger:     trigger,
 		Definitions: defs,
 	}
@@ -746,7 +746,7 @@ func (c *channelDefinitionCache) fetchAndSetChannelDefinitions(ctx context.Conte
 // the JSON response, and annotates each definition with its source identifier. Returns an
 // error if the URL is invalid, the HTTP request fails, the hash verification fails, or the
 // JSON cannot be decoded.
-func (c *channelDefinitionCache) fetchChannelDefinitions(ctx context.Context, trigger types.Trigger) (llotypes.ChannelDefinitions, error) {
+func (c *channelDefinitionCache) fetchChannelDefinitions(ctx context.Context, trigger channelsource.Trigger) (llotypes.ChannelDefinitions, error) {
 	u, err := url.ParseRequestURI(trigger.URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL %s: %w", trigger.URL, err)
@@ -921,7 +921,7 @@ func (c *channelDefinitionCache) Definitions(prev llotypes.ChannelDefinitions) l
 		merged = make(llotypes.ChannelDefinitions)
 	}
 
-	src := make([]types.SourceDefinition, 0, len(c.definitions.Sources))
+	src := make([]channelsource.SourceDefinition, 0, len(c.definitions.Sources))
 	for _, sourceDefinition := range c.definitions.Sources {
 		src = append(src, sourceDefinition)
 	}
@@ -946,8 +946,8 @@ func (c *channelDefinitionCache) Definitions(prev llotypes.ChannelDefinitions) l
 	return merged
 }
 
-func decodePersistedSourceDefinitions(definitionsJSON json.RawMessage) (map[uint32]types.SourceDefinition, error) {
-	var sources map[uint32]types.SourceDefinition
+func decodePersistedSourceDefinitions(definitionsJSON json.RawMessage) (map[uint32]channelsource.SourceDefinition, error) {
+	var sources map[uint32]channelsource.SourceDefinition
 	if err := json.Unmarshal(definitionsJSON, &sources); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal persisted definitions: %w", err)
 	}

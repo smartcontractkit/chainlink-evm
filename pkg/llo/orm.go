@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
-	"github.com/smartcontractkit/chainlink-data-streams/llo/types"
+	"github.com/smartcontractkit/chainlink-data-streams/llo/channelsource"
 	"github.com/smartcontractkit/chainlink-evm/pkg/llo/channeldefinitions"
 )
 
@@ -29,8 +29,8 @@ func NewChainScopedORM(ds sqlutil.DataSource, chainSelector uint64) ChainScopedO
 	return &chainScopedORM{ds, chainSelector}
 }
 
-func (o *chainScopedORM) LoadChannelDefinitions(ctx context.Context, addr common.Address, donID uint32) (pd *types.PersistedDefinitions, err error) {
-	pd = new(types.PersistedDefinitions)
+func (o *chainScopedORM) LoadChannelDefinitions(ctx context.Context, addr common.Address, donID uint32) (pd *channelsource.PersistedDefinitions, err error) {
+	pd = new(channelsource.PersistedDefinitions)
 	err = o.ds.GetContext(ctx, pd, "SELECT * FROM channel_definitions WHERE chain_selector = $1 AND addr = $2 AND don_id = $3", o.chainSelector, addr, donID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
