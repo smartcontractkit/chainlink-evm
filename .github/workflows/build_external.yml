@@ -18,10 +18,12 @@ jobs:
       contents: read
     outputs:
       core-ref: ${{ steps.set-git-refs.outputs.core-ref }}
+      solana-ref: ${{ steps.set-git-refs.outputs.solana-ref }}
+      starknet-ref: ${{ steps.set-git-refs.outputs.starknet-ref }}
     steps:
       - name: Get refs from PR body
         id: set-git-refs
-        uses: smartcontractkit/.github/actions/get-refs-from-pr-body@get-refs-from-pr-body/v1
+        uses: smartcontractkit/.github/actions/get-refs-from-pr-body@v1
         with:
           sigscanner-url: ${{ secrets.SIGSCANNER_URL }}
           sigscanner-api-key: ${{ secrets.SIGSCANNER_API_KEY }}
@@ -67,5 +69,5 @@ jobs:
         working-directory: chainlink
         run: |
           go get "github.com/smartcontractkit/chainlink-evm@${CL_EVM_SHA}"
-          make gomodtidy
+          go mod tidy
           make install-chainlink
