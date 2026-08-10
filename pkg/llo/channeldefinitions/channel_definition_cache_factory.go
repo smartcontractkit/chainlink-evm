@@ -6,7 +6,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	llotypes "github.com/smartcontractkit/chainlink-common/pkg/types/llo"
 
-	lloconfig "github.com/smartcontractkit/chainlink-data-streams/llo/config"
+	lloconfig "github.com/smartcontractkit/chainlink-data-streams/llo/pluginconfig"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 )
 

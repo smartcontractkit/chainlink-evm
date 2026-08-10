@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	llotypes "github.com/smartcontractkit/chainlink-common/pkg/types/llo"
-	"github.com/smartcontractkit/chainlink-data-streams/llo/types"
+	"github.com/smartcontractkit/chainlink-data-streams/llo/channelsource"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/llo/channeldefinitions"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
@@ -105,7 +105,7 @@ func Test_ORM(t *testing.T) {
 			assert.Equal(t, uint32(1), pd.Format)
 
 			// Unmarshal the definitions from json.RawMessage
-			var loadedDefs map[uint32]types.SourceDefinition
+			var loadedDefs map[uint32]channelsource.SourceDefinition
 			err = json.Unmarshal(pd.Definitions, &loadedDefs)
 			require.NoError(t, err)
 			require.Len(t, loadedDefs, 1)
@@ -128,7 +128,7 @@ func Test_ORM(t *testing.T) {
 			require.NoError(t, err)
 
 			// Unmarshal empty definitions
-			var emptyDefs map[uint32]types.SourceDefinition
+			var emptyDefs map[uint32]channelsource.SourceDefinition
 			err = json.Unmarshal(pd.Definitions, &emptyDefs)
 			require.NoError(t, err)
 			assert.Empty(t, emptyDefs)
@@ -138,7 +138,7 @@ func Test_ORM(t *testing.T) {
 			pd, err = orm.LoadChannelDefinitions(ctx, addr1, donID2)
 			require.NoError(t, err)
 
-			assert.Equal(t, (*types.PersistedDefinitions)(nil), pd)
+			assert.Equal(t, (*channelsource.PersistedDefinitions)(nil), pd)
 		})
 	})
 
@@ -148,9 +148,9 @@ func Test_ORM(t *testing.T) {
 		cid2 := rand.Uint32()
 		cid3 := rand.Uint32()
 		cid4 := rand.Uint32()
-		defs := map[uint32]types.SourceDefinition{
+		defs := map[uint32]channelsource.SourceDefinition{
 			1: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   1,
 					BlockNum: 142,
 					Version:  42,
@@ -168,7 +168,7 @@ func Test_ORM(t *testing.T) {
 				},
 			},
 			2: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   2,
 					BlockNum: 142,
 					Version:  42,
@@ -205,14 +205,14 @@ func Test_ORM(t *testing.T) {
 			assert.Equal(t, channeldefinitions.MultiChannelDefinitionsFormat, pd.Format)
 
 			// Unmarshal and compare
-			var loadedDefs map[uint32]types.SourceDefinition
+			var loadedDefs map[uint32]channelsource.SourceDefinition
 			err = json.Unmarshal(pd.Definitions, &loadedDefs)
 			require.NoError(t, err)
 			assert.Equal(t, defs, loadedDefs)
 		})
 		t.Run("does not update if version is older than the database persisted version", func(t *testing.T) {
 			// try to update with an older version
-			emptyDefsJSON, err := json.Marshal(map[uint32]types.SourceDefinition{})
+			emptyDefsJSON, err := json.Marshal(map[uint32]channelsource.SourceDefinition{})
 			require.NoError(t, err)
 			err = orm.StoreChannelDefinitions(ctx, addr1, donID1, 41, emptyDefsJSON, expectedBlockNum-1, channeldefinitions.MultiChannelDefinitionsFormat)
 			require.NoError(t, err)
@@ -222,7 +222,7 @@ func Test_ORM(t *testing.T) {
 			assert.Equal(t, uint32(42), pd.Version)
 
 			// Unmarshal and verify original definitions are still there
-			var loadedDefs map[uint32]types.SourceDefinition
+			var loadedDefs map[uint32]channelsource.SourceDefinition
 			err = json.Unmarshal(pd.Definitions, &loadedDefs)
 			require.NoError(t, err)
 			assert.Equal(t, defs, loadedDefs)

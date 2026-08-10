@@ -21,11 +21,11 @@ import (
 	relaytypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	coretypes "github.com/smartcontractkit/chainlink-common/pkg/types/core"
 	llotypes "github.com/smartcontractkit/chainlink-common/pkg/types/llo"
-	lloconfig "github.com/smartcontractkit/chainlink-data-streams/llo/config"
+	lloconfig "github.com/smartcontractkit/chainlink-data-streams/llo/pluginconfig"
 	"github.com/smartcontractkit/chainlink-data-streams/llo/retirement"
 	llotransmitter "github.com/smartcontractkit/chainlink-data-streams/llo/transmitter"
-	"github.com/smartcontractkit/chainlink-data-streams/llo/transmitter/bm"
-	mercurytransmitter "github.com/smartcontractkit/chainlink-data-streams/llo/transmitter/de"
+	mercurytransmitter "github.com/smartcontractkit/chainlink-data-streams/llo/transmitter/dataengine"
+	dummytransmitter "github.com/smartcontractkit/chainlink-data-streams/llo/transmitter/dummy"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc"
 	"github.com/smartcontractkit/chainlink-data-streams/rpc"
@@ -118,7 +118,7 @@ func NewLLOProvider(
 	var transmitter LLOTransmitter
 	if lloCfg.BenchmarkMode {
 		lggr.Info("Benchmark mode enabled, using dummy transmitter. NOTE: THIS WILL NOT TRANSMIT ANYTHING")
-		transmitter = bm.NewTransmitter(lggr, csaPub)
+		transmitter = dummytransmitter.NewTransmitter(lggr, csaPub)
 	} else {
 		clients := make(map[string]rpc.Client)
 

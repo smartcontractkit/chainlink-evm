@@ -32,7 +32,7 @@ import (
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	coretypes "github.com/smartcontractkit/chainlink-common/pkg/types/core"
 	"github.com/smartcontractkit/chainlink-data-streams/llo/retirement"
-	coreconfig "github.com/smartcontractkit/chainlink-data-streams/llo/transmitter/de"
+	coreconfig "github.com/smartcontractkit/chainlink-data-streams/llo/transmitter/dataengine"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury"
 	mercuryconfig "github.com/smartcontractkit/chainlink-data-streams/mercury/config"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc"
