@@ -1,0 +1,73 @@
+# Builds external repositories that use this so we can create tickets to update them before their ci pipelines break.
+# NOTE: This is not a required check to merge, merely a check so you know to update the products that rely on this.
+name: Build External Repositories
+on:
+  pull_request:
+
+# Only run 1 of this workflow at a time per PR
+concurrency:
+  group: integration-build-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      core-ref: ${{ steps.set-git-refs.outputs.core-ref }}
+      solana-ref: ${{ steps.set-git-refs.outputs.solana-ref }}
+      starknet-ref: ${{ steps.set-git-refs.outputs.starknet-ref }}
+    steps:
+      - name: Get refs from PR body
+        id: set-git-refs
+        uses: smartcontractkit/.github/actions/get-refs-from-pr-body@get-refs-from-pr-body/v1
+        with:
+          sigscanner-url: ${{ secrets.SIGSCANNER_URL }}
+          sigscanner-api-key: ${{ secrets.SIGSCANNER_API_KEY }}
+
+  build-chainlink:
+    needs: init
+    environment:
+      name: integration
+      deployment: false
+    permissions:
+      contents: read
+      id-token: write
+    name: Build Chainlink
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout the chainlink-evm repo
+        uses: actions/checkout@v7
+        with:
+          repository: smartcontractkit/chainlink-evm
+          persist-credentials: false
+          path: chainlink-evm
+
+      - name: Checkout the chainlink core repo
+        uses: actions/checkout@v7
+        with:
+          repository: smartcontractkit/chainlink
+          ref: ${{ needs.init.outputs.core-ref }}
+          persist-credentials: false
+          path: chainlink
+
+      - name: Setup Go
+        uses: ./chainlink-evm/.github/actions/setup-go
+        with:
+          go-version-file: "chainlink/go.mod"
+          only-modules: "true"
+
+      - name: Build /chainlink
+        shell: bash
+        env:
+          CL_EVM_SHA: ${{ github.event.pull_request.head.sha }}
+        working-directory: chainlink
+        run: |
+          go get "github.com/smartcontractkit/chainlink-evm@${CL_EVM_SHA}"
+          go mod tidy
+          make install-chainlink
