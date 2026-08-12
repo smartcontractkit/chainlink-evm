@@ -4,32 +4,11 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"time"
 
 	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
-)
-
-// The values Config does not expose are fixed here, mirroring chainlink's own EVM chain
-// defaults for a generic EVM chain, so a binary polling the same RPCs through Config.New
-// behaves like the node does. The settings Config does expose are defaulted by whoever binds
-// it, not here.
-const (
-	fixedSelectionMode              = "HighestHead"
-	fixedLeaseDuration              = 0
-	fixedPollFailureThreshold       = uint32(5)
-	fixedPollSuccessThreshold       = uint32(0)
-	fixedSyncThreshold              = uint32(5)
-	fixedNoNewHeadsThreshold        = 3 * time.Minute
-	fixedFinalizedBlockOffset       = uint32(0)
-	fixedDeathDeclarationDelay      = 10 * time.Second
-	fixedNoNewFinalizedHeads        = 0
-	fixedFinalizedBlockPollInterval = 5 * time.Second
-	fixedNewHeadsPollInterval       = 0
-	fixedConfirmationTimeout        = 60 * time.Second
-	fixedSafeDepth                  = uint32(0)
 )
 
 // Config is the configuration for a multinode-backed [Client] created by [NewClientFromConfig]: the
@@ -39,17 +18,31 @@ const (
 //
 // At least one HTTPURL is required. WSURLs are optional; without them the client polls for
 // heads rather than subscribing, which is enough for view calls.
-// A field carries a `toml` tag only where its key differs from its own name: the plural URL
-// slices are each bound to a singular key, since one flag is repeated to build the pool.
 type Config struct {
 	HTTPURLs  []string `toml:"http-url" usage:"EVM RPC HTTP URL(s); repeat or comma-separate for a multinode pool" validate:"required" example:"['https://rpc.example.com']"`
 	WSURLs    []string `toml:"ws-url" usage:"EVM RPC WebSocket URL(s), positionally paired with --evm.http-url; optional" validate:"excluded_without=HTTPURLs"`
 	ChainID   string   `usage:"EVM chain ID" validate:"required" example:"'1'"`
 	ChainType string   `usage:"EVM chain type (empty for a generic EVM chain)"`
 
-	FinalityTagEnabled bool                  `usage:"use the finalized block tag instead of a finality depth"`
-	FinalityDepth      uint32                `usage:"finality depth, used when --evm.finality-tag-enabled=false"`
-	PollInterval       commonconfig.Duration `usage:"per-node health poll interval"`
+	SelectionMode              string                `usage:"node selection mode"`
+	LeaseDuration              commonconfig.Duration `usage:"lease duration for node selection"`
+	PollFailureThreshold       uint32                `usage:"poll failure threshold before marking node unhealthy"`
+	PollSuccessThreshold       uint32                `usage:"poll success threshold before marking node healthy"`
+	PollInterval               commonconfig.Duration `usage:"per-node health poll interval"`
+	SyncThreshold              uint32                `usage:"sync threshold for head height lag"`
+	NodeIsSyncingEnabled       bool                  `usage:"enable checking eth_syncing state"`
+	NoNewHeadsThreshold        commonconfig.Duration `usage:"duration without new heads before declaring out of sync"`
+	FinalityTagEnabled         bool                  `usage:"use the finalized block tag instead of a finality depth"`
+	FinalityDepth              uint32                `usage:"finality depth, used when --evm.finality-tag-enabled=false"`
+	SafeTagSupported           bool                  `usage:"whether safe block tag is supported"`
+	FinalizedBlockOffset       uint32                `usage:"offset applied to finalized block tags"`
+	EnforceRepeatableRead      bool                  `usage:"enforce repeatable read across nodes"`
+	DeathDeclarationDelay      commonconfig.Duration `usage:"delay before declaring a node dead"`
+	NoNewFinalizedHeads        commonconfig.Duration `usage:"threshold duration for missing finalized heads"`
+	FinalizedBlockPollInterval commonconfig.Duration `usage:"poll interval for finalized block tag"`
+	NewHeadsPollInterval       commonconfig.Duration `usage:"poll interval for new heads when WS is disabled"`
+	ConfirmationTimeout        commonconfig.Duration `usage:"timeout duration for block confirmation"`
+	SafeDepth                  uint32                `usage:"safe depth block offset"`
 }
 
 // NewClientFromConfig builds and dials a multinode-backed Client from cfg, one node per HTTPURL
@@ -85,40 +78,28 @@ func NewClientFromConfig(ctx context.Context, lggr logger.Logger, c Config) (Cli
 		nodeCfgs[i] = nodeCfg
 	}
 
-	selectionMode := fixedSelectionMode
-	pollFailureThreshold := fixedPollFailureThreshold
-	pollSuccessThreshold := fixedPollSuccessThreshold
-	syncThreshold := fixedSyncThreshold
-	nodeIsSyncingEnabled := false
-	finalityDepth := c.FinalityDepth
-	finalityTagEnabled := c.FinalityTagEnabled
-	safeTagSupported := false
-	finalizedBlockOffset := fixedFinalizedBlockOffset
-	enforceRepeatableRead := true
-	safeDepth := fixedSafeDepth
-
 	chainCfg, nodePool, nodes, err := NewClientConfigs(
-		&selectionMode,
-		fixedLeaseDuration,
+		&c.SelectionMode,
+		c.LeaseDuration.Duration(),
 		c.ChainType,
 		nodeCfgs,
-		&pollFailureThreshold,
-		&pollSuccessThreshold,
+		&c.PollFailureThreshold,
+		&c.PollSuccessThreshold,
 		c.PollInterval.Duration(),
-		&syncThreshold,
-		&nodeIsSyncingEnabled,
-		fixedNoNewHeadsThreshold,
-		&finalityDepth,
-		&finalityTagEnabled,
-		&safeTagSupported,
-		&finalizedBlockOffset,
-		&enforceRepeatableRead,
-		fixedDeathDeclarationDelay,
-		fixedNoNewFinalizedHeads,
-		fixedFinalizedBlockPollInterval,
-		fixedNewHeadsPollInterval,
-		fixedConfirmationTimeout,
-		&safeDepth,
+		&c.SyncThreshold,
+		&c.NodeIsSyncingEnabled,
+		c.NoNewHeadsThreshold.Duration(),
+		&c.FinalityDepth,
+		&c.FinalityTagEnabled,
+		&c.SafeTagSupported,
+		&c.FinalizedBlockOffset,
+		&c.EnforceRepeatableRead,
+		c.DeathDeclarationDelay.Duration(),
+		c.NoNewFinalizedHeads.Duration(),
+		c.FinalizedBlockPollInterval.Duration(),
+		c.NewHeadsPollInterval.Duration(),
+		c.ConfirmationTimeout.Duration(),
+		&c.SafeDepth,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build evm client configs: %w", err)
@@ -135,6 +116,6 @@ func NewClientFromConfig(ctx context.Context, lggr logger.Logger, c Config) (Cli
 		return nil, fmt.Errorf("failed to dial evm client: %w", err)
 	}
 
-	lggr.Infow("EVM client dialed", "chainID", chainID, "nodes", len(nodes), "selectionMode", selectionMode)
+	lggr.Infow("EVM client dialed", "chainID", chainID, "nodes", len(nodes), "selectionMode", c.SelectionMode)
 	return cl, nil
 }
