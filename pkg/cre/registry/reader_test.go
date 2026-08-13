@@ -132,7 +132,7 @@ func TestReader_ReadBuildsSnapshot(t *testing.T) {
 	require.Len(t, don.Members, 2)
 
 	// Capability config is carried through undecoded.
-	assert.Equal(t, []byte("act-cfg"), don.CapabilityConfigurations["act@1.0.0"])
+	assert.Equal(t, []byte("act-cfg"), don.CapabilityConfigurations["act@1.0.0"].Config)
 
 	require.Len(t, snap.Nodes, 2)
 	assert.Equal(t, uint32(11), snap.Nodes[peer(1)].NodeOperatorID)

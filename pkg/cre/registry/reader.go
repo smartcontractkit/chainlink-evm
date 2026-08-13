@@ -121,9 +121,9 @@ func (r *Reader) Read(ctx context.Context) (*registry.Snapshot, error) {
 
 	idsToDONs := make(map[registry.DonID]registry.DON, len(dons))
 	for _, d := range dons {
-		cfgs := make(map[string][]byte, len(d.CapabilityConfigurations))
+		cfgs := make(map[string]registry.CapabilityConfiguration, len(d.CapabilityConfigurations))
 		for _, dc := range d.CapabilityConfigurations {
-			cfgs[dc.CapabilityId] = dc.Config
+			cfgs[dc.CapabilityId] = registry.CapabilityConfiguration{Config: dc.Config}
 		}
 		idsToDONs[registry.DonID(d.Id)] = registry.DON{
 			DON:                      toDON(d),
