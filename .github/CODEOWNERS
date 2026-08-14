@@ -22,7 +22,6 @@
 /contracts/**/*upkeep* @smartcontractkit/dev-services
 /contracts/**/*automation* @smartcontractkit/dev-services
 /contracts/**/*automation-cre* @smartcontractkit/cld-vault
-/contracts/**/*functions* @smartcontractkit/dev-services
 /contracts/**/*l2ep* @smartcontractkit/data-growth
 /contracts/**/*llo-feeds* @smartcontractkit/data-streams-engineers
 /contracts/**/*operatorforwarder* @smartcontractkit/data-feeds-engineers
@@ -34,7 +33,6 @@
 
 /contracts/src/v0.8/automation @smartcontractkit/dev-services
 /contracts/src/v0.8/automation-cre @smartcontractkit/cld-vault
-/contracts/src/v0.8/functions @smartcontractkit/dev-services
 /contracts/src/v0.8/l2ep @smartcontractkit/data-growth
 /contracts/src/v0.8/llo-feeds @smartcontractkit/data-streams-engineers
 # TODO: mocks folder, folder should be removed and files moved to the correct folders

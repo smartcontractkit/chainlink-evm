@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
+import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 
 import {SubscriptionAPI} from "../SubscriptionAPI.sol";
 
