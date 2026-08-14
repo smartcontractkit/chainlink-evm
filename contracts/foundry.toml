@@ -27,15 +27,6 @@ ignore = ["src/v0.8/vendor/**/*.sol", "src/v0.6/**/*.sol"]
 number_underscore = "thousands"
 wrap_comments = true
 
-[profile.functions]
-optimizer_runs = 1_000_000
-solc_version = '0.8.19'
-evm_version = 'paris'
-src = 'src/v0.8/functions'
-test = 'src/v0.8/functions/tests'
-gas_price = 3_000_000_000         # 3 gwei
-deny_warnings = false
-
 #Used in tests with different solidity versions.
 [profile.vrf]
 optimizer_runs = 1_000

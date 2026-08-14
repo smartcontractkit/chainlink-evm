@@ -1,9 +1,9 @@
 pragma solidity 0.8.19;
 
-import {MockLinkToken} from "../../functions/tests/v1_3_1/testhelpers/MockLinkToken.sol";
 import {SubscriptionAPI} from "../SubscriptionAPI.sol";
 import {VRFV2PlusClient} from "../libraries/VRFV2PlusClient.sol";
 import {VRFCoordinatorV2_5Mock} from "../mocks/VRFCoordinatorV2_5Mock.sol";
+import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 import {VRFConsumerV2Plus} from "../testhelpers/VRFConsumerV2Plus.sol";
 import "./BaseTest.t.sol";
 

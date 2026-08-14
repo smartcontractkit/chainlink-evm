@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {MockLinkToken} from "../../functions/tests/v1_3_1/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
+import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 
 import {GasPriceOracle as OVM_GasPriceOracle} from
   "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";

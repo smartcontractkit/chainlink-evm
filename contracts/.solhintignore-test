@@ -1,6 +1,5 @@
 src/v0.8/automation/
 src/v0.8/data-feeds/test/helpers/DataFeedsLegacyAggregatorProxy.sol
-src/v0.8/functions/
 src/v0.8/l2ep/
 src/v0.8/llo-feeds/
 src/v0.8/operatorforwarder/

@@ -1,10 +1,10 @@
 pragma solidity 0.8.19;
 
-import {MockLinkToken} from "../../functions/tests/v1_3_1/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 import {SubscriptionAPI} from "../SubscriptionAPI.sol";
 import {VRFCoordinatorV2_5} from "../VRFCoordinatorV2_5.sol";
 import {ExposedVRFCoordinatorV2_5} from "../testhelpers/ExposedVRFCoordinatorV2_5.sol";
+import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 import {VRFCoordinatorV2Plus_V2Example} from "../testhelpers/VRFCoordinatorV2Plus_V2Example.sol";
 
 import {VRFV2PlusConsumerExample} from "../testhelpers/VRFV2PlusConsumerExample.sol";
