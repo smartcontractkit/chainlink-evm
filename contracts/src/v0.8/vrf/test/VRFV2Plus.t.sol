@@ -1,6 +1,6 @@
 pragma solidity 0.8.19;
 
-import {MockLinkToken} from "../../functions/tests/v1_3_1/testhelpers/MockLinkToken.sol";
+import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 import {VRF} from "../VRF.sol";
 
