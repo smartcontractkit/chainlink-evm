@@ -108,7 +108,7 @@ func (t *transmitter) CreateEthTransaction(ctx context.Context, toAddress common
 		_, count, err1 := t.statuschecker.CheckMessageStatus(ctx, messageID)
 
 		if err1 != nil {
-			return errors.Wrap(err, "skipped OCR transmission, error getting message status")
+			return errors.Wrap(err1, "skipped OCR transmission, error getting message status")
 		}
 		idempotencyKey = func() *string {
 			s := fmt.Sprintf("%s-%d", messageID, count+1)

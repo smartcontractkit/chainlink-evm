@@ -22,6 +22,7 @@ package abi
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
@@ -94,8 +95,9 @@ func parseCompositeType(unescapedSelector string) ([]abi.ArgumentMarshaling, str
 	i := 0
 	for len(rest) > 0 && rest[0] != ')' {
 		// skip any leading whitespace
-		for rest[0] == ' ' {
-			rest = rest[1:]
+		rest = strings.TrimLeft(rest, " ")
+		if len(rest) == 0 {
+			return nil, "", errors.New("string ended mid-parse")
 		}
 
 		parsedType, rest, err = parseType(rest[0:])
@@ -104,8 +106,9 @@ func parseCompositeType(unescapedSelector string) ([]abi.ArgumentMarshaling, str
 		}
 
 		// skip whitespace between name and identifier
-		for rest[0] == ' ' {
-			rest = rest[1:]
+		rest = strings.TrimLeft(rest, " ")
+		if len(rest) == 0 {
+			return nil, "", errors.New("string ended mid-parse")
 		}
 
 		name := fmt.Sprintf("name%d", i)
@@ -127,9 +130,7 @@ func parseCompositeType(unescapedSelector string) ([]abi.ArgumentMarshaling, str
 		i++
 
 		// skip trailing whitespace, consume comma
-		for rest[0] == ' ' || rest[0] == ',' {
-			rest = rest[1:]
-		}
+		rest = strings.TrimLeft(rest, " ,")
 	}
 	if len(rest) == 0 || rest[0] != ')' {
 		return nil, "", fmt.Errorf("expected ')', got '%s'", rest)

@@ -229,8 +229,19 @@ func (v *VRFV1Checker) Check(
 		l.Errorw("Failed to fetch latest header and transaction receipt. Attempting to transmit anyway.",
 			"err", err,
 			"ethTxID", tx.ID,
-			"meta", tx.Meta,
-		)
+			"meta", tx.Meta)
+		return nil
+	} else if err = batch[0].Error; err != nil {
+		l.Errorw("Failed to fetch latest header. Attempting to transmit anyway.", "err", err,
+			"err", err,
+			"ethTxID", tx.ID,
+			"meta", tx.Meta)
+		return nil
+	} else if err = batch[1].Error; err != nil {
+		l.Errorw("Failed to fetch transaction receipt. Attempting to transmit anyway.",
+			"err", err,
+			"ethTxID", tx.ID,
+			"meta", tx.Meta)
 		return nil
 	}
 

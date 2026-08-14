@@ -34,6 +34,9 @@ func chainSpecificIsUsable(tx evmtypes.Transaction, baseFee *assets.Wei, chainTy
 		if tx.Type == 0x7c || tx.Type == 0x7b || tx.Type == 0x7e {
 			return false
 		}
+		if tx.GasPrice == nil {
+			return false
+		}
 		// Celo has not yet fully migrated to the 0x7c type for special feeCurrency transactions
 		// and uses the standard 0x0, 0x2 types instead. We need to discard any invalid transactions
 		// and not throw an error since this can happen from time to time and it's an expected behavior

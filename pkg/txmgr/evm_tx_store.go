@@ -1311,15 +1311,16 @@ func (o *evmTxStore) GetAbandonedTransactionsByBatch(ctx context.Context, chainI
 	return txes, err
 }
 
-func (o *evmTxStore) GetTxByID(ctx context.Context, id int64) (txe *Tx, err error) {
+func (o *evmTxStore) GetTxByID(ctx context.Context, id int64) (*Tx, error) {
 	var cancel context.CancelFunc
 	ctx, cancel = o.stopCh.Ctx(ctx)
 	defer cancel()
 
-	err = o.Transact(ctx, true, func(orm *evmTxStore) error {
+	var txe *Tx
+	err := o.Transact(ctx, true, func(orm *evmTxStore) error {
 		stmt := `SELECT * FROM evm.txes WHERE id = $1`
 		var dbEtxs []DbEthTx
-		if err = orm.q.SelectContext(ctx, &dbEtxs, stmt, id); err != nil {
+		if err := orm.q.SelectContext(ctx, &dbEtxs, stmt, id); err != nil {
 			return fmt.Errorf("failed to load evm.txes: %w", err)
 		}
 		txes := make([]*Tx, len(dbEtxs))
@@ -1328,14 +1329,13 @@ func (o *evmTxStore) GetTxByID(ctx context.Context, id int64) (txe *Tx, err erro
 			return fmt.Errorf("failed to get tx with id %v", id)
 		}
 		txe = txes[0]
-		err = o.LoadTxesAttempts(ctx, txes)
-		if err != nil {
+		if err := o.LoadTxesAttempts(ctx, txes); err != nil {
 			return fmt.Errorf("failed to load evm.tx_attempts: %w", err)
 		}
 		return nil
 	})
 
-	return txe, nil
+	return txe, err
 }
 
 // FindTxsRequiringGasBump returns transactions that have all

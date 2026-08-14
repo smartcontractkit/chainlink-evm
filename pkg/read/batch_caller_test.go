@@ -18,7 +18,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/read"
 	"github.com/smartcontractkit/chainlink-evm/pkg/read/mocks"
-	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 )
 
 func TestDefaultEvmBatchCaller_BatchCallDynamicLimit(t *testing.T) {
@@ -98,14 +97,14 @@ func TestDefaultEvmBatchCaller_BatchCallDynamicLimit(t *testing.T) {
 			}
 
 			bc := read.NewDynamicLimitedBatchCaller(logger.Test(t), mockCodec, ec, tc.maxBatchSize, tc.backOffMultiplier, 1)
-			_, _ = bc.BatchCall(testutils.Context(t), 123, calls)
+			_, _ = bc.BatchCall(t.Context(), 123, calls)
 			assert.Equal(t, tc.expectedBatchSizesOnEachRetry, batchSizes)
 		})
 	}
 }
 
 func TestDefaultEvmBatchCaller_batchCallLimit(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	testCases := []struct {
 		numCalls              uint
 		batchSize             uint

@@ -2,7 +2,6 @@ package read
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"iter"
 	"maps"
@@ -640,8 +639,8 @@ func ConfirmationsFromConfig(values map[string]int) (map[primitives.ConfidenceLe
 	}
 
 	if mappings[primitives.Finalized] != evmtypes.Finalized &&
-		mappings[primitives.Finalized] > mappings[primitives.Unconfirmed] {
-		return nil, errors.New("finalized confidence level should map to -1 or a higher value than 0")
+		mappings[primitives.Finalized] <= mappings[primitives.Unconfirmed] {
+		return nil, fmt.Errorf("finalized confidence level (%d) should map to -1 or a higher value than unconfirmed level (%d)", mappings[primitives.Finalized], mappings[primitives.Unconfirmed])
 	}
 
 	return mappings, nil

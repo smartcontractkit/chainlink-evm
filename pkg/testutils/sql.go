@@ -35,7 +35,7 @@ func SkipShortDB(tb testing.TB) {
 }
 
 func MustExec(t *testing.T, ds sqlutil.DataSource, stmt string, args ...any) {
-	require.NoError(t, utils.JustError(ds.ExecContext(Context(t), stmt, args...)))
+	require.NoError(t, utils.JustError(ds.ExecContext(t.Context(), stmt, args...)))
 }
 
 // pristineDBName is a clean copy of test DB with migrations.

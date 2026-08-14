@@ -22,7 +22,6 @@ import (
 
 	. "github.com/smartcontractkit/chainlink-common/pkg/types/interfacetests" //nolint:revive // dot-imports
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/shared/generated/initial/chain_reader_tester"
-	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
 
@@ -49,21 +48,21 @@ func TestCodec(t *testing.T) {
 		c, err := codec2.NewCodec(codecConfig)
 		require.NoError(t, err)
 
-		result, err := c.Encode(testutils.Context(t), encode, codecName)
+		result, err := c.Encode(t.Context(), encode, codecName)
 		require.NoError(t, err)
 
 		decode := &struct {
 			F0 int32
 			F1 int32
 		}{}
-		err = c.Decode(testutils.Context(t), result, decode, codecName)
+		err = c.Decode(t.Context(), result, decode, codecName)
 		require.NoError(t, err)
 		require.Equal(t, encode.F0, decode.F0)
 		require.Equal(t, encode.F1, decode.F1)
 	})
 
 	t.Run("GetMaxEncodingSize delegates to GetMaxSize", func(t *testing.T) {
-		actual, err := c.GetMaxEncodingSize(testutils.Context(t), anyN, sizeItemType)
+		actual, err := c.GetMaxEncodingSize(t.Context(), anyN, sizeItemType)
 		require.NoError(t, err)
 
 		expected, err := evmtypes.GetMaxSize(anyN, parseDefs(t)[sizeItemType])
@@ -72,7 +71,7 @@ func TestCodec(t *testing.T) {
 	})
 
 	t.Run("GetMaxDecodingSize delegates to GetMaxSize", func(t *testing.T) {
-		actual, err := c.GetMaxDecodingSize(testutils.Context(t), anyN, sizeItemType)
+		actual, err := c.GetMaxDecodingSize(t.Context(), anyN, sizeItemType)
 		require.NoError(t, err)
 
 		expected, err := evmtypes.GetMaxSize(anyN, parseDefs(t)[sizeItemType])
@@ -95,7 +94,7 @@ func TestCodec_SimpleEncode(t *testing.T) {
 	c, err := codec2.NewCodec(codecConfig)
 	require.NoError(t, err)
 
-	result, err := c.Encode(testutils.Context(t), input, codecName)
+	result, err := c.Encode(t.Context(), input, codecName)
 	require.NoError(t, err)
 	expected :=
 		"0000000000000000000000000000000000000000000000000000000000000006" + // int32(6)
@@ -124,7 +123,7 @@ func TestCodec_EncodeTuple(t *testing.T) {
 	c, err := codec2.NewCodec(codecConfig)
 	require.NoError(t, err)
 
-	result, err := c.Encode(testutils.Context(t), input, codecName)
+	result, err := c.Encode(t.Context(), input, codecName)
 	require.NoError(t, err)
 	expected :=
 		"0000000000000000000000000000000000000000000000000000000000000006" + // Report integer (=6)
@@ -156,7 +155,7 @@ func TestCodec_EncodeTupleWithLists(t *testing.T) {
 	c, err := codec2.NewCodec(codecConfig)
 	require.NoError(t, err)
 
-	result, err := c.Encode(testutils.Context(t), input, codecName)
+	result, err := c.Encode(t.Context(), input, codecName)
 	require.NoError(t, err)
 	expected :=
 		"0000000000000000000000000000000000000000000000000000000000000020" + // offset of Elem tuple

@@ -522,7 +522,7 @@ func (o *DSORM) SelectExcessLogIDs(ctx context.Context, limit int64) (results []
 	// Count logs matching each filter in reverse order, labeling anything after the filter.max_logs_kept'th with old=true
 	countLogsSubQuery := `
 		SELECT l.id, block_number, log_index, max_logs_kept != 0 AND
-				ROW_NUMBER() OVER(PARTITION BY f.name ORDER BY block_number, log_index DESC) > max_logs_kept AS old
+				ROW_NUMBER() OVER(PARTITION BY f.name ORDER BY block_number DESC, log_index DESC) > max_logs_kept AS old
 			FROM filters f JOIN evm.logs l ON
 				l.address = ANY(f.addresses) AND l.event_sig = ANY(f.events)
 			WHERE evm_chain_id = $1 AND block_number >= $2 AND block_number <= $3

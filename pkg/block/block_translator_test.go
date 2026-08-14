@@ -11,7 +11,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/toml"
-	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/block"
 )
@@ -20,7 +19,7 @@ func Test_BlockTranslator(t *testing.T) {
 	t.Parallel()
 
 	ethClient := clienttest.NewClient(t)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	lggr := logger.Test(t)
 
 	t.Run("for L1 chains, returns the block changed argument", func(t *testing.T) {
