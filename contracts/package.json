@@ -1,6 +1,6 @@
 {
   "name": "@chainlink/contracts",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Chainlink smart contracts",
   "author": "Chainlink devs",
   "repository": "github:smartcontractkit/chainlink-evm",
@@ -37,13 +37,12 @@
     "onlyBuiltDependencies": []
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.8",
+    "@changesets/cli": "^2.31.1",
     "@changesets/get-github-info": "^0.7.0",
-    "abi-to-sol": "^0.8.0",
-    "hardhat": "^3.9.0",
-    "solhint": "^6.2.3",
+    "hardhat": "^3.13.0",
+    "solhint": "^6.2.4",
     "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1",
-    "tsx": "^4.22.4"
+    "tsx": "^4.23.12"
   },
   "dependencies": {
     "@arbitrum/nitro-contracts": "3.0.0",
