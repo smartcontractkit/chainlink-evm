@@ -34,6 +34,7 @@
       "@openzeppelin/contracts": "4.9.6",
       "js-yaml": "^4.2.0",
       "lodash": "^4.17.23",
+      "ws": "^8.20.1",
       "tmp": "^0.2.4"
     },
     "onlyBuiltDependencies": []
