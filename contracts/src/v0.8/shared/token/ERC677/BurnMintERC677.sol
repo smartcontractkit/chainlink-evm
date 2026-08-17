@@ -7,10 +7,10 @@ import {IERC677} from "./IERC677.sol";
 import {OwnerIsCreator} from "../../access/OwnerIsCreator.sol";
 import {ERC677} from "./ERC677.sol";
 
-import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/ERC20Burnable.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/utils/introspection/IERC165.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableSet.sol";
+import {IERC20} from "@openzeppelin/contracts@4.9.6/token/ERC20/IERC20.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts@4.9.6/token/ERC20/extensions/ERC20Burnable.sol";
+import {IERC165} from "@openzeppelin/contracts@4.9.6/utils/introspection/IERC165.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 /// @notice A basic ERC677 compatible token contract with burn and minting roles.
 /// @dev The total supply can be limited during deployment.

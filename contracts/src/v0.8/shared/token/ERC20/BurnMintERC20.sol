@@ -4,12 +4,12 @@ pragma solidity ^0.8.4;
 import {IGetCCIPAdmin} from "../../../shared/interfaces/IGetCCIPAdmin.sol";
 import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
 
-import {AccessControl} from "@openzeppelin/contracts@4.8.3/access/AccessControl.sol";
-import {IAccessControl} from "@openzeppelin/contracts@4.8.3/access/IAccessControl.sol";
-import {ERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/ERC20Burnable.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/utils/introspection/IERC165.sol";
+import {AccessControl} from "@openzeppelin/contracts@4.9.6/access/AccessControl.sol";
+import {IAccessControl} from "@openzeppelin/contracts@4.9.6/access/IAccessControl.sol";
+import {ERC20} from "@openzeppelin/contracts@4.9.6/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts@4.9.6/token/ERC20/IERC20.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts@4.9.6/token/ERC20/extensions/ERC20Burnable.sol";
+import {IERC165} from "@openzeppelin/contracts@4.9.6/utils/introspection/IERC165.sol";
 
 /// @notice A basic ERC20 compatible token contract with burn and minting roles.
 /// @dev The total supply can be limited during deployment.
