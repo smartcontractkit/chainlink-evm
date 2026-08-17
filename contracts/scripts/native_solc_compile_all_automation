@@ -46,3 +46,4 @@ compileContract automation-compile-21 testhelpers/VerifiableLoadStreamsLookupUpk
 compileContract automation-compile-21 testhelpers/VerifiableLoadLogTriggerUpkeep
 compileContract automation-compile-21 testhelpers/AutomationConsumerBenchmark
 compileContract automation-compile-21 testhelpers/StreamsLookupUpkeep
+compileContract automation-compile-21 interfaces/IAutomationV21PlusCommon
