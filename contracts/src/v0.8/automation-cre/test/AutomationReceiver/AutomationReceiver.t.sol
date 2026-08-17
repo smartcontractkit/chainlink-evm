@@ -117,7 +117,8 @@ contract AutomationReceiverTest {
     gasBurner = new MockGasBurner();
   }
 
-  // ─── helpers ────────────────────────────────────────────────
+  // ─── helpers
+  // ────────────────────────────────────────────────
   function _performCall(
     bytes memory performData
   ) private pure returns (bytes memory) {
@@ -159,7 +160,8 @@ contract AutomationReceiverTest {
     }
   }
 
-  // ─── inbound auth ────────────────────────────────────────────
+  // ─── inbound auth
+  // ────────────────────────────────────────────
   function test_onReport_RevertWhen_InvalidSender() external {
     bytes memory report = _report(address(target), _performCall(hex"01"));
 
@@ -168,7 +170,8 @@ contract AutomationReceiverTest {
     receiver.onReport(_metadata(WORKFLOW_ID, WORKFLOW_OWNER), report);
   }
 
-  // ─── forwarder-zero guard ────────────────────────────────────
+  // ─── forwarder-zero guard
+  // ────────────────────────────────────
   function test_onReport_RevertWhen_ForwarderIsZero() external {
     receiver.setCallAllowed(address(target), PERFORM_SELECTOR, true);
     receiver.setForwarderAddress(address(0));
@@ -177,7 +180,8 @@ contract AutomationReceiverTest {
     receiver.onReport(_metadata(WORKFLOW_ID, WORKFLOW_OWNER), _report(address(target), _performCall(hex"01")));
   }
 
-  // ─── workflow identity guard ─────────────────────────────────
+  // ─── workflow identity guard
+  // ─────────────────────────────────
   function test_onReport_WorkflowIdAloneSuffices() external {
     AutomationReceiver freshReceiver = new AutomationReceiver(FORWARDER);
     freshReceiver.setExpectedWorkflowId(WORKFLOW_ID);
@@ -240,7 +244,8 @@ contract AutomationReceiverTest {
     _assertEq(target.performCount(), 1);
   }
 
-  // ─── outbound allowlist ─────────────────────────────────────
+  // ─── outbound allowlist
+  // ─────────────────────────────────────
   function test_onReport_RevertWhen_CallNotAllowed() external {
     bytes memory report = _report(address(target), _performCall(hex"01"));
 
@@ -279,7 +284,8 @@ contract AutomationReceiverTest {
     _assertEq(target.performCount(), 0);
   }
 
-  // ─── malformed reports ──────────────────────────────────────
+  // ─── malformed reports
+  // ──────────────────────────────────────
   function test_onReport_RevertWhen_ZeroTarget() external {
     vm.expectRevert(AutomationReceiver.InvalidTargetAddress.selector);
     _deliver(_report(address(0), _performCall(hex"01")));
@@ -290,7 +296,8 @@ contract AutomationReceiverTest {
     _deliver(_report(address(target), hex"010203"));
   }
 
-  // ─── allowlist administration ───────────────────────────────
+  // ─── allowlist administration
+  // ───────────────────────────────
   function test_setCallAllowed_RevertWhen_NotOwner() external {
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, ATTACKER));
     vm.prank(ATTACKER);
@@ -320,7 +327,8 @@ contract AutomationReceiverTest {
     _assertTrue(receiver.isCallAllowed(address(target), PERFORM_SELECTOR));
   }
 
-  // ─── emergency pause ────────────────────────────────────────
+  // ─── emergency pause
+  // ────────────────────────────────────────
   function test_pause_RevertWhen_NotOwner() external {
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, ATTACKER));
     vm.prank(ATTACKER);
@@ -424,7 +432,8 @@ contract AutomationReceiverTest {
     _assertEq(receiver.getConsumerGasLimit(address(gasHog), bytes4(keccak256("otherFn()"))), 0);
   }
 
-  // ─── gas guard ──────────────────────────────────────────────
+  // ─── gas guard
+  // ──────────────────────────────────────────────
   function test_onReport_RevertWhen_InsufficientGas() external {
     receiver.setCallAllowed(address(gasHog), PERFORM_SELECTOR, true);
     uint256 limit = 200_000;
@@ -466,7 +475,8 @@ contract AutomationReceiverTest {
     _assertEq(target.performCount(), 0);
   }
 
-  // ─── EIP-150 (63/64 rule) ────────────────────────────────────
+  // ─── EIP-150 (63/64 rule)
+  // ────────────────────────────────────
   function test_onReport_RequiredIncludesEIP150Buffer() external {
     receiver.setCallAllowed(address(gasHog), PERFORM_SELECTOR, true);
     uint256 limit = 200_000;
@@ -507,7 +517,8 @@ contract AutomationReceiverTest {
     _assertTrue(gasReceived <= limit);
   }
 
-  // ─── GAS_OVERHEAD accuracy ──────────────────────────────────
+  // ─── GAS_OVERHEAD accuracy
+  // ──────────────────────────────────
   function test_onReport_GasOverheadCorrectlyCoversNoOpConsumer() external {
     receiver.setCallAllowed(address(gasRecorder), PERFORM_SELECTOR, true);
     uint256 limit = 30_000;
@@ -545,7 +556,8 @@ contract AutomationReceiverTest {
     _assertEq(_deliverOutcome(address(gasBurner), lo, report), 1);
   }
 
-  // ─── block-number monotonicity ───────────────────────────────
+  // ─── block-number monotonicity
+  // ───────────────────────────────
   function test_onReport_BlockNumberCheckDisabledAllowsOutOfOrder() external {
     receiver.setCallAllowed(address(target), PERFORM_SELECTOR, true);
 
@@ -676,21 +688,23 @@ contract AutomationReceiverTest {
     _assertEq(lastBlock, 100);
   }
 
-  // ─── supportsInterface ───────────────────────────────────────
-  function test_supportsInterface_ERC165() external {
+  // ─── supportsInterface
+  // ───────────────────────────────────────
+  function test_supportsInterface_ERC165() external view {
     _assertTrue(receiver.supportsInterface(0x01ffc9a7));
   }
 
-  function test_supportsInterface_IReceiver() external {
+  function test_supportsInterface_IReceiver() external view {
     _assertTrue(receiver.supportsInterface(type(IReceiver).interfaceId));
   }
 
-  function test_supportsInterface_ReturnsFalseForUnknown() external {
+  function test_supportsInterface_ReturnsFalseForUnknown() external view {
     _assertFalse(receiver.supportsInterface(0xdeadbeef));
   }
 
-  // ─── getters ────────────────────────────────────────────────
-  function test_getters_ReflectState() external {
+  // ─── getters
+  // ────────────────────────────────────────────────
+  function test_getters_ReflectState() external view {
     _assertEq(receiver.getForwarderAddress(), FORWARDER);
     _assertEq(receiver.getExpectedAuthor(), WORKFLOW_OWNER);
     _assertEq(receiver.getExpectedWorkflowId(), WORKFLOW_ID);

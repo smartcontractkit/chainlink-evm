@@ -10,11 +10,11 @@ PROJECT="automation-cre"
 CONTRACTS_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../ && pwd -P )"
 
 compileContract() {
-  local contract=$(basename "$2")
+  local contract=$(basename "$1")
   echo "Compiling" "$contract"
 
   local command
-  command="env FOUNDRY_PROFILE=$1 forge build $CONTRACTS_DIR/src/v0.8/$PROJECT/$2.sol \
+  command="env FOUNDRY_PROFILE=$PROJECT forge build $CONTRACTS_DIR/src/v0.8/$PROJECT/$1.sol \
    --root $CONTRACTS_DIR \
    --extra-output-files bin abi \
    -o $CONTRACTS_DIR/solc/$PROJECT/$contract"
@@ -25,4 +25,5 @@ compileContract() {
   cp "$CONTRACTS_DIR"/solc/$PROJECT/"$contract"/"$contract".sol/"$contract".abi.json "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"/"$contract".abi.json
 }
 
-compileContract automation-compile-24 AutomationReceiver
+compileContract AutomationReceiver
+compileContract EthBalanceMonitor
