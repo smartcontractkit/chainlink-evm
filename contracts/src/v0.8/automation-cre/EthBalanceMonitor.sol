@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
+import {OwnerIsCreator} from "../shared/access/OwnerIsCreator.sol";
 import {IAutomationCompatible} from "./interfaces/IAutomationCompatible.sol";
 import {Pausable} from "@openzeppelin/contracts@4.9.6/security/Pausable.sol";
 
 /// @title The EthBalanceMonitor contract
 /// @notice A keeper-compatible contract that monitors and funds eth addresses
-contract EthBalanceMonitor is ConfirmedOwner, Pausable, IAutomationCompatible {
+contract EthBalanceMonitor is OwnerIsCreator, Pausable, IAutomationCompatible {
   // observed limit of 45K + 10k buffer
   uint256 private constant MIN_GAS_FOR_TRANSFER = 55_000;
 
@@ -39,7 +39,7 @@ contract EthBalanceMonitor is ConfirmedOwner, Pausable, IAutomationCompatible {
   constructor(
     address keeperRegistryAddress,
     uint256 minWaitPeriodSeconds
-  ) ConfirmedOwner(msg.sender) {
+  ) {
     setKeeperRegistryAddress(keeperRegistryAddress);
     setMinWaitPeriodSeconds(minWaitPeriodSeconds);
   }
