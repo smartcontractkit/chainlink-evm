@@ -58,12 +58,6 @@ optimizer_runs = 1_000_000
 src = 'src/v0.8/automation'
 deny_warnings = false
 
-[profile.automation-compile-23]
-solc_version = '0.8.19'
-optimizer_runs = 1_000_000
-src = 'src/v0.8/automation'
-deny_warnings = false
-
 [profile.automation-compile-24]
 solc_version = '0.8.24'
 optimizer_runs = 1_000_000

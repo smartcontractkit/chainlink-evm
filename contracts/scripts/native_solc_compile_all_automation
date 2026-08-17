@@ -46,20 +46,3 @@ compileContract automation-compile-21 testhelpers/VerifiableLoadStreamsLookupUpk
 compileContract automation-compile-21 testhelpers/VerifiableLoadLogTriggerUpkeep
 compileContract automation-compile-21 testhelpers/AutomationConsumerBenchmark
 compileContract automation-compile-21 testhelpers/StreamsLookupUpkeep
-
-compileContract automation-compile-23 chains/ArbitrumModule
-compileContract automation-compile-23 chains/ChainModuleBase
-compileContract automation-compile-23 chains/OptimismModuleV2
-compileContract automation-compile-23 chains/ScrollModule
-compileContract automation-compile-23 interfaces/IChainModule
-compileContract automation-compile-23 interfaces/IAutomationV21PlusCommon
-compileContract automation-compile-23 AutomationCompatibleUtils
-compileContract automation-compile-23 v2_3/AutomationRegistrar2_3
-compileContract automation-compile-23 v2_3/AutomationRegistry2_3
-compileContract automation-compile-23 v2_3/AutomationRegistryLogicA2_3
-compileContract automation-compile-23 v2_3/AutomationRegistryLogicB2_3
-compileContract automation-compile-23 v2_3/AutomationRegistryLogicC2_3
-compileContract automation-compile-23 upkeeps/EthBalanceMonitor
-compileContract automation-compile-23 v2_3/AutomationUtils2_3
-compileContract automation-compile-23 interfaces/v2_3/IAutomationRegistryMaster2_3
-compileContract automation-compile-23 testhelpers/MockETHUSDAggregator
