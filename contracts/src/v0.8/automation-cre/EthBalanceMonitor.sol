@@ -36,10 +36,7 @@ contract EthBalanceMonitor is OwnerIsCreator, Pausable, IAutomationCompatible {
 
   /// @param keeperRegistryAddress The address of the keeper registry contract
   /// @param minWaitPeriodSeconds The minimum wait period for addresses between funding
-  constructor(
-    address keeperRegistryAddress,
-    uint256 minWaitPeriodSeconds
-  ) {
+  constructor(address keeperRegistryAddress, uint256 minWaitPeriodSeconds) {
     setKeeperRegistryAddress(keeperRegistryAddress);
     setMinWaitPeriodSeconds(minWaitPeriodSeconds);
   }
@@ -71,7 +68,10 @@ contract EthBalanceMonitor is OwnerIsCreator, Pausable, IAutomationCompatible {
         revert InvalidWatchList();
       }
       s_targets[addresses[idx]] = Target({
-        isActive: true, minBalanceWei: minBalancesWei[idx], topUpAmountWei: topUpAmountsWei[idx], lastTopUpTimestamp: 0
+        isActive: true,
+        minBalanceWei: minBalancesWei[idx],
+        topUpAmountWei: topUpAmountsWei[idx],
+        lastTopUpTimestamp: 0
       });
     }
     s_watchList = addresses;
@@ -118,8 +118,10 @@ contract EthBalanceMonitor is OwnerIsCreator, Pausable, IAutomationCompatible {
         target.isActive && target.lastTopUpTimestamp + minWaitPeriodSeconds <= block.timestamp
           && needsFunding[idx].balance < target.minBalanceWei
       ) {
+        // solhint-disable-next-line check-send-result,multiple-sends
         bool success = payable(needsFunding[idx]).send(target.topUpAmountWei);
         if (success) {
+          // solhint-disable-next-line reentrancy
           s_targets[needsFunding[idx]].lastTopUpTimestamp = uint56(block.timestamp);
           emit TopUpSucceeded(needsFunding[idx]);
         } else {
@@ -155,10 +157,8 @@ contract EthBalanceMonitor is OwnerIsCreator, Pausable, IAutomationCompatible {
   /// @notice Withdraws the contract balance
   /// @param amount The amount of eth (in wei) to withdraw
   /// @param payee The address to pay
-  function withdraw(
-    uint256 amount,
-    address payable payee
-  ) external onlyOwner {
+  function withdraw(uint256 amount, address payable payee) external onlyOwner {
+    // solhint-disable-next-line reason-string,gas-custom-errors
     require(payee != address(0));
     emit FundsWithdrawn(amount, payee);
     payee.transfer(amount);
@@ -173,6 +173,7 @@ contract EthBalanceMonitor is OwnerIsCreator, Pausable, IAutomationCompatible {
   function setKeeperRegistryAddress(
     address keeperRegistryAddress
   ) public onlyOwner {
+    // solhint-disable-next-line reason-string,gas-custom-errors
     require(keeperRegistryAddress != address(0));
     emit KeeperRegistryAddressUpdated(s_keeperRegistryAddress, keeperRegistryAddress);
     s_keeperRegistryAddress = keeperRegistryAddress;

@@ -183,11 +183,7 @@ contract AutomationReceiver is ReceiverTemplate, Pausable {
   /// @param target The contract the receiver is permitted to call.
   /// @param selector The 4-byte function selector permitted on `target`.
   /// @param allowed True to permit, false to revoke.
-  function setCallAllowed(
-    address target,
-    bytes4 selector,
-    bool allowed
-  ) external onlyOwner {
+  function setCallAllowed(address target, bytes4 selector, bool allowed) external onlyOwner {
     if (target == address(0)) {
       revert InvalidTargetAddress();
     }
@@ -199,10 +195,7 @@ contract AutomationReceiver is ReceiverTemplate, Pausable {
   }
 
   /// @notice Returns whether the receiver may call `selector` on `target`.
-  function isCallAllowed(
-    address target,
-    bytes4 selector
-  ) external view returns (bool) {
+  function isCallAllowed(address target, bytes4 selector) external view returns (bool) {
     return s_callAllowed[target][selector];
   }
 
@@ -222,11 +215,7 @@ contract AutomationReceiver is ReceiverTemplate, Pausable {
   /// @param target  The contract the limit applies to. Must not be the zero address.
   /// @param selector The 4-byte function selector the limit applies to.
   /// @param gasLimit Minimum gas required by the consumer. 0 = no guard.
-  function setConsumerGasLimit(
-    address target,
-    bytes4 selector,
-    uint256 gasLimit
-  ) external onlyOwner {
+  function setConsumerGasLimit(address target, bytes4 selector, uint256 gasLimit) external onlyOwner {
     if (target == address(0)) revert InvalidTargetAddress();
     uint256 previous = s_consumerGasLimit[target][selector];
     s_consumerGasLimit[target][selector] = gasLimit;
@@ -234,10 +223,7 @@ contract AutomationReceiver is ReceiverTemplate, Pausable {
   }
 
   /// @notice Returns the configured consumer gas limit for a (target, selector) pair (0 = no guard).
-  function getConsumerGasLimit(
-    address target,
-    bytes4 selector
-  ) external view returns (uint256) {
+  function getConsumerGasLimit(address target, bytes4 selector) external view returns (uint256) {
     return s_consumerGasLimit[target][selector];
   }
 

@@ -189,24 +189,15 @@ contract ReceiverTemplateTest {
     return bytes10(first10);
   }
 
-  function _assertEq(
-    uint256 actual,
-    uint256 expected
-  ) private pure {
+  function _assertEq(uint256 actual, uint256 expected) private pure {
     if (actual != expected) revert("uint mismatch");
   }
 
-  function _assertEq(
-    bytes32 actual,
-    bytes32 expected
-  ) private pure {
+  function _assertEq(bytes32 actual, bytes32 expected) private pure {
     if (actual != expected) revert("bytes32 mismatch");
   }
 
-  function _assertEq(
-    address actual,
-    address expected
-  ) private pure {
+  function _assertEq(address actual, address expected) private pure {
     if (actual != expected) revert("address mismatch");
   }
 
