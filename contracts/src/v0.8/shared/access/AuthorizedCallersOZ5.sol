@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Ownable2StepMsgSender} from "./Ownable2StepMsgSender.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@5.3.0/utils/structs/EnumerableSet.sol";
 
 /// @title The AuthorizedCallers contract
 /// @notice A contract that manages multiple authorized callers. Enables restricting access to certain functions to a
