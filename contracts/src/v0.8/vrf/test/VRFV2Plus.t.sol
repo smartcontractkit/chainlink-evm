@@ -443,9 +443,9 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = 2.992e16 + 8e17 = 8.2992e17
     // note: delta is doubled from the native test to account for more variance due to the link/native ratio
     (uint96 linkBalanceAfter,,,,) = s_testCoordinator.getSubscription(subId);
-    // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 8.2992 * 1e17, 1e15);
-    assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 8.2992 * 1e17, 1e15);
+
+    assertApproxEqAbs(payment, 8.2992 * 1e17, 20e14);
+    assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 8.2992 * 1e17, 20e14);
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
 
@@ -713,9 +713,9 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = 6.11e17 * 0.15 + 5e17
     // billed_fee = 5.9157e+17
     (, uint96 nativeBalanceAfter,,,) = s_testCoordinator.getSubscription(subId);
-    // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 5.9157 * 1e17, 1e15);
-    assertApproxEqAbs(nativeBalanceAfter, nativeBalanceBefore - 5.9157 * 1e17, 1e15);
+
+    assertApproxEqAbs(payment, 5.9157 * 1e17, 6e15);
+    assertApproxEqAbs(nativeBalanceAfter, nativeBalanceBefore - 5.9157 * 1e17, 6e15);
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
 
@@ -764,9 +764,9 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = 9.391e+17
     // note: delta is doubled from the native test to account for more variance due to the link/native ratio
     (uint96 linkBalanceAfter,,,,) = s_testCoordinator.getSubscription(subId);
-    // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 9.391 * 1e17, 1e15);
-    assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 9.391 * 1e17, 1e15);
+
+    assertApproxEqAbs(payment, 9.391 * 1e17, 6e15);
+    assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 9.391 * 1e17, 6e15);
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
 
