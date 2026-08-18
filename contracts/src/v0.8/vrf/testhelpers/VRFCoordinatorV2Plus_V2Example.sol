@@ -30,7 +30,10 @@ contract VRFCoordinatorV2Plus_V2Example is IVRFCoordinatorV2PlusMigration {
   address public s_prevCoordinator;
   address public s_link;
 
-  constructor(address link, address prevCoordinator) {
+  constructor(
+    address link,
+    address prevCoordinator
+  ) {
     s_link = link;
     s_prevCoordinator = prevCoordinator;
   }

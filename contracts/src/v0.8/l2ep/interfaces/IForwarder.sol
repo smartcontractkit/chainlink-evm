@@ -6,5 +6,8 @@ interface IForwarder {
   /// @notice forward calls the `target` with `data`
   /// @param target contract address to be called
   /// @param data to send to target contract
-  function forward(address target, bytes memory data) external;
+  function forward(
+    address target,
+    bytes memory data
+  ) external;
 }

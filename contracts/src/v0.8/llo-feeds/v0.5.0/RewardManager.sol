@@ -109,14 +109,17 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IRewardManager
-  function onFeePaid(FeePayment[] calldata payments, address payer) external override onlyFeeManager {
+  function onFeePaid(
+    FeePayment[] calldata payments,
+    address payer
+  ) external override onlyFeeManager {
     uint256 totalFeeAmount;
     for (uint256 i; i < payments.length; ++i) {
       unchecked {
         //the total amount for any ERC-20 asset cannot exceed 2^256 - 1
         //see
         // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/36bf1e46fa811f0f07d38eb9cfbc69a955f300ce/contracts/token/ERC20/ERC20.sol#L266
-        //for example implementation.
+        // for example implementation.
         s_totalRewardRecipientFees[payments[i].poolId] += payments[i].amount;
 
         //tally the total payable fees
@@ -138,7 +141,10 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   // wrapper impl for claimRewards
-  function _claimRewards(address recipient, bytes32[] memory poolIds) internal returns (uint256) {
+  function _claimRewards(
+    address recipient,
+    bytes32[] memory poolIds
+  ) internal returns (uint256) {
     //get the total amount claimable for this recipient
     uint256 claimAmount;
 
@@ -276,7 +282,10 @@ contract RewardManager is IRewardManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IRewardManager
-  function payRecipients(bytes32 poolId, address[] calldata recipients) external onlyOwnerOrRecipientInPool(poolId) {
+  function payRecipients(
+    bytes32 poolId,
+    address[] calldata recipients
+  ) external onlyOwnerOrRecipientInPool(poolId) {
     //convert poolIds to an array to match the interface of _claimRewards
     bytes32[] memory poolIdsArray = new bytes32[](1);
     poolIdsArray[0] = poolId;

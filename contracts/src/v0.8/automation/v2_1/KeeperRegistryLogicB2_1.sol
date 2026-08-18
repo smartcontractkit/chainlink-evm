@@ -31,7 +31,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice transfers the address of an admin for an upkeep
    */
-  function transferUpkeepAdmin(uint256 id, address proposed) external {
+  function transferUpkeepAdmin(
+    uint256 id,
+    address proposed
+  ) external {
     _requireAdminAndNotCancelled(id);
     if (proposed == msg.sender) revert ValueNotChanged();
 
@@ -88,7 +91,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice updates the checkData for an upkeep
    */
-  function setUpkeepCheckData(uint256 id, bytes calldata newCheckData) external {
+  function setUpkeepCheckData(
+    uint256 id,
+    bytes calldata newCheckData
+  ) external {
     _requireAdminAndNotCancelled(id);
     if (newCheckData.length > s_storage.maxCheckDataSize) revert CheckDataExceedsLimit();
     s_checkData[id] = newCheckData;
@@ -98,7 +104,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice updates the gas limit for an upkeep
    */
-  function setUpkeepGasLimit(uint256 id, uint32 gasLimit) external {
+  function setUpkeepGasLimit(
+    uint256 id,
+    uint32 gasLimit
+  ) external {
     if (gasLimit < PERFORM_GAS_MIN || gasLimit > s_storage.maxPerformGas) revert GasLimitOutsideRange();
     _requireAdminAndNotCancelled(id);
     s_upkeep[id].performGas = gasLimit;
@@ -109,7 +118,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice updates the offchain config for an upkeep
    */
-  function setUpkeepOffchainConfig(uint256 id, bytes calldata config) external {
+  function setUpkeepOffchainConfig(
+    uint256 id,
+    bytes calldata config
+  ) external {
     _requireAdminAndNotCancelled(id);
     s_upkeepOffchainConfig[id] = config;
     emit UpkeepOffchainConfigSet(id, config);
@@ -119,7 +131,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @notice withdraws LINK funds from an upkeep
    * @dev note that an upkeep must be cancelled first!!
    */
-  function withdrawFunds(uint256 id, address to) external nonReentrant {
+  function withdrawFunds(
+    uint256 id,
+    address to
+  ) external nonReentrant {
     if (to == ZERO_ADDRESS) revert InvalidRecipient();
     Upkeep memory upkeep = s_upkeep[id];
     if (s_upkeepAdmin[id] != msg.sender) revert OnlyCallableByAdmin();
@@ -138,7 +153,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice transfers the address of payee for a transmitter
    */
-  function transferPayeeship(address transmitter, address proposed) external {
+  function transferPayeeship(
+    address transmitter,
+    address proposed
+  ) external {
     if (s_transmitterPayees[transmitter] != msg.sender) revert OnlyCallableByPayee();
     if (proposed == msg.sender) revert ValueNotChanged();
 
@@ -165,7 +183,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice withdraws LINK received as payment for work performed
    */
-  function withdrawPayment(address from, address to) external {
+  function withdrawPayment(
+    address from,
+    address to
+  ) external {
     if (to == ZERO_ADDRESS) revert InvalidRecipient();
     if (s_transmitterPayees[from] != msg.sender) revert OnlyCallableByPayee();
     uint96 balance = _updateTransmitterBalanceFromPool(from, s_hotVars.totalPremium, uint96(s_transmittersList.length));
@@ -182,7 +203,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
   /**
    * @notice sets the privilege config for an upkeep
    */
-  function setUpkeepPrivilegeConfig(uint256 upkeepId, bytes calldata newPrivilegeConfig) external {
+  function setUpkeepPrivilegeConfig(
+    uint256 upkeepId,
+    bytes calldata newPrivilegeConfig
+  ) external {
     if (msg.sender != s_storage.upkeepPrivilegeManager) {
       revert OnlyCallableByUpkeepPrivilegeManager();
     }
@@ -234,7 +258,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @notice sets the migration permission for a peer registry
    * @dev this must be done before upkeeps can be migrated to/from another registry
    */
-  function setPeerRegistryMigrationPermission(address peer, MigrationPermission permission) external onlyOwner {
+  function setPeerRegistryMigrationPermission(
+    address peer,
+    MigrationPermission permission
+  ) external onlyOwner {
     s_peerRegistryMigrationPermission[peer] = permission;
   }
 
@@ -259,7 +286,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @param admin the address to set privilege for
    * @param newPrivilegeConfig the privileges that this admin has
    */
-  function setAdminPrivilegeConfig(address admin, bytes calldata newPrivilegeConfig) external {
+  function setAdminPrivilegeConfig(
+    address admin,
+    bytes calldata newPrivilegeConfig
+  ) external {
     if (msg.sender != s_storage.upkeepPrivilegeManager) {
       revert OnlyCallableByUpkeepPrivilegeManager();
     }
@@ -351,7 +381,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @dev the order of IDs in the list is **not guaranteed**, therefore, if making successive calls, one
    * should consider keeping the blockheight constant to ensure a holistic picture of the contract state
    */
-  function getActiveUpkeepIDs(uint256 startIndex, uint256 maxCount) external view returns (uint256[] memory) {
+  function getActiveUpkeepIDs(
+    uint256 startIndex,
+    uint256 maxCount
+  ) external view returns (uint256[] memory) {
     uint256 numUpkeeps = s_upkeepIDs.length();
     if (startIndex >= numUpkeeps) revert IndexOutOfRange();
     uint256 endIndex = startIndex + maxCount;
@@ -497,7 +530,10 @@ contract KeeperRegistryLogicB2_1 is KeeperRegistryBase2_1 {
    * @notice calculates the maximum payment for a given gas limit
    * @param gasLimit the gas to calculate payment for
    */
-  function getMaxPaymentForGas(Trigger triggerType, uint32 gasLimit) public view returns (uint96 maxPayment) {
+  function getMaxPaymentForGas(
+    Trigger triggerType,
+    uint32 gasLimit
+  ) public view returns (uint96 maxPayment) {
     HotVars memory hotVars = s_hotVars;
     (uint256 fastGasWei, uint256 linkNative) = _getFeedData(hotVars);
     return

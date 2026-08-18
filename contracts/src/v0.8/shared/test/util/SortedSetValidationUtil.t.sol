@@ -7,7 +7,10 @@ import {BaseTest} from "../BaseTest.t.sol";
 contract SortedSetValidationUtilBaseTest is BaseTest {
   uint256 constant OFFSET = 5;
 
-  modifier _ensureSetLength(uint256 subsetLength, uint256 supersetLength) {
+  modifier _ensureSetLength(
+    uint256 subsetLength,
+    uint256 supersetLength
+  ) {
     vm.assume(subsetLength > 0 && supersetLength > 0 && subsetLength <= supersetLength);
     _;
   }
@@ -20,29 +23,47 @@ contract SortedSetValidationUtilBaseTest is BaseTest {
     superset = new bytes32[](supersetLength);
   }
 
-  function _convertArrayToSortedSet(bytes32[] memory arr, uint256 offSet) internal pure {
+  function _convertArrayToSortedSet(
+    bytes32[] memory arr,
+    uint256 offSet
+  ) internal pure {
     for (uint256 i = 1; i < arr.length; ++i) {
       arr[i] = bytes32(uint256(arr[i - 1]) + offSet);
     }
   }
 
-  function _convertToUnsortedSet(bytes32[] memory arr, uint256 ptr1, uint256 ptr2) internal pure {
+  function _convertToUnsortedSet(
+    bytes32[] memory arr,
+    uint256 ptr1,
+    uint256 ptr2
+  ) internal pure {
     // Swap two elements to make it unsorted
     (arr[ptr1], arr[ptr2]) = (arr[ptr2], arr[ptr1]);
   }
 
-  function _convertArrayToSubset(bytes32[] memory subset, bytes32[] memory superset) internal pure {
+  function _convertArrayToSubset(
+    bytes32[] memory subset,
+    bytes32[] memory superset
+  ) internal pure {
     for (uint256 i; i < subset.length; ++i) {
       subset[i] = superset[i];
     }
   }
 
-  function _makeInvalidSubset(bytes32[] memory subset, bytes32[] memory superset, uint256 ptr) internal pure {
+  function _makeInvalidSubset(
+    bytes32[] memory subset,
+    bytes32[] memory superset,
+    uint256 ptr
+  ) internal pure {
     _convertArrayToSubset(subset, superset);
     subset[ptr] = bytes32(uint256(subset[ptr]) + 1);
   }
 
-  function _convertArrayToHaveDuplicates(bytes32[] memory arr, uint256 ptr1, uint256 ptr2) internal pure {
+  function _convertArrayToHaveDuplicates(
+    bytes32[] memory arr,
+    uint256 ptr1,
+    uint256 ptr2
+  ) internal pure {
     arr[ptr2] = arr[ptr1];
   }
 }

@@ -34,7 +34,9 @@ contract BatchVRFCoordinatorV2Plus {
     // solhint-disable-next-line gas-custom-errors
     require(proofs.length == rcs.length, "input array arg lengths mismatch");
     for (uint256 i = 0; i < proofs.length; ++i) {
-      try COORDINATOR.fulfillRandomWords(proofs[i], rcs[i], false) returns (uint96 /* payment */ ) {
+      try COORDINATOR.fulfillRandomWords(proofs[i], rcs[i], false) returns (
+        uint96 /* payment */
+      ) {
         continue;
       } catch Error(string memory reason) {
         uint256 requestId = _getRequestIdFromProof(proofs[i]);

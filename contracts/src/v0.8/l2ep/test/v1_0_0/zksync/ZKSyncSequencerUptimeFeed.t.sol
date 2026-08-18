@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {AddressAliasHelper} from
-  "../../../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
+import {
+  AddressAliasHelper
+} from "../../../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
 
 import {BaseSequencerUptimeFeed} from "../../../base/BaseSequencerUptimeFeed.sol";
 import {ZKSyncSequencerUptimeFeed} from "../../../zksync/ZKSyncSequencerUptimeFeed.sol";
 import {L2EPTest} from "../L2EPTest.t.sol";
 
 contract ZKSyncSequencerUptimeFeed_TestWrapper is ZKSyncSequencerUptimeFeed {
-  constructor(address l1SenderAddress, bool initialStatus) ZKSyncSequencerUptimeFeed(l1SenderAddress, initialStatus) {}
+  constructor(
+    address l1SenderAddress,
+    bool initialStatus
+  ) ZKSyncSequencerUptimeFeed(l1SenderAddress, initialStatus) {}
 
   /// @notice Exposes the internal _validateSender function for testing
   function validateSenderTestWrapper(

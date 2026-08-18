@@ -33,7 +33,10 @@ contract DestinationVerifierProxy is IDestinationVerifierProxy, ConfirmedOwner, 
   }
 
   /// @inheritdoc IDestinationVerifierProxy
-  function verify(bytes calldata payload, bytes calldata parameterPayload) external payable returns (bytes memory) {
+  function verify(
+    bytes calldata payload,
+    bytes calldata parameterPayload
+  ) external payable returns (bytes memory) {
     return s_verifier.verify{value: msg.value}(payload, parameterPayload, msg.sender);
   }
 

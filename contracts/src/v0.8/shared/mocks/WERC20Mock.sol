@@ -28,11 +28,17 @@ contract WERC20Mock is ERC20 {
     emit Withdrawal(msg.sender, wad);
   }
 
-  function mint(address account, uint256 amount) external {
+  function mint(
+    address account,
+    uint256 amount
+  ) external {
     _mint(account, amount);
   }
 
-  function burn(address account, uint256 amount) external {
+  function burn(
+    address account,
+    uint256 amount
+  ) external {
     _burn(account, amount);
   }
 }

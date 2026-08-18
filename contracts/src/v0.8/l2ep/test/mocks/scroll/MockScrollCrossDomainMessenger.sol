@@ -27,14 +27,25 @@ contract MockScrollCrossDomainMessenger is IScrollMessenger {
   /// @notice Send cross chain message from L1 to L2 or L2 to L1.
   /// @param _target The address of account who receive the message.
   /// @param _message The content of the message.
-  function sendMessage(address _target, uint256, bytes calldata _message, uint256) external payable override {
+  function sendMessage(
+    address _target,
+    uint256,
+    bytes calldata _message,
+    uint256
+  ) external payable override {
     Address.functionCall(_target, _message);
   }
 
   /// @notice Send cross chain message from L1 to L2 or L2 to L1.
   /// @param _target The address of account who receive the message.
   /// @param _message The content of the message.
-  function sendMessage(address _target, uint256, bytes calldata _message, uint256, address) external payable override {
+  function sendMessage(
+    address _target,
+    uint256,
+    bytes calldata _message,
+    uint256,
+    address
+  ) external payable override {
     Address.functionCall(_target, _message);
   }
 }

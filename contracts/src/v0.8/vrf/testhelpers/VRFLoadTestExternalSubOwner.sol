@@ -16,12 +16,18 @@ contract VRFLoadTestExternalSubOwner is VRFConsumerBaseV2, ConfirmedOwner {
 
   uint256 public s_responseCount;
 
-  constructor(address _vrfCoordinator, address _link) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
+  constructor(
+    address _vrfCoordinator,
+    address _link
+  ) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
     COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
     LINK = LinkTokenInterface(_link);
   }
 
-  function fulfillRandomWords(uint256, uint256[] memory) internal override {
+  function fulfillRandomWords(
+    uint256,
+    uint256[] memory
+  ) internal override {
     s_responseCount++;
   }
 

@@ -38,7 +38,10 @@ abstract contract VRFV2WrapperConsumerBase {
    * @param _link is the address of LinkToken
    * @param _vrfV2Wrapper is the address of the VRFV2Wrapper contract
    */
-  constructor(address _link, address _vrfV2Wrapper) {
+  constructor(
+    address _link,
+    address _vrfV2Wrapper
+  ) {
     LINK = LinkTokenInterface(_link);
     VRF_V2_WRAPPER = VRFV2WrapperInterface(_vrfV2Wrapper);
   }
@@ -77,9 +80,15 @@ abstract contract VRFV2WrapperConsumerBase {
    * @param _randomWords is the randomness result.
    */
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal virtual;
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) internal virtual;
 
-  function rawFulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) external {
+  function rawFulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(msg.sender == address(VRF_V2_WRAPPER), "only VRF V2 wrapper can fulfill");
     fulfillRandomWords(_requestId, _randomWords);

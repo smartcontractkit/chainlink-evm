@@ -186,7 +186,10 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     i_verifierProxyAddr = verifierProxyAddr;
   }
 
-  modifier checkConfigValid(uint256 numSigners, uint256 f) {
+  modifier checkConfigValid(
+    uint256 numSigners,
+    uint256 f
+  ) {
     if (f == 0) revert FaultToleranceMustBePositive();
     if (numSigners > MAX_NUM_ORACLES) revert ExcessSigners(numSigners, MAX_NUM_ORACLES);
     if (numSigners <= 3 * f) revert InsufficientSigners(numSigners, 3 * f + 1);
@@ -211,8 +214,13 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     address sender
   ) external override returns (bytes memory verifierResponse) {
     if (msg.sender != i_verifierProxyAddr) revert AccessForbidden();
-    (bytes32[3] memory reportContext, bytes memory reportData, bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs)
-    = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
+    (
+      bytes32[3] memory reportContext,
+      bytes memory reportData,
+      bytes32[] memory rs,
+      bytes32[] memory ss,
+      bytes32 rawVs
+    ) = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
 
     // The feed ID is the first 32 bytes of the report data.
     bytes32 feedId = bytes32(reportData);
@@ -267,7 +275,10 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
    * @param reportContext Report context containing the epoch and round
    * @param feedVerifierState Feed verifier state to conditionally update
    */
-  function _updateEpoch(bytes32[3] memory reportContext, VerifierState storage feedVerifierState) private {
+  function _updateEpoch(
+    bytes32[3] memory reportContext,
+    VerifierState storage feedVerifierState
+  ) private {
     uint40 epochAndRound = uint40(uint256(reportContext[1]));
     uint32 epoch = uint32(epochAndRound >> 8);
     if (epoch > feedVerifierState.latestEpoch) {
@@ -429,9 +440,8 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
         Signer({role: Role.Signer, index: i});
     }
 
-    IVerifierProxy(i_verifierProxyAddr).setVerifier(
-      feedVerifierState.latestConfigDigest, configDigest, recipientAddressesAndWeights
-    );
+    IVerifierProxy(i_verifierProxyAddr)
+      .setVerifier(feedVerifierState.latestConfigDigest, configDigest, recipientAddressesAndWeights);
 
     emit ConfigSet(
       feedId,
@@ -500,7 +510,10 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifier
-  function activateConfig(bytes32 feedId, bytes32 configDigest) external onlyOwner {
+  function activateConfig(
+    bytes32 feedId,
+    bytes32 configDigest
+  ) external onlyOwner {
     VerifierState storage feedVerifierState = s_feedVerifierStates[feedId];
 
     if (configDigest == bytes32("")) revert DigestEmpty();
@@ -510,7 +523,10 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifier
-  function deactivateConfig(bytes32 feedId, bytes32 configDigest) external onlyOwner {
+  function deactivateConfig(
+    bytes32 feedId,
+    bytes32 configDigest
+  ) external onlyOwner {
     VerifierState storage feedVerifierState = s_feedVerifierStates[feedId];
 
     if (configDigest == bytes32("")) revert DigestEmpty();

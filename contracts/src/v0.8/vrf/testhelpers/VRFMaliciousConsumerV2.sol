@@ -15,12 +15,18 @@ contract VRFMaliciousConsumerV2 is VRFConsumerBaseV2 {
   uint256 public s_gasAvailable;
   bytes32 internal s_keyHash;
 
-  constructor(address vrfCoordinator, address link) VRFConsumerBaseV2(vrfCoordinator) {
+  constructor(
+    address vrfCoordinator,
+    address link
+  ) VRFConsumerBaseV2(vrfCoordinator) {
     COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
     LINKTOKEN = LinkTokenInterface(link);
   }
 
-  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) internal override {
     s_gasAvailable = gasleft();
     s_randomWords = randomWords;
     s_requestId = requestId;

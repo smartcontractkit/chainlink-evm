@@ -13,7 +13,10 @@ contract UpkeepPerformCounterRestrictive {
 
   uint256 private count = 0;
 
-  constructor(uint256 _testRange, uint256 _averageEligibilityCadence) {
+  constructor(
+    uint256 _testRange,
+    uint256 _averageEligibilityCadence
+  ) {
     testRange = _testRange;
     averageEligibilityCadence = _averageEligibilityCadence;
   }
@@ -82,7 +85,10 @@ contract UpkeepPerformCounterRestrictive {
     count = 0;
   }
 
-  function setSpread(uint256 _newTestRange, uint256 _newAverageEligibilityCadence) external {
+  function setSpread(
+    uint256 _newTestRange,
+    uint256 _newAverageEligibilityCadence
+  ) external {
     testRange = _newTestRange;
     averageEligibilityCadence = _newAverageEligibilityCadence;
   }

@@ -21,7 +21,10 @@ contract BundleAggregatorProxy is IBundleAggregatorProxy, ITypeAndVersion, Confi
 
   error AggregatorNotProposed(address aggregator);
 
-  constructor(address aggregatorAddress, address owner) ConfirmedOwner(owner) {
+  constructor(
+    address aggregatorAddress,
+    address owner
+  ) ConfirmedOwner(owner) {
     s_currentAggregator = IBundleAggregator(aggregatorAddress);
   }
 

@@ -368,7 +368,7 @@ contract VerifierVerifyTest is BaseTest {
           - DonConfigA has signers {A, B, C} is set at time T1
           - DonConfigB (transition config) has signers {A, B, C, D, E, F} is set at time T2
           - DonConfigC has signers {D, E, F} is set at time T3
-          
+
           - checks we can verify a report with {A, B, C} signers (via DonConfigA) at time between T1 and T2
           - checks we can verify a report with {A, B, C} signers (via DonConfigB) at time between T2 and T3
           - checks we can verify a report with {D, E, F} signers (via DonConfigB) at time between T2 and T3
@@ -542,7 +542,7 @@ contract VerifierVerifyTest is BaseTest {
           - SetConfig A at time T0
           - SetConfig B at time T1
           - tries verifing report issued at blocktimestmap < T0
-          
+
           this test is failing: ToDo Ask Michael
          */
     Signer[] memory signers = _getSigners(MAX_ORACLES);
@@ -577,9 +577,9 @@ contract VerifierVerifyTest is BaseTest {
     /*
        This test is checking that we can roll out in a new network and set historic configurations :
        - Stars with a chain at blocktimestamp 1000
-       - SetConfigA with teimstamp 100 
+       - SetConfigA with teimstamp 100
        - SetConfigB with timesmtap 200
-       - SetConfigC with timestamp current 
+       - SetConfigC with timestamp current
        - tries verifying reports for all the configs
     */
 

@@ -16,7 +16,10 @@ interface IVerifier is IERC165 {
    * contract will always be the proxy.
    * @return verifierResponse The encoded verified response.
    */
-  function verify(bytes calldata signedReport, address sender) external returns (bytes memory verifierResponse);
+  function verify(
+    bytes calldata signedReport,
+    address sender
+  ) external returns (bytes memory verifierResponse);
 
   /**
    * @notice sets offchain reporting protocol configuration incl. participating oracles
@@ -74,7 +77,10 @@ interface IVerifier is IERC165 {
    * @param configDigest The config digest to activate
    * @dev This function can be called by the contract admin to activate a configuration.
    */
-  function activateConfig(bytes32 feedId, bytes32 configDigest) external;
+  function activateConfig(
+    bytes32 feedId,
+    bytes32 configDigest
+  ) external;
 
   /**
    * @notice Deactivates the configuration for a config digest
@@ -82,7 +88,10 @@ interface IVerifier is IERC165 {
    * @param configDigest The config digest to deactivate
    * @dev This function can be called by the contract admin to deactivate an incorrect configuration.
    */
-  function deactivateConfig(bytes32 feedId, bytes32 configDigest) external;
+  function deactivateConfig(
+    bytes32 feedId,
+    bytes32 configDigest
+  ) external;
 
   /**
    * @notice Activates the given feed

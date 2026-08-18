@@ -4,8 +4,9 @@ pragma solidity 0.8.26;
 import {PausableWithAccessControl} from "../../../../PausableWithAccessControl.sol";
 import {BaseUnitTest} from "../../BaseUnitTest.t.sol";
 
-import {IAccessControlDefaultAdminRules} from
-  "@openzeppelin/contracts@5.0.2/access/extensions/IAccessControlDefaultAdminRules.sol";
+import {
+  IAccessControlDefaultAdminRules
+} from "@openzeppelin/contracts@5.0.2/access/extensions/IAccessControlDefaultAdminRules.sol";
 
 contract GrantRoleUnitTests is BaseUnitTest {
   function setUp() public {

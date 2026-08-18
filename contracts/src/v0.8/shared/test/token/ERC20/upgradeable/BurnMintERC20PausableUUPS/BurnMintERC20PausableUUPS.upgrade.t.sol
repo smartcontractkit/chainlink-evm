@@ -7,7 +7,10 @@ import {ERC20UpgradableBaseTest_pausing} from "../ERC20UpgradableBaseTest.pausin
 import {ERC1967Proxy} from "@openzeppelin/contracts@5.0.2/proxy/ERC1967/ERC1967Proxy.sol";
 
 interface IUpgradeableProxy {
-  function upgradeToAndCall(address, bytes memory) external payable;
+  function upgradeToAndCall(
+    address,
+    bytes memory
+  ) external payable;
 }
 
 /// @dev Mock contract with limited functionality used for testing only.
@@ -47,7 +50,11 @@ contract MockBurnMintERC20PausableUUPSV2 is BurnMintERC20PausableUUPS {
     $.s_isFrozen[account] = true;
   }
 
-  function _update(address from, address to, uint256 value) internal virtual override {
+  function _update(
+    address from,
+    address to,
+    uint256 value
+  ) internal virtual override {
     MockBurnMintERC20PausableUUPSV2Storage storage $ = _getV2Storage();
     if ($.s_isFrozen[from]) revert MockBurnMintERC20PausableUUPSV2__AccountFrozen(from);
     if ($.s_isFrozen[to]) revert MockBurnMintERC20PausableUUPSV2__AccountFrozen(to);
@@ -93,10 +100,11 @@ contract BurnMintERC20PausableUUPS_upgrade is ERC20UpgradableBaseTest_pausing {
     changePrank(DEFAULT_UPGRADER);
     MockBurnMintERC20PausableUUPSV2 newImplementation = new MockBurnMintERC20PausableUUPSV2();
 
-    IUpgradeableProxy(s_uupsProxy).upgradeToAndCall(
-      address(newImplementation),
-      abi.encodeCall(MockBurnMintERC20PausableUUPSV2.initializeFreezerRole, (defaultFreezer))
-    );
+    IUpgradeableProxy(s_uupsProxy)
+      .upgradeToAndCall(
+        address(newImplementation),
+        abi.encodeCall(MockBurnMintERC20PausableUUPSV2.initializeFreezerRole, (defaultFreezer))
+      );
 
     newImplementation = MockBurnMintERC20PausableUUPSV2(s_uupsProxy);
 

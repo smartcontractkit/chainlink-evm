@@ -52,7 +52,9 @@ contract MercuryRegistryTest is Test {
     // The fork is only used with the `FORK_TEST` flag enabeld, as to not disrupt CI. For CI, a mock verifier is used
     // instead.
     vm.startPrank(OWNER);
-    try vm.envBool("FORK_TEST") returns (bool /* fork testing enabled */ ) {
+    try vm.envBool("FORK_TEST") returns (
+      bool /* fork testing enabled */
+    ) {
       vm.selectFork(vm.createFork("https://goerli-rollup.arbitrum.io/rpc"));
     } catch {
       s_verifier = address(new MockVerifierProxy());

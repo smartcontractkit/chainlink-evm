@@ -47,7 +47,10 @@ contract L2EPTest is Test {
   /// @param greeterAddr - the address of the greeter contract
   /// @param data - the transaction data string
   /// @return an encoded transaction structured as specified in the MultiSend#multiSend comments
-  function encodeMultiSendTx(address greeterAddr, bytes memory data) public pure returns (bytes memory) {
+  function encodeMultiSendTx(
+    address greeterAddr,
+    bytes memory data
+  ) public pure returns (bytes memory) {
     bytes memory txData = abi.encodeWithSelector(Greeter.setGreeting.selector, data);
     return abi.encodePacked(
       uint8(0), // operation

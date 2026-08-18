@@ -36,9 +36,8 @@ contract ScrollValidator is BaseValidator {
     int256 currentAnswer
   ) external override checkAccess returns (bool) {
     // Make the xDomain call
-    IL1ScrollMessenger(L1_CROSS_DOMAIN_MESSENGER_ADDRESS).sendMessage{
-      value: IL1MessageQueueV2(L1_MSG_QUEUE_ADDR).estimateCrossDomainMessageFee(s_gasLimit)
-    }(
+    IL1ScrollMessenger(L1_CROSS_DOMAIN_MESSENGER_ADDRESS)
+    .sendMessage{value: IL1MessageQueueV2(L1_MSG_QUEUE_ADDR).estimateCrossDomainMessageFee(s_gasLimit)}(
       L2_UPTIME_FEED_ADDR,
       0,
       abi.encodeWithSelector(

@@ -138,12 +138,15 @@ contract VRFOld {
   // Prime characteristic of the galois field over which Secp256k1 is defined
   uint256 private constant FIELD_SIZE =
   // solium-disable-next-line indentation
-   0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
+  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
   uint256 private constant WORD_LENGTH_BYTES = 0x20;
 
   // (base^exponent) % FIELD_SIZE
   // Cribbed from https://medium.com/@rbkhmrcr/precompiles-solidity-e5d29bd428c4
-  function _bigModExp(uint256 base, uint256 exponent) internal view returns (uint256 exponentiation) {
+  function _bigModExp(
+    uint256 base,
+    uint256 exponent
+  ) internal view returns (uint256 exponentiation) {
     uint256 callResult;
     uint256[6] memory bigModExpContractInputs;
     bigModExpContractInputs[0] = WORD_LENGTH_BYTES; // Length of base
@@ -154,15 +157,14 @@ contract VRFOld {
     bigModExpContractInputs[5] = FIELD_SIZE;
     uint256[1] memory output;
     assembly {
-      callResult :=
-        staticcall(
-          not(0), // Gas cost: no limit
-          0x05, // Bigmodexp contract address
-          bigModExpContractInputs,
-          0xc0, // Length of input segment: 6*0x20-bytes
-          output,
-          0x20 // Length of output segment
-        )
+      callResult := staticcall(
+        not(0), // Gas cost: no limit
+        0x05, // Bigmodexp contract address
+        bigModExpContractInputs,
+        0xc0, // Length of input segment: 6*0x20-bytes
+        output,
+        0x20 // Length of output segment
+      )
     }
     if (callResult == 0) {
       // solhint-disable-next-line gas-custom-errors
@@ -257,7 +259,10 @@ contract VRFOld {
   //
   // This would greatly simplify the analysis in "OTHER SECURITY CONSIDERATIONS"
   // https://www.pivotaltracker.com/story/show/171120900
-  function _hashToCurve(uint256[2] memory pk, uint256 input) internal view returns (uint256[2] memory rv) {
+  function _hashToCurve(
+    uint256[2] memory pk,
+    uint256 input
+  ) internal view returns (uint256[2] memory rv) {
     rv = _newCandidateSecp256k1Point(abi.encodePacked(HASH_TO_CURVE_HASH_PREFIX, pk, input));
     while (!_isOnCurve(rv)) {
       rv = _newCandidateSecp256k1Point(abi.encodePacked(rv[0]));
@@ -584,7 +589,10 @@ contract VRFOld {
      * @return output i.e., the random output implied by the proof
      * ***************************************************************************
      */
-  function _randomValueFromVRFProof(Proof memory proof, uint256 seed) internal view returns (uint256 output) {
+  function _randomValueFromVRFProof(
+    Proof memory proof,
+    uint256 seed
+  ) internal view returns (uint256 output) {
     _verifyVRFProof(
       proof.pk, proof.gamma, proof.c, proof.s, seed, proof.uWitness, proof.cGammaWitness, proof.sHashWitness, proof.zInv
     );

@@ -4,14 +4,18 @@ pragma solidity ^0.8.24;
 import {IGetCCIPAdmin} from "../../../../shared/interfaces/IGetCCIPAdmin.sol";
 import {IBurnMintERC20Upgradeable} from "../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
 
-import {AccessControlDefaultAdminRulesUpgradeable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
-import {Initializable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {ERC20BurnableUpgradeable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import {
+  AccessControlDefaultAdminRulesUpgradeable
+} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import {
+  Initializable
+} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/Initializable.sol";
+import {
+  UUPSUpgradeable
+} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {
+  ERC20BurnableUpgradeable
+} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 import {IERC1822Proxiable} from "@openzeppelin/contracts@5.0.2/interfaces/draft-IERC1822.sol";
@@ -135,7 +139,11 @@ contract BurnMintERC20UUPS is
   }
 
   /// @dev Disallows minting and transferring to address(this).
-  function _update(address from, address to, uint256 value) internal virtual override {
+  function _update(
+    address from,
+    address to,
+    uint256 value
+  ) internal virtual override {
     if (to == address(this)) revert BurnMintERC20UUPS__InvalidRecipient(to);
 
     super._update(from, to, value);
@@ -143,7 +151,12 @@ contract BurnMintERC20UUPS is
 
   /// @dev Uses OZ ERC20Upgradeable _approve to disallow approving for address(0).
   /// @dev Disallows approving for address(this).
-  function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
+  function _approve(
+    address owner,
+    address spender,
+    uint256 value,
+    bool emitEvent
+  ) internal virtual override {
     if (spender == address(this)) revert BurnMintERC20UUPS__InvalidRecipient(spender);
 
     super._approve(owner, spender, value, emitEvent);
@@ -165,7 +178,10 @@ contract BurnMintERC20UUPS is
   /// @inheritdoc IBurnMintERC20Upgradeable
   /// @dev Alias for BurnFrom for compatibility with the older naming convention.
   /// @dev Uses burnFrom for all validation & logic.
-  function burn(address account, uint256 amount) public virtual override {
+  function burn(
+    address account,
+    uint256 amount
+  ) public virtual override {
     burnFrom(account, amount);
   }
 
@@ -183,7 +199,10 @@ contract BurnMintERC20UUPS is
   /// @dev Uses OZ ERC20Upgradeable _mint to disallow minting to address(0).
   /// @dev Disallows minting to address(this) via _beforeTokenTransfer hook.
   /// @dev Increases the total supply.
-  function mint(address account, uint256 amount) external override onlyRole(MINTER_ROLE) {
+  function mint(
+    address account,
+    uint256 amount
+  ) external override onlyRole(MINTER_ROLE) {
     uint256 _maxSupply = _getBurnMintERC20UUPSStorage().maxSupply;
     uint256 _totalSupply = totalSupply();
 

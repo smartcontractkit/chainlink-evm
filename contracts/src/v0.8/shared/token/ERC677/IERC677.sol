@@ -9,5 +9,9 @@ interface IERC677 {
   /// @param amount The amount of tokens to be transferred
   /// @param data bytes Additional data with no specified format, sent in call to `to`
   /// @return true unless throwing
-  function transferAndCall(address to, uint256 amount, bytes memory data) external returns (bool);
+  function transferAndCall(
+    address to,
+    uint256 amount,
+    bytes memory data
+  ) external returns (bool);
 }

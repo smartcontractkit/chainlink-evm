@@ -50,7 +50,10 @@ library Chainlink {
    * @param self The initialized request
    * @param data The CBOR data
    */
-  function _setBuffer(Request memory self, bytes memory data) internal pure {
+  function _setBuffer(
+    Request memory self,
+    bytes memory data
+  ) internal pure {
     BufferChainlink.init(self.buf, data.length);
     BufferChainlink.append(self.buf, data);
   }
@@ -61,7 +64,11 @@ library Chainlink {
    * @param key The name of the key
    * @param value The string value to add
    */
-  function _add(Request memory self, string memory key, string memory value) internal pure {
+  function _add(
+    Request memory self,
+    string memory key,
+    string memory value
+  ) internal pure {
     self.buf.encodeString(key);
     self.buf.encodeString(value);
   }
@@ -72,7 +79,11 @@ library Chainlink {
    * @param key The name of the key
    * @param value The bytes value to add
    */
-  function _addBytes(Request memory self, string memory key, bytes memory value) internal pure {
+  function _addBytes(
+    Request memory self,
+    string memory key,
+    bytes memory value
+  ) internal pure {
     self.buf.encodeString(key);
     self.buf.encodeBytes(value);
   }
@@ -83,7 +94,11 @@ library Chainlink {
    * @param key The name of the key
    * @param value The int256 value to add
    */
-  function _addInt(Request memory self, string memory key, int256 value) internal pure {
+  function _addInt(
+    Request memory self,
+    string memory key,
+    int256 value
+  ) internal pure {
     self.buf.encodeString(key);
     self.buf.encodeInt(value);
   }
@@ -94,7 +109,11 @@ library Chainlink {
    * @param key The name of the key
    * @param value The uint256 value to add
    */
-  function _addUint(Request memory self, string memory key, uint256 value) internal pure {
+  function _addUint(
+    Request memory self,
+    string memory key,
+    uint256 value
+  ) internal pure {
     self.buf.encodeString(key);
     self.buf.encodeUInt(value);
   }
@@ -105,7 +124,11 @@ library Chainlink {
    * @param key The name of the key
    * @param values The array of string values to add
    */
-  function _addStringArray(Request memory self, string memory key, string[] memory values) internal pure {
+  function _addStringArray(
+    Request memory self,
+    string memory key,
+    string[] memory values
+  ) internal pure {
     self.buf.encodeString(key);
     self.buf.startArray();
     for (uint256 i = 0; i < values.length; i++) {

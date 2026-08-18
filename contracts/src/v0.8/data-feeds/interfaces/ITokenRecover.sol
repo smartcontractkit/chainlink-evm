@@ -11,5 +11,9 @@ interface ITokenRecover {
   /// @param token Token to transfer
   /// @param to Address to send payment to
   /// @param amount Amount of token to transfer
-  function recoverTokens(IERC20 token, address to, uint256 amount) external;
+  function recoverTokens(
+    IERC20 token,
+    address to,
+    uint256 amount
+  ) external;
 }

@@ -34,7 +34,12 @@ interface IDestinationFeeManager is IERC165 {
    * @param token token to apply the discount to
    * @param discount discount to be applied to the fee
    */
-  function updateSubscriberDiscount(address subscriber, bytes32 feedId, address token, uint64 discount) external;
+  function updateSubscriberDiscount(
+    address subscriber,
+    bytes32 feedId,
+    address token,
+    uint64 discount
+  ) external;
 
   /**
    * @notice Adds a subscriber to the fee manager
@@ -42,7 +47,11 @@ interface IDestinationFeeManager is IERC165 {
    * @param token token to apply the discount to
    * @param discount discount to be applied to the fee
    */
-  function updateSubscriberGlobalDiscount(address subscriber, address token, uint64 discount) external;
+  function updateSubscriberGlobalDiscount(
+    address subscriber,
+    address token,
+    uint64 discount
+  ) external;
 
   /**
    * @notice Withdraws any native or LINK rewards to the owner address
@@ -50,7 +59,11 @@ interface IDestinationFeeManager is IERC165 {
    * @param recipientAddress address to withdraw to
    * @param quantity quantity to withdraw
    */
-  function withdraw(address assetAddress, address recipientAddress, uint192 quantity) external;
+  function withdraw(
+    address assetAddress,
+    address recipientAddress,
+    uint192 quantity
+  ) external;
 
   /**
    * @notice Returns the link balance of the fee manager

@@ -17,7 +17,11 @@ contract VerifierBillingTests is VerifierWithFeeManager {
   address internal constant DEFAULT_RECIPIENT_6 = address(uint160(uint256(keccak256("DEFAULT_RECIPIENT_6"))));
   address internal constant DEFAULT_RECIPIENT_7 = address(uint160(uint256(keccak256("DEFAULT_RECIPIENT_7"))));
 
-  function payRecipients(bytes32 poolId, address[] memory recipients, address sender) public {
+  function payRecipients(
+    bytes32 poolId,
+    address[] memory recipients,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -89,7 +93,7 @@ contract VerifierBillingTests is VerifierWithFeeManager {
 
   function test_rewardsAreDistributedAccordingToWeights() public {
     /*
-          Simple test verifying that rewards are distributed according to address and weights 
+          Simple test verifying that rewards are distributed according to address and weights
           associated to the DonConfig used to verify the report
          */
     Signer[] memory signers = _getSigners(MAX_ORACLES);
@@ -119,7 +123,7 @@ contract VerifierBillingTests is VerifierWithFeeManager {
 
   function test_rewardsAreDistributedAccordingToWeightsMultipleWeigths() public {
     /*
-          Rewards are distributed according to AddressAndWeight's 
+          Rewards are distributed according to AddressAndWeight's
           associated to the DonConfig used to verify the report:
           - multiple recipients
           - multiple verifications
@@ -156,10 +160,10 @@ contract VerifierBillingTests is VerifierWithFeeManager {
   function test_rewardsAreDistributedAccordingToWeightsUsingHistoricalConfigs() public {
     /*
     Verifies that reports verified with historical give rewards according to the verifying config AddressAndWeight.
-          - Sets two Configs: ConfigA and ConfigB, These two Configs have different Recipient and Weights 
+          - Sets two Configs: ConfigA and ConfigB, These two Configs have different Recipient and Weights
           - Verifies a couple reports with each config
           - Pays recipients
-          - Asserts expected rewards for each recipient 
+          - Asserts expected rewards for each recipient
          */
 
     Signer[] memory signers = _getSigners(10);

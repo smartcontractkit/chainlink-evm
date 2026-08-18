@@ -42,7 +42,10 @@ contract BlockhashStore {
    * @param header the rlp-encoded blockheader of block n+1. We verify its correctness by checking
    *   that it hashes to a stored blockhash, and then extract parentHash to get the n-th blockhash.
    */
-  function storeVerifyHeader(uint256 n, bytes memory header) public {
+  function storeVerifyHeader(
+    uint256 n,
+    bytes memory header
+  ) public {
     // solhint-disable-next-line gas-custom-errors
     require(keccak256(header) == s_blockhashes[n + 1], "header has unknown blockhash");
 
@@ -64,7 +67,7 @@ contract BlockhashStore {
     bytes32 parentHash;
     assembly {
       parentHash := mload(add(header, 36)) // 36 = 32 byte offset for length prefix of ABI-encoded array
-        //    +  4 byte offset of PARENTHASH (see above)
+      //    +  4 byte offset of PARENTHASH (see above)
     }
 
     s_blockhashes[n] = parentHash;

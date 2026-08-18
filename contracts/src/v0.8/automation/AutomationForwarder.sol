@@ -20,7 +20,11 @@ contract AutomationForwarder {
 
   IAutomationRegistryConsumer private s_registry;
 
-  constructor(address target, address registry, address logic) {
+  constructor(
+    address target,
+    address registry,
+    address logic
+  ) {
     s_registry = IAutomationRegistryConsumer(registry);
     i_target = target;
     i_logic = logic;
@@ -32,7 +36,10 @@ contract AutomationForwarder {
    * @param data is the 4 bytes function selector + arbitrary function data
    * @return success indicating whether the target call succeeded or failed
    */
-  function forward(uint256 gasAmount, bytes memory data) external returns (bool success, uint256 gasUsed) {
+  function forward(
+    uint256 gasAmount,
+    bytes memory data
+  ) external returns (bool success, uint256 gasUsed) {
     if (msg.sender != address(s_registry)) revert();
     address target = i_target;
     gasUsed = gasleft();

@@ -21,7 +21,10 @@ contract Ownable2Step is IOwnable {
   event OwnershipTransferRequested(address indexed from, address indexed to);
   event OwnershipTransferred(address indexed from, address indexed to);
 
-  constructor(address newOwner, address pendingOwner) {
+  constructor(
+    address newOwner,
+    address pendingOwner
+  ) {
     if (newOwner == address(0)) {
       revert OwnerCannotBeZero();
     }

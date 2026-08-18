@@ -115,7 +115,10 @@ abstract contract VRFConsumerBase is VRFRequestIDBase {
    * @param randomness the VRF output
    */
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomness(bytes32 requestId, uint256 randomness) internal virtual;
+  function fulfillRandomness(
+    bytes32 requestId,
+    uint256 randomness
+  ) internal virtual;
 
   /**
    * @dev In order to keep backwards compatibility we have kept the user
@@ -152,7 +155,10 @@ abstract contract VRFConsumerBase is VRFRequestIDBase {
    * @dev fulfillRandomness.
    */
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function requestRandomness(bytes32 _keyHash, uint256 _fee) internal returns (bytes32 requestId) {
+  function requestRandomness(
+    bytes32 _keyHash,
+    uint256 _fee
+  ) internal returns (bytes32 requestId) {
     LINK.transferAndCall(vrfCoordinator, _fee, abi.encode(_keyHash, USER_SEED_PLACEHOLDER));
     // This is the seed passed to VRFCoordinator. The oracle will mix this with
     // the hash of the block containing this request to obtain the seed/input
@@ -177,7 +183,7 @@ abstract contract VRFConsumerBase is VRFRequestIDBase {
   //
   // Must stay in sync with VRFCoordinator[_keyHash][this]
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
-  mapping(bytes32 => uint256) /* keyHash */ /* nonce */ private nonces;
+  mapping(bytes32 => uint256) private /* keyHash */ /* nonce */ nonces;
 
   /**
    * @param _vrfCoordinator address of VRFCoordinator contract
@@ -185,7 +191,10 @@ abstract contract VRFConsumerBase is VRFRequestIDBase {
    *
    * @dev https://docs.chain.link/docs/link-token-contracts
    */
-  constructor(address _vrfCoordinator, address _link) {
+  constructor(
+    address _vrfCoordinator,
+    address _link
+  ) {
     vrfCoordinator = _vrfCoordinator;
     LINK = LinkTokenInterface(_link);
   }
@@ -193,7 +202,10 @@ abstract contract VRFConsumerBase is VRFRequestIDBase {
   // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF
   // proof. rawFulfillRandomness then calls fulfillRandomness, after validating
   // the origin of the call
-  function rawFulfillRandomness(bytes32 requestId, uint256 randomness) external {
+  function rawFulfillRandomness(
+    bytes32 requestId,
+    uint256 randomness
+  ) external {
     // solhint-disable-next-line gas-custom-errors
     require(msg.sender == vrfCoordinator, "Only VRFCoordinator can fulfill");
     fulfillRandomness(requestId, randomness);

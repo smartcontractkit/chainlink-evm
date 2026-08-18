@@ -28,7 +28,10 @@ abstract contract LinkTokenReceiver {
   function getChainlinkToken() public view virtual returns (address);
 
   // @notice Validate the function called on token transfer
-  function _validateTokenTransferAction(bytes4 funcSelector, bytes memory data) internal virtual;
+  function _validateTokenTransferAction(
+    bytes4 funcSelector,
+    bytes memory data
+  ) internal virtual;
 
   // @dev Reverts if not sent from the LINK token
   modifier validateFromLINK() {

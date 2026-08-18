@@ -40,7 +40,13 @@ contract StreamsLookupUpkeep is AutomationCompatibleInterface, StreamsLookupComp
   bool public shouldRevertCallback;
   bool public callbackReturnBool;
 
-  constructor(uint256 _testRange, uint256 _interval, bool _useArbBlock, bool _staging, bool _verify) {
+  constructor(
+    uint256 _testRange,
+    uint256 _interval,
+    bool _useArbBlock,
+    bool _staging,
+    bool _verify
+  ) {
     testRange = _testRange;
     interval = _interval;
     previousPerformBlock = 0;
@@ -60,7 +66,10 @@ contract StreamsLookupUpkeep is AutomationCompatibleInterface, StreamsLookupComp
     callbackReturnBool = true;
   }
 
-  function setParamKeys(string memory _feedParamKey, string memory _timeParamKey) external {
+  function setParamKeys(
+    string memory _feedParamKey,
+    string memory _timeParamKey
+  ) external {
     feedParamKey = _feedParamKey;
     timeParamKey = _timeParamKey;
   }
@@ -89,7 +98,10 @@ contract StreamsLookupUpkeep is AutomationCompatibleInterface, StreamsLookupComp
     counter = 0;
   }
 
-  function checkCallback(bytes[] memory values, bytes memory extraData) external view returns (bool, bytes memory) {
+  function checkCallback(
+    bytes[] memory values,
+    bytes memory extraData
+  ) external view returns (bool, bytes memory) {
     require(!shouldRevertCallback, "shouldRevertCallback is true");
     // do sth about the chainlinkBlob data in values and extraData
     bytes memory performData = abi.encode(values, extraData);

@@ -125,15 +125,25 @@ contract AutomationReceiverTest {
     return abi.encodeWithSignature("performUpkeep(bytes)", performData);
   }
 
-  function _report(address tgt, bytes memory callData) private pure returns (bytes memory) {
+  function _report(
+    address tgt,
+    bytes memory callData
+  ) private pure returns (bytes memory) {
     return abi.encode(tgt, uint256(0), callData);
   }
 
-  function _reportAtBlock(address tgt, uint256 blockNumber, bytes memory callData) private pure returns (bytes memory) {
+  function _reportAtBlock(
+    address tgt,
+    uint256 blockNumber,
+    bytes memory callData
+  ) private pure returns (bytes memory) {
     return abi.encode(tgt, blockNumber, callData);
   }
 
-  function _metadata(bytes32 wfId, address wfOwner) private pure returns (bytes memory) {
+  function _metadata(
+    bytes32 wfId,
+    address wfOwner
+  ) private pure returns (bytes memory) {
     return abi.encodePacked(wfId, bytes10(0), wfOwner);
   }
 
@@ -144,7 +154,11 @@ contract AutomationReceiverTest {
     receiver.onReport(_metadata(WORKFLOW_ID, WORKFLOW_OWNER), report);
   }
 
-  function _deliverOutcome(address tgt, uint256 gasAmount, bytes memory report) private returns (uint8) {
+  function _deliverOutcome(
+    address tgt,
+    uint256 gasAmount,
+    bytes memory report
+  ) private returns (uint8) {
     vm.cool(tgt);
     vm.prank(FORWARDER);
     try receiver.onReport{gas: gasAmount}(_metadata(WORKFLOW_ID, WORKFLOW_OWNER), report) {
@@ -715,15 +729,24 @@ contract AutomationReceiverTest {
     return bytes4(keccak256("InvalidSender(address,address)"));
   }
 
-  function _assertEq(uint256 actual, uint256 expected) private pure {
+  function _assertEq(
+    uint256 actual,
+    uint256 expected
+  ) private pure {
     if (actual != expected) revert("uint mismatch");
   }
 
-  function _assertEq(bytes32 actual, bytes32 expected) private pure {
+  function _assertEq(
+    bytes32 actual,
+    bytes32 expected
+  ) private pure {
     if (actual != expected) revert("bytes32 mismatch");
   }
 
-  function _assertEq(address actual, address expected) private pure {
+  function _assertEq(
+    address actual,
+    address expected
+  ) private pure {
     if (actual != expected) revert("address mismatch");
   }
 

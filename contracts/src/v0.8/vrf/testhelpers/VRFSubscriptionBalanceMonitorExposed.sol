@@ -12,7 +12,10 @@ contract VRFSubscriptionBalanceMonitorExposed is VRFSubscriptionBalanceMonitor {
     uint256 minWaitPeriodSeconds
   ) VRFSubscriptionBalanceMonitor(linkTokenAddress, coordinatorAddress, keeperRegistryAddress, minWaitPeriodSeconds) {}
 
-  function setLastTopUpXXXTestOnly(uint64 target, uint56 lastTopUpTimestamp) external {
+  function setLastTopUpXXXTestOnly(
+    uint64 target,
+    uint56 lastTopUpTimestamp
+  ) external {
     s_targets[target].lastTopUpTimestamp = lastTopUpTimestamp;
   }
 }

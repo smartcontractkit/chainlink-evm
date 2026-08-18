@@ -39,7 +39,11 @@ abstract contract BaseValidator is SimpleWriteAccessController, AggregatorValida
   /// @param l1CrossDomainMessengerAddress address the L1CrossDomainMessenger contract address
   /// @param l2UptimeFeedAddr the address of the L2 SequencerUptimeFeed contract address
   /// @param gasLimit the gasLimit to use for sending a message from L1 to L2
-  constructor(address l1CrossDomainMessengerAddress, address l2UptimeFeedAddr, uint32 gasLimit) {
+  constructor(
+    address l1CrossDomainMessengerAddress,
+    address l2UptimeFeedAddr,
+    uint32 gasLimit
+  ) {
     if (l1CrossDomainMessengerAddress == address(0)) {
       revert L1CrossDomainMessengerAddressZero();
     }

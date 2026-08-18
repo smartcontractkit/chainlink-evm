@@ -76,7 +76,10 @@ abstract contract ChainlinkClient {
    * @param payment The amount of LINK to send for the request
    * @return requestId The request ID
    */
-  function _sendChainlinkRequest(Chainlink.Request memory req, uint256 payment) internal returns (bytes32) {
+  function _sendChainlinkRequest(
+    Chainlink.Request memory req,
+    uint256 payment
+  ) internal returns (bytes32) {
     return _sendChainlinkRequestTo(address(s_oracle), req, payment);
   }
 
@@ -119,7 +122,10 @@ abstract contract ChainlinkClient {
    * @param payment The amount of LINK to send for the request
    * @return requestId The request ID
    */
-  function _sendOperatorRequest(Chainlink.Request memory req, uint256 payment) internal returns (bytes32) {
+  function _sendOperatorRequest(
+    Chainlink.Request memory req,
+    uint256 payment
+  ) internal returns (bytes32) {
     return _sendOperatorRequestTo(address(s_oracle), req, payment);
   }
 
@@ -256,7 +262,10 @@ abstract contract ChainlinkClient {
    * @param oracleAddress The address of the oracle contract that will fulfill the request
    * @param requestId The request ID used for the response
    */
-  function _addChainlinkExternalRequest(address oracleAddress, bytes32 requestId) internal notPendingRequest(requestId) {
+  function _addChainlinkExternalRequest(
+    address oracleAddress,
+    bytes32 requestId
+  ) internal notPendingRequest(requestId) {
     s_pendingRequests[requestId] = oracleAddress;
   }
 
@@ -266,7 +275,10 @@ abstract contract ChainlinkClient {
    * @param ensAddress The address of the ENS contract
    * @param node The ENS node hash
    */
-  function _useChainlinkWithENS(address ensAddress, bytes32 node) internal {
+  function _useChainlinkWithENS(
+    address ensAddress,
+    bytes32 node
+  ) internal {
     s_ens = ENSInterface(ensAddress);
     s_ensNode = node;
     bytes32 linkSubnode = keccak256(abi.encodePacked(s_ensNode, ENS_TOKEN_SUBNAME));
@@ -295,6 +307,7 @@ abstract contract ChainlinkClient {
   )
     internal
     recordChainlinkFulfillment(requestId) // solhint-disable-next-line no-empty-blocks
+
   {}
 
   /**

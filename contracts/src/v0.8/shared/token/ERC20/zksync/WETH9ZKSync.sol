@@ -65,17 +65,27 @@ contract WETH9ZKSync {
     return address(this).balance;
   }
 
-  function approve(address guy, uint256 wad) public returns (bool) {
+  function approve(
+    address guy,
+    uint256 wad
+  ) public returns (bool) {
     allowance[msg.sender][guy] = wad;
     emit Approval(msg.sender, guy, wad);
     return true;
   }
 
-  function transfer(address dst, uint256 wad) public returns (bool) {
+  function transfer(
+    address dst,
+    uint256 wad
+  ) public returns (bool) {
     return transferFrom(msg.sender, dst, wad);
   }
 
-  function transferFrom(address src, address dst, uint256 wad) public returns (bool) {
+  function transferFrom(
+    address src,
+    address dst,
+    uint256 wad
+  ) public returns (bool) {
     require(balanceOf[src] >= wad);
 
     if (src != msg.sender && allowance[src][msg.sender] != type(uint128).max) {

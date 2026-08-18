@@ -13,7 +13,10 @@ contract UpkeepCounter {
   uint256 public initialTimestamp;
   uint256 public counter;
 
-  constructor(uint256 _testRange, uint256 _interval) {
+  constructor(
+    uint256 _testRange,
+    uint256 _interval
+  ) {
     testRange = _testRange;
     interval = _interval;
     previousPerformBlock = 0;
@@ -49,7 +52,10 @@ contract UpkeepCounter {
     return (block.timestamp - initialTimestamp) < testRange && (block.timestamp - lastTimestamp) >= interval;
   }
 
-  function setSpread(uint256 _testRange, uint256 _interval) external {
+  function setSpread(
+    uint256 _testRange,
+    uint256 _interval
+  ) external {
     testRange = _testRange;
     interval = _interval;
     initialTimestamp = 0;

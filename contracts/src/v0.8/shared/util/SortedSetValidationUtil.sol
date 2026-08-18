@@ -20,7 +20,10 @@ library SortedSetValidationUtil {
   /// @param superset The array of bytes32 in which subset is checked against.
   /// @custom:revert EmptySet If either `subset` or `superset` is empty.
   /// @custom:revert NotASubset If `subset` is not a subset of `superset`.
-  function _checkIsValidUniqueSubset(bytes32[] memory subset, bytes32[] memory superset) internal pure {
+  function _checkIsValidUniqueSubset(
+    bytes32[] memory subset,
+    bytes32[] memory superset
+  ) internal pure {
     if (subset.length == 0 || superset.length == 0) {
       revert EmptySet();
     }

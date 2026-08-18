@@ -5,7 +5,10 @@ import "../interfaces/StreamsLookupCompatibleInterface.sol";
 import "./VerifiableLoadBase.sol";
 
 contract VerifiableLoadStreamsLookupUpkeep is VerifiableLoadBase, StreamsLookupCompatibleInterface {
-  constructor(AutomationRegistrar2_1 _registrar, bool _useArb) VerifiableLoadBase(_registrar, _useArb) {}
+  constructor(
+    AutomationRegistrar2_1 _registrar,
+    bool _useArb
+  ) VerifiableLoadBase(_registrar, _useArb) {}
 
   function checkCallback(
     bytes[] memory values,

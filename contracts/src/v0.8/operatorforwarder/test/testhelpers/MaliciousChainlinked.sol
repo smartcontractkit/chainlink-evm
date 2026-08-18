@@ -40,7 +40,10 @@ contract MaliciousChainlinked is Chainlinked {
     return requestId;
   }
 
-  function chainlinkPriceRequest(Chainlink.Request memory _req, uint256 _amount) internal returns (bytes32 requestId) {
+  function chainlinkPriceRequest(
+    Chainlink.Request memory _req,
+    uint256 _amount
+  ) internal returns (bytes32 requestId) {
     requestId = keccak256(abi.encodePacked(this, s_maliciousRequests));
     _req.nonce = s_maliciousRequests;
     s_maliciousPendingRequests[requestId] = oracleAddress();

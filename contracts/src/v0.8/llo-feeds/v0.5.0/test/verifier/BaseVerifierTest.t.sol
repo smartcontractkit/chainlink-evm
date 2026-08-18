@@ -247,7 +247,10 @@ contract BaseTest is Test {
     });
   }
 
-  function _ccipReadURL(bytes32 feedId, uint256 commitmentBlock) internal pure returns (string memory url) {
+  function _ccipReadURL(
+    bytes32 feedId,
+    uint256 commitmentBlock
+  ) internal pure returns (string memory url) {
     return string(
       abi.encodePacked(
         SERVER_URL,
@@ -407,7 +410,11 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     return reportContext;
   }
 
-  function _approveLink(address spender, uint256 quantity, address sender) internal {
+  function _approveLink(
+    address spender,
+    uint256 quantity,
+    address sender
+  ) internal {
     address originalAddr = msg.sender;
     changePrank(sender);
 
@@ -415,7 +422,11 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     changePrank(originalAddr);
   }
 
-  function _approveNative(address spender, uint256 quantity, address sender) internal {
+  function _approveNative(
+    address spender,
+    uint256 quantity,
+    address sender
+  ) internal {
     address originalAddr = msg.sender;
     changePrank(sender);
 
@@ -423,7 +434,12 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     changePrank(originalAddr);
   }
 
-  function _verify(bytes memory payload, address feeAddress, uint256 wrappedNativeValue, address sender) internal {
+  function _verify(
+    bytes memory payload,
+    address feeAddress,
+    uint256 wrappedNativeValue,
+    address sender
+  ) internal {
     address originalAddr = msg.sender;
     changePrank(sender);
 
@@ -432,7 +448,12 @@ contract BaseTestWithConfiguredVerifierAndFeeManager is BaseTest {
     changePrank(originalAddr);
   }
 
-  function _verifyBulk(bytes[] memory payload, address feeAddress, uint256 wrappedNativeValue, address sender) internal {
+  function _verifyBulk(
+    bytes[] memory payload,
+    address feeAddress,
+    uint256 wrappedNativeValue,
+    address sender
+  ) internal {
     address originalAddr = msg.sender;
     changePrank(sender);
 

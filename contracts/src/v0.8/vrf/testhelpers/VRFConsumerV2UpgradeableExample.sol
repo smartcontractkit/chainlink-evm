@@ -15,13 +15,19 @@ contract VRFConsumerV2UpgradeableExample is Initializable, VRFConsumerBaseV2Upgr
   uint64 public s_subId;
   uint256 public s_gasAvailable;
 
-  function initialize(address _vrfCoordinator, address _link) public initializer {
+  function initialize(
+    address _vrfCoordinator,
+    address _link
+  ) public initializer {
     __VRFConsumerBaseV2_init(_vrfCoordinator);
     COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
     LINKTOKEN = LinkTokenInterface(_link);
   }
 
-  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) internal override {
     require(requestId == s_requestId, "request ID is incorrect");
 
     s_gasAvailable = gasleft();

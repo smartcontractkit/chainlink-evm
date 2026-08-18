@@ -35,7 +35,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   mapping(uint256 => uint256) public gasLimits;
   mapping(bytes32 => bool) public dummyMap; // used to force storage lookup
   mapping(uint256 => uint256[]) public delays; // how to query for delays for a certain past period: calendar day and/or
-    // past 24 hours
+  // past 24 hours
 
   mapping(uint256 => mapping(uint16 => uint256[])) public bucketedDelays;
   mapping(uint256 => uint16) public buckets;
@@ -68,7 +68,10 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @param _registrar a automation registrar 2.1 address
    * @param _useArb if this contract will use arbitrum block number
    */
-  constructor(AutomationRegistrar2_1 _registrar, bool _useArb) ConfirmedOwner(msg.sender) {
+  constructor(
+    AutomationRegistrar2_1 _registrar,
+    bool _useArb
+  ) ConfirmedOwner(msg.sender) {
     registrar = _registrar;
     (address registryAddress,) = registrar.getConfig();
     registry = IKeeperRegistryMaster(payable(address(registryAddress)));
@@ -78,7 +81,10 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
 
   receive() external payable {}
 
-  function setParamKeys(string memory _feedParamKey, string memory _timeParamKey) external {
+  function setParamKeys(
+    string memory _feedParamKey,
+    string memory _timeParamKey
+  ) external {
     feedParamKey = _feedParamKey;
     timeParamKey = _timeParamKey;
   }
@@ -179,12 +185,7 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     bytes32 topic3
   ) external view returns (bytes memory logTrigger) {
     LogTriggerConfig memory cfg = LogTriggerConfig({
-      contractAddress: addr,
-      filterSelector: selector,
-      topic0: topic0,
-      topic1: topic1,
-      topic2: topic2,
-      topic3: topic3
+      contractAddress: addr, filterSelector: selector, topic0: topic0, topic1: topic1, topic2: topic2, topic3: topic3
     });
     return abi.encode(cfg);
   }
@@ -214,7 +215,11 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   }
 
   // this function sets pipeline data and trigger config for log trigger upkeeps
-  function batchPreparingUpkeepsSimple(uint256[] calldata upkeepIds, uint8 log, uint8 selector) external {
+  function batchPreparingUpkeepsSimple(
+    uint256[] calldata upkeepIds,
+    uint8 log,
+    uint8 selector
+  ) external {
     uint256 len = upkeepIds.length;
     for (uint256 i = 0; i < len; i++) {
       uint256 upkeepId = upkeepIds[i];
@@ -247,7 +252,10 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     registry.setUpkeepTriggerConfig(upkeepId, this.getLogTriggerConfig(addr, selector, topic0, topic1, topic2, topic3));
   }
 
-  function updateLogTriggerConfig2(uint256 upkeepId, bytes calldata cfg) external {
+  function updateLogTriggerConfig2(
+    uint256 upkeepId,
+    bytes calldata cfg
+  ) external {
     registry.setUpkeepTriggerConfig(upkeepId, cfg);
   }
 
@@ -294,7 +302,10 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     }
   }
 
-  function topUpFund(uint256 upkeepId, uint256 blockNum) public {
+  function topUpFund(
+    uint256 upkeepId,
+    uint256 blockNum
+  ) public {
     if (blockNum - lastTopUpBlocks[upkeepId] > upkeepTopUpCheckInterval) {
       IAutomationV21PlusCommon.UpkeepInfoLegacy memory info = registry.getUpkeep(upkeepId);
       uint96 minBalance = registry.getMinBalanceForUpkeep(upkeepId);
@@ -330,7 +341,11 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     return registry.getTriggerType(upkeepId);
   }
 
-  function burnPerformGas(uint256 upkeepId, uint256 startGas, uint256 blockNum) public {
+  function burnPerformGas(
+    uint256 upkeepId,
+    uint256 startGas,
+    uint256 blockNum
+  ) public {
     uint256 performGasToBurn = performGasToBurns[upkeepId];
     while (startGas - gasleft() + 10_000 < performGasToBurn) {
       dummyMap[blockhash(blockNum)] = false;
@@ -342,7 +357,10 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @param upkeepId the upkeep ID
    * @param amount the amount of LINK to be funded for the upkeep
    */
-  function addFunds(uint256 upkeepId, uint96 amount) public {
+  function addFunds(
+    uint256 upkeepId,
+    uint96 amount
+  ) public {
     linkToken.approve(address(registry), amount);
     registry.addFunds(upkeepId, amount);
   }
@@ -353,7 +371,10 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @param upkeepId the upkeep ID
    * @param pipelineData the new pipeline data for the upkeep
    */
-  function updateUpkeepPipelineData(uint256 upkeepId, bytes calldata pipelineData) external {
+  function updateUpkeepPipelineData(
+    uint256 upkeepId,
+    bytes calldata pipelineData
+  ) external {
     registry.setUpkeepCheckData(upkeepId, pipelineData);
   }
 
@@ -419,16 +440,25 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
   //    checkGasToBurns[upkeepId] = value;
   //  }
 
-  function setPerformDataSize(uint256 upkeepId, uint256 value) public {
+  function setPerformDataSize(
+    uint256 upkeepId,
+    uint256 value
+  ) public {
     performDataSizes[upkeepId] = value;
   }
 
-  function setUpkeepGasLimit(uint256 upkeepId, uint32 gasLimit) public {
+  function setUpkeepGasLimit(
+    uint256 upkeepId,
+    uint32 gasLimit
+  ) public {
     registry.setUpkeepGasLimit(upkeepId, gasLimit);
     gasLimits[upkeepId] = gasLimit;
   }
 
-  function setInterval(uint256 upkeepId, uint256 _interval) external {
+  function setInterval(
+    uint256 upkeepId,
+    uint256 _interval
+  ) external {
     intervals[upkeepId] = _interval;
     firstPerformBlocks[upkeepId] = 0;
     counters[upkeepId] = 0;
@@ -446,7 +476,10 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
    * @param upkeepIds an array of upkeep IDs
    * @param interval a new interval
    */
-  function batchSetIntervals(uint256[] calldata upkeepIds, uint32 interval) external {
+  function batchSetIntervals(
+    uint256[] calldata upkeepIds,
+    uint32 interval
+  ) external {
     uint256 len = upkeepIds.length;
     for (uint256 i = 0; i < len; i++) {
       this.setInterval(upkeepIds[i], interval);
@@ -507,11 +540,17 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     return registry.getUpkeepPrivilegeConfig(upkeepId);
   }
 
-  function setUpkeepPrivilegeConfig(uint256 upkeepId, bytes memory cfg) external {
+  function setUpkeepPrivilegeConfig(
+    uint256 upkeepId,
+    bytes memory cfg
+  ) external {
     registry.setUpkeepPrivilegeConfig(upkeepId, cfg);
   }
 
-  function sendLog(uint256 upkeepId, uint8 log) external {
+  function sendLog(
+    uint256 upkeepId,
+    uint8 log
+  ) external {
     uint256 blockNum = getBlockNumber();
     if (log == 0) {
       emit LogEmitted(upkeepId, blockNum, address(this));
@@ -543,21 +582,33 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     return delays[upkeepId];
   }
 
-  function getBucketedDelays(uint256 upkeepId, uint16 bucket) public view returns (uint256[] memory) {
+  function getBucketedDelays(
+    uint256 upkeepId,
+    uint16 bucket
+  ) public view returns (uint256[] memory) {
     return bucketedDelays[upkeepId][bucket];
   }
 
-  function getSumDelayLastNPerforms(uint256 upkeepId, uint256 n) public view returns (uint256, uint256) {
+  function getSumDelayLastNPerforms(
+    uint256 upkeepId,
+    uint256 n
+  ) public view returns (uint256, uint256) {
     uint256[] memory delays = delays[upkeepId];
     return getSumDelayLastNPerforms(delays, n);
   }
 
-  function getSumDelayInBucket(uint256 upkeepId, uint16 bucket) public view returns (uint256, uint256) {
+  function getSumDelayInBucket(
+    uint256 upkeepId,
+    uint16 bucket
+  ) public view returns (uint256, uint256) {
     uint256[] memory delays = bucketedDelays[upkeepId][bucket];
     return getSumDelayLastNPerforms(delays, delays.length);
   }
 
-  function getSumDelayLastNPerforms(uint256[] memory delays, uint256 n) internal view returns (uint256, uint256) {
+  function getSumDelayLastNPerforms(
+    uint256[] memory delays,
+    uint256 n
+  ) internal view returns (uint256, uint256) {
     uint256 i;
     uint256 len = delays.length;
     if (n == 0 || n >= len) {
@@ -571,11 +622,19 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     return (sum, n);
   }
 
-  function getPxDelayLastNPerforms(uint256 upkeepId, uint256 p, uint256 n) public view returns (uint256) {
+  function getPxDelayLastNPerforms(
+    uint256 upkeepId,
+    uint256 p,
+    uint256 n
+  ) public view returns (uint256) {
     return getPxDelayLastNPerforms(delays[upkeepId], p, n);
   }
 
-  function getPxDelayLastNPerforms(uint256[] memory delays, uint256 p, uint256 n) internal view returns (uint256) {
+  function getPxDelayLastNPerforms(
+    uint256[] memory delays,
+    uint256 p,
+    uint256 n
+  ) internal view returns (uint256) {
     uint256 i;
     uint256 len = delays.length;
     if (n == 0 || n >= len) {
@@ -594,7 +653,11 @@ abstract contract VerifiableLoadBase is ConfirmedOwner {
     return subArr[(p * subArr.length) / 100];
   }
 
-  function quickSort(uint256[] memory arr, int256 left, int256 right) private pure {
+  function quickSort(
+    uint256[] memory arr,
+    int256 left,
+    int256 right
+  ) private pure {
     int256 i = left;
     int256 j = right;
     if (i == j) return;

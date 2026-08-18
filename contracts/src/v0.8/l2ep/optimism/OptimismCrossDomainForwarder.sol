@@ -9,8 +9,9 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 import {CrossDomainForwarder} from "../CrossDomainForwarder.sol";
 import {CrossDomainOwnable} from "../CrossDomainOwnable.sol";
 
-import {iOVM_CrossDomainMessenger} from
-  "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
+import {
+  iOVM_CrossDomainMessenger
+} from "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
 import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 
 /**
@@ -30,7 +31,10 @@ contract OptimismCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
    * @param crossDomainMessengerAddr the xDomain bridge messenger (Optimism bridge L2) contract address
    * @param l1OwnerAddr the L1 owner address that will be allowed to call the forward fn
    */
-  constructor(iOVM_CrossDomainMessenger crossDomainMessengerAddr, address l1OwnerAddr) CrossDomainOwnable(l1OwnerAddr) {
+  constructor(
+    iOVM_CrossDomainMessenger crossDomainMessengerAddr,
+    address l1OwnerAddr
+  ) CrossDomainOwnable(l1OwnerAddr) {
     // solhint-disable-next-line gas-custom-errors
     require(address(crossDomainMessengerAddr) != address(0), "Invalid xDomain Messenger address");
     OVM_CROSS_DOMAIN_MESSENGER = crossDomainMessengerAddr;
@@ -52,7 +56,10 @@ contract OptimismCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
    * @dev forwarded only if L2 Messenger calls with `xDomainMessageSender` being the L1 owner address
    * @inheritdoc IForwarder
    */
-  function forward(address target, bytes memory data) external virtual override onlyL1Owner {
+  function forward(
+    address target,
+    bytes memory data
+  ) external virtual override onlyL1Owner {
     Address.functionCall(target, data);
   }
 

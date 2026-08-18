@@ -96,9 +96,15 @@ abstract contract VRFV2PlusWrapperConsumerBase {
    * @param _randomWords is the randomness result.
    */
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal virtual;
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) internal virtual;
 
-  function rawFulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) external {
+  function rawFulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) external {
     address vrfWrapperAddr = address(i_vrfV2PlusWrapper);
     if (msg.sender != vrfWrapperAddr) {
       revert OnlyVRFWrapperCanFulfill(msg.sender, vrfWrapperAddr);

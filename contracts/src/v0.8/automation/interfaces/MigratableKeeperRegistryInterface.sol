@@ -11,7 +11,10 @@ interface MigratableKeeperRegistryInterface {
    * @param upkeepIDs ids of upkeeps to migrate
    * @param destination the address of the registry to migrate to
    */
-  function migrateUpkeeps(uint256[] calldata upkeepIDs, address destination) external;
+  function migrateUpkeeps(
+    uint256[] calldata upkeepIDs,
+    address destination
+  ) external;
 
   /**
    * @notice Called by other registries when migrating upkeeps. Only callable by other registries.

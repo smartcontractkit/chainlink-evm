@@ -73,7 +73,10 @@ contract ArbitrumSequencerUptimeFeed is
    * @param flagsAddress Address of the Flags contract on L2
    * @param l1SenderAddress Address of the L1 contract that is permissioned to call this contract
    */
-  constructor(address flagsAddress, address l1SenderAddress) {
+  constructor(
+    address flagsAddress,
+    address l1SenderAddress
+  ) {
     _setL1Sender(l1SenderAddress);
 
     FLAGS = IFlags(flagsAddress);
@@ -197,7 +200,11 @@ contract ArbitrumSequencerUptimeFeed is
    * @param status Sequencer status
    * @param timestamp Block timestamp of status update
    */
-  function _recordRound(uint80 roundId, bool status, uint64 timestamp) private {
+  function _recordRound(
+    uint80 roundId,
+    bool status,
+    uint64 timestamp
+  ) private {
     Round memory nextRound = Round(status, timestamp);
     FeedState memory feedState = FeedState(roundId, status, timestamp);
 
@@ -215,7 +222,10 @@ contract ArbitrumSequencerUptimeFeed is
    * @param status Sequencer status
    * @param timestamp Block timestamp of status update
    */
-  function updateStatus(bool status, uint64 timestamp) external override {
+  function updateStatus(
+    bool status,
+    uint64 timestamp
+  ) external override {
     FeedState memory feedState = s_feedState;
     _requireInitialized(feedState.latestRoundId);
     if (msg.sender != aliasedL1MessageSender()) {

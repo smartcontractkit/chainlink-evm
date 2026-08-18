@@ -11,7 +11,11 @@ interface IVerifierFeeManager is IERC165 {
    * @param parameterPayload fee payload
    * @param subscriber address of the fee will be applied
    */
-  function processFee(bytes calldata payload, bytes calldata parameterPayload, address subscriber) external payable;
+  function processFee(
+    bytes calldata payload,
+    bytes calldata parameterPayload,
+    address subscriber
+  ) external payable;
 
   /**
    * @notice Processes the fees for each report in the payload, billing the subscriber and paying the reward manager

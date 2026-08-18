@@ -2,8 +2,9 @@
 
 pragma solidity 0.8.6;
 
-import {AutomationCompatibleInterface as KeeperCompatibleInterface} from
-  "../automation/interfaces/AutomationCompatibleInterface.sol";
+import {
+  AutomationCompatibleInterface as KeeperCompatibleInterface
+} from "../automation/interfaces/AutomationCompatibleInterface.sol";
 import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
 
 import {LinkTokenInterface} from "../shared/interfaces/LinkTokenInterface.sol";
@@ -197,7 +198,10 @@ contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompat
    * @param amount the amount of LINK (in juels) to withdraw
    * @param payee the address to pay
    */
-  function withdraw(uint256 amount, address payable payee) external onlyOwner {
+  function withdraw(
+    uint256 amount,
+    address payable payee
+  ) external onlyOwner {
     // solhint-disable-next-line gas-custom-errors, reason-string
     require(payee != address(0));
     emit FundsWithdrawn(amount, payee);

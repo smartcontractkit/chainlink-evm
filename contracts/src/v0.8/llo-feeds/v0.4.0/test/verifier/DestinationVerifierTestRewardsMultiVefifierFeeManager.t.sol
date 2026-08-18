@@ -58,7 +58,11 @@ contract MultiVerifierBillingTests is MultipleVerifierWithMultipleFeeManagers {
     });
   }
 
-  function payRecipients(bytes32 poolId, address[] memory recipients, address sender) public {
+  function payRecipients(
+    bytes32 poolId,
+    address[] memory recipients,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -72,19 +76,19 @@ contract MultiVerifierBillingTests is MultipleVerifierWithMultipleFeeManagers {
 
   function test_multipleFeeManagersAndVerifiers() public {
     /*
-       In this test we got:
-        - three verifiers (verifier, verifier2, verifier3).
-        - two fee managers (feeManager, feeManager2)
-        - one reward manager
-        
-       we glue:
-       - feeManager is used by verifier1 and verifier2
-       - feeManager is used by verifier3
-       - Rewardmanager is used by feeManager and feeManager2
-      
-    In this test we do verificatons via verifier1, verifier2 and verifier3 and check that rewards are set accordingly
-   
-    */
+        In this test we got:
+         - three verifiers (verifier, verifier2, verifier3).
+         - two fee managers (feeManager, feeManager2)
+         - one reward manager
+
+        we glue:
+        - feeManager is used by verifier1 and verifier2
+        - feeManager is used by verifier3
+        - Rewardmanager is used by feeManager and feeManager2
+
+     In this test we do verificatons via verifier1, verifier2 and verifier3 and check that rewards are set accordingly
+
+     */
     Signer[] memory signers = _getSigners(MAX_ORACLES);
     address[] memory signerAddrs = _getSignerAddresses(signers);
     Common.AddressAndWeight[] memory weights = new Common.AddressAndWeight[](1);

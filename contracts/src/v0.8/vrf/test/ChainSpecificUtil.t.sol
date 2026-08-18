@@ -5,8 +5,9 @@ import "./BaseTest.t.sol";
 
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
-import {OVM_GasPriceOracle} from
-  "../../vendor/@eth-optimism/contracts/v0.8.6/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
+import {
+  OVM_GasPriceOracle
+} from "../../vendor/@eth-optimism/contracts/v0.8.6/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
 
 contract ChainSpecificUtilTest is BaseTest {
   // ------------ Start Arbitrum Constants ------------

@@ -2,8 +2,9 @@
 pragma solidity ^0.8.24;
 
 import {IBurnMintERC20Upgradeable} from "../../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
-import {PausableUpgradeable} from
-  "../../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
+import {
+  PausableUpgradeable
+} from "../../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 
@@ -32,7 +33,10 @@ contract ERC20UpgradableBaseTest_freeze is ERC20UpgradableBaseTest {
     should_Freeze(implementation);
   }
 
-  function should_Freeze_RevertWhen_CallerDoesNotHaveFreezerRole(address implementation, bytes32 FREEZER_ROLE) public {
+  function should_Freeze_RevertWhen_CallerDoesNotHaveFreezerRole(
+    address implementation,
+    bytes32 FREEZER_ROLE
+  ) public {
     changePrank(STRANGER);
 
     vm.expectRevert(
@@ -42,7 +46,10 @@ contract ERC20UpgradableBaseTest_freeze is ERC20UpgradableBaseTest {
     IERC20UpgradeableBase(implementation).freeze(OWNER);
   }
 
-  function should_Freeze_RevertWhen_RecipientIsAddressZero(address implementation, bytes4 errorSelector) public {
+  function should_Freeze_RevertWhen_RecipientIsAddressZero(
+    address implementation,
+    bytes4 errorSelector
+  ) public {
     changePrank(DEFAULT_FREEZER);
 
     vm.expectRevert(abi.encodeWithSelector(errorSelector, address(0)));
@@ -61,7 +68,10 @@ contract ERC20UpgradableBaseTest_freeze is ERC20UpgradableBaseTest {
     IERC20UpgradeableBase(implementation).freeze(implementation);
   }
 
-  function should_Freeze_RevertWhen_AccountIsAlreadyFrozen(address implementation, bytes4 errorSelector) public {
+  function should_Freeze_RevertWhen_AccountIsAlreadyFrozen(
+    address implementation,
+    bytes4 errorSelector
+  ) public {
     changePrank(DEFAULT_FREEZER);
     IERC20UpgradeableBase(implementation).freeze(OWNER);
 
@@ -70,7 +80,10 @@ contract ERC20UpgradableBaseTest_freeze is ERC20UpgradableBaseTest {
     IERC20UpgradeableBase(implementation).freeze(OWNER);
   }
 
-  function should_Mint_RevertWhen_AccountIsFrozen(address implementation, bytes4 errorSelector) public {
+  function should_Mint_RevertWhen_AccountIsFrozen(
+    address implementation,
+    bytes4 errorSelector
+  ) public {
     changePrank(DEFAULT_FREEZER);
     IERC20UpgradeableBase(implementation).freeze(OWNER);
 

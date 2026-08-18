@@ -113,10 +113,7 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );
     (
-      ,
-      ,
-      ,
-      ,
+      ,,,,
       uint32 _wrapperGasOverhead,
       uint32 _coordinatorGasOverheadNative,
       uint32 _coordinatorGasOverheadLink,

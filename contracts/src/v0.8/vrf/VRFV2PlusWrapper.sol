@@ -162,7 +162,7 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
   }
   /* Storage Slot 6: BEGIN */
 
-  mapping(uint256 => Callback) /* requestID */ /* callback */ public s_callbacks;
+  mapping(uint256 => Callback) public /* requestID */ /* callback */ s_callbacks;
   /* Storage Slot 6: END */
 
   constructor(
@@ -447,9 +447,9 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
 
     // coordinatorCostWithPremiumAndFlatFeeWei is the coordinator cost with the percentage premium and flat fee applied
     // coordinator cost * premium multiplier + flat fee
-    uint256 coordinatorCostWithPremiumAndFlatFeeWei = (
-      (coordinatorCostWei * (s_coordinatorNativePremiumPercentage + 100)) / 100
-    ) + (1e12 * uint256(s_fulfillmentFlatFeeNativePPM));
+    uint256 coordinatorCostWithPremiumAndFlatFeeWei =
+      ((coordinatorCostWei * (s_coordinatorNativePremiumPercentage + 100)) / 100)
+        + (1e12 * uint256(s_fulfillmentFlatFeeNativePPM));
 
     return wrapperCostWei + coordinatorCostWithPremiumAndFlatFeeWei;
   }
@@ -472,9 +472,9 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
 
     // coordinatorCostWithPremiumAndFlatFeeWei is the coordinator cost with the percentage premium and flat fee applied
     // coordinator cost * premium multiplier + flat fee
-    uint256 coordinatorCostWithPremiumAndFlatFeeWei = (
-      (coordinatorCostWei * (s_coordinatorLinkPremiumPercentage + 100)) / 100
-    ) + (1e12 * uint256(s_fulfillmentFlatFeeNativePPM - s_fulfillmentFlatFeeLinkDiscountPPM));
+    uint256 coordinatorCostWithPremiumAndFlatFeeWei =
+      ((coordinatorCostWei * (s_coordinatorLinkPremiumPercentage + 100)) / 100)
+        + (1e12 * uint256(s_fulfillmentFlatFeeNativePPM - s_fulfillmentFlatFeeLinkDiscountPPM));
 
     // requestPrice is denominated in juels (link)
     // (1e18 juels/link) * wei / (wei/link) = juels
@@ -494,7 +494,11 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    * @param _data is the abi-encoded VRF request parameters: uint32 callbackGasLimit,
    *        uint16 requestConfirmations, and uint32 numWords.
    */
-  function onTokenTransfer(address _sender, uint256 _amount, bytes calldata _data) external onlyConfiguredNotDisabled {
+  function onTokenTransfer(
+    address _sender,
+    uint256 _amount,
+    bytes calldata _data
+  ) external onlyConfiguredNotDisabled {
     // solhint-disable-next-line gas-custom-errors
     require(msg.sender == address(i_link), "only callable from LINK");
 
@@ -526,7 +530,10 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
     }
   }
 
-  function checkPaymentMode(bytes memory extraArgs, bool isLinkMode) public pure {
+  function checkPaymentMode(
+    bytes memory extraArgs,
+    bool isLinkMode
+  ) public pure {
     // If extraArgs is empty, payment mode is LINK by default
     if (extraArgs.length == 0) {
       if (!isLinkMode) {
@@ -573,8 +580,9 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
       extraArgs: extraArgs
     });
     requestId = s_vrfCoordinator.requestRandomWords(req);
-    s_callbacks[requestId] =
-      Callback({callbackAddress: msg.sender, callbackGasLimit: _callbackGasLimit, requestGasPrice: uint64(tx.gasprice)});
+    s_callbacks[requestId] = Callback({
+      callbackAddress: msg.sender, callbackGasLimit: _callbackGasLimit, requestGasPrice: uint64(tx.gasprice)
+    });
 
     return requestId;
   }
@@ -631,7 +639,10 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 _requestId, uint256[] calldata _randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] calldata _randomWords
+  ) internal override {
     Callback memory callback = s_callbacks[_requestId];
     delete s_callbacks[_requestId];
 
@@ -679,7 +690,10 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
     return gas / 63 + 1;
   }
 
-  function _getCoordinatorGasOverhead(uint32 numWords, bool nativePayment) internal view returns (uint32) {
+  function _getCoordinatorGasOverhead(
+    uint32 numWords,
+    bool nativePayment
+  ) internal view returns (uint32) {
     if (nativePayment) {
       return s_coordinatorGasOverheadNative + numWords * s_coordinatorGasOverheadPerWord;
     } else {
@@ -691,7 +705,11 @@ contract VRFV2PlusWrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2P
    * @dev calls target address with exactly gasAmount gas and data as calldata
    * or reverts if at least gasAmount gas is not available.
    */
-  function _callWithExactGas(uint256 gasAmount, address target, bytes memory data) private returns (bool success) {
+  function _callWithExactGas(
+    uint256 gasAmount,
+    address target,
+    bytes memory data
+  ) private returns (bool success) {
     assembly {
       let g := gas()
       // Compute g -= GAS_FOR_CALL_EXACT_CHECK and check for underflow

@@ -43,7 +43,10 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
    * @inheritdoc IForwarder
    */
-  function forward(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
+  function forward(
+    address target,
+    bytes memory data
+  ) external override onlyLocalOrCrossDomainOwner {
     Address.functionCall(target, data);
   }
 
@@ -51,7 +54,10 @@ contract ArbitrumCrossDomainGovernor is IDelegateForwarder, ArbitrumCrossDomainF
    * @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
    * @inheritdoc IDelegateForwarder
    */
-  function forwardDelegate(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
+  function forwardDelegate(
+    address target,
+    bytes memory data
+  ) external override onlyLocalOrCrossDomainOwner {
     Address.functionDelegateCall(target, data);
   }
 

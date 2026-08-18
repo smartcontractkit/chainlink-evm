@@ -36,11 +36,12 @@ contract OptimismValidator is BaseValidator {
     // Encode `status` and `timestamp`
     bytes memory message = abi.encodeWithSelector(selector, status, timestamp);
     // Make the xDomain call
-    IL1CrossDomainMessenger(L1_CROSS_DOMAIN_MESSENGER_ADDRESS).sendMessage(
-      L2_UPTIME_FEED_ADDR, // target
-      message,
-      s_gasLimit
-    );
+    IL1CrossDomainMessenger(L1_CROSS_DOMAIN_MESSENGER_ADDRESS)
+      .sendMessage(
+        L2_UPTIME_FEED_ADDR, // target
+        message,
+        s_gasLimit
+      );
     emit BaseValidator.ValidatedStatus(previousRoundId, previousAnswer, currentRoundId, currentAnswer);
     // return success
     return true;

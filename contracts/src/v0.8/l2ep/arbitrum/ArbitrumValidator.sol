@@ -190,7 +190,10 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
    *   WARNING: `refundAddr` is not aliased! Make sure you can recover the refunded funds on L2.
    * @return id unique id of the published retryable transaction (keccak256(requestID, uint(0))
    */
-  function withdrawFundsFromL2(uint256 amount, address refundAddr) external onlyOwner returns (uint256 id) {
+  function withdrawFundsFromL2(
+    uint256 amount,
+    address refundAddr
+  ) external onlyOwner returns (uint256 id) {
     // Build an xDomain message to trigger the ArbSys precompile, which will create a L2 -> L1 tx transferring `amount`
     bytes memory message = abi.encodeWithSelector(ArbSys.withdrawEth.selector, address(this));
     // Make the xDomain call
@@ -317,7 +320,12 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
   }
 
   /// @notice internal method that stores the gas configuration
-  function _setGasConfig(uint256 maxGas, uint256 gasPriceBid, uint256 baseFee, address gasPriceL1FeedAddr) internal {
+  function _setGasConfig(
+    uint256 maxGas,
+    uint256 gasPriceBid,
+    uint256 baseFee,
+    address gasPriceL1FeedAddr
+  ) internal {
     // solhint-disable-next-line gas-custom-errors
     require(maxGas > 0, "Max gas is zero");
     // solhint-disable-next-line gas-custom-errors
@@ -348,9 +356,8 @@ contract ArbitrumValidator is ITypeAndVersion, AggregatorValidatorInterface, Sim
   function _approximateMaxSubmissionCost(
     uint256 calldataSizeInBytes
   ) internal view returns (uint256) {
-    return IArbitrumDelayedInbox(CROSS_DOMAIN_MESSENGER).calculateRetryableSubmissionFee(
-      calldataSizeInBytes, s_gasConfig.baseFee
-    );
+    return IArbitrumDelayedInbox(CROSS_DOMAIN_MESSENGER)
+      .calculateRetryableSubmissionFee(calldataSizeInBytes, s_gasConfig.baseFee);
   }
 
   /// @notice Internal helper method that calculates the total cost of the xDomain retryable ticket call

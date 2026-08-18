@@ -24,7 +24,10 @@ contract ScrollCrossDomainGovernor is IDelegateForwarder, ITypeAndVersion, Cross
 
   /// @param crossDomainMessengerAddr the xDomain bridge messenger (Scroll bridge L2) contract address
   /// @param l1OwnerAddr the L1 owner address that will be allowed to call the forward fn
-  constructor(IScrollMessenger crossDomainMessengerAddr, address l1OwnerAddr) CrossDomainOwnable(l1OwnerAddr) {
+  constructor(
+    IScrollMessenger crossDomainMessengerAddr,
+    address l1OwnerAddr
+  ) CrossDomainOwnable(l1OwnerAddr) {
     // solhint-disable-next-line gas-custom-errors
     require(address(crossDomainMessengerAddr) != address(0), "Invalid xDomain Messenger address");
     i_scrollCrossDomainMessenger = address(crossDomainMessengerAddr);
@@ -32,13 +35,19 @@ contract ScrollCrossDomainGovernor is IDelegateForwarder, ITypeAndVersion, Cross
 
   /// @inheritdoc IForwarder
   /// @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
-  function forward(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
+  function forward(
+    address target,
+    bytes memory data
+  ) external override onlyLocalOrCrossDomainOwner {
     Address.functionCall(target, data);
   }
 
   /// @inheritdoc IDelegateForwarder
   /// @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
-  function forwardDelegate(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
+  function forwardDelegate(
+    address target,
+    bytes memory data
+  ) external override onlyLocalOrCrossDomainOwner {
     Address.functionDelegateCall(target, data);
   }
 

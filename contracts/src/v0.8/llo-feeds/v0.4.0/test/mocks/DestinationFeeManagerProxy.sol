@@ -6,7 +6,11 @@ import {IDestinationVerifierFeeManager} from "../../interfaces/IDestinationVerif
 contract DestinationFeeManagerProxy {
   IDestinationVerifierFeeManager internal s_feeManager;
 
-  function processFee(bytes32 poolId, bytes calldata payload, bytes calldata parameterPayload) public payable {
+  function processFee(
+    bytes32 poolId,
+    bytes calldata payload,
+    bytes calldata parameterPayload
+  ) public payable {
     s_feeManager.processFee{value: msg.value}(poolId, payload, parameterPayload, msg.sender);
   }
 

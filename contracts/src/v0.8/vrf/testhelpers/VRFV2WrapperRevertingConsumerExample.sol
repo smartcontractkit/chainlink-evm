@@ -18,7 +18,11 @@ contract VRFV2WrapperRevertingConsumerExample is VRFV2WrapperConsumerBase, Confi
     return requestRandomness(_callbackGasLimit, _requestConfirmations, _numWords);
   }
 
-  function fulfillRandomWords(uint256, /* _requestId */ uint256[] memory /* _randomWords */ ) internal pure override {
+  function fulfillRandomWords(
+    uint256,
+    /* _requestId */
+    uint256[] memory /* _randomWords */
+  ) internal pure override {
     revert("reverting example");
   }
 }

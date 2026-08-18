@@ -18,7 +18,10 @@ interface IVRFV2PlusWrapper {
    * @param _callbackGasLimit is the gas limit used to estimate the price.
    * @param _numWords is the number of words to request.
    */
-  function calculateRequestPrice(uint32 _callbackGasLimit, uint32 _numWords) external view returns (uint256);
+  function calculateRequestPrice(
+    uint32 _callbackGasLimit,
+    uint32 _numWords
+  ) external view returns (uint256);
 
   /**
    * @notice Calculates the price of a VRF request in native with the given callbackGasLimit at the current
@@ -30,7 +33,10 @@ interface IVRFV2PlusWrapper {
    * @param _callbackGasLimit is the gas limit used to estimate the price.
    * @param _numWords is the number of words to request.
    */
-  function calculateRequestPriceNative(uint32 _callbackGasLimit, uint32 _numWords) external view returns (uint256);
+  function calculateRequestPriceNative(
+    uint32 _callbackGasLimit,
+    uint32 _numWords
+  ) external view returns (uint256);
 
   /**
    * @notice Estimates the price of a VRF request with a specific gas limit and gas price.

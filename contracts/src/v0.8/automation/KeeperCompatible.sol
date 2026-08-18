@@ -9,5 +9,6 @@ import {AutomationCompatible as KeeperCompatible} from "./AutomationCompatible.s
 // solhint-disable-next-line no-unused-import
 import {AutomationBase as KeeperBase} from "./AutomationBase.sol";
 // solhint-disable-next-line no-unused-import
-import {AutomationCompatibleInterface as KeeperCompatibleInterface} from
-  "./interfaces/AutomationCompatibleInterface.sol";
+import {
+  AutomationCompatibleInterface as KeeperCompatibleInterface
+} from "./interfaces/AutomationCompatibleInterface.sol";

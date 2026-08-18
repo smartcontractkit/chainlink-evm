@@ -45,7 +45,10 @@ contract BatchBlockhashStore {
    * @param blockNumbers the block numbers whose blockhashes should be stored, in decreasing order
    * @param headers the rlp-encoded block headers of blockNumbers[i] + 1.
    */
-  function storeVerifyHeader(uint256[] memory blockNumbers, bytes[] memory headers) public {
+  function storeVerifyHeader(
+    uint256[] memory blockNumbers,
+    bytes[] memory headers
+  ) public {
     // solhint-disable-next-line gas-custom-errors
     require(blockNumbers.length == headers.length, "input array arg lengths mismatch");
     for (uint256 i = 0; i < blockNumbers.length; i++) {
@@ -67,7 +70,8 @@ contract BatchBlockhashStore {
     for (uint256 i = 0; i < blockNumbers.length; i++) {
       try BHS.getBlockhash(blockNumbers[i]) returns (bytes32 bh) {
         blockHashes[i] = bh;
-      } catch Error(string memory) /* reason */ {
+      } catch Error(string memory) {
+        /* reason */
         blockHashes[i] = 0x0;
       }
     }
@@ -90,7 +94,10 @@ contract BatchBlockhashStore {
 
 // solhint-disable-next-line interface-starts-with-i
 interface BlockhashStore {
-  function storeVerifyHeader(uint256 n, bytes memory header) external;
+  function storeVerifyHeader(
+    uint256 n,
+    bytes memory header
+  ) external;
 
   function store(
     uint256 n

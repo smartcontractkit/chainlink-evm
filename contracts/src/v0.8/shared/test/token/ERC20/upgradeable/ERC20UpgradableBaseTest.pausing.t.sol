@@ -2,8 +2,9 @@
 pragma solidity ^0.8.24;
 
 import {IBurnMintERC20Upgradeable} from "../../../../../shared/token/ERC20/upgradeable/IBurnMintERC20Upgradeable.sol";
-import {PausableUpgradeable} from
-  "../../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
+import {
+  PausableUpgradeable
+} from "../../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
 import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/interfaces/IERC20.sol";
 
@@ -46,7 +47,10 @@ contract ERC20UpgradableBaseTest_pausing is ERC20UpgradableBaseTest {
     assertEq(IERC20(implementation).allowance(STRANGER, OWNER), AMOUNT);
   }
 
-  function should_Pause_RevertWhen_CallerDoesNotHavePauserRole(address implementation, bytes32 PAUSER_ROLE) public {
+  function should_Pause_RevertWhen_CallerDoesNotHavePauserRole(
+    address implementation,
+    bytes32 PAUSER_ROLE
+  ) public {
     changePrank(STRANGER);
 
     vm.expectRevert(
