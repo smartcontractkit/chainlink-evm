@@ -65,5 +65,12 @@ func (d *dependency) Get(ctx context.Context, cc standalone.CommonConfig) (commo
 		return nil, fmt.Errorf("failed to get evm client: %w", err)
 	}
 
-	return NewReader(d.lggr, client, common.HexToAddress(d.cfg.Address))
+	// The chain is the client's rather than a setting of its own: a registry is
+	// read over one client, so asking for it twice could only ever disagree.
+	chainID := client.ConfiguredChainID()
+	if chainID == nil || !chainID.IsUint64() {
+		return nil, fmt.Errorf("evm client reports an unusable chain ID %v", chainID)
+	}
+
+	return NewReader(d.lggr, client, common.HexToAddress(d.cfg.Address), chainID.Uint64())
 }

@@ -63,6 +63,11 @@ type registryCaller interface {
 type Reader struct {
 	lggr   logger.Logger
 	caller registryCaller
+
+	// contract is which registry this reads, reported with every snapshot: some
+	// of what the contract stores cannot be interpreted without knowing where it
+	// was read from. See registry.Contract.
+	contract registry.Contract
 }
 
 var _ registry.Reader = (*Reader)(nil)
@@ -76,6 +81,7 @@ func NewReader(
 	lggr logger.Logger,
 	backend bind.ContractCaller,
 	registryAddress common.Address,
+	chainID uint64,
 ) (*Reader, error) {
 	caller, err := capregv2.NewCapabilitiesRegistryCaller(registryAddress, backend)
 	if err != nil {
@@ -84,6 +90,10 @@ func NewReader(
 	return &Reader{
 		lggr:   logger.Named(lggr, "CapabilitiesRegistryReader"),
 		caller: caller,
+		// Hex() rather than the raw address, so the form is the checksummed one
+		// this chain writes addresses in and a digest computed over it is the
+		// same wherever it is computed.
+		contract: registry.Contract{ChainID: chainID, Address: registryAddress.Hex()},
 	}, nil
 }
 
@@ -155,6 +165,7 @@ func (r *Reader) Read(ctx context.Context) (*registry.Snapshot, error) {
 		DONs:         idsToDONs,
 		Nodes:        idsToNodes,
 		Capabilities: idsToCapabilities,
+		Contract:     r.contract,
 	}, nil
 }
 
