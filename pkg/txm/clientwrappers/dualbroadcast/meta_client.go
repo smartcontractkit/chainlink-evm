@@ -586,6 +586,9 @@ func (a *MetaClient) SendOperation(ctx context.Context, tx *types.Transaction, a
 	if tx.Nonce == nil {
 		return fmt.Errorf("failed to create attempt for txID: %v: nonce empty", tx.ID)
 	}
+	if meta.GasLimit == nil {
+		return fmt.Errorf("failed to create attempt for txID: %v: gasLimit empty", tx.ID)
+	}
 
 	// TODO: fastest way to avoid overpaying, but might require additional checks.
 	tip := meta.MaxFeePerGas.ToInt()

@@ -55,7 +55,7 @@ func TestContractTransmitter(t *testing.T) {
 	lggr := logger.Test(t)
 	c := clienttest.NewClient(t)
 	lp := mocks.NewLogPoller(t)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	// scanLogs = false
 	digestAndEpochDontScanLogs, _ := hex.DecodeString(
 		"0000000000000000000000000000000000000000000000000000000000000000" + // false
@@ -70,7 +70,7 @@ func TestContractTransmitter(t *testing.T) {
 	ot, err := NewOCRContractTransmitter(ctx, gethcommon.Address{}, c, contractABI, &mockTransmitter{}, lp, lggr, &keystest.FakeChainStore{},
 		WithReportToEthMetadata(reportToEvmTxMeta))
 	require.NoError(t, err)
-	digest, epoch, err := ot.LatestConfigDigestAndEpoch(testutils.Context(t))
+	digest, epoch, err := ot.LatestConfigDigestAndEpoch(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, "000130da6b9315bd59af6b0a3f5463c0d0a39e92eaa34cbcbdbace7b3bfcc776", hex.EncodeToString(digest[:]))
 	assert.Equal(t, uint32(2), epoch)
@@ -88,7 +88,7 @@ func TestContractTransmitter(t *testing.T) {
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&logpoller.Log{
 		Data: transmitted2,
 	}, nil)
-	digest, epoch, err = ot.LatestConfigDigestAndEpoch(testutils.Context(t))
+	digest, epoch, err = ot.LatestConfigDigestAndEpoch(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, "000130da6b9315bd59af6b0a3f5463c0d0a39e92eaa34cbcbdbace7b3bfcc777", hex.EncodeToString(digest[:]))
 	assert.Equal(t, uint32(2), epoch)

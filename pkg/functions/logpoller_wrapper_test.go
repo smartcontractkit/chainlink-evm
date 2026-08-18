@@ -21,7 +21,6 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/functions/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	lpmocks "github.com/smartcontractkit/chainlink-evm/pkg/logpoller/mocks"
-	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 )
 
 type subscriber struct {
@@ -87,7 +86,7 @@ func getMockedRequestLog(t *testing.T) logpoller.Log {
 
 func TestLogPollerWrapper_SingleSubscriberEmptyEvents(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	lp, lpWrapper, client := setUp(t, 100_000) // check only once
 	lp.On("LatestBlock", mock.Anything).Return(logpoller.Block{BlockNumber: int64(100)}, nil)
 
@@ -109,7 +108,7 @@ func TestLogPollerWrapper_SingleSubscriberEmptyEvents(t *testing.T) {
 
 func TestLogPollerWrapper_ErrorOnZeroAddresses(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	lp, lpWrapper, client := setUp(t, 100_000) // check only once
 	lp.On("LatestBlock", mock.Anything).Return(logpoller.Block{BlockNumber: int64(100)}, nil)
 
@@ -122,7 +121,7 @@ func TestLogPollerWrapper_ErrorOnZeroAddresses(t *testing.T) {
 
 func TestLogPollerWrapper_LatestEvents_ReorgHandling(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	lp, lpWrapper, client := setUp(t, 100_000)
 	lp.On("LatestBlock", mock.Anything).Return(logpoller.Block{BlockNumber: int64(100)}, nil)
 	client.On("CallContract", mock.Anything, mock.Anything, mock.Anything).Return(addr(t, "01"), nil)
@@ -218,7 +217,7 @@ func TestLogPollerWrapper_FilterPreviouslyDetectedEvents_FiltersPreviouslyDetect
 
 func TestLogPollerWrapper_UnregisterOldFiltersOnRouteUpgrade(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	lp, lpWrapper, _ := setUp(t, 100_000) // check only once
 	wrapper := lpWrapper.(*logPollerWrapper)
 

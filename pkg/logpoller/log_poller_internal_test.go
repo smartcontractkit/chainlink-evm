@@ -46,7 +46,7 @@ var (
 
 // Validate that filters stored in log_filters_table match the filters stored in memory
 func validateFiltersTable(t *testing.T, lp *logPoller, orm ORM) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	filters, err := orm.LoadFilters(ctx)
 	require.NoError(t, err)
 	require.Equal(t, len(filters), len(lp.filters))
@@ -67,7 +67,7 @@ func TestLogPoller_RegisterFilter(t *testing.T) {
 	lggr, observedLogs := logger.TestObserved(t, zapcore.InfoLevel)
 	chainID := testutils.NewRandomEVMChainID()
 	db := testutils.NewSqlxDB(t)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	orm := NewORM(chainID, db, lggr)
 
@@ -171,7 +171,7 @@ func TestLogPoller_RegisterFilter_ContractValidation(t *testing.T) {
 	lggr, _ := logger.TestObserved(t, zapcore.InfoLevel)
 	chainID := testutils.NewRandomEVMChainID()
 	db := testutils.NewSqlxDB(t)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	orm := NewORM(chainID, db, lggr)
 	ec := clienttest.NewClient(t)
@@ -370,7 +370,7 @@ func assertBackupPollerStartup(t *testing.T, head *evmtypes.Head, finalizedHead 
 	headTracker.On("LatestAndFinalizedBlock", mock.Anything).Return(head, finalizedHead, nil)
 	headTracker.On("LatestSafeBlock", mock.Anything).Return(safeHead, nil)
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	lpOpts := Opts{
 		PollPeriod:               time.Hour,
 		FinalityDepth:            finalityDepth,
@@ -501,7 +501,7 @@ func TestLogPoller_Replay(t *testing.T) {
 	lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
 
 	{
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		// process 1 log in block 3
 		lp.PollAndSaveLogs(ctx, 4, false)
 		latest, err := lp.LatestBlock(ctx)
@@ -512,7 +512,7 @@ func TestLogPoller_Replay(t *testing.T) {
 
 	t.Run("abort before replayStart received", func(t *testing.T) {
 		// Replay() should abort immediately if caller's context is cancelled before request signal is read
-		cancelCtx, cancel := context.WithCancel(testutils.Context(t))
+		cancelCtx, cancel := context.WithCancel(t.Context())
 		cancel()
 		err := lp.Replay(cancelCtx, 3)
 		assert.ErrorIs(t, err, ErrReplayRequestAborted)
@@ -529,7 +529,7 @@ func TestLogPoller_Replay(t *testing.T) {
 
 	// Replay() should return error code received from replayComplete
 	t.Run("returns error code on replay complete", func(t *testing.T) {
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		ec.On("FilterLogs", mock.Anything, mock.Anything).Return([]types.Log{log1}, nil).Once()
 		mockBatchCallContext(t, ec)
 		anyErr := pkgerrors.New("any error")
@@ -545,7 +545,7 @@ func TestLogPoller_Replay(t *testing.T) {
 
 	// Replay() should return ErrReplayInProgress if caller's context is cancelled after replay has begun
 	t.Run("late abort returns ErrReplayInProgress", func(t *testing.T) {
-		cancelCtx, cancel := context.WithTimeout(testutils.Context(t), time.Second) // Intentionally abort replay after 1s
+		cancelCtx, cancel := context.WithTimeout(t.Context(), time.Second) // Intentionally abort replay after 1s
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
@@ -560,13 +560,13 @@ func TestLogPoller_Replay(t *testing.T) {
 
 	// Main lp.run() loop shouldn't get stuck if client aborts
 	t.Run("client abort doesnt hang run loop", func(t *testing.T) {
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		lp.backupPollerNextBlock = 0
 
 		pass := make(chan struct{})
 		cancelled := make(chan struct{})
 
-		rctx, rcancel := context.WithCancel(testutils.Context(t))
+		rctx, rcancel := context.WithCancel(t.Context())
 		var wg sync.WaitGroup
 		defer func() { wg.Wait() }()
 		ec.On("FilterLogs", mock.Anything, mock.Anything).Once().Return([]types.Log{log1}, nil).Run(func(args mock.Arguments) {
@@ -609,7 +609,7 @@ func TestLogPoller_Replay(t *testing.T) {
 
 	// run() should abort if log poller shuts down while replay is in progress
 	t.Run("shutdown during replay", func(t *testing.T) {
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		lp.backupPollerNextBlock = 0
 
 		pass := make(chan struct{})
@@ -662,11 +662,11 @@ func TestLogPoller_Replay(t *testing.T) {
 
 		lp.ReplayAsync(1)
 
-		recvStartReplay(t, testutils.Context(t), 4)
+		recvStartReplay(t, t.Context(), 4)
 	})
 
 	t.Run("ReplayAsync error", func(t *testing.T) {
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		t.Cleanup(lp.reset)
 		servicetest.Run(t, lp)
 		head.Store(newHead(4))
@@ -675,7 +675,7 @@ func TestLogPoller_Replay(t *testing.T) {
 		observedLogs.TakeAll()
 
 		lp.ReplayAsync(4)
-		recvStartReplay(t, testutils.Context(t), 4)
+		recvStartReplay(t, t.Context(), 4)
 
 		select {
 		case lp.replayComplete <- anyErr:
@@ -688,16 +688,16 @@ func TestLogPoller_Replay(t *testing.T) {
 	})
 
 	t.Run("run regular replay when there are not blocks in db", func(t *testing.T) {
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		err := lp.orm.DeleteLogsAndBlocksAfter(ctx, 0)
 		require.NoError(t, err)
 
 		lp.ReplayAsync(1)
-		recvStartReplay(t, testutils.Context(t), 1)
+		recvStartReplay(t, t.Context(), 1)
 	})
 
 	t.Run("run only backfill when everything is finalized", func(t *testing.T) {
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		err := lp.orm.DeleteLogsAndBlocksAfter(ctx, 0)
 		require.NoError(t, err)
 
@@ -758,7 +758,7 @@ func TestLogPoller_Replay_nilLatestHead(t *testing.T) {
 		RPCBatchSize:             1,
 		KeepFinalizedBlocksDepth: 20,
 	})
-	err := lp.Replay(testutils.Context(t), 1)
+	err := lp.Replay(t.Context(), 1)
 	require.ErrorContains(t, err, "expected latest block to be non-nil")
 }
 
@@ -940,7 +940,7 @@ func Test_FetchBlocks(t *testing.T) {
 	chainID := testutils.FixtureChainID
 	db := testutils.NewSqlxDB(t)
 	orm := NewORM(chainID, db, lggr)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	lpOpts := Opts{
 		PollPeriod:               time.Hour,
@@ -1198,7 +1198,7 @@ func Test_getUnfinalizedLogs_includes_empty_finalized_when_skip_empty(t *testing
 func Test_PollAndSaveLogs_FinalityViolation_reorgedFinalizedEmpty(t *testing.T) {
 	t.Parallel()
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 	chainID := testutils.NewRandomEVMChainID()
 	lggr := logger.Test(t)
@@ -1308,7 +1308,7 @@ func Test_PollAndSaveLogs_FinalityViolation_reorgedFinalizedEmpty(t *testing.T) 
 func Test_PollAndSaveLogs_FinalityViolation_replayMissingSkippedEmptyParent(t *testing.T) {
 	t.Parallel()
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 	chainID := testutils.NewRandomEVMChainID()
 	lggr := logger.Test(t)
@@ -1710,7 +1710,7 @@ func testFindBlockAfterLCA(t *testing.T, opts Opts) {
 			orm := NewORM(testutils.NewRandomEVMChainID(), db, lggr)
 			headTracker := headstest.NewTracker[*evmtypes.Head, common.Hash](t)
 			ec := clienttest.NewClient(t)
-			ctx := testutils.Context(t)
+			ctx := t.Context()
 			for _, blockNum := range tc.DBBlocks {
 				hash := common.BigToHash(big.NewInt(blockNum))
 				require.NoError(t, orm.InsertBlock(ctx, hash, blockNum, time.Now(), blockNum, blockNum))
@@ -1733,7 +1733,7 @@ func testFindBlockAfterLCA(t *testing.T, opts Opts) {
 
 func TestLogPoller_getCurrentBlockMaybeHandleReorg(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	chainID := testutils.NewRandomEVMChainID()
 
 	newBlock := func(blockNumber int64) *Block {
@@ -2052,7 +2052,7 @@ func TestLogPoller_ReplayAfterReorg(t *testing.T) {
 	}
 	lp := NewLogPoller(orm, ec, lggr, headTracker, lpOpts)
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	require.NoError(t, lp.RegisterFilter(ctx, Filter{
 		Name:      "emitter",
 		EventSigs: []common.Hash{EmitterABI.Events["Log1"].ID},
@@ -2125,7 +2125,7 @@ func benchmarkFilter(b *testing.B, nFilters, nAddresses, nEvents int) {
 		for j := range nEvents {
 			events = append(events, common.BigToHash(big.NewInt(int64(j+1))))
 		}
-		err := lp.RegisterFilter(testutils.Context(b), Filter{Name: "my Filter", EventSigs: events, Addresses: addresses})
+		err := lp.RegisterFilter(b.Context(), Filter{Name: "my Filter", EventSigs: events, Addresses: addresses})
 		require.NoError(b, err)
 	}
 	b.ResetTimer()

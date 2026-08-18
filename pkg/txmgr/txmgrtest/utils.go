@@ -58,14 +58,14 @@ func MustInsertUnconfirmedEthTx(t testing.TB, txStore txmgr.TestEvmTxStore, nonc
 	etx.Sequence = &n
 	etx.State = txmgrcommon.TxUnconfirmed
 	etx.ChainID = chainID
-	require.NoError(t, txStore.InsertTx(evmtestutils.Context(t), &etx))
+	require.NoError(t, txStore.InsertTx(t.Context(), &etx))
 	return etx
 }
 
 func MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t *testing.T, txStore txmgr.TestEvmTxStore, nonce int64, fromAddress common.Address, opts ...any) txmgr.Tx {
 	etx := MustInsertUnconfirmedEthTx(t, txStore, nonce, fromAddress, opts...)
 	attempt := NewLegacyEthTxAttempt(t, etx.ID)
-	ctx := evmtestutils.Context(t)
+	ctx := t.Context()
 
 	tx := evmtestutils.NewLegacyTransaction(uint64(nonce), evmtestutils.NewAddress(), big.NewInt(142), 242, big.NewInt(342), []byte{1, 2, 3})
 	rlp := new(bytes.Buffer)
@@ -82,7 +82,7 @@ func MustInsertUnconfirmedEthTxWithBroadcastLegacyAttempt(t *testing.T, txStore 
 func MustInsertConfirmedEthTxWithLegacyAttempt(t testing.TB, txStore txmgr.TestEvmTxStore, nonce int64, broadcastBeforeBlockNum int64, fromAddress common.Address) txmgr.Tx {
 	timeNow := time.Now()
 	etx := NewEthTx(fromAddress)
-	ctx := evmtestutils.Context(t)
+	ctx := t.Context()
 
 	etx.BroadcastAt = &timeNow
 	etx.InitialBroadcastAt = &timeNow
@@ -133,7 +133,7 @@ func NewDynamicFeeEthTxAttempt(t *testing.T, etxID int64) txmgr.TxAttempt {
 
 func AssertCount(t testing.TB, ds sqlutil.DataSource, tableName string, expected int64) {
 	t.Helper()
-	ctx := evmtestutils.Context(t)
+	ctx := t.Context()
 	var count int64
 	err := ds.GetContext(ctx, &count, fmt.Sprintf(`SELECT count(*) FROM %s;`, tableName))
 	require.NoError(t, err)

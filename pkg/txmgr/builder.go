@@ -128,14 +128,17 @@ func NewTxmV2(
 	chainID := client.ConfiguredChainID()
 
 	var stuckTxDetector txm.StuckTxDetector
-	if txConfig.AutoPurge().Enabled() {
+	if autoPurgeCfg := txConfig.AutoPurge(); autoPurgeCfg.Enabled() {
 		var detectionURL string
-		if txConfig.AutoPurge().DetectionApiUrl() != nil {
-			detectionURL = txConfig.AutoPurge().DetectionApiUrl().String()
+		if apiURL := autoPurgeCfg.DetectionApiUrl(); apiURL != nil {
+			detectionURL = apiURL.String()
+		}
+		if autoPurgeCfg.Threshold() == nil {
+			return nil, fmt.Errorf("threshold is required for auto-purge")
 		}
 		stuckTxDetectorConfig := txm.StuckTxDetectorConfig{
 			BlockTime:             *txmV2Config.BlockTime(),
-			StuckTxBlockThreshold: *txConfig.AutoPurge().Threshold(),
+			StuckTxBlockThreshold: *autoPurgeCfg.Threshold(),
 			DetectionURL:          detectionURL,
 		}
 		stuckTxDetector = txm.NewStuckTxDetector(lggr, chainConfig.ChainType(), stuckTxDetectorConfig)

@@ -32,7 +32,7 @@ func newMockTxStrategy(t *testing.T) *txmmocks.TxStrategy {
 
 func TestContractTransmitter_LatestConfigDigestAndEpoch(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	digestStr := "000130da6b9315bd59af6b0a3f5463c0d0a39e92eaa34cbcbdbace7b3bfcc776"
 	lggr := logger.Test(t)
@@ -71,7 +71,7 @@ func TestContractTransmitter_LatestConfigDigestAndEpoch(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, functionsTransmitter.UpdateRoutes(ctx, gethcommon.Address{}, gethcommon.Address{}))
 
-	digest, epoch, err := functionsTransmitter.LatestConfigDigestAndEpoch(testutils.Context(t))
+	digest, epoch, err := functionsTransmitter.LatestConfigDigestAndEpoch(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, digestStr, hex.EncodeToString(digest[:]))
 	assert.Equal(t, uint32(2), epoch)
@@ -79,7 +79,7 @@ func TestContractTransmitter_LatestConfigDigestAndEpoch(t *testing.T) {
 
 func TestContractTransmitter_Transmit_V1(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	contractVersion := uint32(1)
 	configuredDestAddress, coordinatorAddress := testutils.NewAddress(), testutils.NewAddress()
@@ -141,19 +141,19 @@ func TestContractTransmitter_Transmit_V1(t *testing.T) {
 		Meta:             nil,
 		Strategy:         strategy,
 	}).Return(txmgr.Tx{}, nil).Once()
-	require.NoError(t, ot.Transmit(testutils.Context(t), ocrtypes.ReportContext{}, reportBytes, []ocrtypes.AttributedOnchainSignature{}))
+	require.NoError(t, ot.Transmit(t.Context(), ocrtypes.ReportContext{}, reportBytes, []ocrtypes.AttributedOnchainSignature{}))
 
 	// failure on too many signatures
 	signatures := []ocrtypes.AttributedOnchainSignature{}
 	for range 33 {
 		signatures = append(signatures, ocrtypes.AttributedOnchainSignature{})
 	}
-	require.Error(t, ot.Transmit(testutils.Context(t), ocrtypes.ReportContext{}, reportBytes, signatures))
+	require.Error(t, ot.Transmit(t.Context(), ocrtypes.ReportContext{}, reportBytes, signatures))
 }
 
 func TestContractTransmitter_Transmit_V1_CoordinatorMismatch(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	contractVersion := uint32(1)
 	configuredDestAddress, coordinatorAddress1, coordinatorAddress2 := testutils.NewAddress(), testutils.NewAddress(), testutils.NewAddress()
@@ -221,5 +221,5 @@ func TestContractTransmitter_Transmit_V1_CoordinatorMismatch(t *testing.T) {
 		Meta:             nil,
 		Strategy:         strategy,
 	}).Return(txmgr.Tx{}, nil).Once()
-	require.NoError(t, ot.Transmit(testutils.Context(t), ocrtypes.ReportContext{}, reportBytes, []ocrtypes.AttributedOnchainSignature{}))
+	require.NoError(t, ot.Transmit(t.Context(), ocrtypes.ReportContext{}, reportBytes, []ocrtypes.AttributedOnchainSignature{}))
 }

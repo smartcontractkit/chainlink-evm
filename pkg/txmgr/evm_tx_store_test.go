@@ -1421,7 +1421,7 @@ func TestORM_GetTxByID(t *testing.T) {
 
 	t.Run("no transaction", func(t *testing.T) {
 		tx, err := txStore.GetTxByID(tests.Context(t), int64(0))
-		require.NoError(t, err)
+		require.Error(t, err)
 		require.Nil(t, tx)
 	})
 

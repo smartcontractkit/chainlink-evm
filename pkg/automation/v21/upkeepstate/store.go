@@ -124,6 +124,9 @@ func (u *upkeepStateStore) Start(pctx context.Context) error {
 					u.flush(ctx)
 					flushTicker.Reset(timeutil.JitterPct(0.1).Apply(flushCadence))
 				case <-ctx.Done():
+					var cancel context.CancelFunc
+					ctx, cancel = context.WithTimeout(context.WithoutCancel(ctx), time.Second)
+					defer cancel()
 					u.flush(ctx)
 					return
 				}

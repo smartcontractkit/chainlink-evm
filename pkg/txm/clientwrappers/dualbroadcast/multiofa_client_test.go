@@ -22,7 +22,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
-	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/clientwrappers"
 	txmtypes "github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
@@ -112,7 +111,7 @@ func TestMultiOfaClient_SendTransaction_GetMetaError_ReturnsEarly(t *testing.T) 
 	}
 	mc := createMultiOfaClient(t, chainClient, primary)
 
-	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
+	err := mc.SendTransaction(t.Context(), tx, attempt)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unmarshalling meta")
 	require.Zero(t, chainClient.sendTxCalls.Load(), "chain client must not run when GetMeta fails")
@@ -156,7 +155,7 @@ func TestMultiOfaClient_NonDual_DualBroadcastFalse_RoutesOnlyToChainClient(t *te
 	}
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
-	require.NoError(t, mc.SendTransaction(testutils.Context(t), tx, attempt))
+	require.NoError(t, mc.SendTransaction(t.Context(), tx, attempt))
 	require.Equal(t, int32(1), chainClient.sendTxCalls.Load())
 
 	select {
@@ -201,7 +200,7 @@ func TestMultiOfaClient_NonDual_RoutesOnlyToChainClient(t *testing.T) {
 	}
 	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
 
-	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
+	err := mc.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 	require.Equal(t, int32(1), chainClient.sendTxCalls.Load(), "non-dual path must use chainClient only")
 
@@ -219,7 +218,7 @@ func TestMultiOfaClient_SendTransaction_TwoSecondaries(t *testing.T) {
 	primary := &ofaBackendMock{}
 	mc := createMultiOfaClient(t, chainClient, primary, &ofaBackendMock{sendCalled: sec1}, &ofaBackendMock{sendCalled: sec2})
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
+	err := mc.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 
 	select {
@@ -242,7 +241,7 @@ func TestMultiOfaClient_SendTransaction_BothSucceed(t *testing.T) {
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
+	err := mc.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 
 	select {
@@ -273,7 +272,7 @@ func TestMultiOfaClient_SecondarySend_DoesNotBlockReturn(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		done <- mc.SendTransaction(testutils.Context(t), tx, attempt)
+		done <- mc.SendTransaction(t.Context(), tx, attempt)
 	}()
 
 	select {
@@ -298,7 +297,7 @@ func TestMultiOfaClient_SendTransaction_PrimaryFails(t *testing.T) {
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
+	err := mc.SendTransaction(t.Context(), tx, attempt)
 	require.ErrorIs(t, err, primaryErr)
 }
 
@@ -318,7 +317,7 @@ func TestMultiOfaClient_SecondarySendRespectsTimeout(t *testing.T) {
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	mc.secondarySendTimeout = 150 * time.Millisecond
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
+	err := mc.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 
 	select {
@@ -346,7 +345,7 @@ func TestMultiOfaClient_SendTransaction_SecondaryFails(t *testing.T) {
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
 	tx, attempt := newDualBroadcastTx(t, 1)
-	err := mc.SendTransaction(testutils.Context(t), tx, attempt)
+	err := mc.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 
 	select {
@@ -371,7 +370,7 @@ func TestMultiOfaClient_PendingNonceAt_RoutesToPrimary(t *testing.T) {
 	}
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
-	nonce, err := mc.PendingNonceAt(testutils.Context(t), common.HexToAddress("0x123"))
+	nonce, err := mc.PendingNonceAt(t.Context(), common.HexToAddress("0x123"))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(42), nonce)
 }
@@ -391,7 +390,7 @@ func TestMultiOfaClient_NonceAt_RoutesToPrimary(t *testing.T) {
 	}
 
 	mc := createMultiOfaClient(t, chainClient, primary, secondary)
-	nonce, err := mc.NonceAt(testutils.Context(t), common.HexToAddress("0x123"), big.NewInt(100))
+	nonce, err := mc.NonceAt(t.Context(), common.HexToAddress("0x123"), big.NewInt(100))
 	require.NoError(t, err)
 	assert.Equal(t, uint64(99), nonce)
 }
@@ -438,7 +437,7 @@ func TestMultiOfaClient_FromOFAURLs_HTTPServers_DualBroadcast(t *testing.T) {
 	require.NoError(t, err)
 
 	tx, attempt := newDualBroadcastTx(t, 7)
-	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
+	err = mux.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -488,7 +487,7 @@ func TestMultiOfaClient_NonDual_NovaPrimary_RoutesToMempool(t *testing.T) {
 	}
 	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
 
-	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
+	err = mux.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 	require.Equal(t, int32(0), relayHits.Load(), "Nova relay must not receive sends when not dual-broadcasting")
 }
@@ -549,7 +548,7 @@ func TestMultiOfaClient_NonDual_FlashbotsPrimaryNovaSecondary_NoOFAHTTPHits(t *t
 	}
 	attempt := &txmtypes.Attempt{SignedTransaction: signedTx}
 
-	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
+	err = mux.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 	require.Equal(t, int32(0), primaryHits.Load())
 	require.Equal(t, int32(0), secondaryHits.Load())
@@ -581,7 +580,7 @@ func TestMultiOfaClient_Purgeable_NovaPrimary_RoutesToMempool(t *testing.T) {
 	tx, attempt := newDualBroadcastTx(t, 1)
 	tx.IsPurgeable = true
 
-	err = mux.SendTransaction(testutils.Context(t), tx, attempt)
+	err = mux.SendTransaction(t.Context(), tx, attempt)
 	require.NoError(t, err)
 	require.Equal(t, int32(0), relayHits.Load(), "purgeable txs must not hit the Nova relay")
 }

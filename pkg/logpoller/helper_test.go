@@ -118,7 +118,7 @@ func SetupTH(t testing.TB, opts logpoller.Opts) TestHarness {
 	}
 	lp := logpoller.NewLogPoller(o, esc, lggr, headTracker, opts)
 
-	pendingNonce, err := backend.Client().PendingNonceAt(testutils.Context(t), owner.From)
+	pendingNonce, err := backend.Client().PendingNonceAt(t.Context(), owner.From)
 	require.NoError(t, err)
 
 	owner.Nonce = big.NewInt(0).SetUint64(pendingNonce)
@@ -171,7 +171,7 @@ func (th *TestHarness) PollAndSaveLogs(ctx context.Context, currentBlockNumber i
 
 func (th *TestHarness) assertDontHave(t *testing.T, start, end int) {
 	for i := start; i < end; i++ {
-		_, err := th.ORM.SelectBlockByNumber(testutils.Context(t), int64(i))
+		_, err := th.ORM.SelectBlockByNumber(t.Context(), int64(i))
 		assert.True(t, pkgerrors.Is(err, sql.ErrNoRows))
 	}
 }

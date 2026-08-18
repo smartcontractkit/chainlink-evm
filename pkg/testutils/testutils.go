@@ -7,14 +7,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 )
 
 // Deprecated: use [*testing.T.Context]
 // Context returns a context with the test's deadline, if available.
+//
+//go:fix inline
 func Context(tb testing.TB) context.Context {
-	return tests.Context(tb)
+	return tb.Context()
 }
 
 // DefaultWaitTimeout is the default wait timeout. If you have a *testing.T, use WaitTimeout instead.

@@ -39,7 +39,7 @@ func Test_DB_LatestRoundRequested(t *testing.T) {
 	}
 
 	t.Run("saves latest round requested", func(t *testing.T) {
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		err := db.SaveLatestRoundRequested(ctx, rr)
 		require.NoError(t, err)
 
@@ -59,7 +59,7 @@ func Test_DB_LatestRoundRequested(t *testing.T) {
 	})
 
 	t.Run("loads latest round requested", func(t *testing.T) {
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		// There is no round for db2
 		lrr, err := db2.LoadLatestRoundRequested(ctx)
 		require.NoError(t, err)

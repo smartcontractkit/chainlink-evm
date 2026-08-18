@@ -279,7 +279,7 @@ func TestBroadcaster_BackfillUnconsumedAfterCrash(t *testing.T) {
 		helper := newBroadcasterHelper(t, 0, 1, logs, func(c *toml.EVMConfig) {
 			c.FinalityDepth = new(uint32(confs))
 		})
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		orm := log.NewORM(helper.db, *testutils.FixtureChainID)
 
 		listener := helper.newLogListenerWithJob("one")
@@ -305,7 +305,7 @@ func TestBroadcaster_BackfillUnconsumedAfterCrash(t *testing.T) {
 		helper := newBroadcasterHelper(t, 2, 1, logs, func(c *toml.EVMConfig) {
 			c.FinalityDepth = new(uint32(confs))
 		})
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		orm := log.NewORM(helper.db, *testutils.FixtureChainID)
 		contract1.On("ParseLog", log1).Return(flux_aggregator_wrapper.FluxAggregatorNewRound{}, nil)
 		contract2.On("ParseLog", log2).Return(flux_aggregator_wrapper.FluxAggregatorAnswerUpdated{}, nil)
@@ -332,7 +332,7 @@ func TestBroadcaster_BackfillUnconsumedAfterCrash(t *testing.T) {
 		helper := newBroadcasterHelper(t, 4, 1, logs, func(c *toml.EVMConfig) {
 			c.FinalityDepth = new(uint32(confs))
 		})
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		orm := log.NewORM(helper.db, *testutils.FixtureChainID)
 
 		listener := helper.newLogListenerWithJob("one")
@@ -357,7 +357,7 @@ func TestBroadcaster_BackfillUnconsumedAfterCrash(t *testing.T) {
 		helper := newBroadcasterHelper(t, 7, 1, logs[1:], func(c *toml.EVMConfig) {
 			c.FinalityDepth = new(uint32(confs))
 		})
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		orm := log.NewORM(helper.db, *testutils.FixtureChainID)
 		listener := helper.newLogListenerWithJob("one")
 		listener2 := helper.newLogListenerWithJob("two")
@@ -393,7 +393,7 @@ func (helper *broadcasterHelper) simulateHeads(t *testing.T, listener, listener2
 
 	<-headsDone
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	require.Eventually(t, func() bool {
 		blockNum, err := orm.GetPendingMinBlock(ctx)
 		if !assert.NoError(t, err) {
@@ -1463,7 +1463,7 @@ func TestBroadcaster_ProcessesLogsFromReorgsAndMissedHead(t *testing.T) {
 
 	chRawLogs := <-helper.chchRawLogs
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	for _, event := range events {
 		switch x := event.(type) {
 		case *evmtypes.Head:
@@ -1631,7 +1631,7 @@ func TestBroadcaster_BroadcastsWithZeroConfirmations(t *testing.T) {
 
 	// Send a block to trigger sending the logs from the pool
 	// to the subscribers
-	helper.lb.OnNewLongestChain(testutils.Context(t), &evmtypes.Head{Number: 2})
+	helper.lb.OnNewLongestChain(t.Context(), &evmtypes.Head{Number: 2})
 
 	// The subs should each get exactly 3 broadcasts each
 	// If we do not receive a broadcast for 1 second
@@ -1701,7 +1701,7 @@ type broadcasterHelper struct {
 }
 
 func (helper *broadcasterHelper) start() {
-	err := helper.lb.Start(testutils.Context(helper.t))
+	err := helper.lb.Start(testing.TB(helper.t).Context())
 	require.NoError(helper.t, err)
 }
 
@@ -1968,7 +1968,7 @@ func newMockEthClient(t *testing.T, chchRawLogs chan<- testutils.RawSub[types.Lo
 // SimulateIncomingHeads spawns a goroutine which sends a stream of heads and closes the returned channel when finished.
 func simulateIncomingHeads(t *testing.T, heads []*evmtypes.Head, headTrackables ...heads.Trackable) (done chan struct{}) {
 	// Build the full chain of heads
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	done = make(chan struct{})
 	go func(t *testing.T) {
 		defer close(done)
