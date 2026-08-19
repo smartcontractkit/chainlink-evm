@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 import {WorkflowRegistryManager} from "../../WorkflowRegistryManager.sol";
 import {MockContract} from "../../mocks/MockContract.sol";
 import {MockWorkflowRegistryContract} from "../../mocks/MockWorkflowRegistryContract.sol";
 import {WorkflowRegistryManagerSetup} from "./WorkflowRegistryManagerSetup.t.sol";
+import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 
 contract WorkflowRegistryManager_addVersion is WorkflowRegistryManagerSetup {
   function test_RevertWhen_TheCallerIsNotTheOwner() external {

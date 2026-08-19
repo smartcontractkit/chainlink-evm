@@ -1,25 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IRouter} from "../../v1/interfaces/IRouter.sol";
 import {IReceiver} from "../../v1/interfaces/IReceiver.sol";
+import {IRouter} from "../../v1/interfaces/IRouter.sol";
 
 import {MockKeystoneForwarder} from "../MockKeystoneForwarder.sol";
 
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
-import {Test} from "forge-std/Test.sol";
 import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
-
+import {Test} from "forge-std/Test.sol";
 
 // Minimal receivers to exercise success/failure paths.
 contract GoodReceiver is IReceiver {
   event OnReport(bytes metadata, bytes validatedReport);
 
-  function onReport(bytes calldata metadata, bytes calldata validatedReport) external {
+  function onReport(
+    bytes calldata metadata,
+    bytes calldata validatedReport
+  ) external {
     emit OnReport(metadata, validatedReport);
   }
 
-  function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override returns (bool) {
     return interfaceId == type(IReceiver).interfaceId || interfaceId == type(IERC165).interfaceId;
   }
 }
@@ -27,11 +31,16 @@ contract GoodReceiver is IReceiver {
 contract BadReceiver is IReceiver {
   error Oops();
 
-  function onReport(bytes calldata, bytes calldata) external pure {
+  function onReport(
+    bytes calldata,
+    bytes calldata
+  ) external pure {
     revert Oops();
   }
 
-  function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override returns (bool) {
     return interfaceId == type(IReceiver).interfaceId || interfaceId == type(IERC165).interfaceId;
   }
 }

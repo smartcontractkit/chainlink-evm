@@ -280,8 +280,9 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
     // SETUP: addDON
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
     bytes32[] memory nodeIds = new bytes32[](2);
     nodeIds[0] = P2P_ID;
     nodeIds[1] = P2P_ID_TWO;
@@ -327,8 +328,9 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
     // SETUP: addDON
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
     bytes32[] memory nodeIds = new bytes32[](2);
     nodeIds[0] = P2P_ID;
     nodeIds[1] = P2P_ID_TWO;

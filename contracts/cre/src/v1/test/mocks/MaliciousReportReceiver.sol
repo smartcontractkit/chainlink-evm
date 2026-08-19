@@ -9,7 +9,10 @@ contract MaliciousReportReceiver is IReceiver {
 
   bytes public latestReport;
 
-  function onReport(bytes calldata metadata, bytes calldata rawReport) external {
+  function onReport(
+    bytes calldata metadata,
+    bytes calldata rawReport
+  ) external {
     // Exhaust all gas that was provided
     for (uint256 i = 0; i < 1_000_000_000; ++i) {
       bytes[] memory mercuryReports = abi.decode(rawReport, (bytes[]));

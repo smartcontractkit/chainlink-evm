@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {Test} from "forge-std/Test.sol";
 import {ShardConfig} from "../../dev/ShardConfig.sol";
 import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
+import {Test} from "forge-std/Test.sol";
 
 contract ShardConfigTest is Test {
   ShardConfig internal s_shardConfig;

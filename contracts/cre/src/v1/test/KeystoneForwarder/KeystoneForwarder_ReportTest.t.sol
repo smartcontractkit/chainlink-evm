@@ -3,9 +3,9 @@ pragma solidity 0.8.24;
 
 import {KeystoneForwarder} from "../../KeystoneForwarder.sol";
 import {IRouter} from "../../interfaces/IRouter.sol";
-import {BaseTest} from "./KeystoneForwarderBaseTest.t.sol";
 import {MaliciousReportReceiver} from "../mocks/MaliciousReportReceiver.sol";
 import {MaliciousRevertingReceiver} from "../mocks/MaliciousRevertingReceiver.sol";
+import {BaseTest} from "./KeystoneForwarderBaseTest.t.sol";
 
 contract KeystoneForwarder_ReportTest is BaseTest {
   event MessageReceived(bytes metadata, bytes[] mercuryReports);

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
 import {BaseTest} from "./BaseTest.t.sol";
+import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 
 contract CapabilitiesRegistry_AddDONsTest is BaseTest {
   CapabilitiesRegistry.NewDONParams[] private s_DEFAULT_NEW_DON_PARAMS;
@@ -25,8 +25,9 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory defaultCapabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    defaultCapabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    defaultCapabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
 
     string[] memory donFamilies = new string[](0);
     s_DEFAULT_NEW_DON_PARAMS = new CapabilitiesRegistry.NewDONParams[](1);
@@ -98,10 +99,12 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
   function test_RevertWhen_DuplicateCapabilityAdded() public {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](2);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
-    capabilityConfigs[1] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
+    capabilityConfigs[1] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
 
     s_DEFAULT_NEW_DON_PARAMS[0].capabilityConfigurations = capabilityConfigs;
 
@@ -167,11 +170,11 @@ contract CapabilitiesRegistry_AddDONsTest is BaseTest {
   function test_AddDONs() public {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigsForTwoCapabilities =
       new CapabilitiesRegistry.CapabilityConfiguration[](2);
-    capabilityConfigsForTwoCapabilities[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigsForTwoCapabilities[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
     capabilityConfigsForTwoCapabilities[1] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_capabilityWithConfigurationContractId,
-      config: CONFIG_CAPABILITY_CONFIG
+      capabilityId: s_capabilityWithConfigurationContractId, config: CONFIG_CAPABILITY_CONFIG
     });
 
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));

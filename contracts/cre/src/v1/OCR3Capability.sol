@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {OwnerIsCreator} from "@chainlink/contracts/src/v0.8/shared/access/OwnerIsCreator.sol";
 import {OCR2Abstract} from "./ocr/OCR2Abstract.sol";
+import {OwnerIsCreator} from "@chainlink/contracts/src/v0.8/shared/access/OwnerIsCreator.sol";
 
 /// @notice OCR2Base provides config management compatible with OCR3
 contract OCR3Capability is OwnerIsCreator, OCR2Abstract {
@@ -29,7 +29,11 @@ contract OCR3Capability is OwnerIsCreator, OCR2Abstract {
   ConfigInfo internal s_configInfo;
 
   // Reverts transaction if config args are invalid
-  modifier checkConfigValid(uint256 numSigners, uint256 numTransmitters, uint256 f) {
+  modifier checkConfigValid(
+    uint256 numSigners,
+    uint256 numTransmitters,
+    uint256 f
+  ) {
     if (numSigners > MAX_NUM_ORACLES) revert InvalidConfig("too many signers");
     if (f == 0) revert InvalidConfig("f must be positive");
     if (numSigners != numTransmitters) revert InvalidConfig("oracle addresses out of registration");

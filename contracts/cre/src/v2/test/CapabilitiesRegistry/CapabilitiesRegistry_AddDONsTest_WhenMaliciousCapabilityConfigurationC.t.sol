@@ -52,8 +52,9 @@ contract CapabilitiesRegistry_AddDONsTest_WhenMaliciousCapabilityConfigurationCo
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
 
     CapabilitiesRegistry.NewDONParams[] memory newDONs = new CapabilitiesRegistry.NewDONParams[](1);
     newDONs[0] = CapabilitiesRegistry.NewDONParams({

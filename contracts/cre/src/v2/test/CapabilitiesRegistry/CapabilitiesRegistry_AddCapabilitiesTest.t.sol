@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
+import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 
 import {BaseTest} from "./BaseTest.t.sol";
 import {IERC165} from "@openzeppelin/contracts@5.1.0/interfaces/IERC165.sol";

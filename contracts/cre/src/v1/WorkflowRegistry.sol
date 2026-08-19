@@ -25,7 +25,7 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
 
   struct WorkflowMetadata {
     bytes32 workflowID; //     Unique identifier from hash of owner address, WASM binary content, config content and
-      // secrets URL.
+    // secrets URL.
     address owner; // ─────────╮ Workflow owner.
     uint32 donID; //           │ Unique identifier for the Workflow DON.
     WorkflowStatus status; // ─╯ Current status of the workflow (active, paused).
@@ -120,7 +120,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// new workflows for a removed DON.
   /// @param donIDs The list of unique identifiers for Workflow DONs.
   /// @param allowed True if they should be added to the allowlist, false to remove them.
-  function updateAllowedDONs(uint32[] calldata donIDs, bool allowed) external onlyOwner registryNotLocked {
+  function updateAllowedDONs(
+    uint32[] calldata donIDs,
+    bool allowed
+  ) external onlyOwner registryNotLocked {
     uint256 length = donIDs.length;
     if (allowed) {
       for (uint256 i = 0; i < length; ++i) {
@@ -139,7 +142,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev We don't check if an existing authorized address will be set to false, please take extra caution.
   /// @param addresses The list of addresses.
   /// @param allowed True if they should be added to whitelist, false to remove them.
-  function updateAuthorizedAddresses(address[] calldata addresses, bool allowed) external onlyOwner registryNotLocked {
+  function updateAuthorizedAddresses(
+    address[] calldata addresses,
+    bool allowed
+  ) external onlyOwner registryNotLocked {
     uint256 length = addresses.length;
     if (allowed) {
       for (uint256 i = 0; i < length; ++i) {
@@ -485,7 +491,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// - `WorkflowPausedV1` or `WorkflowActivatedV1` event indicating that the relevant workflow status has been updated.
   /// @param workflowKey The unique identifier for the workflow.
   /// @param newStatus The new status to set for the workflow (either `Paused` or `Active`).
-  function _updateWorkflowStatus(bytes32 workflowKey, WorkflowStatus newStatus) internal {
+  function _updateWorkflowStatus(
+    bytes32 workflowKey,
+    WorkflowStatus newStatus
+  ) internal {
     // Retrieve workflow metadata once
     WorkflowMetadata storage workflow = _getWorkflowFromStorage(msg.sender, workflowKey);
     uint32 donID = workflow.donID;
@@ -707,7 +716,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @dev Reverts with DONNotAllowed if the DON is not allowed or AddressNotAuthorized if the caller is not authorized.
   /// @param donID The ID of the DON to check.
   /// @param caller The address attempting to access the DON
-  function _validatePermissions(uint32 donID, address caller) internal view {
+  function _validatePermissions(
+    uint32 donID,
+    address caller
+  ) internal view {
     if (!s_allowedDONs.contains(donID)) {
       // First, ensure the DON is in the allowed list. This is separate from the permission check below because a DON
       // can be removed from the allowed list without removing the permissioned addresses associated with the DON.
@@ -732,7 +744,10 @@ contract WorkflowRegistry is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param owner The address of the owner. Typically used to uniquely associate the field with the owner.
   /// @param field A string field, such as the workflow name or secrets URL, that is used to generate the unique hash.
   /// @return A unique `bytes32` hash computed from the combination of the owner's address and the given field.
-  function computeHashKey(address owner, string calldata field) public pure returns (bytes32) {
+  function computeHashKey(
+    address owner,
+    string calldata field
+  ) public pure returns (bytes32) {
     return keccak256(abi.encodePacked(owner, field));
   }
 }

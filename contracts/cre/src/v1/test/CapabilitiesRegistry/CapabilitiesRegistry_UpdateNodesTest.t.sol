@@ -219,8 +219,7 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
+      capabilityId: s_basicHashedCapabilityId, config: BASIC_CAPABILITY_CONFIG
     });
     bytes32[] memory nodeIds = new bytes32[](2);
     nodeIds[0] = P2P_ID;
@@ -258,8 +257,7 @@ contract CapabilitiesRegistry_UpdateNodesTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
+      capabilityId: s_basicHashedCapabilityId, config: BASIC_CAPABILITY_CONFIG
     });
     bytes32[] memory nodeIds = new bytes32[](2);
     nodeIds[0] = P2P_ID;

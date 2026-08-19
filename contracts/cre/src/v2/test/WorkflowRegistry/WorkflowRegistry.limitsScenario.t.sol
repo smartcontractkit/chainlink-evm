@@ -6,7 +6,10 @@ import {WorkflowRegistrySetup} from "./WorkflowRegistrySetup.t.sol";
 
 contract WorkflowRegistry_limitsScenario is WorkflowRegistrySetup {
   // Helper to build deterministic IDs
-  function _wfId(string memory prefix, uint256 i) internal pure returns (bytes32) {
+  function _wfId(
+    string memory prefix,
+    uint256 i
+  ) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(prefix, "-", i));
   }
 

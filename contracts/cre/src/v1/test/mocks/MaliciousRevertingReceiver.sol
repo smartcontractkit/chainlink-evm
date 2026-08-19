@@ -7,7 +7,10 @@ import {IERC165} from "@openzeppelin/contracts@4.8.3/interfaces/IERC165.sol";
 /// A malicious receiver that uses max allowed for ERC165 checks and consumes all gas in `onReport()`
 /// Causes parent Forwarder contract to revert if it doesn't handle gas tracking accurately
 contract MaliciousRevertingReceiver is IReceiver {
-  function onReport(bytes calldata, bytes calldata) external view override {
+  function onReport(
+    bytes calldata,
+    bytes calldata
+  ) external view override {
     // consumes about 63/64 of all gas available
     uint256 targetGasRemaining = 200;
     for (uint256 i = 0; gasleft() > targetGasRemaining; ++i) {}

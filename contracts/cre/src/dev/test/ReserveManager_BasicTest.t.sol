@@ -12,7 +12,10 @@ interface IERC165Local {
 }
 
 interface IReceiverLocal is IERC165Local {
-  function onReport(bytes calldata metadata, bytes calldata report) external;
+  function onReport(
+    bytes calldata metadata,
+    bytes calldata report
+  ) external;
 }
 
 contract ReserveManagerTest is Test {

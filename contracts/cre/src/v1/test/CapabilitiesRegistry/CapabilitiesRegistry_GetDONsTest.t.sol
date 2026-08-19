@@ -47,8 +47,7 @@ contract CapabilitiesRegistry_GetDONsTest is BaseTest {
 
     s_capabilityConfigs.push(
       CapabilitiesRegistry.CapabilityConfiguration({
-        capabilityId: s_basicHashedCapabilityId,
-        config: BASIC_CAPABILITY_CONFIG
+        capabilityId: s_basicHashedCapabilityId, config: BASIC_CAPABILITY_CONFIG
       })
     );
 

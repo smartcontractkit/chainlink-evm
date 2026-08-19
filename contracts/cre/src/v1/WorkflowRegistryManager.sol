@@ -63,7 +63,12 @@ contract WorkflowRegistryManager is Ownable2StepMsgSender, ITypeAndVersion {
   /// @param chainID The chain ID of the EVM chain where the WorkflowRegistry is deployed.
   /// @param autoActivate A boolean indicating whether the new version should be activated immediately.
   /// @custom:throws InvalidContractType if the provided contract address is zero or not a WorkflowRegistry.
-  function addVersion(address contractAddress, uint64 chainID, uint32 deployedAt, bool autoActivate) external onlyOwner {
+  function addVersion(
+    address contractAddress,
+    uint64 chainID,
+    uint32 deployedAt,
+    bool autoActivate
+  ) external onlyOwner {
     // Check if the contract is already registered. If it is, you can just activate that existing version.
     bytes32 key = keccak256(abi.encodePacked(contractAddress, chainID));
     if (s_versionNumberByAddressAndChainID[key] != 0) {
@@ -74,10 +79,7 @@ contract WorkflowRegistryManager is Ownable2StepMsgSender, ITypeAndVersion {
     uint32 latestVersionNumber = ++s_latestVersionNumber;
 
     s_versions[latestVersionNumber] = Version({
-      contractAddress: contractAddress,
-      chainID: chainID,
-      deployedAt: deployedAt,
-      contractTypeAndVersion: typeVer
+      contractAddress: contractAddress, chainID: chainID, deployedAt: deployedAt, contractTypeAndVersion: typeVer
     });
 
     // Store the version number associated with the hash of contract address and chainID
@@ -152,7 +154,10 @@ contract WorkflowRegistryManager is Ownable2StepMsgSender, ITypeAndVersion {
   /// @return versions An array of `Version` structs containing version details, starting from the `start` index up to
   /// the
   /// specified `limit`.
-  function getAllVersions(uint32 start, uint32 limit) external view returns (Version[] memory versions) {
+  function getAllVersions(
+    uint32 start,
+    uint32 limit
+  ) external view returns (Version[] memory versions) {
     uint32 totalVersions = s_latestVersionNumber;
 
     // Adjust for 1-based index

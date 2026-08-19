@@ -63,12 +63,10 @@ contract CapabilitiesRegistry_GetNextDONIdTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](2);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
+      capabilityId: s_basicHashedCapabilityId, config: BASIC_CAPABILITY_CONFIG
     });
     capabilityConfigs[1] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_capabilityWithConfigurationContractId,
-      config: CONFIG_CAPABILITY_CONFIG
+      capabilityId: s_capabilityWithConfigurationContractId, config: CONFIG_CAPABILITY_CONFIG
     });
 
     vm.expectEmit(true, true, true, true, address(s_CapabilitiesRegistry));

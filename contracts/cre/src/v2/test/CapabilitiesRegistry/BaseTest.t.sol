@@ -29,9 +29,7 @@ contract BaseTest is Test, Constants {
     s_capabilityConfigurationContract = new CapabilityConfigurationContract();
 
     s_basicCapability = CapabilitiesRegistry.Capability({
-      capabilityId: "data-streams-reports@1.0.0",
-      configurationContract: address(0),
-      metadata: TEST_CAPABILITY_METADATA
+      capabilityId: "data-streams-reports@1.0.0", configurationContract: address(0), metadata: TEST_CAPABILITY_METADATA
     });
     s_capabilityWithConfigurationContract = CapabilitiesRegistry.Capability({
       capabilityId: "read-ethereum-mainnet-gas-price@1.0.2",
@@ -55,8 +53,9 @@ contract BaseTest is Test, Constants {
     s_capabilities[1] = s_capabilityWithConfigurationContract;
 
     s_capabilityConfigs = new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    s_capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    s_capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
 
     s_paramsForTwoNodes = new CapabilitiesRegistry.NodeParams[](2);
     s_paramsForTwoNodes[0] = CapabilitiesRegistry.NodeParams({

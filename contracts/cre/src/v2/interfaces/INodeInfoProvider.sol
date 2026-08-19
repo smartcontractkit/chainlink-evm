@@ -46,7 +46,10 @@ interface INodeInfoProvider {
   /// @param start Zero-based index at which the page begins.
   /// @param limit Maximum number of nodes to return.
   /// @return NodeInfo[] Array of nodes for the requested page.
-  function getNodes(uint256 start, uint256 limit) external view returns (NodeInfo[] memory);
+  function getNodes(
+    uint256 start,
+    uint256 limit
+  ) external view returns (NodeInfo[] memory);
 
   /// @notice Retrieves nodes by their P2P IDs.
   /// @param p2pIds Array of P2P IDs to query for.
