@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -33,7 +34,7 @@ type OCR3OnchainKeyringWithPublicKey[RI any] struct {
 // If you have security-critical information in RI, you should make your own ocr3types.OnchainKeyring2 that does use the information in RI for signing.
 func CreateOCR3OnchainKeyringIgnoringRI[RI any](ctx context.Context, ks keystore.Keystore, keyringName string) (OCR3OnchainKeyringWithPublicKey[RI], error) {
 	if keyringName == "" {
-		return OCR3OnchainKeyringWithPublicKey[RI]{}, fmt.Errorf("keyring name cannot be empty")
+		return OCR3OnchainKeyringWithPublicKey[RI]{}, errors.New("keyring name cannot be empty")
 	}
 	onchainKeyPath := keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain, keyringName)
 	createReq := keystore.CreateKeysRequest{

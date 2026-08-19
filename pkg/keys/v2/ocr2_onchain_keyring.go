@@ -4,6 +4,7 @@ package keys
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -25,7 +26,7 @@ const (
 // For example, a key named "test-key" will be stored at the path "evm/ocr2_onchain/test-key".
 func CreateOCR2OnchainKeyring(ctx context.Context, ks keystore.Keystore, keyringName string) (ocrtypes.OnchainKeyring, error) {
 	if keyringName == "" {
-		return nil, fmt.Errorf("keyring name cannot be empty")
+		return nil, errors.New("keyring name cannot be empty")
 	}
 	onchainKeyPath := keystore.NewKeyPath(PrefixEVM, PrefixOCR2Onchain, keyringName)
 	createReq := keystore.CreateKeysRequest{
