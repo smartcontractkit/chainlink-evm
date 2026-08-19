@@ -4,12 +4,14 @@ package keys
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	gethcrypto "github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/chainlink-common/keystore"
 )
 
@@ -122,6 +124,9 @@ func (k *TxKey) GetTransactOpts(ctx context.Context, chainID *big.Int) (*bind.Tr
 // Note that key names are prefixed with PrefixEVM and PrefixTxKeystore.
 // For example, a key named "test-key" will be stored at the path "evm/tx/test-key".
 func CreateTxKey(ks keystore.Keystore, name string) (*TxKey, error) {
+	if name == "" {
+		return nil, fmt.Errorf("keyring name cannot be empty")
+	}
 	path := keystore.NewKeyPath(PrefixEVM, PrefixTxKeystore, name)
 	createReq := keystore.CreateKeysRequest{
 		Keys: []keystore.CreateKeyRequest{
