@@ -520,10 +520,7 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.DecimalFeedConfigSet({
-      dataId: dataIds[0],
-      decimals: 0,
-      description: s_descriptions[0],
-      workflowMetadata: s_workflowMetadata
+      dataId: dataIds[0], decimals: 0, description: s_descriptions[0], workflowMetadata: s_workflowMetadata
     });
 
     s_dataFeedsCache.setDecimalFeedConfigs(dataIds, s_descriptions, s_workflowMetadata);
@@ -545,17 +542,11 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.DecimalFeedConfigSet({
-      dataId: dataIds[0],
-      decimals: 0,
-      description: _descriptions[0],
-      workflowMetadata: s_workflowMetadata
+      dataId: dataIds[0], decimals: 0, description: _descriptions[0], workflowMetadata: s_workflowMetadata
     });
     vm.expectEmit();
     emit DataFeedsCache.DecimalFeedConfigSet({
-      dataId: dataIds[1],
-      decimals: 0,
-      description: _descriptions[1],
-      workflowMetadata: s_workflowMetadata
+      dataId: dataIds[1], decimals: 0, description: _descriptions[1], workflowMetadata: s_workflowMetadata
     });
 
     s_dataFeedsCache.setDecimalFeedConfigs(dataIds, _descriptions, s_workflowMetadata);
@@ -586,19 +577,13 @@ contract DataFeedsCacheTest is BaseTest {
     emit DataFeedsCache.FeedConfigRemoved({dataId: dataIds[0]});
     vm.expectEmit();
     emit DataFeedsCache.DecimalFeedConfigSet({
-      dataId: dataIds[0],
-      decimals: 0,
-      description: _descriptions[0],
-      workflowMetadata: _workflowMetadataNew
+      dataId: dataIds[0], decimals: 0, description: _descriptions[0], workflowMetadata: _workflowMetadataNew
     });
     vm.expectEmit();
     emit DataFeedsCache.FeedConfigRemoved({dataId: dataIds[1]});
     vm.expectEmit();
     emit DataFeedsCache.DecimalFeedConfigSet({
-      dataId: dataIds[1],
-      decimals: 0,
-      description: _descriptions[1],
-      workflowMetadata: _workflowMetadataNew
+      dataId: dataIds[1], decimals: 0, description: _descriptions[1], workflowMetadata: _workflowMetadataNew
     });
 
     s_dataFeedsCache.setDecimalFeedConfigs(dataIds, _descriptions, _workflowMetadataNew);
@@ -872,14 +857,20 @@ contract DataFeedsCacheTest is BaseTest {
     assertEq(dataType, hex"32");
   }
 
-  function testFuzzy_getDataType(bytes16 id, uint256 index) public view {
+  function testFuzzy_getDataType(
+    bytes16 id,
+    uint256 index
+  ) public view {
     vm.assume(index < 16);
     bytes1 expected = bytes1(uint8(id[index]));
     bytes1 result = s_dataFeedsCache.getDataType(id, index);
     assertEq(result, expected);
   }
 
-  function testFuzzy_getDataTypeRevertOutOfBound(bytes16 id, uint256 index) public {
+  function testFuzzy_getDataTypeRevertOutOfBound(
+    bytes16 id,
+    uint256 index
+  ) public {
     vm.assume(index >= 16);
     vm.expectRevert();
     s_dataFeedsCache.getDataType(id, index);
@@ -932,9 +923,7 @@ contract DataFeedsCacheTest is BaseTest {
     bytes10 fuzzedWorkflowName
   ) public view {
     DataFeedsCache.WorkflowMetadata memory wfm = DataFeedsCache.WorkflowMetadata({
-      allowedSender: sender,
-      allowedWorkflowOwner: fuzzedWorkflowOwner,
-      allowedWorkflowName: fuzzedWorkflowName
+      allowedSender: sender, allowedWorkflowOwner: fuzzedWorkflowOwner, allowedWorkflowName: fuzzedWorkflowName
     });
     bool hasPermission = s_dataFeedsCache.checkFeedPermission(dataId, wfm);
     assertEq(hasPermission, false);
@@ -952,9 +941,7 @@ contract DataFeedsCacheTest is BaseTest {
     vm.assume(fuzzedWorkflowName != bytes10(0));
 
     DataFeedsCache.WorkflowMetadata memory _workflowMetadata1 = DataFeedsCache.WorkflowMetadata({
-      allowedSender: sender,
-      allowedWorkflowOwner: fuzzedWorkflowOwner,
-      allowedWorkflowName: fuzzedWorkflowName
+      allowedSender: sender, allowedWorkflowOwner: fuzzedWorkflowOwner, allowedWorkflowName: fuzzedWorkflowName
     });
 
     DataFeedsCache.WorkflowMetadata[] memory _workflowMetadata = new DataFeedsCache.WorkflowMetadata[](1);
@@ -975,18 +962,12 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.InvalidUpdatePermission({
-      dataId: bytes16(DATAID1),
-      sender: ILLEGAL_CALLER,
-      workflowOwner: WORKFLOWOWNER,
-      workflowName: WORKFLOWNAME
+      dataId: bytes16(DATAID1), sender: ILLEGAL_CALLER, workflowOwner: WORKFLOWOWNER, workflowName: WORKFLOWNAME
     });
 
     vm.expectEmit();
     emit DataFeedsCache.InvalidUpdatePermission({
-      dataId: bytes16(DATAID2),
-      sender: ILLEGAL_CALLER,
-      workflowOwner: WORKFLOWOWNER,
-      workflowName: WORKFLOWNAME
+      dataId: bytes16(DATAID2), sender: ILLEGAL_CALLER, workflowOwner: WORKFLOWOWNER, workflowName: WORKFLOWNAME
     });
 
     s_dataFeedsCache.onReport(METADATA, s_decimalReportlength2);
@@ -1006,18 +987,12 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.DecimalReportUpdated({
-      dataId: bytes16(DATAID1),
-      roundId: 1,
-      timestamp: TIMESTAMP1,
-      answer: uint224(PRICE3)
+      dataId: bytes16(DATAID1), roundId: 1, timestamp: TIMESTAMP1, answer: uint224(PRICE3)
     });
 
     vm.expectEmit();
     emit DataFeedsCache.InvalidUpdatePermission({
-      dataId: bytes16(DATAID2),
-      sender: REPORT_SENDER,
-      workflowOwner: WORKFLOWOWNER,
-      workflowName: WORKFLOWNAME
+      dataId: bytes16(DATAID2), sender: REPORT_SENDER, workflowOwner: WORKFLOWOWNER, workflowName: WORKFLOWNAME
     });
 
     vm.stopPrank();
@@ -1026,18 +1001,13 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.BundleReportUpdated({
-      dataId: bytes16(DATAID1),
-      timestamp: TIMESTAMP1,
-      bundle: abi.encodePacked(abi.encode(PRICE3), abi.encode(PRICE4))
+      dataId: bytes16(DATAID1), timestamp: TIMESTAMP1, bundle: abi.encodePacked(abi.encode(PRICE3), abi.encode(PRICE4))
     });
 
     // missing data id for bundle report
     vm.expectEmit();
     emit DataFeedsCache.InvalidUpdatePermission({
-      dataId: bytes16(DATAID2),
-      sender: REPORT_SENDER,
-      workflowOwner: WORKFLOWOWNER,
-      workflowName: WORKFLOWNAME
+      dataId: bytes16(DATAID2), sender: REPORT_SENDER, workflowOwner: WORKFLOWOWNER, workflowName: WORKFLOWNAME
     });
 
     s_dataFeedsCache.onReport(METADATA, s_bundleReportlength2);
@@ -1059,17 +1029,12 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.StaleDecimalReport({
-      dataId: bytes16(DATAID1),
-      reportTimestamp: TIMESTAMP1 - 50,
-      latestTimestamp: TIMESTAMP1
+      dataId: bytes16(DATAID1), reportTimestamp: TIMESTAMP1 - 50, latestTimestamp: TIMESTAMP1
     });
 
     vm.expectEmit();
     emit DataFeedsCache.DecimalReportUpdated({
-      dataId: bytes16(DATAID2),
-      roundId: 2,
-      timestamp: TIMESTAMP2 + 50,
-      answer: uint224(PRICE2)
+      dataId: bytes16(DATAID2), roundId: 2, timestamp: TIMESTAMP2 + 50, answer: uint224(PRICE2)
     });
 
     s_dataFeedsCache.onReport(METADATA, s_staleReport);
@@ -1091,9 +1056,7 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.StaleBundleReport({
-      dataId: bytes16(DATAID1),
-      reportTimestamp: TIMESTAMP1 - 50,
-      latestTimestamp: TIMESTAMP1
+      dataId: bytes16(DATAID1), reportTimestamp: TIMESTAMP1 - 50, latestTimestamp: TIMESTAMP1
     });
 
     vm.expectEmit();
@@ -1120,18 +1083,12 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.InvalidUpdatePermission({
-      dataId: bytes16(DATAID1),
-      sender: REPORT_SENDER,
-      workflowOwner: WORKFLOWOWNER,
-      workflowName: invalidWorkflowName
+      dataId: bytes16(DATAID1), sender: REPORT_SENDER, workflowOwner: WORKFLOWOWNER, workflowName: invalidWorkflowName
     });
 
     vm.expectEmit();
     emit DataFeedsCache.InvalidUpdatePermission({
-      dataId: bytes16(DATAID2),
-      sender: REPORT_SENDER,
-      workflowOwner: WORKFLOWOWNER,
-      workflowName: invalidWorkflowName
+      dataId: bytes16(DATAID2), sender: REPORT_SENDER, workflowOwner: WORKFLOWOWNER, workflowName: invalidWorkflowName
     });
 
     s_dataFeedsCache.onReport(thisMetadata, s_decimalReportlength2);
@@ -1151,18 +1108,12 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.InvalidUpdatePermission({
-      dataId: bytes16(DATAID1),
-      sender: REPORT_SENDER,
-      workflowOwner: invalidWorkflowOwner,
-      workflowName: WORKFLOWNAME
+      dataId: bytes16(DATAID1), sender: REPORT_SENDER, workflowOwner: invalidWorkflowOwner, workflowName: WORKFLOWNAME
     });
 
     vm.expectEmit();
     emit DataFeedsCache.InvalidUpdatePermission({
-      dataId: bytes16(DATAID2),
-      sender: REPORT_SENDER,
-      workflowOwner: invalidWorkflowOwner,
-      workflowName: WORKFLOWNAME
+      dataId: bytes16(DATAID2), sender: REPORT_SENDER, workflowOwner: invalidWorkflowOwner, workflowName: WORKFLOWNAME
     });
 
     s_dataFeedsCache.onReport(thisMetadata, s_decimalReportlength2);
@@ -1218,10 +1169,7 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.DecimalReportUpdated({
-      dataId: bytes16(DATAID1),
-      roundId: 1,
-      timestamp: TIMESTAMP1,
-      answer: uint224(PRICE1)
+      dataId: bytes16(DATAID1), roundId: 1, timestamp: TIMESTAMP1, answer: uint224(PRICE1)
     });
 
     s_dataFeedsCache.onReport(METADATA, s_decimalReportlength1);
@@ -1244,18 +1192,12 @@ contract DataFeedsCacheTest is BaseTest {
 
     vm.expectEmit();
     emit DataFeedsCache.DecimalReportUpdated({
-      dataId: bytes16(DATAID1),
-      roundId: 1,
-      timestamp: TIMESTAMP1,
-      answer: uint224(PRICE3)
+      dataId: bytes16(DATAID1), roundId: 1, timestamp: TIMESTAMP1, answer: uint224(PRICE3)
     });
 
     vm.expectEmit();
     emit DataFeedsCache.DecimalReportUpdated({
-      dataId: bytes16(DATAID2),
-      roundId: 1,
-      timestamp: TIMESTAMP2,
-      answer: uint224(PRICE4)
+      dataId: bytes16(DATAID2), roundId: 1, timestamp: TIMESTAMP2, answer: uint224(PRICE4)
     });
 
     s_dataFeedsCache.onReport(METADATA, s_decimalReportlength2);
@@ -1688,7 +1630,10 @@ contract DataFeedsCacheHarness is DataFeedsCache {
     return _getWorkflowMetaData(metadata);
   }
 
-  function getDataType(bytes16 id, uint256 index) public pure returns (bytes1) {
+  function getDataType(
+    bytes16 id,
+    uint256 index
+  ) public pure returns (bytes1) {
     return _getDataType(id, index);
   }
 

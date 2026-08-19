@@ -334,7 +334,11 @@ contract FeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IFeeManager
-  function withdraw(address assetAddress, address recipient, uint192 quantity) external onlyOwner {
+  function withdraw(
+    address assetAddress,
+    address recipient,
+    uint192 quantity
+  ) external onlyOwner {
     //address 0 is used to withdraw native in the context of withdrawing
     if (assetAddress == address(0)) {
       (bool success,) = payable(recipient).call{value: quantity}("");
@@ -475,7 +479,10 @@ contract FeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
     _tryReturnChange(subscriber, change);
   }
 
-  function _tryReturnChange(address subscriber, uint256 quantity) internal {
+  function _tryReturnChange(
+    address subscriber,
+    uint256 quantity
+  ) internal {
     if (quantity != 0) {
       payable(subscriber).transfer(quantity);
     }

@@ -186,12 +186,20 @@ contract ChainReaderTester {
   }
 
   // first topic is the event signature
-  function triggerWithFourTopics(int32 field1, int32 field2, int32 field3) public {
+  function triggerWithFourTopics(
+    int32 field1,
+    int32 field2,
+    int32 field3
+  ) public {
     emit TriggeredWithFourTopics(field1, field2, field3);
   }
 
   // first topic is event hash, second and third topics get hashed before getting stored
-  function triggerWithFourTopicsWithHashed(string memory field1, uint8[32] memory field2, bytes32 field3) public {
+  function triggerWithFourTopicsWithHashed(
+    string memory field1,
+    uint8[32] memory field2,
+    bytes32 field3
+  ) public {
     emit TriggeredWithFourTopicsWithHashed(field1, field2, field3);
   }
 

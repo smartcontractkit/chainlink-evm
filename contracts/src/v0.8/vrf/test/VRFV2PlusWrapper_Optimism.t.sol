@@ -4,8 +4,9 @@ pragma solidity 0.8.19;
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 
-import {GasPriceOracle as OVM_GasPriceOracle} from
-  "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
+import {
+  GasPriceOracle as OVM_GasPriceOracle
+} from "../../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
 import {OptimismL1Fees} from "../OptimismL1Fees.sol";
 import {VRFV2PlusWrapper_Optimism} from "../VRFV2PlusWrapper_Optimism.sol";
 import {ExposedVRFCoordinatorV2_5_Optimism} from "../testhelpers/ExposedVRFCoordinatorV2_5_Optimism.sol";
@@ -110,7 +111,10 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
     vm.mockCall(OVM_GASPRICEORACLE_ADDR, abi.encodeWithSelector(bytes4(keccak256("decimals()"))), abi.encode(6));
   }
 
-  function _checkL1FeeCalculationSetEmittedLogs(uint8 expectedMode, uint8 expectedCoefficient) internal {
+  function _checkL1FeeCalculationSetEmittedLogs(
+    uint8 expectedMode,
+    uint8 expectedCoefficient
+  ) internal {
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 1);
     assertEq(entries[0].topics.length, 1);
@@ -166,7 +170,7 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
     uint32 numWords = 5;
     uint256 wrapperCostCalculation = s_wrapper.calculateRequestPriceNative(callbackGasLimit, numWords);
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(wrapperCostCalculation, 5.02575 * 1e17, 1e15);
+    assertApproxEqAbs(wrapperCostCalculation, 5.025_75 * 1e17, 1e15);
   }
 
   function test_calculateRequestPriceLinkOnOptimismWrapper_UsingCalldataCostCall() public {
@@ -178,7 +182,7 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
     uint32 numWords = 5;
     uint256 wrapperCostCalculation = s_wrapper.calculateRequestPrice(callbackGasLimit, numWords);
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(wrapperCostCalculation, 8.04934 * 1e17, 1e15);
+    assertApproxEqAbs(wrapperCostCalculation, 8.049_34 * 1e17, 1e15);
   }
 
   function test_calculateRequestPriceNativeOnOptimismWrapper_UsingGetL1FeeUpperBoundCall() public {
@@ -190,7 +194,7 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
     uint32 numWords = 5;
     uint256 wrapperCostCalculation = s_wrapper.calculateRequestPriceNative(callbackGasLimit, numWords);
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(wrapperCostCalculation, 5.15283 * 1e17, 1e15);
+    assertApproxEqAbs(wrapperCostCalculation, 5.152_83 * 1e17, 1e15);
   }
 
   function test_calculateRequestPriceLinkOnOptimismWrapper_UsingGetL1FeeUpperBoundCall() public {
@@ -202,6 +206,6 @@ contract VRFV2PlusWrapperOptimismAndBaseTest is BaseTest {
     uint32 numWords = 5;
     uint256 wrapperCostCalculation = s_wrapper.calculateRequestPrice(callbackGasLimit, numWords);
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(wrapperCostCalculation, 8.29246 * 1e17, 1e15);
+    assertApproxEqAbs(wrapperCostCalculation, 8.292_46 * 1e17, 1e15);
   }
 }

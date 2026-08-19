@@ -7,8 +7,9 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 
 import {OptimismCrossDomainForwarder} from "./OptimismCrossDomainForwarder.sol";
 
-import {iOVM_CrossDomainMessenger} from
-  "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
+import {
+  iOVM_CrossDomainMessenger
+} from "../../vendor/@eth-optimism/contracts/v0.4.7/contracts/optimistic-ethereum/iOVM/bridge/messaging/iOVM_CrossDomainMessenger.sol";
 import {Address} from "@openzeppelin/contracts@5.3.0/utils/Address.sol";
 
 /**
@@ -43,7 +44,10 @@ contract OptimismCrossDomainGovernor is IDelegateForwarder, OptimismCrossDomainF
    * @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
    * @inheritdoc IForwarder
    */
-  function forward(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
+  function forward(
+    address target,
+    bytes memory data
+  ) external override onlyLocalOrCrossDomainOwner {
     Address.functionCall(target, data);
   }
 
@@ -51,7 +55,10 @@ contract OptimismCrossDomainGovernor is IDelegateForwarder, OptimismCrossDomainF
    * @dev forwarded only if L2 Messenger calls with `msg.sender` being the L1 owner address, or called by the L2 owner
    * @inheritdoc IDelegateForwarder
    */
-  function forwardDelegate(address target, bytes memory data) external override onlyLocalOrCrossDomainOwner {
+  function forwardDelegate(
+    address target,
+    bytes memory data
+  ) external override onlyLocalOrCrossDomainOwner {
     Address.functionDelegateCall(target, data);
   }
 

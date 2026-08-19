@@ -30,7 +30,7 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
 
   struct FeedConfig {
     uint8[] bundleDecimals; // Only appliciable to Bundle reports - Decimal reports have decimals encoded into the
-      // DataId.
+    // DataId.
     string description; // Description of the feed (e.g. "LINK / USD")
     WorkflowMetadata[] workflowMetadata; // Metadata for the feed
   }
@@ -124,11 +124,9 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
   function supportsInterface(
     bytes4 interfaceId
   ) public pure returns (bool) {
-    return (
-      interfaceId == type(IDataFeedsCache).interfaceId || interfaceId == type(IERC165).interfaceId
+    return (interfaceId == type(IDataFeedsCache).interfaceId || interfaceId == type(IERC165).interfaceId
         || interfaceId == type(IReceiver).interfaceId || interfaceId == type(ITokenRecover).interfaceId
-        || interfaceId == type(ITypeAndVersion).interfaceId
-    );
+        || interfaceId == type(ITypeAndVersion).interfaceId);
   }
 
   /// @notice Get the workflow metadata of a feed
@@ -250,10 +248,7 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
       feedConfig.description = descriptions[i];
 
       emit DecimalFeedConfigSet({
-        dataId: dataId,
-        decimals: _getDecimals(dataId),
-        description: descriptions[i],
-        workflowMetadata: workflowMetadata
+        dataId: dataId, decimals: _getDecimals(dataId), description: descriptions[i], workflowMetadata: workflowMetadata
       });
     }
   }
@@ -329,10 +324,7 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
       feedConfig.description = descriptions[i];
 
       emit BundleFeedConfigSet({
-        dataId: dataId,
-        decimals: decimalsMatrix[i],
-        description: descriptions[i],
-        workflowMetadata: workflowMetadata
+        dataId: dataId, decimals: decimalsMatrix[i], description: descriptions[i], workflowMetadata: workflowMetadata
       });
     }
   }
@@ -365,7 +357,10 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
 
   /// @notice Sets a feed admin for all feeds, only callable by the Owner
   /// @param feedAdmin The feed admin
-  function setFeedAdmin(address feedAdmin, bool isAdmin) external onlyOwner {
+  function setFeedAdmin(
+    address feedAdmin,
+    bool isAdmin
+  ) external onlyOwner {
     if (feedAdmin == address(0)) revert InvalidAddress(feedAdmin);
 
     s_feedAdmins[feedAdmin] = isAdmin;
@@ -422,7 +417,11 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
   // ================================================================
 
   /// @inheritdoc ITokenRecover
-  function recoverTokens(IERC20 token, address to, uint256 amount) external onlyOwner {
+  function recoverTokens(
+    IERC20 token,
+    address to,
+    uint256 amount
+  ) external onlyOwner {
     if (address(token) == address(0)) {
       if (amount > address(this).balance) {
         revert InsufficientBalance(address(this).balance, amount);
@@ -443,7 +442,10 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
   // ================================================================
 
   /// @inheritdoc IReceiver
-  function onReport(bytes calldata metadata, bytes calldata report) external {
+  function onReport(
+    bytes calldata metadata,
+    bytes calldata report
+  ) external {
     (address workflowOwner, bytes10 workflowName) = _getWorkflowMetaData(metadata);
 
     // The first 32 bytes is the offset to the array
@@ -519,6 +521,7 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
       }
     }
   }
+
   // ================================================================
   // │                        Helper Methods                        │
   // ================================================================
@@ -568,7 +571,10 @@ contract DataFeedsCache is IDataFeedsCache, IReceiver, ITokenRecover, ITypeAndVe
   /// @param dataId The data ID for the feed
   /// @param index The index of the byte to extract from the data Id
   /// @return dataType result The keccak256 hash of the abi.encoded inputs
-  function _getDataType(bytes16 dataId, uint256 index) internal pure returns (bytes1 dataType) {
+  function _getDataType(
+    bytes16 dataId,
+    uint256 index
+  ) internal pure returns (bytes1 dataType) {
     // Convert bytes16 to bytes
     return abi.encodePacked(dataId)[index];
   }

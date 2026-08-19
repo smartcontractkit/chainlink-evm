@@ -12,11 +12,17 @@ contract VRFOwnerlessConsumerExample is VRFConsumerBase, IERC677Receiver {
 
   error OnlyCallableFromLink();
 
-  constructor(address _vrfCoordinator, address _link) VRFConsumerBase(_vrfCoordinator, _link) {
+  constructor(
+    address _vrfCoordinator,
+    address _link
+  ) VRFConsumerBase(_vrfCoordinator, _link) {
     /* empty */
   }
 
-  function fulfillRandomness(bytes32 requestId, uint256 _randomness) internal override {
+  function fulfillRandomness(
+    bytes32 requestId,
+    uint256 _randomness
+  ) internal override {
     require(requestId == s_requestId, "request ID is incorrect");
     s_randomnessOutput = _randomness;
   }
@@ -27,7 +33,12 @@ contract VRFOwnerlessConsumerExample is VRFConsumerBase, IERC677Receiver {
    * @param _amount The amount of LINK transferred to pay for this request.
    * @param _data The data passed to transferAndCall on LinkToken. Must be an abi-encoded key hash.
    */
-  function onTokenTransfer(address, /* sender */ uint256 _amount, bytes calldata _data) external override {
+  function onTokenTransfer(
+    address,
+    /* sender */
+    uint256 _amount,
+    bytes calldata _data
+  ) external override {
     if (msg.sender != address(LINK)) {
       revert OnlyCallableFromLink();
     }

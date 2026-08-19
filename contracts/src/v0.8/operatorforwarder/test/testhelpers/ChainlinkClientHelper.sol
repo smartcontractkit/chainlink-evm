@@ -12,11 +12,18 @@ contract ChainlinkClientHelper is ChainlinkClient {
     _setChainlinkToken(link);
   }
 
-  function sendRequest(address op, uint256 payment) external returns (bytes32) {
+  function sendRequest(
+    address op,
+    uint256 payment
+  ) external returns (bytes32) {
     return _sendChainlinkRequestTo(op, _buildOperatorRequest(bytes32(hex"10"), FULFILL_SELECTOR), payment);
   }
 
-  function cancelRequest(bytes32 requestId, uint256 payment, uint256 expiration) external {
+  function cancelRequest(
+    bytes32 requestId,
+    uint256 payment,
+    uint256 expiration
+  ) external {
     _cancelChainlinkRequest(requestId, payment, this.fulfill.selector, expiration);
   }
 

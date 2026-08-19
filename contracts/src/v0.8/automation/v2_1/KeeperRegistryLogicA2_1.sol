@@ -309,7 +309,10 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
    * @param id the upkeepID
    * @param amount the amount of LINK to fund, in jules (jules = "wei" of LINK)
    */
-  function addFunds(uint256 id, uint96 amount) external {
+  function addFunds(
+    uint256 id,
+    uint96 amount
+  ) external {
     Upkeep memory upkeep = s_upkeep[id];
     if (upkeep.maxValidBlocknumber != UINT32_MAX) revert UpkeepCancelled();
     s_upkeep[id].balance = upkeep.balance + amount;
@@ -326,7 +329,10 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
    * @dev migration permissions must be set on *both* sending and receiving registries
    * @dev only an upkeep admin can migrate their upkeeps
    */
-  function migrateUpkeeps(uint256[] calldata ids, address destination) external {
+  function migrateUpkeeps(
+    uint256[] calldata ids,
+    address destination
+  ) external {
     if (
       s_peerRegistryMigrationPermission[destination] != MigrationPermission.OUTGOING
         && s_peerRegistryMigrationPermission[destination] != MigrationPermission.BIDIRECTIONAL
@@ -364,11 +370,13 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
     s_expectedLinkBalance = s_expectedLinkBalance - totalBalanceRemaining;
     bytes memory encodedUpkeeps =
       abi.encode(ids, upkeeps, new address[](ids.length), admins, checkDatas, triggerConfigs, offchainConfigs);
-    MigratableKeeperRegistryInterfaceV2(destination).receiveUpkeeps(
-      UpkeepTranscoderInterfaceV2(s_storage.transcoder).transcodeUpkeeps(
-        UPKEEP_VERSION_BASE, MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(), encodedUpkeeps
-      )
-    );
+    MigratableKeeperRegistryInterfaceV2(destination)
+      .receiveUpkeeps(
+        UpkeepTranscoderInterfaceV2(s_storage.transcoder)
+          .transcodeUpkeeps(
+            UPKEEP_VERSION_BASE, MigratableKeeperRegistryInterfaceV2(destination).upkeepVersion(), encodedUpkeeps
+          )
+      );
     i_link.transfer(destination, totalBalanceRemaining);
   }
 
@@ -411,7 +419,10 @@ contract KeeperRegistryLogicA2_1 is KeeperRegistryBase2_1, Chainable {
    * @param id the upkeepID to change the trigger for
    * @param triggerConfig the new trigger config
    */
-  function setUpkeepTriggerConfig(uint256 id, bytes calldata triggerConfig) external {
+  function setUpkeepTriggerConfig(
+    uint256 id,
+    bytes calldata triggerConfig
+  ) external {
     _requireAdminAndNotCancelled(id);
     s_upkeepTriggerConfig[id] = triggerConfig;
     emit UpkeepTriggerConfigSet(id, triggerConfig);

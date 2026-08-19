@@ -284,7 +284,10 @@ contract DataFeedsLegacyAggregatorProxy is AggregatorV2V3Interface, ConfirmedOwn
     s_phaseAggregators[id] = AggregatorV2V3Interface(aggregatorAddress);
   }
 
-  function addPhase(uint16 phase, uint64 originalId) internal pure returns (uint80) {
+  function addPhase(
+    uint16 phase,
+    uint64 originalId
+  ) internal pure returns (uint80) {
     return uint80((uint256(phase) << PHASE_OFFSET) | originalId);
   }
 

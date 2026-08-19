@@ -17,14 +17,20 @@ contract VRFConsumerV2PlusUpgradeableExample is Initializable, VRFConsumerBaseV2
   uint256 public s_subId;
   uint256 public s_gasAvailable;
 
-  function initialize(address _vrfCoordinator, address _link) public initializer {
+  function initialize(
+    address _vrfCoordinator,
+    address _link
+  ) public initializer {
     __VRFConsumerBaseV2_init(_vrfCoordinator);
     COORDINATOR = IVRFCoordinatorV2Plus(_vrfCoordinator);
     LINKTOKEN = LinkTokenInterface(_link);
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) internal override {
     // solhint-disable-next-line gas-custom-errors
     require(requestId == s_requestId, "request ID is incorrect");
 

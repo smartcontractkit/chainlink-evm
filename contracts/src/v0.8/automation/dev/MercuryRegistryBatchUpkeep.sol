@@ -17,7 +17,11 @@ contract MercuryRegistryBatchUpkeep is ConfirmedOwner, AutomationCompatibleInter
   uint256 public s_batchStart; // starting index of upkeep batch on the MercuryRegistry's s_feeds array, inclusive
   uint256 public s_batchEnd; // ending index of upkeep batch on the MercuryRegistry's s_feeds array, exclusive
 
-  constructor(address mercuryRegistry, uint256 batchStart, uint256 batchEnd) ConfirmedOwner(msg.sender) {
+  constructor(
+    address mercuryRegistry,
+    uint256 batchStart,
+    uint256 batchEnd
+  ) ConfirmedOwner(msg.sender) {
     i_registry = MercuryRegistry(mercuryRegistry);
 
     updateBatchingWindow(batchStart, batchEnd);
@@ -38,7 +42,8 @@ contract MercuryRegistryBatchUpkeep is ConfirmedOwner, AutomationCompatibleInter
       // So, the batch will be partially empty.
       try i_registry.s_feeds(i) returns (string memory f) {
         feedId = f;
-      } catch (bytes memory) /* data */ {
+      } catch (bytes memory) {
+        /* data */
         break;
       }
 
@@ -79,7 +84,10 @@ contract MercuryRegistryBatchUpkeep is ConfirmedOwner, AutomationCompatibleInter
     i_registry.performUpkeep(performData);
   }
 
-  function updateBatchingWindow(uint256 batchStart, uint256 batchEnd) public onlyOwner {
+  function updateBatchingWindow(
+    uint256 batchStart,
+    uint256 batchEnd
+  ) public onlyOwner {
     // Do not allow a batched mercury registry to use an excessive batch size, as to avoid
     // calldata size limits. If more feeds need to be updated than allowed by the batch size,
     // deploy another `MercuryRegistryBatchUpkeep` contract and register another upkeep job.

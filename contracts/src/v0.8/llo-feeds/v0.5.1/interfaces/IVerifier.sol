@@ -16,7 +16,10 @@ interface IVerifier is IERC165 {
    * contract will always be the proxy.
    * @return verifierResponse The encoded verified response.
    */
-  function verify(bytes calldata signedReport, address sender) external returns (bytes memory verifierResponse);
+  function verify(
+    bytes calldata signedReport,
+    address sender
+  ) external returns (bytes memory verifierResponse);
 
   /**
    * @notice Verifies that the data encoded has been signed correctly (view version)

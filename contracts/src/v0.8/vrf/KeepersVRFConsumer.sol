@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {AutomationCompatibleInterface as KeeperCompatibleInterface} from
-  "../automation/interfaces/AutomationCompatibleInterface.sol";
+import {
+  AutomationCompatibleInterface as KeeperCompatibleInterface
+} from "../automation/interfaces/AutomationCompatibleInterface.sol";
 import {VRFConsumerBaseV2} from "./VRFConsumerBaseV2.sol";
 import {VRFCoordinatorV2Interface} from "./interfaces/VRFCoordinatorV2Interface.sol";
 
@@ -67,7 +68,15 @@ contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
   // solhint-disable-next-line chainlink-solidity/explicit-returns
   function checkUpkeep(
     bytes calldata /* checkData */
-  ) external view override returns (bool upkeepNeeded, bytes memory /* performData */ ) {
+  )
+    external
+    view
+    override
+    returns (
+      bool upkeepNeeded,
+      bytes memory /* performData */
+    )
+  {
     upkeepNeeded = (block.timestamp - s_lastTimeStamp) > UPKEEP_INTERVAL;
   }
 
@@ -91,7 +100,10 @@ contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
    * @param randomWords the randomness provided by Chainlink VRF.
    */
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) internal override {
     // Check that the request exists. If not, revert.
     RequestRecord memory record = s_requests[requestId];
     // solhint-disable-next-line gas-custom-errors

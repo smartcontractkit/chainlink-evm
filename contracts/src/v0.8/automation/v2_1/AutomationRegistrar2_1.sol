@@ -292,7 +292,10 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @param keeperRegistry new keeper registry address
    * @param minLINKJuels minimum LINK that new registrations should fund their upkeep with
    */
-  function setConfig(address keeperRegistry, uint96 minLINKJuels) public onlyOwner {
+  function setConfig(
+    address keeperRegistry,
+    uint96 minLINKJuels
+  ) public onlyOwner {
     s_config = RegistrarConfig({minLINKJuels: minLINKJuels, keeperRegistry: IKeeperRegistryMaster(keeperRegistry)});
     emit ConfigChanged(keeperRegistry, minLINKJuels);
   }
@@ -318,7 +321,10 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @param senderAddress senderAddress to set the allowlist status for
    * @param allowed true if senderAddress needs to be added to allowlist, false if needs to be removed
    */
-  function setAutoApproveAllowedSender(address senderAddress, bool allowed) external onlyOwner {
+  function setAutoApproveAllowedSender(
+    address senderAddress,
+    bool allowed
+  ) external onlyOwner {
     s_autoApproveAllowedSenders[senderAddress] = allowed;
 
     emit AutoApproveAllowedSenderSet(senderAddress, allowed);
@@ -397,7 +403,10 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
   /**
    * @dev verify registration request and emit RegistrationRequested event
    */
-  function _register(RegistrationParams memory params, address sender) private returns (uint256) {
+  function _register(
+    RegistrationParams memory params,
+    address sender
+  ) private returns (uint256) {
     if (params.adminAddress == address(0)) {
       revert InvalidAdminAddress();
     }
@@ -442,7 +451,10 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
   /**
    * @dev register upkeep on KeeperRegistry contract and emit RegistrationApproved event
    */
-  function _approve(RegistrationParams memory params, bytes32 hash) private returns (uint256) {
+  function _approve(
+    RegistrationParams memory params,
+    bytes32 hash
+  ) private returns (uint256) {
     IKeeperRegistryMaster keeperRegistry = s_config.keeperRegistry;
     uint256 upkeepId = keeperRegistry.registerUpkeep(
       params.upkeepContract,
@@ -464,7 +476,10 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
   /**
    * @dev verify sender allowlist if needed and check max limit
    */
-  function _shouldAutoApprove(TriggerRegistrationStorage memory config, address sender) private view returns (bool) {
+  function _shouldAutoApprove(
+    TriggerRegistrationStorage memory config,
+    address sender
+  ) private view returns (bool) {
     if (config.autoApproveType == AutoApproveType.DISABLED) {
       return false;
     }
@@ -514,7 +529,10 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @param expected amount that should match the actual amount
    * @param data bytes
    */
-  modifier isActualAmount(uint256 expected, bytes calldata data) {
+  modifier isActualAmount(
+    uint256 expected,
+    bytes calldata data
+  ) {
     // decode register function arguments to get actual amount
     (,,,,,,,,, uint96 amount,) =
       abi.decode(data[4:], (string, bytes, address, uint32, address, uint8, bytes, bytes, bytes, uint96, address));
@@ -529,7 +547,10 @@ contract AutomationRegistrar2_1 is ITypeAndVersion, ConfirmedOwner, IERC677Recei
    * @param expected address that should match the actual sender address
    * @param data bytes
    */
-  modifier isActualSender(address expected, bytes calldata data) {
+  modifier isActualSender(
+    address expected,
+    bytes calldata data
+  ) {
     // decode register function arguments to get actual sender
     (,,,,,,,,,, address sender) =
       abi.decode(data[4:], (string, bytes, address, uint32, address, uint8, bytes, bytes, bytes, uint96, address));

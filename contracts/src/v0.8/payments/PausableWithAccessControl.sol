@@ -5,8 +5,9 @@ import {IPausable} from "./interfaces/IPausable.sol";
 
 import {Roles} from "./libraries/Roles.sol";
 
-import {AccessControlDefaultAdminRules} from
-  "@openzeppelin/contracts@5.0.2/access/extensions/AccessControlDefaultAdminRules.sol";
+import {
+  AccessControlDefaultAdminRules
+} from "@openzeppelin/contracts@5.0.2/access/extensions/AccessControlDefaultAdminRules.sol";
 import {IAccessControlEnumerable} from "@openzeppelin/contracts@5.0.2/access/extensions/IAccessControlEnumerable.sol";
 import {Pausable} from "@openzeppelin/contracts@5.0.2/utils/Pausable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts@5.0.2/utils/structs/EnumerableSet.sol";
@@ -48,7 +49,10 @@ abstract contract PausableWithAccessControl is
   }
 
   /// @inheritdoc IAccessControlEnumerable
-  function getRoleMember(bytes32 role, uint256 index) external view override returns (address) {
+  function getRoleMember(
+    bytes32 role,
+    uint256 index
+  ) external view override returns (address) {
     return s_roleMembers[role].at(index);
   }
 
@@ -69,7 +73,10 @@ abstract contract PausableWithAccessControl is
   }
 
   /// @inheritdoc AccessControlDefaultAdminRules
-  function _grantRole(bytes32 role, address account) internal virtual override returns (bool) {
+  function _grantRole(
+    bytes32 role,
+    address account
+  ) internal virtual override returns (bool) {
     bool granted = super._grantRole(role, account);
     if (granted) {
       s_roleMembers[role].add(account);
@@ -78,7 +85,10 @@ abstract contract PausableWithAccessControl is
   }
 
   /// @inheritdoc AccessControlDefaultAdminRules
-  function _revokeRole(bytes32 role, address account) internal virtual override returns (bool) {
+  function _revokeRole(
+    bytes32 role,
+    address account
+  ) internal virtual override returns (bool) {
     bool revoked = super._revokeRole(role, account);
     if (revoked) {
       s_roleMembers[role].remove(account);

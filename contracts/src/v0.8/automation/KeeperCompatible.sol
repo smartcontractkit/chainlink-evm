@@ -8,6 +8,8 @@ pragma solidity ^0.8.0;
 import {AutomationCompatible as KeeperCompatible} from "./AutomationCompatible.sol";
 // solhint-disable-next-line no-unused-import
 import {AutomationBase as KeeperBase} from "./AutomationBase.sol";
-// solhint-disable-next-line no-unused-import
-import {AutomationCompatibleInterface as KeeperCompatibleInterface} from
-  "./interfaces/AutomationCompatibleInterface.sol";
+import {
+
+  // solhint-disable-next-line no-unused-import
+  AutomationCompatibleInterface as KeeperCompatibleInterface
+} from "./interfaces/AutomationCompatibleInterface.sol";

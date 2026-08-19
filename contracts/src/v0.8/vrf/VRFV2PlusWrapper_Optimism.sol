@@ -22,7 +22,10 @@ contract VRFV2PlusWrapper_Optimism is VRFV2PlusWrapper, OptimismL1Fees {
    * @notice Overriding the setL1FeeCalculation function in VRFV2PlusWrapper for Optimism
    * @notice ensures that L1_GAS_FEES_MODE can't be set for the wrapper contract.
    */
-  function setL1FeeCalculation(uint8 mode, uint8 coefficient) external override onlyOwner {
+  function setL1FeeCalculation(
+    uint8 mode,
+    uint8 coefficient
+  ) external override onlyOwner {
     if (mode == L1_GAS_FEES_MODE) {
       revert UnsupportedL1FeeCalculationMode(mode);
     }

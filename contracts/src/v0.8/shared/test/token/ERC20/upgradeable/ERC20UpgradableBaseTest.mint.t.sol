@@ -23,7 +23,10 @@ contract ERC20UpgradableBaseTest_mint is ERC20UpgradableBaseTest {
     assertEq(IERC20UpgradeableBase(implementation).totalSupply(), PRE_MINT + AMOUNT);
   }
 
-  function should_Mint_RevertWhen_AmountExceedsMaxSupply(address implementation, bytes4 errorSelector) public {
+  function should_Mint_RevertWhen_AmountExceedsMaxSupply(
+    address implementation,
+    bytes4 errorSelector
+  ) public {
     changePrank(i_mockPool);
 
     uint256 amountToMint = IERC20UpgradeableBase(implementation).maxSupply() + AMOUNT;
@@ -33,7 +36,10 @@ contract ERC20UpgradableBaseTest_mint is ERC20UpgradableBaseTest {
     IERC20UpgradeableBase(implementation).mint(STRANGER, amountToMint);
   }
 
-  function should_Mint_RevertWhen_CallerDoesNotHaveMinterRole(address implementation, bytes32 MINTER_ROLE) public {
+  function should_Mint_RevertWhen_CallerDoesNotHaveMinterRole(
+    address implementation,
+    bytes32 MINTER_ROLE
+  ) public {
     changePrank(STRANGER);
 
     vm.expectRevert(
@@ -43,7 +49,10 @@ contract ERC20UpgradableBaseTest_mint is ERC20UpgradableBaseTest {
     IERC20UpgradeableBase(implementation).mint(STRANGER, AMOUNT);
   }
 
-  function should_Mint_RevertWhen_RecipientIsImplementationItself(address implementation, bytes4 errorSelector) public {
+  function should_Mint_RevertWhen_RecipientIsImplementationItself(
+    address implementation,
+    bytes4 errorSelector
+  ) public {
     changePrank(i_mockPool);
 
     vm.expectRevert(abi.encodeWithSelector(errorSelector, implementation));

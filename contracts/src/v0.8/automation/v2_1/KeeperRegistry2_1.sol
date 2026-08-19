@@ -196,7 +196,11 @@ contract KeeperRegistry2_1 is KeeperRegistryBase2_1, OCR2Abstract, Chainable, IE
    * @param sender the account which transferred the funds
    * @param amount number of LINK transfer
    */
-  function onTokenTransfer(address sender, uint256 amount, bytes calldata data) external override {
+  function onTokenTransfer(
+    address sender,
+    uint256 amount,
+    bytes calldata data
+  ) external override {
     if (msg.sender != address(i_link)) revert OnlyCallableByLINKToken();
     if (data.length != 32) revert InvalidDataLength();
     uint256 id = abi.decode(data, (uint256));

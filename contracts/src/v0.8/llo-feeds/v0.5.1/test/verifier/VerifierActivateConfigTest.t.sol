@@ -3,7 +3,8 @@ pragma solidity 0.8.19;
 
 import {Verifier} from "../../Verifier.sol";
 import {
-  BaseTestWithConfiguredVerifierAndFeeManager, BaseTestWithMultipleConfiguredDigests
+  BaseTestWithConfiguredVerifierAndFeeManager,
+  BaseTestWithMultipleConfiguredDigests
 } from "./BaseVerifierTest.t.sol";
 
 contract VerifierActivateConfigTestV051 is BaseTestWithConfiguredVerifierAndFeeManager {

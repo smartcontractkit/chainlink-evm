@@ -13,7 +13,10 @@ contract ZKSyncSequencerUptimeFeed is BaseSequencerUptimeFeed {
 
   /// @param l1SenderAddress Address of the L1 contract that is permissioned to call this contract
   /// @param initialStatus The initial status of the feed
-  constructor(address l1SenderAddress, bool initialStatus) BaseSequencerUptimeFeed(l1SenderAddress, initialStatus) {}
+  constructor(
+    address l1SenderAddress,
+    bool initialStatus
+  ) BaseSequencerUptimeFeed(l1SenderAddress, initialStatus) {}
 
   function _validateSender(
     address l1Sender

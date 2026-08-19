@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {AddressAliasHelper} from
-  "../../../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
+import {
+  AddressAliasHelper
+} from "../../../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/libraries/AddressAliasHelper.sol";
 import {BaseSequencerUptimeFeed} from "../../../base/BaseSequencerUptimeFeed.sol";
 import {MockBaseSequencerUptimeFeed} from "../../../test/mocks/MockBaseSequencerUptimeFeed.sol";
 import {FeedConsumer} from "../../FeedConsumer.sol";
@@ -117,8 +118,7 @@ contract BaseSequencerUptimeFeed_UpdateStatus is BaseSequencerUptimeFeed_Setup {
     (
       uint80 roundIdBeforeUpdate,
       int256 answerBeforeUpdate,
-      uint256 startedAtBeforeUpdate,
-      ,
+      uint256 startedAtBeforeUpdate,,
       uint80 answeredInRoundBeforeUpdate
     ) = s_sequencerUptimeFeed.latestRoundData();
 

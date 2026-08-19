@@ -32,7 +32,7 @@ contract VRFV2LoadTestWithMetrics is VRFConsumerBaseV2 {
     uint256 fulfilmentBlockNumber;
   }
 
-  mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
+  mapping(uint256 => RequestStatus) public /* requestId */ /* requestStatus */ s_requests;
 
   constructor(
     address _vrfCoordinator
@@ -40,7 +40,10 @@ contract VRFV2LoadTestWithMetrics is VRFConsumerBaseV2 {
     COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
   }
 
-  function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) internal override {
     uint256 fulfilmentBlockNumber = ChainSpecificUtil._getBlockNumber();
     uint256 requestDelay = fulfilmentBlockNumber - requestHeights[_requestId];
     uint256 requestDelayInMillions = requestDelay * 1_000_000;
@@ -153,7 +156,11 @@ contract VRFV2LoadTestWithMetrics is VRFConsumerBaseV2 {
     }
   }
 
-  function topUpSubscription(uint64 _subId, uint256 _amount, address _link) public {
+  function topUpSubscription(
+    uint64 _subId,
+    uint256 _amount,
+    address _link
+  ) public {
     LINKTOKEN = LinkTokenInterface(_link);
     LINKTOKEN.transferAndCall(address(COORDINATOR), _amount, abi.encode(_subId));
   }

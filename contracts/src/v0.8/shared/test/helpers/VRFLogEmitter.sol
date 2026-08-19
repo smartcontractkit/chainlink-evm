@@ -29,7 +29,12 @@ contract VRFLogEmitter {
     );
   }
 
-  function emitRandomWordsFulfilled(uint256 requestId, uint256 outputSeed, uint96 payment, bool success) public {
+  function emitRandomWordsFulfilled(
+    uint256 requestId,
+    uint256 outputSeed,
+    uint96 payment,
+    bool success
+  ) public {
     emit RandomWordsFulfilled(requestId, outputSeed, payment, success);
   }
 }

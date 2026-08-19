@@ -49,9 +49,9 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
     uint64 maxGas; // gas lane max gas price for fulfilling requests
   }
 
-  mapping(bytes32 => ProvingKey) /* keyHash */ /* provingKey */ public s_provingKeys;
+  mapping(bytes32 => ProvingKey) public /* keyHash */ /* provingKey */ s_provingKeys;
   bytes32[] public s_provingKeyHashes;
-  mapping(uint256 => bytes32) /* requestID */ /* commitment */ public s_requestCommitments;
+  mapping(uint256 => bytes32) public /* requestID */ /* commitment */ s_requestCommitments;
 
   event ProvingKeyRegistered(bytes32 keyHash, uint64 maxGas);
   event ProvingKeyDeregistered(bytes32 keyHash, uint64 maxGas);
@@ -106,7 +106,10 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
    * @notice Registers a proving key to.
    * @param publicProvingKey key that oracle can use to submit vrf fulfillments
    */
-  function registerProvingKey(uint256[2] calldata publicProvingKey, uint64 maxGas) external onlyOwner {
+  function registerProvingKey(
+    uint256[2] calldata publicProvingKey,
+    uint64 maxGas
+  ) external onlyOwner {
     bytes32 kh = hashOfKey(publicProvingKey);
     if (s_provingKeys[kh].exists) {
       revert ProvingKeyAlreadyRegistered(kh);
@@ -330,7 +333,11 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
    * @dev calls target address with exactly gasAmount gas and data as calldata
    * or reverts if at least gasAmount gas is not available.
    */
-  function _callWithExactGas(uint256 gasAmount, address target, bytes memory data) private returns (bool success) {
+  function _callWithExactGas(
+    uint256 gasAmount,
+    address target,
+    bytes memory data
+  ) private returns (bool success) {
     assembly {
       let g := gas()
       // Compute g -= GAS_FOR_CALL_EXACT_CHECK and check for underflow
@@ -397,7 +404,10 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
     return Output(key, requestId, randomness);
   }
 
-  function _getValidatedGasPrice(bool onlyPremium, uint64 gasLaneMaxGas) internal view returns (uint256 gasPrice) {
+  function _getValidatedGasPrice(
+    bool onlyPremium,
+    uint64 gasLaneMaxGas
+  ) internal view returns (uint256 gasPrice) {
     if (tx.gasprice > gasLaneMaxGas) {
       if (onlyPremium) {
         // if only the premium amount needs to be billed, then the premium is capped by the gas lane max
@@ -515,7 +525,11 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
     return payment;
   }
 
-  function _chargePayment(uint96 payment, bool nativePayment, uint256 subId) internal {
+  function _chargePayment(
+    uint96 payment,
+    bool nativePayment,
+    uint256 subId
+  ) internal {
     Subscription storage subcription = s_subscriptions[subId];
     if (nativePayment) {
       uint96 prevBal = subcription.nativeBalance;
@@ -577,9 +591,9 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
     // Will return non-zero on chains that have this enabled
     uint256 l1CostWei = _getL1CostWei(msg.data);
     // (1e18 juels/link) ((wei/gas * gas) + l1wei) / (wei/link) = juels
-    uint256 paymentNoFee = (
-      1e18 * (weiPerUnitGas * (s_config.gasAfterPaymentCalculation + startGas - gasleft()) + l1CostWei)
-    ) / uint256(weiPerUnitLink);
+    uint256 paymentNoFee =
+      (1e18 * (weiPerUnitGas * (s_config.gasAfterPaymentCalculation + startGas - gasleft()) + l1CostWei))
+        / uint256(weiPerUnitLink);
     // calculate the flat fee in wei
     uint256 flatFeeWei =
       1e12 * uint256(s_config.fulfillmentFlatFeeNativePPM - s_config.fulfillmentFlatFeeLinkDiscountPPM);
@@ -660,7 +674,10 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
   /**
    * @inheritdoc IVRFSubscriptionV2Plus
    */
-  function removeConsumer(uint256 subId, address consumer) external override onlySubOwner(subId) nonReentrant {
+  function removeConsumer(
+    uint256 subId,
+    address consumer
+  ) external override onlySubOwner(subId) nonReentrant {
     if (pendingRequestExists(subId)) {
       revert PendingRequestExists();
     }
@@ -686,7 +703,10 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
   /**
    * @inheritdoc IVRFSubscriptionV2Plus
    */
-  function cancelSubscription(uint256 subId, address to) external override onlySubOwner(subId) nonReentrant {
+  function cancelSubscription(
+    uint256 subId,
+    address to
+  ) external override onlySubOwner(subId) nonReentrant {
     if (pendingRequestExists(subId)) {
       revert PendingRequestExists();
     }
@@ -765,7 +785,10 @@ contract VRFCoordinatorV2_5 is VRF, SubscriptionAPI, IVRFCoordinatorV2Plus {
     revert CoordinatorNotRegistered(target);
   }
 
-  function migrate(uint256 subId, address newCoordinator) external nonReentrant {
+  function migrate(
+    uint256 subId,
+    address newCoordinator
+  ) external nonReentrant {
     if (!_isTargetRegistered(newCoordinator)) {
       revert CoordinatorNotRegistered(newCoordinator);
     }

@@ -12,7 +12,10 @@ interface OracleInterface {
     bytes32 data
   ) external returns (bool);
 
-  function withdraw(address recipient, uint256 amount) external;
+  function withdraw(
+    address recipient,
+    uint256 amount
+  ) external;
 
   function withdrawable() external view returns (uint256);
 }

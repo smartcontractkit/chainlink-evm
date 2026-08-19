@@ -14,6 +14,7 @@
     "solhint-test": "solhint --config \".solhint-test.json\"  --ignore-path \".solhintignore-test\" --max-warnings 0 \"./src/v0.8/**/*.sol\""
   },
   "files": [
+    "src/v0.6",
     "src/v0.8",
     "abi/v0.8",
     "!**/test/**/*",

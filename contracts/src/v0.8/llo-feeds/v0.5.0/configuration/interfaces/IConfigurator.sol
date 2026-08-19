@@ -39,7 +39,10 @@ interface IConfigurator {
   /// @notice Promotes the staging configuration to production
   // currentState must match the current state for the given configId (prevents
   // accidentally double-flipping if same transaction is sent twice)
-  function promoteStagingConfig(bytes32 configId, bool currentState) external;
+  function promoteStagingConfig(
+    bytes32 configId,
+    bool currentState
+  ) external;
 
   function setProductionConfig(
     bytes32 configId,

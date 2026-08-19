@@ -352,7 +352,11 @@ contract DestinationFeeManager is
     emit SubscriberDiscountUpdated(subscriber, feedId, token, discount);
   }
 
-  function updateSubscriberGlobalDiscount(address subscriber, address token, uint64 discount) external onlyOwner {
+  function updateSubscriberGlobalDiscount(
+    address subscriber,
+    address token,
+    uint64 discount
+  ) external onlyOwner {
     //make sure the discount is not greater than the total discount that can be applied
     if (discount > PERCENTAGE_SCALAR) revert InvalidDiscount();
     //make sure the token is either LINK or native
@@ -364,7 +368,11 @@ contract DestinationFeeManager is
   }
 
   /// @inheritdoc IDestinationFeeManager
-  function withdraw(address assetAddress, address recipient, uint192 quantity) external onlyOwner {
+  function withdraw(
+    address assetAddress,
+    address recipient,
+    uint192 quantity
+  ) external onlyOwner {
     //address 0 is used to withdraw native in the context of withdrawing
     if (assetAddress == address(0)) {
       (bool success,) = payable(recipient).call{value: quantity}("");
@@ -440,11 +448,13 @@ contract DestinationFeeManager is
     uint256 totalNumberOfFees = numberOfLinkFees + numberOfNativeFees;
     for (uint256 i; i < totalNumberOfFees; ++i) {
       if (feesAndRewards[i].fee.assetAddress == i_linkAddress) {
-        linkRewards[linkRewardsIndex++] =
-          IDestinationRewardManager.FeePayment(feesAndRewards[i].configDigest, uint192(feesAndRewards[i].reward.amount));
+        linkRewards[linkRewardsIndex++] = IDestinationRewardManager.FeePayment(
+          feesAndRewards[i].configDigest, uint192(feesAndRewards[i].reward.amount)
+        );
       } else {
-        nativeFeeLinkRewards[nativeFeeLinkRewardsIndex++] =
-          IDestinationRewardManager.FeePayment(feesAndRewards[i].configDigest, uint192(feesAndRewards[i].reward.amount));
+        nativeFeeLinkRewards[nativeFeeLinkRewardsIndex++] = IDestinationRewardManager.FeePayment(
+          feesAndRewards[i].configDigest, uint192(feesAndRewards[i].reward.amount)
+        );
         totalNativeFee += feesAndRewards[i].fee.amount;
         totalNativeFeeLinkValue += feesAndRewards[i].reward.amount;
       }
@@ -507,7 +517,10 @@ contract DestinationFeeManager is
     _tryReturnChange(subscriber, change);
   }
 
-  function _tryReturnChange(address subscriber, uint256 quantity) internal {
+  function _tryReturnChange(
+    address subscriber,
+    uint256 quantity
+  ) internal {
     if (quantity != 0) {
       payable(subscriber).transfer(quantity);
     }

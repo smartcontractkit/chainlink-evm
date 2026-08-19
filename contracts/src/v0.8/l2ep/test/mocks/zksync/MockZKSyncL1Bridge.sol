@@ -126,7 +126,12 @@ contract MockBridgehub is IBridgehub {
     return keccak256(abi.encodePacked("L2TransactionTwoBridges"));
   }
 
-  function l2TransactionBaseCost(uint256, uint256, uint256, uint256) external pure override returns (uint256) {
+  function l2TransactionBaseCost(
+    uint256,
+    uint256,
+    uint256,
+    uint256
+  ) external pure override returns (uint256) {
     return 0;
   }
 

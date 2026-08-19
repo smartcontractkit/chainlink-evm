@@ -49,7 +49,10 @@ contract VRFV2PlusSingleConsumerExample is VRFConsumerBaseV2Plus {
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] calldata randomWords
+  ) internal override {
     // solhint-disable-next-line gas-custom-errors
     require(requestId == s_requestId, "request ID is incorrect");
     s_randomWords = randomWords;
@@ -98,7 +101,10 @@ contract VRFV2PlusSingleConsumerExample is VRFConsumerBaseV2Plus {
     LINKTOKEN.transferAndCall(address(s_vrfCoordinator), amount, abi.encode(s_requestConfig.subId));
   }
 
-  function withdraw(uint256 amount, address to) external onlyOwner {
+  function withdraw(
+    uint256 amount,
+    address to
+  ) external onlyOwner {
     LINKTOKEN.transfer(to, amount);
   }
 

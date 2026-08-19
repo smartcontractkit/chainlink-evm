@@ -76,39 +76,12 @@ src = 'src/v0.8/llo-feeds'
 test = 'src/v0.8/llo-feeds/test'
 solc_version = '0.8.19'
 
-[profile.keystone]
-optimizer_runs = 1_000_000
-solc_version = '0.8.24'
-src = 'src/v0.8/keystone'
-test = 'src/v0.8/keystone/test'
-evm_version = 'paris'
-
 [profile.operatorforwarder]
 optimizer_runs = 1_000_000
 solc_version = '0.8.19'
 src = 'src/v0.8/operatorforwarder'
 test = 'src/v0.8/operatorforwarder/test'
 deny_warnings = false
-
-[profile.workflow]
-src = 'src/v0.8/workflow'
-via_ir = true
-
-[profile.workflow-v1]
-optimizer_runs = 1_000_000
-solc_version = '0.8.24'
-src = 'src/v0.8/workflow/v1'
-test = 'src/v0.8/workflow/v1/test'
-via_ir = true
-evm_version = 'paris'
-
-[profile.workflow-v2]
-optimizer_runs = 1_000
-solc_version = '0.8.26'
-src = 'src/v0.8/workflow/v2'
-test = 'src/v0.8/workflow/v2/test'
-via_ir = true
-evm_version = 'paris'
 
 [profile.data-feeds]
 optimizer_runs = 10_000

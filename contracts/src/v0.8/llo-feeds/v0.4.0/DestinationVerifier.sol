@@ -165,8 +165,9 @@ contract DestinationVerifier is
       try IDestinationVerifierFeeManager(fm).processFee{value: msg.value}(
         donConfigId, signedReport, parameterPayload, sender
       ) {
-        //do nothing
-      } catch {
+      //do nothing
+      }
+      catch {
         // we purposefully obfuscate the error here to prevent information leaking leading to free verifications
         revert BadVerification();
       }
@@ -196,8 +197,9 @@ contract DestinationVerifier is
       try IDestinationVerifierFeeManager(fm).processFeeBulk{value: msg.value}(
         donConfigs, signedReports, parameterPayload, sender
       ) {
-        //do nothing
-      } catch {
+      //do nothing
+      }
+      catch {
         // we purposefully obfuscate the error here to prevent information leaking leading to free verifications
         revert BadVerification();
       }
@@ -206,9 +208,17 @@ contract DestinationVerifier is
     return verifierResponses;
   }
 
-  function _verify(bytes calldata signedReport, address sender) internal returns (bytes memory, bytes32) {
-    (bytes32[3] memory reportContext, bytes memory reportData, bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs)
-    = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
+  function _verify(
+    bytes calldata signedReport,
+    address sender
+  ) internal returns (bytes memory, bytes32) {
+    (
+      bytes32[3] memory reportContext,
+      bytes memory reportData,
+      bytes32[] memory rs,
+      bytes32[] memory ss,
+      bytes32 rawVs
+    ) = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
 
     // Signature lengths must match
     if (rs.length != ss.length) revert MismatchedSignatures(rs.length, ss.length);
@@ -366,7 +376,10 @@ contract DestinationVerifier is
   }
 
   /// @inheritdoc IDestinationVerifier
-  function setConfigActive(uint256 donConfigIndex, bool isActive) external onlyOwner {
+  function setConfigActive(
+    uint256 donConfigIndex,
+    bool isActive
+  ) external onlyOwner {
     // Config must exist
     if (donConfigIndex >= s_donConfigs.length) {
       revert DonConfigDoesNotExist();
@@ -418,7 +431,10 @@ contract DestinationVerifier is
     return activeDonConfig;
   }
 
-  modifier checkConfigValid(uint256 numSigners, uint256 f) {
+  modifier checkConfigValid(
+    uint256 numSigners,
+    uint256 f
+  ) {
     if (f == 0) revert FaultToleranceMustBePositive();
     if (numSigners > MAX_NUM_ORACLES) revert ExcessSigners(numSigners, MAX_NUM_ORACLES);
     if (numSigners <= 3 * f) revert InsufficientSigners(numSigners, 3 * f + 1);

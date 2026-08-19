@@ -29,7 +29,10 @@ contract VerifiableLoadLogTriggerUpkeep is VerifiableLoadBase, StreamsLookupComp
     logNum = _log;
   }
 
-  function checkLog(Log calldata log, bytes memory checkData) external returns (bool, bytes memory) {
+  function checkLog(
+    Log calldata log,
+    bytes memory checkData
+  ) external returns (bool, bytes memory) {
     uint256 startGas = gasleft();
     uint256 blockNum = getBlockNumber();
     uint256 uid = abi.decode(checkData, (uint256));

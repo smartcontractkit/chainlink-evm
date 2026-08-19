@@ -123,7 +123,10 @@ contract MockArbitrumInbox is IInbox {
   /// @param dataLength The length of the calldata that will be executed in L2
   /// @param baseFee The base fee to pay for the transaction.
   /// @dev The calculation will use the L1 base fee if it is passed 0.
-  function calculateRetryableSubmissionFee(uint256 dataLength, uint256 baseFee) public view returns (uint256) {
+  function calculateRetryableSubmissionFee(
+    uint256 dataLength,
+    uint256 baseFee
+  ) public view returns (uint256) {
     return (1400 + 6 * dataLength) * (baseFee == 0 ? block.basefee : baseFee);
   }
 }

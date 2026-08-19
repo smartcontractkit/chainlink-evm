@@ -72,10 +72,10 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
   }
   // Note a nonce of 0 indicates the consumer is not assigned to that subscription.
 
-  mapping(address => mapping(uint256 => ConsumerConfig)) /* consumerAddress */ /* subId */ /* consumerConfig */
-    internal s_consumers;
-  mapping(uint256 => SubscriptionConfig) /* subId */ /* subscriptionConfig */ internal s_subscriptionConfigs;
-  mapping(uint256 => Subscription) /* subId */ /* subscription */ internal s_subscriptions;
+  mapping(address => mapping(uint256 => ConsumerConfig)) internal /* consumerAddress */ /* subId */ /* consumerConfig */
+    s_consumers;
+  mapping(uint256 => SubscriptionConfig) internal /* subId */ /* subscriptionConfig */ s_subscriptionConfigs;
+  mapping(uint256 => Subscription) internal /* subId */ /* subscription */ s_subscriptions;
   // subscription nonce used to construct subId. Rises monotonically
   uint64 public s_currentSubNonce;
   // track all subscription id's that were created by this contract
@@ -184,7 +184,10 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
    * @param link - address of link token
    * @param linkNativeFeed address of the link native feed
    */
-  function setLINKAndLINKNativeFeed(address link, address linkNativeFeed) external onlyOwner {
+  function setLINKAndLINKNativeFeed(
+    address link,
+    address linkNativeFeed
+  ) external onlyOwner {
     // Disallow re-setting link token because the logic wouldn't really make sense
     if (address(LINK) != address(0)) {
       revert LinkAlreadySet();
@@ -293,7 +296,12 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     _mustSendNative(recipient, amount);
   }
 
-  function onTokenTransfer(address, /* sender */ uint256 amount, bytes calldata data) external override nonReentrant {
+  function onTokenTransfer(
+    address,
+    /* sender */
+    uint256 amount,
+    bytes calldata data
+  ) external override nonReentrant {
     if (msg.sender != address(LINK)) {
       revert OnlyCallableFromLink();
     }
@@ -424,7 +432,10 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
   /**
    * @inheritdoc IVRFSubscriptionV2Plus
    */
-  function addConsumer(uint256 subId, address consumer) external override onlySubOwner(subId) nonReentrant {
+  function addConsumer(
+    uint256 subId,
+    address consumer
+  ) external override onlySubOwner(subId) nonReentrant {
     ConsumerConfig storage consumerConfig = s_consumers[consumer][subId];
     if (consumerConfig.active) {
       // Idempotence - do nothing if already added.
@@ -469,7 +480,10 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     return (balance, nativeBalance);
   }
 
-  function _cancelSubscriptionHelper(uint256 subId, address to) internal {
+  function _cancelSubscriptionHelper(
+    uint256 subId,
+    address to
+  ) internal {
     (uint96 balance, uint96 nativeBalance) = _deleteSubscription(subId);
 
     // Only withdraw LINK if the token is active and there is a balance.
@@ -499,7 +513,10 @@ abstract contract SubscriptionAPI is ConfirmedOwner, IERC677Receiver, IVRFSubscr
     }
   }
 
-  function _mustSendNative(address to, uint256 amount) internal {
+  function _mustSendNative(
+    address to,
+    uint256 amount
+  ) internal {
     (bool success,) = to.call{value: amount}("");
     if (!success) {
       revert FailedToSendNative();

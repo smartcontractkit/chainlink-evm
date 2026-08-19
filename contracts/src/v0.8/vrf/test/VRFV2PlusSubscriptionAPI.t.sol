@@ -98,7 +98,13 @@ contract VRFV2PlusSubscriptionAPITest is BaseTest {
     // change back to owner and cancel the subscription
     changePrank(OWNER);
     vm.expectEmit(true, false, false, true);
-    emit SubscriptionCanceled(subId, subOwner, 0, /* link balance */ 5 ether /* native balance */ );
+    emit SubscriptionCanceled(
+      subId,
+      subOwner,
+      0,
+      /* link balance */
+      5 ether /* native balance */
+    );
     s_subscriptionAPI.ownerCancelSubscription(subId);
 
     // assert that the subscription no longer exists
@@ -137,7 +143,13 @@ contract VRFV2PlusSubscriptionAPITest is BaseTest {
 
     // change back to owner and cancel the subscription
     vm.expectEmit(true, false, false, true);
-    emit SubscriptionCanceled(subId, subOwner, 5 ether, /* link balance */ 0 /* native balance */ );
+    emit SubscriptionCanceled(
+      subId,
+      subOwner,
+      5 ether,
+      /* link balance */
+      0 /* native balance */
+    );
     s_subscriptionAPI.ownerCancelSubscription(subId);
 
     // assert that the subscription no longer exists
@@ -182,7 +194,13 @@ contract VRFV2PlusSubscriptionAPITest is BaseTest {
     // change back to owner and cancel the subscription
     changePrank(OWNER);
     vm.expectEmit(true, false, false, true);
-    emit SubscriptionCanceled(subId, subOwner, 5 ether, /* link balance */ 5 ether /* native balance */ );
+    emit SubscriptionCanceled(
+      subId,
+      subOwner,
+      5 ether,
+      /* link balance */
+      5 ether /* native balance */
+    );
     s_subscriptionAPI.ownerCancelSubscription(subId);
 
     // assert that the subscription no longer exists

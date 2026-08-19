@@ -59,7 +59,10 @@ contract OperatorFactory {
   }
 
   // @notice creates a new Forwarder contract with the msg.sender as owner
-  function deployNewForwarderAndTransferOwnership(address to, bytes calldata message) external returns (address) {
+  function deployNewForwarderAndTransferOwnership(
+    address to,
+    bytes calldata message
+  ) external returns (address) {
     AuthorizedForwarder forwarder = new AuthorizedForwarder(linkToken, msg.sender, to, message);
 
     s_created[address(forwarder)] = true;

@@ -33,7 +33,10 @@ contract ERC20UpgradableBaseTest_burn is ERC20UpgradableBaseTest {
     assertEq(IBurnMintERC20Upgradeable(implementation).totalSupply(), totalSupplyBefore - amountToBurn);
   }
 
-  function should_Burn_RevertWhen_CallerDoesNotHaveBurnerRole(address implementation, bytes32 BURNER_ROLE) public {
+  function should_Burn_RevertWhen_CallerDoesNotHaveBurnerRole(
+    address implementation,
+    bytes32 BURNER_ROLE
+  ) public {
     changePrank(i_mockPool);
     IBurnMintERC20Upgradeable(implementation).mint(STRANGER, AMOUNT);
 

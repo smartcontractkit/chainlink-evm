@@ -64,7 +64,8 @@ contract NoOpFeeManagerIntegrationTestV051 is BaseTestWithConfiguredVerifierAndF
     bytes memory signedReport = _generateV3EncodedBlob(report, reportContext, signers);
     bytes memory reportData = _encodeReport(report);
 
-    // ─── Run 1: FeeManager (billing enabled) ─────────────────────────────────
+    // ─── Run 1: FeeManager (billing enabled)
+    // ─────────────────────────────────
     VerificationResult memory result1 = _runVerificationWorkflow(signedReport, reportData, USER);
 
     // Validate FeeManager was invoked: fee charged, LINK transferred
@@ -82,11 +83,13 @@ contract NoOpFeeManagerIntegrationTestV051 is BaseTestWithConfiguredVerifierAndF
     assertEq(result1.decodedPrice, MEDIAN, "Decoded price should match");
     assertEq(result1.decodedFeedId, FEED_ID_V3, "Decoded feedId should match");
 
-    // ─── Swap to NoOpFeeManager ──────────────────────────────────────────────
+    // ─── Swap to NoOpFeeManager
+    // ──────────────────────────────────────────────
     changePrank(ADMIN);
     s_verifierProxy.setFeeManager(noOpFeeManager);
 
-    // ─── Run 2: NoOpFeeManager (billing deactivated) ─────────────────────────
+    // ─── Run 2: NoOpFeeManager (billing deactivated)
+    // ─────────────────────────
     VerificationResult memory result2 = _runVerificationWorkflow(signedReport, reportData, USER);
 
     // Validate NoOpFeeManager: no fees, no transfer

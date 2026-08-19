@@ -270,7 +270,11 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
     emit SubscriberDiscountUpdated(subscriber, feedId, token, discount);
   }
 
-  function updateSubscriberGlobalDiscount(address subscriber, address token, uint64 discount) external onlyOwner {
+  function updateSubscriberGlobalDiscount(
+    address subscriber,
+    address token,
+    uint64 discount
+  ) external onlyOwner {
     //make sure the discount is not greater than the total discount that can be applied
     if (discount > PERCENTAGE_SCALAR) revert InvalidDiscount();
     //make sure the token is either LINK or native
@@ -282,7 +286,11 @@ contract MockFeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IFeeManager
-  function withdraw(address assetAddress, address recipient, uint192 quantity) external onlyOwner {
+  function withdraw(
+    address assetAddress,
+    address recipient,
+    uint192 quantity
+  ) external onlyOwner {
     //withdraw the requested asset
     IERC20(assetAddress).safeTransfer(recipient, quantity);
 

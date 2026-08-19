@@ -50,15 +50,11 @@ contract DataFeedsSetupGas is BaseTest {
   bytes10[] internal s_workflowNames = [bytes10("abc"), bytes10("xyz")];
 
   DataFeedsCache.WorkflowMetadata internal s_workflowMetadata1 = DataFeedsCache.WorkflowMetadata({
-    allowedSender: s_senders[0],
-    allowedWorkflowOwner: s_workflowOwners[0],
-    allowedWorkflowName: s_workflowNames[0]
+    allowedSender: s_senders[0], allowedWorkflowOwner: s_workflowOwners[0], allowedWorkflowName: s_workflowNames[0]
   });
 
   DataFeedsCache.WorkflowMetadata internal s_workflowMetadata2 = DataFeedsCache.WorkflowMetadata({
-    allowedSender: s_senders[1],
-    allowedWorkflowOwner: s_workflowOwners[1],
-    allowedWorkflowName: s_workflowNames[1]
+    allowedSender: s_senders[1], allowedWorkflowOwner: s_workflowOwners[1], allowedWorkflowName: s_workflowNames[1]
   });
   DataFeedsCache.WorkflowMetadata[] internal s_workflowMetadata;
 

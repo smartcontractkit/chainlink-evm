@@ -95,12 +95,18 @@ contract BaseTest is Constants, Test {
     vm.startPrank(newCaller);
   }
 
-  function _changePrank(address newCaller, address tx_origin) internal {
+  function _changePrank(
+    address newCaller,
+    address tx_origin
+  ) internal {
     vm.stopPrank();
     vm.startPrank(newCaller, tx_origin);
   }
 
-  function _sign(uint256 privateKey, bytes32 digest) internal pure returns (bytes32 r, bytes32 s) {
+  function _sign(
+    uint256 privateKey,
+    bytes32 digest
+  ) internal pure returns (bytes32 r, bytes32 s) {
     uint8 v;
     (v, r, s) = vm.sign(privateKey, digest);
 

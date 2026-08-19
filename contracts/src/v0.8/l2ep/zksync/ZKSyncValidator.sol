@@ -6,7 +6,8 @@ import {ISequencerUptimeFeed} from "./../interfaces/ISequencerUptimeFeed.sol";
 import {BaseValidator} from "../base/BaseValidator.sol";
 
 import {
-  IBridgehub, L2TransactionRequestDirect
+  IBridgehub,
+  L2TransactionRequestDirect
 } from "@zksync/contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
 
 /// @title ZKSyncValidator - makes cross chain call to update the Sequencer Uptime Feed on L2

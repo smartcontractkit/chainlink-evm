@@ -46,7 +46,10 @@ interface IVRFCoordinatorV2 {
     address to
   ) external;
 
-  function registerProvingKey(address oracle, uint256[2] calldata publicProvingKey) external;
+  function registerProvingKey(
+    address oracle,
+    uint256[2] calldata publicProvingKey
+  ) external;
 
   function deregisterProvingKey(
     uint256[2] calldata publicProvingKey
@@ -157,7 +160,10 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
    * @param oracle address of the oracle
    * @param publicProvingKey key that oracle can use to submit vrf fulfillments
    */
-  function registerProvingKey(address oracle, uint256[2] calldata publicProvingKey) external onlyOwner {
+  function registerProvingKey(
+    address oracle,
+    uint256[2] calldata publicProvingKey
+  ) external onlyOwner {
     s_vrfCoordinator.registerProvingKey(oracle, publicProvingKey);
   }
 
@@ -256,8 +262,12 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
    * @return Config struct containing all relevant configs from the VRF coordinator.
    */
   function _getConfigs() private view returns (Config memory) {
-    (uint16 minimumRequestConfirmations, uint32 maxGasLimit, uint32 stalenessSeconds, uint32 gasAfterPaymentCalculation)
-    = s_vrfCoordinator.getConfig();
+    (
+      uint16 minimumRequestConfirmations,
+      uint32 maxGasLimit,
+      uint32 stalenessSeconds,
+      uint32 gasAfterPaymentCalculation
+    ) = s_vrfCoordinator.getConfig();
     (
       uint32 fulfillmentFlatFeeLinkPPMTier1,
       uint32 fulfillmentFlatFeeLinkPPMTier2,
@@ -355,7 +365,10 @@ contract VRFOwner is ConfirmedOwner, AuthorizedReceiver {
    * @param proofSeed the proof seed
    * @dev Refer to VRFCoordinatorV2.getRandomnessFromProof for original implementation.
    */
-  function _requestIdFromProof(uint256[2] memory publicKey, uint256 proofSeed) private view returns (uint256) {
+  function _requestIdFromProof(
+    uint256[2] memory publicKey,
+    uint256 proofSeed
+  ) private view returns (uint256) {
     bytes32 keyHash = s_vrfCoordinator.hashOfKey(publicKey);
     uint256 requestId = uint256(keccak256(abi.encode(keyHash, proofSeed)));
     return requestId;

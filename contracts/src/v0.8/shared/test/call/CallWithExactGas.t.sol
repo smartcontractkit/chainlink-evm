@@ -28,7 +28,10 @@ contract CallWithExactGasSetup is BaseTest {
 }
 
 contract CallWithExactGas__callWithExactGas is CallWithExactGasSetup {
-  function testFuzz_callWithExactGasSuccess(bytes memory payload, bytes4 funcSelector) public {
+  function testFuzz_callWithExactGasSuccess(
+    bytes memory payload,
+    bytes4 funcSelector
+  ) public {
     vm.pauseGasMetering();
 
     bytes memory data = abi.encodeWithSelector(funcSelector, payload);
@@ -143,7 +146,10 @@ contract CallWithExactGas__callWithExactGas is CallWithExactGasSetup {
 }
 
 contract CallWithExactGas__callWithExactGasSafeReturnData is CallWithExactGasSetup {
-  function testFuzz_CallWithExactGasSafeReturnDataSuccess(bytes memory payload, bytes4 funcSelector) public {
+  function testFuzz_CallWithExactGasSafeReturnDataSuccess(
+    bytes memory payload,
+    bytes4 funcSelector
+  ) public {
     vm.pauseGasMetering();
     bytes memory data = abi.encodeWithSelector(funcSelector, payload);
     vm.assume(
@@ -184,8 +190,8 @@ contract CallWithExactGas__callWithExactGasSafeReturnData is CallWithExactGasSet
     // Since only 63/64th of the gas gets passed, we compensate
     uint256 allowedGas = (DEFAULT_GAS_LIMIT + (DEFAULT_GAS_LIMIT / 64));
 
-    allowedGas +=
-      extcodesizeGas + DEFAULT_GAS_FOR_CALL_EXACT_CHECK + overheadForRetDataInit + overheadForCallWithExactGas;
+    allowedGas += extcodesizeGas + DEFAULT_GAS_FOR_CALL_EXACT_CHECK + overheadForRetDataInit
+      + overheadForCallWithExactGas;
 
     // Due to EIP-150 we expect to lose 1/64, so we compensate for this
     allowedGas = (allowedGas * 64) / 63;
@@ -350,7 +356,10 @@ contract CallWithExactGas__callWithExactGasSafeReturnData is CallWithExactGasSet
 }
 
 contract CallWithExactGas__callWithExactGasEvenIfTargetIsNoContract is CallWithExactGasSetup {
-  function testFuzz_CallWithExactGasEvenIfTargetIsNoContractSuccess(bytes memory payload, bytes4 funcSelector) public {
+  function testFuzz_CallWithExactGasEvenIfTargetIsNoContractSuccess(
+    bytes memory payload,
+    bytes4 funcSelector
+  ) public {
     vm.pauseGasMetering();
     bytes memory data = abi.encodeWithSelector(funcSelector, payload);
     vm.assume(

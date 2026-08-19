@@ -92,7 +92,7 @@ contract VRFV2PlusWrapperArbitrumTest is BaseTest {
     uint32 numWords = 5;
     uint256 wrapperCostCalculation = s_wrapper.calculateRequestPriceNative(callbackGasLimit, numWords);
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(wrapperCostCalculation, 5.01483 * 1e17, 1e15);
+    assertApproxEqAbs(wrapperCostCalculation, 5.014_83 * 1e17, 1e15);
   }
 
   function test_calculateRequestPriceLinkOnArbitrumWrapper() public {
@@ -102,6 +102,6 @@ contract VRFV2PlusWrapperArbitrumTest is BaseTest {
     uint32 numWords = 5;
     uint256 wrapperCostCalculation = s_wrapper.calculateRequestPrice(callbackGasLimit, numWords);
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(wrapperCostCalculation, 8.02846 * 1e17, 1e15);
+    assertApproxEqAbs(wrapperCostCalculation, 8.028_46 * 1e17, 1e15);
   }
 }

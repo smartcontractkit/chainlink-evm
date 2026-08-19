@@ -236,7 +236,10 @@ interface IAutomationV21PlusCommon {
     bytes memory extraData
   ) external view returns (bool upkeepNeeded, bytes memory performData, uint8 upkeepFailureReason, uint256 gasUsed);
   function typeAndVersion() external view returns (string memory);
-  function addFunds(uint256 id, uint96 amount) external;
+  function addFunds(
+    uint256 id,
+    uint96 amount
+  ) external;
   function cancelUpkeep(
     uint256 id
   ) external;
@@ -266,18 +269,33 @@ interface IAutomationV21PlusCommon {
       address[] memory transmitters,
       uint8 f
     );
-  function setUpkeepGasLimit(uint256 id, uint32 gasLimit) external;
-  function setUpkeepPrivilegeConfig(uint256 upkeepId, bytes memory newPrivilegeConfig) external;
+  function setUpkeepGasLimit(
+    uint256 id,
+    uint32 gasLimit
+  ) external;
+  function setUpkeepPrivilegeConfig(
+    uint256 upkeepId,
+    bytes memory newPrivilegeConfig
+  ) external;
   function pauseUpkeep(
     uint256 id
   ) external;
   function unpauseUpkeep(
     uint256 id
   ) external;
-  function getActiveUpkeepIDs(uint256 startIndex, uint256 maxCount) external view returns (uint256[] memory);
+  function getActiveUpkeepIDs(
+    uint256 startIndex,
+    uint256 maxCount
+  ) external view returns (uint256[] memory);
   function pause() external;
-  function setUpkeepCheckData(uint256 id, bytes memory newCheckData) external;
-  function setUpkeepTriggerConfig(uint256 id, bytes memory triggerConfig) external;
+  function setUpkeepCheckData(
+    uint256 id,
+    bytes memory newCheckData
+  ) external;
+  function setUpkeepTriggerConfig(
+    uint256 id,
+    bytes memory triggerConfig
+  ) external;
   function owner() external view returns (address);
   function getTriggerType(
     uint256 upkeepId

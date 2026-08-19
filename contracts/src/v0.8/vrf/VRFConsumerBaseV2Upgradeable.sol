@@ -148,12 +148,18 @@ abstract contract VRFConsumerBaseV2Upgradeable is Initializable {
    * @param randomWords the VRF output expanded to the requested number of words
    */
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual;
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) internal virtual;
 
   // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF
   // proof. rawFulfillRandomness then calls fulfillRandomness, after validating
   // the origin of the call
-  function rawFulfillRandomWords(uint256 requestId, uint256[] memory randomWords) external {
+  function rawFulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) external {
     if (msg.sender != vrfCoordinator) {
       revert OnlyCoordinatorCanFulfill(msg.sender, vrfCoordinator);
     }

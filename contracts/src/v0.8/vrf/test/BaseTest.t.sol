@@ -25,7 +25,10 @@ contract BaseTest is Test {
     return addresses;
   }
 
-  function addressIsIn(address addr, address[] memory addresses) internal pure returns (bool) {
+  function addressIsIn(
+    address addr,
+    address[] memory addresses
+  ) internal pure returns (bool) {
     for (uint256 i = 0; i < addresses.length; ++i) {
       if (addresses[i] == addr) {
         return true;

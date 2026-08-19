@@ -85,7 +85,10 @@ contract KeeperConsumerPerformance {
     count = 0;
   }
 
-  function setSpread(uint256 _newTestRange, uint256 _newAverageEligibilityCadence) external {
+  function setSpread(
+    uint256 _newTestRange,
+    uint256 _newAverageEligibilityCadence
+  ) external {
     testRange = _newTestRange;
     averageEligibilityCadence = _newAverageEligibilityCadence;
   }

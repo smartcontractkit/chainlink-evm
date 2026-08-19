@@ -85,7 +85,11 @@ contract MockScrollL1MessageQueueV2 is IL1MessageQueueV2 {
   /// @param target The address of target contract to call in L2.
   /// @param gasLimit The maximum gas should be used for relay this message in L2.
   /// @param data The calldata passed to target contract.
-  function appendCrossDomainMessage(address target, uint256 gasLimit, bytes calldata data) external {}
+  function appendCrossDomainMessage(
+    address target,
+    uint256 gasLimit,
+    bytes calldata data
+  ) external {}
 
   /// @notice Append an enforced transaction to this contract.
   /// @dev The address of sender should be an EOA.
@@ -110,7 +114,11 @@ contract MockScrollL1MessageQueueV2 is IL1MessageQueueV2 {
   /// @param startIndex The start index to pop.
   /// @param count The number of messages to pop.
   /// @param skippedBitmap A bitmap indicates whether a message is skipped.
-  function popCrossDomainMessage(uint256 startIndex, uint256 count, uint256 skippedBitmap) external {}
+  function popCrossDomainMessage(
+    uint256 startIndex,
+    uint256 count,
+    uint256 skippedBitmap
+  ) external {}
 
   /// @notice Drop a skipped message from the queue.
   function dropCrossDomainMessage(

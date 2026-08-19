@@ -67,7 +67,10 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
 
   mapping(uint256 => Request) internal s_requests; /* requestId */ /* request */
 
-  constructor(uint96 _baseFee, uint96 _gasPriceLink) ConfirmedOwner(msg.sender) {
+  constructor(
+    uint96 _baseFee,
+    uint96 _gasPriceLink
+  ) ConfirmedOwner(msg.sender) {
     BASE_FEE = _baseFee;
     GAS_PRICE_LINK = _gasPriceLink;
     setConfig();
@@ -81,7 +84,10 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     emit ConfigSet();
   }
 
-  function consumerIsAdded(uint64 _subId, address _consumer) public view returns (bool) {
+  function consumerIsAdded(
+    uint64 _subId,
+    address _consumer
+  ) public view returns (bool) {
     address[] memory consumers = s_consumers[_subId];
     for (uint256 i = 0; i < consumers.length; i++) {
       if (consumers[i] == _consumer) {
@@ -91,7 +97,10 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     return false;
   }
 
-  modifier onlyValidConsumer(uint64 _subId, address _consumer) {
+  modifier onlyValidConsumer(
+    uint64 _subId,
+    address _consumer
+  ) {
     if (!consumerIsAdded(_subId, _consumer)) {
       revert InvalidConsumer();
     }
@@ -109,7 +118,10 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
    * @param _requestId the request to fulfill
    * @param _consumer the VRF randomness consumer to send the result to
    */
-  function fulfillRandomWords(uint256 _requestId, address _consumer) external nonReentrant {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    address _consumer
+  ) external nonReentrant {
     fulfillRandomWordsWithOverride(_requestId, _consumer, new uint256[](0));
   }
 
@@ -120,7 +132,11 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
    * @param _consumer the VRF randomness consumer to send the result to
    * @param _words user-provided random words
    */
-  function fulfillRandomWordsWithOverride(uint256 _requestId, address _consumer, uint256[] memory _words) public {
+  function fulfillRandomWordsWithOverride(
+    uint256 _requestId,
+    address _consumer,
+    uint256[] memory _words
+  ) public {
     uint256 startGas = gasleft();
     if (s_requests[_requestId].subId == 0) {
       revert("nonexistent request");
@@ -157,7 +173,10 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
    * @param _subId the subscription to fund
    * @param _amount the amount to fund
    */
-  function fundSubscription(uint64 _subId, uint96 _amount) public {
+  function fundSubscription(
+    uint64 _subId,
+    uint96 _amount
+  ) public {
     if (s_subscriptions[_subId].owner == address(0)) {
       revert InvalidSubscription();
     }
@@ -204,7 +223,10 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     return (s_subscriptions[_subId].balance, 0, s_subscriptions[_subId].owner, s_consumers[_subId]);
   }
 
-  function cancelSubscription(uint64 _subId, address _to) external override onlySubOwner(_subId) nonReentrant {
+  function cancelSubscription(
+    uint64 _subId,
+    address _to
+  ) external override onlySubOwner(_subId) nonReentrant {
     emit SubscriptionCanceled(_subId, _to, s_subscriptions[_subId].balance);
     delete (s_subscriptions[_subId]);
   }
@@ -226,7 +248,10 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     return (3, 2_000_000, new bytes32[](0));
   }
 
-  function addConsumer(uint64 _subId, address _consumer) external override onlySubOwner(_subId) {
+  function addConsumer(
+    uint64 _subId,
+    address _consumer
+  ) external override onlySubOwner(_subId) {
     if (s_consumers[_subId].length == MAX_CONSUMERS) {
       revert TooManyConsumers();
     }
@@ -308,7 +333,11 @@ contract VRFCoordinatorV2Mock is VRFCoordinatorV2Interface, ConfirmedOwner {
     return 4_000_000_000_000_000; // 0.004 Ether
   }
 
-  function requestSubscriptionOwnerTransfer(uint64, /*_subId*/ address /*_newOwner*/ ) external pure override {
+  function requestSubscriptionOwnerTransfer(
+    uint64,
+    /*_subId*/
+    address /*_newOwner*/
+  ) external pure override {
     revert("not implemented");
   }
 

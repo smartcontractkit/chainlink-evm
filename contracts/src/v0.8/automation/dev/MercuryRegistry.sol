@@ -72,7 +72,7 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
 
   string private constant FEED_PARAM_KEY = "feedIdHex"; // for Mercury v0.2 - format by which feeds are identified
   string private constant TIME_PARAM_KEY = "blockNumber"; // for Mercury v0.2 - format by which feeds are filtered to be
-    // sufficiently recent
+  // sufficiently recent
   IVerifierProxy public s_verifier; // for Mercury v0.2 - verifies off-chain reports
 
   int192 private constant SCALE = 1_000_000; // a scalar used for measuring deviation with precision
@@ -164,7 +164,9 @@ contract MercuryRegistry is ConfirmedOwner, AutomationCompatibleInterface, Strea
   function performUpkeep(
     bytes calldata performData
   ) external override {
-    (bytes[] memory values, /* bytes memory lookupData */ ) = abi.decode(performData, (bytes[], bytes));
+    (
+      bytes[] memory values, /* bytes memory lookupData */
+    ) = abi.decode(performData, (bytes[], bytes));
     for (uint256 i = 0; i < values.length; i++) {
       // Verify and decode the Mercury report.
       Report memory report = abi.decode(s_verifier.verify(values[i]), (Report));

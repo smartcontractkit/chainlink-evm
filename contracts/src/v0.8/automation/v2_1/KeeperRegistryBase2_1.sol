@@ -6,8 +6,9 @@ import {AggregatorV3Interface} from "../../shared/interfaces/AggregatorV3Interfa
 import {LinkTokenInterface} from "../../shared/interfaces/LinkTokenInterface.sol";
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
-import {OVM_GasPriceOracle} from
-  "../../vendor/@eth-optimism/contracts/v0.8.9/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
+import {
+  OVM_GasPriceOracle
+} from "../../vendor/@eth-optimism/contracts/v0.8.9/contracts/L2/predeploys/OVM_GasPriceOracle.sol";
 import {ExecutionPrevention} from "../ExecutionPrevention.sol";
 
 import {IAutomationForwarder} from "../interfaces/IAutomationForwarder.sol";
@@ -55,18 +56,18 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
   uint256 internal constant REGISTRY_CONDITIONAL_OVERHEAD = 90_000; // Used in maxPayment estimation, and in capping
-    // overheads during actual payment
+  // overheads during actual payment
   uint256 internal constant REGISTRY_LOG_OVERHEAD = 110_000; // Used only in maxPayment estimation, and in capping
-    // overheads during actual payment.
+  // overheads during actual payment.
   uint256 internal constant REGISTRY_PER_PERFORM_BYTE_GAS_OVERHEAD = 20; // Used only in maxPayment estimation, and in
-    // capping overheads during actual payment. Value scales with performData length.
+  // capping overheads during actual payment. Value scales with performData length.
   uint256 internal constant REGISTRY_PER_SIGNER_GAS_OVERHEAD = 7500; // Used only in maxPayment estimation, and in
-    // capping overheads during actual payment. Value scales with f.
+  // capping overheads during actual payment. Value scales with f.
 
   uint256 internal constant ACCOUNTING_FIXED_GAS_OVERHEAD = 27_500; // Used in actual payment. Fixed overhead per tx
   uint256 internal constant ACCOUNTING_PER_SIGNER_GAS_OVERHEAD = 1100; // Used in actual payment. overhead per signer
   uint256 internal constant ACCOUNTING_PER_UPKEEP_GAS_OVERHEAD = 7000; // Used in actual payment. overhead per upkeep
-    // performed
+  // performed
 
   OVM_GasPriceOracle internal constant OPTIMISM_ORACLE = OVM_GasPriceOracle(0x420000000000000000000000000000000000000F);
   ArbGasInfo internal constant ARB_NITRO_ORACLE = ArbGasInfo(0x000000000000000000000000000000000000006C);
@@ -105,13 +106,13 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
   uint256 internal s_fallbackLinkPrice;
   uint256 internal s_expectedLinkBalance; // Used in case of erroneous LINK transfers to contract
   mapping(address => MigrationPermission) internal s_peerRegistryMigrationPermission; // Permissions for migration to
-    // and fro
+  // and fro
   mapping(uint256 => bytes) internal s_upkeepTriggerConfig; // upkeep triggers
   mapping(uint256 => bytes) internal s_upkeepOffchainConfig; // general config set by users for each upkeep
   mapping(uint256 => bytes) internal s_upkeepPrivilegeConfig; // general config set by an administrative role for an
-    // upkeep
+  // upkeep
   mapping(address => bytes) internal s_adminPrivilegeConfig; // general config set by an administrative role for an
-    // admin
+  // admin
 
   error ArrayHasNoEntries();
   error CannotCancel();
@@ -216,6 +217,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     uint96 balance;
     uint32 lastPerformedBlockNumber;
   }
+
   // 2 bytes left in 2nd EVM word - written in transmit path
 
   /// @dev Config + State storage struct which is on hot transmit path
@@ -229,7 +231,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     bool reentrancyGuard; // guard against reentrancy
     uint96 totalPremium; // total historical payment to oracles for premium
     uint32 latestEpoch; // latest epoch for which a report was transmitted
-      // 1 EVM word full
+    // 1 EVM word full
   }
 
   /// @dev Config + State storage struct which is not on hot transmit path
@@ -249,7 +251,7 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
     uint32 maxPerformDataSize; // max length of performData bytes
     uint32 maxRevertDataSize; // max length of revertData bytes
     address upkeepPrivilegeManager; // address which can set privilege for upkeeps
-      // 3 EVM word full
+    // 3 EVM word full
   }
 
   /// @dev Report transmitted by OCR to transmit function
@@ -553,7 +555,11 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
   /**
    * @dev returns the max gas overhead that can be charged for an upkeep
    */
-  function _getMaxGasOverhead(Trigger triggerType, uint32 performDataLength, uint8 f) internal pure returns (uint256) {
+  function _getMaxGasOverhead(
+    Trigger triggerType,
+    uint32 performDataLength,
+    uint8 f
+  ) internal pure returns (uint256) {
     // performData causes additional overhead in report length and memory operations
     uint256 baseOverhead;
     if (triggerType == Trigger.CONDITION) {
@@ -754,7 +760,10 @@ abstract contract KeeperRegistryBase2_1 is ConfirmedOwner, ExecutionPrevention {
    * @dev updates a storage marker for this upkeep to prevent duplicate and out of order performances
    * @dev for conditional triggers we set the latest block number, for log triggers we store a dedupID
    */
-  function _updateTriggerMarker(uint256 upkeepID, UpkeepTransmitInfo memory upkeepTransmitInfo) internal {
+  function _updateTriggerMarker(
+    uint256 upkeepID,
+    UpkeepTransmitInfo memory upkeepTransmitInfo
+  ) internal {
     if (upkeepTransmitInfo.triggerType == Trigger.CONDITION) {
       s_upkeep[upkeepID].lastPerformedBlockNumber = uint32(_blockNum());
     } else if (upkeepTransmitInfo.triggerType == Trigger.LOG) {

@@ -43,11 +43,21 @@ contract ErroredVerifier is IVerifier {
     revert FailedToVerify();
   }
 
-  function updateConfig(bytes32, address[] calldata, address[] calldata, uint8) external pure {
+  function updateConfig(
+    bytes32,
+    address[] calldata,
+    address[] calldata,
+    uint8
+  ) external pure {
     revert FailedToUnsetConfig();
   }
 
-  function setConfig(bytes32, address[] calldata, uint8, Common.AddressAndWeight[] calldata) external pure override {
+  function setConfig(
+    bytes32,
+    address[] calldata,
+    uint8,
+    Common.AddressAndWeight[] calldata
+  ) external pure override {
     revert FailedToSetConfig();
   }
 

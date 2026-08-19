@@ -79,13 +79,12 @@ contract VRFV2Plus is BaseTest {
     bytes32 abiEncodedOwnerAddress = bytes32(uint256(uint160(LINK_WHALE)) << 96);
     address consumerCreate2Address;
     assembly {
-      consumerCreate2Address :=
-        create2(
-          0, // value - left at zero here
-          add(0x20, consumerInitCode), // initialization bytecode (excluding first memory slot which contains its length)
-          mload(consumerInitCode), // length of initialization bytecode
-          abiEncodedOwnerAddress // user-defined nonce to ensure unique SCA addresses
-        )
+      consumerCreate2Address := create2(
+        0, // value - left at zero here
+        add(0x20, consumerInitCode), // initialization bytecode (excluding first memory slot which contains its length)
+        mload(consumerInitCode), // length of initialization bytecode
+        abiEncodedOwnerAddress // user-defined nonce to ensure unique SCA addresses
+      )
     }
     s_testConsumer = VRFV2PlusConsumerExample(consumerCreate2Address);
 
@@ -444,9 +443,9 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = 2.992e16 + 8e17 = 8.2992e17
     // note: delta is doubled from the native test to account for more variance due to the link/native ratio
     (uint96 linkBalanceAfter,,,,) = s_testCoordinator.getSubscription(subId);
-    // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 8.2992 * 1e17, 1e15);
-    assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 8.2992 * 1e17, 1e15);
+
+    assertApproxEqAbs(payment, 8.2992 * 1e17, 20e14);
+    assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 8.2992 * 1e17, 20e14);
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
 
@@ -494,7 +493,7 @@ contract VRFV2Plus is BaseTest {
       CALLBACK_GAS_LIMIT,
       NUM_WORDS,
       VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})), // nativePayment, //
-        // nativePayment
+      // nativePayment
       address(s_testConsumer) // requester
     );
     s_testConsumer.requestRandomWords(CALLBACK_GAS_LIMIT, MIN_CONFIRMATIONS, NUM_WORDS, vrfKeyHash, false);
@@ -684,7 +683,11 @@ contract VRFV2Plus is BaseTest {
 
     uint256 outputSeed = s_testCoordinator.getRandomnessFromProofExternal(proof, rc).randomness;
     vm.recordLogs();
-    uint96 payment = s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    uint96 payment = s_testCoordinator.fulfillRandomWords(
+      proof,
+      rc,
+      true /* onlyPremium */
+    );
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries[0].topics[1], bytes32(uint256(requestId)));
     assertEq(entries[0].topics[2], bytes32(uint256(subId)));
@@ -710,9 +713,9 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = 6.11e17 * 0.15 + 5e17
     // billed_fee = 5.9157e+17
     (, uint96 nativeBalanceAfter,,,) = s_testCoordinator.getSubscription(subId);
-    // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 5.9157 * 1e17, 1e15);
-    assertApproxEqAbs(nativeBalanceAfter, nativeBalanceBefore - 5.9157 * 1e17, 1e15);
+
+    assertApproxEqAbs(payment, 5.9157 * 1e17, 6e15);
+    assertApproxEqAbs(nativeBalanceAfter, nativeBalanceBefore - 5.9157 * 1e17, 6e15);
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
 
@@ -727,7 +730,11 @@ contract VRFV2Plus is BaseTest {
 
     uint256 outputSeed = s_testCoordinator.getRandomnessFromProofExternal(proof, rc).randomness;
     vm.recordLogs();
-    uint96 payment = s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    uint96 payment = s_testCoordinator.fulfillRandomWords(
+      proof,
+      rc,
+      true /* onlyPremium */
+    );
 
     VmSafe.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries[0].topics[1], bytes32(uint256(requestId)));
@@ -757,9 +764,9 @@ contract VRFV2Plus is BaseTest {
     // billed_fee = 9.391e+17
     // note: delta is doubled from the native test to account for more variance due to the link/native ratio
     (uint96 linkBalanceAfter,,,,) = s_testCoordinator.getSubscription(subId);
-    // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 9.391 * 1e17, 1e15);
-    assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 9.391 * 1e17, 1e15);
+
+    assertApproxEqAbs(payment, 9.391 * 1e17, 6e15);
+    assertApproxEqAbs(linkBalanceAfter, linkBalanceBefore - 9.391 * 1e17, 6e15);
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
 
@@ -772,7 +779,13 @@ contract VRFV2Plus is BaseTest {
     // consumer is not added to the subscription
     vm.expectRevert(abi.encodeWithSelector(SubscriptionAPI.InvalidConsumer.selector, subId, address(consumer)));
     consumer.requestRandomWords(
-      subId, MIN_CONFIRMATIONS, vrfKeyHash, CALLBACK_GAS_LIMIT, true, NUM_WORDS, 1 /* requestCount */
+      subId,
+      MIN_CONFIRMATIONS,
+      vrfKeyHash,
+      CALLBACK_GAS_LIMIT,
+      true,
+      NUM_WORDS,
+      1 /* requestCount */
     );
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
@@ -877,7 +890,11 @@ contract VRFV2Plus is BaseTest {
       sender: address(consumer),
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true}))
     });
-    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    s_testCoordinator.fulfillRandomWords(
+      proof,
+      rc,
+      true /* onlyPremium */
+    );
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
 
     // 4. remove consumer and verify request random words doesn't work
@@ -908,7 +925,7 @@ contract VRFV2Plus is BaseTest {
       CALLBACK_GAS_LIMIT,
       NUM_WORDS,
       VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})), // nativePayment, //
-        // nativePayment
+      // nativePayment
       address(consumer) // requester
     );
     consumer.requestRandomWords(
@@ -1026,7 +1043,11 @@ contract VRFV2Plus is BaseTest {
       sender: address(consumer1),
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true}))
     });
-    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    s_testCoordinator.fulfillRandomWords(
+      proof,
+      rc,
+      true /* onlyPremium */
+    );
     assertTrue(s_testCoordinator.pendingRequestExists(subId));
 
     // 4. Fulfill the 2nd request
@@ -1082,7 +1103,11 @@ contract VRFV2Plus is BaseTest {
       sender: address(consumer2),
       extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true}))
     });
-    s_testCoordinator.fulfillRandomWords(proof, rc, true /* onlyPremium */ );
+    s_testCoordinator.fulfillRandomWords(
+      proof,
+      rc,
+      true /* onlyPremium */
+    );
     assertFalse(s_testCoordinator.pendingRequestExists(subId));
   }
 

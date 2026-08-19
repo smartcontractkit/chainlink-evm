@@ -341,7 +341,11 @@ contract FeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
     emit SubscriberDiscountUpdated(subscriber, feedId, token, discount);
   }
 
-  function updateSubscriberGlobalDiscount(address subscriber, address token, uint64 discount) external onlyOwner {
+  function updateSubscriberGlobalDiscount(
+    address subscriber,
+    address token,
+    uint64 discount
+  ) external onlyOwner {
     //make sure the discount is not greater than the total discount that can be applied
     if (discount > PERCENTAGE_SCALAR) revert InvalidDiscount();
     //make sure the token is either LINK or native
@@ -353,7 +357,11 @@ contract FeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
   }
 
   /// @inheritdoc IFeeManager
-  function withdraw(address assetAddress, address recipient, uint192 quantity) external onlyOwner {
+  function withdraw(
+    address assetAddress,
+    address recipient,
+    uint192 quantity
+  ) external onlyOwner {
     //address 0 is used to withdraw native in the context of withdrawing
     if (assetAddress == address(0)) {
       _transfer(recipient, quantity);
@@ -492,7 +500,10 @@ contract FeeManager is IFeeManager, ConfirmedOwner, ITypeAndVersion {
     _transfer(subscriber, change);
   }
 
-  function _transfer(address to, uint256 quantity) internal {
+  function _transfer(
+    address to,
+    uint256 quantity
+  ) internal {
     if (quantity != 0) {
       (bool success,) = payable(to).call{value: quantity}("");
       if (!success) revert InvalidReceivingAddress();

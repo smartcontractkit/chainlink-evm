@@ -100,7 +100,10 @@ contract ForwarderTest is Deployer {
     require(s_mockReceiver.getValue() == _value);
   }
 
-  function testFuzz_MultiForward_Success(uint256 _value1, uint256 _value2) public {
+  function testFuzz_MultiForward_Success(
+    uint256 _value1,
+    uint256 _value2
+  ) public {
     _addSenders();
 
     address[] memory tos;
