@@ -1,7 +1,0 @@
-AutomationForwarderTest_constructor:testInitialValues() (gas: 16547)
-AutomationForwarderTest_constructor:testTypeAndVersion() (gas: 12393)
-AutomationForwarderTest_forward:testOnlyCallableByTheRegistry() (gas: 16528)
-AutomationForwarderTest_forward:testReturnsSuccessValueAndGasUsed() (gas: 18153)
-AutomationForwarderTest_updateRegistry:testOnlyCallableByTheActiveRegistry() (gas: 19225)
-MercuryRegistryTest:testMercuryRegistry() (gas: 956144)
-MercuryRegistryTest:testMercuryRegistryBatchUpkeep() (gas: 1778429)

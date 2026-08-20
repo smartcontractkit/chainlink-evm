@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import {
-  AutomationCompatibleInterface as KeeperCompatibleInterface
-} from "../automation/interfaces/AutomationCompatibleInterface.sol";
+import {IAutomationCompatible} from "../automation-cre/interfaces/IAutomationCompatible.sol";
+
 import {VRFConsumerBaseV2} from "./VRFConsumerBaseV2.sol";
 import {VRFCoordinatorV2Interface} from "./interfaces/VRFCoordinatorV2Interface.sol";
-
-// solhint-disable chainlink-solidity/prefix-immutable-variables-with-i
 
 /**
  * @title KeepersVRFConsumer
@@ -15,7 +12,8 @@ import {VRFCoordinatorV2Interface} from "./interfaces/VRFCoordinatorV2Interface.
  * VRF V2 requester and consumer. In particular, a random words request is made when `performUpkeep`
  * is called in a cadence provided by the upkeep interval.
  */
-contract KeepersVRFConsumer is KeeperCompatibleInterface, VRFConsumerBaseV2 {
+// solhint-disable chainlink-solidity/prefix-immutable-variables-with-i
+contract KeepersVRFConsumer is IAutomationCompatible, VRFConsumerBaseV2 {
   // Upkeep interval in seconds. This contract's performUpkeep method will
   // be called by the Keepers network roughly every UPKEEP_INTERVAL seconds.
   uint256 public immutable UPKEEP_INTERVAL;

@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.6;
 
-import {
-  AutomationCompatibleInterface as KeeperCompatibleInterface
-} from "../automation/interfaces/AutomationCompatibleInterface.sol";
-import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
+import {IAutomationCompatible} from "../automation-cre/interfaces/IAutomationCompatible.sol";
 
+import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
 import {LinkTokenInterface} from "../shared/interfaces/LinkTokenInterface.sol";
 import {VRFCoordinatorV2Interface} from "./interfaces/VRFCoordinatorV2Interface.sol";
 import {Pausable} from "@openzeppelin/contracts@4.9.6/security/Pausable.sol";
@@ -15,7 +12,7 @@ import {Pausable} from "@openzeppelin/contracts@4.9.6/security/Pausable.sol";
  * @title The VRFSubscriptionBalanceMonitor contract.
  * @notice A keeper-compatible contract that monitors and funds VRF subscriptions.
  */
-contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, KeeperCompatibleInterface {
+contract VRFSubscriptionBalanceMonitor is ConfirmedOwner, Pausable, IAutomationCompatible {
   VRFCoordinatorV2Interface public COORDINATOR;
   LinkTokenInterface public LINKTOKEN;
 

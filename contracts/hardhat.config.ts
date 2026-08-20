@@ -14,15 +14,9 @@ const config: HardhatUserConfig = {
   paths: {
     artifacts: './artifacts',
     cache: './cache',
-    sources: './src/v0.8/automation',
-    tests: './test',
   },
   solidity: {
     compilers: [
-      {
-        version: '0.8.16',
-        settings: COMPILER_SETTINGS,
-      },
       {
         version: '0.8.19',
         settings: COMPILER_SETTINGS,
