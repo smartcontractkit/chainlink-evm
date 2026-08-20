@@ -46,18 +46,6 @@ optimizer_runs = 1_000_000
 src = 'src/v0.8/vrf'
 deny_warnings = false
 
-[profile.automation]
-optimizer_runs = 10_000
-src = 'src/v0.8/automation'
-test = 'src/v0.8/automation/test'
-deny_warnings = false
-
-[profile.automation-compile-21]
-solc_version = '0.8.16'
-optimizer_runs = 1_000_000
-src = 'src/v0.8/automation'
-deny_warnings = false
-
 [profile.automation-cre]
 solc_version = '0.8.24'
 src = 'src/v0.8/automation-cre'
