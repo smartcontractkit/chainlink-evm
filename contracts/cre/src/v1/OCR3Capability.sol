@@ -49,6 +49,7 @@ contract OCR3Capability is OwnerIsCreator, OCR2Abstract {
   /// @param _offchainConfigVersion version number for offchainEncoding schema
   /// @param _offchainConfig encoded off-chain oracle configuration
   /// @dev signer = [ 1 byte type | 2 byte len | n byte value ]...
+  // solhint-disable-next-line gas-calldata-parameters
   function setConfig(
     bytes[] calldata _signers,
     address[] calldata _transmitters,

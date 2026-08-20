@@ -4,8 +4,8 @@ pragma solidity 0.8.24;
 import {BaseTest} from "./BaseTest.t.sol";
 
 contract CapabilitiesRegistry_GetHashedCapabilityTest is BaseTest {
-  string constant CAPABILITY_LABELLED_NAME = "ccip1";
-  string constant CAPABILITY_VERSION = "1.0.0";
+  string constant internal CAPABILITY_LABELLED_NAME = "ccip1";
+  string constant internal CAPABILITY_VERSION = "1.0.0";
 
   function test_CorrectlyGeneratesHashedCapabilityId() public view {
     bytes32 expectedHashedCapabilityId = keccak256(abi.encode(CAPABILITY_LABELLED_NAME, CAPABILITY_VERSION));
