@@ -108,18 +108,10 @@ jobs:
           predicate-quantifier: every
           filters: |
             not_test_sol:
-              - modified|added: 'contracts/src/v0.8/**/!(*.t).sol'
-              - '!contracts/src/v0.8/**/test/**'
-              - '!contracts/src/v0.8/**/tests/**'
-              - '!contracts/src/v0.8/**/mock/**'
-              - '!contracts/src/v0.8/**/mocks/**'
-              - '!contracts/src/v0.8/**/*.t.sol'
-              - '!contracts/src/v0.8/*.t.sol'
-              - '!contracts/src/v0.8/**/testhelpers/**'
-              - '!contracts/src/v0.8/testhelpers/**'
+              - modified|added: 'contracts/{src/v0.8,cre/src}/**/!(*.t).sol'
+              - '!contracts/{src/v0.8,cre/src}/**/{test,tests,mock,mocks,testhelpers}/**'
+              - '!contracts/{src/v0.8,cre/src}/**/*.t.sol'
               - '!contracts/src/v0.8/vendor/**'
-              - '!contracts/cre/src/**/test/**'
-              - '!contracts/cre/src/**/mocks/**'
 
   tests:
     if: ${{ needs.changes.outputs.non_src_changes == 'true' || needs.changes.outputs.sol_modified_added == 'true' }}
