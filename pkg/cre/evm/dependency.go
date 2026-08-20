@@ -55,7 +55,9 @@ func (d *dependency) Dependencies() []standalone.BootstrapCommand {
 	return []standalone.BootstrapCommand{}
 }
 
-func (d *dependency) ForEmbedding(_ int) standalone.BootstrapDependency[evmclient.Client] { return d }
+func (d *dependency) ForEmbedding(_, _ int) standalone.BootstrapDependency[evmclient.Client] {
+	return d
+}
 
 func (d *dependency) Get(ctx context.Context, _ standalone.CommonConfig) (evmclient.Client, error) {
 	cl, err := evmclient.NewClientFromConfig(ctx, d.lggr, d.cfg)

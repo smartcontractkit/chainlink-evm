@@ -51,7 +51,7 @@ func (d *dependency) Dependencies() []standalone.BootstrapCommand {
 
 // ForEmbedding returns the receiver: every embedded instance reads the same registry, since they
 // are members of the same DONs rather than separate deployments.
-func (d *dependency) ForEmbedding(int) standalone.BootstrapDependency[commonregistry.Reader] {
+func (d *dependency) ForEmbedding(int, int) standalone.BootstrapDependency[commonregistry.Reader] {
 	return d
 }
 
