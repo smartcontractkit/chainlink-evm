@@ -164,7 +164,12 @@ contract MockKeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
   // ================================================================
 
   /// @notice Simplified permissionless report function that skips all validations
-  function report(address receiver, bytes calldata rawReport, bytes calldata, bytes[] calldata) external {
+  function report(
+    address receiver,
+    bytes calldata rawReport,
+    bytes calldata,
+    bytes[] calldata
+  ) external {
     if (rawReport.length < METADATA_LENGTH) {
       revert InvalidReport();
     }

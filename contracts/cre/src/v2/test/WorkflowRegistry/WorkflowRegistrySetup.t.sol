@@ -99,7 +99,11 @@ contract WorkflowRegistrySetup is Test {
   }
 
   // helper to upsert one test workflow
-  function _upsertTestWorklow(WorkflowRegistry.WorkflowStatus status, bool keepAlive, address owner) internal {
+  function _upsertTestWorklow(
+    WorkflowRegistry.WorkflowStatus status,
+    bool keepAlive,
+    address owner
+  ) internal {
     vm.prank(owner);
     s_registry.upsertWorkflow(
       s_workflowName, s_tag, s_workflowId, status, s_donFamily, s_binaryUrl, s_configUrl, s_attributes, keepAlive
@@ -107,7 +111,11 @@ contract WorkflowRegistrySetup is Test {
   }
 
   // helper to upsert 5 test workflows
-  function _upsertTestWorklows(WorkflowRegistry.WorkflowStatus status, bool keepAlive, address owner) internal {
+  function _upsertTestWorklows(
+    WorkflowRegistry.WorkflowStatus status,
+    bool keepAlive,
+    address owner
+  ) internal {
     // Workflow 1: Price Oracle
     bytes32 workflowId1 = keccak256("workflow1");
     string memory workflowName1 = "Price Oracle";

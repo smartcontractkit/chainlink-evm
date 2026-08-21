@@ -30,6 +30,7 @@ abstract contract KeystoneFeedsPermissionHandler is Ownable2StepMsgSender {
   /// @notice Sets permissions for multiple reports
   /// @param permissions An array of Permission structs for which to set permissions
   /// @dev Emits a ReportPermissionSet event for each permission set
+  // solhint-disable-next-line gas-calldata-parameters
   function setReportPermissions(
     Permission[] memory permissions
   ) external onlyOwner {

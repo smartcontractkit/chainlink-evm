@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {Ownable2StepMsgSender} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2StepMsgSender.sol";
-import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
+import {Ownable2StepMsgSender} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2StepMsgSender.sol";
+import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 
 import {ERC165Checker} from "@openzeppelin/contracts@5.1.0/utils/introspection/ERC165Checker.sol";
 import {EnumerableSet} from "@openzeppelin/contracts@5.1.0/utils/structs/EnumerableSet.sol";
@@ -608,7 +608,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @notice Updates a node operator
   /// @param nodeOperatorIds The ID of the node operator being updated
   /// @param nodeOperators The updated node operator params
-  function updateNodeOperators(uint32[] calldata nodeOperatorIds, NodeOperatorParams[] calldata nodeOperators) external {
+  function updateNodeOperators(
+    uint32[] calldata nodeOperatorIds,
+    NodeOperatorParams[] calldata nodeOperators
+  ) external {
     if (nodeOperatorIds.length != nodeOperators.length) {
       revert LengthMismatch(nodeOperatorIds.length, nodeOperators.length);
     }
@@ -799,7 +802,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
       uint32 nodeWorkflowDONId = storedNode.workflowDONId;
       if (nodeWorkflowDONId != 0) {
         bytes32[] memory workflowDonCapabilityIds =
-          s_dons[nodeWorkflowDONId].config[s_dons[nodeWorkflowDONId].configCount].capabilityIds;
+        s_dons[nodeWorkflowDONId].config[s_dons[nodeWorkflowDONId].configCount].capabilityIds;
 
         for (uint256 j; j < workflowDonCapabilityIds.length; ++j) {
           if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j])) {
@@ -850,9 +853,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         /// correctly supports the ICapabilityConfiguration interface
         /// by implementing both getCapabilityConfiguration and
         /// beforeCapabilityConfigSet
-        if (
-          !ERC165Checker.supportsInterface(capability.configurationContract, type(ICapabilityConfiguration).interfaceId)
-        ) revert InvalidCapabilityConfigurationContractInterface(capability.configurationContract);
+        if (!ERC165Checker.supportsInterface(
+            capability.configurationContract, type(ICapabilityConfiguration).interfaceId
+          )) revert InvalidCapabilityConfigurationContractInterface(capability.configurationContract);
       }
       s_capabilities[hashedCapabilityId] = capability;
       emit CapabilityConfigured(capability.capabilityId);
@@ -913,7 +916,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// as whether or not the DON can accept external workflows
   /// @param donId The ID of the DON to update
   /// @param updateDONParams The parameters for the DON to update
-  function updateDON(uint32 donId, UpdateDONParams calldata updateDONParams) external onlyOwner {
+  function updateDON(
+    uint32 donId,
+    UpdateDONParams calldata updateDONParams
+  ) external onlyOwner {
     DON storage don = s_dons[donId];
     uint32 configCount = don.configCount;
     if (configCount == 0) revert DONDoesNotExist(donId);
@@ -935,7 +941,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @notice Updates a DON's configuration by its name
   /// @param donName The name of the DON to update
   /// @param updateDONParams The parameters for the DON to update
-  function updateDONByName(string calldata donName, UpdateDONParams calldata updateDONParams) external onlyOwner {
+  function updateDONByName(
+    string calldata donName,
+    UpdateDONParams calldata updateDONParams
+  ) external onlyOwner {
     uint32 donId = s_donNameToId[donName];
     if (donId == 0) revert DONWithNameDoesNotExist(donName);
 
@@ -1015,14 +1024,12 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     string memory capabilityId
   ) public view returns (CapabilityInfo memory) {
     bytes32 hashedCapabilityId = _hash(capabilityId);
-    return (
-      CapabilityInfo({
+    return (CapabilityInfo({
         capabilityId: capabilityId,
         metadata: s_capabilities[hashedCapabilityId].metadata,
         configurationContract: s_capabilities[hashedCapabilityId].configurationContract,
         isDeprecated: s_deprecatedHashedCapabilityIds.contains(hashedCapabilityId)
-      })
-    );
+      }));
   }
 
   /// @notice Returns a paginated list of capabilities
@@ -1032,7 +1039,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param start Zero-based index at which the page begins
   /// @param limit Maximum number of capabilities to return
   /// @return CapabilityInfo[] List of capabilities for the requested page
-  function getCapabilities(uint256 start, uint256 limit) external view returns (CapabilityInfo[] memory) {
+  function getCapabilities(
+    uint256 start,
+    uint256 limit
+  ) external view returns (CapabilityInfo[] memory) {
     uint256 total = s_hashedCapabilityIds.length();
     uint256 count = _getPageCount(total, start, limit);
 
@@ -1074,7 +1084,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param start Zero-based index at which the page begins
   /// @param limit Maximum number of node operators to return
   /// @return NodeOperatorInfo[] List of node operators for the requested page
-  function getNodeOperators(uint256 start, uint256 limit) external view returns (NodeOperatorInfo[] memory) {
+  function getNodeOperators(
+    uint256 start,
+    uint256 limit
+  ) external view returns (NodeOperatorInfo[] memory) {
     uint256 total = s_activeNodeOperatorIds.length();
     uint256 count = _getPageCount(total, start, limit);
 
@@ -1109,8 +1122,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
     for (uint256 i; i < capabilityIds.length; ++i) {
       capabilityIdsString[i] = s_hashedCapabilityIdToCapabilityId[capabilityIds[i]];
     }
-    return (
-      NodeInfo({
+    return (NodeInfo({
         nodeOperatorId: s_nodes[p2pId].nodeOperatorId,
         p2pId: s_nodes[p2pId].p2pId,
         signer: s_nodes[p2pId].signer,
@@ -1120,8 +1132,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
         configCount: s_nodes[p2pId].configCount,
         workflowDONId: s_nodes[p2pId].workflowDONId,
         capabilitiesDONIds: s_nodes[p2pId].capabilitiesDONIds.values()
-      })
-    );
+      }));
   }
 
   /// @notice Returns a paginated list of nodes
@@ -1131,7 +1142,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param start Zero-based index at which the page begins
   /// @param limit Maximum number of nodes to return
   /// @return NodeInfo[] List of nodes for the requested page
-  function getNodes(uint256 start, uint256 limit) external view returns (NodeInfo[] memory) {
+  function getNodes(
+    uint256 start,
+    uint256 limit
+  ) external view returns (NodeInfo[] memory) {
     uint256 total = s_nodeP2PIds.length();
     uint256 count = _getPageCount(total, start, limit);
 
@@ -1175,7 +1189,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param donId The DON ID
   /// @param configCount The config count of the DON
   /// @return DONInfo The DON's parameters
-  function getHistoricalDONInfo(uint32 donId, uint32 configCount) external view returns (DONInfo memory) {
+  function getHistoricalDONInfo(
+    uint32 donId,
+    uint32 configCount
+  ) external view returns (DONInfo memory) {
     uint32 donConfigCount = s_dons[donId].configCount;
     if (donConfigCount == 0) revert DONDoesNotExist(donId);
     if (configCount > donConfigCount) {
@@ -1204,7 +1221,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param start Zero-based index at which the page begins
   /// @param limit Maximum number of DONs to return
   /// @return DONInfo[] List of DONs for the requested page
-  function getDONs(uint256 start, uint256 limit) external view returns (DONInfo[] memory) {
+  function getDONs(
+    uint256 start,
+    uint256 limit
+  ) external view returns (DONInfo[] memory) {
     uint256 total = s_activeDONIds.length();
     uint256 count = _getPageCount(total, start, limit);
 
@@ -1285,7 +1305,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param start Zero-based index at which the page begins
   /// @param limit Maximum number of DON families to return
   /// @return string[] List of DON families for the requested page
-  function getDONFamilies(uint256 start, uint256 limit) external view returns (string[] memory) {
+  function getDONFamilies(
+    uint256 start,
+    uint256 limit
+  ) external view returns (string[] memory) {
     uint256 total = s_activeDONFamilyNames.length();
     uint256 count = _getPageCount(total, start, limit);
 
@@ -1340,7 +1363,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
 
   /// @notice Removes a DON from a family
   /// @param donId The ID of the DON to remove from the family
-  function _removeDONFromFamily(uint32 donId, bytes32 donFamilyHash) internal {
+  function _removeDONFromFamily(
+    uint32 donId,
+    bytes32 donFamilyHash
+  ) internal {
     // Remove the family hash from the families the DON belongs to
     s_donIdToDonFamilyHashes[donId].remove(donFamilyHash);
     // Remove the DON ID from the list of DON IDs in the current family
@@ -1356,7 +1382,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @notice Adds a DON to a family
   /// @param donId The ID of the DON to add to the family
   /// @param donFamily The family name to add the DON to
-  function _addDONToFamily(uint32 donId, string memory donFamily) internal {
+  function _addDONToFamily(
+    uint32 donId,
+    string memory donFamily
+  ) internal {
     bytes32 donFamilyHash = _hash(donFamily);
 
     // If the DON is already in the family, do nothing.
@@ -1507,9 +1536,8 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   ) internal {
     bytes32 hashedCapabilityId = _hash(capabilityId);
     if (s_capabilities[hashedCapabilityId].configurationContract != address(0)) {
-      ICapabilityConfiguration(s_capabilities[hashedCapabilityId].configurationContract).beforeCapabilityConfigSet(
-        nodes, config, configCount, donId
-      );
+      ICapabilityConfiguration(s_capabilities[hashedCapabilityId].configurationContract)
+        .beforeCapabilityConfigSet(nodes, config, configCount, donId);
     }
   }
 
@@ -1517,7 +1545,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param donId The DON ID
   /// @param configCount The config count of the DON
   /// @return DONInfo The DON's parameters
-  function _getDON(uint32 donId, uint32 configCount) internal view returns (DONInfo memory) {
+  function _getDON(
+    uint32 donId,
+    uint32 configCount
+  ) internal view returns (DONInfo memory) {
     DON storage don = s_dons[donId];
     MutableDONConfig storage donConfig = don.config[configCount];
 
@@ -1574,7 +1605,11 @@ contract CapabilitiesRegistry is INodeInfoProvider, Ownable2StepMsgSender, IType
   /// @param start The zero-based index at which the page begins.
   /// @param limit The maximum number of items to include in the page.
   /// @return count The number of items from `start` before hitting `total` (zero if `start >= total`).
-  function _getPageCount(uint256 total, uint256 start, uint256 limit) internal pure returns (uint256 count) {
+  function _getPageCount(
+    uint256 total,
+    uint256 start,
+    uint256 limit
+  ) internal pure returns (uint256 count) {
     if (start >= total) {
       return 0;
     }

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 import {WorkflowRegistryManager} from "../../WorkflowRegistryManager.sol";
 import {WorkflowRegistryManagerSetup} from "./WorkflowRegistryManagerSetup.t.sol";
+import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract WorkflowRegistryManager_activateVersion is WorkflowRegistryManagerSetup {

@@ -11,7 +11,10 @@ contract Receiver is IReceiver {
 
   constructor() {}
 
-  function onReport(bytes calldata metadata, bytes calldata rawReport) external {
+  function onReport(
+    bytes calldata metadata,
+    bytes calldata rawReport
+  ) external {
     latestReport = rawReport;
 
     // parse actual report

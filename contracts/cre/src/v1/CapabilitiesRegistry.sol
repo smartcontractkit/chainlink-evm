@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 import {ICapabilityConfiguration} from "./interfaces/ICapabilityConfiguration.sol";
 import {INodeInfoProvider} from "./interfaces/INodeInfoProvider.sol";
+import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 
 import {OwnerIsCreator} from "@chainlink/contracts/src/v0.8/shared/access/OwnerIsCreator.sol";
 
@@ -455,7 +455,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @notice Updates a node operator
   /// @param nodeOperatorIds The ID of the node operator being updated
   /// @param nodeOperators The updated node operator params
-  function updateNodeOperators(uint32[] calldata nodeOperatorIds, NodeOperator[] calldata nodeOperators) external {
+  function updateNodeOperators(
+    uint32[] calldata nodeOperatorIds,
+    NodeOperator[] calldata nodeOperators
+  ) external {
     if (nodeOperatorIds.length != nodeOperators.length) {
       revert LengthMismatch(nodeOperatorIds.length, nodeOperators.length);
     }
@@ -629,7 +632,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       uint32 nodeWorkflowDONId = storedNode.workflowDONId;
       if (nodeWorkflowDONId != 0) {
         bytes32[] memory workflowDonCapabilityIds =
-          s_dons[nodeWorkflowDONId].config[s_dons[nodeWorkflowDONId].configCount].capabilityIds;
+        s_dons[nodeWorkflowDONId].config[s_dons[nodeWorkflowDONId].configCount].capabilityIds;
 
         for (uint256 j; j < workflowDonCapabilityIds.length; ++j) {
           if (!storedNode.supportedHashedCapabilityIds[capabilityConfigCount].contains(workflowDonCapabilityIds[j])) {
@@ -665,8 +668,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   function getNode(
     bytes32 p2pId
   ) public view returns (NodeInfo memory nodeInfo) {
-    return (
-      NodeInfo({
+    return (NodeInfo({
         nodeOperatorId: s_nodes[p2pId].nodeOperatorId,
         p2pId: s_nodes[p2pId].p2pId,
         signer: s_nodes[p2pId].signer,
@@ -675,8 +677,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         configCount: s_nodes[p2pId].configCount,
         workflowDONId: s_nodes[p2pId].workflowDONId,
         capabilitiesDONIds: s_nodes[p2pId].capabilitiesDONIds.values()
-      })
-    );
+      }));
   }
 
   /// @notice Gets all nodes
@@ -741,8 +742,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   function getCapability(
     bytes32 hashedId
   ) public view returns (CapabilityInfo memory) {
-    return (
-      CapabilityInfo({
+    return (CapabilityInfo({
         hashedId: hashedId,
         labelledName: s_capabilities[hashedId].labelledName,
         version: s_capabilities[hashedId].version,
@@ -750,8 +750,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
         responseType: s_capabilities[hashedId].responseType,
         configurationContract: s_capabilities[hashedId].configurationContract,
         isDeprecated: s_deprecatedHashedCapabilityIds.contains(hashedId)
-      })
-    );
+      }));
   }
 
   /// @notice Returns all capabilities. This operation will copy capabilities
@@ -773,7 +772,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param version The capability's version number
   /// @return bytes32 A unique identifier for the capability
   /// @dev The hash of the encoded labelledName and version
-  function getHashedCapabilityId(string memory labelledName, string memory version) public pure returns (bytes32) {
+  function getHashedCapabilityId(
+    string memory labelledName,
+    string memory version
+  ) public pure returns (bytes32) {
     return keccak256(abi.encode(labelledName, version));
   }
 
@@ -835,11 +837,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       nodes,
       capabilityConfigurations,
       DONParams({
-        id: donId,
-        configCount: ++configCount,
-        isPublic: isPublic,
-        acceptsWorkflows: don.acceptsWorkflows,
-        f: f
+        id: donId, configCount: ++configCount, isPublic: isPublic, acceptsWorkflows: don.acceptsWorkflows, f: f
       })
     );
   }
@@ -908,7 +906,10 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
   /// @param capabilityId The Capability ID
   /// @return bytes The DON specific configuration for the capability stored on the capability registry
   /// @return bytes The DON specific configuration stored on the capability's configuration contract
-  function getCapabilityConfigs(uint32 donId, bytes32 capabilityId) external view returns (bytes memory, bytes memory) {
+  function getCapabilityConfigs(
+    uint32 donId,
+    bytes32 capabilityId
+  ) external view returns (bytes memory, bytes memory) {
     uint32 configCount = s_dons[donId].configCount;
 
     bytes memory donCapabilityConfig = s_dons[donId].config[configCount].capabilityConfigs[capabilityId];
@@ -984,11 +985,9 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
       }
 
       for (uint256 j; j < nodes.length; ++j) {
-        if (
-          !s_nodes[nodes[j]].supportedHashedCapabilityIds[s_nodes[nodes[j]].configCount].contains(
+        if (!s_nodes[nodes[j]].supportedHashedCapabilityIds[s_nodes[nodes[j]].configCount].contains(
             configuration.capabilityId
-          )
-        ) revert NodeDoesNotSupportCapability(nodes[j], configuration.capabilityId);
+          )) revert NodeDoesNotSupportCapability(nodes[j], configuration.capabilityId);
       }
 
       donCapabilityConfig.capabilityIds.push(configuration.capabilityId);
@@ -1021,24 +1020,26 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
     bytes memory config
   ) internal {
     if (s_capabilities[capabilityId].configurationContract != address(0)) {
-      ICapabilityConfiguration(s_capabilities[capabilityId].configurationContract).beforeCapabilityConfigSet(
-        nodes, config, configCount, donId
-      );
+      ICapabilityConfiguration(s_capabilities[capabilityId].configurationContract)
+        .beforeCapabilityConfigSet(nodes, config, configCount, donId);
     }
   }
 
   /// @notice Sets a capability's data
   /// @param hashedCapabilityId The ID of the capability being set
   /// @param capability The capability's data
-  function _setCapability(bytes32 hashedCapabilityId, Capability memory capability) internal {
+  function _setCapability(
+    bytes32 hashedCapabilityId,
+    Capability memory capability
+  ) internal {
     if (capability.configurationContract != address(0)) {
       /// Check that the configuration contract being assigned
       /// correctly supports the ICapabilityConfiguration interface
       /// by implementing both getCapabilityConfiguration and
       /// beforeCapabilityConfigSet
-      if (
-        !ERC165Checker.supportsInterface(capability.configurationContract, type(ICapabilityConfiguration).interfaceId)
-      ) revert InvalidCapabilityConfigurationContractInterface(capability.configurationContract);
+      if (!ERC165Checker.supportsInterface(
+          capability.configurationContract, type(ICapabilityConfiguration).interfaceId
+        )) revert InvalidCapabilityConfigurationContractInterface(capability.configurationContract);
     }
     s_capabilities[hashedCapabilityId] = capability;
     emit CapabilityConfigured(hashedCapabilityId);
@@ -1059,8 +1060,7 @@ contract CapabilitiesRegistry is INodeInfoProvider, OwnerIsCreator, ITypeAndVers
 
     for (uint256 i; i < capabilityConfigurations.length; ++i) {
       capabilityConfigurations[i] = CapabilityConfiguration({
-        capabilityId: capabilityIds[i],
-        config: donCapabilityConfig.capabilityConfigs[capabilityIds[i]]
+        capabilityId: capabilityIds[i], config: donCapabilityConfig.capabilityConfigs[capabilityIds[i]]
       });
     }
 
