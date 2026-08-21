@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.6;
+pragma solidity ^0.8.6;
 
 import {IAutomationCompatible} from "../automation-cre/interfaces/IAutomationCompatible.sol";
 
