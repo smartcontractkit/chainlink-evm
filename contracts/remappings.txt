@@ -1,4 +1,4 @@
-forge-std/=src/v0.8/vendor/forge-std/src/
+forge-std/=node_modules/forge-std/src/
 
 @openzeppelin/contracts@4.8.3=node_modules/@openzeppelin/contracts-4.8.3
 @openzeppelin/contracts@4.9.6=node_modules/@openzeppelin/contracts-4.9.6
