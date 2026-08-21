@@ -29,10 +29,10 @@
       "@openzeppelin/contracts": "4.9.6"
     }
   },
-
   "devDependencies": {
     "solhint": "^6.2.4",
-    "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1"
+    "solhint-plugin-chainlink-solidity": "github:smartcontractkit/chainlink-solhint-rules#v1.2.1",
+    "forge-std": "github:foundry-rs/forge-std#v1.16.2"
   },
   "dependencies": {
     "@openzeppelin/contracts-4.8.3": "npm:@openzeppelin/contracts@4.8.3",

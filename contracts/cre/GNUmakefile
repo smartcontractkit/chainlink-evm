@@ -16,11 +16,11 @@ ALL_FOUNDRY_PRODUCTS = dev v1 v2
 # a static fuzz seed by default, flaky gas results per platform are still observed.
 .PHONY: snapshot
 snapshot: ## Make a snapshot for a specific product.
-	export FOUNDRY_PROFILE=$(FOUNDRY_PROFILE) && forge snapshot --nmt "test?(Fuzz|Fork|.*_RevertWhen)_.*" --snap gas-snapshots/$(FOUNDRY_PROFILE).gas-snapshot
+	export FOUNDRY_PROFILE=$(FOUNDRY_PROFILE) && forge snapshot --isolate --nmt "test?(Fuzz|Fork|.*_RevertWhen)_.*" --snap gas-snapshots/$(FOUNDRY_PROFILE).gas-snapshot
 
 .PHONY: snapshot-diff
 snapshot-diff: ## Make a snapshot for a specific product.
-	export FOUNDRY_PROFILE=$(FOUNDRY_PROFILE) && forge snapshot --nmt "test?(Fuzz|Fork|.*_RevertWhen)_.*" --diff gas-snapshots/$(FOUNDRY_PROFILE).gas-snapshot
+	export FOUNDRY_PROFILE=$(FOUNDRY_PROFILE) && forge snapshot --isolate --nmt "test?(Fuzz|Fork|.*_RevertWhen)_.*" --diff gas-snapshots/$(FOUNDRY_PROFILE).gas-snapshot
 
 
 .PHONY: snapshot-all
