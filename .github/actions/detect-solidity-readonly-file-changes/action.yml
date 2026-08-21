@@ -7,7 +7,6 @@ outputs:
 runs:
   using: 'composite'
   steps:
-
     - name: Filter paths
       uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
       id: changed_files
@@ -15,9 +14,7 @@ runs:
         list-files: 'csv'
         filters: |
           read_only_sol:
-            - modified|added:'contracts/src/v0.8/automation/interfaces/**/*'
-            - modified|added:'contracts/src/v0.8/automation/upkeeps/**/*'
-            - modified|added:'contracts/src/v0.8/automation/v2_1/**/*'
+            - modified|added:'contracts/src/v0.8/vrf/interfaces/**/*'
 
     - name: Fail if read-only files have changed
       if: ${{ steps.changed_files.outputs.read_only_sol == 'true' }}

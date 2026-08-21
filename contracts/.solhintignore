@@ -1,20 +1,7 @@
 # Test files run with a different solhint ruleset, ignore them here.
 **/*.t.sol
 
-# Ignore frozen Automation code
-src/v0.8/automation/v2_1
-src/v0.8/automation/interfaces/v2_1/
-src/v0.8/automation/interfaces/MigratableKeeperRegistryInterface.sol
-src/v0.8/automation/upkeeps
-src/v0.8/automation/libraries/internal/Cron.sol
-src/v0.8/automation/AutomationForwarder.sol
-src/v0.8/automation/AutomationForwarderLogic.sol
-src/v0.8/automation/dev/UpkeepBalanceMonitor.sol
-
-
 # Ignore tests / test helpers (for now)
-src/v0.8/automation/mocks
-src/v0.8/automation/testhelpers
 src/v0.8/data-feeds/test/helpers
 
 # Test helpers

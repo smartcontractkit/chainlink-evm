@@ -7,7 +7,6 @@ on:
         description: 'product for which to generate artifacts; should be the same as Foundry profile'
         required: true
         options:
-          - "automation"
           - "keystone"
           - "l2ep"
           - "llo-feeds"
