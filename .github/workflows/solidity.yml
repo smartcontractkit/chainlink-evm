@@ -3,6 +3,10 @@ name: Solidity
 on:
   merge_group:
   pull_request:
+  push:
+    tags:
+      - 'contracts-v*'
+      - 'contracts-cre-v*'
 
 defaults:
   run:
