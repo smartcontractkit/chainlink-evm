@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -19,9 +20,14 @@ import (
 // At least one HTTPURL is required. WSURLs are optional; without them the client polls for
 // heads rather than subscribing, which is enough for view calls.
 type Config struct {
-	HTTPURLs  []string `toml:"http-url" usage:"EVM RPC HTTP URL(s); repeat or comma-separate for a multinode pool" validate:"required" example:"['https://rpc.example.com']"`
+	// Neither URL nor chain ID is `validate:"required"`, which would be checked when
+	// the configuration is decoded: a run that names no chain at all is asking for one
+	// to be started for it, and there is nothing to name until it exists. Both are
+	// still required to dial - see NewClientFromConfig, which says so once the answer
+	// to that question is known.
+	HTTPURLs  []string `toml:"http-url" usage:"EVM RPC HTTP URL(s); repeat or comma-separate for a multinode pool" example:"['https://rpc.example.com']"`
 	WSURLs    []string `toml:"ws-url" usage:"EVM RPC WebSocket URL(s), positionally paired with --evm.http-url; optional" validate:"excluded_without=HTTPURLs"`
-	ChainID   string   `usage:"EVM chain ID" validate:"required" example:"'1'"`
+	ChainID   string   `usage:"EVM chain ID" example:"'1'"`
 	ChainType string   `usage:"EVM chain type (empty for a generic EVM chain)"`
 
 	SelectionMode              string                `usage:"node selection mode"`
@@ -50,6 +56,9 @@ type Config struct {
 //
 // The returned Client is dialed and ready to use; the caller owns it and must Close it.
 func NewClientFromConfig(ctx context.Context, lggr logger.Logger, c Config) (Client, error) {
+	if len(c.HTTPURLs) == 0 {
+		return nil, errors.New("at least one http url is required to dial a chain")
+	}
 	if len(c.WSURLs) > 0 && len(c.WSURLs) != len(c.HTTPURLs) {
 		return nil, fmt.Errorf("ws url count (%d) must match http url count (%d) when provided", len(c.WSURLs), len(c.HTTPURLs))
 	}
