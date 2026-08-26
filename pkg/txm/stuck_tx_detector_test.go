@@ -1,6 +1,7 @@
 package txm
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -94,5 +95,27 @@ func TestTimeBasedDetection(t *testing.T) {
 		}
 		assert.True(t, s.timeBasedDetection(tx1))
 		assert.False(t, s.timeBasedDetection(tx2))
+	})
+
+	t.Run("safe to call concurrently for different addresses", func(t *testing.T) {
+		config := StuckTxDetectorConfig{
+			BlockTime:             1 * time.Second,
+			StuckTxBlockThreshold: 10,
+		}
+		s := NewStuckTxDetector(logger.Test(t), "", config)
+		lastBroadcastAt := time.Time{}
+
+		var wg sync.WaitGroup
+		for range 10 {
+			wg.Go(func() {
+				tx := &types.Transaction{
+					ID:              1,
+					LastBroadcastAt: &lastBroadcastAt,
+					FromAddress:     testutils.NewAddress(),
+				}
+				s.timeBasedDetection(tx)
+			})
+		}
+		wg.Wait()
 	})
 }

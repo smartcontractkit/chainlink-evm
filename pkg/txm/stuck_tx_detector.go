@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -27,6 +28,7 @@ type stuckTxDetector struct {
 	lggr         logger.Logger
 	chainType    chaintype.ChainType
 	config       StuckTxDetectorConfig
+	mu           sync.Mutex
 	lastPurgeMap map[common.Address]time.Time
 }
 
@@ -60,6 +62,9 @@ func (s *stuckTxDetector) DetectStuckTransaction(ctx context.Context, tx *types.
 // so it is more likely to be picked up compared to a transaction that hasn't been broadcasted before. This would avoid slowing down TXM for sebsequent transactions
 // in case the current one is stuck.
 func (s *stuckTxDetector) timeBasedDetection(tx *types.Transaction) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	threshold := (s.config.BlockTime * time.Duration(s.config.StuckTxBlockThreshold))
 	if tx.LastBroadcastAt == nil {
 		if tx.AttemptCount >= maxAttemptsThreshold {
