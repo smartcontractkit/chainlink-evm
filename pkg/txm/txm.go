@@ -141,10 +141,10 @@ func (t *Txm) startAddress(address common.Address) {
 }
 
 func (t *Txm) initializeNonce(ctx context.Context, address common.Address) {
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, pendingNonceDefaultTimeout)
-	defer cancel()
 	for {
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, pendingNonceDefaultTimeout)
 		pendingNonce, err := t.client.PendingNonceAt(ctxWithTimeout, address)
+		cancel()
 		if err != nil {
 			t.lggr.Errorw("Error when fetching initial nonce", "address", address, "err", err)
 			select {
@@ -278,7 +278,7 @@ func (t *Txm) BroadcastTransaction(ctx context.Context, address common.Address) 
 		// to insufficient balance. We're making this trade-off to avoid storing stuck transactions and making unnecessary
 		// RPC calls. The upper limit is always MaxInFlightTransactions regardless of the pending nonce.
 		if unconfirmedCount >= MaxInFlightSubset {
-			if unconfirmedCount > MaxInFlightTransactions {
+			if unconfirmedCount >= MaxInFlightTransactions {
 				t.metrics.IncrementLifecycleFailure(ctx, StageMaxInFlight)
 				t.lggr.Warnf("Reached transaction limit: %d for unconfirmed transactions", MaxInFlightTransactions)
 				return true, nil
@@ -349,17 +349,18 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 				return nil
 			}
 		}
-		pendingNonce, pErr := t.client.PendingNonceAt(ctx, fromAddress)
-		if pErr != nil {
-			return pErr
-		}
-		if pendingNonce <= *tx.Nonce {
-			if tx.AttemptCount == 1 {
-				// We increment the failure counter only during the first attempt to avoid overcounting. After the first attempt, there is no guarantee
-				// there isn't an in-flight transaction in the mempool that would prevent the nonce from increasing, i.e. transaction already known.
-				t.metrics.IncrementLifecycleFailure(ctx, StageBroadcast)
+		// Best-effort check on the first transmission only. After the first attempt, there is no guarantee an in-flight
+		// attempt in the mempool won't keep the pending nonce increased, i.e. transaction already known, so the result
+		// wouldn't tell us anything about this attempt's transmission.
+		if tx.AttemptCount == 1 {
+			pendingNonce, pErr := t.client.PendingNonceAt(ctx, fromAddress)
+			if pErr != nil {
+				return pErr
 			}
-			return fmt.Errorf("pending nonce for txID: %v didn't increase. PendingNonce: %d, TxNonce: %d. TxErr: %w", tx.ID, pendingNonce, *tx.Nonce, txErr)
+			if pendingNonce <= *tx.Nonce {
+				t.metrics.IncrementLifecycleFailure(ctx, StageBroadcast)
+				return fmt.Errorf("pending nonce for txID: %v didn't increase. PendingNonce: %d, TxNonce: %d. TxErr: %w", tx.ID, pendingNonce, *tx.Nonce, txErr)
+			}
 		}
 	}
 
