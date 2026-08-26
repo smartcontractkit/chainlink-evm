@@ -34,7 +34,8 @@ func TestMetaErrorHandler(t *testing.T) {
 		setNonce := func(address common.Address, nonce uint64) {}
 		txStoreManager := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
 		require.NoError(t, txStoreManager.Add(address))
-		txStore := txStoreManager.InMemoryStoreMap[address]
+		txStore, exists := txStoreManager.GetStoreSafe(address)
+		require.True(t, exists)
 		_ = txStore.CreateTransaction(txRequest)
 		tx, err := txStore.UpdateUnstartedTransactionWithNonce(nonce)
 		require.NoError(t, err)
@@ -67,7 +68,8 @@ func TestMetaErrorHandler(t *testing.T) {
 		setNonce := func(address common.Address, nonce uint64) {}
 		txStoreManager := storage.NewInMemoryStoreManager(logger.Test(t), testutils.FixtureChainID)
 		require.NoError(t, txStoreManager.Add(address))
-		txStore := txStoreManager.InMemoryStoreMap[address]
+		txStore, exists := txStoreManager.GetStoreSafe(address)
+		require.True(t, exists)
 		_ = txStore.CreateTransaction(txRequest)
 		tx, err := txStore.UpdateUnstartedTransactionWithNonce(nonce)
 		require.NoError(t, err)
@@ -102,7 +104,8 @@ func TestMetaErrorHandler(t *testing.T) {
 		setNonce := func(address common.Address, nonce uint64) {}
 		txStoreManager := storage.NewInMemoryStoreManager(lggr, testutils.FixtureChainID)
 		require.NoError(t, txStoreManager.Add(address))
-		txStore := txStoreManager.InMemoryStoreMap[address]
+		txStore, exists := txStoreManager.GetStoreSafe(address)
+		require.True(t, exists)
 		_ = txStore.CreateTransaction(txRequest)
 		tx, err := txStore.UpdateUnstartedTransactionWithNonce(nonce)
 		require.NoError(t, err)

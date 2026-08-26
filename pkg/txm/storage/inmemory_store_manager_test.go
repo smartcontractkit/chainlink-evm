@@ -19,13 +19,15 @@ func TestAdd(t *testing.T) {
 	// Adds a new address
 	err := m.Add(fromAddress)
 	require.NoError(t, err)
-	assert.Len(t, m.InMemoryStoreMap, 1)
-	existingStore := m.InMemoryStoreMap[fromAddress]
+	existingStore, exists := m.GetStoreSafe(fromAddress)
+	require.True(t, exists)
 
 	// Fails if address exists
 	err = m.Add(fromAddress)
 	require.Error(t, err)
-	assert.Same(t, existingStore, m.InMemoryStoreMap[fromAddress])
+	store, exists := m.GetStoreSafe(fromAddress)
+	require.True(t, exists)
+	assert.Same(t, existingStore, store)
 
 	// Adds multiple addresses
 	fromAddress1 := testutils.NewAddress()
@@ -33,5 +35,8 @@ func TestAdd(t *testing.T) {
 	addresses := []common.Address{fromAddress1, fromAddress2}
 	err = m.Add(addresses...)
 	require.NoError(t, err)
-	assert.Len(t, m.InMemoryStoreMap, 3)
+	_, exists = m.GetStoreSafe(fromAddress1)
+	require.True(t, exists)
+	_, exists = m.GetStoreSafe(fromAddress2)
+	require.True(t, exists)
 }
