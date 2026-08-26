@@ -20,10 +20,12 @@ func TestAdd(t *testing.T) {
 	err := m.Add(fromAddress)
 	require.NoError(t, err)
 	assert.Len(t, m.InMemoryStoreMap, 1)
+	existingStore := m.InMemoryStoreMap[fromAddress]
 
 	// Fails if address exists
 	err = m.Add(fromAddress)
 	require.Error(t, err)
+	assert.Same(t, existingStore, m.InMemoryStoreMap[fromAddress])
 
 	// Adds multiple addresses
 	fromAddress1 := testutils.NewAddress()

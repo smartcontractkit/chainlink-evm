@@ -41,6 +41,7 @@ func (m *InMemoryStoreManager) Add(addresses ...common.Address) (err error) {
 	for _, address := range addresses {
 		if _, exists := m.InMemoryStoreMap[address]; exists {
 			err = errors.Join(err, fmt.Errorf("address %v already exists in store manager", address))
+			continue
 		}
 		m.InMemoryStoreMap[address] = NewInMemoryStore(m.lggr, address, m.chainID)
 	}
