@@ -558,9 +558,9 @@ func TestFlow_ErrorHandler(t *testing.T) {
 	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
 	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(dualbroadcast.ErrNoBids).Once()
-	// The pending nonce is not checked after the first attempt, so the send error doesn't fail the retry.
+	// The pending nonce is not checked after the first attempt, so the send error is assumed to be a failed transmission and returned.
 	err = tm.BackfillTransactions(t.Context(), address) // retry
-	require.NoError(t, err)
+	require.ErrorIs(t, err, dualbroadcast.ErrNoBids)
 	tx, count, err = txStoreManager.FetchUnconfirmedTransactionAtNonceWithCount(t.Context(), 0, address) // same transaction is still in the store
 	require.NoError(t, err)
 	require.Equal(t, 1, count)

@@ -208,9 +208,19 @@ func (t *Txm) GetNonce(address common.Address) uint64 {
 	return t.nonceMap[address]
 }
 
+// SetNonce updates the local nonce map. Lowering the nonce is only allowed by exactly one,
+// i.e. releasing the most recently assigned nonce after a failed transmission. Anything
+// lower would collide with nonces already assigned to in-flight transactions; in that case
+// the update is dropped and the nonce gap left by the fatal tx is filled by
+// BackfillTransactions' empty tx.
 func (t *Txm) SetNonce(address common.Address, nonce uint64) {
 	t.nonceMapMu.Lock()
 	defer t.nonceMapMu.Unlock()
+	if current := t.nonceMap[address]; nonce+1 < current {
+		t.lggr.Criticalw("Rejected nonce update that would collide with in-flight transactions",
+			"address", address, "currentNonce", current, "requestedNonce", nonce)
+		return
+	}
 	t.nonceMap[address] = nonce
 }
 
@@ -349,18 +359,20 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 				return nil
 			}
 		}
-		// Best-effort check on the first transmission only. After the first attempt, there is no guarantee an in-flight
-		// attempt in the mempool won't keep the pending nonce increased, i.e. transaction already known, so the result
-		// wouldn't tell us anything about this attempt's transmission.
-		if tx.AttemptCount == 1 {
-			pendingNonce, pErr := t.client.PendingNonceAt(ctx, fromAddress)
-			if pErr != nil {
-				return pErr
-			}
-			if pendingNonce <= *tx.Nonce {
-				t.metrics.IncrementLifecycleFailure(ctx, StageBroadcast)
-				return fmt.Errorf("pending nonce for txID: %v didn't increase. PendingNonce: %d, TxNonce: %d. TxErr: %w", tx.ID, pendingNonce, *tx.Nonce, txErr)
-			}
+		// Best-effort check on the first transmission only: an increased pending nonce proves the transmission went
+		// through. After the first attempt, there is no guarantee an in-flight attempt in the mempool won't keep the
+		// pending nonce increased, i.e. transaction already known, so the result wouldn't tell us anything about this
+		// attempt's transmission and we assume it failed.
+		if tx.AttemptCount != 1 {
+			return fmt.Errorf("rebroadcast attempt for txID: %v failed: %w", tx.ID, txErr)
+		}
+		pendingNonce, pErr := t.client.PendingNonceAt(ctx, fromAddress)
+		if pErr != nil {
+			return pErr
+		}
+		if pendingNonce <= *tx.Nonce {
+			t.metrics.IncrementLifecycleFailure(ctx, StageBroadcast)
+			return fmt.Errorf("pending nonce for txID: %v didn't increase. PendingNonce: %d, TxNonce: %d. TxErr: %w", tx.ID, pendingNonce, *tx.Nonce, txErr)
 		}
 	}
 
