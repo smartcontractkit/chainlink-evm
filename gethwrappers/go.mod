@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/chainlink-evm/gethwrappers
 
-go 1.25.0
+go 1.25.13
 
 require (
 	github.com/ethereum/go-ethereum v1.17.3
@@ -54,7 +54,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grafana/pyroscope-go v1.2.7 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/hashicorp/go-bexpr v0.1.10 // indirect

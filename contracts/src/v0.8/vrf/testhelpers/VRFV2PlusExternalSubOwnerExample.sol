@@ -14,13 +14,19 @@ contract VRFV2PlusExternalSubOwnerExample is VRFConsumerBaseV2Plus {
   uint256 public s_requestId;
   address internal s_owner;
 
-  constructor(address vrfCoordinator, address link) VRFConsumerBaseV2Plus(vrfCoordinator) {
+  constructor(
+    address vrfCoordinator,
+    address link
+  ) VRFConsumerBaseV2Plus(vrfCoordinator) {
     LINKTOKEN = LinkTokenInterface(link);
     s_owner = msg.sender;
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] calldata randomWords
+  ) internal override {
     // solhint-disable-next-line gas-custom-errors
     require(requestId == s_requestId, "request ID is incorrect");
     s_randomWords = randomWords;

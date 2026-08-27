@@ -44,12 +44,12 @@ func TestORM_broadcasts(t *testing.T) {
 	require.Zero(t, rowsAffected)
 
 	t.Run("WasBroadcastConsumed_DNE", func(t *testing.T) {
-		_, err := orm.WasBroadcastConsumed(testutils.Context(t), rawLog.BlockHash, rawLog.Index, listener.JobID())
+		_, err := orm.WasBroadcastConsumed(t.Context(), rawLog.BlockHash, rawLog.Index, listener.JobID())
 		require.NoError(t, err)
 	})
 
 	require.True(t, t.Run("CreateBroadcast", func(t *testing.T) {
-		err := orm.CreateBroadcast(testutils.Context(t), rawLog.BlockHash, rawLog.BlockNumber, rawLog.Index, listener.JobID())
+		err := orm.CreateBroadcast(t.Context(), rawLog.BlockHash, rawLog.BlockNumber, rawLog.Index, listener.JobID())
 		require.NoError(t, err)
 
 		var consumed null.Bool
@@ -59,13 +59,13 @@ func TestORM_broadcasts(t *testing.T) {
 	}))
 
 	t.Run("WasBroadcastConsumed_false", func(t *testing.T) {
-		was, err := orm.WasBroadcastConsumed(testutils.Context(t), rawLog.BlockHash, rawLog.Index, listener.JobID())
+		was, err := orm.WasBroadcastConsumed(t.Context(), rawLog.BlockHash, rawLog.Index, listener.JobID())
 		require.NoError(t, err)
 		require.False(t, was)
 	})
 
 	require.True(t, t.Run("MarkBroadcastConsumed", func(t *testing.T) {
-		err := orm.MarkBroadcastConsumed(testutils.Context(t), rawLog.BlockHash, rawLog.BlockNumber, rawLog.Index, listener.JobID())
+		err := orm.MarkBroadcastConsumed(t.Context(), rawLog.BlockHash, rawLog.BlockNumber, rawLog.Index, listener.JobID())
 		require.NoError(t, err)
 
 		var consumed null.Bool
@@ -75,14 +75,14 @@ func TestORM_broadcasts(t *testing.T) {
 	}))
 
 	t.Run("WasBroadcastConsumed_true", func(t *testing.T) {
-		was, err := orm.WasBroadcastConsumed(testutils.Context(t), rawLog.BlockHash, rawLog.Index, listener.JobID())
+		was, err := orm.WasBroadcastConsumed(t.Context(), rawLog.BlockHash, rawLog.Index, listener.JobID())
 		require.NoError(t, err)
 		require.True(t, was)
 	})
 }
 
 func TestORM_pending(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 	orm := log.NewORM(db, *testutils.FixtureChainID)
 
@@ -107,7 +107,7 @@ func TestORM_pending(t *testing.T) {
 }
 
 func TestORM_MarkUnconsumed(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	db := testutils.NewSqlxDB(t)
 
 	orm := log.NewORM(db, *testutils.FixtureChainID)
@@ -202,7 +202,7 @@ func TestORM_Reinitialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := testutils.NewSqlxDB(t)
-			ctx := testutils.Context(t)
+			ctx := t.Context()
 			orm := log.NewORM(db, *testutils.FixtureChainID)
 
 			jobID := mustInsertV2JobSpec(t, db, common.BigToAddress(big.NewInt(rand.Int63())))

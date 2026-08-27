@@ -11,5 +11,8 @@ import {IInbox} from "../../vendor/arb-bridge-eth/v0.8.0-custom/contracts/bridge
  * contract's implementation
  */
 interface IArbitrumDelayedInbox is IInbox {
-  function calculateRetryableSubmissionFee(uint256 dataLength, uint256 baseFee) external view returns (uint256);
+  function calculateRetryableSubmissionFee(
+    uint256 dataLength,
+    uint256 baseFee
+  ) external view returns (uint256);
 }

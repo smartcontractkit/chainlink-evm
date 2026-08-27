@@ -126,6 +126,7 @@ func (s *store) Sign(ctx context.Context, address common.Address, bytes []byte) 
 }
 
 func (s *store) GetNextAddress(ctx context.Context, whitelist ...common.Address) (next common.Address, err error) {
+	whitelist = slices.Clone(whitelist)
 	s.lastUsedMu.Lock()
 	defer s.lastUsedMu.Unlock()
 

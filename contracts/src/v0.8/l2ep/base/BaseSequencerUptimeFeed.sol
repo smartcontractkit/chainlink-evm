@@ -60,7 +60,10 @@ abstract contract BaseSequencerUptimeFeed is
 
   /// @param l1SenderAddress Address of the L1 contract that is permissioned to call this contract
   /// @param initialStatus The initial status of the feed
-  constructor(address l1SenderAddress, bool initialStatus) {
+  constructor(
+    address l1SenderAddress,
+    bool initialStatus
+  ) {
     // We need to allow l1SenderAddress to be zero because this contract is deployed first
     // After deploying the validator contract, this contract will be updated with the correct L1 sender address
     _setL1Sender(l1SenderAddress);
@@ -115,13 +118,14 @@ abstract contract BaseSequencerUptimeFeed is
   /// @param roundId The round ID to record
   /// @param status Sequencer status
   /// @param timestamp The L1 block timestamp of status update
-  function _recordRound(uint80 roundId, bool status, uint64 timestamp) internal {
+  function _recordRound(
+    uint80 roundId,
+    bool status,
+    uint64 timestamp
+  ) internal {
     s_rounds[roundId] = Round({status: status, startedAt: timestamp, updatedAt: uint64(block.timestamp)});
     s_feedState = FeedState({
-      latestRoundId: roundId,
-      latestStatus: status,
-      startedAt: timestamp,
-      updatedAt: uint64(block.timestamp)
+      latestRoundId: roundId, latestStatus: status, startedAt: timestamp, updatedAt: uint64(block.timestamp)
     });
 
     emit NewRound(roundId, msg.sender, timestamp);
@@ -131,7 +135,10 @@ abstract contract BaseSequencerUptimeFeed is
   /// @notice Helper function to update when a round was last updated
   /// @param roundId The round ID to update
   /// @param status Sequencer status
-  function _updateRound(uint80 roundId, bool status) internal {
+  function _updateRound(
+    uint80 roundId,
+    bool status
+  ) internal {
     s_rounds[roundId].updatedAt = uint64(block.timestamp);
     s_feedState.updatedAt = uint64(block.timestamp);
     emit RoundUpdated(_getStatusAnswer(status), uint64(block.timestamp));
@@ -182,7 +189,10 @@ abstract contract BaseSequencerUptimeFeed is
   /// @dev This function will revert if not called from `l1Sender` via the L1->L2 messenger.
   /// @param status Sequencer status
   /// @param timestamp Block timestamp of status update
-  function updateStatus(bool status, uint64 timestamp) external override {
+  function updateStatus(
+    bool status,
+    uint64 timestamp
+  ) external override {
     _validateSender(s_l1Sender);
 
     FeedState memory feedState = _getFeedState();

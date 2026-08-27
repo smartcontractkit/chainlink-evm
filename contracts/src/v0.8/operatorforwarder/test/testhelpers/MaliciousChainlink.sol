@@ -36,27 +36,47 @@ library MaliciousChainlink {
     return self;
   }
 
-  function add(Request memory self, string memory _key, string memory _value) internal pure {
+  function add(
+    Request memory self,
+    string memory _key,
+    string memory _value
+  ) internal pure {
     self.buf.encodeString(_key);
     self.buf.encodeString(_value);
   }
 
-  function addBytes(Request memory self, string memory _key, bytes memory _value) internal pure {
+  function addBytes(
+    Request memory self,
+    string memory _key,
+    bytes memory _value
+  ) internal pure {
     self.buf.encodeString(_key);
     self.buf.encodeBytes(_value);
   }
 
-  function addInt(Request memory self, string memory _key, int256 _value) internal pure {
+  function addInt(
+    Request memory self,
+    string memory _key,
+    int256 _value
+  ) internal pure {
     self.buf.encodeString(_key);
     self.buf.encodeInt(_value);
   }
 
-  function addUint(Request memory self, string memory _key, uint256 _value) internal pure {
+  function addUint(
+    Request memory self,
+    string memory _key,
+    uint256 _value
+  ) internal pure {
     self.buf.encodeString(_key);
     self.buf.encodeUInt(_value);
   }
 
-  function addStringArray(Request memory self, string memory _key, string[] memory _values) internal pure {
+  function addStringArray(
+    Request memory self,
+    string memory _key,
+    string[] memory _values
+  ) internal pure {
     self.buf.encodeString(_key);
     self.buf.startArray();
     for (uint256 i = 0; i < _values.length; i++) {

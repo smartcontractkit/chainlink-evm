@@ -31,7 +31,10 @@ contract Chainlinked is ChainlinkClient {
    * @param _payment The amount of LINK to send for the request
    * @return The request ID
    */
-  function chainlinkRequest(Chainlink.Request memory _req, uint256 _payment) internal returns (bytes32) {
+  function chainlinkRequest(
+    Chainlink.Request memory _req,
+    uint256 _payment
+  ) internal returns (bytes32) {
     return _sendChainlinkRequest(_req, _payment);
   }
 
@@ -99,6 +102,7 @@ contract Chainlinked is ChainlinkClient {
   )
     internal
     recordChainlinkFulfillment(_requestId) // solhint-disable-next-line no-empty-blocks
+
   {}
 
   /**
@@ -107,7 +111,10 @@ contract Chainlinked is ChainlinkClient {
    * @param _ens The address of the ENS contract
    * @param _node The ENS node hash
    */
-  function setChainlinkWithENS(address _ens, bytes32 _node) internal {
+  function setChainlinkWithENS(
+    address _ens,
+    bytes32 _node
+  ) internal {
     _useChainlinkWithENS(_ens, _node);
   }
 
@@ -125,7 +132,10 @@ contract Chainlinked is ChainlinkClient {
    * @param _oracle The address of the oracle contract that will fulfill the request
    * @param _requestId The request ID used for the response
    */
-  function addExternalRequest(address _oracle, bytes32 _requestId) internal {
+  function addExternalRequest(
+    address _oracle,
+    bytes32 _requestId
+  ) internal {
     _addChainlinkExternalRequest(_oracle, _requestId);
   }
 }

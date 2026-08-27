@@ -55,7 +55,7 @@ func Test_DefaultTransmitter_CreateEthTransaction(t *testing.T) {
 		Meta:             nil,
 		Strategy:         strategy,
 	}).Return(txmgr.Tx{}, nil).Once()
-	require.NoError(t, transmitter.CreateEthTransaction(testutils.Context(t), toAddress, payload, nil))
+	require.NoError(t, transmitter.CreateEthTransaction(t.Context(), toAddress, payload, nil))
 }
 
 func Test_DefaultTransmitter_Forwarding_Enabled_CreateEthTransaction(t *testing.T) {
@@ -102,8 +102,8 @@ func Test_DefaultTransmitter_Forwarding_Enabled_CreateEthTransaction(t *testing.
 		Meta:             nil,
 		Strategy:         strategy,
 	}).Return(txmgr.Tx{}, nil).Once()
-	require.NoError(t, transmitter.CreateEthTransaction(testutils.Context(t), toAddress, payload, nil))
-	require.NoError(t, transmitter.CreateEthTransaction(testutils.Context(t), toAddress, payload, nil))
+	require.NoError(t, transmitter.CreateEthTransaction(t.Context(), toAddress, payload, nil))
+	require.NoError(t, transmitter.CreateEthTransaction(t.Context(), toAddress, payload, nil))
 }
 
 func Test_DefaultTransmitter_Forwarding_Enabled_CreateEthTransaction_Round_Robin_Error(t *testing.T) {
@@ -128,7 +128,7 @@ func Test_DefaultTransmitter_Forwarding_Enabled_CreateEthTransaction_Round_Robin
 		keystest.Addresses{},
 	)
 	require.NoError(t, err)
-	require.Error(t, transmitter.CreateEthTransaction(testutils.Context(t), toAddress, payload, nil))
+	require.Error(t, transmitter.CreateEthTransaction(t.Context(), toAddress, payload, nil))
 }
 
 func Test_DefaultTransmitter_Forwarding_Enabled_CreateEthTransaction_No_Keystore_Error(t *testing.T) {
@@ -198,6 +198,6 @@ func Test_Transmitter_With_StatusChecker_CreateEthTransaction(t *testing.T) {
 		Strategy:         strategy,
 	}).Return(txmgr.Tx{}, nil).Once()
 
-	require.NoError(t, transmitter.CreateEthTransaction(testutils.Context(t), toAddress, payload, txMeta))
+	require.NoError(t, transmitter.CreateEthTransaction(t.Context(), toAddress, payload, txMeta))
 	txm.AssertExpectations(t)
 }

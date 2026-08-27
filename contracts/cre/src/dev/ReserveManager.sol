@@ -16,7 +16,10 @@ contract ReserveManager is IReceiver {
     uint256 totalReserve;
   }
 
-  function onReport(bytes calldata, bytes calldata report) external override {
+  function onReport(
+    bytes calldata,
+    bytes calldata report
+  ) external override {
     UpdateReserves memory updateReservesData = abi.decode(report, (UpdateReserves));
     lastTotalMinted = updateReservesData.totalMinted;
     lastTotalReserve = updateReservesData.totalReserve;

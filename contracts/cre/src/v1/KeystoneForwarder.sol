@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 import {IReceiver} from "./interfaces/IReceiver.sol";
 import {IRouter} from "./interfaces/IRouter.sol";
+import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 
 import {OwnerIsCreator} from "@chainlink/contracts/src/v0.8/shared/access/OwnerIsCreator.sol";
 
@@ -223,7 +223,12 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
   // │                          Forwarder                           │
   // ================================================================
 
-  function setConfig(uint32 donId, uint32 configVersion, uint8 f, address[] calldata signers) external onlyOwner {
+  function setConfig(
+    uint32 donId,
+    uint32 configVersion,
+    uint8 f,
+    address[] calldata signers
+  ) external onlyOwner {
     if (f == 0) revert FaultToleranceMustBePositive();
     if (signers.length > MAX_ORACLES) revert ExcessSigners(signers.length, MAX_ORACLES);
     if (signers.length <= 3 * f) revert InsufficientSigners(signers.length, 3 * f + 1);
@@ -249,7 +254,10 @@ contract KeystoneForwarder is OwnerIsCreator, ITypeAndVersion, IRouter {
     emit ConfigSet(donId, configVersion, f, signers);
   }
 
-  function clearConfig(uint32 donId, uint32 configVersion) external onlyOwner {
+  function clearConfig(
+    uint32 donId,
+    uint32 configVersion
+  ) external onlyOwner {
     // We are not removing old signer positions, because it is sufficient to
     // clear the f value for `report` function. If we decide to restore
     // the configId in the future, the setConfig function clears the positions.

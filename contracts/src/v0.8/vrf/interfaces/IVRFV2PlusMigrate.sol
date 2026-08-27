@@ -11,5 +11,8 @@ interface IVRFV2PlusMigrate {
    * @param subId the subscription ID to migrate
    * @param newCoordinator the vrf coordinator to migrate to
    */
-  function migrate(uint256 subId, address newCoordinator) external;
+  function migrate(
+    uint256 subId,
+    address newCoordinator
+  ) external;
 }

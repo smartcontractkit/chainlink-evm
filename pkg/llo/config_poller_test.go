@@ -17,7 +17,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
-	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 )
 
 var _ LogPoller = (*mockLogPoller)(nil)
@@ -61,7 +60,7 @@ func (m *mockConfigCache) StoreConfig(ctx context.Context, cd ocrtypes.ConfigDig
 }
 
 func Test_ConfigPoller(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	lggr := logger.Test(t)
 	lp := &mockLogPoller{make([]logpoller.Log, 0), 0, nil, query.LimitAndSort{}}
 	addr := common.Address{1}

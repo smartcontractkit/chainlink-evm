@@ -27,15 +27,6 @@ ignore = ["src/v0.8/vendor/**/*.sol", "src/v0.6/**/*.sol"]
 number_underscore = "thousands"
 wrap_comments = true
 
-[profile.functions]
-optimizer_runs = 1_000_000
-solc_version = '0.8.19'
-evm_version = 'paris'
-src = 'src/v0.8/functions'
-test = 'src/v0.8/functions/tests'
-gas_price = 3_000_000_000         # 3 gwei
-deny_warnings = false
-
 #Used in tests with different solidity versions.
 [profile.vrf]
 optimizer_runs = 1_000
@@ -55,37 +46,11 @@ optimizer_runs = 1_000_000
 src = 'src/v0.8/vrf'
 deny_warnings = false
 
-[profile.automation]
-optimizer_runs = 10_000
-src = 'src/v0.8/automation'
-test = 'src/v0.8/automation/test'
-deny_warnings = false
-
-[profile.automation-compile-21]
-solc_version = '0.8.16'
-optimizer_runs = 1_000_000
-src = 'src/v0.8/automation'
-deny_warnings = false
-
-[profile.automation-compile-23]
-solc_version = '0.8.19'
-optimizer_runs = 1_000_000
-src = 'src/v0.8/automation'
-deny_warnings = false
-
-[profile.automation-compile-24]
-solc_version = '0.8.24'
-optimizer_runs = 1_000_000
-src = 'src/v0.8/automation'
-deny_warnings = false
-
 [profile.automation-cre]
 solc_version = '0.8.24'
 src = 'src/v0.8/automation-cre'
 test = 'src/v0.8/automation-cre/test'
 optimizer_runs = 1_000_000
-evm_version = 'paris'
-deny_warnings = false
 
 [profile.l2ep]
 solc_version = '0.8.24'
@@ -99,39 +64,12 @@ src = 'src/v0.8/llo-feeds'
 test = 'src/v0.8/llo-feeds/test'
 solc_version = '0.8.19'
 
-[profile.keystone]
-optimizer_runs = 1_000_000
-solc_version = '0.8.24'
-src = 'src/v0.8/keystone'
-test = 'src/v0.8/keystone/test'
-evm_version = 'paris'
-
 [profile.operatorforwarder]
 optimizer_runs = 1_000_000
 solc_version = '0.8.19'
 src = 'src/v0.8/operatorforwarder'
 test = 'src/v0.8/operatorforwarder/test'
 deny_warnings = false
-
-[profile.workflow]
-src = 'src/v0.8/workflow'
-via_ir = true
-
-[profile.workflow-v1]
-optimizer_runs = 1_000_000
-solc_version = '0.8.24'
-src = 'src/v0.8/workflow/v1'
-test = 'src/v0.8/workflow/v1/test'
-via_ir = true
-evm_version = 'paris'
-
-[profile.workflow-v2]
-optimizer_runs = 1_000
-solc_version = '0.8.26'
-src = 'src/v0.8/workflow/v2'
-test = 'src/v0.8/workflow/v2/test'
-via_ir = true
-evm_version = 'paris'
 
 [profile.data-feeds]
 optimizer_runs = 10_000

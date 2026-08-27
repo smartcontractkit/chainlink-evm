@@ -33,7 +33,10 @@ contract Flags is ITypeAndVersion, IFlags, SimpleReadAccessController {
    * @param racAddress address for the raising access controller.
    * @param lacAddress address for the lowering access controller.
    */
-  constructor(address racAddress, address lacAddress) {
+  constructor(
+    address racAddress,
+    address lacAddress
+  ) {
     setRaisingAccessController(racAddress);
     setLoweringAccessController(lacAddress);
   }

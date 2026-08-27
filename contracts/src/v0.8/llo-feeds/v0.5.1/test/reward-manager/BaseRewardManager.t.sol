@@ -168,14 +168,21 @@ contract BaseRewardManagerTest is Test {
     return recipients;
   }
 
-  function addFundsToPool(bytes32 poolId, Common.Asset memory amount, address sender) public {
+  function addFundsToPool(
+    bytes32 poolId,
+    Common.Asset memory amount,
+    address sender
+  ) public {
     IRewardManager.FeePayment[] memory payments = new IRewardManager.FeePayment[](1);
     payments[0] = IRewardManager.FeePayment(poolId, uint192(amount.amount));
 
     addFundsToPool(payments, sender);
   }
 
-  function addFundsToPool(IRewardManager.FeePayment[] memory payments, address sender) public {
+  function addFundsToPool(
+    IRewardManager.FeePayment[] memory payments,
+    address sender
+  ) public {
     //record the current address and switch to the sender
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -207,7 +214,10 @@ contract BaseRewardManagerTest is Test {
     return asset.balanceOf(addr);
   }
 
-  function claimRewards(bytes32[] memory poolIds, address sender) public {
+  function claimRewards(
+    bytes32[] memory poolIds,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -219,7 +229,11 @@ contract BaseRewardManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function payRecipients(bytes32 poolId, address[] memory recipients, address sender) public {
+  function payRecipients(
+    bytes32 poolId,
+    address[] memory recipients,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -231,7 +245,11 @@ contract BaseRewardManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function setRewardRecipients(bytes32 poolId, Common.AddressAndWeight[] memory recipients, address sender) public {
+  function setRewardRecipients(
+    bytes32 poolId,
+    Common.AddressAndWeight[] memory recipients,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -243,7 +261,10 @@ contract BaseRewardManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function setFeeManager(address feeManager, address sender) public {
+  function setFeeManager(
+    address feeManager,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -255,7 +276,11 @@ contract BaseRewardManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function updateRewardRecipients(bytes32 poolId, Common.AddressAndWeight[] memory recipients, address sender) public {
+  function updateRewardRecipients(
+    bytes32 poolId,
+    Common.AddressAndWeight[] memory recipients,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {PausableUpgradeable} from
-  "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
+import {
+  PausableUpgradeable
+} from "../../../../vendor/openzeppelin-solidity-upgradeable/v5.0.2/contracts/utils/PausableUpgradeable.sol";
 import {BurnMintERC20Transparent} from "./BurnMintERC20Transparent.sol";
 
 contract BurnMintERC20PausableTransparent is BurnMintERC20Transparent, PausableUpgradeable {
@@ -33,14 +34,23 @@ contract BurnMintERC20PausableTransparent is BurnMintERC20Transparent, PausableU
   // ================================================================
 
   /// @dev Disallows sending, minting and burning if implementation is paused.
-  function _update(address from, address to, uint256 value) internal virtual override {
+  function _update(
+    address from,
+    address to,
+    uint256 value
+  ) internal virtual override {
     _requireNotPaused();
 
     super._update(from, to, value);
   }
 
   /// @dev Disallows approving if implementation is paused.
-  function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
+  function _approve(
+    address owner,
+    address spender,
+    uint256 value,
+    bool emitEvent
+  ) internal virtual override {
     _requireNotPaused();
 
     super._approve(owner, spender, value, emitEvent);

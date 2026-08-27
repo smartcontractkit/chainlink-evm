@@ -61,7 +61,10 @@ contract KeystoneFeedsConsumer is IReceiver, OwnerIsCreator {
     s_allowedWorkflowNamesList = _allowedWorkflowNamesList;
   }
 
-  function onReport(bytes calldata metadata, bytes calldata rawReport) external {
+  function onReport(
+    bytes calldata metadata,
+    bytes calldata rawReport
+  ) external {
     if (!s_allowedSenders[msg.sender]) {
       revert UnauthorizedSender(msg.sender);
     }

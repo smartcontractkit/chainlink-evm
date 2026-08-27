@@ -53,7 +53,11 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
 
   mapping(uint256 => Request) internal s_requests; /* requestId */ /* request */
 
-  constructor(uint96 _baseFee, uint96 _gasPrice, int256 _weiPerUnitLink) SubscriptionAPI() {
+  constructor(
+    uint96 _baseFee,
+    uint96 _gasPrice,
+    int256 _weiPerUnitLink
+  ) SubscriptionAPI() {
     i_base_fee = _baseFee;
     i_gas_price = _gasPrice;
     i_wei_per_unit_link = _weiPerUnitLink;
@@ -78,11 +82,17 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
     emit ConfigSet();
   }
 
-  function consumerIsAdded(uint256 _subId, address _consumer) public view returns (bool) {
+  function consumerIsAdded(
+    uint256 _subId,
+    address _consumer
+  ) public view returns (bool) {
     return s_consumers[_consumer][_subId].active;
   }
 
-  modifier onlyValidConsumer(uint256 _subId, address _consumer) {
+  modifier onlyValidConsumer(
+    uint256 _subId,
+    address _consumer
+  ) {
     if (!consumerIsAdded(_subId, _consumer)) {
       revert InvalidConsumer(_subId, _consumer);
     }
@@ -100,7 +110,10 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
    * @param _requestId the request to fulfill
    * @param _consumer the VRF randomness consumer to send the result to
    */
-  function fulfillRandomWords(uint256 _requestId, address _consumer) external nonReentrant {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    address _consumer
+  ) external nonReentrant {
     fulfillRandomWordsWithOverride(_requestId, _consumer, new uint256[](0));
   }
 
@@ -111,7 +124,11 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
    * @param _consumer the VRF randomness consumer to send the result to
    * @param _words user-provided random words
    */
-  function fulfillRandomWordsWithOverride(uint256 _requestId, address _consumer, uint256[] memory _words) public {
+  function fulfillRandomWordsWithOverride(
+    uint256 _requestId,
+    address _consumer,
+    uint256[] memory _words
+  ) public {
     uint256 startGas = gasleft();
     if (s_requests[_requestId].subId == 0) {
       revert InvalidRequest();
@@ -148,7 +165,11 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
     emit RandomWordsFulfilled(_requestId, _requestId, req.subId, payment, nativePayment, success, false);
   }
 
-  function _chargePayment(uint96 payment, bool nativePayment, uint256 subId) internal {
+  function _chargePayment(
+    uint96 payment,
+    bool nativePayment,
+    uint256 subId
+  ) internal {
     Subscription storage subcription = s_subscriptions[subId];
     if (nativePayment) {
       uint96 prevBal = subcription.nativeBalance;
@@ -173,7 +194,10 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
    * @param _subId the subscription to fund
    * @param _amount the amount to fund
    */
-  function fundSubscription(uint256 _subId, uint256 _amount) public {
+  function fundSubscription(
+    uint256 _subId,
+    uint256 _amount
+  ) public {
     if (s_subscriptionConfigs[_subId].owner == address(0)) {
       revert InvalidSubscription();
     }
@@ -209,10 +233,7 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
 
     bytes memory extraArgsBytes = VRFV2PlusClient._argsToBytes(_fromBytes(_req.extraArgs));
     s_requests[requestId] = Request({
-      subId: _req.subId,
-      callbackGasLimit: _req.callbackGasLimit,
-      numWords: _req.numWords,
-      extraArgs: _req.extraArgs
+      subId: _req.subId, callbackGasLimit: _req.callbackGasLimit, numWords: _req.numWords, extraArgs: _req.extraArgs
     });
 
     emit RandomWordsRequested(
@@ -256,7 +277,10 @@ contract VRFCoordinatorV2_5Mock is SubscriptionAPI, IVRFCoordinatorV2Plus {
   /**
    * @inheritdoc IVRFSubscriptionV2Plus
    */
-  function cancelSubscription(uint256 _subId, address _to) external override onlySubOwner(_subId) nonReentrant {
+  function cancelSubscription(
+    uint256 _subId,
+    address _to
+  ) external override onlySubOwner(_subId) nonReentrant {
     (uint96 balance, uint96 nativeBalance) = _deleteSubscription(_subId);
 
     (bool success,) = _to.call{value: uint256(nativeBalance)}("");

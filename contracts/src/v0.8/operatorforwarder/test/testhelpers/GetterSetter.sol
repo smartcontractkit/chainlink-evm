@@ -21,7 +21,10 @@ contract GetterSetter {
     emit SetBytes32(msg.sender, _value);
   }
 
-  function requestedBytes32(bytes32 _requestId, bytes32 _value) public {
+  function requestedBytes32(
+    bytes32 _requestId,
+    bytes32 _value
+  ) public {
     s_requestId = _requestId;
     setBytes32(_value);
   }
@@ -37,7 +40,10 @@ contract GetterSetter {
     return s_getBytes;
   }
 
-  function requestedBytes(bytes32 _requestId, bytes memory _value) public {
+  function requestedBytes(
+    bytes32 _requestId,
+    bytes memory _value
+  ) public {
     s_requestId = _requestId;
     setBytes(_value);
   }
@@ -49,7 +55,10 @@ contract GetterSetter {
     emit SetUint256(msg.sender, _value);
   }
 
-  function requestedUint256(bytes32 _requestId, uint256 _value) public {
+  function requestedUint256(
+    bytes32 _requestId,
+    uint256 _value
+  ) public {
     s_requestId = _requestId;
     setUint256(_value);
   }

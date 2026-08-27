@@ -2,8 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {ConfirmedOwner} from "../shared/access/ConfirmedOwner.sol";
-import {GasPriceOracle as OVM_GasPriceOracle} from
-  "../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
+import {
+  GasPriceOracle as OVM_GasPriceOracle
+} from "../vendor/@eth-optimism/contracts-bedrock/v0.17.3/src/L2/GasPriceOracle.sol";
 
 /// @dev An abstract contract that provides Optimism specific L1 fee calculations.
 abstract contract OptimismL1Fees is ConfirmedOwner {
@@ -44,11 +45,17 @@ abstract contract OptimismL1Fees is ConfirmedOwner {
 
   event L1FeeCalculationSet(uint8 mode, uint8 coefficient);
 
-  function setL1FeeCalculation(uint8 mode, uint8 coefficient) external virtual onlyOwner {
+  function setL1FeeCalculation(
+    uint8 mode,
+    uint8 coefficient
+  ) external virtual onlyOwner {
     _setL1FeeCalculationInternal(mode, coefficient);
   }
 
-  function _setL1FeeCalculationInternal(uint8 mode, uint8 coefficient) internal {
+  function _setL1FeeCalculationInternal(
+    uint8 mode,
+    uint8 coefficient
+  ) internal {
     if (mode >= 3) {
       revert InvalidL1FeeCalculationMode(mode);
     }
@@ -77,16 +84,13 @@ abstract contract OptimismL1Fees is ConfirmedOwner {
     uint8 l1FeeCalculationMode = s_l1FeeCalculationMode;
     if (l1FeeCalculationMode == L1_CALLDATA_GAS_COST_MODE) {
       // estimate based on unsigned fully RLP-encoded transaction size so we have to account for paddding bytes as well
-      return (
-        s_l1FeeCoefficient * _calculateOptimismL1DataFee(calldataSizeBytes + L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE)
-      ) / 100;
+      return (s_l1FeeCoefficient
+          * _calculateOptimismL1DataFee(calldataSizeBytes + L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE)) / 100;
     } else if (l1FeeCalculationMode == L1_GAS_FEES_UPPER_BOUND_MODE) {
       // getL1FeeUpperBound expects unsigned fully RLP-encoded transaction size so we have to account for paddding bytes
       // as well
-      return (
-        s_l1FeeCoefficient
-          * OVM_GASPRICEORACLE.getL1FeeUpperBound(calldataSizeBytes + L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE)
-      ) / 100;
+      return (s_l1FeeCoefficient
+          * OVM_GASPRICEORACLE.getL1FeeUpperBound(calldataSizeBytes + L1_UNSIGNED_RLP_ENC_TX_DATA_BYTES_SIZE)) / 100;
     }
     revert InvalidL1FeeCalculationMode(l1FeeCalculationMode);
   }

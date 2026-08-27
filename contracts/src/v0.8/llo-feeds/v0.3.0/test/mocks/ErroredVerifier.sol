@@ -71,11 +71,17 @@ contract ErroredVerifier is IVerifier {
     revert FailedToSetConfig();
   }
 
-  function activateConfig(bytes32, bytes32) external pure {
+  function activateConfig(
+    bytes32,
+    bytes32
+  ) external pure {
     revert FailedToActivateConfig();
   }
 
-  function deactivateConfig(bytes32, bytes32) external pure {
+  function deactivateConfig(
+    bytes32,
+    bytes32
+  ) external pure {
     revert FailedToDeactivateConfig();
   }
 

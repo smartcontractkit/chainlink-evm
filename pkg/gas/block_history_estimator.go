@@ -787,6 +787,9 @@ var (
 )
 
 func (b *BlockHistoryEstimator) calculatePercentilePrices(blocks []evmtypes.Block, percentile int, eip1559 bool, f func(gasPrices []*assets.Wei), f2 func(tipCaps []*assets.Wei)) (gasPrice, tipCap *assets.Wei, err error) {
+	if percentile < 0 || percentile > 100 {
+		return nil, nil, fmt.Errorf("percentile must be between 0 and 100, got: %d", percentile)
+	}
 	gasPrices, tipCaps := b.getPricesFromBlocks(blocks, eip1559)
 	if len(gasPrices) == 0 {
 		return nil, nil, ErrNoSuitableTransactions

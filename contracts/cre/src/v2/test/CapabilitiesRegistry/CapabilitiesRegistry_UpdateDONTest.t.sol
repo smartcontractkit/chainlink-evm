@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {ICapabilityConfiguration} from "../../interfaces/ICapabilityConfiguration.sol";
 import {BaseTest} from "./BaseTest.t.sol";
+import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 
 contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
   function setUp() public override {
@@ -23,8 +23,9 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
 
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
     s_CapabilitiesRegistry.updateDON(
       DON_ID,
       CapabilitiesRegistry.UpdateDONParams({
@@ -42,8 +43,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_capabilityWithConfigurationContractId,
-      config: CONFIG_CAPABILITY_CONFIG
+      capabilityId: s_capabilityWithConfigurationContractId, config: CONFIG_CAPABILITY_CONFIG
     });
 
     s_paramsForTwoNodes[1].capabilityIds = s_oneCapabilityArray;
@@ -73,8 +73,9 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     nodes[1] = P2P_ID_TWO;
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.DONDoesNotExist.selector, nonExistentDONId));
     s_CapabilitiesRegistry.updateDON(
       nonExistentDONId,
@@ -96,8 +97,7 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_nonExistentCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
+      capabilityId: s_nonExistentCapabilityId, config: BASIC_CAPABILITY_CONFIG
     });
     vm.expectRevert(
       abi.encodeWithSelector(CapabilitiesRegistry.CapabilityDoesNotExist.selector, s_nonExistentCapabilityId)
@@ -122,10 +122,12 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](2);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
-    capabilityConfigs[1] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
+    capabilityConfigs[1] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
 
     vm.expectRevert(
       abi.encodeWithSelector(CapabilitiesRegistry.DuplicateDONCapability.selector, 1, s_basicCapabilityId)
@@ -154,8 +156,9 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
 
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.CapabilityIsDeprecated.selector, s_basicCapabilityId));
     s_CapabilitiesRegistry.updateDON(
@@ -178,8 +181,9 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
     vm.expectRevert(abi.encodeWithSelector(CapabilitiesRegistry.DuplicateDONNode.selector, 1, P2P_ID));
     s_CapabilitiesRegistry.updateDON(
       DON_ID,
@@ -212,11 +216,11 @@ contract CapabilitiesRegistry_UpdateDONTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](2);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
     capabilityConfigs[1] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_capabilityWithConfigurationContractId,
-      config: CONFIG_CAPABILITY_CONFIG
+      capabilityId: s_capabilityWithConfigurationContractId, config: CONFIG_CAPABILITY_CONFIG
     });
 
     CapabilitiesRegistry.DONInfo memory oldDONInfo = s_CapabilitiesRegistry.getDON(DON_ID);

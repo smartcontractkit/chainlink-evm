@@ -71,9 +71,9 @@ func (s *stuckTxDetector) timeBasedDetection(tx *types.Transaction) bool {
 		return false
 	}
 
-	if min(time.Since(*tx.LastBroadcastAt), time.Since(s.lastPurgeMap[tx.FromAddress])) > threshold {
+	if last := s.lastPurgeMap[tx.FromAddress]; min(time.Since(*tx.LastBroadcastAt), time.Since(last)) > threshold {
 		s.lggr.Debugf("TxID: %v last broadcast was: %v and last purge: %v which is more than the max configured duration: %v. Transaction is now considered stuck and will be purged.",
-			tx.ID, tx.LastBroadcastAt, s.lastPurgeMap[tx.FromAddress], threshold)
+			tx.ID, tx.LastBroadcastAt, last, threshold)
 		s.lastPurgeMap[tx.FromAddress] = time.Now()
 		return true
 	}

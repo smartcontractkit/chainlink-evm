@@ -141,7 +141,10 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     i_verifierProxyAddr = verifierProxyAddr;
   }
 
-  modifier checkConfigValid(uint256 numSigners, uint256 f) {
+  modifier checkConfigValid(
+    uint256 numSigners,
+    uint256 f
+  ) {
     if (f == 0) revert FaultToleranceMustBePositive();
     if (numSigners > MAX_NUM_ORACLES) revert ExcessSigners(numSigners, MAX_NUM_ORACLES);
     if (numSigners <= 3 * f) revert InsufficientSigners(numSigners, 3 * f + 1);
@@ -184,8 +187,13 @@ contract Verifier is IVerifier, ConfirmedOwner, ITypeAndVersion {
     bytes calldata signedReport
   ) internal view returns (bytes memory verifierResponse) {
     if (msg.sender != i_verifierProxyAddr) revert AccessForbidden();
-    (bytes32[3] memory reportContext, bytes memory reportData, bytes32[] memory rs, bytes32[] memory ss, bytes32 rawVs)
-    = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
+    (
+      bytes32[3] memory reportContext,
+      bytes memory reportData,
+      bytes32[] memory rs,
+      bytes32[] memory ss,
+      bytes32 rawVs
+    ) = abi.decode(signedReport, (bytes32[3], bytes, bytes32[], bytes32[], bytes32));
 
     // reportContext consists of:
     // reportContext[0]: ConfigDigest

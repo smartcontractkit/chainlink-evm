@@ -6,12 +6,12 @@ import {Receiver} from "../mocks/Receiver.sol";
 import {Test} from "forge-std/Test.sol";
 
 contract BaseTest is Test {
-  address internal ADMIN = address(1);
+  address internal constant ADMIN = address(1);
   address internal constant TRANSMITTER = address(50);
   uint256 internal constant MAX_ORACLES = 31;
-  uint32 internal DON_ID = 0x01020304;
-  uint8 internal F = 1;
-  uint32 internal CONFIG_VERSION = 1;
+  uint32 internal constant DON_ID = 0x01020304;
+  uint8 internal constant F = 1;
+  uint32 internal constant CONFIG_VERSION = 1;
 
   struct Signer {
     uint256 mockPrivateKey;

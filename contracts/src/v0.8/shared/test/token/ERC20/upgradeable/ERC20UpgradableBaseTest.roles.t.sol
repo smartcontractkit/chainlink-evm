@@ -7,7 +7,11 @@ import {IAccessControl} from "@openzeppelin/contracts@5.0.2/access/IAccessContro
 import {ERC20UpgradableBaseTest, IERC20UpgradeableBase} from "./ERC20UpgradableBaseTest.t.sol";
 
 contract ERC20UpgradableBaseTest_roles is ERC20UpgradableBaseTest {
-  function should_GrantMintAndBurnRoles(address implementation, bytes32 MINTER_ROLE, bytes32 BURNER_ROLE) public {
+  function should_GrantMintAndBurnRoles(
+    address implementation,
+    bytes32 MINTER_ROLE,
+    bytes32 BURNER_ROLE
+  ) public {
     assertFalse(IAccessControl(implementation).hasRole(MINTER_ROLE, STRANGER));
     assertFalse(IAccessControl(implementation).hasRole(BURNER_ROLE, STRANGER));
 

@@ -10,7 +10,6 @@ import (
 
 	consensustypes "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3/types"
 	"github.com/smartcontractkit/chainlink-evm/pkg/relay"
-	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-protos/cre/go/values"
 )
 
@@ -50,7 +49,7 @@ func TestEVMEncoder_SingleField(t *testing.T) {
 	}
 	wrapped, err = values.NewMap(input)
 	require.NoError(t, err)
-	encoded, err := enc.Encode(testutils.Context(t), *wrapped)
+	encoded, err := enc.Encode(t.Context(), *wrapped)
 	require.NoError(t, err)
 
 	expected :=
@@ -86,7 +85,7 @@ func TestEVMEncoder_TwoFields(t *testing.T) {
 	}
 	wrapped, err = values.NewMap(input)
 	require.NoError(t, err)
-	encoded, err := enc.Encode(testutils.Context(t), *wrapped)
+	encoded, err := enc.Encode(t.Context(), *wrapped)
 	require.NoError(t, err)
 
 	expected :=
@@ -124,7 +123,7 @@ func TestEVMEncoder_Tuple(t *testing.T) {
 	}
 	wrapped, err = values.NewMap(input)
 	require.NoError(t, err)
-	encoded, err := enc.Encode(testutils.Context(t), *wrapped)
+	encoded, err := enc.Encode(t.Context(), *wrapped)
 	require.NoError(t, err)
 
 	expected :=
@@ -169,7 +168,7 @@ func TestEVMEncoder_ListOfTuples(t *testing.T) {
 	}
 	wrapped, err = values.NewMap(input)
 	require.NoError(t, err)
-	encoded, err := enc.Encode(testutils.Context(t), *wrapped)
+	encoded, err := enc.Encode(t.Context(), *wrapped)
 	require.NoError(t, err)
 
 	expected :=
@@ -203,7 +202,7 @@ func TestEVMEncoder_InvalidIDs(t *testing.T) {
 	}
 	wrapped, err = values.NewMap(input)
 	require.NoError(t, err)
-	_, err = enc.Encode(testutils.Context(t), *wrapped)
+	_, err = enc.Encode(t.Context(), *wrapped)
 	assert.ErrorContains(t, err, "invalid byte")
 
 	// using valid hex string of wrong length
@@ -213,7 +212,7 @@ func TestEVMEncoder_InvalidIDs(t *testing.T) {
 	}
 	wrapped, err = values.NewMap(input)
 	require.NoError(t, err)
-	_, err = enc.Encode(testutils.Context(t), *wrapped)
+	_, err = enc.Encode(t.Context(), *wrapped)
 	assert.ErrorContains(t, err, "wrong length")
 }
 
@@ -262,7 +261,7 @@ func TestEVMEncoder_SubABI(t *testing.T) {
 	}
 	wrapped, err = values.NewMap(input)
 	require.NoError(t, err)
-	encoded, err := enc.Encode(testutils.Context(t), *wrapped)
+	encoded, err := enc.Encode(t.Context(), *wrapped)
 	require.NoError(t, err)
 
 	expected :=

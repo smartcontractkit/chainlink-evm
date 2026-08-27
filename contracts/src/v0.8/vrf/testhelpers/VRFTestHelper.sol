@@ -9,7 +9,10 @@ import {VRF} from "../VRF.sol";
  *     @notice be used for production.
  */
 contract VRFTestHelper is VRF {
-  function bigModExp_(uint256 base, uint256 exponent) public view returns (uint256) {
+  function bigModExp_(
+    uint256 base,
+    uint256 exponent
+  ) public view returns (uint256) {
     return super._bigModExp(base, exponent);
   }
 
@@ -31,11 +34,18 @@ contract VRFTestHelper is VRF {
     return super._fieldHash(b);
   }
 
-  function hashToCurve_(uint256[2] memory pk, uint256 x) public view returns (uint256[2] memory) {
+  function hashToCurve_(
+    uint256[2] memory pk,
+    uint256 x
+  ) public view returns (uint256[2] memory) {
     return super._hashToCurve(pk, x);
   }
 
-  function ecmulVerify_(uint256[2] memory x, uint256 scalar, uint256[2] memory q) public pure returns (bool) {
+  function ecmulVerify_(
+    uint256[2] memory x,
+    uint256 scalar,
+    uint256[2] memory q
+  ) public pure returns (bool) {
     return super._ecmulVerify(x, scalar, q);
   }
 
@@ -107,7 +117,10 @@ contract VRFTestHelper is VRF {
     super._verifyVRFProof(pk, gamma, c, s, seed, uWitness, cGammaWitness, sHashWitness, zInv);
   }
 
-  function randomValueFromVRFProof_(Proof calldata proof, uint256 seed) public view returns (uint256 output) {
+  function randomValueFromVRFProof_(
+    Proof calldata proof,
+    uint256 seed
+  ) public view returns (uint256 output) {
     return super._randomValueFromVRFProof(proof, seed);
   }
 }

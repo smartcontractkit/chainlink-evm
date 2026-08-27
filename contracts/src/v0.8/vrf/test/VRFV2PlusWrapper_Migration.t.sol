@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {MockLinkToken} from "../../functions/tests/v1_3_1/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
+import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 
 import {SubscriptionAPI} from "../SubscriptionAPI.sol";
 import {VRFV2PlusWrapper} from "../VRFV2PlusWrapper.sol";
@@ -113,10 +113,7 @@ contract VRFV2PlusWrapper_MigrationTest is BaseTest {
       0 // fulfillmentFlatFeeLinkDiscountPPM
     );
     (
-      ,
-      ,
-      ,
-      ,
+      ,,,,
       uint32 _wrapperGasOverhead,
       uint32 _coordinatorGasOverheadNative,
       uint32 _coordinatorGasOverheadLink,

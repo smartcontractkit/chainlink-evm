@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {BurnMintERC20} from "../../../../token/ERC20/BurnMintERC20.sol";
 import {BurnMintERC20Setup} from "./BurnMintERC20Setup.t.sol";
 
-import {Strings} from "@openzeppelin/contracts@4.8.3/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts@4.9.6/utils/Strings.sol";
 
 contract BurnMintERC20_burnFromAlias is BurnMintERC20Setup {
   function setUp() public virtual override {
@@ -24,7 +24,7 @@ contract BurnMintERC20_burnFromAlias is BurnMintERC20Setup {
   // Reverts
 
   function test_burn_RevertWhen_SenderNotBurner() public {
-    // OZ Access Control v4.8.3 inherited by BurnMintERC20 does not use custom errors, but the revert message is still
+    // OZ Access Control v4.9.6 inherited by BurnMintERC20 does not use custom errors, but the revert message is still
     // useful
     // and should be checked
     vm.expectRevert(

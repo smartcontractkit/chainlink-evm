@@ -11,13 +11,22 @@ contract Consumer is ChainlinkClient {
   bytes32 internal s_currentPrice;
 
   event RequestFulfilled( // User-defined ID
-  bytes32 indexed requestId, bytes32 indexed price);
+    bytes32 indexed requestId,
+    bytes32 indexed price
+  );
 
-  function requestEthereumPrice(string memory _currency, uint256 _payment) public {
+  function requestEthereumPrice(
+    string memory _currency,
+    uint256 _payment
+  ) public {
     requestEthereumPriceByCallback(_currency, _payment, address(this));
   }
 
-  function requestEthereumPriceByCallback(string memory _currency, uint256 _payment, address _callback) public {
+  function requestEthereumPriceByCallback(
+    string memory _currency,
+    uint256 _payment,
+    address _callback
+  ) public {
     Chainlink.Request memory req = _buildChainlinkRequest(s_specId, _callback, this.fulfill.selector);
     req._add("get", "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,EUR,JPY");
     string[] memory path = new string[](1);
@@ -43,11 +52,17 @@ contract Consumer is ChainlinkClient {
     require(_link.transfer(msg.sender, _link.balanceOf(address(this))), "Unable to transfer");
   }
 
-  function addExternalRequest(address _oracle, bytes32 _requestId) external {
+  function addExternalRequest(
+    address _oracle,
+    bytes32 _requestId
+  ) external {
     _addChainlinkExternalRequest(_oracle, _requestId);
   }
 
-  function fulfill(bytes32 _requestId, bytes32 _price) public recordChainlinkFulfillment(_requestId) {
+  function fulfill(
+    bytes32 _requestId,
+    bytes32 _price
+  ) public recordChainlinkFulfillment(_requestId) {
     emit RequestFulfilled(_requestId, _price);
     s_currentPrice = _price;
   }

@@ -66,7 +66,10 @@ contract Ownable2Step_acceptOwnership is Ownable2Step_setup {
 }
 
 contract Ownable2StepHelper is Ownable2Step {
-  constructor(address newOwner, address pendingOwner) Ownable2Step(newOwner, pendingOwner) {}
+  constructor(
+    address newOwner,
+    address pendingOwner
+  ) Ownable2Step(newOwner, pendingOwner) {}
 
   function validateOwnership() external view {
     _validateOwnership();

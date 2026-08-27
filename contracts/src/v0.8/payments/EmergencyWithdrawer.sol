@@ -25,7 +25,10 @@ abstract contract EmergencyWithdrawer is PausableWithAccessControl {
   /// @param data The bubbled up revert data
   error FailedNativeTokenTransfer(address to, uint256 amount, bytes data);
 
-  constructor(uint48 adminRoleTransferDelay, address admin) PausableWithAccessControl(adminRoleTransferDelay, admin) {}
+  constructor(
+    uint48 adminRoleTransferDelay,
+    address admin
+  ) PausableWithAccessControl(adminRoleTransferDelay, admin) {}
 
   /// @notice Withdraws assets from the contract to the specified address
   /// @dev precondition - The contract must be paused
@@ -54,7 +57,10 @@ abstract contract EmergencyWithdrawer is PausableWithAccessControl {
   /// @dev precondition The caller must have the DEFAULT_ADMIN_ROLE
   /// @param to The address to transfer the native tokens to
   /// @param amount The amount of native token to transfer
-  function emergencyWithdrawNative(address payable to, uint256 amount) external whenPaused onlyRole(DEFAULT_ADMIN_ROLE) {
+  function emergencyWithdrawNative(
+    address payable to,
+    uint256 amount
+  ) external whenPaused onlyRole(DEFAULT_ADMIN_ROLE) {
     _transferNative(to, amount);
     emit AssetEmergencyWithdrawn(to, address(0), amount);
   }
@@ -64,7 +70,10 @@ abstract contract EmergencyWithdrawer is PausableWithAccessControl {
   /// @dev precondition The amount must be greater than zero
   /// @param to The address to transfer the native tokens to
   /// @param amount The amount of native tokens to transfer
-  function _transferNative(address payable to, uint256 amount) internal {
+  function _transferNative(
+    address payable to,
+    uint256 amount
+  ) internal {
     if (to == address(0)) {
       revert Errors.InvalidZeroAddress();
     }
@@ -85,7 +94,11 @@ abstract contract EmergencyWithdrawer is PausableWithAccessControl {
   /// @param to The address to transfer the asset to
   /// @param asset The asset to transfer
   /// @param amount The amount of asset to transfer
-  function _transferAsset(address to, address asset, uint256 amount) internal {
+  function _transferAsset(
+    address to,
+    address asset,
+    uint256 amount
+  ) internal {
     if (to == address(0) || asset == address(0)) {
       revert Errors.InvalidZeroAddress();
     }

@@ -66,7 +66,10 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
   // @dev Sets the LinkToken address for the imported LinkTokenInterface
   // @param link The address of the LINK token
   // @param owner The address of the owner
-  constructor(address link, address owner) ConfirmedOwner(owner) {
+  constructor(
+    address link,
+    address owner
+  ) ConfirmedOwner(owner) {
     i_linkToken = LinkTokenInterface(link); // external but already deployed and unalterable
   }
 
@@ -156,7 +159,7 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
     // See:
     // https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
     (bool success,) = callbackAddress.call(abi.encodeWithSelector(callbackFunctionId, requestId, data)); // solhint-disable-line
-      // avoid-low-level-calls
+    // avoid-low-level-calls
     return success;
   }
 
@@ -195,7 +198,7 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
     // See:
     // https://solidity.readthedocs.io/en/develop/security-considerations.html#use-the-checks-effects-interactions-pattern
     (bool success,) = callbackAddress.call(abi.encodePacked(callbackFunctionId, data)); // solhint-disable-line
-      // avoid-low-level-calls
+    // avoid-low-level-calls
     return success;
   }
 
@@ -204,7 +207,10 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
   // with future contracts.OracleInterface
   // @param ownable list of addresses to transfer
   // @param newOwner address to transfer ownership to
-  function transferOwnableContracts(address[] calldata ownable, address newOwner) external onlyOwner {
+  function transferOwnableContracts(
+    address[] calldata ownable,
+    address newOwner
+  ) external onlyOwner {
     for (uint256 i = 0; i < ownable.length; ++i) {
       s_owned[ownable[i]] = false;
       IOwnable(ownable[i]).transferOwnership(newOwner);
@@ -276,7 +282,10 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
   // @dev Only callable by the owner
   // @param to address
   // @param data to forward
-  function ownerForward(address to, bytes calldata data) external onlyOwner validateNotToLINK(to) {
+  function ownerForward(
+    address to,
+    bytes calldata data
+  ) external onlyOwner validateNotToLINK(to) {
     require(to.code.length != 0, "Must forward to a contract");
     // solhint-disable-next-line avoid-low-level-calls
     (bool status,) = to.call(data);
@@ -303,7 +312,10 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
   // it is expected that the address is removed from the list.
   // @param receivers list of addresses
   // @param amounts list of amounts
-  function distributeFunds(address payable[] calldata receivers, uint256[] calldata amounts) external payable {
+  function distributeFunds(
+    address payable[] calldata receivers,
+    uint256[] calldata amounts
+  ) external payable {
     require(receivers.length > 0 && receivers.length == amounts.length, "Invalid array length(s)");
     uint256 valueRemaining = msg.value;
     for (uint256 i = 0; i < receivers.length; ++i) {
@@ -368,7 +380,10 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
 
   // @notice Require that the token transfer action is valid
   // @dev OPERATOR_REQUEST_SELECTOR = multiword, ORACLE_REQUEST_SELECTOR = singleword
-  function _validateTokenTransferAction(bytes4 funcSelector, bytes memory data) internal pure override {
+  function _validateTokenTransferAction(
+    bytes4 funcSelector,
+    bytes memory data
+  ) internal pure override {
     require(data.length >= MINIMUM_REQUEST_LENGTH, "Invalid request length");
     require(
       funcSelector == OPERATOR_REQUEST_SELECTOR || funcSelector == ORACLE_REQUEST_SELECTOR,
@@ -453,7 +468,10 @@ contract Operator is AuthorizedReceiver, ConfirmedOwner, LinkTokenReceiver, Oper
   // @dev Reverts if the first 32 bytes of the bytes array is not equal to requestId
   // @param requestId bytes32
   // @param data bytes
-  modifier validateMultiWordResponseId(bytes32 requestId, bytes calldata data) {
+  modifier validateMultiWordResponseId(
+    bytes32 requestId,
+    bytes calldata data
+  ) {
     require(data.length >= 32, "Response must be > 32 bytes");
     bytes32 firstDataWord;
     assembly {

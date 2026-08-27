@@ -33,7 +33,10 @@ contract AuthorizedForwarder is ConfirmedOwnerWithProposal, AuthorizedReceiver {
   // @dev Only callable by an authorized sender
   // @param to address
   // @param data to forward
-  function forward(address to, bytes calldata data) external validateAuthorizedSender {
+  function forward(
+    address to,
+    bytes calldata data
+  ) external validateAuthorizedSender {
     require(to != linkToken, "Cannot forward to Link token");
     _forward(to, data);
   }
@@ -42,7 +45,10 @@ contract AuthorizedForwarder is ConfirmedOwnerWithProposal, AuthorizedReceiver {
   //  @dev Only callable by an authorized sender
   //  @param tos An array of addresses to forward the calls to
   //  @param datas An array of data to forward to each corresponding address
-  function multiForward(address[] calldata tos, bytes[] calldata datas) external validateAuthorizedSender {
+  function multiForward(
+    address[] calldata tos,
+    bytes[] calldata datas
+  ) external validateAuthorizedSender {
     require(tos.length == datas.length, "Arrays must have the same length");
 
     for (uint256 i = 0; i < tos.length; ++i) {
@@ -58,14 +64,20 @@ contract AuthorizedForwarder is ConfirmedOwnerWithProposal, AuthorizedReceiver {
   // @dev Only callable by the owner
   // @param to address
   // @param data to forward
-  function ownerForward(address to, bytes calldata data) external onlyOwner {
+  function ownerForward(
+    address to,
+    bytes calldata data
+  ) external onlyOwner {
     _forward(to, data);
   }
 
   // @notice Transfer ownership with instructions for recipient
   // @param to address proposed recipient of ownership
   // @param message instructions for recipient upon accepting ownership
-  function transferOwnershipWithMessage(address to, bytes calldata message) external {
+  function transferOwnershipWithMessage(
+    address to,
+    bytes calldata message
+  ) external {
     transferOwnership(to);
     emit OwnershipTransferRequestedWithMessage(msg.sender, to, message);
   }
@@ -77,7 +89,10 @@ contract AuthorizedForwarder is ConfirmedOwnerWithProposal, AuthorizedReceiver {
   }
 
   // @notice common forwarding functionality and validation
-  function _forward(address to, bytes calldata data) private {
+  function _forward(
+    address to,
+    bytes calldata data
+  ) private {
     require(to.isContract(), "Must forward to a contract");
     // solhint-disable-next-line avoid-low-level-calls
     (bool success, bytes memory result) = to.call(data);

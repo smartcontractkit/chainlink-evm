@@ -16,7 +16,7 @@ contract VRFV2WrapperLoadTestConsumer is VRFV2WrapperConsumerBase, ConfirmedOwne
   uint256 public s_lastRequestId;
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   mapping(uint256 => uint256) internal requestHeights; // requestIds to block number when rand request was made
-  mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
+  mapping(uint256 => RequestStatus) public /* requestId */ /* requestStatus */ s_requests;
 
   event WrappedRequestFulfilled(uint256 requestId, uint256[] randomWords, uint256 payment);
   event WrapperRequestMade(uint256 indexed requestId, uint256 paid);
@@ -64,7 +64,10 @@ contract VRFV2WrapperLoadTestConsumer is VRFV2WrapperConsumerBase, ConfirmedOwne
     }
   }
 
-  function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) internal override {
     // solhint-disable-next-line gas-custom-errors
     require(s_requests[_requestId].paid > 0, "request not found");
     uint256 fulfilmentBlockNumber = ChainSpecificUtil._getBlockNumber();

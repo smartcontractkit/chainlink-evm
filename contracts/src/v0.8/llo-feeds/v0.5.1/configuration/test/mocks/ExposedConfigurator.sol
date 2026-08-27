@@ -15,11 +15,17 @@ contract ExposedConfigurator is Configurator {
     return s_configurationStates[configId];
   }
 
-  function exposedSetIsGreenProduction(bytes32 configId, bool isGreenProduction) public {
+  function exposedSetIsGreenProduction(
+    bytes32 configId,
+    bool isGreenProduction
+  ) public {
     s_configurationStates[configId].isGreenProduction = isGreenProduction;
   }
 
-  function exposedSetConfigurationState(bytes32 configId, ConfigurationState memory state) public {
+  function exposedSetConfigurationState(
+    bytes32 configId,
+    ConfigurationState memory state
+  ) public {
     s_configurationStates[configId] = state;
   }
 

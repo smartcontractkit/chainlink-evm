@@ -9,12 +9,19 @@ contract VRFV2WrapperUnderFundingConsumer is ConfirmedOwner {
   LinkTokenInterface internal immutable LINK;
   VRFV2WrapperInterface internal immutable VRF_V2_WRAPPER;
 
-  constructor(address _link, address _vrfV2Wrapper) ConfirmedOwner(msg.sender) {
+  constructor(
+    address _link,
+    address _vrfV2Wrapper
+  ) ConfirmedOwner(msg.sender) {
     LINK = LinkTokenInterface(_link);
     VRF_V2_WRAPPER = VRFV2WrapperInterface(_vrfV2Wrapper);
   }
 
-  function makeRequest(uint32 _callbackGasLimit, uint16 _requestConfirmations, uint32 _numWords) external onlyOwner {
+  function makeRequest(
+    uint32 _callbackGasLimit,
+    uint16 _requestConfirmations,
+    uint32 _numWords
+  ) external onlyOwner {
     LINK.transferAndCall(
       address(VRF_V2_WRAPPER),
       // Pay less than the needed amount

@@ -32,7 +32,11 @@ contract LogEmitter {
     }
   }
 
-  function EmitLog4(uint256 v, uint256 w, uint256 c) public {
+  function EmitLog4(
+    uint256 v,
+    uint256 w,
+    uint256 c
+  ) public {
     for (uint256 i = 0; i < c; i++) {
       emit Log4(v, w);
     }

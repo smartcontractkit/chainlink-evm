@@ -1517,11 +1517,9 @@ func (r *RPCClient) IsSyncing(ctx context.Context) (bool, error) {
 	err = r.wrapRPCClientError(err)
 	duration := time.Since(start)
 
-	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "BlockNumber",
-		"syncProgress", syncProgress,
-	)
+	r.logResult(ctx, lggr, err, duration, r.getRPCDomain(), "BlockNumber", "syncProgress", syncProgress)
 
-	return syncProgress != nil, nil
+	return syncProgress != nil, err
 }
 
 func (r *RPCClient) Name() string {

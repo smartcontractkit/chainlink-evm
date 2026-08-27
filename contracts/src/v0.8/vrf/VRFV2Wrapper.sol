@@ -98,7 +98,7 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
     uint256 juelsPaid;
   }
 
-  mapping(uint256 => Callback) /* requestID */ /* callback */ public s_callbacks;
+  mapping(uint256 => Callback) public /* requestID */ /* callback */ s_callbacks;
 
   constructor(
     address _link,
@@ -255,10 +255,9 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
     // costWei is the base fee denominated in wei (native)
     // costWei takes into account the L1 posting costs of the VRF fulfillment
     // transaction, if we are on an L2.
-    uint256 costWei = (
-      _requestGasPrice * (_gas + s_wrapperGasOverhead + s_coordinatorGasOverhead)
-        + ChainSpecificUtil._getL1CalldataGasCost(s_fulfillmentTxSizeBytes)
-    );
+    uint256 costWei =
+      (_requestGasPrice * (_gas + s_wrapperGasOverhead + s_coordinatorGasOverhead)
+        + ChainSpecificUtil._getL1CalldataGasCost(s_fulfillmentTxSizeBytes));
     // (1e18 juels/link) * ((wei/gas * (gas)) + l1wei) / (wei/link) == 1e18 juels * wei/link / (wei/link) == 1e18 juels
     // * wei/link * link/wei == juels
     // baseFee is the base fee denominated in juels (link)
@@ -284,7 +283,11 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
    * @param _data is the abi-encoded VRF request parameters: uint32 callbackGasLimit,
    *        uint16 requestConfirmations, and uint32 numWords.
    */
-  function onTokenTransfer(address _sender, uint256 _amount, bytes calldata _data) external onlyConfiguredNotDisabled {
+  function onTokenTransfer(
+    address _sender,
+    uint256 _amount,
+    bytes calldata _data
+  ) external onlyConfiguredNotDisabled {
     // solhint-disable-next-line gas-custom-errors
     require(msg.sender == address(LINK), "only callable from LINK");
 
@@ -322,7 +325,10 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
    *
    * @param _amount is the amount of LINK in Juels that should be withdrawn.
    */
-  function withdraw(address _recipient, uint256 _amount) external onlyOwner {
+  function withdraw(
+    address _recipient,
+    uint256 _amount
+  ) external onlyOwner {
     LINK.transfer(_recipient, _amount);
   }
 
@@ -342,7 +348,10 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) internal override {
     Callback memory callback = s_callbacks[_requestId];
     delete s_callbacks[_requestId];
     // solhint-disable-next-line gas-custom-errors
@@ -384,7 +393,11 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
    * @dev calls target address with exactly gasAmount gas and data as calldata
    * or reverts if at least gasAmount gas is not available.
    */
-  function _callWithExactGas(uint256 gasAmount, address target, bytes memory data) private returns (bool success) {
+  function _callWithExactGas(
+    uint256 gasAmount,
+    address target,
+    bytes memory data
+  ) private returns (bool success) {
     assembly {
       let g := gas()
       // Compute g -= GAS_FOR_CALL_EXACT_CHECK and check for underflow
@@ -420,32 +433,32 @@ contract VRFV2Wrapper is ConfirmedOwner, ITypeAndVersion, VRFConsumerBaseV2, VRF
   }
 }
 
-// solhint-disable-next-line interface-starts-with-i
-interface ExtendedVRFCoordinatorV2Interface is VRFCoordinatorV2Interface {
-  function getConfig()
-    external
-    view
-    returns (
-      uint16 minimumRequestConfirmations,
-      uint32 maxGasLimit,
-      uint32 stalenessSeconds,
-      uint32 gasAfterPaymentCalculation
-    );
+  // solhint-disable-next-line interface-starts-with-i
+  interface ExtendedVRFCoordinatorV2Interface is VRFCoordinatorV2Interface {
+    function getConfig()
+      external
+      view
+      returns (
+        uint16 minimumRequestConfirmations,
+        uint32 maxGasLimit,
+        uint32 stalenessSeconds,
+        uint32 gasAfterPaymentCalculation
+      );
 
-  function getFallbackWeiPerUnitLink() external view returns (int256);
+    function getFallbackWeiPerUnitLink() external view returns (int256);
 
-  function getFeeConfig()
-    external
-    view
-    returns (
-      uint32 fulfillmentFlatFeeLinkPPMTier1,
-      uint32 fulfillmentFlatFeeLinkPPMTier2,
-      uint32 fulfillmentFlatFeeLinkPPMTier3,
-      uint32 fulfillmentFlatFeeLinkPPMTier4,
-      uint32 fulfillmentFlatFeeLinkPPMTier5,
-      uint24 reqsForTier2,
-      uint24 reqsForTier3,
-      uint24 reqsForTier4,
-      uint24 reqsForTier5
-    );
-}
+    function getFeeConfig()
+      external
+      view
+      returns (
+        uint32 fulfillmentFlatFeeLinkPPMTier1,
+        uint32 fulfillmentFlatFeeLinkPPMTier2,
+        uint32 fulfillmentFlatFeeLinkPPMTier3,
+        uint32 fulfillmentFlatFeeLinkPPMTier4,
+        uint32 fulfillmentFlatFeeLinkPPMTier5,
+        uint24 reqsForTier2,
+        uint24 reqsForTier3,
+        uint24 reqsForTier4,
+        uint24 reqsForTier5
+      );
+  }

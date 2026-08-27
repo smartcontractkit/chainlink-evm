@@ -7,10 +7,10 @@ import {IERC677} from "./IERC677.sol";
 import {OwnerIsCreator} from "../../access/OwnerIsCreator.sol";
 import {ERC677} from "./ERC677.sol";
 
-import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/ERC20Burnable.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/utils/introspection/IERC165.sol";
-import {EnumerableSet} from "@openzeppelin/contracts@4.8.3/utils/structs/EnumerableSet.sol";
+import {IERC20} from "@openzeppelin/contracts@4.9.6/token/ERC20/IERC20.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts@4.9.6/token/ERC20/extensions/ERC20Burnable.sol";
+import {IERC165} from "@openzeppelin/contracts@4.9.6/utils/introspection/IERC165.sol";
+import {EnumerableSet} from "@openzeppelin/contracts@4.9.6/utils/structs/EnumerableSet.sol";
 
 /// @notice A basic ERC677 compatible token contract with burn and minting roles.
 /// @dev The total supply can be limited during deployment.
@@ -37,7 +37,12 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
   /// @dev The maximum supply of the token, 0 if unlimited
   uint256 internal immutable i_maxSupply;
 
-  constructor(string memory name, string memory symbol, uint8 decimals_, uint256 maxSupply_) ERC677(name, symbol) {
+  constructor(
+    string memory name,
+    string memory symbol,
+    uint8 decimals_,
+    uint256 maxSupply_
+  ) ERC677(name, symbol) {
     i_decimals = decimals_;
     i_maxSupply = maxSupply_;
   }
@@ -65,23 +70,37 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
 
   /// @dev Uses OZ ERC20 _transfer to disallow sending to address(0).
   /// @dev Disallows sending to address(this)
-  function _transfer(address from, address to, uint256 amount) internal virtual override validAddress(to) {
+  function _transfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal virtual override validAddress(to) {
     super._transfer(from, to, amount);
   }
 
   /// @dev Uses OZ ERC20 _approve to disallow approving for address(0).
   /// @dev Disallows approving for address(this)
-  function _approve(address owner, address spender, uint256 amount) internal virtual override validAddress(spender) {
+  function _approve(
+    address owner,
+    address spender,
+    uint256 amount
+  ) internal virtual override validAddress(spender) {
     super._approve(owner, spender, amount);
   }
 
   /// @dev Exists to be backwards compatible with the older naming convention.
-  function decreaseApproval(address spender, uint256 subtractedValue) external virtual returns (bool success) {
+  function decreaseApproval(
+    address spender,
+    uint256 subtractedValue
+  ) external virtual returns (bool success) {
     return decreaseAllowance(spender, subtractedValue);
   }
 
   /// @dev Exists to be backwards compatible with the older naming convention.
-  function increaseApproval(address spender, uint256 addedValue) external virtual {
+  function increaseApproval(
+    address spender,
+    uint256 addedValue
+  ) external virtual {
     increaseAllowance(spender, addedValue);
   }
 
@@ -113,14 +132,20 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
   /// @inheritdoc IBurnMintERC20
   /// @dev Alias for BurnFrom for compatibility with the older naming convention.
   /// @dev Uses burnFrom for all validation & logic.
-  function burn(address account, uint256 amount) public virtual override {
+  function burn(
+    address account,
+    uint256 amount
+  ) public virtual override {
     burnFrom(account, amount);
   }
 
   /// @inheritdoc ERC20Burnable
   /// @dev Uses OZ ERC20 _burn to disallow burning from address(0).
   /// @dev Decreases the total supply.
-  function burnFrom(address account, uint256 amount) public virtual override(IBurnMintERC20, ERC20Burnable) onlyBurner {
+  function burnFrom(
+    address account,
+    uint256 amount
+  ) public virtual override(IBurnMintERC20, ERC20Burnable) onlyBurner {
     super.burnFrom(account, amount);
   }
 
@@ -128,7 +153,10 @@ contract BurnMintERC677 is IBurnMintERC20, ERC677, IERC165, ERC20Burnable, Owner
   /// @dev Uses OZ ERC20 _mint to disallow minting to address(0).
   /// @dev Disallows minting to address(this)
   /// @dev Increases the total supply.
-  function mint(address account, uint256 amount) external virtual override onlyMinter validAddress(account) {
+  function mint(
+    address account,
+    uint256 amount
+  ) external virtual override onlyMinter validAddress(account) {
     if (i_maxSupply != 0 && totalSupply() + amount > i_maxSupply) revert MaxSupplyExceeded(totalSupply() + amount);
 
     _mint(account, amount);

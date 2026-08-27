@@ -149,18 +149,14 @@ contract ChannelConfigStoreChannelAdderTest is ChannelConfigStoreTest {
 
     // Assert that allowedAdders contains both CHANNEL_ADDER_ID_1 and CHANNEL_ADDER_ID_2 (order agnostic)
     assertTrue(
-      (
-        IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[0])
-          == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_1)
+      (IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[0])
+            == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_1)
           && IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[1])
+            == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_2))
+        || (IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[0])
             == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_2)
-      )
-        || (
-          IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[0])
-            == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_2)
-            && IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[1])
-              == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_1)
-        )
+          && IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[1])
+            == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_1))
     );
   }
 
@@ -192,18 +188,14 @@ contract ChannelConfigStoreChannelAdderTest is ChannelConfigStoreTest {
 
     // EnumerableSet doesn't guarantee order, so check both combinations
     assertTrue(
-      (
-        IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[0])
-          == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_1)
+      (IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[0])
+            == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_1)
           && IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[1])
+            == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_2))
+        || (IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[0])
             == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_2)
-      )
-        || (
-          IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[0])
-            == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_2)
-            && IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[1])
-              == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_1)
-        )
+          && IChannelConfigStore.ChannelAdderId.unwrap(allowedAdders[1])
+            == IChannelConfigStore.ChannelAdderId.unwrap(CHANNEL_ADDER_ID_1))
     );
   }
 

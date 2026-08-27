@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"reflect"
+	"slices"
 	"sync"
 	"time"
 
@@ -218,6 +220,10 @@ func (c *chainClient) BatchCallContextAll(ctx context.Context, b []rpc.BatchElem
 		wg.Add(1)
 		go func(rpc *RPCClient) {
 			defer wg.Done()
+			bCopy := slices.Clone(b)
+			for i := range bCopy {
+				bCopy[i].Result = reflect.New(reflect.TypeOf(bCopy[i])).Interface()
+			}
 			err := rpc.BatchCallContext(ctx, b)
 			if err != nil {
 				c.logger.Debugw("Secondary node BatchCallContext failed", "err", err)

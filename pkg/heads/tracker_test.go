@@ -303,10 +303,14 @@ func TestHeadTracker_NewHeads_FinalityViolations(t *testing.T) {
 		ch <- h2
 		require.NoError(t, ht.headSaver.Save(t.Context(), h2))
 
+		g := gomega.NewWithT(t)
+		g.Eventually(func() bool {
+			latestFinalized := ht.headTracker.LatestChain()
+			return latestFinalized != nil && latestFinalized.Hash == h2.Hash
+		}, 5*time.Second, tests.TestInterval).Should(gomega.BeTrue())
 		// Send old head
 		ch <- h0
 
-		g := gomega.NewWithT(t)
 		g.Eventually(func() bool {
 			report := ht.headTracker.HealthReport()
 			return slices.ContainsFunc(maps.Values(report), func(e error) bool {

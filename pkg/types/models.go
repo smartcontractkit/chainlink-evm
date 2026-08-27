@@ -650,9 +650,13 @@ func fromInternalTxn(ti blocks.TransactionInternal) Transaction {
 		tpe := LegacyTxType
 		ti.Type = &tpe
 	}
+	var gasLimit uint32
+	if ti.Gas != nil {
+		gasLimit = uint32(*ti.Gas)
+	}
 	return Transaction{
 		GasPrice:             (*assets.Wei)(ti.GasPrice),
-		GasLimit:             uint32(*ti.Gas),
+		GasLimit:             gasLimit,
 		MaxFeePerGas:         (*assets.Wei)(ti.MaxFeePerGas),
 		MaxPriorityFeePerGas: (*assets.Wei)(ti.MaxPriorityFeePerGas),
 		Type:                 TxType(*ti.Type),

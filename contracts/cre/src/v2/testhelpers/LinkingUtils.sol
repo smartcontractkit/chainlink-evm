@@ -14,8 +14,9 @@ library LinkingUtils {
     uint256 validityTimestamp,
     bytes32 proof
   ) public view returns (bytes32) {
-    bytes32 messageHash =
-      keccak256(abi.encode(requestType, owner, block.chainid, linkContract, TYPE_AND_VERSION, validityTimestamp, proof));
+    bytes32 messageHash = keccak256(
+      abi.encode(requestType, owner, block.chainid, linkContract, TYPE_AND_VERSION, validityTimestamp, proof)
+    );
     return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
   }
 }

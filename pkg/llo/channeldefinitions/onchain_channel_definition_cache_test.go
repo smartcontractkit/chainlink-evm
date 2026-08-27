@@ -19,7 +19,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	llotypes "github.com/smartcontractkit/chainlink-common/pkg/types/llo"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/query"
-	"github.com/smartcontractkit/chainlink-data-streams/llo/types"
+	"github.com/smartcontractkit/chainlink-data-streams/llo/channelsource"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 )
@@ -81,12 +81,12 @@ type mockCDCORM struct {
 	lastPersistedAddr     common.Address
 	lastPersistedDonID    uint32
 	lastPersistedVersion  uint32
-	lastPersistedDfns     map[uint32]types.SourceDefinition
+	lastPersistedDfns     map[uint32]channelsource.SourceDefinition
 	lastPersistedBlockNum int64
 	lastPersistedFormat   uint32
 }
 
-func (m *mockCDCORM) LoadChannelDefinitions(ctx context.Context, addr common.Address, donID uint32) (pd *types.PersistedDefinitions, err error) {
+func (m *mockCDCORM) LoadChannelDefinitions(ctx context.Context, addr common.Address, donID uint32) (pd *channelsource.PersistedDefinitions, err error) {
 	panic("not implemented")
 }
 func (m *mockCDCORM) StoreChannelDefinitions(ctx context.Context, addr common.Address, donID, version uint32, dfns json.RawMessage, blockNum int64, format uint32) (err error) {
@@ -150,8 +150,8 @@ func drainChannel[T any](ch chan T) {
 }
 
 // collectTriggers collects all available triggers from a channel up to maxCount
-func collectTriggers(ch chan types.Trigger, maxCount int) []types.Trigger {
-	triggers := make([]types.Trigger, 0, maxCount)
+func collectTriggers(ch chan channelsource.Trigger, maxCount int) []channelsource.Trigger {
+	triggers := make([]channelsource.Trigger, 0, maxCount)
 	for range maxCount {
 		select {
 		case trigger := <-ch:
@@ -210,7 +210,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 		cdc := &channelDefinitionCache{
 			lggr: logger.TestSugared(t),
 			definitions: Definitions{
-				Sources: make(map[uint32]types.SourceDefinition),
+				Sources: make(map[uint32]channelsource.SourceDefinition),
 			},
 			orm: &mockCDCORM{}, // Required for persist() call in Definitions()
 		}
@@ -227,8 +227,8 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 				Source:       adderID,
 			},
 		}
-		cdc.definitions.Sources[adderID] = types.SourceDefinition{
-			Trigger: types.Trigger{
+		cdc.definitions.Sources[adderID] = channelsource.SourceDefinition{
+			Trigger: channelsource.Trigger{
 				Source:   adderID,
 				BlockNum: 1000,
 			},
@@ -258,8 +258,8 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 				Tombstone:    true,
 			},
 		}
-		cdc.definitions.Sources[SourceOwner] = types.SourceDefinition{
-			Trigger: types.Trigger{
+		cdc.definitions.Sources[SourceOwner] = channelsource.SourceDefinition{
+			Trigger: channelsource.Trigger{
 				Source:   SourceOwner,
 				BlockNum: 2000,
 			},
@@ -277,14 +277,14 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 
 	t.Run("readLogs", func(t *testing.T) {
 		lp := &mockLogPoller{latestBlockErr: sql.ErrNoRows}
-		fetchTriggerCh := make(chan types.Trigger, 100)
+		fetchTriggerCh := make(chan channelsource.Trigger, 100)
 		cdc := &channelDefinitionCache{
 			donID:          donID,
 			lp:             lp,
 			lggr:           logger.TestSugared(t),
 			fetchTriggerCh: fetchTriggerCh,
 			definitions: Definitions{
-				Sources: make(map[uint32]types.SourceDefinition),
+				Sources: make(map[uint32]channelsource.SourceDefinition),
 			},
 		}
 
@@ -434,7 +434,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			triggers := collectTriggers(fetchTriggerCh, 8)
 			require.Len(t, triggers, 4, "expected 4 triggers")
 			// Find the trigger with version 45 (latest)
-			var latestTrigger *types.Trigger
+			var latestTrigger *channelsource.Trigger
 			for i := range triggers {
 				if triggers[i].Version == 45 {
 					latestTrigger = &triggers[i]
@@ -612,7 +612,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 
 			// Use a URL with invalid scheme that will fail at HTTP client level
 			// This avoids panic from URL parsing in the HTTP library
-			trigger := types.Trigger{
+			trigger := channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      "http://[::1",
 				SHA:      [32]byte{},
@@ -629,7 +629,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			c.resp = nil
 			c.err = errors.New("http request failed")
 
-			trigger := types.Trigger{
+			trigger := channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      "http://example.com/definitions.json",
 				SHA:      [32]byte{},
@@ -646,7 +646,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			c.err = nil
 			c.resp = &http.Response{StatusCode: 500, Body: io.NopCloser(bytes.NewReader([]byte{1, 2, 3}))}
 
-			trigger := types.Trigger{
+			trigger := channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      "http://example.com/definitions.json",
 				SHA:      [32]byte{},
@@ -668,7 +668,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			c.err = nil
 			c.resp = &http.Response{StatusCode: 404, Body: io.NopCloser(bytes.NewReader(largeBody))}
 
-			trigger := types.Trigger{
+			trigger := channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      "http://example.com/definitions.json",
 				SHA:      [32]byte{},
@@ -689,7 +689,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			c.err = nil
 			c.resp = &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader(hugeBody))}
 
-			trigger := types.Trigger{
+			trigger := channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      "http://example.com/definitions.json",
 				SHA:      [32]byte{},
@@ -707,7 +707,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			c.resp = &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte{1, 2, 3}))}
 
 			expectedSha := common.HexToHash("0xfd1780a6fc9ee0dab26ceb4b3941ab03e66ccd970d1db91612c66df4515b0a0a")
-			trigger := types.Trigger{
+			trigger := channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      "http://example.com/definitions.json",
 				SHA:      [32]byte(expectedSha),
@@ -724,7 +724,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			c.err = nil
 			c.resp = &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(`{"foo":"bar"}`)))}
 
-			trigger := types.Trigger{
+			trigger := channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      "http://example.com/definitions.json",
 				SHA:      [32]byte{},
@@ -763,7 +763,7 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			c.resp = &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(valid)))}
 
 			expectedSha := common.HexToHash("0x367bbc75f7b6c9fc66a98ea99f837ea7ac4a3c2d6a9ee284de018bd02c41b52d")
-			trigger := types.Trigger{
+			trigger := channelsource.Trigger{
 				Source:   SourceOwner,
 				URL:      "http://example.com/definitions.json",
 				SHA:      [32]byte(expectedSha),
@@ -807,9 +807,9 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			cdc.definitions.Version = 42
 			cdc.persistedBlockNum = 141
 			cdc.definitions.LastBlockNum = 142
-			cdc.definitions.Sources = map[uint32]types.SourceDefinition{
+			cdc.definitions.Sources = map[uint32]channelsource.SourceDefinition{
 				SourceOwner: {
-					Trigger: types.Trigger{
+					Trigger: channelsource.Trigger{
 						Source:   SourceOwner,
 						BlockNum: 142,
 						Version:  42,
@@ -835,9 +835,9 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			cdc.persistedBlockNum = 141
 			cdc.definitions.Version = 43
 			cdc.definitions.LastBlockNum = 143
-			cdc.definitions.Sources = map[uint32]types.SourceDefinition{
+			cdc.definitions.Sources = map[uint32]channelsource.SourceDefinition{
 				SourceOwner: {
-					Trigger: types.Trigger{
+					Trigger: channelsource.Trigger{
 						Source:   SourceOwner,
 						BlockNum: 143,
 						Version:  43,
@@ -859,9 +859,9 @@ func Test_ChannelDefinitionCache(t *testing.T) {
 			ctx := t.Context()
 			cdc.definitions.Version = 43
 			cdc.definitions.LastBlockNum = 143
-			cdc.definitions.Sources = map[uint32]types.SourceDefinition{
+			cdc.definitions.Sources = map[uint32]channelsource.SourceDefinition{
 				SourceOwner: {
-					Trigger: types.Trigger{
+					Trigger: channelsource.Trigger{
 						Source:   SourceOwner,
 						BlockNum: 143,
 						Version:  43,
@@ -1384,9 +1384,9 @@ func Test_decodePersistedSourceDefinitions(t *testing.T) {
 		source2 := uint32(2)
 		source3 := uint32(3)
 
-		definitions := map[uint32]types.SourceDefinition{
+		definitions := map[uint32]channelsource.SourceDefinition{
 			source2: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   source2,
 					URL:      "http://example.com/source2.json",
 					SHA:      [32]byte{1, 2, 3},
@@ -1399,7 +1399,7 @@ func Test_decodePersistedSourceDefinitions(t *testing.T) {
 				},
 			},
 			source3: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   source3,
 					URL:      "http://example.com/source3.json",
 					SHA:      [32]byte{4, 5, 6},
@@ -1431,9 +1431,9 @@ func Test_decodePersistedSourceDefinitions(t *testing.T) {
 		channelID1 := llotypes.ChannelID(100)
 		channelID2 := llotypes.ChannelID(200)
 
-		definitions := map[uint32]types.SourceDefinition{
+		definitions := map[uint32]channelsource.SourceDefinition{
 			legacyKey: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   legacyKey, // This should be migrated to SourceOwner
 					URL:      "http://example.com/owner.json",
 					SHA:      [32]byte{7, 8, 9},
@@ -1517,9 +1517,9 @@ func Test_decodePersistedSourceDefinitions(t *testing.T) {
 		source2 := uint32(2)
 		source3 := uint32(3)
 
-		definitions := map[uint32]types.SourceDefinition{
+		definitions := map[uint32]channelsource.SourceDefinition{
 			legacyKey: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   legacyKey,
 					URL:      "http://example.com/owner.json",
 					SHA:      [32]byte{1, 1, 1},
@@ -1531,7 +1531,7 @@ func Test_decodePersistedSourceDefinitions(t *testing.T) {
 				},
 			},
 			source2: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   source2,
 					URL:      "http://example.com/source2.json",
 					SHA:      [32]byte{2, 2, 2},
@@ -1543,7 +1543,7 @@ func Test_decodePersistedSourceDefinitions(t *testing.T) {
 				},
 			},
 			source3: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   source3,
 					URL:      "http://example.com/source3.json",
 					SHA:      [32]byte{3, 3, 3},
@@ -1589,9 +1589,9 @@ func Test_decodePersistedSourceDefinitions(t *testing.T) {
 		def2 := makeChannelDefinition(200, source2) // Different source
 		def3 := makeChannelDefinition(300, source3) // Different source
 
-		definitions := map[uint32]types.SourceDefinition{
+		definitions := map[uint32]channelsource.SourceDefinition{
 			legacyKey: {
-				Trigger: types.Trigger{
+				Trigger: channelsource.Trigger{
 					Source:   legacyKey,
 					URL:      "http://example.com/owner.json",
 					SHA:      [32]byte{9, 9, 9},

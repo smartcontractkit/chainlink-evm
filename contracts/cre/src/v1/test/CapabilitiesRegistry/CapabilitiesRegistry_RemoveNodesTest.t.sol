@@ -86,8 +86,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
+      capabilityId: s_basicHashedCapabilityId, config: BASIC_CAPABILITY_CONFIG
     });
 
     s_CapabilitiesRegistry.addDON(nodes, capabilityConfigs, true, false, F_VALUE);
@@ -106,8 +105,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
+      capabilityId: s_basicHashedCapabilityId, config: BASIC_CAPABILITY_CONFIG
     });
 
     // Add DON
@@ -145,8 +143,7 @@ contract CapabilitiesRegistry_RemoveNodesTest is BaseTest {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
     capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
-      capabilityId: s_basicHashedCapabilityId,
-      config: BASIC_CAPABILITY_CONFIG
+      capabilityId: s_basicHashedCapabilityId, config: BASIC_CAPABILITY_CONFIG
     });
 
     // Add DON

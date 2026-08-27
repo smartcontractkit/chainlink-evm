@@ -29,6 +29,9 @@ func (e EVMAddressModifier) DecodeAddress(str string) ([]byte, error) {
 	if len(str) != 40 {
 		return nil, fmt.Errorf("%w: got length %d, expected 40 for address %s", commontypes.ErrInvalidType, len(str), str)
 	}
+	if !common.IsHexAddress(str) {
+		return nil, fmt.Errorf("%w: invalid address %s", commontypes.ErrInvalidType, str)
+	}
 
 	address := common.HexToAddress(str)
 	if address == (common.Address{}) {

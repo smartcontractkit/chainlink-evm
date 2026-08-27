@@ -135,12 +135,18 @@ abstract contract VRFConsumerBaseV2Plus is IVRFMigratableConsumerV2Plus, Confirm
    * @param randomWords the VRF output expanded to the requested number of words
    */
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal virtual;
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] calldata randomWords
+  ) internal virtual;
 
   // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF
   // proof. rawFulfillRandomness then calls fulfillRandomness, after validating
   // the origin of the call
-  function rawFulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) external {
+  function rawFulfillRandomWords(
+    uint256 requestId,
+    uint256[] calldata randomWords
+  ) external {
     if (msg.sender != address(s_vrfCoordinator)) {
       revert OnlyCoordinatorCanFulfill(msg.sender, address(s_vrfCoordinator));
     }

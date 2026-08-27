@@ -4,12 +4,12 @@ pragma solidity ^0.8.4;
 import {IGetCCIPAdmin} from "../../../shared/interfaces/IGetCCIPAdmin.sol";
 import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
 
-import {AccessControl} from "@openzeppelin/contracts@4.8.3/access/AccessControl.sol";
-import {IAccessControl} from "@openzeppelin/contracts@4.8.3/access/IAccessControl.sol";
-import {ERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/IERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts@4.8.3/token/ERC20/extensions/ERC20Burnable.sol";
-import {IERC165} from "@openzeppelin/contracts@4.8.3/utils/introspection/IERC165.sol";
+import {AccessControl} from "@openzeppelin/contracts@4.9.6/access/AccessControl.sol";
+import {IAccessControl} from "@openzeppelin/contracts@4.9.6/access/IAccessControl.sol";
+import {ERC20} from "@openzeppelin/contracts@4.9.6/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts@4.9.6/token/ERC20/IERC20.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts@4.9.6/token/ERC20/extensions/ERC20Burnable.sol";
+import {IERC165} from "@openzeppelin/contracts@4.9.6/utils/introspection/IERC165.sol";
 
 /// @notice A basic ERC20 compatible token contract with burn and minting roles.
 /// @dev The total supply can be limited during deployment.
@@ -77,7 +77,11 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
 
   /// @dev Uses OZ ERC20 _transfer to disallow sending to address(0).
   /// @dev Disallows sending to address(this)
-  function _transfer(address from, address to, uint256 amount) internal virtual override {
+  function _transfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal virtual override {
     if (to == address(this)) revert InvalidRecipient(to);
 
     super._transfer(from, to, amount);
@@ -85,7 +89,11 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
 
   /// @dev Uses OZ ERC20 _approve to disallow approving for address(0).
   /// @dev Disallows approving for address(this)
-  function _approve(address owner, address spender, uint256 amount) internal virtual override {
+  function _approve(
+    address owner,
+    address spender,
+    uint256 amount
+  ) internal virtual override {
     if (spender == address(this)) revert InvalidRecipient(spender);
 
     super._approve(owner, spender, amount);
@@ -107,7 +115,10 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
   /// @inheritdoc IBurnMintERC20
   /// @dev Alias for BurnFrom for compatibility with the older naming convention.
   /// @dev Uses burnFrom for all validation & logic.
-  function burn(address account, uint256 amount) public virtual override {
+  function burn(
+    address account,
+    uint256 amount
+  ) public virtual override {
     burnFrom(account, amount);
   }
 
@@ -125,7 +136,10 @@ contract BurnMintERC20 is IBurnMintERC20, IGetCCIPAdmin, IERC165, ERC20Burnable,
   /// @dev Uses OZ ERC20 _mint to disallow minting to address(0).
   /// @dev Disallows minting to address(this)
   /// @dev Increases the total supply.
-  function mint(address account, uint256 amount) external virtual override onlyRole(MINTER_ROLE) {
+  function mint(
+    address account,
+    uint256 amount
+  ) external virtual override onlyRole(MINTER_ROLE) {
     if (account == address(this)) revert InvalidRecipient(account);
     if (i_maxSupply != 0 && totalSupply() + amount > i_maxSupply) revert MaxSupplyExceeded(totalSupply() + amount);
 

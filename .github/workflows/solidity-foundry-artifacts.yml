@@ -7,8 +7,6 @@ on:
         description: 'product for which to generate artifacts; should be the same as Foundry profile'
         required: true
         options:
-          - "automation"
-          - "functions"
           - "keystone"
           - "l2ep"
           - "llo-feeds"
@@ -132,7 +130,7 @@ jobs:
         env:
           GH_INPUTS_PRODUCT: ${{ inputs.product }}
         run: |
-          if [[ "$GH_INPUTS_PRODUCT" = "automation" || "$GH_INPUTS_PRODUCT" = "vrf" || "$GH_INPUTS_PRODUCT" = "functions" ]]; then
+          if [[ "$GH_INPUTS_PRODUCT" = "automation" || "$GH_INPUTS_PRODUCT" = "vrf" ]]; then
             echo "generate_code_coverage=false" >> $GITHUB_OUTPUT
           else
             echo "generate_code_coverage=true" >> $GITHUB_OUTPUT

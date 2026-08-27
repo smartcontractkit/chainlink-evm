@@ -36,7 +36,7 @@ func TestFwdMgr_MaybeForwardTransaction(t *testing.T) {
 	db := testutils.NewSqlxDB(t)
 	evmcfg := configtest.NewChainScopedConfig(t, nil)
 	owner := testutils.MustNewSimTransactor(t)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	b := simulated.NewBackend(types.GenesisAlloc{
 		owner.From: {
@@ -78,7 +78,7 @@ func TestFwdMgr_MaybeForwardTransaction(t *testing.T) {
 	require.Equal(t, len(lst), 1)
 	require.Equal(t, lst[0].Address, forwarderAddr)
 
-	require.NoError(t, fwdMgr.Start(testutils.Context(t)))
+	require.NoError(t, fwdMgr.Start(t.Context()))
 	addr, err := fwdMgr.ForwarderFor(ctx, owner.From)
 	require.NoError(t, err)
 	require.Equal(t, addr.String(), forwarderAddr.String())
@@ -102,7 +102,7 @@ func TestFwdMgr_MaybeForwardTransaction(t *testing.T) {
 func TestFwdMgr_AccountUnauthorizedToForward_SkipsForwarding(t *testing.T) {
 	lggr := logger.Test(t)
 	db := testutils.NewSqlxDB(t)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	evmcfg := configtest.NewChainScopedConfig(t, nil)
 	owner := testutils.MustNewSimTransactor(t)
 	b := simulated.NewBackend(types.GenesisAlloc{
@@ -139,7 +139,7 @@ func TestFwdMgr_AccountUnauthorizedToForward_SkipsForwarding(t *testing.T) {
 	require.Equal(t, len(lst), 1)
 	require.Equal(t, lst[0].Address, forwarderAddr)
 
-	err = fwdMgr.Start(testutils.Context(t))
+	err = fwdMgr.Start(t.Context())
 	require.NoError(t, err)
 	addr, err := fwdMgr.ForwarderFor(ctx, owner.From)
 	require.ErrorIs(t, err, forwarders.ErrForwarderForEOANotFound)
@@ -151,7 +151,7 @@ func TestFwdMgr_AccountUnauthorizedToForward_SkipsForwarding(t *testing.T) {
 func TestFwdMgr_InvalidForwarderForOCR2FeedsStates(t *testing.T) {
 	lggr := logger.Test(t)
 	db := testutils.NewSqlxDB(t)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	evmcfg := configtest.NewChainScopedConfig(t, nil)
 	owner := testutils.MustNewSimTransactor(t)
 	ec := simulated.NewBackend(types.GenesisAlloc{
@@ -205,7 +205,7 @@ func TestFwdMgr_InvalidForwarderForOCR2FeedsStates(t *testing.T) {
 	require.Equal(t, lst[0].Address, forwarderAddr)
 
 	fwdMgr = forwarders.NewFwdMgr(db, evmClient, lp, lggr, evmcfg.EVM())
-	require.NoError(t, fwdMgr.Start(testutils.Context(t)))
+	require.NoError(t, fwdMgr.Start(t.Context()))
 	// cannot find forwarder because it isn't authorized nor added as a transmitter
 	addr, err := fwdMgr.ForwarderForOCR2Feeds(ctx, owner.From, ocr2Address)
 	require.ErrorIs(t, err, forwarders.ErrForwarderForEOANotFound)
@@ -243,7 +243,7 @@ func TestFwdMgr_InvalidForwarderForOCR2FeedsStates(t *testing.T) {
 
 	// create new fwd to have an empty cache that has to fetch authorized forwarders from log poller
 	fwdMgr = forwarders.NewFwdMgr(db, evmClient, lp, lggr, evmcfg.EVM())
-	require.NoError(t, fwdMgr.Start(testutils.Context(t)))
+	require.NoError(t, fwdMgr.Start(t.Context()))
 	addr, err = fwdMgr.ForwarderForOCR2Feeds(ctx, owner.From, ocr2Address)
 	require.NoError(t, err, "forwarder should be valid and found because it is both authorized and set as a transmitter")
 	require.Equal(t, forwarderAddr, addr)

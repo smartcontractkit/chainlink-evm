@@ -22,7 +22,12 @@ contract MaliciousConfigurationContract is ICapabilityConfiguration, IERC165, Co
     return bytes("");
   }
 
-  function beforeCapabilityConfigSet(bytes32[] calldata, bytes calldata, uint64, uint32) external {
+  function beforeCapabilityConfigSet(
+    bytes32[] calldata,
+    bytes calldata,
+    uint64,
+    uint32
+  ) external {
     CapabilitiesRegistry.NodeParams[] memory nodes = new CapabilitiesRegistry.NodeParams[](2);
     string[] memory capabilityIds = new string[](1);
 

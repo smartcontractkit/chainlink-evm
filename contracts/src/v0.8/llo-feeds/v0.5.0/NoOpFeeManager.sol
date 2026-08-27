@@ -33,19 +33,30 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
   }
 
   /// @inheritdoc IVerifierFeeManager
-  function processFee(bytes calldata, bytes calldata, address subscriber) external payable override {
+  function processFee(
+    bytes calldata,
+    bytes calldata,
+    address subscriber
+  ) external payable override {
     // Refund any ETH sent
     _refund(subscriber);
   }
 
   /// @inheritdoc IVerifierFeeManager
-  function processFeeBulk(bytes[] calldata, bytes calldata, address subscriber) external payable override {
+  function processFeeBulk(
+    bytes[] calldata,
+    bytes calldata,
+    address subscriber
+  ) external payable override {
     // Refund any ETH sent
     _refund(subscriber);
   }
 
   /// @inheritdoc IVerifierFeeManager
-  function setFeeRecipients(bytes32, Common.AddressAndWeight[] calldata) external override {
+  function setFeeRecipients(
+    bytes32,
+    Common.AddressAndWeight[] calldata
+  ) external override {
     // No-op
   }
 
@@ -67,12 +78,21 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
   }
 
   /// @inheritdoc IFeeManager
-  function updateSubscriberDiscount(address, bytes32, address, uint64) external override {
+  function updateSubscriberDiscount(
+    address,
+    bytes32,
+    address,
+    uint64
+  ) external override {
     // No-op
   }
 
   /// @inheritdoc IFeeManager
-  function withdraw(address, address, uint192) external override {
+  function withdraw(
+    address,
+    address,
+    uint192
+  ) external override {
     // No-op
   }
 
@@ -89,7 +109,11 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
   }
 
   /// @inheritdoc IFeeManager
-  function updateSubscriberGlobalDiscount(address, address, uint64) external override {
+  function updateSubscriberGlobalDiscount(
+    address,
+    address,
+    uint64
+  ) external override {
     // No-op
   }
 
@@ -98,7 +122,11 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
    * @dev Replicates public mapping getter signature from FeeManager for backwards compatibility
    */
   // solhint-disable-next-line func-name-mixedcase
-  function s_subscriberDiscounts(address, bytes32, address) external pure returns (uint256) {
+  function s_subscriberDiscounts(
+    address,
+    bytes32,
+    address
+  ) external pure returns (uint256) {
     return PERCENTAGE_SCALAR;
   }
 
@@ -107,7 +135,10 @@ contract NoOpFeeManager is IFeeManager, ITypeAndVersion {
    * @dev Replicates public mapping getter signature from FeeManager for backwards compatibility
    */
   // solhint-disable-next-line func-name-mixedcase
-  function s_globalDiscounts(address, address) external pure returns (uint256) {
+  function s_globalDiscounts(
+    address,
+    address
+  ) external pure returns (uint256) {
     return PERCENTAGE_SCALAR;
   }
 

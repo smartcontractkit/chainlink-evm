@@ -27,7 +27,7 @@ import (
 
 func TestChainWriter(t *testing.T) {
 	lggr := logger.Test(t)
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	txm := mocks.NewMockEvmTxManager(t)
 	client := clienttest.NewClient(t)

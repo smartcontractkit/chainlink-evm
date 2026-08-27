@@ -51,7 +51,10 @@ contract ArbitrumCrossDomainForwarder is ITypeAndVersion, CrossDomainForwarder {
    * @dev forwarded only if L2 Messenger calls with `xDomainMessageSender` being the L1 owner address
    * @inheritdoc IForwarder
    */
-  function forward(address target, bytes memory data) external virtual override onlyL1Owner {
+  function forward(
+    address target,
+    bytes memory data
+  ) external virtual override onlyL1Owner {
     Address.functionCall(target, data);
   }
 

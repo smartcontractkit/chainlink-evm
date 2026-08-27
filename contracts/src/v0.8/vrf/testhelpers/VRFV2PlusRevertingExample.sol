@@ -14,12 +14,18 @@ contract VRFV2PlusRevertingExample is VRFConsumerBaseV2Plus {
   uint256 public s_subId;
   uint256 public s_gasAvailable;
 
-  constructor(address vrfCoordinator, address link) VRFConsumerBaseV2Plus(vrfCoordinator) {
+  constructor(
+    address vrfCoordinator,
+    address link
+  ) VRFConsumerBaseV2Plus(vrfCoordinator) {
     LINKTOKEN = LinkTokenInterface(link);
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256, uint256[] calldata) internal pure override {
+  function fulfillRandomWords(
+    uint256,
+    uint256[] calldata
+  ) internal pure override {
     // solhint-disable-next-line gas-custom-errors, reason-string
     revert();
   }

@@ -18,7 +18,9 @@ contract MultiWordConsumer is ChainlinkClient {
   uint256 private s_jpyInt;
 
   event RequestFulfilled( // User-defined ID
-  bytes32 indexed requestId, bytes indexed price);
+    bytes32 indexed requestId,
+    bytes indexed price
+  );
 
   event RequestMultipleFulfilled(bytes32 indexed requestId, bytes32 indexed usd, bytes32 indexed eur, bytes32 jpy);
 
@@ -26,7 +28,11 @@ contract MultiWordConsumer is ChainlinkClient {
     bytes32 indexed requestId, uint256 indexed usd, uint256 indexed eur, uint256 jpy
   );
 
-  constructor(address _link, address _oracle, bytes32 _specId) {
+  constructor(
+    address _link,
+    address _oracle,
+    bytes32 _specId
+  ) {
     _setChainlinkToken(_link);
     _setChainlinkOracle(_oracle);
     s_specId = _specId;
@@ -38,12 +44,18 @@ contract MultiWordConsumer is ChainlinkClient {
     s_specId = _specId;
   }
 
-  function requestEthereumPrice(string memory, uint256 _payment) public {
+  function requestEthereumPrice(
+    string memory,
+    uint256 _payment
+  ) public {
     Chainlink.Request memory req = _buildOperatorRequest(s_specId, this.fulfillBytes.selector);
     _sendOperatorRequest(req, _payment);
   }
 
-  function requestMultipleParameters(string memory, uint256 _payment) public {
+  function requestMultipleParameters(
+    string memory,
+    uint256 _payment
+  ) public {
     Chainlink.Request memory req = _buildOperatorRequest(s_specId, this.fulfillMultipleParameters.selector);
     _sendOperatorRequest(req, _payment);
   }
@@ -85,7 +97,10 @@ contract MultiWordConsumer is ChainlinkClient {
     require(_link.transfer(msg.sender, _link.balanceOf(address(this))), "Unable to transfer");
   }
 
-  function addExternalRequest(address _oracle, bytes32 _requestId) external {
+  function addExternalRequest(
+    address _oracle,
+    bytes32 _requestId
+  ) external {
     _addChainlinkExternalRequest(_oracle, _requestId);
   }
 
@@ -113,7 +128,10 @@ contract MultiWordConsumer is ChainlinkClient {
     s_jpyInt = _jpy;
   }
 
-  function fulfillBytes(bytes32 _requestId, bytes memory _price) public recordChainlinkFulfillment(_requestId) {
+  function fulfillBytes(
+    bytes32 _requestId,
+    bytes memory _price
+  ) public recordChainlinkFulfillment(_requestId) {
     emit RequestFulfilled(_requestId, _price);
     s_currentPrice = _price;
   }

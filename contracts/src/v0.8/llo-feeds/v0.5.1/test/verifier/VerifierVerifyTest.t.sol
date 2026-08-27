@@ -31,7 +31,10 @@ contract VerifierVerifyTestV051 is BaseTestWithConfiguredVerifierAndFeeManager {
     );
   }
 
-  function assertReportsEqual(bytes memory response, V1Report memory testReport) public pure {
+  function assertReportsEqual(
+    bytes memory response,
+    V1Report memory testReport
+  ) public pure {
     (
       bytes32 feedId,
       uint32 timestamp,

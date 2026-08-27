@@ -10,7 +10,10 @@ interface IRewardManager is IERC165 {
    * @param payments array of structs containing pool id and amount
    * @param payee the user the funds should be retrieved from
    */
-  function onFeePaid(FeePayment[] calldata payments, address payee) external;
+  function onFeePaid(
+    FeePayment[] calldata payments,
+    address payee
+  ) external;
 
   /**
    * @notice Claims the rewards in a specific pool
@@ -26,7 +29,10 @@ interface IRewardManager is IERC165 {
    * @param poolId poolId to set RewardRecipients and weights for
    * @param rewardRecipientAndWeights array of each RewardRecipient and associated weight
    */
-  function setRewardRecipients(bytes32 poolId, Common.AddressAndWeight[] calldata rewardRecipientAndWeights) external;
+  function setRewardRecipients(
+    bytes32 poolId,
+    Common.AddressAndWeight[] calldata rewardRecipientAndWeights
+  ) external;
 
   /**
    * @notice Updates a subset the reward recipients for a specific poolId. The collective weight of the recipients
@@ -34,14 +40,20 @@ interface IRewardManager is IERC165 {
    * @param poolId the poolId to update
    * @param newRewardRecipients array of new reward recipients
    */
-  function updateRewardRecipients(bytes32 poolId, Common.AddressAndWeight[] calldata newRewardRecipients) external;
+  function updateRewardRecipients(
+    bytes32 poolId,
+    Common.AddressAndWeight[] calldata newRewardRecipients
+  ) external;
 
   /**
    * @notice Pays all the recipients for each of the pool ids
    * @param poolId the pool id to pay recipients for
    * @param recipients array of recipients to pay within the pool
    */
-  function payRecipients(bytes32 poolId, address[] calldata recipients) external;
+  function payRecipients(
+    bytes32 poolId,
+    address[] calldata recipients
+  ) external;
 
   /**
    * @notice Sets the fee manager. This needs to be done post construction to prevent a circular dependency.

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 import {CapabilitiesRegistry} from "../../CapabilitiesRegistry.sol";
 import {BaseTest} from "./BaseTest.t.sol";
+import {Ownable2Step} from "@chainlink/contracts/src/v0.8/shared/access/Ownable2Step.sol";
 
 contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
   function setUp() public override {
@@ -22,8 +22,9 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
 
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
 
     bytes32[] memory nodeIds = new bytes32[](2);
     nodeIds[0] = P2P_ID;
@@ -84,8 +85,9 @@ contract CapabilitiesRegistry_RemoveDONsTest is BaseTest {
   function test_RemovesCapabilitiesDON() public {
     CapabilitiesRegistry.CapabilityConfiguration[] memory capabilityConfigs =
       new CapabilitiesRegistry.CapabilityConfiguration[](1);
-    capabilityConfigs[0] =
-      CapabilitiesRegistry.CapabilityConfiguration({capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG});
+    capabilityConfigs[0] = CapabilitiesRegistry.CapabilityConfiguration({
+      capabilityId: s_basicCapabilityId, config: BASIC_CAPABILITY_CONFIG
+    });
 
     bytes32[] memory nodeIds = new bytes32[](2);
     nodeIds[0] = P2P_ID;

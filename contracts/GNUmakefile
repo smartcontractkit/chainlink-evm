@@ -1,6 +1,6 @@
 # ALL_FOUNDRY_PRODUCTS contains a list of all products that have a foundry
 # profile defined and use the Foundry snapshots.
-ALL_FOUNDRY_PRODUCTS = automation-cre functions keystone l2ep llo-feeds operatorforwarder payments shared workflow data-feeds
+ALL_FOUNDRY_PRODUCTS = automation-cre l2ep llo-feeds operatorforwarder payments shared data-feeds
 
 # To make a snapshot for a specific product, either set the `FOUNDRY_PROFILE` env var
 # or call the target with `FOUNDRY_PROFILE=product`
@@ -43,7 +43,7 @@ mockery: $(mockery) ## Install mockery.
 
 .PHONY: foundry
 foundry: ## Install foundry.
-	foundryup --install v1.3.5
+	foundryup --install v1.7.1
 
 .PHONY: forge-zksync
 forge-zksync:

@@ -14,9 +14,10 @@ The rest of the configs are only applicable when `EIP1559` is enabled
 - `RewardPercentile`: specifies which fee percentile to pick from for each processed past block. 
 
 ### Validations
-During startup, the estimator will perform two config checks:
+During startup, the estimator will perform three config checks:
 - `BumpPercent` is equal to or higher than *MinimumBumpPercentage*. *MinimumBumpPercentage* is fixed at 10% and it's the minimum percentage allowed by Geth when bumping a transaction, to prevent spam attacks. Replacing a transaction with a price less than 10% from the previous one will result in an error on the RPC side. Even for chains that don't enforce that rule, a 10% bump seems reasonable.
 - `RewardPercentile` is equal or lower than *ConnectivityPercentile*, when `EIP1559` is enabled. *ConnectivityPercentile* is fixed at the 85th percentile and it's the maximum percentile we're willing to bump a transaction's price. This is used as a sanity check method in order to avoid excessive gas bumping when an RPC is not responding.
+- `CacheTimeout` is equal to or higher than *MinimumCacheTimeout*.
 
 ## As a Service
 `Fee History` estimator is built as a service. This means it will periodically poll the RPC for new prices, perform off-chain calculations, and cache the result for future use. For simplicity, only one type of gas estimation can be enabled at a time, Legacy or Dynamic. The poll interval is controlled by `CacheTimeout`. This value should be close to the block time. For slower chains, like Ethereum, you can set it to 12s, the same as the block time. For faster chains, you can skip a block or two, as prices will be refreshed more frequently. Ideally, 1s should be the absolute minimum. 

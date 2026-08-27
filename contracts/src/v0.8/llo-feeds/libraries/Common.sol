@@ -73,7 +73,11 @@ library Common {
    * @param left the start index
    * @param right the end index
    */
-  function _quickSort(address[] memory arr, int256 left, int256 right) internal pure {
+  function _quickSort(
+    address[] memory arr,
+    int256 left,
+    int256 right
+  ) internal pure {
     int256 i = left;
     int256 j = right;
     if (i == j) return;

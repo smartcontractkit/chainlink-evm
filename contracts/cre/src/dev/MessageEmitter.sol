@@ -26,7 +26,10 @@ contract MessageEmitter is ITypeAndVersion {
     emit MessageEmitted(msg.sender, block.timestamp, message);
   }
 
-  function getMessage(address emitter, uint256 timestamp) public view returns (string memory) {
+  function getMessage(
+    address emitter,
+    uint256 timestamp
+  ) public view returns (string memory) {
     bytes32 key = _hashKey(emitter, timestamp);
     // solhint-disable-next-line gas-custom-errors
     require(bytes(s_messages[key]).length > 0, "Message does not exist for the given sender and timestamp");
@@ -41,7 +44,10 @@ contract MessageEmitter is ITypeAndVersion {
     return s_lastMessage[emitter];
   }
 
-  function _hashKey(address emitter, uint256 timestamp) internal pure returns (bytes32) {
+  function _hashKey(
+    address emitter,
+    uint256 timestamp
+  ) internal pure returns (bytes32) {
     return keccak256(abi.encode(emitter, timestamp));
   }
 }

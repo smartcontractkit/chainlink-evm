@@ -1,4 +1,4 @@
-forge-std/=node_modules/@chainlink/contracts/src/v0.8/vendor/forge-std/src/
+forge-std/=node_modules/forge-std/src/
 @chainlink/contracts/=node_modules/@chainlink/contracts/
 
 @openzeppelin/contracts@4.8.3=node_modules/@openzeppelin/contracts-4.8.3

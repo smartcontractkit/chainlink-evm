@@ -14,12 +14,18 @@ contract VRFConsumerV2Plus is VRFConsumerBaseV2Plus {
   uint256 public s_subId;
   uint256 public s_gasAvailable;
 
-  constructor(address vrfCoordinator, address link) VRFConsumerBaseV2Plus(vrfCoordinator) {
+  constructor(
+    address vrfCoordinator,
+    address link
+  ) VRFConsumerBaseV2Plus(vrfCoordinator) {
     COORDINATOR = IVRFCoordinatorV2Plus(vrfCoordinator);
     LINKTOKEN = LinkTokenInterface(link);
   }
 
-  function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] calldata randomWords
+  ) internal override {
     require(requestId == s_requestId, "request ID is incorrect");
 
     s_gasAvailable = gasleft();

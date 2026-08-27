@@ -1,9 +1,9 @@
-pragma solidity 0.8.6;
+pragma solidity ^0.8.6;
 
-import {MockLinkToken} from "../../functions/tests/v1_3_1/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
 import {VRF} from "../VRF.sol";
 import {VRFCoordinatorV2Mock} from "../mocks/VRFCoordinatorV2Mock.sol";
+import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 import {VRFConsumerV2} from "../testhelpers/VRFConsumerV2.sol";
 import "./BaseTest.t.sol";
 
@@ -308,7 +308,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     );
 
     vm.expectEmit(true, false, false, true);
-    emit RandomWordsFulfilled(reqId, 1, 100_090_236_000_000_000, true);
+    emit RandomWordsFulfilled(reqId, 1, 100_090_192_000_000_000, true);
     s_vrfCoordinatorV2Mock.fulfillRandomWords(reqId, consumerAddr);
 
     vm.stopPrank();
@@ -345,7 +345,7 @@ contract VRFCoordinatorV2MockTest is BaseTest {
     uint256[] memory words2 = new uint256[](2);
     words1[0] = 2533;
     words1[1] = 1768;
-    emit RandomWordsFulfilled(reqId, 1, 100_072_314_000_000_000, true);
+    emit RandomWordsFulfilled(reqId, 1, 100_072_264_000_000_000, true);
     s_vrfCoordinatorV2Mock.fulfillRandomWordsWithOverride(reqId, consumerAddr, words2);
 
     vm.stopPrank();

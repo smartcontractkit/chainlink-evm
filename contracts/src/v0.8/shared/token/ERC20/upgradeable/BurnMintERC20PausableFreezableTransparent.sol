@@ -86,7 +86,11 @@ contract BurnMintERC20PausableFreezableTransparent is BurnMintERC20PausableTrans
 
   /// @dev Uses BurnMintERC20PausableTransparent _update hook to disallow transfers, minting and burning from/to frozen
   /// addresses.
-  function _update(address from, address to, uint256 value) internal virtual override {
+  function _update(
+    address from,
+    address to,
+    uint256 value
+  ) internal virtual override {
     BurnMintERC20PausableFreezableTransparentStorage storage $ = _getBurnMintERC20PausableFreezableTransparentStorage();
     if ($.isFrozen[from]) revert BurnMintERC20PausableFreezableTransparent__AccountFrozen(from);
     if ($.isFrozen[to]) revert BurnMintERC20PausableFreezableTransparent__AccountFrozen(to);
@@ -95,7 +99,12 @@ contract BurnMintERC20PausableFreezableTransparent is BurnMintERC20PausableTrans
   }
 
   /// @dev Uses BurnMintERC20PausableTransparent _approve to disallow approving from and to frozen addresses.
-  function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
+  function _approve(
+    address owner,
+    address spender,
+    uint256 value,
+    bool emitEvent
+  ) internal virtual override {
     BurnMintERC20PausableFreezableTransparentStorage storage $ = _getBurnMintERC20PausableFreezableTransparentStorage();
     if ($.isFrozen[owner]) revert BurnMintERC20PausableFreezableTransparent__AccountFrozen(owner);
     if ($.isFrozen[spender]) revert BurnMintERC20PausableFreezableTransparent__AccountFrozen(spender);

@@ -32,7 +32,7 @@ contract VRFV2PlusWrapperLoadTestConsumer is VRFV2PlusWrapperConsumerBase, Confi
     bool native;
   }
 
-  mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
+  mapping(uint256 => RequestStatus) public /* requestId */ /* requestStatus */ s_requests;
 
   constructor(
     address _vrfV2PlusWrapper
@@ -97,7 +97,10 @@ contract VRFV2PlusWrapperLoadTestConsumer is VRFV2PlusWrapperConsumerBase, Confi
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) internal override {
     // solhint-disable-next-line gas-custom-errors
     require(s_requests[_requestId].paid > 0, "request not found");
     uint256 fulfilmentBlockNumber = ChainSpecificUtil._getBlockNumber();
@@ -152,7 +155,10 @@ contract VRFV2PlusWrapperLoadTestConsumer is VRFV2PlusWrapperConsumerBase, Confi
     );
   }
 
-  function getRequestBlockTimes(uint256 offset, uint256 quantity) external view returns (uint32[] memory) {
+  function getRequestBlockTimes(
+    uint256 offset,
+    uint256 quantity
+  ) external view returns (uint32[] memory) {
     uint256 end = offset + quantity;
     if (end > s_requestBlockTimes.length) {
       end = s_requestBlockTimes.length;

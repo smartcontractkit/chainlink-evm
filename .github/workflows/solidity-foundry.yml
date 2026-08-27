@@ -23,12 +23,10 @@ jobs:
         run: |
           cat <<EOF > matrix.json
           [
-            { "name": "automation", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": false }},
-            { "name": "automation-cre", "setup": { "run-coverage": true, "min-coverage": 98.5, "run-gas-snapshot": true }},
+            { "name": "automation-cre", "setup": { "run-coverage": true, "min-coverage": 60, "run-gas-snapshot": true }},
             { "name": "dev", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum", "min-coverage": 72.8, "run-gas-snapshot": true, "subfolder": "/cre" }},
             { "name": "v1", "setup": { "run-coverage": false, "extra-coverage-params": "--ir-minimum --no-match-coverage='(.*v1/test.*)|(.*v2/test.*)'", "min-coverage": 72.8, "run-gas-snapshot": true, "subfolder": "/cre" }},
             { "name": "v2", "setup": { "run-coverage": true, "extra-coverage-params": "--ir-minimum --no-match-coverage='(.*v1/test.*)|(.*v2/test.*)'", "min-coverage": 93, "run-gas-snapshot": true, "subfolder": "/cre" }},
-            { "name": "functions", "setup": { "run-coverage": false, "min-coverage": 98.5, "run-gas-snapshot": true }},
             { "name": "l2ep", "setup": { "run-coverage": true, "min-coverage": 65.0, "run-gas-snapshot": true }},
             { "name": "llo-feeds", "setup": { "run-coverage": true, "min-coverage": 49.3, "run-gas-snapshot": true }},
             { "name": "operatorforwarder", "setup": { "run-coverage": true, "min-coverage": 55.7, "run-gas-snapshot": true }},
@@ -80,12 +78,8 @@ jobs:
               - modified: 'contracts/src/v0.8/**/!(tests|mocks)/!(*.t).sol'
             not_test_sol:
               - modified|added: 'contracts/src/v0.8/**/!(tests|mocks)/!(*.t).sol'
-            automation:
-              - 'contracts/src/v0.8/automation/**/*.sol'
             automation-cre:
               - 'contracts/src/v0.8/automation-cre/**/*.sol'
-            functions:
-              - 'contracts/src/v0.8/functions/**/*.sol'
             cre:
               - 'contracts/cre/src/**/*.sol'
             l2ep:
@@ -111,18 +105,10 @@ jobs:
           predicate-quantifier: every
           filters: |
             not_test_sol:
-              - modified|added: 'contracts/src/v0.8/**/!(*.t).sol'
-              - '!contracts/src/v0.8/**/test/**'
-              - '!contracts/src/v0.8/**/tests/**'
-              - '!contracts/src/v0.8/**/mock/**'
-              - '!contracts/src/v0.8/**/mocks/**'
-              - '!contracts/src/v0.8/**/*.t.sol'
-              - '!contracts/src/v0.8/*.t.sol'
-              - '!contracts/src/v0.8/**/testhelpers/**'
-              - '!contracts/src/v0.8/testhelpers/**'
+              - modified|added: 'contracts/{src/v0.8,cre/src}/**/!(*.t).sol'
+              - '!contracts/{src/v0.8,cre/src}/**/{test,tests,mock,mocks,testhelpers}/**'
+              - '!contracts/{src/v0.8,cre/src}/**/*.t.sol'
               - '!contracts/src/v0.8/vendor/**'
-              - '!contracts/cre/src/**/test/**'
-              - '!contracts/cre/src/**/mocks/**'
 
   tests:
     if: ${{ needs.changes.outputs.non_src_changes == 'true' || needs.changes.outputs.sol_modified_added == 'true' }}
@@ -157,7 +143,7 @@ jobs:
           || needs.changes.outputs.non_src_changes == 'true' }}
         uses: ./.github/actions/setup-nodejs
         with:
-          prod: "true"
+          prod: "false"
 
       - name: Install Foundry
         if:

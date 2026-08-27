@@ -14,7 +14,7 @@ contract VRFV2WrapperConsumerExample is VRFV2WrapperConsumerBase, ConfirmedOwner
     uint256[] randomWords;
   }
 
-  mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
+  mapping(uint256 => RequestStatus) public /* requestId */ /* requestStatus */ s_requests;
 
   constructor(
     address _link,
@@ -33,7 +33,10 @@ contract VRFV2WrapperConsumerExample is VRFV2WrapperConsumerBase, ConfirmedOwner
     return requestId;
   }
 
-  function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) internal override {
     // solhint-disable-next-line gas-custom-errors
     require(s_requests[_requestId].paid > 0, "request not found");
     s_requests[_requestId].fulfilled = true;

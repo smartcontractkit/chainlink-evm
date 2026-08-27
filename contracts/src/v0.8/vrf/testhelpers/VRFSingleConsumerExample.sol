@@ -45,7 +45,10 @@ contract VRFSingleConsumerExample is VRFConsumerBaseV2 {
     subscribe();
   }
 
-  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) internal override {
     require(requestId == s_requestId, "request ID is incorrect");
     s_randomWords = randomWords;
   }
@@ -79,7 +82,10 @@ contract VRFSingleConsumerExample is VRFConsumerBaseV2 {
     LINKTOKEN.transferAndCall(address(COORDINATOR), amount, abi.encode(s_requestConfig.subId));
   }
 
-  function withdraw(uint256 amount, address to) external onlyOwner {
+  function withdraw(
+    uint256 amount,
+    address to
+  ) external onlyOwner {
     LINKTOKEN.transfer(to, amount);
   }
 

@@ -7,7 +7,11 @@ import {Consumer} from "./Consumer.sol";
 contract GasGuzzlingConsumer is Consumer {
   using Chainlink for Chainlink.Request;
 
-  constructor(address _link, address _oracle, bytes32 _specId) {
+  constructor(
+    address _link,
+    address _oracle,
+    bytes32 _specId
+  ) {
     _setChainlinkToken(_link);
     _setChainlinkOracle(_oracle);
     s_specId = _specId;
@@ -24,7 +28,10 @@ contract GasGuzzlingConsumer is Consumer {
     _sendChainlinkRequest(req, _payment);
   }
 
-  function gassyFulfill(bytes32 _requestId, bytes32) public recordChainlinkFulfillment(_requestId) {
+  function gassyFulfill(
+    bytes32 _requestId,
+    bytes32
+  ) public recordChainlinkFulfillment(_requestId) {
     while (true) {}
   }
 
@@ -39,7 +46,10 @@ contract GasGuzzlingConsumer is Consumer {
     _sendChainlinkRequest(req, _payment);
   }
 
-  function gassyMultiWordFulfill(bytes32 _requestId, bytes memory) public recordChainlinkFulfillment(_requestId) {
+  function gassyMultiWordFulfill(
+    bytes32 _requestId,
+    bytes memory
+  ) public recordChainlinkFulfillment(_requestId) {
     while (true) {}
   }
 }

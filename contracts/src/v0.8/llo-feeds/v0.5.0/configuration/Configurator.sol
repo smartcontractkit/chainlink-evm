@@ -200,7 +200,10 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
   // is working correctly & generating reports. If that's not the case, the
   // owner is expected to "setProductionConfig" directly instead. This will
   // cause "gaps" to be created, but that seems unavoidable in such a scenario.
-  function promoteStagingConfig(bytes32 configId, bool isGreenProduction) external onlyOwner {
+  function promoteStagingConfig(
+    bytes32 configId,
+    bool isGreenProduction
+  ) external onlyOwner {
     ConfigurationState storage configurationState = s_configurationStates[configId];
     if (isGreenProduction != configurationState.isGreenProduction) {
       revert IsGreenProductionMustMatchContractState(configId, !isGreenProduction);
@@ -351,7 +354,10 @@ contract Configurator is IConfigurator, ConfirmedOwner, ITypeAndVersion, IERC165
     return "Configurator 0.5.0";
   }
 
-  modifier checkConfigValid(uint256 numSigners, uint256 f) {
+  modifier checkConfigValid(
+    uint256 numSigners,
+    uint256 f
+  ) {
     if (f == 0) revert FaultToleranceMustBePositive();
     if (numSigners > MAX_NUM_ORACLES) revert ExcessSigners(numSigners, MAX_NUM_ORACLES);
     if (numSigners <= 3 * f) revert InsufficientSigners(numSigners, 3 * f + 1);

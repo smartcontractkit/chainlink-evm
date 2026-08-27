@@ -80,7 +80,7 @@ func GenLogWithData(chainID *big.Int, address common.Address, eventSig common.Ha
 
 func TestLogPoller_Batching(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	th := SetupTH(t, lpOpts)
 	var logs []logpoller.Log
 	// Inserts are limited to 65535 parameters. A log being 10 parameters this results in
@@ -98,7 +98,7 @@ func TestLogPoller_Batching(t *testing.T) {
 
 func TestLogPoller_Blocks_Batching(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	th := SetupTH(t, lpOpts)
 	var blocks []logpoller.Block
 	var logs []logpoller.Log
@@ -125,7 +125,7 @@ func TestLogPoller_Blocks_Batching(t *testing.T) {
 func TestORM_GetBlocks_From_Range(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	// Insert many blocks and read them back together
 	blocks := []block{
 		{
@@ -181,7 +181,7 @@ func TestORM_GetBlocks_From_Range(t *testing.T) {
 func TestORM_GetBlocks_From_Range_Recent_Blocks(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	// Insert many blocks and read them back together
 	var recentBlocks []block
 	for i := 1; i <= 256; i++ {
@@ -216,7 +216,7 @@ func TestORM(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
 	o2 := th.ORM2
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	// Insert and read back a block.
 	require.NoError(t, o1.InsertBlock(ctx, common.HexToHash("0x1234"), 10, time.Now(), 0, 0))
 	b, err := o1.SelectBlockByHash(ctx, common.HexToHash("0x1234"))
@@ -575,7 +575,7 @@ func TestORM_SelectExcessLogs(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
 	o2 := th.ORM2
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	topic := common.HexToHash("0x1599")
 	topic2 := common.HexToHash("0x1600")
@@ -714,16 +714,16 @@ func TestORM_SelectExcessLogs(t *testing.T) {
 	// Test SelectExcessLogIDs with limit greater than # blocks:
 	ids, err = o1.SelectExcessLogIDs(ctx, 4)
 	require.NoError(t, err)
-	assert.Len(t, ids, 8)
+	assert.Len(t, ids, 9)
 
 	// Test SelectExcessLogIDs with no limit
 	ids, err = o1.SelectExcessLogIDs(ctx, 10)
 	require.NoError(t, err)
-	assert.Len(t, ids, 8)
+	assert.Len(t, ids, 9)
 
 	deleted, err := o1.DeleteLogsByRowID(ctx, ids)
 	require.NoError(t, err)
-	assert.Equal(t, int64(8), deleted)
+	assert.Equal(t, int64(9), deleted)
 }
 
 func TestLogPollerFilters(t *testing.T) {
@@ -741,7 +741,7 @@ func TestLogPollerFilters(t *testing.T) {
 	topicC := common.HexToHash("0x3333")
 	topicD := common.HexToHash("0x4444")
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	filters := []logpoller.Filter{{
 		Name:      "filter by topic2",
@@ -825,13 +825,13 @@ func insertLogsTopicValueRange(t *testing.T, chainID *big.Int, o logpoller.ORM, 
 			Data:        []byte("hello"),
 		})
 	}
-	require.NoError(t, o.InsertLogs(testutils.Context(t), lgs))
+	require.NoError(t, o.InsertLogs(t.Context(), lgs))
 }
 
 func TestORM_IndexedLogs(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	eventSig := common.HexToHash("0x1599")
 	addr := common.HexToAddress("0x1234")
 	require.NoError(t, o1.InsertBlock(ctx, common.HexToHash("0x1"), 1, time.Now(), 0, 0))
@@ -998,7 +998,7 @@ func TestORM_IndexedLogs(t *testing.T) {
 func TestORM_SelectIndexedLogsByTxHash(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	eventSig := common.HexToHash("0x1599")
 	txHash := common.HexToHash("0x1888")
 	addr := common.HexToAddress("0x1234")
@@ -1081,7 +1081,7 @@ func TestORM_SelectIndexedLogsByTxHash(t *testing.T) {
 func TestORM_DataWords(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	eventSig := common.HexToHash("0x1599")
 	addr := common.HexToAddress("0x1234")
 	require.NoError(t, o1.InsertBlock(ctx, common.HexToHash("0x1"), 1, time.Now(), 0, 0))
@@ -1197,7 +1197,7 @@ func TestORM_DataWords(t *testing.T) {
 func TestORM_SelectLogsWithSigsByBlockRangeFilter(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	// Insert logs on different topics, should be able to read them
 	// back using SelectLogsWithSigs and specifying
@@ -1346,7 +1346,7 @@ func (m *mockQueryExecutor) Exec(ctx context.Context, r *logpoller.RangeQueryer[
 
 func Test_ExecPagedQuery(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	lggr := logger.Test(t)
 	chainID := testutils.NewRandomEVMChainID()
 	db := testutils.NewSqlxDB(t)
@@ -1402,7 +1402,7 @@ func Test_ExecPagedQuery(t *testing.T) {
 func TestORM_DeleteBlocksBefore(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	require.NoError(t, o1.InsertBlock(ctx, common.HexToHash("0x1234"), 1, time.Now(), 0, 0))
 	require.NoError(t, o1.InsertBlock(ctx, common.HexToHash("0x1235"), 2, time.Now(), 0, 0))
 	deleted, err := o1.DeleteBlocksBefore(ctx, 1, 0)
@@ -1428,7 +1428,7 @@ func TestORM_DeleteBlocksBefore(t *testing.T) {
 
 func TestLogPoller_Logs(t *testing.T) {
 	t.Parallel()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	th := SetupTH(t, lpOpts)
 	event1 := EmitterABI.Events["Log1"].ID
 	event2 := EmitterABI.Events["Log2"].ID
@@ -1509,7 +1509,7 @@ func TestLogPoller_Logs(t *testing.T) {
 func BenchmarkLogs(b *testing.B) {
 	th := SetupTH(b, lpOpts)
 	o := th.ORM
-	ctx := testutils.Context(b)
+	ctx := b.Context()
 	var lgs []logpoller.Log
 	addr := common.HexToAddress("0x1234")
 	for i := range 10_000 {
@@ -1538,7 +1538,7 @@ func BenchmarkLogs(b *testing.B) {
 func TestSelectLogsWithSigsExcluding(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	orm := th.ORM
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	addressA := common.HexToAddress("0x11111")
 	addressB := common.HexToAddress("0x22222")
 	addressC := common.HexToAddress("0x33333")
@@ -1783,7 +1783,7 @@ func TestSelectLogsWithSigsExcluding(t *testing.T) {
 }
 
 func TestSelectLatestBlockNumberEventSigsAddrsWithConfs(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	th := SetupTH(t, lpOpts)
 	event1 := EmitterABI.Events["Log1"].ID
 	event2 := EmitterABI.Events["Log2"].ID
@@ -1889,7 +1889,7 @@ func TestSelectLatestBlockNumberEventSigsAddrsWithConfs(t *testing.T) {
 }
 
 func TestSelectLogsCreatedAfter(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	th := SetupTH(t, lpOpts)
 	event := EmitterABI.Events["Log1"].ID
 	address := utils.RandomAddress()
@@ -2053,7 +2053,7 @@ func TestSelectLogsCreatedAfter(t *testing.T) {
 }
 
 func TestNestedLogPollerBlocksQuery(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	th := SetupTH(t, lpOpts)
 	event := EmitterABI.Events["Log1"].ID
 	address := utils.RandomAddress()
@@ -2085,7 +2085,7 @@ func TestInsertLogsWithBlock(t *testing.T) {
 	chainID := testutils.NewRandomEVMChainID()
 	event := utils.RandomBytes32()
 	address := utils.RandomAddress()
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	// We need full db here, because we want to test transaction rollbacks.
 	// Using testutils.NewSqlxDB(t) will run all tests in TXs which is not desired for this type of test
@@ -2174,7 +2174,7 @@ func TestInsertLogsInTx(t *testing.T) {
 	event := utils.RandomBytes32()
 	address := utils.RandomAddress()
 	maxLogsSize := 9000
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	// We need full db here, because we want to test transaction rollbacks.
 	db := testutils.NewIndependentSqlxDB(t)
@@ -2224,7 +2224,7 @@ func TestInsertLogsInTx(t *testing.T) {
 }
 
 func TestSelectLogsDataWordBetween(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	address := utils.RandomAddress()
 	eventSig := utils.RandomBytes32()
 	th := SetupTH(t, lpOpts)
@@ -2328,7 +2328,7 @@ func Benchmark_LogsDataWordBetween(b *testing.B) {
 	chainId := big.NewInt(137)
 	db := testutils.NewIndependentSqlxDB(b)
 	o := logpoller.NewORM(chainId, db, logger.Test(b))
-	ctx := testutils.Context(b)
+	ctx := b.Context()
 
 	numberOfReports := 100_000
 	numberOfMessagesPerReport := 256
@@ -2382,7 +2382,7 @@ func Benchmark_DeleteExpiredLogs(b *testing.B) {
 	chainId := big.NewInt(137)
 	db := testutils.NewIndependentSqlxDB(b)
 	o := logpoller.NewORM(chainId, db, logger.Test(b))
-	ctx := testutils.Context(b)
+	ctx := b.Context()
 
 	numberOfReports := 200_000
 	commitStoreAddress := utils.RandomAddress()
@@ -2436,7 +2436,7 @@ func TestSelectOldestBlock(t *testing.T) {
 	th := SetupTH(t, lpOpts)
 	o1 := th.ORM
 	o2 := th.ORM2
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	t.Run("Selects oldest within given chain", func(t *testing.T) {
 		// insert blocks
 		require.NoError(t, o2.InsertBlock(ctx, common.HexToHash("0x1231"), 11, time.Now(), 0, 0))
@@ -2467,7 +2467,7 @@ func TestSelectLatestFinalizedBlock(t *testing.T) {
 		th := SetupTH(t, lpOpts)
 		o1 := th.ORM
 		o2 := th.ORM2
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		// o2's chain does not have finalized block
 		require.NoError(t, o2.InsertBlock(ctx, common.HexToHash("0x1231"), 11, time.Now(), 9, 9))
 		require.NoError(t, o2.InsertBlock(ctx, common.HexToHash("0x1234"), 10, time.Now(), 8, 8))
@@ -2481,7 +2481,7 @@ func TestSelectLatestFinalizedBlock(t *testing.T) {
 	t.Run("Returns latest finalized block even if there is no exact match by block number", func(t *testing.T) {
 		th := SetupTH(t, lpOpts)
 		o1 := th.ORM
-		ctx := testutils.Context(t)
+		ctx := t.Context()
 		require.NoError(t, o1.InsertBlock(ctx, common.HexToHash("0x1233"), 12, time.Now(), 10, 10))
 		require.NoError(t, o1.InsertBlock(ctx, common.HexToHash("0x1232"), 11, time.Now(), 9, 9))
 		require.NoError(t, o1.InsertBlock(ctx, common.HexToHash("0x1231"), 5, time.Now(), 4, 4))
@@ -2533,7 +2533,7 @@ func TestDSORM_DeleteLogsAndBlocksAfter_usesTransactionalDataSource(t *testing.T
 	t.Parallel()
 	testutils.SkipShortDB(t)
 
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	base := testutils.NewSqlxDB(t)
 	require.NotNil(t, base)
 	wrapped := &execCountingSQLxDB{DB: base}

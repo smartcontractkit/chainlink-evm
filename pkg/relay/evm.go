@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,7 +25,6 @@ import (
 	chainselectors "github.com/smartcontractkit/chain-selectors"
 
 	ocr3capability "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3"
-	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/triggers"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -34,7 +32,7 @@ import (
 	commontypes "github.com/smartcontractkit/chainlink-common/pkg/types"
 	coretypes "github.com/smartcontractkit/chainlink-common/pkg/types/core"
 	"github.com/smartcontractkit/chainlink-data-streams/llo/retirement"
-	coreconfig "github.com/smartcontractkit/chainlink-data-streams/llo/transmitter/de"
+	coreconfig "github.com/smartcontractkit/chainlink-data-streams/llo/transmitter/dataengine"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury"
 	mercuryconfig "github.com/smartcontractkit/chainlink-data-streams/mercury/config"
 	"github.com/smartcontractkit/chainlink-data-streams/mercury/wsrpc"
@@ -150,10 +148,9 @@ type Relayer struct {
 	evmService
 
 	// Mercury
-	mercuryCfg        MercuryConfig
-	mercuryORM        mercury.ORM
-	mercuryPool       wsrpc.Pool
-	triggerCapability *triggers.MercuryTriggerService
+	mercuryCfg  MercuryConfig
+	mercuryORM  mercury.ORM
+	mercuryPool wsrpc.Pool
 
 	// LLO/data streams
 	cdcFactory            func() (channeldefinitions.ChannelDefinitionCacheFactory, error)
@@ -272,15 +269,6 @@ func (r *Relayer) Start(ctx context.Context) error {
 
 func (r *Relayer) Close() error {
 	cs := make([]io.Closer, 0, 3)
-	if r.triggerCapability != nil {
-		cs = append(cs, r.triggerCapability)
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-
-		err := r.capabilitiesRegistry.Remove(ctx, r.triggerCapability.ID)
-		r.lggr.Errorw("Failed to remove trigger capability", "err", err)
-	}
 	if r.pluginConfigEmitter != nil {
 		cs = append(cs, r.pluginConfigEmitter)
 	}
@@ -492,27 +480,7 @@ func (r *Relayer) NewMercuryProvider(ctx context.Context, rargs commontypes.Rela
 		return nil, pkgerrors.New("EffectiveTransmitterID must be specified")
 	}
 
-	// initialize trigger capability service lazily
-	if relayConfig.EnableTriggerCapability && r.triggerCapability == nil {
-		if r.capabilitiesRegistry == nil {
-			lggr.Errorw("trigger capability is enabled but capabilities registry is not set")
-		} else {
-			var err2 error
-			r.triggerCapability, err2 = triggers.NewMercuryTriggerService(0, relayConfig.TriggerCapabilityName, relayConfig.TriggerCapabilityVersion, lggr)
-			if err2 != nil {
-				return nil, fmt.Errorf("failed to start required trigger service: %w", err2)
-			}
-			if err2 = r.triggerCapability.Start(ctx); err2 != nil {
-				return nil, err2
-			}
-			if err2 = r.capabilitiesRegistry.Add(ctx, r.triggerCapability); err2 != nil {
-				return nil, err2
-			}
-			lggr.Infow("successfully added trigger service to the Registry")
-		}
-	}
-
-	return NewMercuryProvider(ctx, rargs.JobID, relayConfig, mercuryConfig, r.mercuryCfg.Transmitter(), cp, r.codec, NewMercuryChainReader(r.chain.HeadTracker()), lggr, r.csaKeystore, r.mercuryPool, r.mercuryORM, r.triggerCapability)
+	return NewMercuryProvider(ctx, rargs.JobID, relayConfig, mercuryConfig, r.mercuryCfg.Transmitter(), cp, r.codec, NewMercuryChainReader(r.chain.HeadTracker()), lggr, r.csaKeystore, r.mercuryPool, r.mercuryORM)
 }
 
 func (r *Relayer) NewLLOProvider(ctx context.Context, rargs commontypes.RelayArgs, pargs commontypes.PluginArgs) (commontypes.LLOProvider, error) {

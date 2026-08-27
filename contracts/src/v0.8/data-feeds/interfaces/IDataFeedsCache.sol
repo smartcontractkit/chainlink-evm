@@ -17,7 +17,10 @@ interface IDataFeedsCache is IDecimalAggregator, IBundleBaseAggregator, ICommonA
   /// @notice Update mappings for AggregatorProxy -> Data ID
   /// @param proxies AggregatorProxy addresses
   /// @param dataIds Data IDs
-  function updateDataIdMappingsForProxies(address[] calldata proxies, bytes16[] calldata dataIds) external;
+  function updateDataIdMappingsForProxies(
+    address[] calldata proxies,
+    bytes16[] calldata dataIds
+  ) external;
 
   /// @notice Remove mappings for AggregatorProxy -> Data IDs
   /// @param proxies  AggregatorProxy addresses to remove

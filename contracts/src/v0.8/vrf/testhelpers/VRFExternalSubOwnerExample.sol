@@ -14,13 +14,19 @@ contract VRFExternalSubOwnerExample is VRFConsumerBaseV2 {
   uint256 public s_requestId;
   address internal s_owner;
 
-  constructor(address vrfCoordinator, address link) VRFConsumerBaseV2(vrfCoordinator) {
+  constructor(
+    address vrfCoordinator,
+    address link
+  ) VRFConsumerBaseV2(vrfCoordinator) {
     COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
     LINKTOKEN = LinkTokenInterface(link);
     s_owner = msg.sender;
   }
 
-  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] memory randomWords
+  ) internal override {
     require(requestId == s_requestId, "request ID is incorrect");
     s_randomWords = randomWords;
   }

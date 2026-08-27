@@ -24,12 +24,18 @@ contract VRFV2PlusConsumerExample is ConfirmedOwner, VRFConsumerBaseV2Plus {
 
   mapping(uint256 /* request id */ => Response /* response */) public s_requests;
 
-  constructor(address vrfCoordinator, address link) VRFConsumerBaseV2Plus(vrfCoordinator) {
+  constructor(
+    address vrfCoordinator,
+    address link
+  ) VRFConsumerBaseV2Plus(vrfCoordinator) {
     s_vrfCoordinatorApiV1 = IVRFCoordinatorV2Plus(vrfCoordinator);
     s_linkToken = LinkTokenInterface(link);
   }
 
-  function getRandomness(uint256 requestId, uint256 idx) public view returns (uint256 randomWord) {
+  function getRandomness(
+    uint256 requestId,
+    uint256 idx
+  ) public view returns (uint256 randomWord) {
     Response memory resp = s_requests[requestId];
     // solhint-disable-next-line gas-custom-errors
     require(resp.requestId != 0, "request ID is incorrect");
@@ -72,7 +78,10 @@ contract VRFV2PlusConsumerExample is ConfirmedOwner, VRFConsumerBaseV2Plus {
   }
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 requestId,
+    uint256[] calldata randomWords
+  ) internal override {
     // solhint-disable-next-line gas-custom-errors
     require(requestId == s_recentRequestId, "request ID is incorrect");
     s_requests[requestId].randomWords = randomWords;

@@ -145,7 +145,12 @@ contract BaseDestinationFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function setSubscriberGlobalDiscount(address subscriber, address token, uint256 discount, address sender) public {
+  function setSubscriberGlobalDiscount(
+    address subscriber,
+    address token,
+    uint256 discount,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -157,7 +162,10 @@ contract BaseDestinationFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function setNativeSurcharge(uint256 surcharge, address sender) public {
+  function setNativeSurcharge(
+    uint256 surcharge,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -170,21 +178,33 @@ contract BaseDestinationFeeManagerTest is Test {
   }
 
   // solium-disable-next-line no-unused-vars
-  function getFee(bytes memory report, address quote, address subscriber) public view returns (Common.Asset memory) {
+  function getFee(
+    bytes memory report,
+    address quote,
+    address subscriber
+  ) public view returns (Common.Asset memory) {
     //get the fee
     (Common.Asset memory fee,,) = feeManager.getFeeAndReward(subscriber, report, quote);
 
     return fee;
   }
 
-  function getReward(bytes memory report, address quote, address subscriber) public view returns (Common.Asset memory) {
+  function getReward(
+    bytes memory report,
+    address quote,
+    address subscriber
+  ) public view returns (Common.Asset memory) {
     //get the reward
     (, Common.Asset memory reward,) = feeManager.getFeeAndReward(subscriber, report, quote);
 
     return reward;
   }
 
-  function getAppliedDiscount(bytes memory report, address quote, address subscriber) public view returns (uint256) {
+  function getAppliedDiscount(
+    bytes memory report,
+    address quote,
+    address subscriber
+  ) public view returns (uint256) {
     //get the reward
     (,, uint256 appliedDiscount) = feeManager.getFeeAndReward(subscriber, report, quote);
 
@@ -254,7 +274,12 @@ contract BaseDestinationFeeManagerTest is Test {
     return address(native);
   }
 
-  function withdraw(address assetAddress, address recipient, uint256 amount, address sender) public {
+  function withdraw(
+    address assetAddress,
+    address recipient,
+    uint256 amount,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -284,7 +309,10 @@ contract BaseDestinationFeeManagerTest is Test {
     return balanceAddress.balance;
   }
 
-  function mintLink(address recipient, uint256 amount) public {
+  function mintLink(
+    address recipient,
+    uint256 amount
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(ADMIN);
@@ -296,7 +324,11 @@ contract BaseDestinationFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function mintNative(address recipient, uint256 amount, address sender) public {
+  function mintNative(
+    address recipient,
+    uint256 amount,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -308,7 +340,10 @@ contract BaseDestinationFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function issueUnwrappedNative(address recipient, uint256 quantity) public {
+  function issueUnwrappedNative(
+    address recipient,
+    uint256 quantity
+  ) public {
     vm.deal(recipient, quantity);
   }
 
@@ -373,7 +408,11 @@ contract BaseDestinationFeeManagerTest is Test {
     return abi.encode([DEFAULT_CONFIG_DIGEST, 0, 0], reportPayload, new bytes32[](1), new bytes32[](1), bytes32(""));
   }
 
-  function approveLink(address spender, uint256 quantity, address sender) public {
+  function approveLink(
+    address spender,
+    uint256 quantity,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -385,7 +424,11 @@ contract BaseDestinationFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function approveNative(address spender, uint256 quantity, address sender) public {
+  function approveNative(
+    address spender,
+    uint256 quantity,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);
@@ -397,7 +440,10 @@ contract BaseDestinationFeeManagerTest is Test {
     changePrank(originalAddr);
   }
 
-  function payLinkDeficit(bytes32 configDigest, address sender) public {
+  function payLinkDeficit(
+    bytes32 configDigest,
+    address sender
+  ) public {
     //record the current address and switch to the recipient
     address originalAddr = msg.sender;
     changePrank(sender);

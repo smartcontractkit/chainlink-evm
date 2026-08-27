@@ -303,9 +303,9 @@ func (w *chainWriter) getMaxCost(ctx context.Context, amount assets.Eth, calldat
 	var gasPrice *big.Int
 	if err != nil {
 		w.logger.Warnf("%v: GetFeeComponents failed; use maxFeePrice instead", err)
-		gasPrice = fee.ExecutionFee
-	} else {
 		gasPrice = (*big.Int)(maxGasPrice)
+	} else {
+		gasPrice = fee.ExecutionFee
 	}
 
 	estimateGas, err := w.client.EstimateGas(ctx, ethereum.CallMsg{To: toAddress, Data: calldata})

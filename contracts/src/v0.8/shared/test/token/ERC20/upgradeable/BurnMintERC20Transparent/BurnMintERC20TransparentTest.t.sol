@@ -2,10 +2,12 @@
 pragma solidity ^0.8.24;
 
 import {
-  BurnMintERC20Transparent, Initializable
+  BurnMintERC20Transparent,
+  Initializable
 } from "../../../../../token/ERC20/upgradeable/BurnMintERC20Transparent.sol";
-import {TransparentUpgradeableProxy} from
-  "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {
+  TransparentUpgradeableProxy
+} from "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {ERC20UpgradableBaseTest_approve} from "../ERC20UpgradableBaseTest.approve.t.sol";
 import {ERC20UpgradableBaseTest_burn} from "../ERC20UpgradableBaseTest.burn.t.sol";

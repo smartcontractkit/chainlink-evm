@@ -20,7 +20,7 @@ func Test_DeleteForwarder(t *testing.T) {
 	orm := NewORM(testutils.NewSqlxDB(t))
 	addr := testutils.NewAddress()
 	chainID := testutils.FixtureChainID
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 
 	fwd, err := orm.CreateForwarder(ctx, addr, *sqlutil.New(chainID))
 	require.NoError(t, err)

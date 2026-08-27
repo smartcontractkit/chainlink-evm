@@ -1,6 +1,7 @@
 package gas_test
 
 import (
+	"errors"
 	"math/big"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
-	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
@@ -35,7 +35,7 @@ func TestFeeHistoryEstimatorLifecycle(t *testing.T) {
 		}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
-		_, _, err := u.GetLegacyGas(tests.Context(t), nil, gasLimit, maxPrice)
+		_, _, err := u.GetLegacyGas(t.Context(), nil, gasLimit, maxPrice)
 		assert.ErrorContains(t, err, "gas price not set")
 	})
 
@@ -43,7 +43,7 @@ func TestFeeHistoryEstimatorLifecycle(t *testing.T) {
 		cfg := gas.FeeHistoryEstimatorConfig{BumpPercent: 9}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
-		assert.ErrorContains(t, u.Start(tests.Context(t)), "BumpPercent")
+		assert.ErrorContains(t, u.Start(t.Context()), "BumpPercent")
 	})
 
 	t.Run("fails to start if RewardPercentile is higher than ConnectivityPercentile in EIP-1559", func(t *testing.T) {
@@ -54,7 +54,18 @@ func TestFeeHistoryEstimatorLifecycle(t *testing.T) {
 		}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
-		assert.ErrorContains(t, u.Start(tests.Context(t)), "RewardPercentile")
+		assert.ErrorContains(t, u.Start(t.Context()), "RewardPercentile")
+	})
+
+	t.Run("fails to start if CacheTimeout is less than MinimumCacheTimeout", func(t *testing.T) {
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BumpPercent:      20,
+			RewardPercentile: 10,
+			CacheTimeout:     200 * time.Millisecond,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
+		assert.ErrorContains(t, u.Start(t.Context()), "CacheTimeout")
 	})
 
 	t.Run("starts if configs are correct", func(t *testing.T) {
@@ -68,7 +79,7 @@ func TestFeeHistoryEstimatorLifecycle(t *testing.T) {
 		}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.Start(tests.Context(t))
+		err := u.Start(t.Context())
 		assert.NoError(t, err)
 		err = u.Close()
 		assert.NoError(t, err)
@@ -91,7 +102,7 @@ func TestFeeHistoryEstimatorGetLegacyGas(t *testing.T) {
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
 		_, err := u.RefreshGasPrice()
 		assert.NoError(t, err)
-		gasPrice, _, err := u.GetLegacyGas(tests.Context(t), nil, gasLimit, maxPrice)
+		gasPrice, _, err := u.GetLegacyGas(t.Context(), nil, gasLimit, maxPrice)
 		assert.NoError(t, err)
 		assert.Equal(t, assets.NewWeiI(10), gasPrice)
 	})
@@ -106,7 +117,7 @@ func TestFeeHistoryEstimatorGetLegacyGas(t *testing.T) {
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
 		_, err := u.RefreshGasPrice()
 		assert.NoError(t, err)
-		gas1, _, err := u.GetLegacyGas(tests.Context(t), nil, gasLimit, maxPrice)
+		gas1, _, err := u.GetLegacyGas(t.Context(), nil, gasLimit, maxPrice)
 		assert.NoError(t, err)
 		assert.Equal(t, maxPrice, gas1)
 	})
@@ -116,7 +127,7 @@ func TestFeeHistoryEstimatorGetLegacyGas(t *testing.T) {
 
 		maxPrice := assets.NewWeiI(1)
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
-		_, _, err := u.GetLegacyGas(tests.Context(t), nil, gasLimit, maxPrice)
+		_, _, err := u.GetLegacyGas(t.Context(), nil, gasLimit, maxPrice)
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "gas price not set")
 	})
@@ -138,7 +149,7 @@ func TestFeeHistoryEstimatorBumpLegacyGas(t *testing.T) {
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
 		servicetest.RunHealthy(t, u)
-		gasPrice, _, err := u.BumpLegacyGas(tests.Context(t), originalGasPrice, gasLimit, maxPrice, nil)
+		gasPrice, _, err := u.BumpLegacyGas(t.Context(), originalGasPrice, gasLimit, maxPrice, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, assets.NewWeiI(15), gasPrice)
 	})
@@ -150,11 +161,11 @@ func TestFeeHistoryEstimatorBumpLegacyGas(t *testing.T) {
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
 
 		var originalPrice *assets.Wei
-		_, _, err := u.BumpLegacyGas(tests.Context(t), originalPrice, gasLimit, maxPrice, nil)
+		_, _, err := u.BumpLegacyGas(t.Context(), originalPrice, gasLimit, maxPrice, nil)
 		assert.Error(t, err)
 
 		originalPrice = assets.NewWeiI(100)
-		_, _, err = u.BumpLegacyGas(tests.Context(t), originalPrice, gasLimit, maxPrice, nil)
+		_, _, err = u.BumpLegacyGas(t.Context(), originalPrice, gasLimit, maxPrice, nil)
 		assert.Error(t, err)
 	})
 
@@ -166,7 +177,7 @@ func TestFeeHistoryEstimatorBumpLegacyGas(t *testing.T) {
 		cfg := gas.FeeHistoryEstimatorConfig{}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		gas, _, err := u.BumpLegacyGas(tests.Context(t), originalGasPrice, gasLimit, maxPrice, nil)
+		gas, _, err := u.BumpLegacyGas(t.Context(), originalGasPrice, gasLimit, maxPrice, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, assets.NewWeiI(80), gas)
 	})
@@ -180,7 +191,7 @@ func TestFeeHistoryEstimatorBumpLegacyGas(t *testing.T) {
 
 		maxPrice := assets.NewWeiI(14)
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		gas, _, err := u.BumpLegacyGas(tests.Context(t), originalGasPrice, gasLimit, maxPrice, nil)
+		gas, _, err := u.BumpLegacyGas(t.Context(), originalGasPrice, gasLimit, maxPrice, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, maxPrice, gas)
 	})
@@ -194,7 +205,7 @@ func TestFeeHistoryEstimatorBumpLegacyGas(t *testing.T) {
 
 		maxPrice := assets.NewWeiI(14)
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		gas, _, err := u.BumpLegacyGas(tests.Context(t), originalGasPrice, gasLimit, maxPrice, nil)
+		gas, _, err := u.BumpLegacyGas(t.Context(), originalGasPrice, gasLimit, maxPrice, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, maxPrice, gas)
 	})
@@ -209,7 +220,7 @@ func TestFeeHistoryEstimatorBumpLegacyGas(t *testing.T) {
 		// Price will be capped by the max price
 		maxPrice := assets.NewWeiI(101)
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		_, _, err := u.BumpLegacyGas(tests.Context(t), originalGasPrice, gasLimit, maxPrice, nil)
+		_, _, err := u.BumpLegacyGas(t.Context(), originalGasPrice, gasLimit, maxPrice, nil)
 		assert.Error(t, err)
 	})
 }
@@ -226,9 +237,18 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		maxPriorityFeePerGas1 := big.NewInt(33)
 		maxPriorityFeePerGas2 := big.NewInt(20)
 
+		// first one represents market price and second one connectivity price
+		// empty and nil entries are skipped
+		reward := [][]*big.Int{
+			{maxPriorityFeePerGas1, big.NewInt(5)},
+			{maxPriorityFeePerGas2, big.NewInt(5)},
+			{},
+			{nil, big.NewInt(5)},
+			{big.NewInt(5), nil},
+		}
 		feeHistoryResult := &ethereum.FeeHistory{
 			OldestBlock:  big.NewInt(1),
-			Reward:       [][]*big.Int{{maxPriorityFeePerGas1, big.NewInt(5)}, {maxPriorityFeePerGas2, big.NewInt(5)}, {}}, // first one represents market price and second one connectivity price
+			Reward:       reward,
 			BaseFee:      []*big.Int{baseFee, baseFee},
 			GasUsedRatio: nil,
 		}
@@ -241,22 +261,22 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		maxFee := (*assets.Wei)(baseFee).AddPercentage(gas.BaseFeeBufferPercentage).Add((*assets.Wei)(avrgPriorityFee))
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.RefreshDynamicPrice()
+		err := u.RefreshDynamicFee()
 		assert.NoError(t, err)
-		dynamicFee, err := u.GetDynamicFee(tests.Context(t), maxPrice)
+		dynamicFee, err := u.GetDynamicFee(t.Context(), maxPrice)
 		assert.NoError(t, err)
 		assert.Equal(t, maxFee, dynamicFee.GasFeeCap)
 		assert.Equal(t, (*assets.Wei)(avrgPriorityFee), dynamicFee.GasTipCap)
 	})
 
-	t.Run("fails if dynamic prices have not been set yet", func(t *testing.T) {
+	t.Run("fails if dynamic fee has not been set yet", func(t *testing.T) {
 		cfg := gas.FeeHistoryEstimatorConfig{}
 
 		maxPrice := assets.NewWeiI(1)
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
-		_, err := u.GetDynamicFee(tests.Context(t), maxPrice)
+		_, err := u.GetDynamicFee(t.Context(), maxPrice)
 		assert.Error(t, err)
-		assert.ErrorContains(t, err, "dynamic price not set")
+		assert.ErrorContains(t, err, "dynamic fee not set")
 	})
 
 	t.Run("will return max price if tip cap or fee cap exceed it", func(t *testing.T) {
@@ -276,12 +296,42 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		cfg := gas.FeeHistoryEstimatorConfig{BlockHistorySize: 1}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.RefreshDynamicPrice()
+		err := u.RefreshDynamicFee()
 		assert.NoError(t, err)
-		dynamicFee, err := u.GetDynamicFee(tests.Context(t), maxPrice)
+		dynamicFee, err := u.GetDynamicFee(t.Context(), maxPrice)
 		assert.NoError(t, err)
 		assert.Equal(t, maxPrice, dynamicFee.GasFeeCap)
 		assert.Equal(t, maxPrice, dynamicFee.GasTipCap)
+	})
+
+	t.Run("applies the NoMempoolBaseFeeBufferPercentage when there is no mempool", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		baseFee := big.NewInt(100)
+		maxPrice := assets.NewWeiI(1000)
+
+		feeHistoryResult := &ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward:      [][]*big.Int{{big.NewInt(0), big.NewInt(0)}},
+			BaseFee:     []*big.Int{baseFee},
+		}
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(feeHistoryResult, nil).Once()
+
+		// BlockHistorySize of 0 signals a chain without a mempool, so buffer is increased.
+		cfg := gas.FeeHistoryEstimatorConfig{BlockHistorySize: 0, EIP1559: true}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+
+		dynamicFee, err := u.GetDynamicFee(t.Context(), maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWei(baseFee).AddPercentage(gas.NoMempoolBaseFeeBufferPercentage), dynamicFee.GasFeeCap)
+		assert.Equal(t, assets.NewWeiI(0), dynamicFee.GasTipCap)
+		assert.Positive(t, dynamicFee.GasFeeCap.Cmp(assets.NewWei(baseFee).AddPercentage(gas.BaseFeeBufferPercentage)),
+			"the no-mempool buffer must be wider than the default one")
+
+		maxFee, err := u.GetMaxDynamicFee(maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, dynamicFee.GasFeeCap, maxFee.GasFeeCap)
 	})
 }
 
@@ -327,7 +377,7 @@ func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
 		}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.RefreshDynamicPrice()
+		err := u.RefreshDynamicFee()
 		require.NoError(t, err)
 
 		expectedPriorityFeeThreshold := assets.NewWei(connectivityMaxPriorityFeePerGas)
@@ -338,6 +388,125 @@ func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedMaxFeeCap, fee.GasFeeCap)
 		assert.Equal(t, expectedPriorityFeeThreshold, fee.GasTipCap)
+	})
+
+	t.Run("caches the next base fee even when the rewards are all zero", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		baseFee := big.NewInt(5)
+		zero := big.NewInt(0)
+		marketMaxPriorityFeePerGas := big.NewInt(10)
+		connectivityMaxPriorityFeePerGas := big.NewInt(20)
+
+		// First round returns no usable priority fees, so only the base fee can be cached.
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward:      [][]*big.Int{{zero, zero}, {}},
+			BaseFee:     []*big.Int{baseFee, baseFee},
+		}, nil).Once()
+		// Second round returns no base fee at all, which must fall back to the one cached above.
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(2),
+			Reward:      [][]*big.Int{{marketMaxPriorityFeePerGas, connectivityMaxPriorityFeePerGas}},
+			BaseFee:     []*big.Int{},
+		}, nil).Once()
+
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BumpPercent:      20,
+			RewardPercentile: 60,
+			EIP1559:          true,
+			BlockHistorySize: 2,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+		// The priority fees are still unset, but the base fee has been cached.
+		_, err := u.GetMaxDynamicFee(maxPrice)
+		require.ErrorContains(t, err, "priorityFeeThreshold not set")
+
+		require.NoError(t, u.RefreshDynamicFee())
+		expectedPriorityFeeThreshold := assets.NewWei(connectivityMaxPriorityFeePerGas)
+		expectedMaxFeeCap := assets.NewWei(baseFee).AddPercentage(gas.BaseFeeBufferPercentage).Add(expectedPriorityFeeThreshold)
+
+		fee, err := u.GetMaxDynamicFee(maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, expectedMaxFeeCap, fee.GasFeeCap)
+		assert.Equal(t, expectedPriorityFeeThreshold, fee.GasTipCap)
+	})
+
+	t.Run("keeps the cached priority fees as a pair when a round has no usable average", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		maxPrice := assets.NewWeiI(1000)
+
+		// First round is busy: both the average and the connectivity threshold are usable.
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward:      [][]*big.Int{{big.NewInt(100), big.NewInt(200)}},
+			BaseFee:     []*big.Int{big.NewInt(10), big.NewInt(10)},
+		}, nil).Once()
+		// Second round is quiet: the RewardPercentile fee is 0 so no average can be derived, while the
+		// ConnectivityPercentile one drops to 50. Applying only the latter would leave the cache with
+		// maxPriorityFeePerGas(100) > priorityFeeThreshold(50) and halt bumping with a bogus ErrConnectivity.
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(2),
+			Reward:      [][]*big.Int{{big.NewInt(0), big.NewInt(50)}},
+			BaseFee:     []*big.Int{big.NewInt(20), big.NewInt(20)},
+		}, nil).Once()
+
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BumpPercent:      20,
+			RewardPercentile: 60,
+			EIP1559:          true,
+			BlockHistorySize: 2,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+		require.NoError(t, u.RefreshDynamicFee())
+
+		// Both priority fees are retained from the first round, so the invariant still holds.
+		fee, err := u.GetDynamicFee(t.Context(), maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWeiI(100), fee.GasTipCap)
+		// The fee cap still tracked the second round's base fee: 20 * 1.4 + 100.
+		assert.Equal(t, assets.NewWeiI(128), fee.GasFeeCap)
+
+		maxFee, err := u.GetMaxDynamicFee(maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWeiI(200), maxFee.GasTipCap)
+		assert.GreaterOrEqual(t, maxFee.GasTipCap.Cmp(fee.GasTipCap), 0, "the max tip cap must never fall below the market one")
+	})
+
+	t.Run("raises the threshold when the RPC returns non-monotonic percentiles", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		maxPrice := assets.NewWeiI(1000)
+
+		// ConnectivityPercentile(50) below RewardPercentile(100) is impossible for percentiles of the same
+		// sample, so the threshold is raised to the average instead of halting every bump.
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward:      [][]*big.Int{{big.NewInt(100), big.NewInt(50)}},
+			BaseFee:     []*big.Int{big.NewInt(10), big.NewInt(10)},
+		}, nil).Once()
+
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BumpPercent:      20,
+			RewardPercentile: 60,
+			EIP1559:          true,
+			BlockHistorySize: 2,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+
+		maxFee, err := u.GetMaxDynamicFee(maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWeiI(100), maxFee.GasTipCap)
+
+		// Bumping up to the market tip is still allowed rather than tripping ErrConnectivity.
+		originalFee := gas.DynamicFee{GasFeeCap: assets.NewWeiI(20), GasTipCap: assets.NewWeiI(10)}
+		bumped, err := u.BumpDynamicFee(t.Context(), originalFee, maxPrice, nil)
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWeiI(100), bumped.GasTipCap)
 	})
 }
 
@@ -372,9 +541,9 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 		expectedTipCap := originalFee.GasTipCap.AddPercentage(cfg.BumpPercent)
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.RefreshDynamicPrice()
+		err := u.RefreshDynamicFee()
 		assert.NoError(t, err)
-		dynamicFee, err := u.BumpDynamicFee(tests.Context(t), originalFee, globalMaxPrice, nil)
+		dynamicFee, err := u.BumpDynamicFee(t.Context(), originalFee, globalMaxPrice, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedFeeCap, dynamicFee.GasFeeCap)
 		assert.Equal(t, expectedTipCap, dynamicFee.GasTipCap)
@@ -388,7 +557,7 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
 		// nil original fee
 		var originalFee gas.DynamicFee
-		_, err := u.BumpDynamicFee(tests.Context(t), originalFee, maxPrice, nil)
+		_, err := u.BumpDynamicFee(t.Context(), originalFee, maxPrice, nil)
 		assert.Error(t, err)
 
 		// tip cap is higher than fee cap
@@ -396,7 +565,7 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 			GasFeeCap: assets.NewWeiI(10),
 			GasTipCap: assets.NewWeiI(11),
 		}
-		_, err = u.BumpDynamicFee(tests.Context(t), originalFee, maxPrice, nil)
+		_, err = u.BumpDynamicFee(t.Context(), originalFee, maxPrice, nil)
 		assert.Error(t, err)
 
 		// fee cap is equal or higher to max price
@@ -404,7 +573,7 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 			GasFeeCap: assets.NewWeiI(20),
 			GasTipCap: assets.NewWeiI(10),
 		}
-		_, err = u.BumpDynamicFee(tests.Context(t), originalFee, maxPrice, nil)
+		_, err = u.BumpDynamicFee(t.Context(), originalFee, maxPrice, nil)
 		assert.Error(t, err)
 	})
 
@@ -434,9 +603,9 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 		}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.RefreshDynamicPrice()
+		err := u.RefreshDynamicFee()
 		assert.NoError(t, err)
-		bumpedFee, err := u.BumpDynamicFee(tests.Context(t), originalFee, globalMaxPrice, nil)
+		bumpedFee, err := u.BumpDynamicFee(t.Context(), originalFee, globalMaxPrice, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, (*assets.Wei)(maxPriorityFeePerGas), bumpedFee.GasTipCap)
 		assert.Equal(t, maxFee, bumpedFee.GasFeeCap)
@@ -444,14 +613,16 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 
 	t.Run("fails if connectivity percentile value is reached", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
+		// Bumping the original tip cap by BumpPercent lands on 36, above the market's connectivity percentile of 30.
 		originalFee := gas.DynamicFee{
-			GasFeeCap: assets.NewWeiI(20),
-			GasTipCap: assets.NewWeiI(10),
+			GasFeeCap: assets.NewWeiI(40),
+			GasTipCap: assets.NewWeiI(24),
 		}
 
-		// Market fees
+		// Market fees. The two percentiles come from the same sample, so the market price cannot exceed the
+		// connectivity one; the threshold is reached by the bumped attempt, not by the market.
 		baseFee := big.NewInt(5)
-		maxPriorityFeePerGas := big.NewInt(33)
+		maxPriorityFeePerGas := big.NewInt(20)
 		feeHistoryResult := &ethereum.FeeHistory{
 			OldestBlock:  big.NewInt(1),
 			Reward:       [][]*big.Int{{maxPriorityFeePerGas, big.NewInt(30)}}, // first one represents market price and second one connectivity price
@@ -466,11 +637,12 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 		}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.RefreshDynamicPrice()
+		err := u.RefreshDynamicFee()
 		assert.NoError(t, err)
-		_, err = u.BumpDynamicFee(tests.Context(t), originalFee, globalMaxPrice, nil)
+		_, err = u.BumpDynamicFee(t.Context(), originalFee, globalMaxPrice, nil)
 		assert.Error(t, err)
 		assert.True(t, fees.IsBumpErr(err))
+		assert.ErrorIs(t, err, fees.ErrConnectivity)
 	})
 
 	t.Run("returns max price if the aggregation of max and original bumped fee is higher", func(t *testing.T) {
@@ -498,9 +670,9 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 		}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.RefreshDynamicPrice()
+		err := u.RefreshDynamicFee()
 		assert.NoError(t, err)
-		bumpedFee, err := u.BumpDynamicFee(tests.Context(t), originalFee, maxPrice, nil)
+		bumpedFee, err := u.BumpDynamicFee(t.Context(), originalFee, maxPrice, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, maxPrice, bumpedFee.GasTipCap)
 		assert.Equal(t, maxPrice, bumpedFee.GasFeeCap)
@@ -531,9 +703,9 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 		}
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
-		err := u.RefreshDynamicPrice()
+		err := u.RefreshDynamicFee()
 		assert.NoError(t, err)
-		_, err = u.BumpDynamicFee(tests.Context(t), originalFee, maxPrice, nil)
+		_, err = u.BumpDynamicFee(t.Context(), originalFee, maxPrice, nil)
 		assert.Error(t, err)
 	})
 
@@ -562,12 +734,44 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 			EIP1559:          true,
 		}
 
-		maxFeePerGas := assets.NewWei(baseFee).AddPercentage(gas.BaseFeeBufferPercentage)
+		// No mempool means the wider staleness buffer applies.
+		maxFeePerGas := assets.NewWei(baseFee).AddPercentage(gas.NoMempoolBaseFeeBufferPercentage)
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
 		servicetest.RunHealthy(t, u)
-		bumpedFee, err := u.BumpDynamicFee(tests.Context(t), originalFee, globalMaxPrice, nil)
+		bumpedFee, err := u.BumpDynamicFee(t.Context(), originalFee, globalMaxPrice, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, (*assets.Wei)(maxPriorityFeePerGas), assets.NewWeiI(0))
 		assert.Equal(t, maxFeePerGas, bumpedFee.GasFeeCap)
+	})
+
+	t.Run("fails if there is no mempool and the estimator is not started", func(t *testing.T) {
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BlockHistorySize: 0,
+			BumpPercent:      20,
+			CacheTimeout:     10 * time.Second,
+			EIP1559:          true,
+		}
+
+		// The client is never called because the estimator isn't started.
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), mocks.NewFeeHistoryEstimatorClient(t), cfg, chainID, nil)
+		_, err := u.BumpDynamicFee(t.Context(), gas.DynamicFee{GasFeeCap: assets.NewWeiI(40), GasTipCap: assets.NewWeiI(0)}, globalMaxPrice, nil)
+		require.ErrorContains(t, err, "estimator not started")
+	})
+
+	t.Run("propagates the refresh error if there is no mempool", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("RPC unreachable"))
+
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BlockHistorySize: 0,
+			BumpPercent:      20,
+			CacheTimeout:     10 * time.Second,
+			EIP1559:          true,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		servicetest.RunHealthy(t, u)
+		_, err := u.BumpDynamicFee(t.Context(), gas.DynamicFee{GasFeeCap: assets.NewWeiI(40), GasTipCap: assets.NewWeiI(0)}, globalMaxPrice, nil)
+		require.ErrorContains(t, err, "RPC unreachable")
 	})
 }

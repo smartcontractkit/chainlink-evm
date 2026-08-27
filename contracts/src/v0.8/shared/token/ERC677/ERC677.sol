@@ -4,13 +4,20 @@ pragma solidity ^0.8.0;
 import {IERC677Receiver} from "../../interfaces/IERC677Receiver.sol";
 import {IERC677} from "./IERC677.sol";
 
-import {ERC20} from "@openzeppelin/contracts@4.8.3/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts@4.9.6/token/ERC20/ERC20.sol";
 
 contract ERC677 is IERC677, ERC20 {
-  constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
+  constructor(
+    string memory name,
+    string memory symbol
+  ) ERC20(name, symbol) {}
 
   /// @inheritdoc IERC677
-  function transferAndCall(address to, uint256 amount, bytes memory data) public returns (bool success) {
+  function transferAndCall(
+    address to,
+    uint256 amount,
+    bytes memory data
+  ) public returns (bool success) {
     super.transfer(to, amount);
     emit Transfer(msg.sender, to, amount, data);
     if (to.code.length > 0) {

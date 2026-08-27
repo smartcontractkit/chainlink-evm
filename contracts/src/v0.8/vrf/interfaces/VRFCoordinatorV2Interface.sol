@@ -71,7 +71,10 @@ interface VRFCoordinatorV2Interface {
    * @param subId - ID of the subscription
    * @param newOwner - proposed new owner of the subscription
    */
-  function requestSubscriptionOwnerTransfer(uint64 subId, address newOwner) external;
+  function requestSubscriptionOwnerTransfer(
+    uint64 subId,
+    address newOwner
+  ) external;
 
   /**
    * @notice Request subscription owner transfer.
@@ -88,21 +91,30 @@ interface VRFCoordinatorV2Interface {
    * @param subId - ID of the subscription
    * @param consumer - New consumer which can use the subscription
    */
-  function addConsumer(uint64 subId, address consumer) external;
+  function addConsumer(
+    uint64 subId,
+    address consumer
+  ) external;
 
   /**
    * @notice Remove a consumer from a VRF subscription.
    * @param subId - ID of the subscription
    * @param consumer - Consumer to remove from the subscription
    */
-  function removeConsumer(uint64 subId, address consumer) external;
+  function removeConsumer(
+    uint64 subId,
+    address consumer
+  ) external;
 
   /**
    * @notice Cancel a subscription
    * @param subId - ID of the subscription
    * @param to - Where to send the remaining LINK to
    */
-  function cancelSubscription(uint64 subId, address to) external;
+  function cancelSubscription(
+    uint64 subId,
+    address to
+  ) external;
 
   /*
    * @notice Check to see if there exists a request commitment consumers

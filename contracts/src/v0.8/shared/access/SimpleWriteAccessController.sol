@@ -22,7 +22,10 @@ contract SimpleWriteAccessController is AccessControllerInterface, ConfirmedOwne
 
   /// @notice Returns the access of an address
   /// @param _user The address to query
-  function hasAccess(address _user, bytes memory) public view virtual override returns (bool) {
+  function hasAccess(
+    address _user,
+    bytes memory
+  ) public view virtual override returns (bool) {
     return s_accessList[_user] || !checkEnabled;
   }
 

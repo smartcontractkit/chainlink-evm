@@ -32,14 +32,17 @@ contract VRFV2PlusLoadTestWithMetrics is VRFConsumerBaseV2Plus {
     uint256 fulfilmentBlockNumber;
   }
 
-  mapping(uint256 => RequestStatus) /* requestId */ /* requestStatus */ public s_requests;
+  mapping(uint256 => RequestStatus) public /* requestId */ /* requestStatus */ s_requests;
 
   constructor(
     address _vrfCoordinator
   ) VRFConsumerBaseV2Plus(_vrfCoordinator) {}
 
   // solhint-disable-next-line chainlink-solidity/prefix-internal-functions-with-underscore
-  function fulfillRandomWords(uint256 _requestId, uint256[] calldata _randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] calldata _randomWords
+  ) internal override {
     s_requests[_requestId].fulfilled = true;
     s_requests[_requestId].randomWords = _randomWords;
     s_requests[_requestId].fulfilmentTimestamp = block.timestamp;
@@ -50,21 +53,21 @@ contract VRFV2PlusLoadTestWithMetrics is VRFConsumerBaseV2Plus {
     uint256 responseTimeInSeconds = s_requests[_requestId].fulfilmentTimestamp - s_requests[_requestId].requestTimestamp;
 
     (s_slowestResponseTimeInBlocks, s_fastestResponseTimeInBlocks, s_averageResponseTimeInBlocksMillions) =
-    _calculateMetrics(
-      responseTimeInBlocks,
-      s_fastestResponseTimeInBlocks,
-      s_slowestResponseTimeInBlocks,
-      s_averageResponseTimeInBlocksMillions,
-      s_responseCount
-    );
+      _calculateMetrics(
+        responseTimeInBlocks,
+        s_fastestResponseTimeInBlocks,
+        s_slowestResponseTimeInBlocks,
+        s_averageResponseTimeInBlocksMillions,
+        s_responseCount
+      );
     (s_slowestResponseTimeInSeconds, s_fastestResponseTimeInSeconds, s_averageResponseTimeInSecondsMillions) =
-    _calculateMetrics(
-      responseTimeInSeconds,
-      s_fastestResponseTimeInSeconds,
-      s_slowestResponseTimeInSeconds,
-      s_averageResponseTimeInSecondsMillions,
-      s_responseCount
-    );
+      _calculateMetrics(
+        responseTimeInSeconds,
+        s_fastestResponseTimeInSeconds,
+        s_slowestResponseTimeInSeconds,
+        s_averageResponseTimeInSecondsMillions,
+        s_responseCount
+      );
 
     s_responseCount++;
 
@@ -162,7 +165,10 @@ contract VRFV2PlusLoadTestWithMetrics is VRFConsumerBaseV2Plus {
     return (_slowestResponseTime, _fastestResponseTime, averageInMillions);
   }
 
-  function getRequestBlockTimes(uint256 offset, uint256 quantity) external view returns (uint32[] memory) {
+  function getRequestBlockTimes(
+    uint256 offset,
+    uint256 quantity
+  ) external view returns (uint32[] memory) {
     uint256 end = offset + quantity;
     if (end > s_requestBlockTimes.length) {
       end = s_requestBlockTimes.length;

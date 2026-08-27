@@ -24,7 +24,7 @@ import (
 const network = "EVM Test"
 
 func TestMultipleMetricsArePublished(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	orm := createObservedORM(t, 100)
 	t.Cleanup(func() { resetMetrics(*orm) })
 	require.Equal(t, 0, testutil.CollectAndCount(orm.queryDuration))
@@ -53,7 +53,7 @@ func TestMultipleMetricsArePublished(t *testing.T) {
 }
 
 func TestShouldPublishDurationInCaseOfError(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	orm := createObservedORM(t, 200)
 	t.Cleanup(func() { resetMetrics(*orm) })
 	require.Equal(t, 0, testutil.CollectAndCount(orm.queryDuration))
@@ -105,7 +105,7 @@ func TestMetricsAreProperlyPopulatedForWrites(t *testing.T) {
 }
 
 func TestCountersAreProperlyPopulatedForWrites(t *testing.T) {
-	ctx := testutils.Context(t)
+	ctx := t.Context()
 	orm := createObservedORM(t, 420)
 	logs := generateRandomLogs(420, 20)
 

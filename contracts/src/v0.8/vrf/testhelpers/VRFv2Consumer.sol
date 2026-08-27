@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // An example of a consumer contract that relies on a subscription for funding.
-pragma solidity 0.8.6;
+pragma solidity ^0.8.6;
 
 import "../../shared/access/ConfirmedOwner.sol";
 import "../VRFConsumerBaseV2.sol";
@@ -51,7 +51,10 @@ contract VRFv2Consumer is VRFConsumerBaseV2, ConfirmedOwner {
     return requestId;
   }
 
-  function fulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) internal override {
+  function fulfillRandomWords(
+    uint256 _requestId,
+    uint256[] memory _randomWords
+  ) internal override {
     require(s_requests[_requestId].exists, "request not found");
     s_requests[_requestId].fulfilled = true;
     s_requests[_requestId].randomWords = _randomWords;

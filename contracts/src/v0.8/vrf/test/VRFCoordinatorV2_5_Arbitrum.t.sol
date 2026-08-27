@@ -1,7 +1,7 @@
 pragma solidity 0.8.19;
 
-import {MockLinkToken} from "../../functions/tests/v1_3_1/testhelpers/MockLinkToken.sol";
 import {MockV3Aggregator} from "../../shared/mocks/MockV3Aggregator.sol";
+import {MockLinkToken} from "../testhelpers/MockLinkToken.sol";
 
 import {ArbGasInfo} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbGasInfo.sol";
 import {ArbSys} from "../../vendor/@arbitrum/nitro-contracts/src/precompiles/ArbSys.sol";
@@ -135,7 +135,7 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
 
     uint96 payment = abi.decode(returnData, (uint96));
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 5.000129 * 1e17, 1e15);
+    assertApproxEqAbs(payment, 5.000_129 * 1e17, 1e15);
 
     // now we test only premium payment
     onlyPremium = true;
@@ -147,7 +147,7 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
 
     payment = abi.decode(returnData, (uint96));
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 5.000017 * 1e17, 1e15);
+    assertApproxEqAbs(payment, 5.000_017 * 1e17, 1e15);
   }
 
   function test_calculatePaymentAmountLink() public {
@@ -164,7 +164,7 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
 
     uint96 payment = abi.decode(returnData, (uint96));
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 8.00024772 * 1e17, 1e15);
+    assertApproxEqAbs(payment, 8.000_247_72 * 1e17, 1e15);
 
     // now we test only premium payment
     onlyPremium = true;
@@ -176,6 +176,6 @@ contract VRFV2CoordinatorV2_5_Arbitrum is BaseTest {
 
     payment = abi.decode(returnData, (uint96));
     // 1e15 is less than 1 percent discrepancy
-    assertApproxEqAbs(payment, 8.00002252 * 1e17, 1e15);
+    assertApproxEqAbs(payment, 8.000_022_52 * 1e17, 1e15);
   }
 }
