@@ -2,10 +2,7 @@ package txm
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -27,6 +24,7 @@ type stuckTxDetector struct {
 	lggr         logger.Logger
 	chainType    chaintype.ChainType
 	config       StuckTxDetectorConfig
+	mu           sync.Mutex
 	lastPurgeMap map[common.Address]time.Time
 }
 
@@ -60,6 +58,9 @@ func (s *stuckTxDetector) DetectStuckTransaction(ctx context.Context, tx *types.
 // so it is more likely to be picked up compared to a transaction that hasn't been broadcasted before. This would avoid slowing down TXM for sebsequent transactions
 // in case the current one is stuck.
 func (s *stuckTxDetector) timeBasedDetection(tx *types.Transaction) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	threshold := (s.config.BlockTime * time.Duration(s.config.StuckTxBlockThreshold))
 	if tx.LastBroadcastAt == nil {
 		if tx.AttemptCount >= maxAttemptsThreshold {
@@ -78,60 +79,4 @@ func (s *stuckTxDetector) timeBasedDetection(tx *types.Transaction) bool {
 		return true
 	}
 	return false
-}
-
-type APIResponse struct {
-	Status string      `json:"status,omitempty"`
-	Hash   common.Hash `json:"hash,omitempty"`
-}
-
-const (
-	APIStatusPending   = "PENDING"
-	APIStatusIncluded  = "INCLUDED"
-	APIStatusFailed    = "FAILED"
-	APIStatusCancelled = "CANCELLED"
-	APIStatusUnknown   = "UNKNOWN"
-)
-
-// Deprecated: DualBroadcastDetection doesn't provide any significant benefits in terms of speed and time
-// based detection can replace it.
-func (s *stuckTxDetector) DualBroadcastDetection(ctx context.Context, tx *types.Transaction) (bool, error) {
-	for _, attempt := range tx.Attempts {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.config.DetectionURL+attempt.Hash.String(), nil)
-		if err != nil {
-			return false, fmt.Errorf("failed to make request for txID: %v, attemptHash: %v - %w", tx.ID, attempt.Hash, err)
-		}
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return false, fmt.Errorf("failed to get transaction status for txID: %v, attemptHash: %v - %w", tx.ID, attempt.Hash, err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			return false, fmt.Errorf("request %v failed with status: %d", req, resp.StatusCode)
-		}
-		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			return false, err
-		}
-
-		var apiResponse APIResponse
-		err = json.Unmarshal(body, &apiResponse)
-		if err != nil {
-			return false, fmt.Errorf("failed to unmarshal response for txID: %v, attemptHash: %v - %w: %s", tx.ID, attempt.Hash, err, string(body))
-		}
-		switch apiResponse.Status {
-		case APIStatusPending, APIStatusIncluded:
-			return false, nil
-		case APIStatusFailed, APIStatusCancelled:
-			s.lggr.Debugf("TxID: %v with attempHash: %v was marked as failed/cancelled by the RPC. Transaction is now considered stuck and will be purged.",
-				tx.ID, attempt.Hash)
-			return true, nil
-		case APIStatusUnknown:
-			continue
-		default:
-			continue
-		}
-	}
-	return false, nil
 }

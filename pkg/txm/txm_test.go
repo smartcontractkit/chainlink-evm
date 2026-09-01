@@ -455,8 +455,8 @@ func TestFlow_ResendTransaction(t *testing.T) {
 	require.NoError(t, tm.BackfillTransactions(t.Context(), address))
 
 	// Set LastBroadcastAt to a time in the past to trigger retry condition
-	txStore := txStoreManager.InMemoryStoreMap[address]
-	require.NotNil(t, txStore)
+	txStore, exists := txStoreManager.GetStoreSafe(address)
+	require.True(t, exists)
 	tx := txStore.UnconfirmedTransactions[initialNonce]
 	require.NotNil(t, tx)
 	pastTime := time.Now().Add(-(config.BlockTime*time.Duration(config.RetryBlockThreshold) + 1*time.Second))

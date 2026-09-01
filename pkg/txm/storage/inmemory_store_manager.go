@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	evmtypes "github.com/ethereum/go-ethereum/core/types"
@@ -16,9 +17,10 @@ import (
 const StoreNotFoundForAddress string = "InMemoryStore for address: %v not found"
 
 type InMemoryStoreManager struct {
+	mu               sync.RWMutex
 	lggr             logger.Logger
 	chainID          *big.Int
-	InMemoryStoreMap map[common.Address]*InMemoryStore
+	inMemoryStoreMap map[common.Address]*InMemoryStore
 }
 
 func NewInMemoryStoreManager(lggr logger.Logger, chainID *big.Int) *InMemoryStoreManager {
@@ -26,11 +28,19 @@ func NewInMemoryStoreManager(lggr logger.Logger, chainID *big.Int) *InMemoryStor
 	return &InMemoryStoreManager{
 		lggr:             lggr,
 		chainID:          chainID,
-		InMemoryStoreMap: inMemoryStoreMap}
+		inMemoryStoreMap: inMemoryStoreMap}
+}
+
+func (m *InMemoryStoreManager) GetStoreSafe(fromAddress common.Address) (*InMemoryStore, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	store, exists := m.inMemoryStoreMap[fromAddress]
+	return store, exists
 }
 
 func (m *InMemoryStoreManager) AbandonPendingTransactions(_ context.Context, fromAddress common.Address) error {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		store.AbandonPendingTransactions()
 		return nil
 	}
@@ -38,45 +48,49 @@ func (m *InMemoryStoreManager) AbandonPendingTransactions(_ context.Context, fro
 }
 
 func (m *InMemoryStoreManager) Add(addresses ...common.Address) (err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	for _, address := range addresses {
-		if _, exists := m.InMemoryStoreMap[address]; exists {
+		if _, exists := m.inMemoryStoreMap[address]; exists {
 			err = errors.Join(err, fmt.Errorf("address %v already exists in store manager", address))
+			continue
 		}
-		m.InMemoryStoreMap[address] = NewInMemoryStore(m.lggr, address, m.chainID)
+		m.inMemoryStoreMap[address] = NewInMemoryStore(m.lggr, address, m.chainID)
 	}
 	return
 }
 
 func (m *InMemoryStoreManager) AppendAttemptToTransaction(_ context.Context, txNonce uint64, fromAddress common.Address, attempt *types.Attempt) (attempts []*types.Attempt, err error) {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.AppendAttemptToTransaction(txNonce, attempt)
 	}
 	return nil, fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) CountUnstartedTransactions(fromAddress common.Address) (int, error) {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.CountUnstartedTransactions(), nil
 	}
 	return 0, fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) CreateEmptyUnconfirmedTransaction(_ context.Context, fromAddress common.Address, nonce uint64, gasLimit uint64) (*types.Transaction, error) {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.CreateEmptyUnconfirmedTransaction(nonce, gasLimit)
 	}
 	return nil, fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) CreateTransaction(_ context.Context, txRequest *types.TxRequest) (*types.Transaction, error) {
-	if store, exists := m.InMemoryStoreMap[txRequest.FromAddress]; exists {
+	if store, exists := m.GetStoreSafe(txRequest.FromAddress); exists {
 		return store.CreateTransaction(txRequest), nil
 	}
 	return nil, fmt.Errorf(StoreNotFoundForAddress, txRequest.FromAddress)
 }
 
 func (m *InMemoryStoreManager) FetchUnconfirmedTransactionAtNonceWithCount(_ context.Context, nonce uint64, fromAddress common.Address) (tx *types.Transaction, count int, err error) {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		tx, count = store.FetchUnconfirmedTransactionAtNonceWithCount(nonce)
 		return
 	}
@@ -84,14 +98,14 @@ func (m *InMemoryStoreManager) FetchUnconfirmedTransactionAtNonceWithCount(_ con
 }
 
 func (m *InMemoryStoreManager) FetchUnconfirmedTransactions(_ context.Context, fromAddress common.Address) ([]*types.Transaction, error) {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.FetchUnconfirmedTransactions()
 	}
 	return nil, fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) MarkConfirmedAndReorgedTransactions(_ context.Context, nonce uint64, fromAddress common.Address) (confirmedTxs []*types.Transaction, unconfirmedTxIDs []uint64, err error) {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		confirmedTxs, unconfirmedTxIDs, err = store.MarkConfirmedAndReorgedTransactions(nonce)
 		return
 	}
@@ -99,49 +113,56 @@ func (m *InMemoryStoreManager) MarkConfirmedAndReorgedTransactions(_ context.Con
 }
 
 func (m *InMemoryStoreManager) MarkUnconfirmedTransactionPurgeable(_ context.Context, nonce uint64, fromAddress common.Address) error {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.MarkUnconfirmedTransactionPurgeable(nonce)
 	}
 	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) UpdateTransactionBroadcast(_ context.Context, txID uint64, nonce uint64, attemptHash common.Hash, fromAddress common.Address) error {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.UpdateTransactionBroadcast(txID, nonce, attemptHash)
 	}
 	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) UpdateUnstartedTransactionWithNonce(_ context.Context, fromAddress common.Address, nonce uint64) (*types.Transaction, error) {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.UpdateUnstartedTransactionWithNonce(nonce)
 	}
 	return nil, fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) DeleteAttemptForUnconfirmedTx(_ context.Context, nonce uint64, attempt *types.Attempt, fromAddress common.Address) error {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.DeleteAttemptForUnconfirmedTx(nonce, attempt)
 	}
 	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) MarkTxFatal(_ context.Context, tx *types.Transaction, fromAddress common.Address) error {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.MarkTxFatal(tx)
 	}
 	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) UpdateSignedAttempt(_ context.Context, txID uint64, attemptID uint64, signedTransaction *evmtypes.Transaction, fromAddress common.Address) error {
-	if store, exists := m.InMemoryStoreMap[fromAddress]; exists {
+	if store, exists := m.GetStoreSafe(fromAddress); exists {
 		return store.UpdateSignedAttempt(txID, attemptID, signedTransaction)
 	}
 	return fmt.Errorf(StoreNotFoundForAddress, fromAddress)
 }
 
 func (m *InMemoryStoreManager) FindTxWithIdempotencyKey(_ context.Context, idempotencyKey string) (*types.Transaction, error) {
-	for _, store := range m.InMemoryStoreMap {
+	m.mu.RLock()
+	stores := make([]*InMemoryStore, 0, len(m.inMemoryStoreMap))
+	for _, store := range m.inMemoryStoreMap {
+		stores = append(stores, store)
+	}
+	m.mu.RUnlock()
+
+	for _, store := range stores {
 		tx := store.FindTxWithIdempotencyKey(idempotencyKey)
 		if tx != nil {
 			return tx, nil
