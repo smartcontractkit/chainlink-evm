@@ -210,9 +210,7 @@ func (t *Txm) GetNonce(address common.Address) uint64 {
 
 // SetNonce updates the local nonce map. Lowering the nonce is only allowed by exactly one,
 // i.e. releasing the most recently assigned nonce after a failed transmission. Anything
-// lower would collide with nonces already assigned to in-flight transactions; in that case
-// the update is dropped and the nonce gap left by the fatal tx is filled by
-// BackfillTransactions' empty tx.
+// lower would collide with nonces already assigned to in-flight transactions.
 func (t *Txm) SetNonce(address common.Address, nonce uint64) {
 	t.nonceMapMu.Lock()
 	defer t.nonceMapMu.Unlock()
