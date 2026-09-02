@@ -451,7 +451,7 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 		if tx.LastBroadcastAt == nil ||
 			time.Since(*tx.LastBroadcastAt) > (time.Duration(t.config.RetryBlockThreshold)*t.config.BlockTime) ||
 			tx.IsPurgeable {
-			t.lggr.Info("Rebroadcasting attempt for txID: ", tx.ID)
+			t.lggr.Infow("Rebroadcasting attempt", "txID", tx.ID, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr))
 			return t.createAndSendAttempt(ctx, tx, address)
 		}
 	}
