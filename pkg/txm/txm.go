@@ -15,7 +15,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -68,7 +67,7 @@ type StuckTxDetector interface {
 }
 
 type Keystore interface {
-	EnabledAddressesForChain(ctx context.Context, chainID *big.Int) (addresses []common.Address, err error)
+	EnabledAddresses(ctx context.Context) (addresses []common.Address, err error)
 }
 
 type Config struct {
@@ -87,7 +86,7 @@ type Txm struct {
 	errorHandler    ErrorHandler
 	stuckTxDetector StuckTxDetector
 	txStore         TxStore
-	keystore        keys.AddressLister
+	keystore        Keystore
 	config          Config
 	metrics         Metrics
 
@@ -99,7 +98,7 @@ type Txm struct {
 	wg        sync.WaitGroup
 }
 
-func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler, metrics Metrics) *Txm {
+func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore Keystore, errorHandler ErrorHandler, metrics Metrics) *Txm {
 	return &Txm{
 		lggr:            logger.Sugared(logger.Named(lggr, "Txm")),
 		keystore:        keystore,
@@ -235,11 +234,15 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 	ctx, cancel := t.stopCh.NewCtx()
 	defer cancel()
 	broadcastWithBackoff := newBackoff(1 * time.Second)
-	var broadcastCh <-chan time.Time
+	broadcastTimer := time.NewTimer(broadcastInterval)
+	defer broadcastTimer.Stop()
 	backfillTicker := services.TickerConfig{Initial: t.config.BlockTime, JitterPct: services.DefaultJitter}.NewTicker(t.config.BlockTime)
 	defer backfillTicker.Stop()
 
 	t.initializeNonce(ctx, address)
+	if ctx.Err() != nil {
+		return
+	}
 
 	for {
 		start := time.Now()
@@ -250,17 +253,17 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 			t.lggr.Debug("Transaction broadcasting time elapsed: ", time.Since(start))
 		}
 		if bo {
-			broadcastCh = time.After(broadcastWithBackoff.Duration())
+			broadcastTimer.Reset(broadcastWithBackoff.Duration())
 		} else {
 			broadcastWithBackoff.Reset()
-			broadcastCh = time.After(timeutil.JitterPct(0.1).Apply(broadcastInterval))
+			broadcastTimer.Reset(timeutil.JitterPct(0.1).Apply(broadcastInterval))
 		}
 		select {
 		case <-ctx.Done():
 			return
 		case <-triggerCh:
 			continue
-		case <-broadcastCh:
+		case <-broadcastTimer.C:
 			continue
 		case <-backfillTicker.C:
 			start := time.Now()
@@ -411,7 +414,7 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 	}
 
 	if tx == nil || *tx.Nonce != latestNonce {
-		t.lggr.Warnf("Nonce gap at nonce: %d - address: %v. Creating a new transaction\n", latestNonce, address)
+		t.lggr.Warnf("Nonce gap at nonce: %d - address: %v. Creating a new transaction", latestNonce, address)
 		t.metrics.IncrementNumNonceGaps(ctx)
 		return t.createAndSendEmptyTx(ctx, latestNonce, address)
 	} else { //nolint:revive //easier to read
@@ -433,7 +436,7 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 
 		if tx.AttemptCount >= maxAttemptsThreshold {
 			t.metrics.ReachedMaxAttempts(ctx, true)
-			t.lggr.Warnf("Reached max attempts threshold for txID: %d. TXM will broadcast more attempts  but if this"+
+			t.lggr.Warnf("Reached max attempts threshold for txID: %d. TXM will broadcast more attempts but if this"+
 				" error persists, it means the transaction won't likely be confirmed and there is an issue with the transaction."+
 				"Look for any error messages from previous broadcasted attempts that may indicate why this happened, i.e. wallet is out of funds. Tx: %v", tx.ID,
 				tx.PrintWithAttempts())
@@ -445,7 +448,9 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 		// - The transaction has never been broadcasted successfully before
 		// - The last broadcast was more than RetryBlockThreshold blocks ago
 		// - The transaction is purgeable
-		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) || tx.IsPurgeable {
+		if tx.LastBroadcastAt == nil ||
+			time.Since(*tx.LastBroadcastAt) > (time.Duration(t.config.RetryBlockThreshold)*t.config.BlockTime) ||
+			tx.IsPurgeable {
 			t.lggr.Info("Rebroadcasting attempt for txID: ", tx.ID)
 			return t.createAndSendAttempt(ctx, tx, address)
 		}

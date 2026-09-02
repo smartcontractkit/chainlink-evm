@@ -229,7 +229,8 @@ func (a *MetaClient) SendTransaction(ctx context.Context, tx *types.Transaction,
 		// The first attempt is the only one signed with the auction's metacall payload. If it was pruned
 		// from the store, the remaining attempts carry the raw payload, which must not reach the public
 		// mempool, so refuse to rebroadcast. Ideally, the transaction will be purged by the stuck transaction
-		// detector before this condition is meta, but even if it does, eventually it will still be purged.
+		// detector before this condition is met, but even if it doesn't, eventually it will still be purged and
+		// the error will resolve.
 		if first.ID != 0 {
 			return fmt.Errorf("first attempt for transactionID(%d) was pruned, refusing to rebroadcast attemptID(%d)", tx.ID, first.ID)
 		}

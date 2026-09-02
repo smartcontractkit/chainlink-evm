@@ -245,7 +245,7 @@ func (m *InMemoryStore) MarkConfirmedAndReorgedTransactions(latestNonce uint64) 
 		}
 		existingTx, exists := m.UnconfirmedTransactions[*tx.Nonce]
 		if exists {
-			m.lggr.Errorw("Another unconfirmed transaction with the same nonce exists. Transaction will overwritten.",
+			m.lggr.Errorw("Another unconfirmed transaction with the same nonce exists. Transaction will be overwritten.",
 				"existingTx", existingTx, "newTx", tx)
 		}
 		if *tx.Nonce >= latestNonce {
