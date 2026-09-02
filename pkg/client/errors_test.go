@@ -464,6 +464,11 @@ func Test_Eth_Errors_Fatal(t *testing.T) {
 
 		{"Gas limit too low", true, "monad"},
 
+		{"RPC call failed: errcode: 80004, errmsg: INVALID_ACCOUNT_ADDRESS", true, "pharos"},
+		{"errcode: 80004, errmsg: INVALID_ACCOUNT_ADDRESS", true, "pharos"},
+		{"INVALID_ACCOUNT_ADDRESS", false, "pharos"},
+		{"RPC call failed: errcode: 80005, errmsg: INVALID_ACCOUNT_ADDRESS", false, "pharos"},
+
 		{"oversized data: transaction size 138074, limit 131072", true, "Optimism"},
 	}
 

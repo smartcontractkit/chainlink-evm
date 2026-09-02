@@ -318,6 +318,10 @@ var cronos = ClientErrors{
 	ServiceUnavailable:          regexp.MustCompile(`eth_sendRawTransaction does not exist/is not available`),
 }
 
+var pharos = ClientErrors{
+	Fatal: regexp.MustCompile(`errcode: 80004, errmsg: INVALID_ACCOUNT_ADDRESS`),
+}
+
 const TerminallyStuckMsg = "transaction terminally stuck"
 
 // Tx.Error messages that are set internally so they are not chain or client specific
@@ -325,7 +329,7 @@ var internal = ClientErrors{
 	TerminallyStuck: regexp.MustCompile(TerminallyStuckMsg),
 }
 
-var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, jovay, cronos, internal}
+var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, jovay, cronos, pharos, internal}
 
 // ClientErrorRegexes returns a map of compiled regexes for each error type
 func ClientErrorRegexes(errsRegex config.ClientErrors) *ClientErrors {
