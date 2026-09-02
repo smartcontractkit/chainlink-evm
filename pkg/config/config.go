@@ -22,7 +22,6 @@ type EVM interface {
 	Transactions() Transactions
 	GasEstimator() GasEstimator
 	OCR() OCR
-	OCR2() OCR2
 	Workflow() Workflow
 	NodePool() NodePool
 
@@ -67,14 +66,6 @@ type OCR interface {
 	DatabaseTimeout() time.Duration
 	DeltaCOverride() time.Duration
 	DeltaCJitterOverride() time.Duration
-}
-
-type OCR2 interface {
-	Automation() OCR2Automation
-}
-
-type OCR2Automation interface {
-	GasLimit() uint32
 }
 
 type HeadTracker interface {
@@ -173,7 +164,6 @@ type LimitJobType interface {
 	OCR2() *uint32
 	DR() *uint32
 	FM() *uint32
-	Keeper() *uint32
 	VRF() *uint32
 }
 

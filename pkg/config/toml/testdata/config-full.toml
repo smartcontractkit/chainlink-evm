@@ -83,7 +83,6 @@ OCR2 = 1006
 DR = 1002
 VRF = 1003
 FM = 1004
-Keeper = 1005
 
 [GasEstimator.BlockHistory]
 BatchSize = 17
@@ -159,10 +158,6 @@ DatabaseTimeout = '1s'
 DeltaCOverride = '1h0m0s'
 DeltaCJitterOverride = '1s'
 ObservationGracePeriod = '1s'
-
-[OCR2]
-[OCR2.Automation]
-GasLimit = 540
 
 [Workflow]
 FromAddress = '0x627306090abaB3A6e1400e9345bC60c78a8BEf57'

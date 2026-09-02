@@ -336,7 +336,6 @@ func TestChainScopedConfig_Profiles(t *testing.T) {
 			assert.Nil(t, config.EVM().GasEstimator().LimitJobType().DR())
 			assert.Nil(t, config.EVM().GasEstimator().LimitJobType().VRF())
 			assert.Nil(t, config.EVM().GasEstimator().LimitJobType().FM())
-			assert.Nil(t, config.EVM().GasEstimator().LimitJobType().Keeper())
 			assert.Equal(t, tt.expectedMinimumContractPayment, strings.TrimRight(config.EVM().MinContractPayment().Link(), "0"))
 		})
 	}

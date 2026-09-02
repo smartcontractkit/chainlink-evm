@@ -1389,53 +1389,6 @@ func (_c *EVM_OCR_Call) RunAndReturn(run func() config.OCR) *EVM_OCR_Call {
 	return _c
 }
 
-// OCR2 provides a mock function with no fields
-func (_m *EVM) OCR2() config.OCR2 {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for OCR2")
-	}
-
-	var r0 config.OCR2
-	if rf, ok := ret.Get(0).(func() config.OCR2); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(config.OCR2)
-		}
-	}
-
-	return r0
-}
-
-// EVM_OCR2_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OCR2'
-type EVM_OCR2_Call struct {
-	*mock.Call
-}
-
-// OCR2 is a helper method to define mock.On call
-func (_e *EVM_Expecter) OCR2() *EVM_OCR2_Call {
-	return &EVM_OCR2_Call{Call: _e.mock.On("OCR2")}
-}
-
-func (_c *EVM_OCR2_Call) Run(run func()) *EVM_OCR2_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *EVM_OCR2_Call) Return(_a0 config.OCR2) *EVM_OCR2_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *EVM_OCR2_Call) RunAndReturn(run func() config.OCR2) *EVM_OCR2_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // OperatorFactoryAddress provides a mock function with no fields
 func (_m *EVM) OperatorFactoryAddress() string {
 	ret := _m.Called()

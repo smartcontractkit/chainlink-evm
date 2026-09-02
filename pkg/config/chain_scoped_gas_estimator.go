@@ -172,10 +172,6 @@ func (l *limitJobTypeConfig) FM() *uint32 {
 	return l.c.FM
 }
 
-func (l *limitJobTypeConfig) Keeper() *uint32 {
-	return l.c.Keeper
-}
-
 func (l *limitJobTypeConfig) VRF() *uint32 {
 	return l.c.VRF
 }

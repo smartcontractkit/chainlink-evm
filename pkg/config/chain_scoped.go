@@ -63,10 +63,6 @@ func (e *EVMConfig) OCR() OCR {
 	return &ocrConfig{c: e.C.OCR}
 }
 
-func (e *EVMConfig) OCR2() OCR2 {
-	return &ocr2Config{c: e.C.OCR2}
-}
-
 func (e *EVMConfig) Workflow() Workflow {
 	return &workflowConfig{c: e.C.Workflow}
 }
