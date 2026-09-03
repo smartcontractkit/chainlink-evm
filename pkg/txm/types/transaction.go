@@ -40,7 +40,7 @@ type Transaction struct {
 	State        commontypes.TxState
 	IsPurgeable  bool
 	Attempts     []*Attempt
-	AttemptCount uint16 // AttempCount is strictly kept in memory and prevents indefinite retrying
+	AttemptCount uint16 // AttemptCount is strictly kept in memory and prevents indefinite retrying
 	Meta         *sqlutil.JSON
 	Subject      uuid.NullUUID
 

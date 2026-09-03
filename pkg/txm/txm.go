@@ -15,7 +15,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/timeutil"
 
-	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
 )
 
@@ -68,7 +67,7 @@ type StuckTxDetector interface {
 }
 
 type Keystore interface {
-	EnabledAddressesForChain(ctx context.Context, chainID *big.Int) (addresses []common.Address, err error)
+	EnabledAddresses(ctx context.Context) (addresses []common.Address, err error)
 }
 
 type Config struct {
@@ -87,7 +86,7 @@ type Txm struct {
 	errorHandler    ErrorHandler
 	stuckTxDetector StuckTxDetector
 	txStore         TxStore
-	keystore        keys.AddressLister
+	keystore        Keystore
 	config          Config
 	metrics         Metrics
 
@@ -99,7 +98,7 @@ type Txm struct {
 	wg        sync.WaitGroup
 }
 
-func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore keys.AddressLister, errorHandler ErrorHandler, metrics Metrics) *Txm {
+func NewTxm(lggr logger.Logger, chainID *big.Int, client Client, attemptBuilder AttemptBuilder, txStore TxStore, stuckTxDetector StuckTxDetector, config Config, keystore Keystore, errorHandler ErrorHandler, metrics Metrics) *Txm {
 	return &Txm{
 		lggr:            logger.Sugared(logger.Named(lggr, "Txm")),
 		keystore:        keystore,
@@ -136,15 +135,16 @@ func (t *Txm) startAddress(address common.Address) {
 	triggerCh := make(chan struct{}, 1)
 	t.triggerCh[address] = triggerCh
 
-	t.wg.Add(1)
-	go t.loop(address, triggerCh)
+	t.wg.Go(func() {
+		t.loop(address, triggerCh)
+	})
 }
 
 func (t *Txm) initializeNonce(ctx context.Context, address common.Address) {
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, pendingNonceDefaultTimeout)
-	defer cancel()
 	for {
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, pendingNonceDefaultTimeout)
 		pendingNonce, err := t.client.PendingNonceAt(ctxWithTimeout, address)
+		cancel()
 		if err != nil {
 			t.lggr.Errorw("Error when fetching initial nonce", "address", address, "err", err)
 			select {
@@ -208,60 +208,59 @@ func (t *Txm) GetNonce(address common.Address) uint64 {
 	return t.nonceMap[address]
 }
 
+// SetNonce updates the local nonce map. Lowering the nonce is only allowed by exactly one,
+// i.e. releasing the most recently assigned nonce after a failed transmission. Anything
+// lower would collide with nonces already assigned to in-flight transactions.
 func (t *Txm) SetNonce(address common.Address, nonce uint64) {
 	t.nonceMapMu.Lock()
 	defer t.nonceMapMu.Unlock()
+	if current := t.nonceMap[address]; nonce+1 < current {
+		t.lggr.Criticalw("Rejected nonce update that would collide with in-flight transactions",
+			"address", address, "currentNonce", current, "requestedNonce", nonce)
+		return
+	}
 	t.nonceMap[address] = nonce
 }
 
-func newBackoff(minDuration time.Duration) backoff.Backoff {
-	return backoff.Backoff{
-		Min:    minDuration,
-		Max:    1 * time.Minute,
-		Jitter: true,
-	}
-}
-
 func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
-	defer t.wg.Done()
 	ctx, cancel := t.stopCh.NewCtx()
 	defer cancel()
+
 	broadcastWithBackoff := newBackoff(1 * time.Second)
-	var broadcastCh <-chan time.Time
+	broadcastTimer := time.NewTimer(broadcastInterval)
+	defer broadcastTimer.Stop()
+
 	backfillTicker := services.TickerConfig{Initial: t.config.BlockTime, JitterPct: services.DefaultJitter}.NewTicker(t.config.BlockTime)
 	defer backfillTicker.Stop()
 
 	t.initializeNonce(ctx, address)
+	if ctx.Err() != nil {
+		return
+	}
 
 	for {
 		start := time.Now()
-		bo, err := t.BroadcastTransaction(ctx, address)
+		shouldBackoff, err := t.BroadcastTransaction(ctx, address) // use a backoff if transmission is being throttled.
 		if err != nil {
 			t.lggr.Errorw("Error during transaction broadcasting", "err", err)
-		} else {
-			t.lggr.Debug("Transaction broadcasting time elapsed: ", time.Since(start))
 		}
-		if bo {
-			broadcastCh = time.After(broadcastWithBackoff.Duration())
-		} else {
-			broadcastWithBackoff.Reset()
-			broadcastCh = time.After(timeutil.JitterPct(0.1).Apply(broadcastInterval))
-		}
+		t.lggr.Debug("Transaction broadcasting time elapsed: ", time.Since(start))
+		resetBroadcastTimer(broadcastTimer, &broadcastWithBackoff, shouldBackoff)
+
 		select {
 		case <-ctx.Done():
 			return
 		case <-triggerCh:
 			continue
-		case <-broadcastCh:
+		case <-broadcastTimer.C:
 			continue
 		case <-backfillTicker.C:
 			start := time.Now()
 			err := t.BackfillTransactions(ctx, address)
 			if err != nil {
 				t.lggr.Errorw("Error during backfill", "err", err)
-			} else {
-				t.lggr.Debug("Backfill time elapsed: ", time.Since(start))
 			}
+			t.lggr.Debug("Backfill time elapsed: ", time.Since(start))
 		}
 	}
 }
@@ -278,7 +277,7 @@ func (t *Txm) BroadcastTransaction(ctx context.Context, address common.Address) 
 		// to insufficient balance. We're making this trade-off to avoid storing stuck transactions and making unnecessary
 		// RPC calls. The upper limit is always MaxInFlightTransactions regardless of the pending nonce.
 		if unconfirmedCount >= MaxInFlightSubset {
-			if unconfirmedCount > MaxInFlightTransactions {
+			if unconfirmedCount >= MaxInFlightTransactions {
 				t.metrics.IncrementLifecycleFailure(ctx, StageMaxInFlight)
 				t.lggr.Warnf("Reached transaction limit: %d for unconfirmed transactions", MaxInFlightTransactions)
 				return true, nil
@@ -349,16 +348,19 @@ func (t *Txm) sendTransactionWithError(ctx context.Context, tx *types.Transactio
 				return nil
 			}
 		}
+		// Best-effort check on the first transmission only: an increased pending nonce proves the transmission went
+		// through. After the first attempt, there is no guarantee an in-flight attempt in the mempool won't keep the
+		// pending nonce increased, i.e. transaction already known, so the result wouldn't tell us anything about this
+		// attempt's transmission and we assume it failed.
+		if tx.AttemptCount != 1 {
+			return fmt.Errorf("rebroadcast attempt for txID: %v failed: %w", tx.ID, txErr)
+		}
 		pendingNonce, pErr := t.client.PendingNonceAt(ctx, fromAddress)
 		if pErr != nil {
 			return pErr
 		}
 		if pendingNonce <= *tx.Nonce {
-			if tx.AttemptCount == 1 {
-				// We increment the failure counter only during the first attempt to avoid overcounting. After the first attempt, there is no guarantee
-				// there isn't an in-flight transaction in the mempool that would prevent the nonce from increasing, i.e. transaction already known.
-				t.metrics.IncrementLifecycleFailure(ctx, StageBroadcast)
-			}
+			t.metrics.IncrementLifecycleFailure(ctx, StageBroadcast)
 			return fmt.Errorf("pending nonce for txID: %v didn't increase. PendingNonce: %d, TxNonce: %d. TxErr: %w", tx.ID, pendingNonce, *tx.Nonce, txErr)
 		}
 	}
@@ -400,7 +402,7 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 	}
 
 	if tx == nil || *tx.Nonce != latestNonce {
-		t.lggr.Warnf("Nonce gap at nonce: %d - address: %v. Creating a new transaction\n", latestNonce, address)
+		t.lggr.Warnf("Nonce gap at nonce: %d - address: %v. Creating a new transaction", latestNonce, address)
 		t.metrics.IncrementNumNonceGaps(ctx)
 		return t.createAndSendEmptyTx(ctx, latestNonce, address)
 	} else { //nolint:revive //easier to read
@@ -422,7 +424,7 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 
 		if tx.AttemptCount >= maxAttemptsThreshold {
 			t.metrics.ReachedMaxAttempts(ctx, true)
-			t.lggr.Warnf("Reached max attempts threshold for txID: %d. TXM will broadcast more attempts  but if this"+
+			t.lggr.Warnf("Reached max attempts threshold for txID: %d. TXM will broadcast more attempts but if this"+
 				" error persists, it means the transaction won't likely be confirmed and there is an issue with the transaction."+
 				"Look for any error messages from previous broadcasted attempts that may indicate why this happened, i.e. wallet is out of funds. Tx: %v", tx.ID,
 				tx.PrintWithAttempts())
@@ -434,8 +436,10 @@ func (t *Txm) BackfillTransactions(ctx context.Context, address common.Address) 
 		// - The transaction has never been broadcasted successfully before
 		// - The last broadcast was more than RetryBlockThreshold blocks ago
 		// - The transaction is purgeable
-		if tx.LastBroadcastAt == nil || time.Since(*tx.LastBroadcastAt) > (t.config.BlockTime*time.Duration(t.config.RetryBlockThreshold)) || tx.IsPurgeable {
-			t.lggr.Info("Rebroadcasting attempt for txID: ", tx.ID)
+		if tx.LastBroadcastAt == nil ||
+			time.Since(*tx.LastBroadcastAt) > (time.Duration(t.config.RetryBlockThreshold)*t.config.BlockTime) ||
+			tx.IsPurgeable {
+			t.lggr.Infow("Rebroadcasting attempt", "txID", tx.ID, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr))
 			return t.createAndSendAttempt(ctx, tx, address)
 		}
 	}
@@ -460,4 +464,22 @@ func (t *Txm) extractMetrics(ctx context.Context, txs []*types.Transaction) []ui
 		t.lggr.Infow("Confirmed transaction", "txID", tx.ID, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr))
 	}
 	return confirmedTxIDs
+}
+
+func newBackoff(minDuration time.Duration) backoff.Backoff {
+	return backoff.Backoff{
+		Min:    minDuration,
+		Max:    1 * time.Minute,
+		Jitter: true,
+	}
+}
+
+// resetBroadcastTimer resets the broadcast timer based on whether a backoff is needed.
+func resetBroadcastTimer(timer *time.Timer, bo *backoff.Backoff, shouldBackoff bool) {
+	if shouldBackoff {
+		timer.Reset(bo.Duration())
+		return
+	}
+	bo.Reset()
+	timer.Reset(timeutil.JitterPct(0.1).Apply(broadcastInterval))
 }

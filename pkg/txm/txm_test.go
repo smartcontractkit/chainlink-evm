@@ -311,7 +311,9 @@ func TestBackfillTransactions(t *testing.T) {
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		err = tm.BackfillTransactions(t.Context(), address)
 		require.NoError(t, err)
-		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+		tests.AssertEventually(t, func() bool {
+			return observedLogs.FilterMessage("Rebroadcasting attempt").FilterField(zap.Uint64("txID", attempt.TxID)).Len() >= 1
+		})
 	})
 
 	t.Run("retries instantly if the attempt is purgeable", func(t *testing.T) {
@@ -352,7 +354,9 @@ func TestBackfillTransactions(t *testing.T) {
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		err = tm.BackfillTransactions(t.Context(), address)
 		require.NoError(t, err)
-		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+		tests.AssertEventually(t, func() bool {
+			return observedLogs.FilterMessage("Rebroadcasting attempt").FilterField(zap.Uint64("txID", attempt.TxID)).Len() >= 1
+		})
 
 		// Broadcasted once an empty transaction but it didn't get confirmed, so we need to broadcast again.
 		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(uint64(0), nil).Once()
@@ -360,7 +364,9 @@ func TestBackfillTransactions(t *testing.T) {
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		err = tm.BackfillTransactions(t.Context(), address)
 		require.NoError(t, err)
-		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+		tests.AssertEventually(t, func() bool {
+			return observedLogs.FilterMessage("Rebroadcasting attempt").FilterField(zap.Uint64("txID", attempt.TxID)).Len() >= 2
+		})
 	})
 
 	t.Run("fetches the unconfirmed transaction for a given nonce, throws a warning for max limit and retries with a new attempt", func(t *testing.T) {
@@ -558,10 +564,8 @@ func TestFlow_ErrorHandler(t *testing.T) {
 	mockEstimator.On("BumpFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(6), GasFeeCap: assets.NewWeiI(12)}}, defaultGasLimit, nil).Once()
 	client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(dualbroadcast.ErrNoBids).Once()
-	client.On("PendingNonceAt", mock.Anything, address).Return(initialNonce, nil).Once()
+	// The pending nonce is not checked after the first attempt, so the send error is assumed to be a failed transmission and returned.
 	err = tm.BackfillTransactions(t.Context(), address) // retry
-	require.Error(t, err)
-	require.ErrorContains(t, err, "pending nonce for txID: 1 didn't increase")
 	require.ErrorIs(t, err, dualbroadcast.ErrNoBids)
 	tx, count, err = txStoreManager.FetchUnconfirmedTransactionAtNonceWithCount(t.Context(), 0, address) // same transaction is still in the store
 	require.NoError(t, err)
