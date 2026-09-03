@@ -311,7 +311,9 @@ func TestBackfillTransactions(t *testing.T) {
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		err = tm.BackfillTransactions(t.Context(), address)
 		require.NoError(t, err)
-		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+		tests.AssertEventually(t, func() bool {
+			return observedLogs.FilterMessage("Rebroadcasting attempt").FilterField(zap.Uint64("txID", attempt.TxID)).Len() >= 1
+		})
 	})
 
 	t.Run("retries instantly if the attempt is purgeable", func(t *testing.T) {
@@ -352,7 +354,9 @@ func TestBackfillTransactions(t *testing.T) {
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		err = tm.BackfillTransactions(t.Context(), address)
 		require.NoError(t, err)
-		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+		tests.AssertEventually(t, func() bool {
+			return observedLogs.FilterMessage("Rebroadcasting attempt").FilterField(zap.Uint64("txID", attempt.TxID)).Len() >= 1
+		})
 
 		// Broadcasted once an empty transaction but it didn't get confirmed, so we need to broadcast again.
 		client.On("NonceAt", mock.Anything, address, mock.Anything).Return(uint64(0), nil).Once()
@@ -360,7 +364,9 @@ func TestBackfillTransactions(t *testing.T) {
 		client.On("SendTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		err = tm.BackfillTransactions(t.Context(), address)
 		require.NoError(t, err)
-		tests.AssertLogEventually(t, observedLogs, fmt.Sprintf("Rebroadcasting attempt for txID: %d", attempt.TxID))
+		tests.AssertEventually(t, func() bool {
+			return observedLogs.FilterMessage("Rebroadcasting attempt").FilterField(zap.Uint64("txID", attempt.TxID)).Len() >= 2
+		})
 	})
 
 	t.Run("fetches the unconfirmed transaction for a given nonce, throws a warning for max limit and retries with a new attempt", func(t *testing.T) {

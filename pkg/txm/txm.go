@@ -135,8 +135,9 @@ func (t *Txm) startAddress(address common.Address) {
 	triggerCh := make(chan struct{}, 1)
 	t.triggerCh[address] = triggerCh
 
-	t.wg.Add(1)
-	go t.loop(address, triggerCh)
+	t.wg.Go(func() {
+		t.loop(address, triggerCh)
+	})
 }
 
 func (t *Txm) initializeNonce(ctx context.Context, address common.Address) {
@@ -221,21 +222,14 @@ func (t *Txm) SetNonce(address common.Address, nonce uint64) {
 	t.nonceMap[address] = nonce
 }
 
-func newBackoff(minDuration time.Duration) backoff.Backoff {
-	return backoff.Backoff{
-		Min:    minDuration,
-		Max:    1 * time.Minute,
-		Jitter: true,
-	}
-}
-
 func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
-	defer t.wg.Done()
 	ctx, cancel := t.stopCh.NewCtx()
 	defer cancel()
+
 	broadcastWithBackoff := newBackoff(1 * time.Second)
 	broadcastTimer := time.NewTimer(broadcastInterval)
 	defer broadcastTimer.Stop()
+
 	backfillTicker := services.TickerConfig{Initial: t.config.BlockTime, JitterPct: services.DefaultJitter}.NewTicker(t.config.BlockTime)
 	defer backfillTicker.Stop()
 
@@ -246,18 +240,13 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 
 	for {
 		start := time.Now()
-		bo, err := t.BroadcastTransaction(ctx, address)
+		shouldBackoff, err := t.BroadcastTransaction(ctx, address) // use a backoff if transmission is being throttled.
 		if err != nil {
 			t.lggr.Errorw("Error during transaction broadcasting", "err", err)
-		} else {
-			t.lggr.Debug("Transaction broadcasting time elapsed: ", time.Since(start))
 		}
-		if bo {
-			broadcastTimer.Reset(broadcastWithBackoff.Duration())
-		} else {
-			broadcastWithBackoff.Reset()
-			broadcastTimer.Reset(timeutil.JitterPct(0.1).Apply(broadcastInterval))
-		}
+		t.lggr.Debug("Transaction broadcasting time elapsed: ", time.Since(start))
+		resetBroadcastTimer(broadcastTimer, &broadcastWithBackoff, shouldBackoff)
+
 		select {
 		case <-ctx.Done():
 			return
@@ -270,9 +259,8 @@ func (t *Txm) loop(address common.Address, triggerCh chan struct{}) {
 			err := t.BackfillTransactions(ctx, address)
 			if err != nil {
 				t.lggr.Errorw("Error during backfill", "err", err)
-			} else {
-				t.lggr.Debug("Backfill time elapsed: ", time.Since(start))
 			}
+			t.lggr.Debug("Backfill time elapsed: ", time.Since(start))
 		}
 	}
 }
@@ -476,4 +464,22 @@ func (t *Txm) extractMetrics(ctx context.Context, txs []*types.Transaction) []ui
 		t.lggr.Infow("Confirmed transaction", "txID", tx.ID, "transactionLifecycleID", tx.GetTransactionLifecycleID(t.lggr))
 	}
 	return confirmedTxIDs
+}
+
+func newBackoff(minDuration time.Duration) backoff.Backoff {
+	return backoff.Backoff{
+		Min:    minDuration,
+		Max:    1 * time.Minute,
+		Jitter: true,
+	}
+}
+
+// resetBroadcastTimer resets the broadcast timer based on whether a backoff is needed.
+func resetBroadcastTimer(timer *time.Timer, bo *backoff.Backoff, shouldBackoff bool) {
+	if shouldBackoff {
+		timer.Reset(bo.Duration())
+		return
+	}
+	bo.Reset()
+	timer.Reset(timeutil.JitterPct(0.1).Apply(broadcastInterval))
 }
