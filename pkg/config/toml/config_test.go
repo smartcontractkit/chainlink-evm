@@ -129,7 +129,6 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		DR:     new(uint32(25)),
 		VRF:    new(uint32(37)),
 		FM:     new(uint32(42)),
-		Keeper: new(uint32(51)),
 	}
 	unknown.GasEstimator.BumpTxDepth = new(uint32(15))
 	unknown.NodePool.Errors = ClientErrors{
@@ -175,7 +174,6 @@ func TestDocs(t *testing.T) {
 		require.Zero(t, *docDefaults.GasEstimator.LimitJobType.OCR)
 		require.Zero(t, *docDefaults.GasEstimator.LimitJobType.OCR2)
 		require.Zero(t, *docDefaults.GasEstimator.LimitJobType.DR)
-		require.Zero(t, *docDefaults.GasEstimator.LimitJobType.Keeper)
 		require.Zero(t, *docDefaults.GasEstimator.LimitJobType.VRF)
 		require.Zero(t, *docDefaults.GasEstimator.LimitJobType.FM)
 		docDefaults.GasEstimator.LimitJobType = GasLimitJobType{}
@@ -285,7 +283,6 @@ var fullConfig = EVMConfig{
 				DR:     new(uint32(1002)),
 				VRF:    new(uint32(1003)),
 				FM:     new(uint32(1004)),
-				Keeper: new(uint32(1005)),
 				OCR2:   new(uint32(1006)),
 			},
 
@@ -409,11 +406,6 @@ var fullConfig = EVMConfig{
 			DeltaCOverride:                     config.MustNewDuration(time.Hour),
 			DeltaCJitterOverride:               config.MustNewDuration(time.Second),
 			ObservationGracePeriod:             config.MustNewDuration(time.Second),
-		},
-		OCR2: OCR2{
-			Automation: Automation{
-				GasLimit: new(uint32(540)),
-			},
 		},
 		Workflow: Workflow{
 			FromAddress:       new(types.MustEIP55Address("0x627306090abaB3A6e1400e9345bC60c78a8BEf57")),

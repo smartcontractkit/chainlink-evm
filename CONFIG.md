@@ -263,7 +263,7 @@ For example, suppose RPC returns block 100 as the latest finalized. In that case
 With `EnforceRepeatableRead = true,` RPC is considered healthy only if its most recent finalized block is larger or equal to the highest finalized block observed by the CL Node minus `FinalizedBlockOffset.`
 Higher values of `FinalizedBlockOffset` with `EnforceRepeatableRead = true` reduce the number of false `FinalizedBlockOutOfSync` declarations on healthy RPCs that are slightly lagging behind due to network delays.
 This may increase the number of healthy RPCs and reduce the probability that the CL Node will not have any healthy alternatives to the active RPC.
-CAUTION: Setting this to values higher than 0 may delay transaction creation in products (e.g., CCIP, Automation) that base their decision on finalized on-chain events.
+CAUTION: Setting this to values higher than 0 may delay transaction creation in products (e.g., CCIP) that base their decision on finalized on-chain events.
 PoS chains with `FinalityTagEnabled=true` and batched (epochs) blocks finalization (e.g., Ethereum Mainnet) must be treated with special care as a minor increase in the `FinalizedBlockOffset` may lead to significant delays.
 For example, let's say that `FinalizedBlockOffset = 1` and blocks are finalized in batches of 32.
 The latest finalized block on chain is 64, so block 63 is the latest finalized for CL Node.
@@ -558,7 +558,7 @@ Mode = 'FixedPrice'
 LimitDefault = 500_000 # Default
 ```
 LimitDefault sets default gas limit for outgoing transactions. This should not need to be changed in most cases.
-Some job types, such as Keeper jobs, might set their own gas limit unrelated to this value.
+Some job types, might set their own gas limit unrelated to this value.
 
 ### LimitMax
 ```toml
@@ -665,7 +665,6 @@ In EIP-1559 mode, the following changes occur to how configuration works:
 - `FixedPriceEstimator` will use `GasFeeCapDefault` instaed of `GasPriceDefault` for the fee cap
 - `PriceMin` is ignored for new transactions and `GasTipCapMinimum` is used instead (default 0)
 - `PriceMax` still represents that absolute upper limit that Chainlink will ever spend (total) on a single tx
-- `Keeper.GasTipCapBufferPercent` is ignored in EIP-1559 mode and `Keeper.GasTipCapBufferPercent` is used instead
 
 ### FeeCapDefault
 ```toml
@@ -724,7 +723,6 @@ OCR2 = 100_000 # Example
 DR = 100_000 # Example
 VRF = 100_000 # Example
 FM = 100_000 # Example
-Keeper = 100_000 # Example
 ```
 
 
@@ -757,12 +755,6 @@ VRF overrides LimitDefault for VRF jobs.
 FM = 100_000 # Example
 ```
 FM overrides LimitDefault for Flux Monitor jobs.
-
-### Keeper
-```toml
-Keeper = 100_000 # Example
-```
-Keeper overrides LimitDefault for Keeper jobs.
 
 ## GasEstimator.BlockHistory
 ```toml
@@ -1342,19 +1334,6 @@ IsLoadBalancedRPC = false # Example
 IsLoadBalancedRPC indicates whether the http/ws url above has multiple rpc's behind it.
 If true, we should try reconnecting to the node even when its the only node in the Nodes list.
 If false and its the only node in the nodes list, we will mark it alive even when its out of sync, because it might still be able to send txs.
-
-## OCR2.Automation
-```toml
-[OCR2.Automation]
-GasLimit = 5400000 # Default
-```
-
-
-### GasLimit
-```toml
-GasLimit = 5400000 # Default
-```
-GasLimit controls the gas limit for transmit transactions from ocr2automation job.
 
 ## Workflow
 ```toml

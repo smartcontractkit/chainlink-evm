@@ -31,9 +31,6 @@ SyncThreshold = 10
 [OCR]
 ContractConfirmations = 1
 
-[OCR2.Automation]
-GasLimit = 6500000
-
 [Transactions.AutoPurge]
 Enabled = true
 Threshold = 90 # 90 blocks at 2s block time ~3 minutes

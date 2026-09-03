@@ -3,7 +3,6 @@ module github.com/smartcontractkit/chainlink-evm
 go 1.26.6
 
 require (
-	github.com/avast/retry-go/v4 v4.7.0
 	github.com/ethereum/go-ethereum v1.17.3
 	github.com/fbsobreira/gotron-sdk v0.0.0-20250403083053-2943ce8c759b
 	github.com/fxamacker/cbor/v2 v2.9.2
@@ -20,7 +19,6 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/mitchellh/mapstructure v1.5.1-0.20220423185008-bf980b35cac4
 	github.com/onsi/gomega v1.38.2
-	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pelletier/go-toml/v2 v2.3.1
 	github.com/pkg/errors v0.9.1
@@ -29,7 +27,6 @@ require (
 	github.com/prometheus/common v0.67.5
 	github.com/shopspring/decimal v1.4.0
 	github.com/smartcontractkit/chain-selectors v1.0.100
-	github.com/smartcontractkit/chainlink-automation v0.8.1
 	github.com/smartcontractkit/chainlink-common v0.11.2-0.20260729194708-6738a99f5706
 	github.com/smartcontractkit/chainlink-common/keystore v1.3.0
 	github.com/smartcontractkit/chainlink-data-streams v1.1.0

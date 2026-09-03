@@ -111,53 +111,6 @@ func (_c *LimitJobType_FM_Call) RunAndReturn(run func() *uint32) *LimitJobType_F
 	return _c
 }
 
-// Keeper provides a mock function with no fields
-func (_m *LimitJobType) Keeper() *uint32 {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Keeper")
-	}
-
-	var r0 *uint32
-	if rf, ok := ret.Get(0).(func() *uint32); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*uint32)
-		}
-	}
-
-	return r0
-}
-
-// LimitJobType_Keeper_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Keeper'
-type LimitJobType_Keeper_Call struct {
-	*mock.Call
-}
-
-// Keeper is a helper method to define mock.On call
-func (_e *LimitJobType_Expecter) Keeper() *LimitJobType_Keeper_Call {
-	return &LimitJobType_Keeper_Call{Call: _e.mock.On("Keeper")}
-}
-
-func (_c *LimitJobType_Keeper_Call) Run(run func()) *LimitJobType_Keeper_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *LimitJobType_Keeper_Call) Return(_a0 *uint32) *LimitJobType_Keeper_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *LimitJobType_Keeper_Call) RunAndReturn(run func() *uint32) *LimitJobType_Keeper_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // OCR provides a mock function with no fields
 func (_m *LimitJobType) OCR() *uint32 {
 	ret := _m.Called()

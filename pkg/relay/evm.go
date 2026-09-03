@@ -761,13 +761,6 @@ func (r *Relayer) NewMedianProvider(ctx context.Context, rargs commontypes.Relay
 	return &medianProvider, nil
 }
 
-func (r *Relayer) NewAutomationProvider(ctx context.Context, rargs commontypes.RelayArgs, pargs commontypes.PluginArgs) (commontypes.AutomationProvider, error) {
-	lggr := logger.Sugared(r.lggr).Named(rargs.ExternalJobID.String()).Named("AutomationProvider")
-	ocr2keeperRelayer := NewOCR2KeeperRelayer(r.ds, r.chain, lggr.Named("OCR2KeeperRelayer"), r.evmKeystore)
-
-	return ocr2keeperRelayer.NewOCR2KeeperProvider(ctx, rargs, pargs)
-}
-
 var _ commontypes.MedianProvider = (*medianProvider)(nil)
 
 type medianProvider struct {

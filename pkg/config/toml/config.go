@@ -423,7 +423,6 @@ type Chain struct {
 	KeySpecific    KeySpecificConfig `toml:",omitempty"`
 	NodePool       NodePool          `toml:",omitempty"`
 	OCR            OCR               `toml:",omitempty"`
-	OCR2           OCR2              `toml:",omitempty"`
 	Workflow       Workflow          `toml:",omitempty"`
 }
 
@@ -652,24 +651,6 @@ func (t *TransactionManagerV2Config) ValidateConfig() (err error) {
 	return
 }
 
-type OCR2 struct {
-	Automation Automation `toml:",omitempty"`
-}
-
-func (o *OCR2) setFrom(f *OCR2) {
-	o.Automation.setFrom(&f.Automation)
-}
-
-type Automation struct {
-	GasLimit *uint32
-}
-
-func (a *Automation) setFrom(f *Automation) {
-	if v := f.GasLimit; v != nil {
-		a.GasLimit = v
-	}
-}
-
 type Workflow struct {
 	FromAddress       *types.EIP55Address `toml:",omitempty"`
 	ForwarderAddress  *types.EIP55Address `toml:",omitempty"`
@@ -847,7 +828,6 @@ type GasLimitJobType struct {
 	DR     *uint32 `toml:",inline"`
 	VRF    *uint32 `toml:",inline"`
 	FM     *uint32 `toml:",inline"`
-	Keeper *uint32 `toml:",inline"`
 }
 
 func (t *GasLimitJobType) setFrom(f *GasLimitJobType) {
@@ -865,9 +845,6 @@ func (t *GasLimitJobType) setFrom(f *GasLimitJobType) {
 	}
 	if f.FM != nil {
 		t.FM = f.FM
-	}
-	if f.Keeper != nil {
-		t.Keeper = f.Keeper
 	}
 }
 
