@@ -9,6 +9,7 @@ import (
 
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	gotoml "github.com/pelletier/go-toml/v2"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/multierr"
 
 	chainselectors "github.com/smartcontractkit/chain-selectors"
@@ -115,6 +116,9 @@ type chain struct {
 	logPoller       logpoller.LogPoller
 	balanceMonitor  monitor.BalanceMonitor
 	gasEstimator    gas.EvmFeeEstimator
+	// nodeConfigMeter records the node_config_info metric. A nil meter falls
+	// back to the global beholder meter.
+	nodeConfigMeter metric.Meter
 
 	// Extends with support for the Tron TXM
 	tronTxm *trontxm.TronTxm
@@ -379,6 +383,8 @@ func (c *chain) Start(ctx context.Context) error {
 				return err
 			}
 		}
+
+		c.emitNodeConfigInfo(ctx, c.nodeConfigMeter)
 
 		return nil
 	})
