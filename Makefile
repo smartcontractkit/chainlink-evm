@@ -10,17 +10,13 @@ tidy: gomods ## Tidy go.mod and go.sum files
 mockery: ## Install mockery
 	go install github.com/vektra/mockery/v2@v2.53.3
 
-.PHONY: codecgen
-codecgen: ## Install codecgen
-	go install github.com/ugorji/go/codec/codecgen@v1.2.10
-
 .PHONY: protoc
 protoc: ## Install protoc
 	./tools/bin/install-protoc.sh 29.3 /
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@`go list -m -json google.golang.org/protobuf | jq -r .Version`
 
 .PHONY: generate
-generate: gomods codecgen mockery protoc modgraph ## Generate code for all modules
+generate: gomods mockery protoc modgraph ## Generate code for all modules
 	export PATH="$(HOME)/.local/bin:$(PATH)"; gomods -s gethwrappers,contracts/cre/ -go generate ./...
 	find . -type f -name .mockery.yaml -not -path "./contracts/" -not -path "./gethwrappers/" -execdir mockery \; ## Execute mockery for all .mockery.yaml files
 
