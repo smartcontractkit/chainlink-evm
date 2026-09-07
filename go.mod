@@ -43,7 +43,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/theodesp/go-heaps v0.0.0-20190520121037-88e35354fe0a
 	github.com/tidwall/gjson v1.18.0
-	github.com/ugorji/go/codec v1.2.12
+	github.com/ugorji/go/codec v1.3.2
 	github.com/umbracle/ethgo v0.1.3
 	go.opentelemetry.io/otel v1.44.0
 	go.opentelemetry.io/otel/metric v1.44.0
