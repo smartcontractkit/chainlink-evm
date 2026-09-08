@@ -42,49 +42,29 @@ func TestChainConfigAttributes_exactWhitelist(t *testing.T) {
 	assert.NotContains(t, got, attribute.Key("custom_urls"))
 }
 
-func TestDerefBool_nilIsFalse(t *testing.T) {
+func TestIsTrue_nilIsFalse(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, derefBool(nil))
+	assert.False(t, isTrue(nil))
 	v := true
-	assert.True(t, derefBool(&v))
+	assert.True(t, isTrue(&v))
 }
 
-func TestRecordChainConfigInfo_recordsGaugeWithWhitelistOnly(t *testing.T) {
+func TestChainConfigMetrics_recordConfigInfo(t *testing.T) {
 	t.Parallel()
 
 	reader := sdkmetric.NewManualReader()
 	meter := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)).Meter("test")
 
-	require.NoError(t, recordChainConfigInfo(t.Context(), meter, "1", true, false))
+	metrics, err := newChainConfigMetrics(meter)
+	require.NoError(t, err)
+
+	metrics.recordConfigInfo(t.Context(), "1", true, false)
 
 	dp := collectChainConfigInfo(t, reader)
 	assert.Equal(t, int64(1), dp.Value)
 	assert.Equal(t, map[string]string{
 		"chain_id":               "1",
-		"transaction_v2_enabled": "true",
-		"dual_broadcast":         "false",
-	}, attrsToStrings(dp.Attributes))
-}
-
-func TestChain_emitChainConfigInfo(t *testing.T) {
-	t.Parallel()
-
-	c := &chain{
-		id:     stdbig.NewInt(42161),
-		cfg:    txV2ChainConfig(t),
-		logger: logger.Test(t),
-	}
-
-	reader := sdkmetric.NewManualReader()
-	meter := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)).Meter("test")
-
-	c.emitChainConfigInfo(t.Context(), meter)
-
-	dp := collectChainConfigInfo(t, reader)
-	assert.Equal(t, int64(1), dp.Value)
-	assert.Equal(t, map[string]string{
-		"chain_id":               "42161",
 		"transaction_v2_enabled": "true",
 		"dual_broadcast":         "false",
 	}, attrsToStrings(dp.Attributes))
@@ -97,24 +77,31 @@ func TestChain_Start_emitsChainConfigInfo(t *testing.T) {
 	lggr := logger.Test(t)
 	cfg := txV2ChainConfig(t)
 	c := &chain{
-		id:               stdbig.NewInt(42161),
-		cfg:              cfg,
-		logger:           lggr,
-		client:           client.NewNullClient(stdbig.NewInt(42161), lggr),
-		txm:              &txmgr.NullTxManager{ErrMsg: "no txm"},
-		headBroadcaster:  heads.NewBroadcaster(lggr),
-		headTracker:      heads.NullTracker,
-		logBroadcaster:   &log.NullBroadcaster{ErrMsg: "no log broadcaster"},
-		logPoller:        logpoller.LogPollerDisabled,
-		chainConfigMeter: sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)).Meter("test"),
+		id:              stdbig.NewInt(42161),
+		cfg:             cfg,
+		logger:          lggr,
+		client:          client.NewNullClient(stdbig.NewInt(42161), lggr),
+		txm:             &txmgr.NullTxManager{ErrMsg: "no txm"},
+		headBroadcaster: heads.NewBroadcaster(lggr),
+		headTracker:     heads.NullTracker,
+		logBroadcaster:  &log.NullBroadcaster{ErrMsg: "no log broadcaster"},
+		logPoller:       logpoller.LogPollerDisabled,
 	}
+	metrics, err := newChainConfigMetrics(sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)).Meter("test"))
+	require.NoError(t, err)
+	c.chainConfigMetrics = metrics
 
 	require.NoError(t, c.Start(t.Context()))
 	t.Cleanup(func() { assert.NoError(t, c.Close()) })
 
 	dp := collectChainConfigInfo(t, reader)
 	assert.Equal(t, int64(1), dp.Value)
-	assert.Equal(t, "42161", attrsToStrings(dp.Attributes)["chain_id"])
+	// The configured OFA URL carries a secret and must never reach the metric.
+	assert.Equal(t, map[string]string{
+		"chain_id":               "42161",
+		"transaction_v2_enabled": "true",
+		"dual_broadcast":         "false",
+	}, attrsToStrings(dp.Attributes))
 }
 
 // txV2ChainConfig is a chain config with TransactionManagerV2 enabled, dual

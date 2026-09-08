@@ -6,13 +6,37 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-
-	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 )
 
 // evmChainConfigInfoMetricName is an info-style gauge: its value is always 1 and all
 // state is carried in the labels.
 const evmChainConfigInfoMetricName = "evm_chain_config_info"
+
+// chainConfigMetrics holds the instruments for reporting a chain's whitelisted
+// configuration state.
+type chainConfigMetrics struct {
+	configInfo metric.Int64Gauge
+}
+
+func newChainConfigMetrics(meter metric.Meter) (*chainConfigMetrics, error) {
+	configInfo, err := meter.Int64Gauge(
+		evmChainConfigInfoMetricName,
+		metric.WithDescription("Whitelisted EVM chain configuration; value is always 1, state is in the labels"),
+		metric.WithUnit("{info}"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create %s gauge: %w", evmChainConfigInfoMetricName, err)
+	}
+
+	return &chainConfigMetrics{configInfo: configInfo}, nil
+}
+
+// recordConfigInfo records the config gauge for a single chain. A synchronous
+// gauge re-exports its last recorded value on every reader interval, so a single
+// record at startup keeps the series alive.
+func (m *chainConfigMetrics) recordConfigInfo(ctx context.Context, chainID string, txV2Enabled, dualBroadcast bool) {
+	m.configInfo.Record(ctx, 1, metric.WithAttributes(chainConfigAttributes(chainID, txV2Enabled, dualBroadcast)...))
+}
 
 // chainConfigAttributes returns the exhaustive, whitelisted label set for the
 // evm_chain_config_info metric for one EVM chain.
@@ -20,7 +44,7 @@ const evmChainConfigInfoMetricName = "evm_chain_config_info"
 // The whitelist is the security boundary of this metric: it must stay limited to
 // low-cardinality, non-sensitive values. In particular it must never carry an
 // RPC or OFA URL (TransactionManagerV2.CustomURL/CustomURLs), because those can
-// embed credentials.
+// embed credentials. See docs on OEV-1648 / INCIDENT-2541.
 func chainConfigAttributes(chainID string, txV2Enabled, dualBroadcast bool) []attribute.KeyValue {
 	return []attribute.KeyValue{
 		attribute.String("chain_id", chainID),
@@ -29,36 +53,5 @@ func chainConfigAttributes(chainID string, txV2Enabled, dualBroadcast bool) []at
 	}
 }
 
-// derefBool reads an optional config bool, treating an unset value as false.
-func derefBool(b *bool) bool { return b != nil && *b }
-
-// recordChainConfigInfo records the evm_chain_config_info gauge for a single chain.
-// A synchronous gauge re-exports its last recorded value on every reader
-// interval, so a single record at startup keeps the series alive.
-func recordChainConfigInfo(ctx context.Context, meter metric.Meter, chainID string, txV2Enabled, dualBroadcast bool) error {
-	gauge, err := meter.Int64Gauge(
-		evmChainConfigInfoMetricName,
-		metric.WithDescription("Whitelisted EVM chain configuration; value is always 1, state is in the labels"),
-		metric.WithUnit("{info}"),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create %s gauge: %w", evmChainConfigInfoMetricName, err)
-	}
-
-	gauge.Record(ctx, 1, metric.WithAttributes(chainConfigAttributes(chainID, txV2Enabled, dualBroadcast)...))
-	return nil
-}
-
-// emitChainConfigInfo reports this chain's whitelisted config state. A nil meter
-// falls back to the global beholder meter. Failures are non-fatal: a metrics
-// hiccup must never block chain startup.
-func (c *chain) emitChainConfigInfo(ctx context.Context, meter metric.Meter) {
-	if meter == nil {
-		meter = beholder.GetMeter()
-	}
-
-	txV2 := c.cfg.EVM().Transactions().TransactionManagerV2()
-	if err := recordChainConfigInfo(ctx, meter, c.id.String(), txV2.Enabled(), derefBool(txV2.DualBroadcast())); err != nil {
-		c.logger.Warnw("Failed to record chain config info metric", "chainID", c.id, "err", err)
-	}
-}
+// isTrue reads an optional config bool, treating an unset value as false.
+func isTrue(b *bool) bool { return b != nil && *b }

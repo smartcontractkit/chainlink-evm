@@ -138,6 +138,7 @@ func (c *pluginRelayer) NewRelayer(ctx context.Context, configTOML string, keyst
 			},
 			MailMon: mailMon,
 			DS:      c.DataSource,
+			Meter:   beholder.GetMeter(),
 		},
 	}, nil)
 	if err != nil {
