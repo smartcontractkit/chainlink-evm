@@ -116,9 +116,9 @@ type chain struct {
 	logPoller       logpoller.LogPoller
 	balanceMonitor  monitor.BalanceMonitor
 	gasEstimator    gas.EvmFeeEstimator
-	// nodeConfigMeter records the node_config_info metric. A nil meter falls
+	// chainConfigMeter records the evm_chain_config_info metric. A nil meter falls
 	// back to the global beholder meter.
-	nodeConfigMeter metric.Meter
+	chainConfigMeter metric.Meter
 
 	// Extends with support for the Tron TXM
 	tronTxm *trontxm.TronTxm
@@ -384,7 +384,7 @@ func (c *chain) Start(ctx context.Context) error {
 			}
 		}
 
-		c.emitNodeConfigInfo(ctx, c.nodeConfigMeter)
+		c.emitChainConfigInfo(ctx, c.chainConfigMeter)
 
 		return nil
 	})

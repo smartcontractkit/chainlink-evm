@@ -23,10 +23,10 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
 )
 
-func TestNodeConfigAttributes_exactWhitelist(t *testing.T) {
+func TestChainConfigAttributes_exactWhitelist(t *testing.T) {
 	t.Parallel()
 
-	attrs := nodeConfigAttributes("1", true, false)
+	attrs := chainConfigAttributes("1", true, false)
 
 	got := map[attribute.Key]attribute.Value{}
 	for _, kv := range attrs {
@@ -50,15 +50,15 @@ func TestDerefBool_nilIsFalse(t *testing.T) {
 	assert.True(t, derefBool(&v))
 }
 
-func TestRecordNodeConfigInfo_recordsGaugeWithWhitelistOnly(t *testing.T) {
+func TestRecordChainConfigInfo_recordsGaugeWithWhitelistOnly(t *testing.T) {
 	t.Parallel()
 
 	reader := sdkmetric.NewManualReader()
 	meter := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)).Meter("test")
 
-	require.NoError(t, recordNodeConfigInfo(t.Context(), meter, "1", true, false))
+	require.NoError(t, recordChainConfigInfo(t.Context(), meter, "1", true, false))
 
-	dp := collectNodeConfigInfo(t, reader)
+	dp := collectChainConfigInfo(t, reader)
 	assert.Equal(t, int64(1), dp.Value)
 	assert.Equal(t, map[string]string{
 		"chain_id":               "1",
@@ -67,7 +67,7 @@ func TestRecordNodeConfigInfo_recordsGaugeWithWhitelistOnly(t *testing.T) {
 	}, attrsToStrings(dp.Attributes))
 }
 
-func TestChain_emitNodeConfigInfo(t *testing.T) {
+func TestChain_emitChainConfigInfo(t *testing.T) {
 	t.Parallel()
 
 	c := &chain{
@@ -79,9 +79,9 @@ func TestChain_emitNodeConfigInfo(t *testing.T) {
 	reader := sdkmetric.NewManualReader()
 	meter := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)).Meter("test")
 
-	c.emitNodeConfigInfo(t.Context(), meter)
+	c.emitChainConfigInfo(t.Context(), meter)
 
-	dp := collectNodeConfigInfo(t, reader)
+	dp := collectChainConfigInfo(t, reader)
 	assert.Equal(t, int64(1), dp.Value)
 	assert.Equal(t, map[string]string{
 		"chain_id":               "42161",
@@ -90,29 +90,29 @@ func TestChain_emitNodeConfigInfo(t *testing.T) {
 	}, attrsToStrings(dp.Attributes))
 }
 
-func TestChain_Start_emitsNodeConfigInfo(t *testing.T) {
+func TestChain_Start_emitsChainConfigInfo(t *testing.T) {
 	t.Parallel()
 
 	reader := sdkmetric.NewManualReader()
 	lggr := logger.Test(t)
 	cfg := txV2ChainConfig(t)
 	c := &chain{
-		id:              stdbig.NewInt(42161),
-		cfg:             cfg,
-		logger:          lggr,
-		client:          client.NewNullClient(stdbig.NewInt(42161), lggr),
-		txm:             &txmgr.NullTxManager{ErrMsg: "no txm"},
-		headBroadcaster: heads.NewBroadcaster(lggr),
-		headTracker:     heads.NullTracker,
-		logBroadcaster:  &log.NullBroadcaster{ErrMsg: "no log broadcaster"},
-		logPoller:       logpoller.LogPollerDisabled,
-		nodeConfigMeter: sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)).Meter("test"),
+		id:               stdbig.NewInt(42161),
+		cfg:              cfg,
+		logger:           lggr,
+		client:           client.NewNullClient(stdbig.NewInt(42161), lggr),
+		txm:              &txmgr.NullTxManager{ErrMsg: "no txm"},
+		headBroadcaster:  heads.NewBroadcaster(lggr),
+		headTracker:      heads.NullTracker,
+		logBroadcaster:   &log.NullBroadcaster{ErrMsg: "no log broadcaster"},
+		logPoller:        logpoller.LogPollerDisabled,
+		chainConfigMeter: sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader)).Meter("test"),
 	}
 
 	require.NoError(t, c.Start(t.Context()))
 	t.Cleanup(func() { assert.NoError(t, c.Close()) })
 
-	dp := collectNodeConfigInfo(t, reader)
+	dp := collectChainConfigInfo(t, reader)
 	assert.Equal(t, int64(1), dp.Value)
 	assert.Equal(t, "42161", attrsToStrings(dp.Attributes)["chain_id"])
 }
@@ -131,7 +131,7 @@ func txV2ChainConfig(t *testing.T) *config.ChainScoped {
 	})
 }
 
-func collectNodeConfigInfo(t *testing.T, reader sdkmetric.Reader) metricdata.DataPoint[int64] {
+func collectChainConfigInfo(t *testing.T, reader sdkmetric.Reader) metricdata.DataPoint[int64] {
 	t.Helper()
 
 	var rm metricdata.ResourceMetrics
@@ -140,7 +140,7 @@ func collectNodeConfigInfo(t *testing.T, reader sdkmetric.Reader) metricdata.Dat
 	require.Len(t, rm.ScopeMetrics, 1)
 	require.Len(t, rm.ScopeMetrics[0].Metrics, 1)
 	m := rm.ScopeMetrics[0].Metrics[0]
-	assert.Equal(t, "node_config_info", m.Name)
+	assert.Equal(t, "evm_chain_config_info", m.Name)
 
 	g, ok := m.Data.(metricdata.Gauge[int64])
 	require.True(t, ok, "expected an int64 gauge, got %T", m.Data)
