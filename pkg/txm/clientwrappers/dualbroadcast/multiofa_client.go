@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -31,6 +32,12 @@ type multiOfaClient struct {
 	primary              multiOfaBackend
 	secondaries          []multiOfaBackend
 	secondarySendTimeout time.Duration // used in unit tests to configure the timeout
+
+	// secondarySends tracks the in-flight best-effort secondary goroutines, which
+	// outlive the SendTransaction call that spawned them. Waiting on it gives them
+	// an observable lifetime, so callers (notably tests) can join them instead of
+	// racing their teardown.
+	secondarySends sync.WaitGroup
 }
 
 var _ txm.Client = (*multiOfaClient)(nil)
@@ -93,7 +100,10 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 	// Secondaries are best-effort and do not block the primary. Each call is bounded by
 	// secondarySendTimeout
 	for _, secondary := range m.secondaries {
+		m.secondarySends.Add(1)
 		go func() {
+			defer m.secondarySends.Done()
+
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
