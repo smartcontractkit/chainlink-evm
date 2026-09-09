@@ -33,10 +33,8 @@ type multiOfaClient struct {
 	secondaries          []multiOfaBackend
 	secondarySendTimeout time.Duration // used in unit tests to configure the timeout
 
-	// secondarySends tracks the in-flight best-effort secondary goroutines, which
-	// outlive the SendTransaction call that spawned them. Waiting on it gives them
-	// an observable lifetime, so callers (notably tests) can join them instead of
-	// racing their teardown.
+	// secondarySends tracks the in-flight best-effort secondary goroutines.
+	// Only tests call Wait() on them to prevent races during their teardown.
 	secondarySends sync.WaitGroup
 }
 
@@ -100,10 +98,7 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 	// Secondaries are best-effort and do not block the primary. Each call is bounded by
 	// secondarySendTimeout
 	for _, secondary := range m.secondaries {
-		m.secondarySends.Add(1)
-		go func() {
-			defer m.secondarySends.Done()
-
+		m.secondarySends.Go(func() {
 			secondaryCtx, cancel := context.WithTimeout(ctx, m.secondarySendTimeout)
 			defer cancel()
 
@@ -114,7 +109,7 @@ func (m *multiOfaClient) SendTransaction(ctx context.Context, tx *types.Transact
 					"attemptHash", attempt.Hash,
 					"transactionLifecycleID", tx.GetTransactionLifecycleID(m.lggr))
 			}
-		}()
+		})
 	}
 
 	primaryCtx, cancel := context.WithTimeout(ctx, rpcTimeout)
