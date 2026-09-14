@@ -9,10 +9,12 @@ import (
 
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	gotoml "github.com/pelletier/go-toml/v2"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/multierr"
 
 	chainselectors "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	common "github.com/smartcontractkit/chainlink-common/pkg/chains"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -104,17 +106,18 @@ type chain struct {
 	services.StateMachine
 
 	types.UnimplementedChainService
-	id              *big.Int
-	cfg             *config.ChainScoped
-	client          client.Client
-	txm             txmgr.TxManager
-	logger          logger.Logger
-	headBroadcaster heads.Broadcaster
-	headTracker     heads.Tracker
-	logBroadcaster  log.Broadcaster
-	logPoller       logpoller.LogPoller
-	balanceMonitor  monitor.BalanceMonitor
-	gasEstimator    gas.EvmFeeEstimator
+	id                 *big.Int
+	cfg                *config.ChainScoped
+	client             client.Client
+	txm                txmgr.TxManager
+	logger             logger.Logger
+	headBroadcaster    heads.Broadcaster
+	headTracker        heads.Tracker
+	logBroadcaster     log.Broadcaster
+	logPoller          logpoller.LogPoller
+	balanceMonitor     monitor.BalanceMonitor
+	gasEstimator       gas.EvmFeeEstimator
+	chainConfigMetrics *chainConfigMetrics
 
 	// Extends with support for the Tron TXM
 	tronTxm *trontxm.TronTxm
@@ -147,6 +150,11 @@ type ChainOpts struct {
 	MailMon *mailbox.Monitor
 
 	DS sqlutil.DataSource
+
+	// Meter is used to report chain metrics. Defaults to the global beholder
+	// meter when unset.
+	// TODO: make this required once chainlink core passes it explicitly.
+	Meter metric.Meter
 
 	// TODO BCF-2513 remove test code from the API
 	// Gen-functions are useful for dependency injection by tests
@@ -329,18 +337,28 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 		}
 	}
 
+	meter := opts.Meter
+	if meter == nil {
+		meter = beholder.GetMeter()
+	}
+	chainConfigMetrics, err := newChainConfigMetrics(meter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create chain config metrics: %w", err)
+	}
+
 	return &chain{
-		id:              chainID,
-		cfg:             cfg,
-		client:          cl,
-		txm:             txm,
-		logger:          l,
-		headBroadcaster: headBroadcaster,
-		headTracker:     headTracker,
-		logBroadcaster:  logBroadcaster,
-		logPoller:       logPoller,
-		balanceMonitor:  balanceMonitor,
-		gasEstimator:    gasEstimator,
+		id:                 chainID,
+		cfg:                cfg,
+		client:             cl,
+		txm:                txm,
+		logger:             l,
+		headBroadcaster:    headBroadcaster,
+		headTracker:        headTracker,
+		logBroadcaster:     logBroadcaster,
+		logPoller:          logPoller,
+		balanceMonitor:     balanceMonitor,
+		gasEstimator:       gasEstimator,
+		chainConfigMetrics: chainConfigMetrics,
 
 		// Extends with support for the Tron TXM
 		tronTxm: tronTxm,
@@ -379,6 +397,9 @@ func (c *chain) Start(ctx context.Context) error {
 				return err
 			}
 		}
+
+		txV2 := c.cfg.EVM().Transactions().TransactionManagerV2()
+		c.chainConfigMetrics.recordConfigInfo(ctx, c.id.String(), txV2.Enabled(), isTrue(txV2.DualBroadcast()))
 
 		return nil
 	})
