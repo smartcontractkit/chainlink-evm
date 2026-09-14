@@ -27,3 +27,4 @@ package gethwrappers
 //go:generate go run ../wrap shared BurnMintERC20Transparent burn_mint_erc20_transparent
 //go:generate go run ../wrap shared BurnMintERC20UUPS burn_mint_erc20_uups
 //go:generate go run ../wrap shared IBurnMintERC20Upgradeable i_burn_mint_erc20_upgradeable
+//go:generate go run ../wrap shared TransparentUpgradeableProxy transparent_upgradeable_proxy
