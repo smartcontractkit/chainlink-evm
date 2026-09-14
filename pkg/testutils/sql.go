@@ -22,10 +22,7 @@ import (
 func NewSqlxDB(t testing.TB) *sqlx.DB {
 	SkipShortDB(t)
 	dbURL := os.Getenv("CL_DATABASE_URL")
-	if dbURL == "" {
-		t.Errorf("you must provide a CL_DATABASE_URL environment variable")
-		return nil
-	}
+	require.NotEmpty(t, dbURL, "you must provide a CL_DATABASE_URL environment variable")
 	return sqltest.NewDB(t, dbURL)
 }
 
