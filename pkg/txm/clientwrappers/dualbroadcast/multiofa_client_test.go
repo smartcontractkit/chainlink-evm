@@ -45,13 +45,17 @@ var _ ofaBackendRPCClient = (*chainClientMock)(nil)
 
 func createMultiOfaClient(t *testing.T, c ofaBackendRPCClient, primary multiOfaBackend, secondaries ...multiOfaBackend) *multiOfaClient {
 	t.Helper()
-	return &multiOfaClient{
+	mc := &multiOfaClient{
 		lggr:                 logger.Sugared(logger.Test(t)),
 		chainClient:          c,
 		primary:              primary,
 		secondaries:          secondaries,
 		secondarySendTimeout: rpcTimeout,
 	}
+	// Secondary sends are best-effort and outlive SendTransaction. Join them before
+	// the test completes, otherwise they log into a finished *testing.T and panic.
+	t.Cleanup(mc.secondarySends.Wait)
+	return mc
 }
 
 type ofaBackendMock struct {

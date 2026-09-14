@@ -45,10 +45,6 @@ mockery: $(mockery) ## Install mockery.
 foundry: ## Install foundry.
 	foundryup --install v1.7.1
 
-.PHONY: forge-zksync
-forge-zksync:
-	../tools/bin/install_forge_zksync
-
 .PHONY: foundry-refresh
 foundry-refresh: foundry
 	git submodule deinit -f .
@@ -92,10 +88,6 @@ wrappers-all: pnpmdep mockery abigen ## Recompiles solidity contracts and their 
 	cd ../gethwrappers; go generate ./go_generate.go
     # Since this is used in CI to ensure all wrappers are up to date, we also generate the CRE wrappers here
 	cd ./cre/gobindings; go generate ./go_generate.go
-
-.PHONY: wrappers-zksync
-wrappers-zksync: pnpmdep forge-zksync
-	go generate ../gethwrappers/zksync/go_generate.go
 
 help:
 	@echo ""

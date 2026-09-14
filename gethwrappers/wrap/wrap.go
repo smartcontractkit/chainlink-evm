@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/generate/wrap"
-	zksyncwrapper "github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers/zksync"
 )
 
 // main is the entry point for the wrapper generation tool. The abiGenPath is static
@@ -33,13 +31,6 @@ func main() {
 	}
 	fmt.Println(path)
 
-	if os.Getenv("ZKSYNC") == "true" {
-		zksyncBytecodePath := filepath.Join("..", "zkout", contract+".sol", contract+".json")
-		zksyncBytecode := zksyncwrapper.ReadBytecodeFromForgeJSON(zksyncBytecodePath)
-		outPath := filepath.Join(wrap.GetOutDir(outDirSuffix, pkgName), pkgName+"_zksync.go")
-		zksyncwrapper.WrapZksyncDeploy(zksyncBytecode, contract, pkgName, outPath)
-	} else {
-		projectRoot := "../../contracts/solc/" + project
-		wrap.GenWrapper(projectRoot, contract, pkgName, outDirSuffix, abiGenPath)
-	}
+	projectRoot := "../../contracts/solc/" + project
+	wrap.GenWrapper(projectRoot, contract, pkgName, outDirSuffix, abiGenPath)
 }

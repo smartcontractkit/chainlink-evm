@@ -61,10 +61,6 @@ wrappers-release: export metadata=true
 wrappers-release: ## Generate the gethwrappers for release which includes metadata.
 	make wrappers
 
-.PHONY: wrappers-zksync
-wrappers-zksync: pnpmdep forge-zksync
-	go generate ../gethwrappers/zksync/go_generate.go
-
 help:
 	@echo ""
 	@echo "         .__           .__       .__  .__        __"
