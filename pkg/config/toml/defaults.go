@@ -279,7 +279,15 @@ func (c *Chain) SetFrom(f *Chain) {
 	if ks := f.KeySpecific; ks != nil {
 		for i := range ks {
 			v := ks[i]
-			if i := slices.IndexFunc(c.KeySpecific, func(k KeySpecific) bool { return k.Key == v.Key }); i == -1 {
+			if i := slices.IndexFunc(c.KeySpecific, func(k KeySpecific) bool {
+				if k.Key == v.Key {
+					return true
+				} else if k.Key == nil || v.Key == nil {
+					return false
+				}
+
+				return *k.Key == *v.Key
+			}); i == -1 {
 				c.KeySpecific = append(c.KeySpecific, v)
 			} else {
 				c.KeySpecific[i].GasEstimator.setFrom(&v.GasEstimator)
