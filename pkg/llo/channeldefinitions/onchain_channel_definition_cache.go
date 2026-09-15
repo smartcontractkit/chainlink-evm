@@ -86,13 +86,91 @@ var (
 	// NoLimitSortAsc is a query configuration that sorts results by sequence in ascending order with no limit.
 	NoLimitSortAsc = query.NewLimitAndSort(query.Limit{}, query.NewSortBySequence(query.Asc))
 
-	channelDefinitionCacheCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	cdcCommonLabels = []string{"don_id", "addr"}
+
+	channelDefinitionCacheChannels = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: "llo",
 		Subsystem: "channeldefinitions",
-		Name:      "channel_definition_cache_count",
-		Help:      "Current count of channel definitions in the cache",
+		Name:      "channels",
+		Help:      "Channels in the merged outcome definitions, by source and tombstone state",
 	},
-		[]string{"source"},
+		[]string{"don_id", "addr", "source", "tombstone"},
+	)
+
+	// reason is one of: feed_id_collision, adder_tombstone, adder_conflict, adder_limit, unknown_source
+	channelDefinitionCacheMergeRejects = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "llo",
+		Subsystem: "channeldefinitions",
+		Name:      "merge_rejects_total",
+		Help:      "Channel definitions rejected during merge, by reason",
+	},
+		[]string{"don_id", "addr", "source", "reason"},
+	)
+
+	channelDefinitionCacheTombstonesReaped = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "llo",
+		Subsystem: "channeldefinitions",
+		Name:      "tombstones_reaped_total",
+		Help:      "Tombstoned channels fully dropped after being omitted by the owner",
+	},
+		cdcCommonLabels,
+	)
+
+	channelDefinitionCacheVersion = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "llo",
+		Subsystem: "channeldefinitions",
+		Name:      "version",
+		Help:      "Latest owner definitions version",
+	},
+		cdcCommonLabels,
+	)
+
+	channelDefinitionCacheLastBlockNum = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "llo",
+		Subsystem: "channeldefinitions",
+		Name:      "last_block_num",
+		Help:      "Latest block number from which channel definitions were processed",
+	},
+		cdcCommonLabels,
+	)
+
+	// outcome is one of: success, invalid_url, http_error, sha_mismatch, decode_error, gave_up
+	channelDefinitionCacheFetches = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "llo",
+		Subsystem: "channeldefinitions",
+		Name:      "fetches_total",
+		Help:      "Channel definitions fetch attempts, by outcome",
+	},
+		[]string{"don_id", "addr", "source", "outcome"},
+	)
+
+	channelDefinitionCacheFetchDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "llo",
+		Subsystem: "channeldefinitions",
+		Name:      "fetch_duration_seconds",
+		Help:      "Time taken to fetch and verify a channel definitions file",
+		Buckets:   []float64{.1, .5, 1, 2.5, 5, 10, 15, 30, 60},
+	},
+		[]string{"don_id", "addr", "source"},
+	)
+
+	channelDefinitionCacheFetchBytes = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "llo",
+		Subsystem: "channeldefinitions",
+		Name:      "fetch_bytes",
+		Help:      "Size of fetched channel definitions files, to be watched against MaxChannelDefinitionsFileSize",
+		Buckets:   prometheus.ExponentialBuckets(1024, 4, 8),
+	},
+		[]string{"don_id", "addr", "source"},
+	)
+
+	channelDefinitionCachePersistErrors = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "llo",
+		Subsystem: "channeldefinitions",
+		Name:      "persist_errors_total",
+		Help:      "Failures persisting channel definitions to the database",
+	},
+		cdcCommonLabels,
 	)
 )
 
@@ -151,12 +229,16 @@ type channelDefinitionCache struct {
 	client    HTTPClient
 	httpLimit int64
 
-	filterName       string
-	lp               LogPoller
-	logPollInterval  time.Duration
-	addr             common.Address
-	donID            uint32
-	donIDTopic       common.Hash
+	filterName      string
+	lp              LogPoller
+	logPollInterval time.Duration
+	addr            common.Address
+	donID           uint32
+	donIDTopic      common.Hash
+	// Cached metric label values for addr and donID, to avoid re-formatting them on every
+	// Definitions() call, which runs once per OCR round.
+	donIDLabel       string
+	addrLabel        string
 	ownerFilterExprs []query.Expression
 	adderFilterExprs []query.Expression
 	lggr             logger.SugaredLogger
@@ -169,6 +251,11 @@ type channelDefinitionCache struct {
 
 	persistMu         sync.RWMutex
 	persistedBlockNum int64
+
+	// gaugedSources tracks the sources currently reported by channelDefinitionCacheChannels, so
+	// that sources which stop contributing channels can have their stale gauges removed.
+	gaugedSourcesMu sync.Mutex
+	gaugedSources   map[uint32]struct{}
 
 	wg     sync.WaitGroup
 	chStop services.StopChan
@@ -195,6 +282,8 @@ func NewChannelDefinitionCache(lggr logger.Logger, orm ChannelDefinitionCacheORM
 		addr:            addr,
 		donID:           donID,
 		donIDTopic:      common.BigToHash(big.NewInt(int64(donID))),
+		donIDLabel:      strconv.FormatUint(uint64(donID), 10),
+		addrLabel:       addr.Hex(),
 		lggr:            logger.Sugared(lggr).Named("ChannelDefinitionCache").With("addr", addr, "fromBlock", fromBlock),
 		fetchTriggerCh:  make(chan channelsource.Trigger, 1),
 		initialBlockNum: fromBlock,
@@ -272,6 +361,11 @@ func (c *channelDefinitionCache) Start(ctx context.Context) error {
 				c.initialBlockNum = pd.BlockNum
 			}
 		}
+
+		channelDefinitionCacheVersion.
+			WithLabelValues(c.donIDLabel, c.addrLabel).Set(float64(c.definitions.Version))
+		channelDefinitionCacheLastBlockNum.
+			WithLabelValues(c.donIDLabel, c.addrLabel).Set(float64(c.definitions.LastBlockNum))
 
 		c.lggr.Infow("started channel definition cache", "definitions", c.definitions, "initialBlockNum", c.initialBlockNum, "persistedBlockNum", c.persistedBlockNum, "definitionsVersion", c.definitions.Version)
 
@@ -545,6 +639,8 @@ func buildFeedIDMap(definitions llotypes.ChannelDefinitions) map[common.Hash]uin
 //   - All channels must have unique FeedIDs in their options. If a new channel has a FeedID that
 //     collides with an existing channel, the new channel is logged and skipped (not added).
 func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefinitions llotypes.ChannelDefinitions, newDefinitions llotypes.ChannelDefinitions, feedIDToChannelID map[common.Hash]uint32) {
+	sourceLabel := strconv.FormatUint(uint64(source), 10)
+
 	// Count the number of channels for adder sources in the current definitions
 	var numberOfChannels uint32
 	if source > SourceOwner {
@@ -562,7 +658,7 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 	}
 	slices.Sort(channelIDs)
 
-	for _, channelID := range channelIDs {
+	for i, channelID := range channelIDs {
 		def := newDefinitions[channelID]
 
 		// Check for FeedID collision before adding the channel
@@ -571,6 +667,7 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 			if existingChannelID, exists := feedIDToChannelID[newFeedID]; exists && existingChannelID != channelID {
 				c.lggr.Warnw("feedID collision detected, skipping channel definition",
 					"channelID", channelID, "feedID", newFeedID.Hex(), "existingChannelID", existingChannelID, "source", source)
+				c.countMergeReject(sourceLabel, "feed_id_collision")
 				continue
 			}
 		}
@@ -588,6 +685,7 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 			if def.Tombstone {
 				c.lggr.Debugw("invalid channel tombstone, cannot be added by source",
 					"channelID", channelID, "source", source)
+				c.countMergeReject(sourceLabel, "adder_tombstone")
 				continue
 			}
 
@@ -595,6 +693,7 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 				if existing.Source != def.Source {
 					c.lggr.Debugw("channel adder conflict, skipping definition",
 						"channelID", channelID, "existingSourceID", existing.Source, "newSourceID", def.Source)
+					c.countMergeReject(sourceLabel, "adder_conflict")
 				}
 				// Adders do not overwrite existing definitions, they can only add new ones
 				continue
@@ -604,6 +703,10 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 			if numberOfChannels >= MaxChannelsPerAdder {
 				c.lggr.Warnw("adder limit exceeded, skipping remaining definitions for source",
 					"source", source, "numberOfChannels", numberOfChannels, "max", MaxChannelsPerAdder)
+				// Account for every remaining channel this early return skips, not just this one.
+				channelDefinitionCacheMergeRejects.
+					WithLabelValues(c.donIDLabel, c.addrLabel, sourceLabel, "adder_limit").
+					Add(float64(len(channelIDs) - i))
 				return
 			}
 
@@ -617,6 +720,7 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 		default:
 			c.lggr.Warnw("undefined source, skipping definition",
 				"channelID", channelID, "source", source)
+			c.countMergeReject(sourceLabel, "unknown_source")
 			continue
 		}
 	}
@@ -624,10 +728,12 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 	// Drop previously tombstoned channels that the owner has omitted from newDefinitions
 	// Only tombstoned channels are allowed to be dropped by the owner to eventually remove them from the OCR state.
 	if source == SourceOwner {
+		var reaped float64
 		for channelID, def := range currentDefinitions {
 			if def.Tombstone {
 				if _, exists := newDefinitions[channelID]; !exists {
 					delete(currentDefinitions, channelID)
+					reaped++
 					feedID := extractFeedID(def.Opts)
 					if feedID != (common.Hash{}) {
 						delete(feedIDToChannelID, feedID)
@@ -635,7 +741,18 @@ func (c *channelDefinitionCache) mergeDefinitions(source uint32, currentDefiniti
 				}
 			}
 		}
+		if reaped > 0 {
+			channelDefinitionCacheTombstonesReaped.
+				WithLabelValues(c.donIDLabel, c.addrLabel).Add(reaped)
+		}
 	}
+}
+
+// countMergeReject records a single channel definition rejected during merge for the given
+// source and reason.
+func (c *channelDefinitionCache) countMergeReject(sourceLabel, reason string) {
+	channelDefinitionCacheMergeRejects.
+		WithLabelValues(c.donIDLabel, c.addrLabel, sourceLabel, reason).Inc()
 }
 
 // fetchLatestLoop is an asynchronous goroutine that receives fetch triggers from the poll chain
@@ -680,6 +797,11 @@ func (c *channelDefinitionCache) fetchLoop(trigger channelsource.Trigger) {
 	for {
 		select {
 		case <-ctx.Done():
+			// Retries exhausted by fetchRetryTimeout or cache shutdown; the definitions for this
+			// trigger were never fetched.
+			channelDefinitionCacheFetches.
+				WithLabelValues(c.donIDLabel, c.addrLabel,
+					strconv.FormatUint(uint64(trigger.Source), 10), "gave_up").Inc()
 			return
 		case <-time.After(b.Duration()):
 			if err := c.fetchAndSetChannelDefinitions(ctx, trigger); err != nil {
@@ -735,6 +857,11 @@ func (c *channelDefinitionCache) fetchAndSetChannelDefinitions(ctx context.Conte
 		c.definitions.LastBlockNum = trigger.BlockNum
 	}
 
+	channelDefinitionCacheVersion.
+		WithLabelValues(c.donIDLabel, c.addrLabel).Set(float64(c.definitions.Version))
+	channelDefinitionCacheLastBlockNum.
+		WithLabelValues(c.donIDLabel, c.addrLabel).Set(float64(c.definitions.LastBlockNum))
+
 	c.lggr.Infow("Set channel definitions for source",
 		"source", trigger.Source, "blockNum", trigger.BlockNum, "url", trigger.URL, "sha", hex.EncodeToString(trigger.SHA[:]))
 
@@ -747,6 +874,17 @@ func (c *channelDefinitionCache) fetchAndSetChannelDefinitions(ctx context.Conte
 // error if the URL is invalid, the HTTP request fails, the hash verification fails, or the
 // JSON cannot be decoded.
 func (c *channelDefinitionCache) fetchChannelDefinitions(ctx context.Context, trigger channelsource.Trigger) (llotypes.ChannelDefinitions, error) {
+	sourceLabel := strconv.FormatUint(uint64(trigger.Source), 10)
+	start := time.Now()
+	// outcome is set at each return site below and reported once on the way out.
+	outcome := "invalid_url"
+	defer func() {
+		channelDefinitionCacheFetches.
+			WithLabelValues(c.donIDLabel, c.addrLabel, sourceLabel, outcome).Inc()
+		channelDefinitionCacheFetchDuration.
+			WithLabelValues(c.donIDLabel, c.addrLabel, sourceLabel).Observe(time.Since(start).Seconds())
+	}()
+
 	u, err := url.ParseRequestURI(trigger.URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL %s: %w", trigger.URL, err)
@@ -768,6 +906,7 @@ func (c *channelDefinitionCache) fetchChannelDefinitions(ctx context.Context, tr
 		Logger:  c.lggr.Named("HTTPRequest").With("url", trigger.URL, "expectedSHA", hex.EncodeToString(trigger.SHA[:])),
 	}
 
+	outcome = "http_error"
 	reader, statusCode, _, err := httpRequest.SendRequestReader()
 	if err != nil {
 		return nil, fmt.Errorf("failed to make HTTP request to channel definitions URL %s: %w", trigger.URL, err)
@@ -796,11 +935,16 @@ func (c *channelDefinitionCache) fetchChannelDefinitions(ctx context.Context, tr
 		return nil, fmt.Errorf("failed to read channel definitions response body from %s: %w", trigger.URL, err)
 	}
 
+	channelDefinitionCacheFetchBytes.
+		WithLabelValues(c.donIDLabel, c.addrLabel, sourceLabel).Observe(float64(buf.Len()))
+
+	outcome = "sha_mismatch"
 	actualSha := hash.Sum(nil)
 	if !bytes.Equal(trigger.SHA[:], actualSha) {
 		return nil, fmt.Errorf("SHA3 mismatch for channel definitions from %s: expected %s, got %x", trigger.URL, hex.EncodeToString(trigger.SHA[:]), actualSha)
 	}
 
+	outcome = "decode_error"
 	var cd llotypes.ChannelDefinitions
 	decoder := json.NewDecoder(&buf)
 	if err := decoder.Decode(&cd); err != nil {
@@ -813,6 +957,7 @@ func (c *channelDefinitionCache) fetchChannelDefinitions(ctx context.Context, tr
 		cd[channelID] = def
 	}
 
+	outcome = "success"
 	return cd, nil
 }
 
@@ -857,6 +1002,7 @@ func (c *channelDefinitionCache) persistLoop() {
 		select {
 		case <-time.After(dbPersistLoopInterval):
 			if memoryVersion, persistedVersion, err := c.persist(ctx); err != nil {
+				channelDefinitionCachePersistErrors.WithLabelValues(c.donIDLabel, c.addrLabel).Inc()
 				c.lggr.Warnw("Failed to persist channel definitions", "err", err, "memoryVersion", memoryVersion,
 					"persistedVersion", persistedVersion)
 			}
@@ -864,6 +1010,7 @@ func (c *channelDefinitionCache) persistLoop() {
 			// Try one final persist with a short-ish timeout, then return
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			if memoryVersion, persistedVersion, err := c.persist(ctx); err != nil {
+				channelDefinitionCachePersistErrors.WithLabelValues(c.donIDLabel, c.addrLabel).Inc()
 				c.lggr.Errorw("Failed to persist channel definitions on shutdown",
 					"err", err, "memoryVersion", memoryVersion, "persistedVersion", persistedVersion)
 			}
@@ -881,8 +1028,28 @@ func (c *channelDefinitionCache) Close() error {
 		// Cancel all contexts by closing the stop channel and wait for all goroutines to finish
 		close(c.chStop)
 		c.wg.Wait()
+		c.deleteMetrics()
 		return nil
 	})
+}
+
+// deleteMetrics removes every metric series belonging to this cache. Without this, a stopped
+// cache leaves frozen gauges behind that are indistinguishable from a live one.
+func (c *channelDefinitionCache) deleteMetrics() {
+	labels := prometheus.Labels{"don_id": c.donIDLabel, "addr": c.addrLabel}
+	for _, v := range []interface{ DeletePartialMatch(prometheus.Labels) int }{
+		channelDefinitionCacheChannels,
+		channelDefinitionCacheMergeRejects,
+		channelDefinitionCacheTombstonesReaped,
+		channelDefinitionCacheVersion,
+		channelDefinitionCacheLastBlockNum,
+		channelDefinitionCacheFetches,
+		channelDefinitionCacheFetchDuration,
+		channelDefinitionCacheFetchBytes,
+		channelDefinitionCachePersistErrors,
+	} {
+		v.DeletePartialMatch(labels)
+	}
 }
 
 // HealthReport returns a health report map containing the cache's health status.
@@ -907,9 +1074,6 @@ func (c *channelDefinitionCache) Name() string { return c.lggr.Name() }
 func (c *channelDefinitionCache) Definitions(prev llotypes.ChannelDefinitions) llotypes.ChannelDefinitions {
 	c.definitionsMu.RLock()
 	defer c.definitionsMu.RUnlock()
-
-	channelDefinitionCacheCount.
-		WithLabelValues("previous_outcome").Set(float64(len(prev)))
 
 	// nothing to merge
 	if len(c.definitions.Sources) == 0 {
@@ -936,14 +1100,63 @@ func (c *channelDefinitionCache) Definitions(prev llotypes.ChannelDefinitions) l
 
 	feedIDToChannelID := buildFeedIDMap(merged)
 	for _, sourceDefinition := range src {
-		channelDefinitionCacheCount.
-			WithLabelValues(strconv.Itoa(int(sourceDefinition.Trigger.Source))).Set(float64(len(sourceDefinition.Definitions)))
 		c.lggr.Debugw("merging definitions", "source", sourceDefinition.Trigger.Source)
 		c.mergeDefinitions(sourceDefinition.Trigger.Source, merged, sourceDefinition.Definitions, feedIDToChannelID)
 	}
 
+	defer c.setChannelGauges(merged)
+
 	c.lggr.Debugw("returning merged definitions", "definitions", merged)
 	return merged
+}
+
+// setChannelGauges reports the channel counts of the merged outcome definitions, broken down by
+// source and tombstone state. Existing series for this cache are deleted first so that sources
+// which no longer contribute any channels do not leave stale gauges behind.
+func (c *channelDefinitionCache) setChannelGauges(merged llotypes.ChannelDefinitions) {
+	type counts struct{ live, tombstoned float64 }
+	perSource := make(map[uint32]counts)
+	for _, def := range merged {
+		v := perSource[def.Source]
+		if def.Tombstone {
+			v.tombstoned++
+		} else {
+			v.live++
+		}
+		perSource[def.Source] = v
+	}
+
+	c.gaugedSourcesMu.Lock()
+	defer c.gaugedSourcesMu.Unlock()
+
+	if c.gaugedSources == nil {
+		c.gaugedSources = make(map[uint32]struct{}, len(perSource))
+	}
+
+	for source, v := range perSource {
+		sourceLabel := strconv.FormatUint(uint64(source), 10)
+		channelDefinitionCacheChannels.
+			WithLabelValues(c.donIDLabel, c.addrLabel, sourceLabel, "false").Set(v.live)
+		channelDefinitionCacheChannels.
+			WithLabelValues(c.donIDLabel, c.addrLabel, sourceLabel, "true").Set(v.tombstoned)
+	}
+
+	// Drop only the sources that stopped contributing channels, so that a concurrent scrape
+	// never observes a gap in the series that are still current.
+	for source := range c.gaugedSources {
+		if _, ok := perSource[source]; ok {
+			continue
+		}
+		sourceLabel := strconv.FormatUint(uint64(source), 10)
+		channelDefinitionCacheChannels.
+			DeleteLabelValues(c.donIDLabel, c.addrLabel, sourceLabel, "false")
+		channelDefinitionCacheChannels.
+			DeleteLabelValues(c.donIDLabel, c.addrLabel, sourceLabel, "true")
+		delete(c.gaugedSources, source)
+	}
+	for source := range perSource {
+		c.gaugedSources[source] = struct{}{}
+	}
 }
 
 func decodePersistedSourceDefinitions(definitionsJSON json.RawMessage) (map[uint32]channelsource.SourceDefinition, error) {
