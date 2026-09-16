@@ -24,7 +24,6 @@ import (
 
 	chainselectors "github.com/smartcontractkit/chain-selectors"
 
-	ocr3capability "github.com/smartcontractkit/chainlink-common/pkg/capabilities/consensus/ocr3"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -249,21 +248,6 @@ func (r *Relayer) Start(ctx context.Context) error {
 		}
 	}
 
-	wCfg := r.chain.Config().EVM().Workflow()
-	// Initialize write target capability if configuration is defined
-	if wCfg.ForwarderAddress() != nil && wCfg.FromAddress() != nil {
-		if wCfg.GasLimitDefault() == nil {
-			return errors.New("unable to instantiate write target as default gas limit is not set")
-		}
-		capability, err := NewWriteTarget(ctx, r, r.chain, *wCfg.GasLimitDefault(), r.lggr)
-		if err != nil {
-			return fmt.Errorf("failed to initialize write target: %w", err)
-		}
-		if err = r.capabilitiesRegistry.Add(ctx, capability); err != nil {
-			return fmt.Errorf("failed to register capability: %w", err)
-		}
-		r.lggr.Infow("Registered write target", "chain_id", r.chain.ID())
-	}
 	return r.chain.Start(ctx)
 }
 
@@ -412,7 +396,10 @@ func (r *Relayer) NewOCR3CapabilityProvider(ctx context.Context, rargs commontyp
 
 	return &ocr3CapabilityProvider{
 		PluginProvider: pp,
-		transmitter:    ocr3capability.NewContractTransmitter(r.lggr, r.capabilitiesRegistry, string(fromAccount)),
+		// The transmitter has been deprecated since it only would have worked with the now
+		// defunct legacy OCR3 capability. However this provider is still used for the config watcher
+		// and digester by the don time and ring plugins.
+		transmitter: &unsupportedOCR3ContractTransmitter{fromAccount: fromAccount},
 	}, nil
 }
 

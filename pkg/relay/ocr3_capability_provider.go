@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -29,6 +30,24 @@ type ocr3CapabilityProvider struct {
 
 func (o *ocr3CapabilityProvider) OCR3ContractTransmitter() ocr3types.ContractTransmitter[[]byte] {
 	return o.transmitter
+}
+
+var _ ocr3types.ContractTransmitter[[]byte] = &unsupportedOCR3ContractTransmitter{}
+
+// unsupportedOCR3ContractTransmitter is a stub transmitter used by the OCR3 capability
+// provider now that the ocr3 capability it transmitted through has been removed.
+// It still reports the transmitter account so that config validation keeps working, but
+// any attempt to transmit fails.
+type unsupportedOCR3ContractTransmitter struct {
+	fromAccount ocrtypes.Account
+}
+
+func (u *unsupportedOCR3ContractTransmitter) Transmit(context.Context, ocrtypes.ConfigDigest, uint64, ocr3types.ReportWithInfo[[]byte], []ocrtypes.AttributedOnchainSignature) error {
+	return errors.New("OCR3 capability transmission is not supported: the OCR capability has been removed")
+}
+
+func (u *unsupportedOCR3ContractTransmitter) FromAccount(context.Context) (ocrtypes.Account, error) {
+	return u.fromAccount, nil
 }
 
 var _ LogDecoder = &ocr3CapabilityLogDecoder{}
