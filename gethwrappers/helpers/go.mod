@@ -3,10 +3,10 @@ module github.com/smartcontractkit/chainlink-evm/gethwrappers/helpers
 go 1.25.13
 
 require (
-	github.com/ethereum/go-ethereum v1.17.3
+	github.com/ethereum/go-ethereum v1.17.5
 	github.com/pkg/errors v0.9.1
 	go.uber.org/multierr v1.11.0
-	golang.org/x/tools v0.40.0
+	golang.org/x/tools v0.41.0
 )
 
 require (

@@ -830,8 +830,10 @@ func TestRpcClientLargePayloadTimeout(t *testing.T) {
 		},
 		{
 			Name: "BatchCallContext",
-			Fn: func(ctx context.Context, rpc *client.RPCClient) error {
-				err := rpc.BatchCallContext(ctx, nil)
+			Fn: func(ctx context.Context, client *client.RPCClient) error {
+				err := client.BatchCallContext(ctx, []rpc.BatchElem{
+					{Method: "rpc_call"}, // BatchCallContext rejects calls with empty batch
+				})
 				return err
 			},
 		},
@@ -1354,9 +1356,9 @@ func TestRPCClient_TransactionByHashWithOpts(t *testing.T) {
 			return
 		}).URL()
 		rpcClient := client.NewDialedTestRPCClient(t, client.RPCClientOpts{HTTP: httpURL, ExternalRequestMaxResponseSize: responseSize - 1})
-		_, err = rpcClient.TransactionByHashWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionByHashOpts{IsExternalRequest: false})
+		_, _, err = rpcClient.TransactionByHashWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionByHashOpts{IsExternalRequest: false})
 		require.NoError(t, err)
-		_, err = rpcClient.TransactionByHashWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionByHashOpts{IsExternalRequest: true})
+		_, _, err = rpcClient.TransactionByHashWithOpts(t.Context(), common.Hash{}, evmtypes.TransactionByHashOpts{IsExternalRequest: true})
 		require.ErrorContains(t, err, "RPC call failed: reached read limit of 296 bytes: response is too large")
 	})
 }
