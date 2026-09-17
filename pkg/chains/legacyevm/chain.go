@@ -14,7 +14,6 @@ import (
 
 	chainselectors "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/chainlink-common/pkg/beholder"
 	common "github.com/smartcontractkit/chainlink-common/pkg/chains"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -151,9 +150,7 @@ type ChainOpts struct {
 
 	DS sqlutil.DataSource
 
-	// Meter is used to report chain metrics. Defaults to the global beholder
-	// meter when unset.
-	// TODO: make this required once chainlink core passes it explicitly.
+	// Meter is used to report chain metrics. Required.
 	Meter metric.Meter
 
 	// TODO BCF-2513 remove test code from the API
@@ -186,6 +183,9 @@ func (o ChainOpts) Validate() error {
 	}
 	if o.DS == nil {
 		err = errors.Join(err, errors.New("nil DS"))
+	}
+	if o.Meter == nil {
+		err = errors.Join(err, errors.New("nil Meter"))
 	}
 	if err != nil {
 		err = fmt.Errorf("invalid ChainOpts: %w", err)
@@ -337,11 +337,7 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 		}
 	}
 
-	meter := opts.Meter
-	if meter == nil {
-		meter = beholder.GetMeter()
-	}
-	chainConfigMetrics, err := newChainConfigMetrics(meter)
+	chainConfigMetrics, err := newChainConfigMetrics(opts.Meter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create chain config metrics: %w", err)
 	}
