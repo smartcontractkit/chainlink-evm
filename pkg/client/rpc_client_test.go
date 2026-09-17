@@ -830,8 +830,11 @@ func TestRpcClientLargePayloadTimeout(t *testing.T) {
 		},
 		{
 			Name: "BatchCallContext",
-			Fn: func(ctx context.Context, rpc *client.RPCClient) error {
-				err := rpc.BatchCallContext(ctx, nil)
+			// The batch must be non-empty: geth's rpc.Client rejects an empty one
+			// before issuing the request, so it would never reach the timeout under test.
+			// The client param is named c here to avoid shadowing the rpc package.
+			Fn: func(ctx context.Context, c *client.RPCClient) error {
+				err := c.BatchCallContext(ctx, []rpc.BatchElem{{Method: "rpc_call"}})
 				return err
 			},
 		},
