@@ -152,6 +152,8 @@ func Test_Eth_Errors(t *testing.T) {
 			{"failed to forward tx to sequencer, please try again. Error message: 'already known'", true, "Mantle"},
 			{"tx already exists in cache", true, "Sei"},
 			{"tx already in mempool", true, "Cronos"},
+			{"already imported", true, "Adi"},
+			{"Unexpected error (code=10055)", true, "HyperEVM"},
 		}
 		for _, test := range tests {
 			err = evmclient.NewSendErrorS(test.message)
@@ -257,6 +259,7 @@ func Test_Eth_Errors(t *testing.T) {
 			{"[Request ID: 825608a8-fd8a-4b5b-aea7-92999509306d] Error invoking RPC: [Request ID: 825608a8-fd8a-4b5b-aea7-92999509306d] Transaction execution returns a null value for transaction", true, "hedera"},
 			{"call failed: 503 Service Temporarily Unavailable: <html>\r\n<head><title>503 Service Temporarily Unavailable</title></head>\r\n<body>\r\n<center><h1>503 Service Temporarily Unavailable</h1></center>\r\n</body>\r\n</html>\r\n", true, "Arbitrum"},
 			{"RPC call failed: The method eth_sendRawTransaction does not exist/is not available", true, "Cronos"},
+			{`RPC call failed: 429 Too Many Requests: {"jsonrpc":"2.0","id":62458,"error":{"code":-32005,"message":"Your IP has exceeded its request rate limit."`, true, "Alchemy"},
 		}
 		for _, test := range tests {
 			err = evmclient.NewSendErrorS(test.message)
