@@ -330,7 +330,8 @@ const TerminallyStuckMsg = "transaction terminally stuck"
 
 // Tx.Error messages that are set internally so they are not chain or client specific
 var internal = ClientErrors{
-	TerminallyStuck: regexp.MustCompile(TerminallyStuckMsg),
+	TerminallyStuck:    regexp.MustCompile(TerminallyStuckMsg),
+	ServiceUnavailable: regexp.MustCompile("500 Internal Server Error|EOF|connection reset by peer"),
 }
 
 var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, jovay, cronos, pharos, internal, adi, hyperliquid, alchemy}
