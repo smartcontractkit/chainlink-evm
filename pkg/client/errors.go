@@ -322,6 +322,10 @@ var pharos = ClientErrors{
 	Fatal: regexp.MustCompile(`errcode: 80004, errmsg: INVALID_ACCOUNT_ADDRESS`),
 }
 
+var adi = ClientErrors{
+	TransactionAlreadyInMempool: regexp.MustCompile(`already imported`),
+}
+
 const TerminallyStuckMsg = "transaction terminally stuck"
 
 // Tx.Error messages that are set internally so they are not chain or client specific
@@ -329,7 +333,7 @@ var internal = ClientErrors{
 	TerminallyStuck: regexp.MustCompile(TerminallyStuckMsg),
 }
 
-var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, jovay, cronos, pharos, internal}
+var clients = []ClientErrors{parity, geth, arbitrum, metis, substrate, avalanche, optimism, nethermind, harmony, besu, erigon, klaytn, celo, zkSync, zkEvm, treasure, mantle, aStar, hedera, gnosis, sei, monad, jovay, cronos, pharos, internal, adi, hyperliquid, alchemy}
 
 // ClientErrorRegexes returns a map of compiled regexes for each error type
 func ClientErrorRegexes(errsRegex config.ClientErrors) *ClientErrors {
@@ -699,7 +703,8 @@ var infura = ClientErrors{
 }
 
 var alchemy = ClientErrors{
-	TooManyResults: regexp.MustCompile(`(: |^)Log response size exceeded. You can make eth_getLogs requests with up to a [0-9A-Z]+ block range and no limit on the response size, or you can request any block range with a cap of [0-9A-Z]+ logs in the response. Based on your parameters and the response size limit, this block range should work: \[0x[0-9a-f]+, 0x[0-9a-f]+\]$`),
+	TooManyResults:     regexp.MustCompile(`(: |^)Log response size exceeded. You can make eth_getLogs requests with up to a [0-9A-Z]+ block range and no limit on the response size, or you can request any block range with a cap of [0-9A-Z]+ logs in the response. Based on your parameters and the response size limit, this block range should work: \[0x[0-9a-f]+, 0x[0-9a-f]+\]$`),
+	ServiceUnavailable: regexp.MustCompile(`429 Too Many Requests`),
 }
 
 var quicknode = ClientErrors{
@@ -717,6 +722,10 @@ var drpc = ClientErrors{
 var hyperliquid = ClientErrors{
 	TooManyResults: regexp.MustCompile(`(: |^)query exceeds max block range$`),
 	MissingBlocks:  regexp.MustCompile(`(: |^)invalid block range$`),
+	// Docs are vague on the actual root cause. Thus, our best option is to treat it as already known.
+	// Docs: Error code 10055 represents errors occurring at the boundary between HyperCore and HyperEVM.
+	// Examples include nonce errors, insufficient funds, duplicate transaction hashes, or underpriced replacement transactions.
+	TransactionAlreadyInMempool: regexp.MustCompile(`code=10055`),
 }
 
 // Linkpool, Blockdaemon, and Chainstack all return "request timed out" if the log results are too large for them to process
