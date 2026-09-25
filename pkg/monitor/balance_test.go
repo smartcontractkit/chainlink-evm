@@ -3,10 +3,14 @@ package monitor_test
 import (
 	"context"
 	"math/big"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/onsi/gomega"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -17,6 +21,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 
+	"github.com/smartcontractkit/chainlink-evm/gethwrappers/shared/generated/latest/erc20"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client/clienttest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
@@ -39,7 +44,7 @@ func TestBalanceMonitor_Start(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr, k1Addr}
 		ethClient := newEthClientMock(t)
 
-		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), nil)
 		require.NoError(t, err)
 
 		k0bal := big.NewInt(42)
@@ -65,7 +70,7 @@ func TestBalanceMonitor_Start(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr}
 		ethClient := newEthClientMock(t)
 
-		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), nil)
 		require.NoError(t, err)
 		k0bal := big.NewInt(42)
 
@@ -83,7 +88,7 @@ func TestBalanceMonitor_Start(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr}
 		ethClient := newEthClientMock(t)
 
-		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), nil)
 		require.NoError(t, err)
 		ctxCancelledAwaiter := testutils.NewAwaiter()
 
@@ -111,7 +116,7 @@ func TestBalanceMonitor_Start(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr}
 		ethClient := newEthClientMock(t)
 
-		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), nil)
 		require.NoError(t, err)
 
 		ethClient.On("BalanceAt", mock.Anything, k0Addr, nilBigInt).
@@ -135,7 +140,7 @@ func TestBalanceMonitor_OnNewLongestChain_UpdatesBalance(t *testing.T) {
 		ethKeyStore := keystest.Addresses{k0Addr, k1Addr}
 		ethClient := newEthClientMock(t)
 
-		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), nil)
 		require.NoError(t, err)
 		k0bal := big.NewInt(42)
 		// Deliberately larger than a 64 bit unsigned integer to test overflow
@@ -182,7 +187,7 @@ func TestBalanceMonitor_FewerRPCCallsWhenBehind(t *testing.T) {
 	ethKeyStore := keystest.Addresses{testutils.NewAddress()}
 	ethClient := newEthClientMock(t)
 
-	bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t))
+	bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), nil)
 	require.NoError(t, err)
 	ethClient.On("BalanceAt", mock.Anything, mock.Anything, mock.Anything).
 		Once().
@@ -218,6 +223,49 @@ func TestBalanceMonitor_FewerRPCCallsWhenBehind(t *testing.T) {
 
 	// Make sure the BalanceAt mock wasn't called more than once
 	assert.LessOrEqual(t, callCount.Load(), int32(1))
+}
+
+func TestBalanceMonitor_ERC20TokenBalance(t *testing.T) {
+	t.Parallel()
+
+	t.Run("checks ERC-20 token balance instead of native balance when configured", func(t *testing.T) {
+		k0Addr := testutils.NewAddress()
+		ethKeyStore := keystest.Addresses{k0Addr}
+		ethClient := newEthClientMock(t)
+		tokenAddress := testutils.NewAddress()
+
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), &tokenAddress)
+		require.NoError(t, err)
+
+		erc20ABI, err := abi.JSON(strings.NewReader(erc20.ERC20ABI))
+		require.NoError(t, err)
+		expectedCalldata, err := erc20ABI.Pack("balanceOf", k0Addr)
+		require.NoError(t, err)
+
+		tokenBal := big.NewInt(12345)
+
+		ethClient.On("CallContract", mock.Anything, mock.Anything, nilBigInt).
+			Run(func(args mock.Arguments) {
+				callMsg := args.Get(1).(ethereum.CallMsg)
+				require.NotNil(t, callMsg.To)
+				assert.Equal(t, tokenAddress, *callMsg.To)
+				assert.Equal(t, expectedCalldata, callMsg.Data)
+			}).
+			Once().
+			Return(common.BigToHash(tokenBal).Bytes(), nil)
+
+		servicetest.RunHealthy(t, bm)
+
+		gomega.NewWithT(t).Eventually(func() *big.Int {
+			bal := bm.GetEthBalance(k0Addr)
+			if bal == nil {
+				return nil
+			}
+			return bal.ToInt()
+		}).Should(gomega.Equal(tokenBal))
+
+		ethClient.AssertNotCalled(t, "BalanceAt", mock.Anything, mock.Anything, mock.Anything)
+	})
 }
 
 func Test_ApproximateFloat64(t *testing.T) {

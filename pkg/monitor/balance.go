@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,6 +20,7 @@ import (
 	"github.com/smartcontractkit/chainlink-framework/chains/heads"
 	"github.com/smartcontractkit/chainlink-framework/metrics"
 
+	"github.com/smartcontractkit/chainlink-evm/gethwrappers/shared/generated/latest/erc20"
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
@@ -44,6 +46,7 @@ type (
 		ethBalances    map[common.Address]*assets.Eth
 		ethBalancesMtx sync.RWMutex
 		sleeperTask    *utils.SleeperTask
+		tokenCaller    *erc20.ERC20Caller
 	}
 
 	NullBalanceMonitor struct{}
@@ -51,8 +54,9 @@ type (
 
 var _ BalanceMonitor = (*balanceMonitor)(nil)
 
-// NewBalanceMonitor returns a new balanceMonitor
-func NewBalanceMonitor(ethClient evmclient.Client, ethKeyStore keys.AddressLister, lggr logger.Logger) (*balanceMonitor, error) {
+// NewBalanceMonitor returns a new balanceMonitor. If tokenAddress is non-nil, the monitor checks
+// the balance of that ERC-20 token instead of the chain's native balance.
+func NewBalanceMonitor(ethClient evmclient.Client, ethKeyStore keys.AddressLister, lggr logger.Logger, tokenAddress *common.Address) (*balanceMonitor, error) {
 	balanceMetrics, err := metrics.NewGenericBalanceMetrics(metrics.EVM, ethClient.ConfiguredChainID().String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create balance metrics: %w", err)
@@ -64,6 +68,12 @@ func NewBalanceMonitor(ethClient evmclient.Client, ethKeyStore keys.AddressListe
 		balanceMetrics: balanceMetrics,
 		ethKeyStore:    ethKeyStore,
 		ethBalances:    make(map[common.Address]*assets.Eth),
+	}
+	if tokenAddress != nil {
+		bm.tokenCaller, err = erc20.NewERC20Caller(*tokenAddress, ethClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create ERC-20 token caller: %w", err)
+		}
 	}
 	bm.Service, bm.eng = services.Config{
 		Name:  "BalanceMonitor",
@@ -173,7 +183,13 @@ func (w *worker) Work(ctx context.Context) {
 }
 
 func (w *worker) checkAccountBalance(ctx context.Context, address common.Address) {
-	bal, err := w.bm.ethClient.BalanceAt(ctx, address, nil)
+	var bal *big.Int
+	var err error
+	if w.bm.tokenCaller != nil {
+		bal, err = w.bm.tokenCaller.BalanceOf(&bind.CallOpts{Context: ctx}, address)
+	} else {
+		bal, err = w.bm.ethClient.BalanceAt(ctx, address, nil)
+	}
 	if err != nil {
 		w.bm.eng.Errorw("BalanceMonitor: error getting balance for key "+address.Hex(),
 			"err", err,

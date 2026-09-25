@@ -80,6 +80,8 @@ type HeadTracker interface {
 
 type BalanceMonitor interface {
 	Enabled() bool
+	// ERC20TokenAddress returns the configured ERC-20 fee token address, or nil if unset (native balance should be checked instead).
+	ERC20TokenAddress() *types.EIP55Address
 }
 
 type ClientErrors interface {
