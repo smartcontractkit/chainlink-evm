@@ -8,6 +8,9 @@ import {
 import {
   TransparentUpgradeableProxy
 } from "@openzeppelin/contracts@5.0.2/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {
+  IAccessControlDefaultAdminRules
+} from "@openzeppelin/contracts@5.0.2/access/extensions/IAccessControlDefaultAdminRules.sol";
 
 import {ERC20UpgradableBaseTest_approve} from "../ERC20UpgradableBaseTest.approve.t.sol";
 import {ERC20UpgradableBaseTest_burn} from "../ERC20UpgradableBaseTest.burn.t.sol";
@@ -210,5 +213,33 @@ contract BurnMintERC20TransparentTest is
 
   function test_SetCCIPAdmin() public {
     should_SetCCIPAdmin(address(s_burnMintERC20Transparent));
+  }
+
+  /// @dev Demonstrates that DEFAULT_ADMIN_ROLE cannot be independently revoked from one address
+  /// (e.g. the deployer) while a transfer to a *different* address (e.g. a timelock) is pending,
+  /// via renounceRole. This is the "grant to timelock, then revoke from deployer" pattern used by
+  /// EVMPoolAdapter.TidyTokenRoles and the standalone grant/revoke-token-admin-role changesets for
+  /// the plain (non-upgradeable) BurnMintERC20 - it does not carry over to this contract, because
+  /// renounceRole for DEFAULT_ADMIN_ROLE only succeeds when the *pending* transfer target is
+  /// address(0) (i.e. abandoning adminship entirely), not when a real transfer to someone else is
+  /// in flight. See AccessControlDefaultAdminRulesUpgradeable.renounceRole.
+  function test_RevokeAdminRole_ViaRenounceRole_RevertsWhilePendingTransferToSomeoneElse() public {
+    bytes32 defaultAdminRole = s_burnMintERC20Transparent.DEFAULT_ADMIN_ROLE();
+
+    changePrank(DEFAULT_ADMIN);
+
+    // Step 1: "GrantAdminRole(timelock)" mapped to beginDefaultAdminTransfer(timelock).
+    s_burnMintERC20Transparent.beginDefaultAdminTransfer(STRANGER);
+
+    // DEFAULT_ADMIN still holds the role - begin does not grant anything by itself.
+    assertTrue(s_burnMintERC20Transparent.hasRole(defaultAdminRole, DEFAULT_ADMIN));
+
+    // Step 2: "RevokeAdminRole(deployer)" mapped to renounceRole - reverts, because the pending
+    // transfer target is STRANGER, not address(0).
+    vm.expectPartialRevert(IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminDelay.selector);
+    s_burnMintERC20Transparent.renounceRole(defaultAdminRole, DEFAULT_ADMIN);
+
+    // The revert leaves DEFAULT_ADMIN still holding the role - it was never removed.
+    assertTrue(s_burnMintERC20Transparent.hasRole(defaultAdminRole, DEFAULT_ADMIN));
   }
 }
