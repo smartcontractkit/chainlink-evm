@@ -398,8 +398,7 @@ func (c *chain) Start(ctx context.Context) error {
 			}
 		}
 
-		txV2 := c.cfg.EVM().Transactions().TransactionManagerV2()
-		c.chainConfigMetrics.recordConfigInfo(ctx, c.id.String(), txV2.Enabled(), isTrue(txV2.DualBroadcast()))
+		c.chainConfigMetrics.recordConfigInfo(ctx, newChainConfigLabels(c.id.String(), c.cfg))
 
 		return nil
 	})

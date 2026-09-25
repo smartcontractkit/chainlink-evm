@@ -23,23 +23,63 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/txmgr"
 )
 
+// testLabels is a fully populated label set. Every field differs from at least
+// one neighbour of the same type, so a mixed-up assignment in
+// chainConfigAttributes shows up as a wrong value rather than passing silently.
+var testLabels = chainConfigLabels{
+	chainID:               "1",
+	chainType:             "optimismBedrock",
+	nodePoolSelectionMode: "HighestHead",
+	nodeCount:             3,
+
+	txV2Enabled:                 true,
+	dualBroadcast:               false,
+	readRequestsToMultipleNodes: true,
+	bundles:                     false,
+	feeBoost:                    true,
+	customURLsCount:             2,
+
+	transactionsEnabled:   true,
+	forwardersEnabled:     false,
+	autoPurgeEnabled:      true,
+	finalityTagEnabled:    false,
+	nonceAutoSync:         true,
+	logBroadcasterEnabled: false,
+}
+
+var testLabelsExpected = map[string]string{
+	"chain_id":                        "1",
+	"chain_type":                      "optimismBedrock",
+	"node_pool_selection_mode":        "HighestHead",
+	"node_count":                      "3",
+	"transaction_v2_enabled":          "true",
+	"dual_broadcast":                  "false",
+	"read_requests_to_multiple_nodes": "true",
+	"bundles":                         "false",
+	"fee_boost":                       "true",
+	"custom_urls_count":               "2",
+	"transactions_enabled":            "true",
+	"forwarders_enabled":              "false",
+	"auto_purge_enabled":              "true",
+	"finality_tag_enabled":            "false",
+	"nonce_auto_sync":                 "true",
+	"log_broadcaster_enabled":         "false",
+}
+
 func TestChainConfigAttributes_exactWhitelist(t *testing.T) {
 	t.Parallel()
 
-	attrs := chainConfigAttributes("1", true, false)
+	attrs := chainConfigAttributes(testLabels)
 
-	got := map[attribute.Key]attribute.Value{}
-	for _, kv := range attrs {
-		got[kv.Key] = kv.Value
-	}
+	// Exactly the whitelisted keys, no duplicates - nothing else can leak.
+	require.Len(t, attrs, len(testLabelsExpected))
+	got := attrsToStrings(attribute.NewSet(attrs...))
+	assert.Equal(t, testLabelsExpected, got)
 
-	// Exactly the three whitelisted keys - nothing else can leak.
-	require.Len(t, attrs, 3)
-	assert.Equal(t, "1", got["chain_id"].AsString())
-	assert.True(t, got["transaction_v2_enabled"].AsBool())
-	assert.False(t, got["dual_broadcast"].AsBool())
-	assert.NotContains(t, got, attribute.Key("custom_url"))
-	assert.NotContains(t, got, attribute.Key("custom_urls"))
+	// URL-bearing config fields must never become labels, in any form.
+	assert.NotContains(t, got, "custom_url")
+	assert.NotContains(t, got, "custom_urls")
+	assert.NotContains(t, got, "detection_api_url")
 }
 
 func TestIsTrue_nilIsFalse(t *testing.T) {
@@ -59,15 +99,39 @@ func TestChainConfigMetrics_recordConfigInfo(t *testing.T) {
 	metrics, err := newChainConfigMetrics(meter)
 	require.NoError(t, err)
 
-	metrics.recordConfigInfo(t.Context(), "1", true, false)
+	metrics.recordConfigInfo(t.Context(), testLabels)
 
 	dp := collectChainConfigInfo(t, reader)
 	assert.Equal(t, int64(1), dp.Value)
-	assert.Equal(t, map[string]string{
-		"chain_id":               "1",
-		"transaction_v2_enabled": "true",
-		"dual_broadcast":         "false",
-	}, attrsToStrings(dp.Attributes))
+	assert.Equal(t, testLabelsExpected, attrsToStrings(dp.Attributes))
+}
+
+func TestNewChainConfigLabels_readsWhitelistedConfig(t *testing.T) {
+	t.Parallel()
+
+	got := newChainConfigLabels("42161", txV2ChainConfig(t))
+
+	assert.Equal(t, chainConfigLabels{
+		chainID:               "42161",
+		chainType:             "arbitrum",
+		nodePoolSelectionMode: "HighestHead",
+		nodeCount:             0,
+
+		txV2Enabled:                 true,
+		dualBroadcast:               false,
+		readRequestsToMultipleNodes: false,
+		bundles:                     false,
+		feeBoost:                    false,
+		// One OFA URL is configured; only its count is read.
+		customURLsCount: 1,
+
+		transactionsEnabled:   true,
+		forwardersEnabled:     false,
+		autoPurgeEnabled:      false,
+		finalityTagEnabled:    true,
+		nonceAutoSync:         true,
+		logBroadcasterEnabled: true,
+	}, got)
 }
 
 func TestChain_Start_emitsChainConfigInfo(t *testing.T) {
@@ -96,12 +160,31 @@ func TestChain_Start_emitsChainConfigInfo(t *testing.T) {
 
 	dp := collectChainConfigInfo(t, reader)
 	assert.Equal(t, int64(1), dp.Value)
-	// The configured OFA URL carries a secret and must never reach the metric.
 	assert.Equal(t, map[string]string{
-		"chain_id":               "42161",
-		"transaction_v2_enabled": "true",
-		"dual_broadcast":         "false",
+		"chain_id":                        "42161",
+		"chain_type":                      "arbitrum",
+		"node_pool_selection_mode":        "HighestHead",
+		"node_count":                      "0",
+		"transaction_v2_enabled":          "true",
+		"dual_broadcast":                  "false",
+		"read_requests_to_multiple_nodes": "false",
+		"bundles":                         "false",
+		"fee_boost":                       "false",
+		"custom_urls_count":               "1",
+		"transactions_enabled":            "true",
+		"forwarders_enabled":              "false",
+		"auto_purge_enabled":              "false",
+		"finality_tag_enabled":            "true",
+		"nonce_auto_sync":                 "true",
+		"log_broadcaster_enabled":         "true",
 	}, attrsToStrings(dp.Attributes))
+
+	// The configured OFA URL carries a secret and must never reach the metric.
+	for _, kv := range dp.Attributes.ToSlice() {
+		v := kv.Value.String()
+		assert.NotContains(t, v, "hunter2")
+		assert.NotContains(t, v, "ofa.example.com", "%s leaked the OFA URL", kv.Key)
+	}
 }
 
 // txV2ChainConfig is a chain config with TransactionManagerV2 enabled, dual
