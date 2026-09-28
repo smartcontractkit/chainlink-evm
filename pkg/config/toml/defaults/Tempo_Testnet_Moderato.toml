@@ -20,7 +20,7 @@ CacheTimeout = "4s"
 
 [BalanceMonitor]
 Enabled = true
-ERC20TokenAddress = '0x20C0000000000000000000000000000000000000'
+ERC20TokenAddress = '0x20C0000000000000000000000000000000000000' # pathUSD
 
 [OCR]
 ContractConfirmations = 1
