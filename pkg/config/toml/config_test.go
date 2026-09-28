@@ -150,6 +150,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		MissingBlocks:                     new("missing"),
 		FinalizedStateUnavailable:         new("finalized-unavailable"),
 	}
+	unknown.BalanceMonitor.ERC20TokenAddress = new(types.EIP55Address)
 
 	configtest.AssertFieldsNotNil(t, unknown)
 }
