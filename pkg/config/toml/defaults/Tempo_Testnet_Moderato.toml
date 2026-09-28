@@ -1,0 +1,30 @@
+ChainID = '42431' # Tempo testnet moderato
+FinalityTagEnabled = true
+LogBroadcasterEnabled = false
+LogPollInterval = "1s"
+MinIncomingConfirmations = 1
+RPCBlockQueryDelay = 2
+
+[HeadTracker]
+PersistenceEnabled = false # avg diff between latest and finalized block is 1
+
+[GasEstimator]
+LimitMultiplier = '4'
+BumpThreshold = 30
+Mode = "FeeHistory"
+PriceDefault = "1 gwei"
+PriceMax = "1000 gwei"
+
+[GasEstimator.FeeHistory]
+CacheTimeout = "4s"
+
+[BalanceMonitor]
+Enabled = true
+ERC20TokenAddress = '0x20C0000000000000000000000000000000000000'
+
+[OCR]
+ContractConfirmations = 1
+
+[NodePool]
+NewHeadsPollInterval = "1s"
+SyncThreshold = 15

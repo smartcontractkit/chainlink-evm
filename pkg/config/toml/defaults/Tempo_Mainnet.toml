@@ -1,0 +1,29 @@
+ChainID = '4217' # Tempo Mainnet
+FinalityTagEnabled = true
+LogPollInterval = "1s"
+MinIncomingConfirmations = 1
+RPCBlockQueryDelay = 2
+LogBroadcasterEnabled = false
+
+[HeadTracker]
+PersistenceEnabled = false # avg diff between latest and finalized block is 1
+
+[GasEstimator]
+BumpThreshold = 30
+PriceMax = '1000 gwei'
+PriceDefault = '1 gwei'
+Mode = "FeeHistory"
+
+[GasEstimator.FeeHistory]
+CacheTimeout = "4s"
+
+[BalanceMonitor]
+Enabled = true
+ERC20TokenAddress = '0x20c0000000000000000000000000000000000000'
+
+[OCR]
+ContractConfirmations = 1
+
+[NodePool]
+SyncThreshold = 15
+NewHeadsPollInterval = '1s'
