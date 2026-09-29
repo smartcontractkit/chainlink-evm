@@ -464,6 +464,7 @@ FeeBoost enables using GetMaxFee instead of GetFee for all TxM v2 transaction at
 ```toml
 [BalanceMonitor]
 Enabled = true # Default
+ERC20TokenAddress = "0x20C0000000000000000000000000000000000000" # Example
 ```
 
 
@@ -472,6 +473,12 @@ Enabled = true # Default
 Enabled = true # Default
 ```
 Enabled balance monitoring for all keys.
+
+### ERC20TokenAddress
+```toml
+ERC20TokenAddress = "0x20C0000000000000000000000000000000000000" # Example
+```
+ERC20TokenAddress is the address of an ERC-20 type token that a chain supports as a fee token.
 
 ## GasEstimator
 ```toml

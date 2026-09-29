@@ -684,11 +684,17 @@ func (m *Workflow) setFrom(f *Workflow) {
 
 type BalanceMonitor struct {
 	Enabled *bool
+	// ERC20TokenAddress is the address of an ERC-20 fee token. When set, the
+	// BalanceMonitor checks this token's balance instead of the chain's native balance.
+	ERC20TokenAddress *types.EIP55Address `toml:",omitempty"`
 }
 
 func (m *BalanceMonitor) setFrom(f *BalanceMonitor) {
 	if v := f.Enabled; v != nil {
 		m.Enabled = v
+	}
+	if v := f.ERC20TokenAddress; v != nil {
+		m.ERC20TokenAddress = v
 	}
 }
 

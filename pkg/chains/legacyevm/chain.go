@@ -302,7 +302,12 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 
 	var balanceMonitor monitor.BalanceMonitor
 	if opts.ChainConfigs.RPCEnabled() && cfg.EVM().BalanceMonitor().Enabled() {
-		balanceMonitor, err = monitor.NewBalanceMonitor(cl, opts.KeyStore, l)
+		var tokenAddress *ethcommon.Address
+		if erc20Addr := cfg.EVM().BalanceMonitor().ERC20TokenAddress(); erc20Addr != nil {
+			addr := erc20Addr.Address()
+			tokenAddress = &addr
+		}
+		balanceMonitor, err = monitor.NewBalanceMonitor(cl, opts.KeyStore, l, tokenAddress)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create balance monitor for chain with ID %s: %w", chainID, err)
 		}

@@ -150,6 +150,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 		MissingBlocks:                     new("missing"),
 		FinalizedStateUnavailable:         new("finalized-unavailable"),
 	}
+	unknown.BalanceMonitor.ERC20TokenAddress = new(types.EIP55Address)
 
 	configtest.AssertFieldsNotNil(t, unknown)
 }
@@ -225,6 +226,9 @@ func TestDocs(t *testing.T) {
 		// HistoricalBalanceCheckAddress is documented as # Example; fallback.toml supplies the runtime default.
 		docDefaults.NodePool.HistoricalBalanceCheckAddress = nil
 
+		// BalanceMonitor.ERC20TokenAddress is documented as # Example; fallback.toml omits field
+		docDefaults.BalanceMonitor.ERC20TokenAddress = nil
+
 		fallbackDefaults := Defaults(nil)
 		fallbackDefaults.NodePool.HistoricalBalanceCheckAddress = nil
 		assertTOML(t, fallbackDefaults, docDefaults.Chain)
@@ -241,6 +245,7 @@ var fullConfig = EVMConfig{
 		AutoCreateKey: new(false),
 		BalanceMonitor: BalanceMonitor{
 			Enabled: new(true),
+			ERC20TokenAddress: new(types.MustEIP55Address("0x20C0000000000000000000000000000000000000")),
 		},
 		BlockBackfillDepth:   new(uint32(100)),
 		BlockBackfillSkip:    new(true),
