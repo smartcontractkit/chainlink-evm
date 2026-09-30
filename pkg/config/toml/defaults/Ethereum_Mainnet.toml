@@ -10,6 +10,7 @@ ConfirmationTimeout = '5m0s'
 
 [GasEstimator]
 EIP1559DynamicFees = true
+LimitTransfer = 200_000
 
 [GasEstimator.BlockHistory]
 # EIP-1559 does well on a smaller block history size
