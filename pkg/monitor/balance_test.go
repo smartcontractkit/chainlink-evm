@@ -228,44 +228,95 @@ func TestBalanceMonitor_FewerRPCCallsWhenBehind(t *testing.T) {
 func TestBalanceMonitor_ERC20TokenBalance(t *testing.T) {
 	t.Parallel()
 
-	t.Run("checks ERC-20 token balance instead of native balance when configured", func(t *testing.T) {
-		k0Addr := testutils.NewAddress()
-		ethKeyStore := keystest.Addresses{k0Addr}
-		ethClient := newEthClientMock(t)
-		tokenAddress := testutils.NewAddress()
+	// setUpTokenMonitor mocks the one-time `decimals()` call made when the balanceMonitor starts,
+	// then constructs a balanceMonitor configured to check the given token's balance.
+	setUpTokenMonitor := func(t *testing.T, ethClient *clienttest.Client, ethKeyStore keystest.Addresses, tokenAddress common.Address, tokenDecimals uint8, erc20ABI abi.ABI) monitor.BalanceMonitor {
+		t.Helper()
 
-		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), &tokenAddress)
+		decimalsCalldata, err := erc20ABI.Pack("decimals")
 		require.NoError(t, err)
-
-		erc20ABI, err := abi.JSON(strings.NewReader(erc20.ERC20ABI))
-		require.NoError(t, err)
-		expectedCalldata, err := erc20ABI.Pack("balanceOf", k0Addr)
-		require.NoError(t, err)
-
-		tokenBal := big.NewInt(12345)
 
 		ethClient.On("CallContract", mock.Anything, mock.Anything, nilBigInt).
 			Run(func(args mock.Arguments) {
 				callMsg := args.Get(1).(ethereum.CallMsg)
 				require.NotNil(t, callMsg.To)
 				assert.Equal(t, tokenAddress, *callMsg.To)
-				assert.Equal(t, expectedCalldata, callMsg.Data)
+				assert.Equal(t, decimalsCalldata, callMsg.Data)
 			}).
 			Once().
-			Return(common.BigToHash(tokenBal).Bytes(), nil)
+			Return(common.LeftPadBytes([]byte{tokenDecimals}, 32), nil)
 
-		servicetest.RunHealthy(t, bm)
+		bm, err := monitor.NewBalanceMonitor(ethClient, ethKeyStore, logger.Test(t), &tokenAddress)
+		require.NoError(t, err)
+		return bm
+	}
 
-		gomega.NewWithT(t).Eventually(func() *big.Int {
-			bal := bm.GetEthBalance(k0Addr)
-			if bal == nil {
-				return nil
-			}
-			return bal.ToInt()
-		}).Should(gomega.Equal(tokenBal))
+	// GetEthBalance stores and returns the balanceOf result scaled to an 18-decimal (wei-equivalent)
+	// value, so it can be compared and reported alongside native balances using the same units.
+	testCases := []struct {
+		name          string
+		tokenDecimals uint8
+		rawTokenBal   *big.Int
+		wantWeiBal    *big.Int
+	}{
+		{
+			name:          "scales up a token with fewer than 18 decimals (e.g. USDC-style 6 decimals)",
+			tokenDecimals: 6,
+			rawTokenBal:   big.NewInt(12345),
+			wantWeiBal:    new(big.Int).Mul(big.NewInt(12345), big.NewInt(1_000_000_000_000)),
+		},
+		{
+			name:          "does not scale a token with exactly 18 decimals",
+			tokenDecimals: 18,
+			rawTokenBal:   big.NewInt(12345),
+			wantWeiBal:    big.NewInt(12345),
+		},
+		{
+			name:          "scales down a token with more than 18 decimals",
+			tokenDecimals: 20,
+			rawTokenBal:   big.NewInt(1234500),
+			wantWeiBal:    big.NewInt(12345),
+		},
+	}
 
-		ethClient.AssertNotCalled(t, "BalanceAt", mock.Anything, mock.Anything, mock.Anything)
-	})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			k0Addr := testutils.NewAddress()
+			ethKeyStore := keystest.Addresses{k0Addr}
+			ethClient := newEthClientMock(t)
+			tokenAddress := testutils.NewAddress()
+
+			erc20ABI, err := abi.JSON(strings.NewReader(erc20.ERC20ABI))
+			require.NoError(t, err)
+
+			bm := setUpTokenMonitor(t, ethClient, ethKeyStore, tokenAddress, tc.tokenDecimals, erc20ABI)
+
+			balanceOfCalldata, err := erc20ABI.Pack("balanceOf", k0Addr)
+			require.NoError(t, err)
+
+			ethClient.On("CallContract", mock.Anything, mock.Anything, nilBigInt).
+				Run(func(args mock.Arguments) {
+					callMsg := args.Get(1).(ethereum.CallMsg)
+					require.NotNil(t, callMsg.To)
+					assert.Equal(t, tokenAddress, *callMsg.To)
+					assert.Equal(t, balanceOfCalldata, callMsg.Data)
+				}).
+				Once().
+				Return(common.BigToHash(tc.rawTokenBal).Bytes(), nil)
+
+			servicetest.RunHealthy(t, bm)
+
+			gomega.NewWithT(t).Eventually(func() *big.Int {
+				bal := bm.GetEthBalance(k0Addr)
+				if bal == nil {
+					return nil
+				}
+				return bal.ToInt()
+			}).Should(gomega.Equal(tc.wantWeiBal))
+
+			ethClient.AssertNotCalled(t, "BalanceAt", mock.Anything, mock.Anything, mock.Anything)
+		})
+	}
 }
 
 func Test_ApproximateFloat64(t *testing.T) {
