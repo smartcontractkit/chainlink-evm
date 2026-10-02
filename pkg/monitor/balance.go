@@ -47,6 +47,7 @@ type (
 		ethBalancesMtx sync.RWMutex
 		sleeperTask    *utils.SleeperTask
 		tokenCaller    *erc20.ERC20Caller
+		tokenDecimals  uint8
 	}
 
 	NullBalanceMonitor struct{}
@@ -85,6 +86,13 @@ func NewBalanceMonitor(ethClient evmclient.Client, ethKeyStore keys.AddressListe
 }
 
 func (bm *balanceMonitor) start(ctx context.Context) error {
+	if bm.tokenCaller != nil {
+		decimals, err := bm.tokenCaller.Decimals(&bind.CallOpts{Context: ctx})
+		if err != nil {
+			return fmt.Errorf("failed to get ERC-20 token decimals: %w", err)
+		}
+		bm.tokenDecimals = decimals
+	}
 	// Always query latest balance on start
 	(&worker{bm}).Work(ctx)
 	return nil
@@ -145,7 +153,6 @@ var promETHBalance = promauto.NewGaugeVec(
 
 func (bm *balanceMonitor) updateBalanceMetrics(ctx context.Context, balance *assets.Eth, from common.Address) {
 	balanceFloat, err := ApproximateFloat64(balance)
-
 	if err != nil {
 		bm.eng.Error(fmt.Errorf("updatePrometheusEthBalance: %w", err))
 		return
@@ -187,6 +194,9 @@ func (w *worker) checkAccountBalance(ctx context.Context, address common.Address
 	var err error
 	if w.bm.tokenCaller != nil {
 		bal, err = w.bm.tokenCaller.BalanceOf(&bind.CallOpts{Context: ctx}, address)
+		if err == nil && bal != nil {
+			bal = scaleToWei(bal, w.bm.tokenDecimals)
+		}
 	} else {
 		bal, err = w.bm.ethClient.BalanceAt(ctx, address, nil)
 	}
@@ -215,6 +225,26 @@ func (*NullBalanceMonitor) Start(context.Context) error                         
 func (*NullBalanceMonitor) Close() error                                               { return nil }
 func (*NullBalanceMonitor) Ready() error                                               { return nil }
 func (*NullBalanceMonitor) OnNewLongestChain(ctx context.Context, head *evmtypes.Head) {}
+
+// weiDecimals is the number of decimals assets.Eth values are denominated in.
+const weiDecimals = 18
+
+// scaleToWei normalizes a raw ERC-20 balance reported with the given number of decimals to an
+// 18-decimal (wei-equivalent) value, so it can be stored and reported as assets.Eth alongside
+// native balances. Tokens with fewer than 18 decimals are scaled up; tokens with more than 18
+// decimals are scaled down and truncated.
+func scaleToWei(bal *big.Int, decimals uint8) *big.Int {
+	switch {
+	case decimals < weiDecimals:
+		factor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(weiDecimals-decimals)), nil)
+		return new(big.Int).Mul(bal, factor)
+	case decimals > weiDecimals:
+		factor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals-weiDecimals)), nil)
+		return new(big.Int).Quo(bal, factor)
+	default:
+		return bal
+	}
+}
 
 func ApproximateFloat64(e *assets.Eth) (float64, error) {
 	ef := new(big.Float).SetInt(e.ToInt())
