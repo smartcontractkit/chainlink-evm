@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/otel/metric/noop"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil/sqltest"
 	"github.com/smartcontractkit/chainlink-common/pkg/types"
@@ -51,7 +52,20 @@ func TestChainOpts_Validate(t *testing.T) {
 				FeatureConfig:  &testFeatureConfig{},
 				MailMon:        &mailbox.Monitor{},
 				DS:             sqltest.NewNoOpDataSource(),
+				Meter:          noop.NewMeterProvider().Meter("test"),
 			},
+		},
+		{
+			name: "missing meter",
+			opts: legacyevm.ChainOpts{
+				ChainConfigs:   []*toml.EVMConfig{},
+				DatabaseConfig: &dbCfg,
+				ListenerConfig: dbCfg.Listener(),
+				FeatureConfig:  &testFeatureConfig{},
+				MailMon:        &mailbox.Monitor{},
+				DS:             sqltest.NewNoOpDataSource(),
+			},
+			wantErr: true,
 		},
 		{
 			name:    "invalid",
