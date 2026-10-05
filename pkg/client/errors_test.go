@@ -260,6 +260,9 @@ func Test_Eth_Errors(t *testing.T) {
 			{"call failed: 503 Service Temporarily Unavailable: <html>\r\n<head><title>503 Service Temporarily Unavailable</title></head>\r\n<body>\r\n<center><h1>503 Service Temporarily Unavailable</h1></center>\r\n</body>\r\n</html>\r\n", true, "Arbitrum"},
 			{"RPC call failed: The method eth_sendRawTransaction does not exist/is not available", true, "Cronos"},
 			{`RPC call failed: 429 Too Many Requests: {"jsonrpc":"2.0","id":62458,"error":{"code":-32005,"message":"Your IP has exceeded its request rate limit."`, true, "Alchemy"},
+			{`RPC call failed: Post "[REDACTED URL]": EOF`, true, "Internal"},
+			{`500 Internal Server Error`, true, "Internal"},
+			{`Post "[REDACTED URL]": read tcp 10.13.59.67:36156->172.20.31.197:80: read: connection reset by peer`, true, "Internal"},
 		}
 		for _, test := range tests {
 			err = evmclient.NewSendErrorS(test.message)
