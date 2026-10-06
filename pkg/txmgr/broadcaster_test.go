@@ -1750,7 +1750,7 @@ func TestEthBroadcaster_ProcessUnstartedTxs_UnknownErrorRetryLimits(t *testing.T
 	t.Run("default config retries unknown errors indefinitely", func(t *testing.T) {
 		eb, txStore, ethClient, fromAddress := setup(t, nil)
 		etx := mustCreateUnstartedTx(t, txStore, fromAddress, toAddr, []byte{1}, gasLimit, value, testutils.FixtureChainID)
-		const attempts = 0
+		const attempts = 3
 		expectUnknownErrNonceNotConsumed(ethClient, fromAddress, 0, attempts)
 		for range attempts {
 			retryable, err := eb.ProcessUnstartedTxs(t.Context(), fromAddress)
