@@ -292,10 +292,12 @@ ConfirmationTimeout = '60s' # Default
 Enabled = true # Default
 ForwardersEnabled = false # Default
 MaxInFlight = 16 # Default
+MaxUnknownErrorRetries = 0 # Default
 MaxQueued = 250 # Default
 ReaperInterval = '1h' # Default
 ReaperThreshold = '168h' # Default
 ResendAfterThreshold = '1m' # Default
+UnknownErrorRetryTimeout = '0s' # Default
 ```
 
 
@@ -327,6 +329,13 @@ The default is set conservatively at 16 because this is a pessimistic minimum th
 
 0 value disables the limit. Use with caution.
 
+### MaxUnknownErrorRetries
+```toml
+MaxUnknownErrorRetries = 0 # Default
+```
+MaxUnknownErrorRetries is the number of times the Broadcaster retries sending transaction that keeps failing with an unknown (unclassified) RPC error before marking it as fatally erroed. Since there can only one in-progress transaction per key, such as transaction otherwise blocks every transaction queued behind it until it is manually removed
+A transaction is only marked as fatally errored when the RPC reports that its nonce has not been consumed. Its nonce is then reused by the next transaction. If the transaction was in fact accepted by a node that was not queried, the next transaction may fail with a nonce error and the original transaction may still be mined.
+
 ### MaxQueued
 ```toml
 MaxQueued = 250 # Default
@@ -356,6 +365,13 @@ ReaperThreshold indicates how old an EthTx ought to be before it can be reaped.
 ResendAfterThreshold = '1m' # Default
 ```
 ResendAfterThreshold controls how long to wait before re-broadcasting a transaction that has not yet been confirmed.
+
+### UnknownErrorRetryTimeout
+```toml
+UnknownErrorRetryTimeout = '0s' # Default
+```
+UnknownErrorRetryTimeout is how long broadcaster keeps retrying a transaction that fails with unknown (unclassified) RPC errors, measured from thhe first such error, before marking it as fatally errored. The same caveats as MaxUnknownErrorRetries apply. If both are set, whichever limit is reached first, applies.
+0 value disables the limit, retrying indefinitely.
 
 ## Transactions.AutoPurge
 ```toml
