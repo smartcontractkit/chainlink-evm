@@ -541,6 +541,9 @@ type Transactions struct {
 	ResendAfterThreshold *commonconfig.Duration
 	ConfirmationTimeout  *commonconfig.Duration
 
+	MaxUnknownErrorRetries   *uint32
+	UnknownErrorRetryTimeout *commonconfig.Duration
+
 	AutoPurge            AutoPurgeConfig            `toml:",omitempty"`
 	TransactionManagerV2 TransactionManagerV2Config `toml:",omitempty"`
 }
@@ -569,6 +572,12 @@ func (t *Transactions) setFrom(f *Transactions) {
 	}
 	if v := f.ConfirmationTimeout; v != nil {
 		t.ConfirmationTimeout = v
+	}
+	if v := f.MaxUnknownErrorRetries; v != nil {
+		t.MaxUnknownErrorRetries = v
+	}
+	if v := f.UnknownErrorRetryTimeout; v != nil {
+		t.UnknownErrorRetryTimeout = v
 	}
 	t.AutoPurge.setFrom(&f.AutoPurge)
 	t.TransactionManagerV2.setFrom(&f.TransactionManagerV2)
@@ -829,11 +838,11 @@ func (e *GasEstimator) setFrom(f *GasEstimator) {
 }
 
 type GasLimitJobType struct {
-	OCR    *uint32 `toml:",inline"`
-	OCR2   *uint32 `toml:",inline"`
-	DR     *uint32 `toml:",inline"`
-	VRF    *uint32 `toml:",inline"`
-	FM     *uint32 `toml:",inline"`
+	OCR  *uint32 `toml:",inline"`
+	OCR2 *uint32 `toml:",inline"`
+	DR   *uint32 `toml:",inline"`
+	VRF  *uint32 `toml:",inline"`
+	FM   *uint32 `toml:",inline"`
 }
 
 func (t *GasLimitJobType) setFrom(f *GasLimitJobType) {

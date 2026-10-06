@@ -124,11 +124,11 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.GasEstimator.DAOracle.OracleAddress = new(types.EIP55Address)
 	unknown.GasEstimator.DAOracle.CustomGasPriceCalldata = new(string)
 	unknown.GasEstimator.LimitJobType = GasLimitJobType{
-		OCR:    new(uint32(7)),
-		OCR2:   new(uint32(13)),
-		DR:     new(uint32(25)),
-		VRF:    new(uint32(37)),
-		FM:     new(uint32(42)),
+		OCR:  new(uint32(7)),
+		OCR2: new(uint32(13)),
+		DR:   new(uint32(25)),
+		VRF:  new(uint32(37)),
+		FM:   new(uint32(42)),
 	}
 	unknown.GasEstimator.BumpTxDepth = new(uint32(15))
 	unknown.NodePool.Errors = ClientErrors{
@@ -244,7 +244,7 @@ var fullConfig = EVMConfig{
 	Chain: Chain{
 		AutoCreateKey: new(false),
 		BalanceMonitor: BalanceMonitor{
-			Enabled: new(true),
+			Enabled:           new(true),
 			ERC20TokenAddress: new(types.MustEIP55Address("0x20C0000000000000000000000000000000000000")),
 		},
 		BlockBackfillDepth:   new(uint32(100)),
@@ -284,11 +284,11 @@ var fullConfig = EVMConfig{
 			},
 
 			LimitJobType: GasLimitJobType{
-				OCR:    new(uint32(1001)),
-				DR:     new(uint32(1002)),
-				VRF:    new(uint32(1003)),
-				FM:     new(uint32(1004)),
-				OCR2:   new(uint32(1006)),
+				OCR:  new(uint32(1001)),
+				DR:   new(uint32(1002)),
+				VRF:  new(uint32(1003)),
+				FM:   new(uint32(1004)),
+				OCR2: new(uint32(1006)),
 			},
 
 			BlockHistory: BlockHistoryEstimator{
@@ -331,14 +331,16 @@ var fullConfig = EVMConfig{
 		NoNewFinalizedHeadsThreshold: config.MustNewDuration(time.Hour),
 
 		Transactions: Transactions{
-			Enabled:              new(true),
-			MaxInFlight:          new(uint32(19)),
-			MaxQueued:            new(uint32(99)),
-			ReaperInterval:       config.MustNewDuration(time.Minute),
-			ReaperThreshold:      config.MustNewDuration(time.Minute),
-			ResendAfterThreshold: config.MustNewDuration(time.Hour),
-			ConfirmationTimeout:  config.MustNewDuration(time.Minute),
-			ForwardersEnabled:    new(true),
+			Enabled:                  new(true),
+			MaxInFlight:              new(uint32(19)),
+			MaxQueued:                new(uint32(99)),
+			ReaperInterval:           config.MustNewDuration(time.Minute),
+			ReaperThreshold:          config.MustNewDuration(time.Minute),
+			ResendAfterThreshold:     config.MustNewDuration(time.Hour),
+			ConfirmationTimeout:      config.MustNewDuration(time.Minute),
+			ForwardersEnabled:        new(true),
+			UnknownErrorRetryTimeout: config.MustNewDuration(time.Minute),
+			MaxUnknownErrorRetries:   new(uint32(22)),
 			AutoPurge: AutoPurgeConfig{
 				Enabled:         new(false),
 				Threshold:       new(uint32(42)),
