@@ -1725,6 +1725,7 @@ func TestEthBroadcaster_ProcessUnstartedTxs_UnknownErrorRetryLimits(t *testing.T
 		ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
 			return tx.Nonce() == nonce
 		}), fromAddress).Return(multinode.Unknown, unknownErr).Times(times)
+		ethClient.On("PendingNonceAt", mock.Anything, fromAddress).Return(nonce, nil).Times(times)
 	}
 
 	requireInProgress := func(t *testing.T, txStore txmgr.TestEvmTxStore, etxID int64) {
@@ -1768,6 +1769,10 @@ func TestEthBroadcaster_ProcessUnstartedTxs_UnknownErrorRetryLimits(t *testing.T
 		etx2 := mustCreateUnstartedTx(t, txStore, fromAddress, toAddr, []byte{2}, gasLimit, value, testutils.FixtureChainID)
 
 		expectUnknownErrNonceNotConsumed(ethClient, fromAddress, 0, 3)
+		ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
+			return tx.Nonce() == 0
+		}), fromAddress).Return(multinode.Successful, nil).Once()
+
 		for range 2 {
 			retryable, err := eb.ProcessUnstartedTxs(t.Context(), fromAddress)
 			require.ErrorContains(t, err, unknownErr.Error())
