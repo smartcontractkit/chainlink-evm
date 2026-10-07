@@ -1,4 +1,4 @@
 .PHONY: testdb
 testdb:
-	cd $(shell go mod download -json github.com/smartcontractkit/chainlink/v2@ec649c7da3267b6013009dc612472ae702f61873 | jq -r .Dir) && \
+	cd $(shell go mod download -json github.com/smartcontractkit/chainlink/v2@491bf1b63c64bf509cd86f18cddef89d7c9fac2a | jq -r .Dir) && \
 	go run ./core/store/cmd/preparetest
