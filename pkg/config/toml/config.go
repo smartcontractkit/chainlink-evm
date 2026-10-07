@@ -838,11 +838,11 @@ func (e *GasEstimator) setFrom(f *GasEstimator) {
 }
 
 type GasLimitJobType struct {
-	OCR  *uint32 `toml:",inline"`
-	OCR2 *uint32 `toml:",inline"`
-	DR   *uint32 `toml:",inline"`
-	VRF  *uint32 `toml:",inline"`
-	FM   *uint32 `toml:",inline"`
+	OCR  *uint32
+	OCR2 *uint32
+	DR   *uint32
+	VRF  *uint32
+	FM   *uint32
 }
 
 func (t *GasLimitJobType) setFrom(f *GasLimitJobType) {
