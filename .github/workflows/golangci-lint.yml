@@ -29,7 +29,7 @@ jobs:
 
       - name: Run golangci-lint
         if: ${{ env.ALLOW_FAILURE != 'true' }}
-        uses: smartcontractkit/.github/actions/ci-lint-go/v4 # ci-lint-go/v4
+        uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4 # ci-lint-go/v4
         with:
           golangci-lint-version: v2.14.0
           only-new-issues: true
