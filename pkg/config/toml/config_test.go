@@ -340,7 +340,6 @@ var fullConfig = EVMConfig{
 			ConfirmationTimeout:      config.MustNewDuration(time.Minute),
 			ForwardersEnabled:        new(true),
 			UnknownErrorRetryTimeout: config.MustNewDuration(time.Minute),
-			MaxUnknownErrorRetries:   new(uint32(22)),
 			AutoPurge: AutoPurgeConfig{
 				Enabled:         new(false),
 				Threshold:       new(uint32(42)),

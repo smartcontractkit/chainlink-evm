@@ -39,10 +39,6 @@ func (t *transactionsConfig) MaxQueued() uint64 {
 	return uint64(*t.c.MaxQueued)
 }
 
-func (t *transactionsConfig) MaxUnknownErrorRetries() uint32 {
-	return *t.c.MaxUnknownErrorRetries
-}
-
 func (t *transactionsConfig) UnknownErrorRetryTimeout() time.Duration {
 	return t.c.UnknownErrorRetryTimeout.Duration()
 }

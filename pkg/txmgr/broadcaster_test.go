@@ -1761,26 +1761,26 @@ func TestEthBroadcaster_ProcessUnstartedTxs_UnknownErrorRetryLimits(t *testing.T
 		}
 	})
 
-	t.Run("MaxUnknownErrorRetries marks tx as fatal and the next tx reuses its nonce", func(t *testing.T) {
+	t.Run("UnknownErrorRetryTimeout marks tx as fatal once elapsed since the first unknown error and the next tx reuses its nonce", func(t *testing.T) {
+		timeout := 500 * time.Millisecond
 		eb, txStore, ethClient, fromAddress := setup(t, func(c *toml.EVMConfig) {
-			c.Transactions.MaxUnknownErrorRetries = new(uint32(2))
+			c.Transactions.UnknownErrorRetryTimeout = commonconfig.MustNewDuration(timeout)
 		})
 		etx1 := mustCreateUnstartedTx(t, txStore, fromAddress, toAddr, []byte{1}, gasLimit, value, testutils.FixtureChainID)
 		etx2 := mustCreateUnstartedTx(t, txStore, fromAddress, toAddr, []byte{2}, gasLimit, value, testutils.FixtureChainID)
-
-		expectUnknownErrNonceNotConsumed(ethClient, fromAddress, 0, 3)
+		expectUnknownErrNonceNotConsumed(ethClient, fromAddress, 0, 2)
 		ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
 			return tx.Nonce() == 0
 		}), fromAddress).Return(multinode.Successful, nil).Once()
 
-		for range 2 {
-			retryable, err := eb.ProcessUnstartedTxs(t.Context(), fromAddress)
-			require.ErrorContains(t, err, unknownErr.Error())
-			require.True(t, retryable)
-			requireInProgress(t, txStore, etx1.ID)
-		}
-
 		retryable, err := eb.ProcessUnstartedTxs(t.Context(), fromAddress)
+		require.ErrorContains(t, err, unknownErr.Error())
+		require.True(t, retryable)
+		requireInProgress(t, txStore, etx1.ID)
+
+		time.Sleep(timeout + 100*time.Millisecond)
+
+		retryable, err = eb.ProcessUnstartedTxs(t.Context(), fromAddress)
 		require.NoError(t, err)
 		require.False(t, retryable)
 		requireFatal(t, txStore, etx1.ID)
@@ -1789,27 +1789,6 @@ func TestEthBroadcaster_ProcessUnstartedTxs_UnknownErrorRetryLimits(t *testing.T
 		require.NoError(t, err)
 		require.Equal(t, txmgrcommon.TxUnconfirmed, etx2.State)
 		require.Equal(t, evmtypes.Nonce(0), *etx2.Sequence)
-	})
-
-	t.Run("UnknownErrorRetryTimeout marks tx as fatal once elapsed since the first unknown error", func(t *testing.T) {
-		timeout := 500 * time.Millisecond
-		eb, txStore, ethClient, fromAddress := setup(t, func(c *toml.EVMConfig) {
-			c.Transactions.UnknownErrorRetryTimeout = commonconfig.MustNewDuration(timeout)
-		})
-		etx := mustCreateUnstartedTx(t, txStore, fromAddress, toAddr, []byte{1}, gasLimit, value, testutils.FixtureChainID)
-		expectUnknownErrNonceNotConsumed(ethClient, fromAddress, 0, 2)
-
-		retryable, err := eb.ProcessUnstartedTxs(t.Context(), fromAddress)
-		require.ErrorContains(t, err, unknownErr.Error())
-		require.True(t, retryable)
-		requireInProgress(t, txStore, etx.ID)
-
-		time.Sleep(timeout + 100*time.Millisecond)
-
-		retryable, err = eb.ProcessUnstartedTxs(t.Context(), fromAddress)
-		require.NoError(t, err)
-		require.False(t, retryable)
-		requireFatal(t, txStore, etx.ID)
 	})
 }
 

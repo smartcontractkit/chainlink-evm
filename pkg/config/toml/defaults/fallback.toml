@@ -27,7 +27,6 @@ Enabled = true
 ForwardersEnabled = false
 MaxInFlight = 16
 MaxQueued = 250
-MaxUnknownErrorRetries = 0
 ReaperInterval = '1h'
 ReaperThreshold = '168h'
 ResendAfterThreshold = '1m'

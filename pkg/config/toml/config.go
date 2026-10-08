@@ -541,7 +541,6 @@ type Transactions struct {
 	ResendAfterThreshold *commonconfig.Duration
 	ConfirmationTimeout  *commonconfig.Duration
 
-	MaxUnknownErrorRetries   *uint32
 	UnknownErrorRetryTimeout *commonconfig.Duration
 
 	AutoPurge            AutoPurgeConfig            `toml:",omitempty"`
@@ -572,9 +571,6 @@ func (t *Transactions) setFrom(f *Transactions) {
 	}
 	if v := f.ConfirmationTimeout; v != nil {
 		t.ConfirmationTimeout = v
-	}
-	if v := f.MaxUnknownErrorRetries; v != nil {
-		t.MaxUnknownErrorRetries = v
 	}
 	if v := f.UnknownErrorRetryTimeout; v != nil {
 		t.UnknownErrorRetryTimeout = v
