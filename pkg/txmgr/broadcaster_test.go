@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/guregu/null.v4"
 
+	commonconfig "github.com/smartcontractkit/chainlink-common/pkg/config"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
@@ -1698,12 +1699,104 @@ func TestEthBroadcaster_ProcessUnstartedEthTxs_Errors(t *testing.T) {
 	})
 }
 
+func TestEthBroadcaster_ProcessUnstartedTxs_UnknownErrorRetryLimits(t *testing.T) {
+	t.Parallel()
+
+	toAddr := gethCommon.HexToAddress("0x6C03DDA95a2AEd917EeCc6eddD4b9D16E6380411")
+	value := big.Int(assets.NewEthValue(142))
+	gasLimit := uint64(242)
+	unknownErr := errors.New("some unknown err")
+
+	setup := func(t *testing.T, overrideFn func(c *toml.EVMConfig)) (*txmgr.Broadcaster, txmgr.TestEvmTxStore, *clienttest.Client, gethCommon.Address) {
+		db := testutils.NewSqlxDB(t)
+		txStore := txmgrtest.NewTestTxStore(t, db)
+		memKS := keystest.NewMemoryChainStore()
+		fromAddress := memKS.MustCreate(t)
+		ethClient := clienttest.NewClientWithDefaultChainID(t)
+		ethKeyStore := keys.NewChainStore(memKS, ethClient.ConfiguredChainID())
+		ethClient.On("NonceAt", mock.Anything, fromAddress, mock.Anything).Return(uint64(0), nil).Maybe()
+		nonceTracker := txmgr.NewNonceTracker(logger.Test(t), txStore, txmgr.NewEvmTxmClient(ethClient, nil))
+		evmCfg := configtest.NewChainScopedConfig(t, overrideFn)
+		eb := NewTestEthBroadcaster(t, txStore, ethClient, ethKeyStore, dbListenerCfg, evmCfg.EVM(), &testCheckerFactory{}, false, nonceTracker)
+		return eb, txStore, ethClient, fromAddress
+	}
+
+	expectUnknownErrNonceNotConsumed := func(ethClient *clienttest.Client, fromAddress gethCommon.Address, nonce uint64, times int) {
+		ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
+			return tx.Nonce() == nonce
+		}), fromAddress).Return(multinode.Unknown, unknownErr).Times(times)
+		ethClient.On("PendingNonceAt", mock.Anything, fromAddress).Return(nonce, nil).Times(times)
+	}
+
+	requireInProgress := func(t *testing.T, txStore txmgr.TestEvmTxStore, etxID int64) {
+		etx, err := txStore.FindTxWithAttempts(t.Context(), etxID)
+		require.NoError(t, err)
+		require.Equal(t, txmgrcommon.TxInProgress, etx.State)
+		require.False(t, etx.Error.Valid)
+		require.Len(t, etx.TxAttempts, 1)
+		require.Equal(t, txmgrtypes.TxAttemptInProgress, etx.TxAttempts[0].State)
+	}
+
+	requireFatal := func(t *testing.T, txStore txmgr.TestEvmTxStore, etxID int64) {
+		etx, err := txStore.FindTxWithAttempts(t.Context(), etxID)
+		require.NoError(t, err)
+		require.Equal(t, txmgrcommon.TxFatalError, etx.State)
+		require.True(t, etx.Error.Valid)
+		require.Contains(t, etx.Error.String, "giving up on transaction")
+		require.Contains(t, etx.Error.String, unknownErr.Error())
+		require.Empty(t, etx.TxAttempts)
+		require.Nil(t, etx.Sequence)
+	}
+
+	t.Run("default config retries unknown errors indefinitely", func(t *testing.T) {
+		eb, txStore, ethClient, fromAddress := setup(t, nil)
+		etx := mustCreateUnstartedTx(t, txStore, fromAddress, toAddr, []byte{1}, gasLimit, value, testutils.FixtureChainID)
+		const attempts = 3
+		expectUnknownErrNonceNotConsumed(ethClient, fromAddress, 0, attempts)
+		for range attempts {
+			retryable, err := eb.ProcessUnstartedTxs(t.Context(), fromAddress)
+			require.ErrorContains(t, err, unknownErr.Error())
+			require.True(t, retryable)
+			requireInProgress(t, txStore, etx.ID)
+		}
+	})
+
+	t.Run("UnknownErrorRetryTimeout marks tx as fatal once elapsed since the first unknown error and the next tx reuses its nonce", func(t *testing.T) {
+		timeout := 500 * time.Millisecond
+		eb, txStore, ethClient, fromAddress := setup(t, func(c *toml.EVMConfig) {
+			c.Transactions.UnknownErrorRetryTimeout = commonconfig.MustNewDuration(timeout)
+		})
+		etx1 := mustCreateUnstartedTx(t, txStore, fromAddress, toAddr, []byte{1}, gasLimit, value, testutils.FixtureChainID)
+		etx2 := mustCreateUnstartedTx(t, txStore, fromAddress, toAddr, []byte{2}, gasLimit, value, testutils.FixtureChainID)
+		expectUnknownErrNonceNotConsumed(ethClient, fromAddress, 0, 2)
+		ethClient.On("SendTransactionReturnCode", mock.Anything, mock.MatchedBy(func(tx *gethTypes.Transaction) bool {
+			return tx.Nonce() == 0
+		}), fromAddress).Return(multinode.Successful, nil).Once()
+
+		retryable, err := eb.ProcessUnstartedTxs(t.Context(), fromAddress)
+		require.ErrorContains(t, err, unknownErr.Error())
+		require.True(t, retryable)
+		requireInProgress(t, txStore, etx1.ID)
+
+		time.Sleep(timeout + 100*time.Millisecond)
+
+		retryable, err = eb.ProcessUnstartedTxs(t.Context(), fromAddress)
+		require.NoError(t, err)
+		require.False(t, retryable)
+		requireFatal(t, txStore, etx1.ID)
+
+		etx2, err = txStore.FindTxWithAttempts(t.Context(), etx2.ID)
+		require.NoError(t, err)
+		require.Equal(t, txmgrcommon.TxUnconfirmed, etx2.State)
+		require.Equal(t, evmtypes.Nonce(0), *etx2.Sequence)
+	})
+}
+
 func TestEthBroadcaster_ProcessUnstartedEthTxs_GasEstimationError(t *testing.T) {
 	toAddress := testutils.NewAddress()
 	value := big.Int(assets.NewEthValue(142))
 	gasLimit := uint64(242)
 	encodedPayload := []byte{0, 1}
-
 	db := testutils.NewSqlxDB(t)
 	txStore := txmgrtest.NewTestTxStore(t, db)
 

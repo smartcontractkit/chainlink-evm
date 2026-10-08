@@ -114,6 +114,7 @@ type Transactions interface {
 	MaxQueued() uint64
 	AutoPurge() AutoPurgeConfig
 	TransactionManagerV2() TransactionManagerV2
+	UnknownErrorRetryTimeout() time.Duration
 }
 
 type AutoPurgeConfig interface {

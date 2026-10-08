@@ -296,6 +296,7 @@ MaxQueued = 250 # Default
 ReaperInterval = '1h' # Default
 ReaperThreshold = '168h' # Default
 ResendAfterThreshold = '1m' # Default
+UnknownErrorRetryTimeout = '0s' # Default
 ```
 
 
@@ -356,6 +357,14 @@ ReaperThreshold indicates how old an EthTx ought to be before it can be reaped.
 ResendAfterThreshold = '1m' # Default
 ```
 ResendAfterThreshold controls how long to wait before re-broadcasting a transaction that has not yet been confirmed.
+
+### UnknownErrorRetryTimeout
+```toml
+UnknownErrorRetryTimeout = '0s' # Default
+```
+UnknownErrorRetryTimeout is how long the broadcaster keeps retrying a transaction that fails with unknown (unclassified) RPC errors, measured from the first such error, before marking it as fatally errored. Since there can only be one in-progress transaction per key, such a transaction otherwise blocks every transaction queued behind it until it is manually removed.
+A transaction is only marked as fatally errored when the RPC reports that its nonce has not been consumed. Its nonce is then reused by the next transaction. If the transaction was in fact accepted by a node that was not queried, the next transaction may fail with a nonce error and the original transaction may still be mined.
+0 value disables the limit, retrying indefinitely.
 
 ## Transactions.AutoPurge
 ```toml

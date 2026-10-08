@@ -30,6 +30,7 @@ MaxQueued = 250
 ReaperInterval = '1h'
 ReaperThreshold = '168h'
 ResendAfterThreshold = '1m'
+UnknownErrorRetryTimeout = '0s'
 
 [Transactions.AutoPurge]
 Enabled = false
