@@ -46,7 +46,7 @@ func TestFactory(t *testing.T) {
 			VRFRequestBlockNumber: big.NewInt(1),
 		})
 		require.NoError(t, err)
-		require.IsType(t, &txmgr.VRFV2Checker{}, c)
+		require.IsType(t, &txmgr.VRFV2PlusChecker{}, c)
 
 		// request block number not provided should error out.
 		c, err = factory.BuildChecker(txmgr.TransmitCheckerSpec{
@@ -142,7 +142,7 @@ func TestTransmitCheckers(t *testing.T) {
 		})
 	})
 
-	t.Run("VRF V2", func(t *testing.T) {
+	t.Run("VRF V2 Plus", func(t *testing.T) {
 		testDefaultSubID := uint64(2)
 		testDefaultMaxLink := "1000000000000000000"
 
@@ -176,7 +176,7 @@ func TestTransmitCheckers(t *testing.T) {
 			}
 		}
 
-		checker := txmgr.VRFV2Checker{
+		checker := txmgr.VRFV2PlusChecker{
 			GetCommitment: func(_ *bind.CallOpts, requestID *big.Int) ([32]byte, error) {
 				if requestID.String() == "1" {
 					// Request 1 is already fulfilled
