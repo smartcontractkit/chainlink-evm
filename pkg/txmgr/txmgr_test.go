@@ -280,7 +280,7 @@ func TestTxm_CreateTransaction(t *testing.T) {
 		}
 		evmConfig.MaxQueued = uint64(1)
 		checker := txmgr.TransmitCheckerSpec{
-			CheckerType:           txmgr.TransmitCheckerTypeVRFV2,
+			CheckerType:           txmgr.TransmitCheckerTypeVRFV2Plus,
 			VRFCoordinatorAddress: testutils.NewAddressPtr(),
 		}
 		etx, err := txm.CreateTransaction(tests.Context(t), txmgr.TxRequest{
