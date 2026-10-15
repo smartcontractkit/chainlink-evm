@@ -816,17 +816,21 @@ func (b *BlockHistoryEstimator) calculatePercentilePrices(blocks []evmtypes.Bloc
 }
 
 func (b *BlockHistoryEstimator) getPricesFromBlocks(blocks []evmtypes.Block, eip1559 bool) (gasPrices, tipCaps []*assets.Wei) {
-	gasPrices = make([]*assets.Wei, 0)
-	tipCaps = make([]*assets.Wei, 0)
+	var totalCount int
+	var usableCount int
+	var unusableGasPriceCount int
+	var unusableTipCapCount int
 	for _, block := range blocks {
 		if err := verifyBlock(block, eip1559); err != nil {
 			b.logger.Warnw(fmt.Sprintf("Block %v is not usable, %s", block.Number, err.Error()), "blockNum", block.Number, "blockHash", block.Hash, "err", err)
 		}
 		for _, tx := range block.Transactions {
+			totalCount++
 			if b.IsUsable(tx, block, b.chaintype, b.eConfig.PriceMin(), b.logger) {
+				usableCount++
 				gp := b.EffectiveGasPrice(block, tx)
 				if gp == nil {
-					b.logger.Warnw("Unable to get gas price for tx", "tx", tx, "blockNum", block.Number, "blockHash", block.Hash)
+					unusableGasPriceCount++
 					continue
 				}
 				gasPrices = append(gasPrices, gp)
@@ -835,12 +839,18 @@ func (b *BlockHistoryEstimator) getPricesFromBlocks(blocks []evmtypes.Block, eip
 				}
 				tc := b.EffectiveTipCap(block, tx)
 				if tc == nil {
-					b.logger.Warnw("Unable to get tip cap for tx", "tx", tx, "blockNum", block.Number, "blockHash", block.Hash)
+					unusableTipCapCount++
 					continue
 				}
 				tipCaps = append(tipCaps, tc)
 			}
 		}
+	}
+	if unusableGasPriceCount > 0 {
+		b.logger.Warnw("Unable to get gas price for some txes", "total", totalCount, "usable", usableCount, "unusableGasPrice", unusableGasPriceCount)
+	}
+	if unusableTipCapCount > 0 {
+		b.logger.Warnw("Unable to get tip cap for some txes", "total", totalCount, "usable", usableCount, "unusableGasTip", unusableTipCapCount)
 	}
 	return
 }
