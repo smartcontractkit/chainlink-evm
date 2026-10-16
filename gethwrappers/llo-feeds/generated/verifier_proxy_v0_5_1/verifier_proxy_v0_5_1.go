@@ -4,10 +4,12 @@
 package verifier_proxy_v0_5_1
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type CommonAddressAndWeight struct {
@@ -527,6 +531,10 @@ func (_VerifierProxy *VerifierProxyFilterer) WatchAccessControllerSet(opts *bind
 
 				event := new(VerifierProxyAccessControllerSet)
 				if err := _VerifierProxy.contract.UnpackLog(event, "AccessControllerSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -645,6 +653,10 @@ func (_VerifierProxy *VerifierProxyFilterer) WatchFeeManagerSet(opts *bind.Watch
 
 				event := new(VerifierProxyFeeManagerSet)
 				if err := _VerifierProxy.contract.UnpackLog(event, "FeeManagerSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -781,6 +793,10 @@ func (_VerifierProxy *VerifierProxyFilterer) WatchOwnershipTransferRequested(opt
 
 				event := new(VerifierProxyOwnershipTransferRequested)
 				if err := _VerifierProxy.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -917,6 +933,10 @@ func (_VerifierProxy *VerifierProxyFilterer) WatchOwnershipTransferred(opts *bin
 
 				event := new(VerifierProxyOwnershipTransferred)
 				if err := _VerifierProxy.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1034,6 +1054,10 @@ func (_VerifierProxy *VerifierProxyFilterer) WatchVerifierInitialized(opts *bind
 
 				event := new(VerifierProxyVerifierInitialized)
 				if err := _VerifierProxy.contract.UnpackLog(event, "VerifierInitialized", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1153,6 +1177,10 @@ func (_VerifierProxy *VerifierProxyFilterer) WatchVerifierSet(opts *bind.WatchOp
 
 				event := new(VerifierProxyVerifierSet)
 				if err := _VerifierProxy.contract.UnpackLog(event, "VerifierSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1271,6 +1299,10 @@ func (_VerifierProxy *VerifierProxyFilterer) WatchVerifierUnset(opts *bind.Watch
 
 				event := new(VerifierProxyVerifierUnset)
 				if err := _VerifierProxy.contract.UnpackLog(event, "VerifierUnset", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

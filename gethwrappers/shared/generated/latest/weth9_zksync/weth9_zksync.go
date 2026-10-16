@@ -4,9 +4,11 @@
 package weth9_zksync
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var WETH9ZKSyncMetaData = &bind.MetaData{
@@ -481,6 +485,10 @@ func (_WETH9ZKSync *WETH9ZKSyncFilterer) WatchApproval(opts *bind.WatchOpts, sin
 
 				event := new(WETH9ZKSyncApproval)
 				if err := _WETH9ZKSync.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -609,6 +617,10 @@ func (_WETH9ZKSync *WETH9ZKSyncFilterer) WatchDeposit(opts *bind.WatchOpts, sink
 
 				event := new(WETH9ZKSyncDeposit)
 				if err := _WETH9ZKSync.contract.UnpackLog(event, "Deposit", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -746,6 +758,10 @@ func (_WETH9ZKSync *WETH9ZKSyncFilterer) WatchTransfer(opts *bind.WatchOpts, sin
 
 				event := new(WETH9ZKSyncTransfer)
 				if err := _WETH9ZKSync.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -874,6 +890,10 @@ func (_WETH9ZKSync *WETH9ZKSyncFilterer) WatchWithdrawal(opts *bind.WatchOpts, s
 
 				event := new(WETH9ZKSyncWithdrawal)
 				if err := _WETH9ZKSync.contract.UnpackLog(event, "Withdrawal", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

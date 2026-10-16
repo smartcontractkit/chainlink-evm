@@ -4,9 +4,11 @@
 package log_emitter
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var LogEmitterMetaData = &bind.MetaData{
@@ -305,6 +309,10 @@ func (_LogEmitter *LogEmitterFilterer) WatchLog1(opts *bind.WatchOpts, sink chan
 
 				event := new(LogEmitterLog1)
 				if err := _LogEmitter.contract.UnpackLog(event, "Log1", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -432,6 +440,10 @@ func (_LogEmitter *LogEmitterFilterer) WatchLog2(opts *bind.WatchOpts, sink chan
 
 				event := new(LogEmitterLog2)
 				if err := _LogEmitter.contract.UnpackLog(event, "Log2", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -549,6 +561,10 @@ func (_LogEmitter *LogEmitterFilterer) WatchLog3(opts *bind.WatchOpts, sink chan
 
 				event := new(LogEmitterLog3)
 				if err := _LogEmitter.contract.UnpackLog(event, "Log3", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -685,6 +701,10 @@ func (_LogEmitter *LogEmitterFilterer) WatchLog4(opts *bind.WatchOpts, sink chan
 
 				event := new(LogEmitterLog4)
 				if err := _LogEmitter.contract.UnpackLog(event, "Log4", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

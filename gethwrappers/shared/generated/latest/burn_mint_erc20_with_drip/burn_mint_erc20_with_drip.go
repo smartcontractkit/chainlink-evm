@@ -4,9 +4,11 @@
 package burn_mint_erc20_with_drip
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var BurnMintERC20WithDripMetaData = &bind.MetaData{
@@ -765,6 +769,10 @@ func (_BurnMintERC20WithDrip *BurnMintERC20WithDripFilterer) WatchApproval(opts 
 
 				event := new(BurnMintERC20WithDripApproval)
 				if err := _BurnMintERC20WithDrip.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -901,6 +909,10 @@ func (_BurnMintERC20WithDrip *BurnMintERC20WithDripFilterer) WatchCCIPAdminTrans
 
 				event := new(BurnMintERC20WithDripCCIPAdminTransferred)
 				if err := _BurnMintERC20WithDrip.contract.UnpackLog(event, "CCIPAdminTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1046,6 +1058,10 @@ func (_BurnMintERC20WithDrip *BurnMintERC20WithDripFilterer) WatchRoleAdminChang
 
 				event := new(BurnMintERC20WithDripRoleAdminChanged)
 				if err := _BurnMintERC20WithDrip.contract.UnpackLog(event, "RoleAdminChanged", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1191,6 +1207,10 @@ func (_BurnMintERC20WithDrip *BurnMintERC20WithDripFilterer) WatchRoleGranted(op
 
 				event := new(BurnMintERC20WithDripRoleGranted)
 				if err := _BurnMintERC20WithDrip.contract.UnpackLog(event, "RoleGranted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1336,6 +1356,10 @@ func (_BurnMintERC20WithDrip *BurnMintERC20WithDripFilterer) WatchRoleRevoked(op
 
 				event := new(BurnMintERC20WithDripRoleRevoked)
 				if err := _BurnMintERC20WithDrip.contract.UnpackLog(event, "RoleRevoked", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1473,6 +1497,10 @@ func (_BurnMintERC20WithDrip *BurnMintERC20WithDripFilterer) WatchTransfer(opts 
 
 				event := new(BurnMintERC20WithDripTransfer)
 				if err := _BurnMintERC20WithDrip.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

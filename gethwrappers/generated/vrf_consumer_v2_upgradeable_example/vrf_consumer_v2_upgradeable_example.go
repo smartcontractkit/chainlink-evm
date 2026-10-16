@@ -4,10 +4,12 @@
 package vrf_consumer_v2_upgradeable_example
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFConsumerV2UpgradeableExampleMetaData = &bind.MetaData{
@@ -463,6 +467,10 @@ func (_VRFConsumerV2UpgradeableExample *VRFConsumerV2UpgradeableExampleFilterer)
 
 				event := new(VRFConsumerV2UpgradeableExampleInitialized)
 				if err := _VRFConsumerV2UpgradeableExample.contract.UnpackLog(event, "Initialized", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

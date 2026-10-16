@@ -4,10 +4,12 @@
 package channel_config_store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var ChannelConfigStoreMetaData = &bind.MetaData{
@@ -474,6 +478,10 @@ func (_ChannelConfigStore *ChannelConfigStoreFilterer) WatchChannelAdderAddressS
 
 				event := new(ChannelConfigStoreChannelAdderAddressSet)
 				if err := _ChannelConfigStore.contract.UnpackLog(event, "ChannelAdderAddressSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -611,6 +619,10 @@ func (_ChannelConfigStore *ChannelConfigStoreFilterer) WatchChannelAdderSet(opts
 
 				event := new(ChannelConfigStoreChannelAdderSet)
 				if err := _ChannelConfigStore.contract.UnpackLog(event, "ChannelAdderSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -749,6 +761,10 @@ func (_ChannelConfigStore *ChannelConfigStoreFilterer) WatchChannelDefinitionAdd
 
 				event := new(ChannelConfigStoreChannelDefinitionAdded)
 				if err := _ChannelConfigStore.contract.UnpackLog(event, "ChannelDefinitionAdded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -879,6 +895,10 @@ func (_ChannelConfigStore *ChannelConfigStoreFilterer) WatchNewChannelDefinition
 
 				event := new(ChannelConfigStoreNewChannelDefinition)
 				if err := _ChannelConfigStore.contract.UnpackLog(event, "NewChannelDefinition", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1015,6 +1035,10 @@ func (_ChannelConfigStore *ChannelConfigStoreFilterer) WatchOwnershipTransferReq
 
 				event := new(ChannelConfigStoreOwnershipTransferRequested)
 				if err := _ChannelConfigStore.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1151,6 +1175,10 @@ func (_ChannelConfigStore *ChannelConfigStoreFilterer) WatchOwnershipTransferred
 
 				event := new(ChannelConfigStoreOwnershipTransferred)
 				if err := _ChannelConfigStore.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

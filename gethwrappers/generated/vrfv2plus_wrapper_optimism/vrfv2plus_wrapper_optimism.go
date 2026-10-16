@@ -4,10 +4,12 @@
 package vrfv2plus_wrapper_optimism
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFV2PlusWrapperOptimismMetaData = &bind.MetaData{
@@ -869,6 +873,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchConfigSe
 
 				event := new(VRFV2PlusWrapperOptimismConfigSet)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "ConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -986,6 +994,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchCoordina
 
 				event := new(VRFV2PlusWrapperOptimismCoordinatorSet)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "CoordinatorSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1102,6 +1114,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchDisabled
 
 				event := new(VRFV2PlusWrapperOptimismDisabled)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "Disabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1218,6 +1234,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchEnabled(
 
 				event := new(VRFV2PlusWrapperOptimismEnabled)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "Enabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1336,6 +1356,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchFallback
 
 				event := new(VRFV2PlusWrapperOptimismFallbackWeiPerUnitLinkUsed)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "FallbackWeiPerUnitLinkUsed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1453,6 +1477,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchFulfillm
 
 				event := new(VRFV2PlusWrapperOptimismFulfillmentTxSizeSet)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "FulfillmentTxSizeSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1571,6 +1599,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchL1FeeCal
 
 				event := new(VRFV2PlusWrapperOptimismL1FeeCalculationSet)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "L1FeeCalculationSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1699,6 +1731,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchNativeWi
 
 				event := new(VRFV2PlusWrapperOptimismNativeWithdrawn)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "NativeWithdrawn", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1835,6 +1871,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchOwnershi
 
 				event := new(VRFV2PlusWrapperOptimismOwnershipTransferRequested)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1971,6 +2011,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchOwnershi
 
 				event := new(VRFV2PlusWrapperOptimismOwnershipTransferred)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2099,6 +2143,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchWithdraw
 
 				event := new(VRFV2PlusWrapperOptimismWithdrawn)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "Withdrawn", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2235,6 +2283,10 @@ func (_VRFV2PlusWrapperOptimism *VRFV2PlusWrapperOptimismFilterer) WatchWrapperF
 
 				event := new(VRFV2PlusWrapperOptimismWrapperFulfillmentFailed)
 				if err := _VRFV2PlusWrapperOptimism.contract.UnpackLog(event, "WrapperFulfillmentFailed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

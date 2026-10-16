@@ -4,10 +4,12 @@
 package vrfv2_proxy_admin
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFV2ProxyAdminMetaData = &bind.MetaData{
@@ -404,6 +408,10 @@ func (_VRFV2ProxyAdmin *VRFV2ProxyAdminFilterer) WatchOwnershipTransferred(opts 
 
 				event := new(VRFV2ProxyAdminOwnershipTransferred)
 				if err := _VRFV2ProxyAdmin.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

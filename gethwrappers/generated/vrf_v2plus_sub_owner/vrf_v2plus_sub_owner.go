@@ -4,10 +4,12 @@
 package vrf_v2plus_sub_owner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFV2PlusExternalSubOwnerExampleMetaData = &bind.MetaData{
@@ -407,6 +411,10 @@ func (_VRFV2PlusExternalSubOwnerExample *VRFV2PlusExternalSubOwnerExampleFiltere
 
 				event := new(VRFV2PlusExternalSubOwnerExampleCoordinatorSet)
 				if err := _VRFV2PlusExternalSubOwnerExample.contract.UnpackLog(event, "CoordinatorSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -543,6 +551,10 @@ func (_VRFV2PlusExternalSubOwnerExample *VRFV2PlusExternalSubOwnerExampleFiltere
 
 				event := new(VRFV2PlusExternalSubOwnerExampleOwnershipTransferRequested)
 				if err := _VRFV2PlusExternalSubOwnerExample.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -679,6 +691,10 @@ func (_VRFV2PlusExternalSubOwnerExample *VRFV2PlusExternalSubOwnerExampleFiltere
 
 				event := new(VRFV2PlusExternalSubOwnerExampleOwnershipTransferred)
 				if err := _VRFV2PlusExternalSubOwnerExample.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

@@ -4,9 +4,11 @@
 package transparent_upgradeable_proxy
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var TransparentUpgradeableProxyMetaData = &bind.MetaData{
@@ -270,6 +274,10 @@ func (_TransparentUpgradeableProxy *TransparentUpgradeableProxyFilterer) WatchAd
 
 				event := new(TransparentUpgradeableProxyAdminChanged)
 				if err := _TransparentUpgradeableProxy.contract.UnpackLog(event, "AdminChanged", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -397,6 +405,10 @@ func (_TransparentUpgradeableProxy *TransparentUpgradeableProxyFilterer) WatchUp
 
 				event := new(TransparentUpgradeableProxyUpgraded)
 				if err := _TransparentUpgradeableProxy.contract.UnpackLog(event, "Upgraded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

@@ -4,9 +4,11 @@
 package weth9
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var WETH9MetaData = &bind.MetaData{
@@ -481,6 +485,10 @@ func (_WETH9 *WETH9Filterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *WE
 
 				event := new(WETH9Approval)
 				if err := _WETH9.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -609,6 +617,10 @@ func (_WETH9 *WETH9Filterer) WatchDeposit(opts *bind.WatchOpts, sink chan<- *WET
 
 				event := new(WETH9Deposit)
 				if err := _WETH9.contract.UnpackLog(event, "Deposit", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -746,6 +758,10 @@ func (_WETH9 *WETH9Filterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *WE
 
 				event := new(WETH9Transfer)
 				if err := _WETH9.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -874,6 +890,10 @@ func (_WETH9 *WETH9Filterer) WatchWithdrawal(opts *bind.WatchOpts, sink chan<- *
 
 				event := new(WETH9Withdrawal)
 				if err := _WETH9.contract.UnpackLog(event, "Withdrawal", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

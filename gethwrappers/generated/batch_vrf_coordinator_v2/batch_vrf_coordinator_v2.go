@@ -4,10 +4,12 @@
 package batch_vrf_coordinator_v2
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type VRFTypesProof struct {
@@ -324,6 +328,10 @@ func (_BatchVRFCoordinatorV2 *BatchVRFCoordinatorV2Filterer) WatchErrorReturned(
 
 				event := new(BatchVRFCoordinatorV2ErrorReturned)
 				if err := _BatchVRFCoordinatorV2.contract.UnpackLog(event, "ErrorReturned", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -452,6 +460,10 @@ func (_BatchVRFCoordinatorV2 *BatchVRFCoordinatorV2Filterer) WatchRawErrorReturn
 
 				event := new(BatchVRFCoordinatorV2RawErrorReturned)
 				if err := _BatchVRFCoordinatorV2.contract.UnpackLog(event, "RawErrorReturned", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

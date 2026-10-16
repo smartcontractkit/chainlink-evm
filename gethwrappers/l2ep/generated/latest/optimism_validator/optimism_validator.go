@@ -4,9 +4,11 @@
 package optimism_validator
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var OptimismValidatorMetaData = &bind.MetaData{
@@ -519,6 +523,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchAddedAccess(opts *bind
 
 				event := new(OptimismValidatorAddedAccess)
 				if err := _OptimismValidator.contract.UnpackLog(event, "AddedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -635,6 +643,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchCheckAccessDisabled(op
 
 				event := new(OptimismValidatorCheckAccessDisabled)
 				if err := _OptimismValidator.contract.UnpackLog(event, "CheckAccessDisabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -751,6 +763,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchCheckAccessEnabled(opt
 
 				event := new(OptimismValidatorCheckAccessEnabled)
 				if err := _OptimismValidator.contract.UnpackLog(event, "CheckAccessEnabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -870,6 +886,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchConfigUpdated(opts *bi
 
 				event := new(OptimismValidatorConfigUpdated)
 				if err := _OptimismValidator.contract.UnpackLog(event, "ConfigUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -987,6 +1007,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchGasLimitUpdated(opts *
 
 				event := new(OptimismValidatorGasLimitUpdated)
 				if err := _OptimismValidator.contract.UnpackLog(event, "GasLimitUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1123,6 +1147,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchOwnershipTransferReque
 
 				event := new(OptimismValidatorOwnershipTransferRequested)
 				if err := _OptimismValidator.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1259,6 +1287,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchOwnershipTransferred(o
 
 				event := new(OptimismValidatorOwnershipTransferred)
 				if err := _OptimismValidator.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1376,6 +1408,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchRemovedAccess(opts *bi
 
 				event := new(OptimismValidatorRemovedAccess)
 				if err := _OptimismValidator.contract.UnpackLog(event, "RemovedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1496,6 +1532,10 @@ func (_OptimismValidator *OptimismValidatorFilterer) WatchValidatedStatus(opts *
 
 				event := new(OptimismValidatorValidatedStatus)
 				if err := _OptimismValidator.contract.UnpackLog(event, "ValidatedStatus", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

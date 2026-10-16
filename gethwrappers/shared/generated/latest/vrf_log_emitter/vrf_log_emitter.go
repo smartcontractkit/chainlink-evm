@@ -4,9 +4,11 @@
 package vrf_log_emitter
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFLogEmitterMetaData = &bind.MetaData{
@@ -294,6 +298,10 @@ func (_VRFLogEmitter *VRFLogEmitterFilterer) WatchRandomWordsFulfilled(opts *bin
 
 				event := new(VRFLogEmitterRandomWordsFulfilled)
 				if err := _VRFLogEmitter.contract.UnpackLog(event, "RandomWordsFulfilled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -448,6 +456,10 @@ func (_VRFLogEmitter *VRFLogEmitterFilterer) WatchRandomWordsRequested(opts *bin
 
 				event := new(VRFLogEmitterRandomWordsRequested)
 				if err := _VRFLogEmitter.contract.UnpackLog(event, "RandomWordsRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

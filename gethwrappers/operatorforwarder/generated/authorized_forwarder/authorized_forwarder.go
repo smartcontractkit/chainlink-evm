@@ -4,10 +4,12 @@
 package authorized_forwarder
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var AuthorizedForwarderMetaData = &bind.MetaData{
@@ -454,6 +458,10 @@ func (_AuthorizedForwarder *AuthorizedForwarderFilterer) WatchAuthorizedSendersC
 
 				event := new(AuthorizedForwarderAuthorizedSendersChanged)
 				if err := _AuthorizedForwarder.contract.UnpackLog(event, "AuthorizedSendersChanged", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -590,6 +598,10 @@ func (_AuthorizedForwarder *AuthorizedForwarderFilterer) WatchOwnershipTransferR
 
 				event := new(AuthorizedForwarderOwnershipTransferRequested)
 				if err := _AuthorizedForwarder.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -727,6 +739,10 @@ func (_AuthorizedForwarder *AuthorizedForwarderFilterer) WatchOwnershipTransferR
 
 				event := new(AuthorizedForwarderOwnershipTransferRequestedWithMessage)
 				if err := _AuthorizedForwarder.contract.UnpackLog(event, "OwnershipTransferRequestedWithMessage", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -863,6 +879,10 @@ func (_AuthorizedForwarder *AuthorizedForwarderFilterer) WatchOwnershipTransferr
 
 				event := new(AuthorizedForwarderOwnershipTransferred)
 				if err := _AuthorizedForwarder.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

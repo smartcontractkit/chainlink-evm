@@ -4,10 +4,12 @@
 package operator_factory
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var OperatorFactoryMetaData = &bind.MetaData{
@@ -401,6 +405,10 @@ func (_OperatorFactory *OperatorFactoryFilterer) WatchAuthorizedForwarderCreated
 
 				event := new(OperatorFactoryAuthorizedForwarderCreated)
 				if err := _OperatorFactory.contract.UnpackLog(event, "AuthorizedForwarderCreated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -546,6 +554,10 @@ func (_OperatorFactory *OperatorFactoryFilterer) WatchOperatorCreated(opts *bind
 
 				event := new(OperatorFactoryOperatorCreated)
 				if err := _OperatorFactory.contract.UnpackLog(event, "OperatorCreated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

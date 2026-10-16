@@ -4,10 +4,12 @@
 package vrf_malicious_consumer_v2_plus
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFMaliciousConsumerV2PlusMetaData = &bind.MetaData{
@@ -453,6 +457,10 @@ func (_VRFMaliciousConsumerV2Plus *VRFMaliciousConsumerV2PlusFilterer) WatchCoor
 
 				event := new(VRFMaliciousConsumerV2PlusCoordinatorSet)
 				if err := _VRFMaliciousConsumerV2Plus.contract.UnpackLog(event, "CoordinatorSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -589,6 +597,10 @@ func (_VRFMaliciousConsumerV2Plus *VRFMaliciousConsumerV2PlusFilterer) WatchOwne
 
 				event := new(VRFMaliciousConsumerV2PlusOwnershipTransferRequested)
 				if err := _VRFMaliciousConsumerV2Plus.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -725,6 +737,10 @@ func (_VRFMaliciousConsumerV2Plus *VRFMaliciousConsumerV2PlusFilterer) WatchOwne
 
 				event := new(VRFMaliciousConsumerV2PlusOwnershipTransferred)
 				if err := _VRFMaliciousConsumerV2Plus.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

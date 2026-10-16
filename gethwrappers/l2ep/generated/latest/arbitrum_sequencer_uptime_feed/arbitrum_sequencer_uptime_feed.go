@@ -4,9 +4,11 @@
 package arbitrum_sequencer_uptime_feed
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var ArbitrumSequencerUptimeFeedMetaData = &bind.MetaData{
@@ -783,6 +787,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchAd
 
 				event := new(ArbitrumSequencerUptimeFeedAddedAccess)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "AddedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -920,6 +928,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchAn
 
 				event := new(ArbitrumSequencerUptimeFeedAnswerUpdated)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "AnswerUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1036,6 +1048,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchCh
 
 				event := new(ArbitrumSequencerUptimeFeedCheckAccessDisabled)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "CheckAccessDisabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1152,6 +1168,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchCh
 
 				event := new(ArbitrumSequencerUptimeFeedCheckAccessEnabled)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "CheckAccessEnabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1268,6 +1288,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchIn
 
 				event := new(ArbitrumSequencerUptimeFeedInitialized)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "Initialized", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1404,6 +1428,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchL1
 
 				event := new(ArbitrumSequencerUptimeFeedL1SenderTransferred)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "L1SenderTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1541,6 +1569,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchNe
 
 				event := new(ArbitrumSequencerUptimeFeedNewRound)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "NewRound", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1677,6 +1709,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchOw
 
 				event := new(ArbitrumSequencerUptimeFeedOwnershipTransferRequested)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1813,6 +1849,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchOw
 
 				event := new(ArbitrumSequencerUptimeFeedOwnershipTransferred)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1930,6 +1970,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchRe
 
 				event := new(ArbitrumSequencerUptimeFeedRemovedAccess)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "RemovedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2050,6 +2094,10 @@ func (_ArbitrumSequencerUptimeFeed *ArbitrumSequencerUptimeFeedFilterer) WatchUp
 
 				event := new(ArbitrumSequencerUptimeFeedUpdateIgnored)
 				if err := _ArbitrumSequencerUptimeFeed.contract.UnpackLog(event, "UpdateIgnored", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

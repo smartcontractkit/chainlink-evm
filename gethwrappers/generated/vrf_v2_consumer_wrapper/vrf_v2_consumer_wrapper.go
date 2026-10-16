@@ -4,10 +4,12 @@
 package vrf_v2_consumer_wrapper
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFv2ConsumerMetaData = &bind.MetaData{
@@ -452,6 +456,10 @@ func (_VRFv2Consumer *VRFv2ConsumerFilterer) WatchOwnershipTransferRequested(opt
 
 				event := new(VRFv2ConsumerOwnershipTransferRequested)
 				if err := _VRFv2Consumer.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -588,6 +596,10 @@ func (_VRFv2Consumer *VRFv2ConsumerFilterer) WatchOwnershipTransferred(opts *bin
 
 				event := new(VRFv2ConsumerOwnershipTransferred)
 				if err := _VRFv2Consumer.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -706,6 +718,10 @@ func (_VRFv2Consumer *VRFv2ConsumerFilterer) WatchRequestFulfilled(opts *bind.Wa
 
 				event := new(VRFv2ConsumerRequestFulfilled)
 				if err := _VRFv2Consumer.contract.UnpackLog(event, "RequestFulfilled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -824,6 +840,10 @@ func (_VRFv2Consumer *VRFv2ConsumerFilterer) WatchRequestSent(opts *bind.WatchOp
 
 				event := new(VRFv2ConsumerRequestSent)
 				if err := _VRFv2Consumer.contract.UnpackLog(event, "RequestSent", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

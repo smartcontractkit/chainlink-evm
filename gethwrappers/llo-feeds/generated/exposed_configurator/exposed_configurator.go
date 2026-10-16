@@ -4,10 +4,12 @@
 package exposed_configurator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type ConfiguratorConfigurationState struct {
@@ -479,6 +483,10 @@ func (_ExposedConfigurator *ExposedConfiguratorFilterer) WatchOwnershipTransferR
 
 				event := new(ExposedConfiguratorOwnershipTransferRequested)
 				if err := _ExposedConfigurator.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -615,6 +623,10 @@ func (_ExposedConfigurator *ExposedConfiguratorFilterer) WatchOwnershipTransferr
 
 				event := new(ExposedConfiguratorOwnershipTransferred)
 				if err := _ExposedConfigurator.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -752,6 +764,10 @@ func (_ExposedConfigurator *ExposedConfiguratorFilterer) WatchProductionConfigSe
 
 				event := new(ExposedConfiguratorProductionConfigSet)
 				if err := _ExposedConfigurator.contract.UnpackLog(event, "ProductionConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -889,6 +905,10 @@ func (_ExposedConfigurator *ExposedConfiguratorFilterer) WatchPromoteStagingConf
 
 				event := new(ExposedConfiguratorPromoteStagingConfig)
 				if err := _ExposedConfigurator.contract.UnpackLog(event, "PromoteStagingConfig", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1026,6 +1046,10 @@ func (_ExposedConfigurator *ExposedConfiguratorFilterer) WatchStagingConfigSet(o
 
 				event := new(ExposedConfiguratorStagingConfigSet)
 				if err := _ExposedConfigurator.contract.UnpackLog(event, "StagingConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

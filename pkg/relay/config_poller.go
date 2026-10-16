@@ -17,7 +17,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
-	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
 )
@@ -42,7 +42,7 @@ type configPoller struct {
 	lggr               logger.Logger
 	filterName         string
 	destChainLogPoller logpoller.LogPoller
-	client             client.Client
+	client             evmclient.Client
 
 	aggregatorContractAddr common.Address
 	aggregatorContract     *ocr2aggregator.OCR2Aggregator
@@ -62,7 +62,7 @@ func configPollerFilterName(addr common.Address) string {
 }
 
 type CPConfig struct {
-	Client                    client.Client
+	Client                    evmclient.Client
 	DestinationChainPoller    logpoller.LogPoller
 	AggregatorContractAddress common.Address
 	ConfigStoreAddress        *common.Address
@@ -73,13 +73,13 @@ func NewConfigPoller(ctx context.Context, lggr logger.Logger, cfg CPConfig) (con
 	return NewConfigPollerWithParams(ctx, lggr, cfg.Client, cfg.DestinationChainPoller, cfg.AggregatorContractAddress, cfg.ConfigStoreAddress, cfg.LogDecoder)
 }
 
-func NewConfigPollerWithParams(ctx context.Context, lggr logger.Logger, client client.Client, destChainPoller logpoller.LogPoller, aggregatorContractAddr common.Address, configStoreAddr *common.Address, ld LogDecoder) (config.ConfigPoller, error) {
+func NewConfigPollerWithParams(ctx context.Context, lggr logger.Logger, client evmclient.Client, destChainPoller logpoller.LogPoller, aggregatorContractAddr common.Address, configStoreAddr *common.Address, ld LogDecoder) (config.ConfigPoller, error) {
 	err := destChainPoller.RegisterFilter(ctx, logpoller.Filter{Name: configPollerFilterName(aggregatorContractAddr), EventSigs: []common.Hash{ld.EventSig()}, Addresses: []common.Address{aggregatorContractAddr}})
 	if err != nil {
 		return nil, err
 	}
 
-	aggregatorContract, err := ocr2aggregator.NewOCR2Aggregator(aggregatorContractAddr, client)
+	aggregatorContract, err := ocr2aggregator.NewOCR2Aggregator(aggregatorContractAddr, evmclient.AsContractBackend(client))
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func NewConfigPollerWithParams(ctx context.Context, lggr logger.Logger, client c
 
 	if configStoreAddr != nil {
 		cp.configStoreContractAddr = configStoreAddr
-		cp.configStoreContract, err = ocrconfigurationstoreevmsimple.NewOCRConfigurationStoreEVMSimple(*configStoreAddr, client)
+		cp.configStoreContract, err = ocrconfigurationstoreevmsimple.NewOCRConfigurationStoreEVMSimple(*configStoreAddr, evmclient.AsContractBackend(client))
 		if err != nil {
 			return nil, err
 		}

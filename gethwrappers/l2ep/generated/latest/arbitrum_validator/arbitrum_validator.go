@@ -4,9 +4,11 @@
 package arbitrum_validator
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type ArbitrumValidatorGasConfig struct {
@@ -652,6 +656,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchAddedAccess(opts *bind
 
 				event := new(ArbitrumValidatorAddedAccess)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "AddedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -768,6 +776,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchCheckAccessDisabled(op
 
 				event := new(ArbitrumValidatorCheckAccessDisabled)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "CheckAccessDisabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -884,6 +896,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchCheckAccessEnabled(opt
 
 				event := new(ArbitrumValidatorCheckAccessEnabled)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "CheckAccessEnabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1020,6 +1036,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchConfigACSet(opts *bind
 
 				event := new(ArbitrumValidatorConfigACSet)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "ConfigACSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1149,6 +1169,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchGasConfigSet(opts *bin
 
 				event := new(ArbitrumValidatorGasConfigSet)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "GasConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1288,6 +1312,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchL2WithdrawalRequested(
 
 				event := new(ArbitrumValidatorL2WithdrawalRequested)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "L2WithdrawalRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1424,6 +1452,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchOwnershipTransferReque
 
 				event := new(ArbitrumValidatorOwnershipTransferRequested)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1560,6 +1592,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchOwnershipTransferred(o
 
 				event := new(ArbitrumValidatorOwnershipTransferred)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1687,6 +1723,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchPaymentStrategySet(opt
 
 				event := new(ArbitrumValidatorPaymentStrategySet)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "PaymentStrategySet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1804,6 +1844,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchRemovedAccess(opts *bi
 
 				event := new(ArbitrumValidatorRemovedAccess)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "RemovedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1924,6 +1968,10 @@ func (_ArbitrumValidator *ArbitrumValidatorFilterer) WatchValidatedStatus(opts *
 
 				event := new(ArbitrumValidatorValidatedStatus)
 				if err := _ArbitrumValidator.contract.UnpackLog(event, "ValidatedStatus", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

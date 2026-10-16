@@ -4,9 +4,11 @@
 package burn_mint_erc677
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var BurnMintERC677MetaData = &bind.MetaData{
@@ -791,6 +795,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchApproval(opts *bind.WatchOpt
 
 				event := new(BurnMintERC677Approval)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -918,6 +926,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchBurnAccessGranted(opts *bind
 
 				event := new(BurnMintERC677BurnAccessGranted)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "BurnAccessGranted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1045,6 +1057,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchBurnAccessRevoked(opts *bind
 
 				event := new(BurnMintERC677BurnAccessRevoked)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "BurnAccessRevoked", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1172,6 +1188,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchMintAccessGranted(opts *bind
 
 				event := new(BurnMintERC677MintAccessGranted)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "MintAccessGranted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1299,6 +1319,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchMintAccessRevoked(opts *bind
 
 				event := new(BurnMintERC677MintAccessRevoked)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "MintAccessRevoked", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1435,6 +1459,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchOwnershipTransferRequested(o
 
 				event := new(BurnMintERC677OwnershipTransferRequested)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1571,6 +1599,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchOwnershipTransferred(opts *b
 
 				event := new(BurnMintERC677OwnershipTransferred)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1708,6 +1740,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchTransfer(opts *bind.WatchOpt
 
 				event := new(BurnMintERC677Transfer)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1846,6 +1882,10 @@ func (_BurnMintERC677 *BurnMintERC677Filterer) WatchTransfer0(opts *bind.WatchOp
 
 				event := new(BurnMintERC677Transfer0)
 				if err := _BurnMintERC677.contract.UnpackLog(event, "Transfer0", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

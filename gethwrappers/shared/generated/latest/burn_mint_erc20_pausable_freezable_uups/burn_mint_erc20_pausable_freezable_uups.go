@@ -4,9 +4,11 @@
 package burn_mint_erc20_pausable_freezable_uups
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var BurnMintERC20PausableFreezableUUPSMetaData = &bind.MetaData{
@@ -1153,6 +1157,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSAccountFrozen)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "AccountFrozen", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1280,6 +1288,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSAccountUnfrozen)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "AccountUnfrozen", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1417,6 +1429,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSApproval)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1553,6 +1569,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSCCIPAdminTransferred)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "CCIPAdminTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1669,6 +1689,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSDefaultAdminDelayChangeCanceled)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "DefaultAdminDelayChangeCanceled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1787,6 +1811,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSDefaultAdminDelayChangeScheduled)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "DefaultAdminDelayChangeScheduled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1903,6 +1931,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSDefaultAdminTransferCanceled)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "DefaultAdminTransferCanceled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2031,6 +2063,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSDefaultAdminTransferScheduled)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "DefaultAdminTransferScheduled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2148,6 +2184,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSInitialized)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "Initialized", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2265,6 +2305,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSPaused)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "Paused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2410,6 +2454,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSRoleAdminChanged)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "RoleAdminChanged", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2555,6 +2603,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSRoleGranted)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "RoleGranted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2700,6 +2752,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSRoleRevoked)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "RoleRevoked", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2837,6 +2893,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSTransfer)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2954,6 +3014,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSUnpaused)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "Unpaused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -3081,6 +3145,10 @@ func (_BurnMintERC20PausableFreezableUUPS *BurnMintERC20PausableFreezableUUPSFil
 
 				event := new(BurnMintERC20PausableFreezableUUPSUpgraded)
 				if err := _BurnMintERC20PausableFreezableUUPS.contract.UnpackLog(event, "Upgraded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

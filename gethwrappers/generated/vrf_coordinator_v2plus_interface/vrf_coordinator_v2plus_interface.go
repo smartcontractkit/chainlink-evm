@@ -4,10 +4,12 @@
 package vrf_coordinator_v2plus_interface
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type IVRFCoordinatorV2PlusInternalProof struct {
@@ -524,6 +528,10 @@ func (_IVRFCoordinatorV2PlusInternal *IVRFCoordinatorV2PlusInternalFilterer) Wat
 
 				event := new(IVRFCoordinatorV2PlusInternalRandomWordsFulfilled)
 				if err := _IVRFCoordinatorV2PlusInternal.contract.UnpackLog(event, "RandomWordsFulfilled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -679,6 +687,10 @@ func (_IVRFCoordinatorV2PlusInternal *IVRFCoordinatorV2PlusInternalFilterer) Wat
 
 				event := new(IVRFCoordinatorV2PlusInternalRandomWordsRequested)
 				if err := _IVRFCoordinatorV2PlusInternal.contract.UnpackLog(event, "RandomWordsRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

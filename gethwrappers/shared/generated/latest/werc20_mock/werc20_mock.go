@@ -4,9 +4,11 @@
 package werc20_mock
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var WERC20MockMetaData = &bind.MetaData{
@@ -529,6 +533,10 @@ func (_WERC20Mock *WERC20MockFilterer) WatchApproval(opts *bind.WatchOpts, sink 
 
 				event := new(WERC20MockApproval)
 				if err := _WERC20Mock.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -657,6 +665,10 @@ func (_WERC20Mock *WERC20MockFilterer) WatchDeposit(opts *bind.WatchOpts, sink c
 
 				event := new(WERC20MockDeposit)
 				if err := _WERC20Mock.contract.UnpackLog(event, "Deposit", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -794,6 +806,10 @@ func (_WERC20Mock *WERC20MockFilterer) WatchTransfer(opts *bind.WatchOpts, sink 
 
 				event := new(WERC20MockTransfer)
 				if err := _WERC20Mock.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -922,6 +938,10 @@ func (_WERC20Mock *WERC20MockFilterer) WatchWithdrawal(opts *bind.WatchOpts, sin
 
 				event := new(WERC20MockWithdrawal)
 				if err := _WERC20Mock.contract.UnpackLog(event, "Withdrawal", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

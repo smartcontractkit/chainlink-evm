@@ -4,10 +4,12 @@
 package trusted_blockhash_store
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var TrustedBlockhashStoreMetaData = &bind.MetaData{
@@ -450,6 +454,10 @@ func (_TrustedBlockhashStore *TrustedBlockhashStoreFilterer) WatchOwnershipTrans
 
 				event := new(TrustedBlockhashStoreOwnershipTransferRequested)
 				if err := _TrustedBlockhashStore.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -586,6 +594,10 @@ func (_TrustedBlockhashStore *TrustedBlockhashStoreFilterer) WatchOwnershipTrans
 
 				event := new(TrustedBlockhashStoreOwnershipTransferred)
 				if err := _TrustedBlockhashStore.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
