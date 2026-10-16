@@ -1,43 +1,10 @@
 package gethwrappers
 
-// v0.8.6 VRFConsumer
-//go:generate go run ./generation/wrap.go vrf VRFCoordinatorMock vrf_coordinator_mock
-//go:generate go run ./generation/wrap.go vrf VRFCoordinatorMock vrf_coordinator_mock
-//go:generate go run ./generation/wrap.go vrf VRFConsumer solidity_vrf_consumer_interface_v08
-//go:generate go run ./generation/wrap.go vrf VRFRequestIDBaseTestHelper solidity_vrf_request_id_v08
-//go:generate go run ./generation/wrap.go vrf VRFOwnerlessConsumerExample vrf_ownerless_consumer_example
-//go:generate go run ./generation/wrap.go vrf VRFLoadTestOwnerlessConsumer vrf_load_test_ownerless_consumer
-//go:generate go run ./generation/wrap.go vrf VRFLoadTestExternalSubOwner vrf_load_test_external_sub_owner
-//go:generate go run ./generation/wrap.go vrf VRFV2LoadTestWithMetrics vrf_load_test_with_metrics
-//go:generate go run ./generation/wrap.go vrf VRFV2OwnerTestConsumer vrf_owner_test_consumer
-//go:generate go run ./generation/wrap.go vrf VRFv2Consumer vrf_v2_consumer_wrapper
+// VRF helpers
 //go:generate go run ./generation/wrap.go vrf Counter counter
-
-// VRF V2
-//go:generate go run ./generation/wrap.go vrf BatchVRFCoordinatorV2 batch_vrf_coordinator_v2
-//go:generate go run ./generation/wrap.go vrf VRFOwner vrf_owner
-//go:generate go run ./generation/wrap.go vrf VRFCoordinatorV2 vrf_coordinator_v2
-//go:generate go run ./generation/wrap.go vrf VRFConsumerV2 vrf_consumer_v2
-//go:generate go run ./generation/wrap.go vrf VRFMaliciousConsumerV2 vrf_malicious_consumer_v2
 //go:generate go run ./generation/wrap.go vrf VRFTestHelper solidity_vrf_v08_verifier_wrapper
-//go:generate go run ./generation/wrap.go vrf VRFSingleConsumerExample vrf_single_consumer_example
-//go:generate go run ./generation/wrap.go vrf VRFExternalSubOwnerExample vrf_external_sub_owner_example
-//go:generate go run ./generation/wrap.go vrf VRFV2RevertingExample vrfv2_reverting_example
-//go:generate go run ./generation/wrap.go vrf VRFConsumerV2UpgradeableExample vrf_consumer_v2_upgradeable_example
-//go:generate go run ./generation/wrap.go vrf VRFV2TransparentUpgradeableProxy vrfv2_transparent_upgradeable_proxy
-//go:generate go run ./generation/wrap.go vrf VRFV2ProxyAdmin vrfv2_proxy_admin
 //go:generate go run ./generation/wrap.go vrf ChainSpecificUtilHelper chain_specific_util_helper
-//go:generate go run ./generation/wrap.go vrf VRFCoordinatorTestV2 vrf_coordinator_test_v2
 //go:generate go run ./generation/wrap.go vrf VRFMockETHLINKAggregator vrf_mock_ethlink_aggregator
-
-// VRF V2 Wrapper
-//go:generate go run ./generation/wrap.go vrf VRFV2Wrapper vrfv2_wrapper
-//go:generate go run ./generation/wrap.go vrf VRFV2WrapperInterface vrfv2_wrapper_interface
-//go:generate go run ./generation/wrap.go vrf VRFV2WrapperConsumerExample vrfv2_wrapper_consumer_example
-//go:generate go run ./generation/wrap.go vrf VRFV2WrapperLoadTestConsumer vrfv2_wrapper_load_test_consumer
-
-// Keepers X VRF v2
-//go:generate go run ./generation/wrap.go vrf KeepersVRFConsumer keepers_vrf_consumer
 
 // VRF V2Plus
 //go:generate go run ./generation/wrap.go vrf IVRFCoordinatorV2PlusInternal vrf_coordinator_v2plus_interface
