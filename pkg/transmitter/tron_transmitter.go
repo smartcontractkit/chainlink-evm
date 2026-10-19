@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	tronsdk "github.com/fbsobreira/gotron-sdk/pkg/address"
 	"github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
+	tronsdk "github.com/smartcontractkit/chainlink-tron/relayer/gotron-sdk/pkg/address"
 	tron "github.com/smartcontractkit/chainlink-tron/relayer/ocr2"
 )
 
