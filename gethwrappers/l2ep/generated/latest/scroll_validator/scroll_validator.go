@@ -4,9 +4,11 @@
 package scroll_validator
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var ScrollValidatorMetaData = &bind.MetaData{
@@ -541,6 +545,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchAddedAccess(opts *bind.Wat
 
 				event := new(ScrollValidatorAddedAccess)
 				if err := _ScrollValidator.contract.UnpackLog(event, "AddedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -657,6 +665,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchCheckAccessDisabled(opts *
 
 				event := new(ScrollValidatorCheckAccessDisabled)
 				if err := _ScrollValidator.contract.UnpackLog(event, "CheckAccessDisabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -773,6 +785,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchCheckAccessEnabled(opts *b
 
 				event := new(ScrollValidatorCheckAccessEnabled)
 				if err := _ScrollValidator.contract.UnpackLog(event, "CheckAccessEnabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -892,6 +908,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchConfigUpdated(opts *bind.W
 
 				event := new(ScrollValidatorConfigUpdated)
 				if err := _ScrollValidator.contract.UnpackLog(event, "ConfigUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1009,6 +1029,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchGasLimitUpdated(opts *bind
 
 				event := new(ScrollValidatorGasLimitUpdated)
 				if err := _ScrollValidator.contract.UnpackLog(event, "GasLimitUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1145,6 +1169,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchOwnershipTransferRequested
 
 				event := new(ScrollValidatorOwnershipTransferRequested)
 				if err := _ScrollValidator.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1281,6 +1309,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchOwnershipTransferred(opts 
 
 				event := new(ScrollValidatorOwnershipTransferred)
 				if err := _ScrollValidator.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1398,6 +1430,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchRemovedAccess(opts *bind.W
 
 				event := new(ScrollValidatorRemovedAccess)
 				if err := _ScrollValidator.contract.UnpackLog(event, "RemovedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1518,6 +1554,10 @@ func (_ScrollValidator *ScrollValidatorFilterer) WatchValidatedStatus(opts *bind
 
 				event := new(ScrollValidatorValidatedStatus)
 				if err := _ScrollValidator.contract.UnpackLog(event, "ValidatedStatus", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

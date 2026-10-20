@@ -4,10 +4,12 @@
 package destination_verifier
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type CommonAddressAndWeight struct {
@@ -517,6 +521,10 @@ func (_DestinationVerifier *DestinationVerifierFilterer) WatchAccessControllerSe
 
 				event := new(DestinationVerifierAccessControllerSet)
 				if err := _DestinationVerifier.contract.UnpackLog(event, "AccessControllerSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -635,6 +643,10 @@ func (_DestinationVerifier *DestinationVerifierFilterer) WatchConfigActivated(op
 
 				event := new(DestinationVerifierConfigActivated)
 				if err := _DestinationVerifier.contract.UnpackLog(event, "ConfigActivated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -752,6 +764,10 @@ func (_DestinationVerifier *DestinationVerifierFilterer) WatchConfigRemoved(opts
 
 				event := new(DestinationVerifierConfigRemoved)
 				if err := _DestinationVerifier.contract.UnpackLog(event, "ConfigRemoved", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -883,6 +899,10 @@ func (_DestinationVerifier *DestinationVerifierFilterer) WatchConfigSet(opts *bi
 
 				event := new(DestinationVerifierConfigSet)
 				if err := _DestinationVerifier.contract.UnpackLog(event, "ConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1001,6 +1021,10 @@ func (_DestinationVerifier *DestinationVerifierFilterer) WatchFeeManagerSet(opts
 
 				event := new(DestinationVerifierFeeManagerSet)
 				if err := _DestinationVerifier.contract.UnpackLog(event, "FeeManagerSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1137,6 +1161,10 @@ func (_DestinationVerifier *DestinationVerifierFilterer) WatchOwnershipTransferR
 
 				event := new(DestinationVerifierOwnershipTransferRequested)
 				if err := _DestinationVerifier.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1273,6 +1301,10 @@ func (_DestinationVerifier *DestinationVerifierFilterer) WatchOwnershipTransferr
 
 				event := new(DestinationVerifierOwnershipTransferred)
 				if err := _DestinationVerifier.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1401,6 +1433,10 @@ func (_DestinationVerifier *DestinationVerifierFilterer) WatchReportVerified(opt
 
 				event := new(DestinationVerifierReportVerified)
 				if err := _DestinationVerifier.contract.UnpackLog(event, "ReportVerified", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

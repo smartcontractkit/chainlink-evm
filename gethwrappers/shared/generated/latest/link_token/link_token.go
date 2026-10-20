@@ -4,9 +4,11 @@
 package link_token
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var LinkTokenMetaData = &bind.MetaData{
@@ -791,6 +795,10 @@ func (_LinkToken *LinkTokenFilterer) WatchApproval(opts *bind.WatchOpts, sink ch
 
 				event := new(LinkTokenApproval)
 				if err := _LinkToken.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -918,6 +926,10 @@ func (_LinkToken *LinkTokenFilterer) WatchBurnAccessGranted(opts *bind.WatchOpts
 
 				event := new(LinkTokenBurnAccessGranted)
 				if err := _LinkToken.contract.UnpackLog(event, "BurnAccessGranted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1045,6 +1057,10 @@ func (_LinkToken *LinkTokenFilterer) WatchBurnAccessRevoked(opts *bind.WatchOpts
 
 				event := new(LinkTokenBurnAccessRevoked)
 				if err := _LinkToken.contract.UnpackLog(event, "BurnAccessRevoked", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1172,6 +1188,10 @@ func (_LinkToken *LinkTokenFilterer) WatchMintAccessGranted(opts *bind.WatchOpts
 
 				event := new(LinkTokenMintAccessGranted)
 				if err := _LinkToken.contract.UnpackLog(event, "MintAccessGranted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1299,6 +1319,10 @@ func (_LinkToken *LinkTokenFilterer) WatchMintAccessRevoked(opts *bind.WatchOpts
 
 				event := new(LinkTokenMintAccessRevoked)
 				if err := _LinkToken.contract.UnpackLog(event, "MintAccessRevoked", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1435,6 +1459,10 @@ func (_LinkToken *LinkTokenFilterer) WatchOwnershipTransferRequested(opts *bind.
 
 				event := new(LinkTokenOwnershipTransferRequested)
 				if err := _LinkToken.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1571,6 +1599,10 @@ func (_LinkToken *LinkTokenFilterer) WatchOwnershipTransferred(opts *bind.WatchO
 
 				event := new(LinkTokenOwnershipTransferred)
 				if err := _LinkToken.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1708,6 +1740,10 @@ func (_LinkToken *LinkTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sink ch
 
 				event := new(LinkTokenTransfer)
 				if err := _LinkToken.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1846,6 +1882,10 @@ func (_LinkToken *LinkTokenFilterer) WatchTransfer0(opts *bind.WatchOpts, sink c
 
 				event := new(LinkTokenTransfer0)
 				if err := _LinkToken.contract.UnpackLog(event, "Transfer0", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

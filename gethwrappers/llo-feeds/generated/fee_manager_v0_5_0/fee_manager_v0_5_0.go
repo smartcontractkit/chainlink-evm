@@ -4,10 +4,12 @@
 package fee_manager_v0_5_0
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type CommonAddressAndWeight struct {
@@ -704,6 +708,10 @@ func (_FeeManager *FeeManagerFilterer) WatchDiscountApplied(opts *bind.WatchOpts
 
 				event := new(FeeManagerDiscountApplied)
 				if err := _FeeManager.contract.UnpackLog(event, "DiscountApplied", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -821,6 +829,10 @@ func (_FeeManager *FeeManagerFilterer) WatchInsufficientLink(opts *bind.WatchOpt
 
 				event := new(FeeManagerInsufficientLink)
 				if err := _FeeManager.contract.UnpackLog(event, "InsufficientLink", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -949,6 +961,10 @@ func (_FeeManager *FeeManagerFilterer) WatchLinkDeficitCleared(opts *bind.WatchO
 
 				event := new(FeeManagerLinkDeficitCleared)
 				if err := _FeeManager.contract.UnpackLog(event, "LinkDeficitCleared", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1066,6 +1082,10 @@ func (_FeeManager *FeeManagerFilterer) WatchNativeSurchargeUpdated(opts *bind.Wa
 
 				event := new(FeeManagerNativeSurchargeUpdated)
 				if err := _FeeManager.contract.UnpackLog(event, "NativeSurchargeUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1202,6 +1222,10 @@ func (_FeeManager *FeeManagerFilterer) WatchOwnershipTransferRequested(opts *bin
 
 				event := new(FeeManagerOwnershipTransferRequested)
 				if err := _FeeManager.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1338,6 +1362,10 @@ func (_FeeManager *FeeManagerFilterer) WatchOwnershipTransferred(opts *bind.Watc
 
 				event := new(FeeManagerOwnershipTransferred)
 				if err := _FeeManager.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1476,6 +1504,10 @@ func (_FeeManager *FeeManagerFilterer) WatchSubscriberDiscountUpdated(opts *bind
 
 				event := new(FeeManagerSubscriberDiscountUpdated)
 				if err := _FeeManager.contract.UnpackLog(event, "SubscriberDiscountUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1596,6 +1628,10 @@ func (_FeeManager *FeeManagerFilterer) WatchWithdraw(opts *bind.WatchOpts, sink 
 
 				event := new(FeeManagerWithdraw)
 				if err := _FeeManager.contract.UnpackLog(event, "Withdraw", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

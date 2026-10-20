@@ -4,10 +4,12 @@
 package bundle_aggregator_proxy
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var BundleAggregatorProxyMetaData = &bind.MetaData{
@@ -524,6 +528,10 @@ func (_BundleAggregatorProxy *BundleAggregatorProxyFilterer) WatchAggregatorConf
 
 				event := new(BundleAggregatorProxyAggregatorConfirmed)
 				if err := _BundleAggregatorProxy.contract.UnpackLog(event, "AggregatorConfirmed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -660,6 +668,10 @@ func (_BundleAggregatorProxy *BundleAggregatorProxyFilterer) WatchAggregatorProp
 
 				event := new(BundleAggregatorProxyAggregatorProposed)
 				if err := _BundleAggregatorProxy.contract.UnpackLog(event, "AggregatorProposed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -796,6 +808,10 @@ func (_BundleAggregatorProxy *BundleAggregatorProxyFilterer) WatchOwnershipTrans
 
 				event := new(BundleAggregatorProxyOwnershipTransferRequested)
 				if err := _BundleAggregatorProxy.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -932,6 +948,10 @@ func (_BundleAggregatorProxy *BundleAggregatorProxyFilterer) WatchOwnershipTrans
 
 				event := new(BundleAggregatorProxyOwnershipTransferred)
 				if err := _BundleAggregatorProxy.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

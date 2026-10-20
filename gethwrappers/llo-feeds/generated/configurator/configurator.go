@@ -4,10 +4,12 @@
 package configurator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var ConfiguratorMetaData = &bind.MetaData{
@@ -404,6 +408,10 @@ func (_Configurator *ConfiguratorFilterer) WatchOwnershipTransferRequested(opts 
 
 				event := new(ConfiguratorOwnershipTransferRequested)
 				if err := _Configurator.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -540,6 +548,10 @@ func (_Configurator *ConfiguratorFilterer) WatchOwnershipTransferred(opts *bind.
 
 				event := new(ConfiguratorOwnershipTransferred)
 				if err := _Configurator.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -677,6 +689,10 @@ func (_Configurator *ConfiguratorFilterer) WatchProductionConfigSet(opts *bind.W
 
 				event := new(ConfiguratorProductionConfigSet)
 				if err := _Configurator.contract.UnpackLog(event, "ProductionConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -814,6 +830,10 @@ func (_Configurator *ConfiguratorFilterer) WatchPromoteStagingConfig(opts *bind.
 
 				event := new(ConfiguratorPromoteStagingConfig)
 				if err := _Configurator.contract.UnpackLog(event, "PromoteStagingConfig", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -951,6 +971,10 @@ func (_Configurator *ConfiguratorFilterer) WatchStagingConfigSet(opts *bind.Watc
 
 				event := new(ConfiguratorStagingConfigSet)
 				if err := _Configurator.contract.UnpackLog(event, "StagingConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

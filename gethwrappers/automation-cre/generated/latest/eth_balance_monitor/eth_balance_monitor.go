@@ -4,9 +4,11 @@
 package eth_balance_monitor
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var EthBalanceMonitorMetaData = &bind.MetaData{
@@ -585,6 +589,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchFundsAdded(opts *bind.
 
 				event := new(EthBalanceMonitorFundsAdded)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "FundsAdded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -703,6 +711,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchFundsWithdrawn(opts *b
 
 				event := new(EthBalanceMonitorFundsWithdrawn)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "FundsWithdrawn", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -821,6 +833,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchKeeperRegistryAddressU
 
 				event := new(EthBalanceMonitorKeeperRegistryAddressUpdated)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "KeeperRegistryAddressUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -939,6 +955,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchMinWaitPeriodUpdated(o
 
 				event := new(EthBalanceMonitorMinWaitPeriodUpdated)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "MinWaitPeriodUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1075,6 +1095,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchOwnershipTransferReque
 
 				event := new(EthBalanceMonitorOwnershipTransferRequested)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1211,6 +1235,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchOwnershipTransferred(o
 
 				event := new(EthBalanceMonitorOwnershipTransferred)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1328,6 +1356,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchPaused(opts *bind.Watc
 
 				event := new(EthBalanceMonitorPaused)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "Paused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1455,6 +1487,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchTopUpFailed(opts *bind
 
 				event := new(EthBalanceMonitorTopUpFailed)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "TopUpFailed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1582,6 +1618,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchTopUpSucceeded(opts *b
 
 				event := new(EthBalanceMonitorTopUpSucceeded)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "TopUpSucceeded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1699,6 +1739,10 @@ func (_EthBalanceMonitor *EthBalanceMonitorFilterer) WatchUnpaused(opts *bind.Wa
 
 				event := new(EthBalanceMonitorUnpaused)
 				if err := _EthBalanceMonitor.contract.UnpackLog(event, "Unpaused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

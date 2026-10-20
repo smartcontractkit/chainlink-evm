@@ -4,10 +4,12 @@
 package destination_reward_manager
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type CommonAddressAndWeight struct {
@@ -619,6 +623,10 @@ func (_DestinationRewardManager *DestinationRewardManagerFilterer) WatchFeeManag
 
 				event := new(DestinationRewardManagerFeeManagerUpdated)
 				if err := _DestinationRewardManager.contract.UnpackLog(event, "FeeManagerUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -737,6 +745,10 @@ func (_DestinationRewardManager *DestinationRewardManagerFilterer) WatchFeePaid(
 
 				event := new(DestinationRewardManagerFeePaid)
 				if err := _DestinationRewardManager.contract.UnpackLog(event, "FeePaid", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -873,6 +885,10 @@ func (_DestinationRewardManager *DestinationRewardManagerFilterer) WatchOwnershi
 
 				event := new(DestinationRewardManagerOwnershipTransferRequested)
 				if err := _DestinationRewardManager.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1009,6 +1025,10 @@ func (_DestinationRewardManager *DestinationRewardManagerFilterer) WatchOwnershi
 
 				event := new(DestinationRewardManagerOwnershipTransferred)
 				if err := _DestinationRewardManager.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1137,6 +1157,10 @@ func (_DestinationRewardManager *DestinationRewardManagerFilterer) WatchRewardRe
 
 				event := new(DestinationRewardManagerRewardRecipientsUpdated)
 				if err := _DestinationRewardManager.contract.UnpackLog(event, "RewardRecipientsUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1274,6 +1298,10 @@ func (_DestinationRewardManager *DestinationRewardManagerFilterer) WatchRewardsC
 
 				event := new(DestinationRewardManagerRewardsClaimed)
 				if err := _DestinationRewardManager.contract.UnpackLog(event, "RewardsClaimed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

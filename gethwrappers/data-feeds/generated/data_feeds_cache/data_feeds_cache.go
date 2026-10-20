@@ -4,10 +4,12 @@
 package data_feeds_cache
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type DataFeedsCacheWorkflowMetadata struct {
@@ -1054,6 +1058,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchAnswerUpdated(opts *bind.Wat
 
 				event := new(DataFeedsCacheAnswerUpdated)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "AnswerUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1184,6 +1192,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchBundleFeedConfigSet(opts *bi
 
 				event := new(DataFeedsCacheBundleFeedConfigSet)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "BundleFeedConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1321,6 +1333,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchBundleReportUpdated(opts *bi
 
 				event := new(DataFeedsCacheBundleReportUpdated)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "BundleReportUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1451,6 +1467,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchDecimalFeedConfigSet(opts *b
 
 				event := new(DataFeedsCacheDecimalFeedConfigSet)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "DecimalFeedConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1597,6 +1617,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchDecimalReportUpdated(opts *b
 
 				event := new(DataFeedsCacheDecimalReportUpdated)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "DecimalReportUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1733,6 +1757,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchFeedAdminSet(opts *bind.Watc
 
 				event := new(DataFeedsCacheFeedAdminSet)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "FeedAdminSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1860,6 +1888,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchFeedConfigRemoved(opts *bind
 
 				event := new(DataFeedsCacheFeedConfigRemoved)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "FeedConfigRemoved", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1990,6 +2022,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchInvalidUpdatePermission(opts
 
 				event := new(DataFeedsCacheInvalidUpdatePermission)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "InvalidUpdatePermission", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2127,6 +2163,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchNewRound(opts *bind.WatchOpt
 
 				event := new(DataFeedsCacheNewRound)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "NewRound", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2263,6 +2303,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchOwnershipTransferRequested(o
 
 				event := new(DataFeedsCacheOwnershipTransferRequested)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2399,6 +2443,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchOwnershipTransferred(opts *b
 
 				event := new(DataFeedsCacheOwnershipTransferred)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2535,6 +2583,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchProxyDataIdRemoved(opts *bin
 
 				event := new(DataFeedsCacheProxyDataIdRemoved)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "ProxyDataIdRemoved", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2671,6 +2723,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchProxyDataIdUpdated(opts *bin
 
 				event := new(DataFeedsCacheProxyDataIdUpdated)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "ProxyDataIdUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2800,6 +2856,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchStaleBundleReport(opts *bind
 
 				event := new(DataFeedsCacheStaleBundleReport)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "StaleBundleReport", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2929,6 +2989,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchStaleDecimalReport(opts *bin
 
 				event := new(DataFeedsCacheStaleDecimalReport)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "StaleDecimalReport", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -3066,6 +3130,10 @@ func (_DataFeedsCache *DataFeedsCacheFilterer) WatchTokenRecovered(opts *bind.Wa
 
 				event := new(DataFeedsCacheTokenRecovered)
 				if err := _DataFeedsCache.contract.UnpackLog(event, "TokenRecovered", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

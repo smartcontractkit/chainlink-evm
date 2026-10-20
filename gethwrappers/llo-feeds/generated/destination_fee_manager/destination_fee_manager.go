@@ -4,10 +4,12 @@
 package destination_fee_manager
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type CommonAddressAndWeight struct {
@@ -740,6 +744,10 @@ func (_DestinationFeeManager *DestinationFeeManagerFilterer) WatchDiscountApplie
 
 				event := new(DestinationFeeManagerDiscountApplied)
 				if err := _DestinationFeeManager.contract.UnpackLog(event, "DiscountApplied", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -857,6 +865,10 @@ func (_DestinationFeeManager *DestinationFeeManagerFilterer) WatchInsufficientLi
 
 				event := new(DestinationFeeManagerInsufficientLink)
 				if err := _DestinationFeeManager.contract.UnpackLog(event, "InsufficientLink", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -985,6 +997,10 @@ func (_DestinationFeeManager *DestinationFeeManagerFilterer) WatchLinkDeficitCle
 
 				event := new(DestinationFeeManagerLinkDeficitCleared)
 				if err := _DestinationFeeManager.contract.UnpackLog(event, "LinkDeficitCleared", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1102,6 +1118,10 @@ func (_DestinationFeeManager *DestinationFeeManagerFilterer) WatchNativeSurcharg
 
 				event := new(DestinationFeeManagerNativeSurchargeUpdated)
 				if err := _DestinationFeeManager.contract.UnpackLog(event, "NativeSurchargeUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1238,6 +1258,10 @@ func (_DestinationFeeManager *DestinationFeeManagerFilterer) WatchOwnershipTrans
 
 				event := new(DestinationFeeManagerOwnershipTransferRequested)
 				if err := _DestinationFeeManager.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1374,6 +1398,10 @@ func (_DestinationFeeManager *DestinationFeeManagerFilterer) WatchOwnershipTrans
 
 				event := new(DestinationFeeManagerOwnershipTransferred)
 				if err := _DestinationFeeManager.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1512,6 +1540,10 @@ func (_DestinationFeeManager *DestinationFeeManagerFilterer) WatchSubscriberDisc
 
 				event := new(DestinationFeeManagerSubscriberDiscountUpdated)
 				if err := _DestinationFeeManager.contract.UnpackLog(event, "SubscriberDiscountUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1632,6 +1664,10 @@ func (_DestinationFeeManager *DestinationFeeManagerFilterer) WatchWithdraw(opts 
 
 				event := new(DestinationFeeManagerWithdraw)
 				if err := _DestinationFeeManager.contract.UnpackLog(event, "Withdraw", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

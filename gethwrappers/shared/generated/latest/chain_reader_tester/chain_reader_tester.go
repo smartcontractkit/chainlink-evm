@@ -4,9 +4,11 @@
 package chain_reader_tester
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type AccountStruct struct {
@@ -510,6 +514,10 @@ func (_ChainReaderTester *ChainReaderTesterFilterer) WatchStaticBytes(opts *bind
 
 				event := new(ChainReaderTesterStaticBytes)
 				if err := _ChainReaderTester.contract.UnpackLog(event, "StaticBytes", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -645,6 +653,10 @@ func (_ChainReaderTester *ChainReaderTesterFilterer) WatchTriggered(opts *bind.W
 
 				event := new(ChainReaderTesterTriggered)
 				if err := _ChainReaderTester.contract.UnpackLog(event, "Triggered", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -773,6 +785,10 @@ func (_ChainReaderTester *ChainReaderTesterFilterer) WatchTriggeredEventWithDyna
 
 				event := new(ChainReaderTesterTriggeredEventWithDynamicTopic)
 				if err := _ChainReaderTester.contract.UnpackLog(event, "TriggeredEventWithDynamicTopic", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -918,6 +934,10 @@ func (_ChainReaderTester *ChainReaderTesterFilterer) WatchTriggeredWithFourTopic
 
 				event := new(ChainReaderTesterTriggeredWithFourTopics)
 				if err := _ChainReaderTester.contract.UnpackLog(event, "TriggeredWithFourTopics", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1063,6 +1083,10 @@ func (_ChainReaderTester *ChainReaderTesterFilterer) WatchTriggeredWithFourTopic
 
 				event := new(ChainReaderTesterTriggeredWithFourTopicsWithHashed)
 				if err := _ChainReaderTester.contract.UnpackLog(event, "TriggeredWithFourTopicsWithHashed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

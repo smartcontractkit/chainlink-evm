@@ -4,9 +4,11 @@
 package automation_receiver
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var AutomationReceiverMetaData = &bind.MetaData{
@@ -672,6 +676,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchBlockNumberCheckSet(
 
 				event := new(AutomationReceiverBlockNumberCheckSet)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "BlockNumberCheckSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -809,6 +817,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchCallAllowedSet(opts 
 
 				event := new(AutomationReceiverCallAllowedSet)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "CallAllowedSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -946,6 +958,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchCallExecuted(opts *b
 
 				event := new(AutomationReceiverCallExecuted)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "CallExecuted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1083,6 +1099,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchCallFailed(opts *bin
 
 				event := new(AutomationReceiverCallFailed)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "CallFailed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1221,6 +1241,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchConsumerGasLimitSet(
 
 				event := new(AutomationReceiverConsumerGasLimitSet)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "ConsumerGasLimitSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1357,6 +1381,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchExpectedAuthorUpdate
 
 				event := new(AutomationReceiverExpectedAuthorUpdated)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "ExpectedAuthorUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1493,6 +1521,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchExpectedWorkflowIdUp
 
 				event := new(AutomationReceiverExpectedWorkflowIdUpdated)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "ExpectedWorkflowIdUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1629,6 +1661,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchExpectedWorkflowName
 
 				event := new(AutomationReceiverExpectedWorkflowNameUpdated)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "ExpectedWorkflowNameUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1765,6 +1801,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchForwarderAddressUpda
 
 				event := new(AutomationReceiverForwarderAddressUpdated)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "ForwarderAddressUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1901,6 +1941,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchOwnershipTransferred
 
 				event := new(AutomationReceiverOwnershipTransferred)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2018,6 +2062,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchPaused(opts *bind.Wa
 
 				event := new(AutomationReceiverPaused)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "Paused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2134,6 +2182,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchReportSkippedWhilePa
 
 				event := new(AutomationReceiverReportSkippedWhilePaused)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "ReportSkippedWhilePaused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2251,6 +2303,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchSecurityWarning(opts
 
 				event := new(AutomationReceiverSecurityWarning)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "SecurityWarning", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2389,6 +2445,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchStaleReportSkipped(o
 
 				event := new(AutomationReceiverStaleReportSkipped)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "StaleReportSkipped", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2506,6 +2566,10 @@ func (_AutomationReceiver *AutomationReceiverFilterer) WatchUnpaused(opts *bind.
 
 				event := new(AutomationReceiverUnpaused)
 				if err := _AutomationReceiver.contract.UnpackLog(event, "Unpaused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

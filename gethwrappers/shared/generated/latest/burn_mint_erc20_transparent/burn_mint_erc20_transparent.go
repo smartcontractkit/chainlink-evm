@@ -4,9 +4,11 @@
 package burn_mint_erc20_transparent
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var BurnMintERC20TransparentMetaData = &bind.MetaData{
@@ -949,6 +953,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchApproval
 
 				event := new(BurnMintERC20TransparentApproval)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1085,6 +1093,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchCCIPAdmi
 
 				event := new(BurnMintERC20TransparentCCIPAdminTransferred)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "CCIPAdminTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1201,6 +1213,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchDefaultA
 
 				event := new(BurnMintERC20TransparentDefaultAdminDelayChangeCanceled)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "DefaultAdminDelayChangeCanceled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1319,6 +1335,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchDefaultA
 
 				event := new(BurnMintERC20TransparentDefaultAdminDelayChangeScheduled)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "DefaultAdminDelayChangeScheduled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1435,6 +1455,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchDefaultA
 
 				event := new(BurnMintERC20TransparentDefaultAdminTransferCanceled)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "DefaultAdminTransferCanceled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1563,6 +1587,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchDefaultA
 
 				event := new(BurnMintERC20TransparentDefaultAdminTransferScheduled)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "DefaultAdminTransferScheduled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1680,6 +1708,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchInitiali
 
 				event := new(BurnMintERC20TransparentInitialized)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "Initialized", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1825,6 +1857,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchRoleAdmi
 
 				event := new(BurnMintERC20TransparentRoleAdminChanged)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "RoleAdminChanged", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1970,6 +2006,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchRoleGran
 
 				event := new(BurnMintERC20TransparentRoleGranted)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "RoleGranted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2115,6 +2155,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchRoleRevo
 
 				event := new(BurnMintERC20TransparentRoleRevoked)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "RoleRevoked", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2252,6 +2296,10 @@ func (_BurnMintERC20Transparent *BurnMintERC20TransparentFilterer) WatchTransfer
 
 				event := new(BurnMintERC20TransparentTransfer)
 				if err := _BurnMintERC20Transparent.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

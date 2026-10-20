@@ -4,10 +4,12 @@
 package vrf_owner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type FeeConfig struct {
@@ -512,6 +516,10 @@ func (_VRFOwner *VRFOwnerFilterer) WatchAuthorizedSendersChanged(opts *bind.Watc
 
 				event := new(VRFOwnerAuthorizedSendersChanged)
 				if err := _VRFOwner.contract.UnpackLog(event, "AuthorizedSendersChanged", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -648,6 +656,10 @@ func (_VRFOwner *VRFOwnerFilterer) WatchOwnershipTransferRequested(opts *bind.Wa
 
 				event := new(VRFOwnerOwnershipTransferRequested)
 				if err := _VRFOwner.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -784,6 +796,10 @@ func (_VRFOwner *VRFOwnerFilterer) WatchOwnershipTransferred(opts *bind.WatchOpt
 
 				event := new(VRFOwnerOwnershipTransferred)
 				if err := _VRFOwner.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -929,6 +945,10 @@ func (_VRFOwner *VRFOwnerFilterer) WatchRandomWordsForced(opts *bind.WatchOpts, 
 
 				event := new(VRFOwnerRandomWordsForced)
 				if err := _VRFOwner.contract.UnpackLog(event, "RandomWordsForced", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

@@ -4,10 +4,12 @@
 package mock_fee_manager_v0_5_0
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type CommonAddressAndWeight struct {
@@ -704,6 +708,10 @@ func (_MockFeeManager *MockFeeManagerFilterer) WatchDiscountApplied(opts *bind.W
 
 				event := new(MockFeeManagerDiscountApplied)
 				if err := _MockFeeManager.contract.UnpackLog(event, "DiscountApplied", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -821,6 +829,10 @@ func (_MockFeeManager *MockFeeManagerFilterer) WatchInsufficientLink(opts *bind.
 
 				event := new(MockFeeManagerInsufficientLink)
 				if err := _MockFeeManager.contract.UnpackLog(event, "InsufficientLink", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -949,6 +961,10 @@ func (_MockFeeManager *MockFeeManagerFilterer) WatchLinkDeficitCleared(opts *bin
 
 				event := new(MockFeeManagerLinkDeficitCleared)
 				if err := _MockFeeManager.contract.UnpackLog(event, "LinkDeficitCleared", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1066,6 +1082,10 @@ func (_MockFeeManager *MockFeeManagerFilterer) WatchNativeSurchargeUpdated(opts 
 
 				event := new(MockFeeManagerNativeSurchargeUpdated)
 				if err := _MockFeeManager.contract.UnpackLog(event, "NativeSurchargeUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1202,6 +1222,10 @@ func (_MockFeeManager *MockFeeManagerFilterer) WatchOwnershipTransferRequested(o
 
 				event := new(MockFeeManagerOwnershipTransferRequested)
 				if err := _MockFeeManager.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1338,6 +1362,10 @@ func (_MockFeeManager *MockFeeManagerFilterer) WatchOwnershipTransferred(opts *b
 
 				event := new(MockFeeManagerOwnershipTransferred)
 				if err := _MockFeeManager.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1476,6 +1504,10 @@ func (_MockFeeManager *MockFeeManagerFilterer) WatchSubscriberDiscountUpdated(op
 
 				event := new(MockFeeManagerSubscriberDiscountUpdated)
 				if err := _MockFeeManager.contract.UnpackLog(event, "SubscriberDiscountUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1596,6 +1628,10 @@ func (_MockFeeManager *MockFeeManagerFilterer) WatchWithdraw(opts *bind.WatchOpt
 
 				event := new(MockFeeManagerWithdraw)
 				if err := _MockFeeManager.contract.UnpackLog(event, "Withdraw", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

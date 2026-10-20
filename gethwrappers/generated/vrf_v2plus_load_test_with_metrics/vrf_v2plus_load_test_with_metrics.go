@@ -4,10 +4,12 @@
 package vrf_v2plus_load_test_with_metrics
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFV2PlusLoadTestWithMetricsMetaData = &bind.MetaData{
@@ -684,6 +688,10 @@ func (_VRFV2PlusLoadTestWithMetrics *VRFV2PlusLoadTestWithMetricsFilterer) Watch
 
 				event := new(VRFV2PlusLoadTestWithMetricsCoordinatorSet)
 				if err := _VRFV2PlusLoadTestWithMetrics.contract.UnpackLog(event, "CoordinatorSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -820,6 +828,10 @@ func (_VRFV2PlusLoadTestWithMetrics *VRFV2PlusLoadTestWithMetricsFilterer) Watch
 
 				event := new(VRFV2PlusLoadTestWithMetricsOwnershipTransferRequested)
 				if err := _VRFV2PlusLoadTestWithMetrics.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -956,6 +968,10 @@ func (_VRFV2PlusLoadTestWithMetrics *VRFV2PlusLoadTestWithMetricsFilterer) Watch
 
 				event := new(VRFV2PlusLoadTestWithMetricsOwnershipTransferred)
 				if err := _VRFV2PlusLoadTestWithMetrics.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

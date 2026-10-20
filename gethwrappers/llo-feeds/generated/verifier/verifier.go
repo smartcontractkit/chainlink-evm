@@ -4,10 +4,12 @@
 package verifier
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type CommonAddressAndWeight struct {
@@ -511,6 +515,10 @@ func (_Verifier *VerifierFilterer) WatchConfigActivated(opts *bind.WatchOpts, si
 
 				event := new(VerifierConfigActivated)
 				if err := _Verifier.contract.UnpackLog(event, "ConfigActivated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -639,6 +647,10 @@ func (_Verifier *VerifierFilterer) WatchConfigDeactivated(opts *bind.WatchOpts, 
 
 				event := new(VerifierConfigDeactivated)
 				if err := _Verifier.contract.UnpackLog(event, "ConfigDeactivated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -775,6 +787,10 @@ func (_Verifier *VerifierFilterer) WatchConfigSet(opts *bind.WatchOpts, sink cha
 
 				event := new(VerifierConfigSet)
 				if err := _Verifier.contract.UnpackLog(event, "ConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -902,6 +918,10 @@ func (_Verifier *VerifierFilterer) WatchFeedActivated(opts *bind.WatchOpts, sink
 
 				event := new(VerifierFeedActivated)
 				if err := _Verifier.contract.UnpackLog(event, "FeedActivated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1029,6 +1049,10 @@ func (_Verifier *VerifierFilterer) WatchFeedDeactivated(opts *bind.WatchOpts, si
 
 				event := new(VerifierFeedDeactivated)
 				if err := _Verifier.contract.UnpackLog(event, "FeedDeactivated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1165,6 +1189,10 @@ func (_Verifier *VerifierFilterer) WatchOwnershipTransferRequested(opts *bind.Wa
 
 				event := new(VerifierOwnershipTransferRequested)
 				if err := _Verifier.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1301,6 +1329,10 @@ func (_Verifier *VerifierFilterer) WatchOwnershipTransferred(opts *bind.WatchOpt
 
 				event := new(VerifierOwnershipTransferred)
 				if err := _Verifier.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1429,6 +1461,10 @@ func (_Verifier *VerifierFilterer) WatchReportVerified(opts *bind.WatchOpts, sin
 
 				event := new(VerifierReportVerified)
 				if err := _Verifier.contract.UnpackLog(event, "ReportVerified", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

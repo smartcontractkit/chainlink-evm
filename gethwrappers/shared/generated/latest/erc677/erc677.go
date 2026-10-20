@@ -4,9 +4,11 @@
 package erc677
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var ERC677MetaData = &bind.MetaData{
@@ -481,6 +485,10 @@ func (_ERC677 *ERC677Filterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *
 
 				event := new(ERC677Approval)
 				if err := _ERC677.contract.UnpackLog(event, "Approval", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -618,6 +626,10 @@ func (_ERC677 *ERC677Filterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *
 
 				event := new(ERC677Transfer)
 				if err := _ERC677.contract.UnpackLog(event, "Transfer", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -756,6 +768,10 @@ func (_ERC677 *ERC677Filterer) WatchTransfer0(opts *bind.WatchOpts, sink chan<- 
 
 				event := new(ERC677Transfer0)
 				if err := _ERC677.contract.UnpackLog(event, "Transfer0", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

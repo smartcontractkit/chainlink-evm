@@ -54,7 +54,7 @@ func (c *CheckerFactory) BuildChecker(spec TransmitCheckerSpec) (TransmitChecker
 		if spec.VRFCoordinatorAddress == nil {
 			return nil, pkgerrors.Errorf("malformed checker, expected non-nil VRFCoordinatorAddress, got: %v", spec)
 		}
-		coord, err := v1.NewVRFCoordinator(*spec.VRFCoordinatorAddress, c.Client)
+		coord, err := v1.NewVRFCoordinator(*spec.VRFCoordinatorAddress, evmclient.AsContractBackend(c.Client))
 		if err != nil {
 			return nil, pkgerrors.Wrapf(err,
 				"failed to create VRF V1 coordinator at address %v", spec.VRFCoordinatorAddress)
@@ -67,7 +67,7 @@ func (c *CheckerFactory) BuildChecker(spec TransmitCheckerSpec) (TransmitChecker
 		if spec.VRFCoordinatorAddress == nil {
 			return nil, pkgerrors.Errorf("malformed checker, expected non-nil VRFCoordinatorAddress, got: %v", spec)
 		}
-		coord, err := v2.NewVRFCoordinatorV2(*spec.VRFCoordinatorAddress, c.Client)
+		coord, err := v2.NewVRFCoordinatorV2(*spec.VRFCoordinatorAddress, evmclient.AsContractBackend(c.Client))
 		if err != nil {
 			return nil, pkgerrors.Wrapf(err,
 				"failed to create VRF V2 coordinator at address %v", spec.VRFCoordinatorAddress)
@@ -84,7 +84,7 @@ func (c *CheckerFactory) BuildChecker(spec TransmitCheckerSpec) (TransmitChecker
 		if spec.VRFCoordinatorAddress == nil {
 			return nil, pkgerrors.Errorf("malformed checker, expected non-nil VRFCoordinatorAddress, got: %v", spec)
 		}
-		coord, err := vrf_coordinator_v2plus_interface.NewIVRFCoordinatorV2PlusInternal(*spec.VRFCoordinatorAddress, c.Client)
+		coord, err := vrf_coordinator_v2plus_interface.NewIVRFCoordinatorV2PlusInternal(*spec.VRFCoordinatorAddress, evmclient.AsContractBackend(c.Client))
 		if err != nil {
 			return nil, pkgerrors.Wrapf(err,
 				"failed to create VRF V2 coordinator plus at address %v", spec.VRFCoordinatorAddress)

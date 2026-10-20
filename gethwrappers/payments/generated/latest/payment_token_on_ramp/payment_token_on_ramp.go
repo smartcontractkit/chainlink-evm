@@ -4,9 +4,11 @@
 package payment_token_on_ramp
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type CommonAssetAmount struct {
@@ -935,6 +939,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchAssetEmergencyWithdr
 
 				event := new(PaymentTokenOnRampAssetEmergencyWithdrawn)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "AssetEmergencyWithdrawn", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1052,6 +1060,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchChainSelectorSet(opt
 
 				event := new(PaymentTokenOnRampChainSelectorSet)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "ChainSelectorSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1168,6 +1180,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchDefaultAdminDelayCha
 
 				event := new(PaymentTokenOnRampDefaultAdminDelayChangeCanceled)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "DefaultAdminDelayChangeCanceled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1286,6 +1302,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchDefaultAdminDelayCha
 
 				event := new(PaymentTokenOnRampDefaultAdminDelayChangeScheduled)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "DefaultAdminDelayChangeScheduled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1402,6 +1422,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchDefaultAdminTransfer
 
 				event := new(PaymentTokenOnRampDefaultAdminTransferCanceled)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "DefaultAdminTransferCanceled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1530,6 +1554,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchDefaultAdminTransfer
 
 				event := new(PaymentTokenOnRampDefaultAdminTransferScheduled)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "DefaultAdminTransferScheduled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1647,6 +1675,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchFeeAggregatorSet(opt
 
 				event := new(PaymentTokenOnRampFeeAggregatorSet)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "FeeAggregatorSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1784,6 +1816,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchFeeTokenWithdrawn(op
 
 				event := new(PaymentTokenOnRampFeeTokenWithdrawn)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "FeeTokenWithdrawn", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1901,6 +1937,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchPaused(opts *bind.Wa
 
 				event := new(PaymentTokenOnRampPaused)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "Paused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2029,6 +2069,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchPaymentRequestSubmit
 
 				event := new(PaymentTokenOnRampPaymentRequestSubmitted)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "PaymentRequestSubmitted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2174,6 +2218,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchRoleAdminChanged(opt
 
 				event := new(PaymentTokenOnRampRoleAdminChanged)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "RoleAdminChanged", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2319,6 +2367,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchRoleGranted(opts *bi
 
 				event := new(PaymentTokenOnRampRoleGranted)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "RoleGranted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2464,6 +2516,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchRoleRevoked(opts *bi
 
 				event := new(PaymentTokenOnRampRoleRevoked)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "RoleRevoked", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2581,6 +2637,10 @@ func (_PaymentTokenOnRamp *PaymentTokenOnRampFilterer) WatchUnpaused(opts *bind.
 
 				event := new(PaymentTokenOnRampUnpaused)
 				if err := _PaymentTokenOnRamp.contract.UnpackLog(event, "Unpaused", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

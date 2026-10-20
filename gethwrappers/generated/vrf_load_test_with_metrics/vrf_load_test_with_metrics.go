@@ -4,10 +4,12 @@
 package vrf_load_test_with_metrics
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFV2LoadTestWithMetricsMetaData = &bind.MetaData{
@@ -564,6 +568,10 @@ func (_VRFV2LoadTestWithMetrics *VRFV2LoadTestWithMetricsFilterer) WatchSubscrip
 
 				event := new(VRFV2LoadTestWithMetricsSubscriptionCreatedFundedAndConsumerAdded)
 				if err := _VRFV2LoadTestWithMetrics.contract.UnpackLog(event, "SubscriptionCreatedFundedAndConsumerAdded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

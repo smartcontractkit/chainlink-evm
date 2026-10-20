@@ -4,10 +4,12 @@
 package vrfv2_wrapper_consumer_example
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFV2WrapperConsumerExampleMetaData = &bind.MetaData{
@@ -421,6 +425,10 @@ func (_VRFV2WrapperConsumerExample *VRFV2WrapperConsumerExampleFilterer) WatchOw
 
 				event := new(VRFV2WrapperConsumerExampleOwnershipTransferRequested)
 				if err := _VRFV2WrapperConsumerExample.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -557,6 +565,10 @@ func (_VRFV2WrapperConsumerExample *VRFV2WrapperConsumerExampleFilterer) WatchOw
 
 				event := new(VRFV2WrapperConsumerExampleOwnershipTransferred)
 				if err := _VRFV2WrapperConsumerExample.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -676,6 +688,10 @@ func (_VRFV2WrapperConsumerExample *VRFV2WrapperConsumerExampleFilterer) WatchWr
 
 				event := new(VRFV2WrapperConsumerExampleWrappedRequestFulfilled)
 				if err := _VRFV2WrapperConsumerExample.contract.UnpackLog(event, "WrappedRequestFulfilled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -804,6 +820,10 @@ func (_VRFV2WrapperConsumerExample *VRFV2WrapperConsumerExampleFilterer) WatchWr
 
 				event := new(VRFV2WrapperConsumerExampleWrapperRequestMade)
 				if err := _VRFV2WrapperConsumerExample.contract.UnpackLog(event, "WrapperRequestMade", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

@@ -4,10 +4,12 @@
 package operator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var OperatorMetaData = &bind.MetaData{
@@ -630,6 +634,10 @@ func (_Operator *OperatorFilterer) WatchAuthorizedSendersChanged(opts *bind.Watc
 
 				event := new(OperatorAuthorizedSendersChanged)
 				if err := _Operator.contract.UnpackLog(event, "AuthorizedSendersChanged", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -757,6 +765,10 @@ func (_Operator *OperatorFilterer) WatchCancelOracleRequest(opts *bind.WatchOpts
 
 				event := new(OperatorCancelOracleRequest)
 				if err := _Operator.contract.UnpackLog(event, "CancelOracleRequest", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -892,6 +904,10 @@ func (_Operator *OperatorFilterer) WatchOracleRequest(opts *bind.WatchOpts, sink
 
 				event := new(OperatorOracleRequest)
 				if err := _Operator.contract.UnpackLog(event, "OracleRequest", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1019,6 +1035,10 @@ func (_Operator *OperatorFilterer) WatchOracleResponse(opts *bind.WatchOpts, sin
 
 				event := new(OperatorOracleResponse)
 				if err := _Operator.contract.UnpackLog(event, "OracleResponse", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1146,6 +1166,10 @@ func (_Operator *OperatorFilterer) WatchOwnableContractAccepted(opts *bind.Watch
 
 				event := new(OperatorOwnableContractAccepted)
 				if err := _Operator.contract.UnpackLog(event, "OwnableContractAccepted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1282,6 +1306,10 @@ func (_Operator *OperatorFilterer) WatchOwnershipTransferRequested(opts *bind.Wa
 
 				event := new(OperatorOwnershipTransferRequested)
 				if err := _Operator.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1418,6 +1446,10 @@ func (_Operator *OperatorFilterer) WatchOwnershipTransferred(opts *bind.WatchOpt
 
 				event := new(OperatorOwnershipTransferred)
 				if err := _Operator.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1537,6 +1569,10 @@ func (_Operator *OperatorFilterer) WatchTargetsUpdatedAuthorizedSenders(opts *bi
 
 				event := new(OperatorTargetsUpdatedAuthorizedSenders)
 				if err := _Operator.contract.UnpackLog(event, "TargetsUpdatedAuthorizedSenders", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

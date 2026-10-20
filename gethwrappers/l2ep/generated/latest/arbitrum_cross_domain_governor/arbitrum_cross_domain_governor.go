@@ -4,9 +4,11 @@
 package arbitrum_cross_domain_governor
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var ArbitrumCrossDomainGovernorMetaData = &bind.MetaData{
@@ -436,6 +440,10 @@ func (_ArbitrumCrossDomainGovernor *ArbitrumCrossDomainGovernorFilterer) WatchL1
 
 				event := new(ArbitrumCrossDomainGovernorL1OwnershipTransferRequested)
 				if err := _ArbitrumCrossDomainGovernor.contract.UnpackLog(event, "L1OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -572,6 +580,10 @@ func (_ArbitrumCrossDomainGovernor *ArbitrumCrossDomainGovernorFilterer) WatchL1
 
 				event := new(ArbitrumCrossDomainGovernorL1OwnershipTransferred)
 				if err := _ArbitrumCrossDomainGovernor.contract.UnpackLog(event, "L1OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -708,6 +720,10 @@ func (_ArbitrumCrossDomainGovernor *ArbitrumCrossDomainGovernorFilterer) WatchOw
 
 				event := new(ArbitrumCrossDomainGovernorOwnershipTransferRequested)
 				if err := _ArbitrumCrossDomainGovernor.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -844,6 +860,10 @@ func (_ArbitrumCrossDomainGovernor *ArbitrumCrossDomainGovernorFilterer) WatchOw
 
 				event := new(ArbitrumCrossDomainGovernorOwnershipTransferred)
 				if err := _ArbitrumCrossDomainGovernor.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

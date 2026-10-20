@@ -4,10 +4,12 @@
 package vrfv2plus_wrapper_arbitrum
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFV2PlusWrapperArbitrumMetaData = &bind.MetaData{
@@ -813,6 +817,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchConfigSe
 
 				event := new(VRFV2PlusWrapperArbitrumConfigSet)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "ConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -930,6 +938,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchCoordina
 
 				event := new(VRFV2PlusWrapperArbitrumCoordinatorSet)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "CoordinatorSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1046,6 +1058,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchDisabled
 
 				event := new(VRFV2PlusWrapperArbitrumDisabled)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "Disabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1162,6 +1178,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchEnabled(
 
 				event := new(VRFV2PlusWrapperArbitrumEnabled)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "Enabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1280,6 +1300,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchFallback
 
 				event := new(VRFV2PlusWrapperArbitrumFallbackWeiPerUnitLinkUsed)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "FallbackWeiPerUnitLinkUsed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1397,6 +1421,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchFulfillm
 
 				event := new(VRFV2PlusWrapperArbitrumFulfillmentTxSizeSet)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "FulfillmentTxSizeSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1525,6 +1553,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchNativeWi
 
 				event := new(VRFV2PlusWrapperArbitrumNativeWithdrawn)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "NativeWithdrawn", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1661,6 +1693,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchOwnershi
 
 				event := new(VRFV2PlusWrapperArbitrumOwnershipTransferRequested)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1797,6 +1833,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchOwnershi
 
 				event := new(VRFV2PlusWrapperArbitrumOwnershipTransferred)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1925,6 +1965,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchWithdraw
 
 				event := new(VRFV2PlusWrapperArbitrumWithdrawn)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "Withdrawn", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2061,6 +2105,10 @@ func (_VRFV2PlusWrapperArbitrum *VRFV2PlusWrapperArbitrumFilterer) WatchWrapperF
 
 				event := new(VRFV2PlusWrapperArbitrumWrapperFulfillmentFailed)
 				if err := _VRFV2PlusWrapperArbitrum.contract.UnpackLog(event, "WrapperFulfillmentFailed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

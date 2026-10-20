@@ -14,7 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/functions/generated/functions_coordinator"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/functions/generated/functions_router"
-	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	evmconfig "github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/functions/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/logpoller"
@@ -26,7 +26,7 @@ type logPollerWrapper struct {
 
 	routerContract            *functions_router.FunctionsRouter
 	relayConfig               config.RelayConfig
-	client                    client.Client
+	client                    evmclient.Client
 	logPoller                 logpoller.LogPoller
 	subscribers               map[string]evmconfig.RouteUpdateSubscriber
 	activeCoordinator         common.Address
@@ -56,8 +56,8 @@ const maxLogsToProcess = 1000
 
 var _ evmconfig.LogPollerWrapper = &logPollerWrapper{}
 
-func NewLogPollerWrapper(routerContractAddress common.Address, relayConfig config.RelayConfig, client client.Client, logPoller logpoller.LogPoller, lggr logger.Logger) (evmconfig.LogPollerWrapper, error) {
-	routerContract, err := functions_router.NewFunctionsRouter(routerContractAddress, client)
+func NewLogPollerWrapper(routerContractAddress common.Address, relayConfig config.RelayConfig, client evmclient.Client, logPoller logpoller.LogPoller, lggr logger.Logger) (evmconfig.LogPollerWrapper, error) {
+	routerContract, err := functions_router.NewFunctionsRouter(routerContractAddress, evmclient.AsContractBackend(client))
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (l *logPollerWrapper) LatestEvents(ctx context.Context) ([]evmconfig.Oracle
 		l.eng.Debugw("LatestEvents: fetched request logs", "nResponseLogs", len(responseLogs), "latestBlock", latest, "startBlock", startBlockNum, "endBlock", responseEndBlock)
 		responseLogs = l.filterPreviouslyDetectedEvents(responseLogs, &l.detectedResponses, "responses")
 
-		parsingContract, err := functions_coordinator.NewFunctionsCoordinator(coordinator, l.client)
+		parsingContract, err := functions_coordinator.NewFunctionsCoordinator(coordinator, evmclient.AsContractBackend(l.client))
 		if err != nil {
 			l.eng.Error("LatestEvents: creating a contract instance for parsing failed")
 			return nil, nil, err

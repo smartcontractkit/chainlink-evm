@@ -4,9 +4,11 @@
 package mock_v3_aggregator_contract
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var MockV3AggregatorMetaData = &bind.MetaData{
@@ -543,6 +547,10 @@ func (_MockV3Aggregator *MockV3AggregatorFilterer) WatchAnswerUpdated(opts *bind
 
 				event := new(MockV3AggregatorAnswerUpdated)
 				if err := _MockV3Aggregator.contract.UnpackLog(event, "AnswerUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -680,6 +688,10 @@ func (_MockV3Aggregator *MockV3AggregatorFilterer) WatchNewRound(opts *bind.Watc
 
 				event := new(MockV3AggregatorNewRound)
 				if err := _MockV3Aggregator.contract.UnpackLog(event, "NewRound", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

@@ -4,10 +4,12 @@
 package vrf_coordinator_v2_5
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 type VRFProof struct {
@@ -1037,6 +1041,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchConfigSet(opts *bind.W
 
 				event := new(VRFCoordinatorV25ConfigSet)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "ConfigSet", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1154,6 +1162,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchCoordinatorDeregistere
 
 				event := new(VRFCoordinatorV25CoordinatorDeregistered)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "CoordinatorDeregistered", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1271,6 +1283,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchCoordinatorRegistered(
 
 				event := new(VRFCoordinatorV25CoordinatorRegistered)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "CoordinatorRegistered", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1389,6 +1405,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchFallbackWeiPerUnitLink
 
 				event := new(VRFCoordinatorV25FallbackWeiPerUnitLinkUsed)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "FallbackWeiPerUnitLinkUsed", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1507,6 +1527,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchFundsRecovered(opts *b
 
 				event := new(VRFCoordinatorV25FundsRecovered)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "FundsRecovered", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1624,6 +1648,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchL1GasFee(opts *bind.Wa
 
 				event := new(VRFCoordinatorV25L1GasFee)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "L1GasFee", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1742,6 +1770,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchMigrationCompleted(opt
 
 				event := new(VRFCoordinatorV25MigrationCompleted)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "MigrationCompleted", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1860,6 +1892,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchNativeFundsRecovered(o
 
 				event := new(VRFCoordinatorV25NativeFundsRecovered)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "NativeFundsRecovered", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1996,6 +2032,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchOwnershipTransferReque
 
 				event := new(VRFCoordinatorV25OwnershipTransferRequested)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2132,6 +2172,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchOwnershipTransferred(o
 
 				event := new(VRFCoordinatorV25OwnershipTransferred)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2250,6 +2294,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchProvingKeyDeregistered
 
 				event := new(VRFCoordinatorV25ProvingKeyDeregistered)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "ProvingKeyDeregistered", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2368,6 +2416,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchProvingKeyRegistered(o
 
 				event := new(VRFCoordinatorV25ProvingKeyRegistered)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "ProvingKeyRegistered", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2511,6 +2563,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchRandomWordsFulfilled(o
 
 				event := new(VRFCoordinatorV25RandomWordsFulfilled)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "RandomWordsFulfilled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2666,6 +2722,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchRandomWordsRequested(o
 
 				event := new(VRFCoordinatorV25RandomWordsRequested)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "RandomWordsRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2796,6 +2856,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchSubscriptionCanceled(o
 
 				event := new(VRFCoordinatorV25SubscriptionCanceled)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "SubscriptionCanceled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -2924,6 +2988,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchSubscriptionConsumerAd
 
 				event := new(VRFCoordinatorV25SubscriptionConsumerAdded)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "SubscriptionConsumerAdded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -3052,6 +3120,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchSubscriptionConsumerRe
 
 				event := new(VRFCoordinatorV25SubscriptionConsumerRemoved)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "SubscriptionConsumerRemoved", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -3180,6 +3252,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchSubscriptionCreated(op
 
 				event := new(VRFCoordinatorV25SubscriptionCreated)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "SubscriptionCreated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -3309,6 +3385,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchSubscriptionFunded(opt
 
 				event := new(VRFCoordinatorV25SubscriptionFunded)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "SubscriptionFunded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -3438,6 +3518,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchSubscriptionFundedWith
 
 				event := new(VRFCoordinatorV25SubscriptionFundedWithNative)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "SubscriptionFundedWithNative", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -3567,6 +3651,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchSubscriptionOwnerTrans
 
 				event := new(VRFCoordinatorV25SubscriptionOwnerTransferRequested)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "SubscriptionOwnerTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -3696,6 +3784,10 @@ func (_VRFCoordinatorV25 *VRFCoordinatorV25Filterer) WatchSubscriptionOwnerTrans
 
 				event := new(VRFCoordinatorV25SubscriptionOwnerTransferred)
 				if err := _VRFCoordinatorV25.contract.UnpackLog(event, "SubscriptionOwnerTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

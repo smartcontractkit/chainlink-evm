@@ -4,9 +4,11 @@
 package optimism_sequencer_uptime_feed
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,6 +28,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var OptimismSequencerUptimeFeedMetaData = &bind.MetaData{
@@ -705,6 +709,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchAd
 
 				event := new(OptimismSequencerUptimeFeedAddedAccess)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "AddedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -842,6 +850,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchAn
 
 				event := new(OptimismSequencerUptimeFeedAnswerUpdated)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "AnswerUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -958,6 +970,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchCh
 
 				event := new(OptimismSequencerUptimeFeedCheckAccessDisabled)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "CheckAccessDisabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1074,6 +1090,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchCh
 
 				event := new(OptimismSequencerUptimeFeedCheckAccessEnabled)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "CheckAccessEnabled", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1210,6 +1230,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchL1
 
 				event := new(OptimismSequencerUptimeFeedL1SenderTransferred)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "L1SenderTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1347,6 +1371,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchNe
 
 				event := new(OptimismSequencerUptimeFeedNewRound)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "NewRound", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1483,6 +1511,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchOw
 
 				event := new(OptimismSequencerUptimeFeedOwnershipTransferRequested)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1619,6 +1651,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchOw
 
 				event := new(OptimismSequencerUptimeFeedOwnershipTransferred)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1736,6 +1772,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchRe
 
 				event := new(OptimismSequencerUptimeFeedRemovedAccess)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "RemovedAccess", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1854,6 +1894,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchRo
 
 				event := new(OptimismSequencerUptimeFeedRoundUpdated)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "RoundUpdated", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -1974,6 +2018,10 @@ func (_OptimismSequencerUptimeFeed *OptimismSequencerUptimeFeedFilterer) WatchUp
 
 				event := new(OptimismSequencerUptimeFeedUpdateIgnored)
 				if err := _OptimismSequencerUptimeFeed.contract.UnpackLog(event, "UpdateIgnored", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log

@@ -4,10 +4,12 @@
 package vrf_owner_test_consumer
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -28,6 +30,8 @@ var (
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 	_ = abi.ConvertType
+	_ = time.Tick
+	_ = context.Background
 )
 
 var VRFV2OwnerTestConsumerMetaData = &bind.MetaData{
@@ -637,6 +641,10 @@ func (_VRFV2OwnerTestConsumer *VRFV2OwnerTestConsumerFilterer) WatchOwnershipTra
 
 				event := new(VRFV2OwnerTestConsumerOwnershipTransferRequested)
 				if err := _VRFV2OwnerTestConsumer.contract.UnpackLog(event, "OwnershipTransferRequested", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -773,6 +781,10 @@ func (_VRFV2OwnerTestConsumer *VRFV2OwnerTestConsumerFilterer) WatchOwnershipTra
 
 				event := new(VRFV2OwnerTestConsumerOwnershipTransferred)
 				if err := _VRFV2OwnerTestConsumer.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
@@ -892,6 +904,10 @@ func (_VRFV2OwnerTestConsumer *VRFV2OwnerTestConsumerFilterer) WatchSubscription
 
 				event := new(VRFV2OwnerTestConsumerSubscriptionCreatedFundedAndConsumerAdded)
 				if err := _VRFV2OwnerTestConsumer.contract.UnpackLog(event, "SubscriptionCreatedFundedAndConsumerAdded", log); err != nil {
+
+					if errors.Is(err, bind.ErrEventSignatureMismatch) {
+						continue
+					}
 					return err
 				}
 				event.Raw = log
