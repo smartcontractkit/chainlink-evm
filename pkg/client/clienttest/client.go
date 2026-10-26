@@ -2459,8 +2459,8 @@ func (_c *Client_TransactionByHash_Call) Run(run func(ctx context.Context, txHas
 	return _c
 }
 
-func (_c *Client_TransactionByHash_Call) Return(_a0 *coretypes.Transaction, _a1 bool, _a2 error) *Client_TransactionByHash_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *Client_TransactionByHash_Call) Return(tx *coretypes.Transaction, isPending bool, err error) *Client_TransactionByHash_Call {
+	_c.Call.Return(tx, isPending, err)
 	return _c
 }
 
@@ -2526,8 +2526,8 @@ func (_c *Client_TransactionByHashWithOpts_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *Client_TransactionByHashWithOpts_Call) Return(_a0 *coretypes.Transaction, _a1 bool, _a2 error) *Client_TransactionByHashWithOpts_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *Client_TransactionByHashWithOpts_Call) Return(tx *coretypes.Transaction, isPending bool, err error) *Client_TransactionByHashWithOpts_Call {
+	_c.Call.Return(tx, isPending, err)
 	return _c
 }
 
