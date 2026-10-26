@@ -19,7 +19,6 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	offchain_aggregator_wrapper "github.com/smartcontractkit/chainlink-evm/gethwrappers/offchainaggregator/generated/ocr2/offchainaggregator"
 	"github.com/smartcontractkit/chainlink-evm/pkg/chains/legacyevm"
-	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/round"
 )
 
@@ -35,7 +34,7 @@ type medianContract struct {
 
 func newMedianContract(configTracker types.ContractConfigTracker, contractAddress common.Address, chain legacyevm.Chain, jobID int32, oracleSpecID int32, ds sqlutil.DataSource, lggr logger.Logger) (*medianContract, error) {
 	lggr = logger.Named(lggr, "MedianContract")
-	contract, err := offchain_aggregator_wrapper.NewOffchainAggregator(contractAddress, evmclient.AsContractBackend(chain.Client()))
+	contract, err := offchain_aggregator_wrapper.NewOffchainAggregator(contractAddress, chain.Client())
 	if err != nil {
 		return nil, errors.Wrap(err, "could not instantiate NewOffchainAggregator")
 	}

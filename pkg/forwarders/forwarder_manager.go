@@ -82,12 +82,12 @@ func (f *FwdMgr) start(ctx context.Context) error {
 		}
 	}
 
-	f.authRcvr, err = authorized_receiver.NewAuthorizedReceiver(common.Address{}, evmclient.AsContractBackend(f.evmClient))
+	f.authRcvr, err = authorized_receiver.NewAuthorizedReceiver(common.Address{}, f.evmClient)
 	if err != nil {
 		return pkgerrors.Wrap(err, "Failed to init AuthorizedReceiver")
 	}
 
-	f.offchainAgg, err = offchain_aggregator_wrapper.NewOffchainAggregator(common.Address{}, evmclient.AsContractBackend(f.evmClient))
+	f.offchainAgg, err = offchain_aggregator_wrapper.NewOffchainAggregator(common.Address{}, f.evmClient)
 	if err != nil {
 		return pkgerrors.Wrap(err, "Failed to init OffchainAggregator")
 	}
@@ -129,7 +129,7 @@ func (f *FwdMgr) ForwarderForOCR2Feeds(ctx context.Context, eoa, ocr2Aggregator 
 		return common.Address{}, err
 	}
 
-	offchainAggregator, err := ocr2aggregator.NewOCR2Aggregator(ocr2Aggregator, evmclient.AsContractBackend(f.evmClient))
+	offchainAggregator, err := ocr2aggregator.NewOCR2Aggregator(ocr2Aggregator, f.evmClient)
 	if err != nil {
 		return common.Address{}, err
 	}

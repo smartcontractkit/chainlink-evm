@@ -81,7 +81,7 @@ func (e *evmService) EstimateGas(ctx context.Context, call *evm.CallMsg) (uint64
 }
 
 func (e *evmService) GetTransactionByHash(ctx context.Context, request evm.GetTransactionByHashRequest) (*evm.Transaction, error) {
-	tx, err := e.chain.Client().TransactionByHashWithOpts(ctx, request.Hash, types.TransactionByHashOpts{IsExternalRequest: request.IsExternal})
+	tx, _, err := e.chain.Client().TransactionByHashWithOpts(ctx, request.Hash, types.TransactionByHashOpts{IsExternalRequest: request.IsExternal})
 	if err != nil {
 		return nil, err
 	}

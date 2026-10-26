@@ -204,12 +204,12 @@ func (c *SimulatedBackendClient) TransactionReceiptWithOpts(ctx context.Context,
 	return evmtypes.FromGethReceipt(receipt), nil
 }
 
-func (c *SimulatedBackendClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, err error) {
-	tx, _, err = c.client.TransactionByHash(ctx, txHash)
+func (c *SimulatedBackendClient) TransactionByHash(ctx context.Context, txHash common.Hash) (tx *types.Transaction, isPending bool, err error) {
+	tx, isPending, err = c.client.TransactionByHash(ctx, txHash)
 	return
 }
 
-func (c *SimulatedBackendClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, _ evmtypes.TransactionByHashOpts) (tx *types.Transaction, err error) {
+func (c *SimulatedBackendClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, _ evmtypes.TransactionByHashOpts) (tx *types.Transaction, isPending bool, err error) {
 	tx, _, err = c.client.TransactionByHash(ctx, txHash)
 	return
 }

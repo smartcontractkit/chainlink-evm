@@ -57,7 +57,7 @@ const maxLogsToProcess = 1000
 var _ evmconfig.LogPollerWrapper = &logPollerWrapper{}
 
 func NewLogPollerWrapper(routerContractAddress common.Address, relayConfig config.RelayConfig, client evmclient.Client, logPoller logpoller.LogPoller, lggr logger.Logger) (evmconfig.LogPollerWrapper, error) {
-	routerContract, err := functions_router.NewFunctionsRouter(routerContractAddress, evmclient.AsContractBackend(client))
+	routerContract, err := functions_router.NewFunctionsRouter(routerContractAddress, client)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (l *logPollerWrapper) LatestEvents(ctx context.Context) ([]evmconfig.Oracle
 		l.eng.Debugw("LatestEvents: fetched request logs", "nResponseLogs", len(responseLogs), "latestBlock", latest, "startBlock", startBlockNum, "endBlock", responseEndBlock)
 		responseLogs = l.filterPreviouslyDetectedEvents(responseLogs, &l.detectedResponses, "responses")
 
-		parsingContract, err := functions_coordinator.NewFunctionsCoordinator(coordinator, evmclient.AsContractBackend(l.client))
+		parsingContract, err := functions_coordinator.NewFunctionsCoordinator(coordinator, l.client)
 		if err != nil {
 			l.eng.Error("LatestEvents: creating a contract instance for parsing failed")
 			return nil, nil, err

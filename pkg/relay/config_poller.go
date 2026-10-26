@@ -79,7 +79,7 @@ func NewConfigPollerWithParams(ctx context.Context, lggr logger.Logger, client e
 		return nil, err
 	}
 
-	aggregatorContract, err := ocr2aggregator.NewOCR2Aggregator(aggregatorContractAddr, evmclient.AsContractBackend(client))
+	aggregatorContract, err := ocr2aggregator.NewOCR2Aggregator(aggregatorContractAddr, client)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func NewConfigPollerWithParams(ctx context.Context, lggr logger.Logger, client e
 
 	if configStoreAddr != nil {
 		cp.configStoreContractAddr = configStoreAddr
-		cp.configStoreContract, err = ocrconfigurationstoreevmsimple.NewOCRConfigurationStoreEVMSimple(*configStoreAddr, evmclient.AsContractBackend(client))
+		cp.configStoreContract, err = ocrconfigurationstoreevmsimple.NewOCRConfigurationStoreEVMSimple(*configStoreAddr, client)
 		if err != nil {
 			return nil, err
 		}
