@@ -39,6 +39,10 @@ func (t *transactionsConfig) MaxQueued() uint64 {
 	return uint64(*t.c.MaxQueued)
 }
 
+func (t *transactionsConfig) UnknownErrorRetryTimeout() time.Duration {
+	return t.c.UnknownErrorRetryTimeout.Duration()
+}
+
 func (t *transactionsConfig) TransactionManagerV2() TransactionManagerV2 {
 	return &transactionManagerV2Config{c: t.c.TransactionManagerV2}
 }

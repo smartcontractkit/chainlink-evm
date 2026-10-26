@@ -2,6 +2,7 @@ ChainID = '534352'
 ChainType = 'scroll'
 FinalityDepth = 10
 FinalityTagEnabled = true
+SafeTagSupported = false # chain dropped safe tag support
 LinkContractAddress = '0x548C6944cba02B9D1C0570102c89de64D258d3Ac'
 LogPollInterval = '5s'
 MinIncomingConfirmations = 1

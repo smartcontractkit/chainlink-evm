@@ -8,7 +8,7 @@ tidy: gomods ## Tidy go.mod and go.sum files
 
 .PHONY: mockery
 mockery: ## Install mockery
-	go install github.com/vektra/mockery/v2@v2.53.3
+	go install github.com/vektra/mockery/v2@v2.53.7
 
 .PHONY: protoc
 protoc: ## Install protoc

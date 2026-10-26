@@ -52,7 +52,7 @@ jobs:
 
       - name: Setup Postgres
         if: ${{ matrix.type.should-run == 'true' }}
-        uses: smartcontractkit/.github/actions/setup-postgres@7aa7ce23687ba493e9ba9c6ad47a063e60ae3433 # setup-postgres@0.1.0
+        uses: smartcontractkit/.github/actions/setup-postgres@4ff333f505dc9703b87933fdc742aca407bbd92a # setup-postgres/1.2.0
 
       - name: Setup DB
         if: ${{ matrix.type.should-run == 'true' }}
