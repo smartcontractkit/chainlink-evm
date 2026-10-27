@@ -210,7 +210,7 @@ func (c *SimulatedBackendClient) TransactionByHash(ctx context.Context, txHash c
 }
 
 func (c *SimulatedBackendClient) TransactionByHashWithOpts(ctx context.Context, txHash common.Hash, _ evmtypes.TransactionByHashOpts) (tx *types.Transaction, isPending bool, err error) {
-	tx, _, err = c.client.TransactionByHash(ctx, txHash)
+	tx, isPending, err = c.client.TransactionByHash(ctx, txHash)
 	return
 }
 
