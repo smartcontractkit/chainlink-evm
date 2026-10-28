@@ -48,9 +48,6 @@ compileContract vrf-compile testhelpers/VRFLoadTestOwnerlessConsumer
 compileContract vrf-compile testhelpers/VRFMockETHLINKAggregator
 compileContract vrf-compile testhelpers/Counter
 
-# Helper contracts
-compileContract vrf-compile interfaces/IAuthorizedReceiver
-
 # VRF V2 Plus
 compileContract vrfv2plus-compile interfaces/IVRFCoordinatorV2PlusInternal
 compileContract vrfv2plus-compile testhelpers/VRFV2PlusConsumerExample
