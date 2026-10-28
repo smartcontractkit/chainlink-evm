@@ -1,12 +1,5 @@
 package gethwrappers
 
-// v0.8.6 VRFConsumer
-//go:generate go run ./generation/wrap.go vrf VRFCoordinatorMock vrf_coordinator_mock
-//go:generate go run ./generation/wrap.go vrf VRFCoordinatorMock vrf_coordinator_mock
-//go:generate go run ./generation/wrap.go vrf VRFConsumer solidity_vrf_consumer_interface_v08
-//go:generate go run ./generation/wrap.go vrf VRFRequestIDBaseTestHelper solidity_vrf_request_id_v08
-//go:generate go run ./generation/wrap.go vrf VRFOwnerlessConsumerExample vrf_ownerless_consumer_example
-//go:generate go run ./generation/wrap.go vrf VRFLoadTestOwnerlessConsumer vrf_load_test_ownerless_consumer
 //go:generate go run ./generation/wrap.go vrf VRFLoadTestExternalSubOwner vrf_load_test_external_sub_owner
 //go:generate go run ./generation/wrap.go vrf VRFV2LoadTestWithMetrics vrf_load_test_with_metrics
 //go:generate go run ./generation/wrap.go vrf VRFV2OwnerTestConsumer vrf_owner_test_consumer
