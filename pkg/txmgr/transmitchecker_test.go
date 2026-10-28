@@ -51,24 +51,6 @@ func TestFactory(t *testing.T) {
 		require.IsType(t, &txmgr.VRFV1Checker{}, c)
 	})
 
-	t.Run("vrf v2 checker", func(t *testing.T) {
-		c, err := factory.BuildChecker(txmgr.TransmitCheckerSpec{
-			CheckerType:           txmgr.TransmitCheckerTypeVRFV2,
-			VRFCoordinatorAddress: testutils.NewAddressPtr(),
-			VRFRequestBlockNumber: big.NewInt(1),
-		})
-		require.NoError(t, err)
-		require.IsType(t, &txmgr.VRFV2Checker{}, c)
-
-		// request block number not provided should error out.
-		c, err = factory.BuildChecker(txmgr.TransmitCheckerSpec{
-			CheckerType:           txmgr.TransmitCheckerTypeVRFV2,
-			VRFCoordinatorAddress: testutils.NewAddressPtr(),
-		})
-		require.Error(t, err)
-		require.Nil(t, c)
-	})
-
 	t.Run("vrf v2 plus checker", func(t *testing.T) {
 		c, err := factory.BuildChecker(txmgr.TransmitCheckerSpec{
 			CheckerType:           txmgr.TransmitCheckerTypeVRFV2Plus,
@@ -76,7 +58,7 @@ func TestFactory(t *testing.T) {
 			VRFRequestBlockNumber: big.NewInt(1),
 		})
 		require.NoError(t, err)
-		require.IsType(t, &txmgr.VRFV2Checker{}, c)
+		require.IsType(t, &txmgr.VRFV2PlusChecker{}, c)
 
 		// request block number not provided should error out.
 		c, err = factory.BuildChecker(txmgr.TransmitCheckerSpec{
@@ -282,7 +264,7 @@ func TestTransmitCheckers(t *testing.T) {
 		})
 	})
 
-	t.Run("VRF V2", func(t *testing.T) {
+	t.Run("VRF V2 Plus", func(t *testing.T) {
 		testDefaultSubID := uint64(2)
 		testDefaultMaxLink := "1000000000000000000"
 
@@ -316,7 +298,7 @@ func TestTransmitCheckers(t *testing.T) {
 			}
 		}
 
-		checker := txmgr.VRFV2Checker{
+		checker := txmgr.VRFV2PlusChecker{
 			GetCommitment: func(_ *bind.CallOpts, requestID *big.Int) ([32]byte, error) {
 				if requestID.String() == "1" {
 					// Request 1 is already fulfilled

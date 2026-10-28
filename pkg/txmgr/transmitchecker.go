@@ -18,7 +18,6 @@ import (
 	txmgrtypes "github.com/smartcontractkit/chainlink-framework/chains/txmgr/types"
 
 	v1 "github.com/smartcontractkit/chainlink-evm/gethwrappers/generated/solidity_vrf_coordinator_interface"
-	v2 "github.com/smartcontractkit/chainlink-evm/gethwrappers/generated/vrf_coordinator_v2"
 	"github.com/smartcontractkit/chainlink-evm/gethwrappers/generated/vrf_coordinator_v2plus_interface"
 	evmclient "github.com/smartcontractkit/chainlink-evm/pkg/client"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
@@ -37,7 +36,7 @@ var (
 	_ TransmitCheckerFactory = &CheckerFactory{}
 	_ TransmitChecker        = &SimulateChecker{}
 	_ TransmitChecker        = &VRFV1Checker{}
-	_ TransmitChecker        = &VRFV2Checker{}
+	_ TransmitChecker        = &VRFV2PlusChecker{}
 )
 
 // CheckerFactory is a real implementation of TransmitCheckerFactory.
@@ -63,23 +62,6 @@ func (c *CheckerFactory) BuildChecker(spec TransmitCheckerSpec) (TransmitChecker
 			Callbacks: coord.Callbacks,
 			Client:    c.Client,
 		}, nil
-	case TransmitCheckerTypeVRFV2:
-		if spec.VRFCoordinatorAddress == nil {
-			return nil, pkgerrors.Errorf("malformed checker, expected non-nil VRFCoordinatorAddress, got: %v", spec)
-		}
-		coord, err := v2.NewVRFCoordinatorV2(*spec.VRFCoordinatorAddress, c.Client)
-		if err != nil {
-			return nil, pkgerrors.Wrapf(err,
-				"failed to create VRF V2 coordinator at address %v", spec.VRFCoordinatorAddress)
-		}
-		if spec.VRFRequestBlockNumber == nil {
-			return nil, pkgerrors.New("VRFRequestBlockNumber parameter must be non-nil")
-		}
-		return &VRFV2Checker{
-			GetCommitment:      coord.GetCommitment,
-			HeadByNumber:       c.Client.HeadByNumber,
-			RequestBlockNumber: spec.VRFRequestBlockNumber,
-		}, nil
 	case TransmitCheckerTypeVRFV2Plus:
 		if spec.VRFCoordinatorAddress == nil {
 			return nil, pkgerrors.Errorf("malformed checker, expected non-nil VRFCoordinatorAddress, got: %v", spec)
@@ -87,12 +69,12 @@ func (c *CheckerFactory) BuildChecker(spec TransmitCheckerSpec) (TransmitChecker
 		coord, err := vrf_coordinator_v2plus_interface.NewIVRFCoordinatorV2PlusInternal(*spec.VRFCoordinatorAddress, c.Client)
 		if err != nil {
 			return nil, pkgerrors.Wrapf(err,
-				"failed to create VRF V2 coordinator plus at address %v", spec.VRFCoordinatorAddress)
+				"failed to create VRF V2 Plus coordinator at address %v", spec.VRFCoordinatorAddress)
 		}
 		if spec.VRFRequestBlockNumber == nil {
 			return nil, pkgerrors.New("VRFRequestBlockNumber parameter must be non-nil")
 		}
-		return &VRFV2Checker{
+		return &VRFV2PlusChecker{
 			GetCommitment:      coord.SRequestCommitments,
 			HeadByNumber:       c.Client.HeadByNumber,
 			RequestBlockNumber: spec.VRFRequestBlockNumber,
@@ -275,24 +257,24 @@ func (v *VRFV1Checker) Check(
 	return nil
 }
 
-// VRFV2Checker is an implementation of TransmitChecker that checks whether a VRF V2 fulfillment
-// has already been fulfilled.
-type VRFV2Checker struct {
+// VRFV2PlusChecker is an implementation of TransmitChecker that checks whether a VRF V2 Plus
+// fulfillment has already been fulfilled.
+type VRFV2PlusChecker struct {
 
-	// GetCommitment checks whether a VRF V2 request has been fulfilled on the VRFCoordinatorV2
-	// Solidity contract.
+	// GetCommitment checks whether a VRF V2 Plus request has been fulfilled on the
+	// VRFCoordinatorV2_5 Solidity contract, via IVRFCoordinatorV2PlusInternal.
 	GetCommitment func(opts *bind.CallOpts, requestID *big.Int) ([32]byte, error)
 
 	// HeadByNumber fetches the head given the number. If nil is provided,
 	// the latest header is fetched.
 	HeadByNumber func(ctx context.Context, n *big.Int) (*evmtypes.Head, error)
 
-	// RequestBlockNumber is the block number of the VRFV2 request.
+	// RequestBlockNumber is the block number of the VRF V2 Plus request.
 	RequestBlockNumber *big.Int
 }
 
 // Check satisfies the TransmitChecker interface.
-func (v *VRFV2Checker) Check(
+func (v *VRFV2PlusChecker) Check(
 	ctx context.Context,
 	l logger.SugaredLogger,
 	tx Tx,
