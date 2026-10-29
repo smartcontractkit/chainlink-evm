@@ -31,20 +31,11 @@ compileContract() {
   cp "$CONTRACTS_DIR"/solc/$PROJECT/"$contract"/"$contract".sol/"$contract".abi.json "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"/"$contract".abi.json
 }
 
-# VRF
-compileContract vrf-compile VRFRequestIDBase
-compileContract vrf-compile VRFConsumerBase
-compileContract vrf-compile testhelpers/VRFConsumer
-compileContract vrf-compile testhelpers/VRFRequestIDBaseTestHelper
-compileContract vrf-compile mocks/VRFCoordinatorMock
-
 # VRF Helpers
 compileContract vrf-compile testhelpers/ChainSpecificUtilHelper
 compileContract vrf-compile testhelpers/VRFTestHelper
 
 # VRF Consumers and Mocks
-compileContract vrf-compile testhelpers/VRFOwnerlessConsumerExample
-compileContract vrf-compile testhelpers/VRFLoadTestOwnerlessConsumer
 compileContract vrf-compile testhelpers/VRFMockETHLINKAggregator
 compileContract vrf-compile testhelpers/Counter
 
