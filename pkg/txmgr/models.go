@@ -61,14 +61,6 @@ const (
 	// chain.
 	TransmitCheckerTypeSimulate = txmgrtypes.TransmitCheckerType("simulate")
 
-	// TransmitCheckerTypeVRFV1 is a checker that will not submit VRF V1 fulfillment requests that
-	// have already been fulfilled. This could happen if the request was fulfilled by another node.
-	TransmitCheckerTypeVRFV1 = txmgrtypes.TransmitCheckerType("vrf_v1")
-
-	// TransmitCheckerTypeVRFV2 is a checker that will not submit VRF V2 fulfillment requests that
-	// have already been fulfilled. This could happen if the request was fulfilled by another node.
-	TransmitCheckerTypeVRFV2 = txmgrtypes.TransmitCheckerType("vrf_v2")
-
 	// TransmitCheckerTypeVRFV2Plus is a checker that will not submit VRF V2 plus fulfillment requests that
 	// have already been fulfilled. This could happen if the request was fulfilled by another node.
 	TransmitCheckerTypeVRFV2Plus = txmgrtypes.TransmitCheckerType("vrf_v2plus")
