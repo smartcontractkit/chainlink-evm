@@ -31,13 +31,6 @@ compileContract() {
   cp "$CONTRACTS_DIR"/solc/$PROJECT/"$contract"/"$contract".sol/"$contract".abi.json "$CONTRACTS_DIR"/abi/v0.8/"$PROJECT"/"$contract".abi.json
 }
 
-# VRF
-compileContract vrf-compile VRFRequestIDBase
-compileContract vrf-compile VRFConsumerBase
-compileContract vrf-compile testhelpers/VRFConsumer
-compileContract vrf-compile testhelpers/VRFRequestIDBaseTestHelper
-compileContract vrf-compile mocks/VRFCoordinatorMock
-#
 ## VRF V2
 compileContract vrf-compile VRFConsumerBaseV2
 compileContract vrf-compile testhelpers/ChainSpecificUtilHelper
@@ -67,8 +60,6 @@ compileContract vrf-compile testhelpers/VRFv2Consumer
 # VRF Consumers and Mocks
 compileContract vrf-compile testhelpers/VRFExternalSubOwnerExample
 compileContract vrf-compile testhelpers/VRFSingleConsumerExample
-compileContract vrf-compile testhelpers/VRFOwnerlessConsumerExample
-compileContract vrf-compile testhelpers/VRFLoadTestOwnerlessConsumer
 compileContract vrf-compile testhelpers/VRFLoadTestExternalSubOwner
 compileContract vrf-compile testhelpers/VRFV2LoadTestWithMetrics
 compileContract vrf-compile testhelpers/VRFV2OwnerTestConsumer
