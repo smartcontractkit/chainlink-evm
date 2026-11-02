@@ -120,6 +120,7 @@ PriceMax = '79.228162514264337593543950335 gether'
 [NodePool]
 PollFailureThreshold = 5
 PollSuccessThreshold = 0
+RedialBackoffMin = '1s'
 PollInterval = '1m0s'
 SelectionMode = 'HighestHead'
 SyncThreshold = 13

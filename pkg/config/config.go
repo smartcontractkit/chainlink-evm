@@ -202,6 +202,7 @@ type Workflow interface {
 type NodePool interface {
 	PollFailureThreshold() uint32
 	PollSuccessThreshold() uint32
+	RedialBackoffMin() time.Duration
 	PollInterval() time.Duration
 	SelectionMode() string
 	SyncThreshold() uint32

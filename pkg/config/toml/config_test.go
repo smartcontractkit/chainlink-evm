@@ -372,6 +372,7 @@ var fullConfig = EVMConfig{
 		NodePool: NodePool{
 			PollFailureThreshold:                new(uint32(5)),
 			PollSuccessThreshold:                new(uint32(0)),
+			RedialBackoffMin:                    config.MustNewDuration(time.Second),
 			PollInterval:                        config.MustNewDuration(time.Minute),
 			SelectionMode:                       new(multinode.NodeSelectionModeHighestHead),
 			SyncThreshold:                       new(uint32(13)),

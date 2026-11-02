@@ -957,6 +957,7 @@ GasEstimator.PriceMax overrides the maximum gas price for this key. See EVM.GasE
 [NodePool]
 PollFailureThreshold = 5 # Default
 PollSuccessThreshold = 0 # Default
+RedialBackoffMin = '1s' # Default
 PollInterval = '10s' # Default
 SelectionMode = 'HighestHead' # Default
 SyncThreshold = 5 # Default
@@ -990,6 +991,15 @@ PollSuccessThreshold = 0 # Default
 PollSuccessThreshold indicates how many consecutive polls must succeed in order to mark a node as alive once it has been marked as unreachable.
 
 Set to zero to require no successful polls (previous behavior).
+
+### RedialBackoffMin
+```toml
+RedialBackoffMin = '1s' # Default
+```
+RedialBackoffMin is how long to wait before the first redial of a node that has been marked as unreachable.
+Later redials back off exponentially, with jitter, up to 15s. Values of 15s or more always wait 15s.
+
+Set to zero to redial immediately. Later redials then back off starting from 100ms.
 
 ### PollInterval
 ```toml

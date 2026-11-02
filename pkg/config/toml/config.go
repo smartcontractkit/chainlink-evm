@@ -1105,6 +1105,7 @@ func (r *ClientErrors) setFrom(f *ClientErrors) bool {
 type NodePool struct {
 	PollFailureThreshold                *uint32
 	PollSuccessThreshold                *uint32
+	RedialBackoffMin                    *commonconfig.Duration
 	PollInterval                        *commonconfig.Duration
 	SelectionMode                       *string
 	SyncThreshold                       *uint32
@@ -1127,6 +1128,9 @@ func (p *NodePool) setFrom(f *NodePool) {
 	}
 	if v := f.PollSuccessThreshold; v != nil {
 		p.PollSuccessThreshold = v
+	}
+	if v := f.RedialBackoffMin; v != nil {
+		p.RedialBackoffMin = v
 	}
 	if v := f.PollInterval; v != nil {
 		p.PollInterval = v

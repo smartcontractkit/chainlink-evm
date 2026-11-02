@@ -30,6 +30,7 @@ func TestNewEvmClient(t *testing.T) {
 	leaseDuration := 0 * time.Second
 	pollFailureThreshold := new(uint32(5))
 	pollSuccessThreshold := new(uint32(0))
+	redialBackoffMin := time.Second
 	pollInterval := 10 * time.Second
 	syncThreshold := new(uint32(5))
 	nodeIsSyncingEnabled := new(false)
@@ -53,7 +54,7 @@ func TestNewEvmClient(t *testing.T) {
 	finalityTagEnabled := new(true)
 	SafeTagSupported := new(true)
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(selectionMode, leaseDuration, chainTypeStr, nodeConfigs,
-		pollFailureThreshold, pollSuccessThreshold, pollInterval, syncThreshold, nodeIsSyncingEnabled, noNewHeadsThreshold, finalityDepth,
+		pollFailureThreshold, pollSuccessThreshold, redialBackoffMin, pollInterval, syncThreshold, nodeIsSyncingEnabled, noNewHeadsThreshold, finalityDepth,
 		finalityTagEnabled, SafeTagSupported, finalizedBlockOffset, enforceRepeatableRead, deathDeclarationDelay, noNewFinalizedBlocksThreshold,
 		finalizedBlockPollInterval, newHeadsPollInterval, confirmationTimeout, safeDepth)
 	require.NoError(t, err)
@@ -80,7 +81,7 @@ func TestChainClientMetrics(t *testing.T) {
 		},
 	}
 	chainCfg, nodePool, nodes, err := client.NewClientConfigs(new("HighestHead"), time.Duration(0), "", nodeConfigs,
-		new(uint32(5)), new(uint32(0)), 10*time.Second, new(uint32(5)), new(false), time.Minute, new(uint32(5)), new(false), new(false),
+		new(uint32(5)), new(uint32(0)), time.Second, 10*time.Second, new(uint32(5)), new(false), time.Minute, new(uint32(5)), new(false), new(false),
 		new(uint32(5)), new(false), 10*time.Second, 10*time.Second, 10*time.Second, 10*time.Second, 60*time.Second, new(uint32(10)))
 	require.NoError(t, err)
 

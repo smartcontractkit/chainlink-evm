@@ -435,6 +435,11 @@ PollFailureThreshold = 5 # Default
 #
 # Set to zero to require no successful polls (previous behavior).
 PollSuccessThreshold = 0 # Default
+# RedialBackoffMin is how long to wait before the first redial of a node that has been marked as unreachable.
+# Later redials back off exponentially, with jitter, up to 15s. Values of 15s or more always wait 15s.
+#
+# Set to zero to redial immediately. Later redials then back off starting from 100ms.
+RedialBackoffMin = '1s' # Default
 # PollInterval controls how often to poll the node to check for liveness.
 #
 # Set to zero to disable poll checking.
