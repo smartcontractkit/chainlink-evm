@@ -145,7 +145,12 @@ func NewTxmV2(
 	}
 
 	feeBoost := txmV2Config.DualBroadcast() != nil && *txmV2Config.DualBroadcast() && txmV2Config.FeeBoost()
-	attemptBuilder := txm.NewAttemptBuilder(fCfg.PriceMaxKey, estimator, keyStore, gasEstimatorConfig.LimitTransfer(), feeBoost)
+	attemptBuilder := txm.NewAttemptBuilderWithConfig(fCfg.PriceMaxKey, estimator, keyStore, txm.AttemptBuilderConfig{
+		EmptyTxLimitDefault: gasEstimatorConfig.LimitTransfer(),
+		FeeBoost:            feeBoost,
+		FeeMultiplier:       txmV2Config.FeeMultiplier(),
+		PriceDefault:        gasEstimatorConfig.PriceDefault(),
+	})
 	inMemoryStoreManager := storage.NewInMemoryStoreManager(lggr, chainID)
 	readRequestsToMultipleNodes := false
 	if txmV2Config.ReadRequestsToMultipleNodes() != nil && *txmV2Config.ReadRequestsToMultipleNodes() {
