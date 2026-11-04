@@ -21,8 +21,109 @@ import (
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
 )
 
+func TestNewAttemptBuilder_BackwardCompatibility(t *testing.T) {
+	for _, boosted := range []bool{false, true} {
+		estimator := mocks.NewEvmFeeEstimator(t)
+		method := "GetFee"
+		if boosted {
+			method = "GetMaxFee"
+		}
+		estimator.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(gas.EvmFee{GasPrice: assets.NewWeiI(10)}, uint64(100), nil).Once()
+		ab := NewAttemptBuilder(func(common.Address) *assets.Wei {
+			return assets.NewWeiI(100)
+		}, estimator, keystest.TxSigner(nil), 100, boosted)
+		nonce := uint64(1)
+		attempt, err := ab.NewAttempt(t.Context(), logger.Test(t), &types.Transaction{
+			Nonce: &nonce, SpecifiedGasLimit: 100,
+		}, false)
+		require.NoError(t, err)
+		assert.Equal(t, int64(10), attempt.Fee.GasPrice.Int64())
+		assert.Equal(t, uint64(100), attempt.GasLimit)
+	}
+}
+
+func TestAttemptBuilder_FeeMultiplier(t *testing.T) {
+	for _, tc := range []struct {
+		name                string
+		multiplier          float32
+		maxPrice            int64
+		wantTip             int64
+		wantCap             int64
+		priceDefault        int64
+		wantBoostTip        int64
+		wantBoostCap        int64
+		wantDynamicCap      int64
+		wantBoostDynamicCap int64
+	}{
+		{"zero defaults to one", 0, 100, 3, 10, 0, 3, 10, 10, 10},
+		{"zero with boosted floor", 0, 100, 3, 10, 15, 15, 15, 10, 22},
+		{"unchanged", 1, 100, 3, 10, 0, 3, 10, 10, 10},
+		{"double", 2, 100, 6, 20, 0, 6, 20, 13, 13},
+		{"fractional", 1.5, 100, 4, 15, 0, 4, 15, 11, 11},
+		{"capped fee cap", 2, 12, 6, 12, 0, 6, 12, 12, 12},
+		{"capped both", 2, 5, 5, 5, 0, 5, 5, 5, 5},
+		{"floor without multiplication", 1, 100, 3, 10, 15, 15, 15, 10, 22},
+		{"floor after multiplication", 2, 100, 6, 20, 15, 15, 20, 13, 22},
+		{"multiplied fees above floor", 2, 100, 6, 20, 5, 6, 20, 13, 13},
+		{"maximum overrides floor", 2, 12, 6, 12, 15, 12, 12, 12, 12},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, dynamic := range []bool{false, true} {
+				for _, boosted := range []bool{false, true} {
+					estimator := mocks.NewEvmFeeEstimator(t)
+					fee := gas.EvmFee{GasPrice: assets.NewWeiI(10)}
+					if dynamic {
+						fee = gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(3), GasFeeCap: assets.NewWeiI(10)}}
+					}
+					method := "GetFee"
+					if boosted {
+						method = "GetMaxFee"
+					}
+					estimator.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Return(fee, uint64(100), nil).Once()
+					ab := NewAttemptBuilderWithConfig(func(common.Address) *assets.Wei {
+						return assets.NewWeiI(tc.maxPrice)
+					}, estimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: boosted, FeeMultiplier: tc.multiplier, PriceDefault: assets.NewWeiI(tc.priceDefault)})
+					nonce := uint64(1)
+					tx := &types.Transaction{ID: 1, Nonce: &nonce, SpecifiedGasLimit: 100}
+					attempt, err := ab.NewAttempt(t.Context(), logger.Test(t), tx, dynamic)
+					require.NoError(t, err)
+					assert.Equal(t, uint64(100), attempt.GasLimit)
+					wantTip, wantCap := tc.wantTip, tc.wantCap
+					if boosted {
+						wantTip, wantCap = tc.wantBoostTip, tc.wantBoostCap
+					}
+					if dynamic {
+						wantCap = tc.wantDynamicCap
+						if boosted {
+							wantCap = tc.wantBoostDynamicCap
+						}
+						assert.Equal(t, wantTip, attempt.Fee.GasTipCap.Int64())
+						assert.Equal(t, wantCap, attempt.Fee.GasFeeCap.Int64())
+						assert.Equal(t, wantTip, attempt.SignedTransaction.GasTipCap().Int64())
+						assert.Equal(t, wantCap, attempt.SignedTransaction.GasFeeCap().Int64())
+						assert.Equal(t, int64(3), fee.GasTipCap.Int64())
+						assert.Equal(t, int64(10), fee.GasFeeCap.Int64())
+					} else {
+						assert.Equal(t, wantCap, attempt.Fee.GasPrice.Int64())
+						assert.Equal(t, wantCap, attempt.SignedTransaction.GasPrice().Int64())
+						assert.Equal(t, int64(10), fee.GasPrice.Int64())
+					}
+
+					estimator.On("BumpFee", mock.Anything, attempt.Fee, uint64(100), mock.Anything, mock.Anything).
+						Return(attempt.Fee, uint64(100), nil).Once()
+					bumped, err := ab.NewBumpAttempt(t.Context(), logger.Test(t), tx, *attempt)
+					require.NoError(t, err)
+					assert.Equal(t, attempt.Fee, bumped.Fee)
+				}
+			}
+		})
+	}
+}
+
 func TestAttemptBuilder_newLegacyAttempt(t *testing.T) {
-	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil), 100, false)
+	ab := NewAttemptBuilderWithConfig(nil, nil, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 	address := testutils.NewAddress()
 	lggr := logger.Test(t)
 	var gasLimit uint64 = 100
@@ -57,7 +158,7 @@ func TestAttemptBuilder_newLegacyAttempt(t *testing.T) {
 }
 
 func TestAttemptBuilder_newDynamicFeeAttempt(t *testing.T) {
-	ab := NewAttemptBuilder(nil, nil, keystest.TxSigner(nil), 100, false)
+	ab := NewAttemptBuilderWithConfig(nil, nil, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 	address := testutils.NewAddress()
 
 	lggr := logger.Test(t)
@@ -100,7 +201,7 @@ func TestAttemptBuilder_NewAttempt(t *testing.T) {
 	var nonce uint64 = 1
 	var specifiedGasLimit uint64 = 200
 	var emptyGasLimit uint64 = 100
-	ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), emptyGasLimit, false)
+	ab := NewAttemptBuilderWithConfig(priceMaxKey, mockEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: emptyGasLimit, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 	address := testutils.NewAddress()
 	lggr := logger.Test(t)
 
@@ -163,7 +264,7 @@ func TestAttemptBuilder_NewAttempt(t *testing.T) {
 
 	t.Run("uses SpecifiedGasLimit when feeBoost is enabled and tx is not purgeable", func(t *testing.T) {
 		boostEstimator := mocks.NewEvmFeeEstimator(t)
-		boostAb := NewAttemptBuilder(priceMaxKey, boostEstimator, keystest.TxSigner(nil), emptyGasLimit, true)
+		boostAb := NewAttemptBuilderWithConfig(priceMaxKey, boostEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: emptyGasLimit, FeeBoost: true, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 		tx := &types.Transaction{ID: 10, FromAddress: address, Nonce: &nonce, SpecifiedGasLimit: specifiedGasLimit}
 		boostEstimator.On("GetMaxFee", mock.Anything, mock.Anything, specifiedGasLimit, mock.Anything, mock.Anything, mock.Anything).
 			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, specifiedGasLimit, nil).Once()
@@ -175,7 +276,7 @@ func TestAttemptBuilder_NewAttempt(t *testing.T) {
 
 	t.Run("uses emptyTxLimitDefault when feeBoost is enabled and tx is purgeable", func(t *testing.T) {
 		boostEstimator := mocks.NewEvmFeeEstimator(t)
-		boostAb := NewAttemptBuilder(priceMaxKey, boostEstimator, keystest.TxSigner(nil), emptyGasLimit, true)
+		boostAb := NewAttemptBuilderWithConfig(priceMaxKey, boostEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: emptyGasLimit, FeeBoost: true, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 		tx := &types.Transaction{ID: 10, FromAddress: address, IsPurgeable: true, Nonce: &nonce, SpecifiedGasLimit: specifiedGasLimit}
 		boostEstimator.On("GetMaxFee", mock.Anything, mock.Anything, emptyGasLimit, mock.Anything, mock.Anything, mock.Anything).
 			Return(gas.EvmFee{GasPrice: assets.NewWeiI(100)}, emptyGasLimit, nil).Once()
@@ -196,7 +297,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("returns original attempt when AttemptCount is 0", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
+		ab := NewAttemptBuilderWithConfig(priceMaxKey, mockEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -220,7 +321,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("bumps once when AttemptCount is 1", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
+		ab := NewAttemptBuilderWithConfig(priceMaxKey, mockEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -246,7 +347,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("bumps N times when AttemptCount is N", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
+		ab := NewAttemptBuilderWithConfig(priceMaxKey, mockEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -277,7 +378,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("returns last valid attempt when BumpFee fails", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
+		ab := NewAttemptBuilderWithConfig(priceMaxKey, mockEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -306,7 +407,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("caps bumps at maxBumpThreshold", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
+		ab := NewAttemptBuilderWithConfig(priceMaxKey, mockEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 
 		tx := &types.Transaction{
 			ID:           10,
@@ -331,7 +432,7 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 
 	t.Run("returns max percentile attempt when transaction is purgeable", func(t *testing.T) {
 		mockEstimator := mocks.NewEvmFeeEstimator(t)
-		ab := NewAttemptBuilder(priceMaxKey, mockEstimator, keystest.TxSigner(nil), 100, false)
+		ab := NewAttemptBuilderWithConfig(priceMaxKey, mockEstimator, keystest.TxSigner(nil), AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: false, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
 
 		tx := &types.Transaction{
 			ID:           10,
