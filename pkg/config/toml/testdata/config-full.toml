@@ -54,6 +54,7 @@ ReadRequestsToMultipleNodes = false
 Bundles = false
 FastlaneAuctionRequestTimeout = '15s'
 FeeBoost = true
+FeeMultiplier = '1.5'
 
 [BalanceMonitor]
 Enabled = true
