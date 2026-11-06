@@ -218,6 +218,9 @@ throughput than batch 8, and the extra latency only increases the reorg window.
 
 ## 6. Results so far
 
+The first real-endpoint run is summarized in
+[RESULTS.md](RESULTS.md).
+
 ### 6.1 Zero-code baseline from existing metrics
 
 From the same histogram family used in the RCA, at 2026-11-04 14:15 UTC (stable
