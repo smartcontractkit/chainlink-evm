@@ -3,6 +3,7 @@ package toml
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"regexp"
 	"slices"
@@ -611,6 +612,7 @@ type TransactionManagerV2Config struct {
 	Bundles                       *bool                  `toml:",omitempty"`
 	FastlaneAuctionRequestTimeout *commonconfig.Duration `toml:",omitempty"`
 	FeeBoost                      *bool                  `toml:",omitempty"`
+	FeeMultiplier                 *decimal.Decimal       `toml:",omitempty"`
 }
 
 func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
@@ -641,9 +643,20 @@ func (t *TransactionManagerV2Config) setFrom(f *TransactionManagerV2Config) {
 	if v := f.FeeBoost; v != nil {
 		t.FeeBoost = f.FeeBoost
 	}
+	if v := f.FeeMultiplier; v != nil {
+		t.FeeMultiplier = v
+	}
 }
 
 func (t *TransactionManagerV2Config) ValidateConfig() (err error) {
+	if t.FeeMultiplier != nil && t.FeeMultiplier.LessThan(decimal.NewFromInt(1)) {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "FeeMultiplier", Value: t.FeeMultiplier, Msg: "must be greater than or equal to 1"})
+	}
+	if t.FeeMultiplier != nil {
+		if f, _ := t.FeeMultiplier.Float64(); math.IsInf(f, 0) {
+			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "FeeMultiplier", Value: t.FeeMultiplier, Msg: "must be representable as a finite float64"})
+		}
+	}
 	if t.Enabled != nil && *t.Enabled {
 		if t.BlockTime == nil {
 			err = multierr.Append(err, commonconfig.ErrMissing{Name: "BlockTime", Msg: "must be set if TransactionManagerV2 feature is enabled"})

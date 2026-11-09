@@ -390,6 +390,25 @@ func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
 		assert.Equal(t, expectedPriorityFeeThreshold, fee.GasTipCap)
 	})
 
+	t.Run("clamps tip cap to max price", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		feeHistoryResult := &ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward:      [][]*big.Int{{big.NewInt(10), big.NewInt(150)}}, // connectivity tip spikes above maxPrice
+			BaseFee:     []*big.Int{big.NewInt(5), big.NewInt(5)},
+		}
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(feeHistoryResult, nil).Once()
+
+		cfg := gas.FeeHistoryEstimatorConfig{BumpPercent: 20, RewardPercentile: 60, EIP1559: true, BlockHistorySize: 2}
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+
+		fee, err := u.GetMaxDynamicFee(maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, maxPrice, fee.GasTipCap)
+		assert.Equal(t, maxPrice, fee.GasFeeCap)
+	})
+
 	t.Run("caches the next base fee even when the rewards are all zero", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
 		baseFee := big.NewInt(5)

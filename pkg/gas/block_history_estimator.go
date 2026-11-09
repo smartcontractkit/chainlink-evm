@@ -218,7 +218,7 @@ func (b *BlockHistoryEstimator) GetLegacyGas(_ context.Context, _ []byte, gasLim
 	return
 }
 
-func (b *BlockHistoryEstimator) GetMaxLegacyGas(_ context.Context, _ []byte, _ uint64, maxGasPriceWei *assets.Wei, _ ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
+func (b *BlockHistoryEstimator) GetMaxLegacyGas(_ context.Context, _ []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, _ ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
 	if b.eConfig.EIP1559DynamicFees() {
 		return gasPrice, 0, errors.New("can't get max legacy gas, EIP1559 is enabled")
 	}
@@ -235,7 +235,7 @@ func (b *BlockHistoryEstimator) GetMaxLegacyGas(_ context.Context, _ []byte, _ u
 	if gasPrice == nil {
 		return gasPrice, 0, errors.New("BlockHistoryEstimator has not finished the first gas estimation yet")
 	}
-	return gasPrice, 0, nil
+	return assets.WeiMin(gasPrice, assets.WeiMin(maxGasPriceWei, b.eConfig.PriceMax())), gasLimit, nil
 }
 
 func (b *BlockHistoryEstimator) getGasPrice() *assets.Wei {
@@ -439,7 +439,9 @@ func (b *BlockHistoryEstimator) GetMaxDynamicFee(maxGasPriceWei *assets.Wei) (fe
 	if maxTipCap == nil || currentBaseFee == nil {
 		return fee, fmt.Errorf("BlockHistoryEstimator: no value for latest block base fee or tip cap: maxTipCap: %v, currentBaseFee: %v", maxTipCap, currentBaseFee)
 	}
-	maxFeeCap := calcFeeCap(currentBaseFee, int(b.bhConfig.EIP1559FeeCapBufferBlocks()), maxTipCap, maxGasPriceWei)
+	maxGasPrice := assets.WeiMin(maxGasPriceWei, b.eConfig.PriceMax())
+	maxTipCap = assets.WeiMin(maxTipCap, maxGasPrice)
+	maxFeeCap := calcFeeCap(currentBaseFee, int(b.bhConfig.EIP1559FeeCapBufferBlocks()), maxTipCap, maxGasPrice)
 	return DynamicFee{GasFeeCap: maxFeeCap, GasTipCap: maxTipCap}, nil
 }
 

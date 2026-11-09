@@ -3,6 +3,7 @@ package txm
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -18,21 +19,42 @@ import (
 // maxBumpThreshold controls the maximum number of bumps for an attempt.
 const maxBumpThreshold = 5
 
+type AttemptBuilderConfig struct {
+	EmptyTxLimitDefault uint64
+	FeeBoost            bool
+	FeeMultiplier       float64
+	PriceDefault        *assets.Wei // We use PriceDefault instead of PriceMin as this doesn't affect primary path.
+}
+
 type attemptBuilder struct {
 	gas.EvmFeeEstimator
-	priceMaxKey         func(common.Address) *assets.Wei
-	keystore            keys.TxSigner
-	emptyTxLimitDefault uint64
-	feeBoost            bool
+	priceMaxKey func(common.Address) *assets.Wei
+	keystore    keys.TxSigner
+	config      AttemptBuilderConfig
 }
 
 func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, emptyTxLimitDefault uint64, feeBoost bool) *attemptBuilder {
+	return NewAttemptBuilderWithConfig(priceMaxKey, estimator, keystore, AttemptBuilderConfig{
+		EmptyTxLimitDefault: emptyTxLimitDefault,
+		FeeBoost:            feeBoost,
+		FeeMultiplier:       1,
+		PriceDefault:        assets.NewWeiI(0),
+	})
+}
+
+func NewAttemptBuilderWithConfig(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, config AttemptBuilderConfig) *attemptBuilder {
+	// FeeMultiplier must be finite and >= 1, otherwise default to 1.
+	if !(config.FeeMultiplier >= 1) || math.IsInf(config.FeeMultiplier, 0) {
+		config.FeeMultiplier = 1
+	}
+	if config.PriceDefault == nil {
+		config.PriceDefault = assets.NewWeiI(0)
+	}
 	return &attemptBuilder{
-		priceMaxKey:         priceMaxKey,
-		EvmFeeEstimator:     estimator,
-		keystore:            keystore,
-		emptyTxLimitDefault: emptyTxLimitDefault,
-		feeBoost:            feeBoost,
+		priceMaxKey:     priceMaxKey,
+		EvmFeeEstimator: estimator,
+		keystore:        keystore,
+		config:          config,
 	}
 }
 
@@ -40,10 +62,10 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 	var fee gas.EvmFee
 	var estimatedGasLimit uint64
 	var err error
-	if tx.IsPurgeable || a.feeBoost {
+	if tx.IsPurgeable || a.config.FeeBoost {
 		gasLimit := tx.SpecifiedGasLimit
 		if tx.IsPurgeable {
-			gasLimit = a.emptyTxLimitDefault
+			gasLimit = a.config.EmptyTxLimitDefault
 		}
 		fee, estimatedGasLimit, err = a.GetMaxFee(ctx, tx.Data, gasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
 		if err != nil {
@@ -53,6 +75,28 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 		fee, estimatedGasLimit, err = a.GetFee(ctx, tx.Data, tx.SpecifiedGasLimit, a.priceMaxKey(tx.FromAddress), &tx.FromAddress, &tx.ToAddress)
 		if err != nil {
 			return nil, err
+		}
+	}
+	// Scale fees, applying PriceDefault as a floor only with FeeBoost; preserve the EIP-1559 base-fee buffer by adding only the tip increase to the fee cap.
+	if a.config.FeeMultiplier != 1 || a.config.FeeBoost {
+		maxPrice := a.priceMaxKey(tx.FromAddress)
+		multiply := func(priceWei *assets.Wei) *assets.Wei {
+			unroundedMultipliedPrice := new(big.Float).Mul(new(big.Float).SetInt(priceWei.ToInt()), big.NewFloat(a.config.FeeMultiplier))
+			multipliedPrice, _ := unroundedMultipliedPrice.Add(unroundedMultipliedPrice, big.NewFloat(0.5)).Int(nil) // round to nearest wei to absorb float error
+			multipliedPriceWei := assets.NewWei(multipliedPrice)
+			if a.config.FeeBoost {
+				multipliedPriceWei = assets.WeiMax(multipliedPriceWei, a.config.PriceDefault)
+			}
+			return assets.WeiMin(multipliedPriceWei, maxPrice)
+		}
+		if fee.GasPrice != nil {
+			fee.GasPrice = multiply(fee.GasPrice)
+		}
+		if fee.ValidDynamic() {
+			multipliedTipCap := multiply(fee.GasTipCap)
+			// Floor the fee cap at the tip cap so it never goes below it (or negative) when the tip cap gets clamped down.
+			fee.GasFeeCap = assets.WeiMin(assets.WeiMax(fee.GasFeeCap.Add(multipliedTipCap.Sub(fee.GasTipCap)), multipliedTipCap), maxPrice)
+			fee.GasTipCap = multipliedTipCap
 		}
 	}
 	txType := evmtypes.LegacyTxType
@@ -65,7 +109,7 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 func (a *attemptBuilder) NewBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, previousAttempt types.Attempt) (*types.Attempt, error) {
 	gasLimit := tx.SpecifiedGasLimit
 	if tx.IsPurgeable {
-		gasLimit = a.emptyTxLimitDefault
+		gasLimit = a.config.EmptyTxLimitDefault
 	}
 	bumpedFee, bumpedFeeLimit, err := a.EvmFeeEstimator.BumpFee(ctx, previousAttempt.Fee, gasLimit, a.priceMaxKey(tx.FromAddress), nil)
 	if err != nil {
@@ -82,7 +126,7 @@ func (a *attemptBuilder) NewAgnosticBumpAttempt(ctx context.Context, lggr logger
 		return
 	}
 
-	if tx.IsPurgeable || a.feeBoost {
+	if tx.IsPurgeable || a.config.FeeBoost {
 		return
 	}
 

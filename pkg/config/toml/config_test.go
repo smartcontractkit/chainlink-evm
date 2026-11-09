@@ -93,6 +93,27 @@ func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
 	assert.Contains(t, err.Error(), "RPCDefaultBatchSize")
 }
 
+func TestTransactionManagerV2FeeMultiplier(t *testing.T) {
+	for _, value := range []string{"0", "-1", "0.9", "1", "1.5", "2", "1e100", "1e400"} {
+		t.Run(value, func(t *testing.T) {
+			var cfg TransactionManagerV2Config
+			require.NoError(t, toml.Unmarshal([]byte("FeeMultiplier = '"+value+"'"), &cfg))
+			require.NotNil(t, cfg.FeeMultiplier)
+			if cfg.FeeMultiplier.LessThan(decimal.NewFromInt(1)) || value == "1e400" {
+				require.ErrorContains(t, cfg.ValidateConfig(), "FeeMultiplier")
+			} else {
+				require.NoError(t, cfg.ValidateConfig())
+			}
+			var merged TransactionManagerV2Config
+			merged.setFrom(&cfg)
+			require.Equal(t, cfg.FeeMultiplier, merged.FeeMultiplier)
+			merged.setFrom(&TransactionManagerV2Config{})
+			require.Equal(t, cfg.FeeMultiplier, merged.FeeMultiplier)
+		})
+	}
+	require.NoError(t, (&TransactionManagerV2Config{}).ValidateConfig())
+}
+
 func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown := Defaults(nil)
 
@@ -114,6 +135,7 @@ func TestDefaults_fieldsNotNil(t *testing.T) {
 	unknown.Transactions.TransactionManagerV2.Bundles = new(false)
 	unknown.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = new(config.Duration)
 	unknown.Transactions.TransactionManagerV2.FeeBoost = new(false)
+	unknown.Transactions.TransactionManagerV2.FeeMultiplier = new(decimal.Decimal)
 	unknown.Transactions.AutoPurge.Threshold = new(uint32(0))
 	unknown.Transactions.AutoPurge.MinAttempts = new(uint32(0))
 	unknown.Transactions.AutoPurge.DetectionApiUrl = new(config.URL)
@@ -216,6 +238,7 @@ func TestDocs(t *testing.T) {
 		docDefaults.Transactions.TransactionManagerV2.Bundles = nil
 		docDefaults.Transactions.TransactionManagerV2.FastlaneAuctionRequestTimeout = nil
 		docDefaults.Transactions.TransactionManagerV2.FeeBoost = nil
+		docDefaults.Transactions.TransactionManagerV2.FeeMultiplier = nil
 
 		// Fallback DA oracle is not set
 		docDefaults.GasEstimator.DAOracle = DAOracle{}
@@ -356,6 +379,7 @@ var fullConfig = EVMConfig{
 				CustomURLs:                    []*config.URL{config.MustParseURL("http://txs.org"), config.MustParseURL("http://txs.org/secondary")},
 				FastlaneAuctionRequestTimeout: config.MustNewDuration(15 * time.Second),
 				FeeBoost:                      new(true),
+				FeeMultiplier:                 new(decimal.RequireFromString("1.5")),
 			},
 		},
 
