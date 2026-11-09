@@ -2079,11 +2079,18 @@ func TestBlockHistoryEstimator_GetMaxLegacyGas(t *testing.T) {
 		// The max percentile gas price should be set based on CheckInclusionPercentile (90th percentile)
 		// from the last CheckInclusionBlocks (4) blocks
 		assert.Greater(t, gasPrice.Int64(), int64(0))
-		assert.Equal(t, uint64(0), limit) // GetMaxLegacyGas always returns 0 for chainSpecificGasLimit
+		assert.Equal(t, uint64(10000), limit) // GetMaxLegacyGas passes through the provided gas limit
 
 		// Verify it matches the max percentile gas price
 		expectedMaxPercentileGasPrice := gas.GetMaxPercentileGasPrice(bhe)
 		assert.Equal(t, expectedMaxPercentileGasPrice, gasPrice)
+
+		// Clamped to the max gas price when the percentile price exceeds it
+		keyMax := assets.NewWeiI(2000)
+		require.Positive(t, expectedMaxPercentileGasPrice.Cmp(keyMax))
+		gasPrice, _, err = bhe.GetMaxLegacyGas(t.Context(), make([]byte, 0), 10000, keyMax)
+		require.NoError(t, err)
+		assert.Equal(t, keyMax, gasPrice)
 	})
 }
 
@@ -2271,6 +2278,28 @@ func TestBlockHistoryEstimator_GetMaxDynamicFee(t *testing.T) {
 		require.NotNil(t, latestBaseFee)
 		assert.Greater(t, fee.GasFeeCap.Int64(), int64(0))
 		assert.LessOrEqual(t, fee.GasFeeCap.Int64(), maxGasPrice.Int64())
+	})
+
+	t.Run("clamps tip cap to max gas price", func(t *testing.T) {
+		bhe := newBlockHistoryEstimator(t, nil, defaultChainType, geCfg, bhCfg, l1Oracle)
+		blocks := []evmtypes.Block{
+			{BaseFeePerGas: assets.NewWeiI(100000), Number: 0, Hash: utils.NewHash(), Transactions: dynamicFeeTransactionsFromTipCaps(5000, 6000, 7000)},
+			{BaseFeePerGas: assets.NewWeiI(100000), Number: 1, Hash: utils.NewHash(), Transactions: dynamicFeeTransactionsFromTipCaps(8000, 9000, 10000)},
+		}
+		gas.SetRollingBlockHistory(bhe, blocks)
+		h := testutils.Head(1)
+		h.BaseFeePerGas = assets.NewWeiI(100000)
+		bhe.Recalculate(t.Context(), h)
+		gas.SimulateStart(t, bhe)
+		gas.SetInitialFetch(bhe, true)
+		bhe.OnNewLongestChain(t.Context(), h)
+
+		keyMax := assets.NewWeiI(2000) // below the percentile tip cap
+		require.Positive(t, gas.GetMaxPercentileTipCap(bhe).Cmp(keyMax))
+		fee, err := bhe.GetMaxDynamicFee(keyMax)
+		require.NoError(t, err)
+		assert.Equal(t, keyMax, fee.GasTipCap)
+		assert.Equal(t, keyMax, fee.GasFeeCap)
 	})
 }
 

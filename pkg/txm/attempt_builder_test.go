@@ -2,6 +2,7 @@ package txm
 
 import (
 	"errors"
+	"math"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -43,6 +44,38 @@ func TestNewAttemptBuilder_BackwardCompatibility(t *testing.T) {
 	}
 }
 
+func TestAttemptBuilder_FeeBoostTipAboveMaxPrice(t *testing.T) {
+	// Regression: estimator returned tip (~150 gwei) > fee cap (20 gwei = key max). Clamping the tip
+	// used to drive the fee cap negative (20 + (20 - 150) gwei).
+	gwei := func(n int64) *assets.Wei { return assets.GWei(n) }
+	estimator := mocks.NewEvmFeeEstimator(t)
+	estimator.On("GetMaxFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: gwei(150).Add(assets.NewWeiI(8)), GasFeeCap: gwei(20)}}, uint64(100), nil).Once()
+	ab := NewAttemptBuilderWithConfig(func(common.Address) *assets.Wei { return gwei(20) }, estimator, keystest.TxSigner(nil),
+		AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: true, FeeMultiplier: 1, PriceDefault: assets.NewWeiI(0)})
+	nonce := uint64(1)
+	tx := &types.Transaction{ID: 1, Nonce: &nonce, SpecifiedGasLimit: 100}
+	attempt, err := ab.NewAttempt(t.Context(), logger.Test(t), tx, true)
+	require.NoError(t, err)
+	assert.Equal(t, gwei(20), attempt.Fee.GasTipCap)
+	assert.Equal(t, gwei(20), attempt.Fee.GasFeeCap)
+	assert.Equal(t, 1, attempt.SignedTransaction.GasFeeCap().Sign())
+}
+
+func TestAttemptBuilder_NilPriceDefault(t *testing.T) {
+	estimator := mocks.NewEvmFeeEstimator(t)
+	estimator.On("GetMaxFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{DynamicFee: gas.DynamicFee{GasTipCap: assets.NewWeiI(3), GasFeeCap: assets.NewWeiI(10)}}, uint64(100), nil).Once()
+	ab := NewAttemptBuilderWithConfig(func(common.Address) *assets.Wei { return assets.NewWeiI(100) }, estimator, keystest.TxSigner(nil),
+		AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeBoost: true, FeeMultiplier: 1})
+	nonce := uint64(1)
+	tx := &types.Transaction{ID: 1, Nonce: &nonce, SpecifiedGasLimit: 100}
+	attempt, err := ab.NewAttempt(t.Context(), logger.Test(t), tx, true)
+	require.NoError(t, err)
+	assert.Equal(t, int64(3), attempt.Fee.GasTipCap.Int64())
+	assert.Equal(t, int64(10), attempt.Fee.GasFeeCap.Int64())
+}
+
 func TestAttemptBuilder_FeeMultiplier(t *testing.T) {
 	for _, tc := range []struct {
 		name                string
@@ -57,6 +90,10 @@ func TestAttemptBuilder_FeeMultiplier(t *testing.T) {
 		wantBoostDynamicCap int64
 	}{
 		{"zero defaults to one", 0, 100, 3, 10, 0, 3, 10, 10, 10},
+		{"negative defaults to one", -1, 100, 3, 10, 0, 3, 10, 10, 10},
+		{"fractional below one defaults to one", 0.5, 100, 3, 10, 0, 3, 10, 10, 10},
+		{"NaN defaults to one", float32(math.NaN()), 100, 3, 10, 0, 3, 10, 10, 10},
+		{"Inf defaults to one", float32(math.Inf(1)), 100, 3, 10, 0, 3, 10, 10, 10},
 		{"zero with boosted floor", 0, 100, 3, 10, 15, 15, 15, 10, 22},
 		{"unchanged", 1, 100, 3, 10, 0, 3, 10, 10, 10},
 		{"double", 2, 100, 6, 20, 0, 6, 20, 13, 13},

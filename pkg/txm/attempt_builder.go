@@ -3,6 +3,7 @@ package txm
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -42,9 +43,12 @@ func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator g
 }
 
 func NewAttemptBuilderWithConfig(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, config AttemptBuilderConfig) *attemptBuilder {
-	// Safely set the FeeMultiplier to 1 if it is not set to avoid multiplication by zero.
-	if config.FeeMultiplier == 0 {
+	// FeeMultiplier must be finite and >= 1 otherwise default to 1.
+	if m := float64(config.FeeMultiplier); !(m >= 1) || math.IsInf(m, 0) {
 		config.FeeMultiplier = 1
+	}
+	if config.PriceDefault == nil {
+		config.PriceDefault = assets.NewWeiI(0)
 	}
 	return &attemptBuilder{
 		priceMaxKey:     priceMaxKey,
@@ -88,9 +92,10 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 			fee.GasPrice = multiply(fee.GasPrice)
 		}
 		if fee.ValidDynamic() {
-			tipCap := multiply(fee.GasTipCap)
-			fee.GasFeeCap = assets.WeiMin(fee.GasFeeCap.Add(tipCap.Sub(fee.GasTipCap)), maxPrice)
-			fee.GasTipCap = tipCap
+			multipliedTipCap := multiply(fee.GasTipCap)
+			// Floor the fee cap at the tip cap so it never goes below it (or negative) when the tip cap gets clamped down.
+			fee.GasFeeCap = assets.WeiMin(assets.WeiMax(fee.GasFeeCap.Add(multipliedTipCap.Sub(fee.GasTipCap)), multipliedTipCap), maxPrice)
+			fee.GasTipCap = multipliedTipCap
 		}
 	}
 	txType := evmtypes.LegacyTxType
