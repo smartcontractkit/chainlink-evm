@@ -94,12 +94,12 @@ func TestEVMConfig_ValidateConfig_RPCDefaultBatchSize(t *testing.T) {
 }
 
 func TestTransactionManagerV2FeeMultiplier(t *testing.T) {
-	for _, value := range []string{"0", "-1", "0.9", "1", "1.5", "2", "1e100"} {
+	for _, value := range []string{"0", "-1", "0.9", "1", "1.5", "2", "1e100", "1e400"} {
 		t.Run(value, func(t *testing.T) {
 			var cfg TransactionManagerV2Config
 			require.NoError(t, toml.Unmarshal([]byte("FeeMultiplier = '"+value+"'"), &cfg))
 			require.NotNil(t, cfg.FeeMultiplier)
-			if cfg.FeeMultiplier.LessThan(decimal.NewFromInt(1)) || value == "1e100" {
+			if cfg.FeeMultiplier.LessThan(decimal.NewFromInt(1)) || value == "1e400" {
 				require.ErrorContains(t, cfg.ValidateConfig(), "FeeMultiplier")
 			} else {
 				require.NoError(t, cfg.ValidateConfig())

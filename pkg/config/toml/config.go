@@ -653,9 +653,8 @@ func (t *TransactionManagerV2Config) ValidateConfig() (err error) {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "FeeMultiplier", Value: t.FeeMultiplier, Msg: "must be greater than or equal to 1"})
 	}
 	if t.FeeMultiplier != nil {
-		f, _ := t.FeeMultiplier.BigFloat().Float32()
-		if math.IsInf(float64(f), 0) {
-			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "FeeMultiplier", Value: t.FeeMultiplier, Msg: "must be representable as a finite float32"})
+		if f, _ := t.FeeMultiplier.Float64(); math.IsInf(f, 0) {
+			err = multierr.Append(err, commonconfig.ErrInvalid{Name: "FeeMultiplier", Value: t.FeeMultiplier, Msg: "must be representable as a finite float64"})
 		}
 	}
 	if t.Enabled != nil && *t.Enabled {

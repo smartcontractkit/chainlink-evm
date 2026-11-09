@@ -21,13 +21,13 @@ import (
 
 func TestChainScopedConfig_FeeMultiplier(t *testing.T) {
 	cfg := configtest.NewChainScopedConfig(t, nil)
-	assert.InDelta(t, float32(1), cfg.EVM().Transactions().TransactionManagerV2().FeeMultiplier(), 1e-6)
+	assert.InDelta(t, 1.0, cfg.EVM().Transactions().TransactionManagerV2().FeeMultiplier(), 1e-12)
 
-	multiplier := decimal.RequireFromString("1.5")
+	multiplier := decimal.RequireFromString("1.13")
 	cfg = configtest.NewChainScopedConfig(t, func(c *toml.EVMConfig) {
 		c.Transactions.TransactionManagerV2.FeeMultiplier = &multiplier
 	})
-	assert.InDelta(t, float32(1.5), cfg.EVM().Transactions().TransactionManagerV2().FeeMultiplier(), 1e-6)
+	assert.InDelta(t, 1.13, cfg.EVM().Transactions().TransactionManagerV2().FeeMultiplier(), 1e-12)
 }
 
 func TestChainScopedConfig(t *testing.T) {

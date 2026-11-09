@@ -22,7 +22,7 @@ const maxBumpThreshold = 5
 type AttemptBuilderConfig struct {
 	EmptyTxLimitDefault uint64
 	FeeBoost            bool
-	FeeMultiplier       float32
+	FeeMultiplier       float64
 	PriceDefault        *assets.Wei // We use PriceDefault instead of PriceMin as this doesn't affect primary path.
 }
 
@@ -43,8 +43,8 @@ func NewAttemptBuilder(priceMaxKey func(common.Address) *assets.Wei, estimator g
 }
 
 func NewAttemptBuilderWithConfig(priceMaxKey func(common.Address) *assets.Wei, estimator gas.EvmFeeEstimator, keystore keys.TxSigner, config AttemptBuilderConfig) *attemptBuilder {
-	// FeeMultiplier must be finite and >= 1 otherwise default to 1.
-	if m := float64(config.FeeMultiplier); !(m >= 1) || math.IsInf(m, 0) {
+	// FeeMultiplier must be finite and >= 1, otherwise default to 1.
+	if !(config.FeeMultiplier >= 1) || math.IsInf(config.FeeMultiplier, 0) {
 		config.FeeMultiplier = 1
 	}
 	if config.PriceDefault == nil {
@@ -80,13 +80,14 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 	// Scale fees, applying PriceDefault as a floor only with FeeBoost; preserve the EIP-1559 base-fee buffer by adding only the tip increase to the fee cap.
 	if a.config.FeeMultiplier != 1 || a.config.FeeBoost {
 		maxPrice := a.priceMaxKey(tx.FromAddress)
-		multiply := func(price *assets.Wei) *assets.Wei {
-			multiplied, _ := new(big.Float).Mul(new(big.Float).SetInt(price.ToInt()), big.NewFloat(float64(a.config.FeeMultiplier))).Int(nil)
-			price = assets.NewWei(multiplied)
+		multiply := func(priceWei *assets.Wei) *assets.Wei {
+			unroundedMultipliedPrice := new(big.Float).Mul(new(big.Float).SetInt(priceWei.ToInt()), big.NewFloat(a.config.FeeMultiplier))
+			multipliedPrice, _ := unroundedMultipliedPrice.Add(unroundedMultipliedPrice, big.NewFloat(0.5)).Int(nil) // round to nearest wei to absorb float error
+			multipliedPriceWei := assets.NewWei(multipliedPrice)
 			if a.config.FeeBoost {
-				price = assets.WeiMax(price, a.config.PriceDefault)
+				multipliedPriceWei = assets.WeiMax(multipliedPriceWei, a.config.PriceDefault)
 			}
-			return assets.WeiMin(price, maxPrice)
+			return assets.WeiMin(multipliedPriceWei, maxPrice)
 		}
 		if fee.GasPrice != nil {
 			fee.GasPrice = multiply(fee.GasPrice)

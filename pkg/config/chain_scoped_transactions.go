@@ -101,11 +101,11 @@ func (t *transactionManagerV2Config) FeeBoost() bool {
 	return t.c.FeeBoost != nil && *t.c.FeeBoost
 }
 
-func (t *transactionManagerV2Config) FeeMultiplier() float32 {
+func (t *transactionManagerV2Config) FeeMultiplier() float64 {
 	if t.c.FeeMultiplier == nil {
 		return 1
 	}
-	f, _ := t.c.FeeMultiplier.BigFloat().Float32()
+	f, _ := t.c.FeeMultiplier.Float64()
 	return f
 }
 

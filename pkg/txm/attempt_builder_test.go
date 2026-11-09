@@ -76,10 +76,24 @@ func TestAttemptBuilder_NilPriceDefault(t *testing.T) {
 	assert.Equal(t, int64(10), attempt.Fee.GasFeeCap.Int64())
 }
 
+func TestAttemptBuilder_FeeMultiplierPrecision(t *testing.T) {
+	// 1.13 is not exactly representable as a binary float; float math produced 112999999999 wei.
+	estimator := mocks.NewEvmFeeEstimator(t)
+	estimator.On("GetFee", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(gas.EvmFee{GasPrice: assets.GWei(100)}, uint64(100), nil).Once()
+	ab := NewAttemptBuilderWithConfig(func(common.Address) *assets.Wei { return assets.GWei(1000) }, estimator, keystest.TxSigner(nil),
+		AttemptBuilderConfig{EmptyTxLimitDefault: 100, FeeMultiplier: 1.13})
+	nonce := uint64(1)
+	tx := &types.Transaction{ID: 1, Nonce: &nonce, SpecifiedGasLimit: 100}
+	attempt, err := ab.NewAttempt(t.Context(), logger.Test(t), tx, false)
+	require.NoError(t, err)
+	assert.Equal(t, assets.GWei(113), attempt.Fee.GasPrice)
+}
+
 func TestAttemptBuilder_FeeMultiplier(t *testing.T) {
 	for _, tc := range []struct {
 		name                string
-		multiplier          float32
+		multiplier          float64
 		maxPrice            int64
 		wantTip             int64
 		wantCap             int64
@@ -92,12 +106,12 @@ func TestAttemptBuilder_FeeMultiplier(t *testing.T) {
 		{"zero defaults to one", 0, 100, 3, 10, 0, 3, 10, 10, 10},
 		{"negative defaults to one", -1, 100, 3, 10, 0, 3, 10, 10, 10},
 		{"fractional below one defaults to one", 0.5, 100, 3, 10, 0, 3, 10, 10, 10},
-		{"NaN defaults to one", float32(math.NaN()), 100, 3, 10, 0, 3, 10, 10, 10},
-		{"Inf defaults to one", float32(math.Inf(1)), 100, 3, 10, 0, 3, 10, 10, 10},
+		{"NaN defaults to one", math.NaN(), 100, 3, 10, 0, 3, 10, 10, 10},
+		{"Inf defaults to one", math.Inf(1), 100, 3, 10, 0, 3, 10, 10, 10},
 		{"zero with boosted floor", 0, 100, 3, 10, 15, 15, 15, 10, 22},
 		{"unchanged", 1, 100, 3, 10, 0, 3, 10, 10, 10},
 		{"double", 2, 100, 6, 20, 0, 6, 20, 13, 13},
-		{"fractional", 1.5, 100, 4, 15, 0, 4, 15, 11, 11},
+		{"fractional", 1.5, 100, 5, 15, 0, 5, 15, 12, 12}, // 3 * 1.5 = 4.5 rounds to 5
 		{"capped fee cap", 2, 12, 6, 12, 0, 6, 12, 12, 12},
 		{"capped both", 2, 5, 5, 5, 0, 5, 5, 5, 5},
 		{"floor without multiplication", 1, 100, 3, 10, 15, 15, 15, 10, 22},

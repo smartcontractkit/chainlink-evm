@@ -133,7 +133,7 @@ type TransactionManagerV2 interface {
 	Bundles() *bool
 	FastlaneAuctionRequestTimeout() *time.Duration
 	FeeBoost() bool
-	FeeMultiplier() float32
+	FeeMultiplier() float64
 }
 
 type GasEstimator interface {
