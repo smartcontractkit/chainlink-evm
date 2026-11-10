@@ -84,29 +84,33 @@ jobs:
         shell: bash
         env:
           GH_INPUTS_PRODUCT: ${{ inputs.product }}
+          CHANGES_PRODUCT: ${{ steps.changes-dorny.outputs.product }}
+          CHANGES_PRODUCT_FILES: ${{ steps.changes-dorny.outputs.product_files }}
+          CHANGES_OTHER_SHARED: ${{ steps.changes-dorny.outputs.other_shared }}
+          CHANGES_OTHER_SHARED_FILES: ${{ steps.changes-dorny.outputs.other_shared_files }}
         run: |
           if [ "$GH_INPUTS_PRODUCT" = "shared" ]; then
             echo "::debug:: Product is shared, transforming changes"
-            if [[ "${{ steps.changes-dorny.outputs.product }}" == "true" && "${{ steps.changes-dorny.outputs.other_shared }}" == "true" ]]; then
+            if [[ "$CHANGES_PRODUCT" == "true" && "$CHANGES_OTHER_SHARED" == "true" ]]; then
               echo "::debug:: Changes were found in 'shared' folder and in 'interfaces' and root folders"
               echo "product_changes=true" >> $GITHUB_OUTPUT
-              echo "product_files=${{ steps.changes-dorny.outputs.product_files }},${{ steps.changes-dorny.outputs.other_shared_files }}" >> $GITHUB_OUTPUT
-            elif [[ "${{ steps.changes-dorny.outputs.product }}" == "false" && "${{ steps.changes-dorny.outputs.other_shared }}" == "true" ]]; then
+              echo "product_files=$CHANGES_PRODUCT_FILES,$CHANGES_OTHER_SHARED_FILES" >> $GITHUB_OUTPUT
+            elif [[ "$CHANGES_PRODUCT" == "false" && "$CHANGES_OTHER_SHARED" == "true" ]]; then
               echo "::debug:: Only contracts in' interfaces' and root folders were modified"
               echo "product_changes=true" >> $GITHUB_OUTPUT
-              echo "product_files=${{ steps.changes-dorny.outputs.other_shared_files }}" >> $GITHUB_OUTPUT
-            elif [[ "${{ steps.changes-dorny.outputs.product }}" == "true" && "${{ steps.changes-dorny.outputs.other_shared }}" == "false" ]]; then
+              echo "product_files=$CHANGES_OTHER_SHARED_FILES" >> $GITHUB_OUTPUT
+            elif [[ "$CHANGES_PRODUCT" == "true" && "$CHANGES_OTHER_SHARED" == "false" ]]; then
               echo "::debug:: Only contracts in 'shared' folder were modified"
               echo "product_changes=true" >> $GITHUB_OUTPUT
-              echo "product_files=${{ steps.changes-dorny.outputs.product_files }}" >> $GITHUB_OUTPUT
+              echo "product_files=$CHANGES_PRODUCT_FILES" >> $GITHUB_OUTPUT
             else
               echo "::debug:: No contracts were modified"
               echo "product_changes=false" >> $GITHUB_OUTPUT
               echo "product_files=" >> $GITHUB_OUTPUT
             fi
           else
-           echo "product_changes=${{ steps.changes-dorny.outputs.product }}" >> $GITHUB_OUTPUT
-           echo "product_files=${{ steps.changes-dorny.outputs.product_files }}" >> $GITHUB_OUTPUT
+           echo "product_changes=$CHANGES_PRODUCT" >> $GITHUB_OUTPUT
+           echo "product_files=$CHANGES_PRODUCT_FILES" >> $GITHUB_OUTPUT
           fi
 
   prepare-workflow-inputs:
