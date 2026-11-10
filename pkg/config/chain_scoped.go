@@ -95,6 +95,16 @@ func (e *EVMConfig) LogPollerSkipEmptyBlocks() bool {
 	return *e.C.LogPollerSkipEmptyBlocks
 }
 
+// LogPollerBatchUnfinalizedBlocks reports whether the opt-in batched unfinalized-block walk is enabled.
+func (e *EVMConfig) LogPollerBatchUnfinalizedBlocks() bool {
+	return *e.C.LogPollerBatchUnfinalizedBlocks
+}
+
+// LogPollerBatchUnfinalizedBlocksChunkSize returns the number of unfinalized headers fetched per batch.
+func (e *EVMConfig) LogPollerBatchUnfinalizedBlocksChunkSize() uint32 {
+	return *e.C.LogPollerBatchUnfinalizedBlocksChunkSize
+}
+
 func (e *EVMConfig) FinalityDepth() uint32 {
 	return *e.C.FinalityDepth
 }

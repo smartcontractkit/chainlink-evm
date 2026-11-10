@@ -232,6 +232,12 @@ func (c *Chain) SetFrom(f *Chain) {
 	if v := f.LogPollerSkipEmptyBlocks; v != nil {
 		c.LogPollerSkipEmptyBlocks = v
 	}
+	if v := f.LogPollerBatchUnfinalizedBlocks; v != nil {
+		c.LogPollerBatchUnfinalizedBlocks = v
+	}
+	if v := f.LogPollerBatchUnfinalizedBlocksChunkSize; v != nil {
+		c.LogPollerBatchUnfinalizedBlocksChunkSize = v
+	}
 	if v := f.LogKeepBlocksDepth; v != nil {
 		c.LogKeepBlocksDepth = v
 	}
