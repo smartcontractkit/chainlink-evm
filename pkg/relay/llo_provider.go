@@ -14,6 +14,7 @@ import (
 
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/registry"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
@@ -88,7 +89,7 @@ func NewLLOProvider(
 	retirementReportCache retirement.RetirementReportCache,
 	ds sqlutil.DataSource,
 	mercuryPool wsrpc.Pool,
-	capabilitiesRegistry coretypes.CapabilitiesRegistry,
+	capabilitiesRegistry registry.CapabilitiesRegistry,
 ) (relaytypes.LLOProvider, error) {
 	donID := relayConfig.LLODONID
 	lp := chain.LogPoller()
