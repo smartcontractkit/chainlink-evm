@@ -24,6 +24,7 @@ import (
 
 	chainselectors "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/registry"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	"github.com/smartcontractkit/chainlink-common/pkg/loop"
 	"github.com/smartcontractkit/chainlink-common/pkg/services"
@@ -142,7 +143,7 @@ type Relayer struct {
 	csaKeystore          coretypes.Keystore
 	evmKeystore          keys.Store
 	codec                commontypes.Codec
-	capabilitiesRegistry coretypes.CapabilitiesRegistry
+	capabilitiesRegistry registry.CapabilitiesRegistry
 	pluginConfigEmitter  services.Service
 	evmService
 
@@ -170,7 +171,7 @@ type RelayerOpts struct {
 	MercuryPool           wsrpc.Pool
 	RetirementReportCache retirement.RetirementReportCache
 	MercuryConfig         MercuryConfig
-	CapabilitiesRegistry  coretypes.CapabilitiesRegistry
+	CapabilitiesRegistry  registry.CapabilitiesRegistry
 	HTTPClient            *http.Client
 }
 

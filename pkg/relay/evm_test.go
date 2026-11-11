@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/capabilities/registry"
 	"github.com/smartcontractkit/chainlink-common/pkg/sqlutil"
 	"github.com/smartcontractkit/chainlink-common/pkg/types/core"
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys"
@@ -16,7 +17,7 @@ func TestRelayerOpts_Validate(t *testing.T) {
 		DS                   sqlutil.DataSource
 		CSAKeystore          core.Keystore
 		EVMKeystore          keys.ChainStore
-		CapabilitiesRegistry core.CapabilitiesRegistry
+		CapabilitiesRegistry registry.CapabilitiesRegistry
 	}
 	tests := []struct {
 		name            string
