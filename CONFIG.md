@@ -29,6 +29,8 @@ LinkContractAddress = '0x538aAaB4ea120b2bC2fe5D296852D948F07D849e' # Example
 LogBackfillBatchSize = 1000 # Default
 LogPollInterval = '15s' # Default
 LogPollerSkipEmptyBlocks = false # Default
+LogPollerBatchUnfinalizedBlocks = false # Default
+LogPollerBatchUnfinalizedBlocksChunkSize = 16 # Default
 LogKeepBlocksDepth = 100000 # Default
 LogPrunePageSize = 0 # Default
 BackupLogPollerBlockDelay = 100 # Default
@@ -179,6 +181,20 @@ LogPollInterval works in conjunction with Feature.LogPoller. Controls how freque
 LogPollerSkipEmptyBlocks = false # Default
 ```
 LogPollerSkipEmptyBlocks works in conjunction with Feature.LogPoller. Controls whether the log poller skips blocks with no logs. Setting this to true can reduce DB load, however it can affect product performance. Consult with specific Chainlink product team before changing this setting.
+
+### LogPollerBatchUnfinalizedBlocks
+:warning: **_ADVANCED_**: _Do not change this setting unless you know what you are doing._
+```toml
+LogPollerBatchUnfinalizedBlocks = false # Default
+```
+LogPollerBatchUnfinalizedBlocks works in conjunction with Feature.LogPoller. When true, the log poller fetches unfinalized headers in chunks and queries their logs with bounded concurrency. This can improve throughput on high-latency RPC endpoints. Default false preserves the legacy per-block walk.
+
+### LogPollerBatchUnfinalizedBlocksChunkSize
+:warning: **_ADVANCED_**: _Do not change this setting unless you know what you are doing._
+```toml
+LogPollerBatchUnfinalizedBlocksChunkSize = 16 # Default
+```
+LogPollerBatchUnfinalizedBlocksChunkSize is the number of unfinalized headers fetched per batch when LogPollerBatchUnfinalizedBlocks is true. Must be between 1 and 50. Values above 16 are not recommended.
 
 ### LogKeepBlocksDepth
 :warning: **_ADVANCED_**: _Do not change this setting unless you know what you are doing._
