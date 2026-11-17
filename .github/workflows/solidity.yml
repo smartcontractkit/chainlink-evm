@@ -246,6 +246,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
+      contents: write  # Required to create the GitHub release
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
