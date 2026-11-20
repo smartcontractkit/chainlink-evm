@@ -390,32 +390,34 @@ func (c *EVMConfig) TOMLString() (string, error) {
 }
 
 type Chain struct {
-	AutoCreateKey                *bool
-	BlockBackfillDepth           *uint32
-	BlockBackfillSkip            *bool
-	ChainType                    *chaintype.Config
-	FinalityDepth                *uint32
-	SafeDepth                    *uint32
-	FinalityTagEnabled           *bool
-	SafeTagSupported             *bool
-	FlagsContractAddress         *types.EIP55Address
-	LinkContractAddress          *types.EIP55Address
-	LogBackfillBatchSize         *uint32
-	LogPollInterval              *commonconfig.Duration
-	LogPollerSkipEmptyBlocks     *bool
-	LogKeepBlocksDepth           *uint32
-	LogPrunePageSize             *uint32
-	BackupLogPollerBlockDelay    *uint64
-	MinIncomingConfirmations     *uint32
-	MinContractPayment           *commonassets.Link
-	NonceAutoSync                *bool
-	NoNewHeadsThreshold          *commonconfig.Duration
-	OperatorFactoryAddress       *types.EIP55Address
-	LogBroadcasterEnabled        *bool
-	RPCDefaultBatchSize          *uint32
-	RPCBlockQueryDelay           *uint16
-	FinalizedBlockOffset         *uint32
-	NoNewFinalizedHeadsThreshold *commonconfig.Duration
+	AutoCreateKey                            *bool
+	BlockBackfillDepth                       *uint32
+	BlockBackfillSkip                        *bool
+	ChainType                                *chaintype.Config
+	FinalityDepth                            *uint32
+	SafeDepth                                *uint32
+	FinalityTagEnabled                       *bool
+	SafeTagSupported                         *bool
+	FlagsContractAddress                     *types.EIP55Address
+	LinkContractAddress                      *types.EIP55Address
+	LogBackfillBatchSize                     *uint32
+	LogPollInterval                          *commonconfig.Duration
+	LogPollerSkipEmptyBlocks                 *bool
+	LogPollerBatchUnfinalizedBlocks          *bool
+	LogPollerBatchUnfinalizedBlocksChunkSize *uint32
+	LogKeepBlocksDepth                       *uint32
+	LogPrunePageSize                         *uint32
+	BackupLogPollerBlockDelay                *uint64
+	MinIncomingConfirmations                 *uint32
+	MinContractPayment                       *commonassets.Link
+	NonceAutoSync                            *bool
+	NoNewHeadsThreshold                      *commonconfig.Duration
+	OperatorFactoryAddress                   *types.EIP55Address
+	LogBroadcasterEnabled                    *bool
+	RPCDefaultBatchSize                      *uint32
+	RPCBlockQueryDelay                       *uint16
+	FinalizedBlockOffset                     *uint32
+	NoNewFinalizedHeadsThreshold             *commonconfig.Duration
 
 	Transactions   Transactions      `toml:",omitempty"`
 	BalanceMonitor BalanceMonitor    `toml:",omitempty"`
@@ -458,6 +460,11 @@ func (c *Chain) ValidateConfig() (err error) {
 	if *c.LogBackfillBatchSize <= 0 {
 		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "LogBackfillBatchSize", Value: 0,
 			Msg: "must be greater than 0"})
+	}
+
+	if *c.LogPollerBatchUnfinalizedBlocksChunkSize < 1 || *c.LogPollerBatchUnfinalizedBlocksChunkSize > 50 {
+		err = multierr.Append(err, commonconfig.ErrInvalid{Name: "LogPollerBatchUnfinalizedBlocksChunkSize", Value: *c.LogPollerBatchUnfinalizedBlocksChunkSize,
+			Msg: "must be between 1 and 50"})
 	}
 
 	// AutoPurge configs depend on ChainType so handling validation on per chain basis

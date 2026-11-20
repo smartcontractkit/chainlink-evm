@@ -119,23 +119,26 @@ var (
 
 type logPoller struct {
 	services.StateMachine
-	ec                       Client
-	orm                      ORM
-	headTracker              HeadTracker
-	latencyMonitor           LatencyMonitor
-	lggr                     logger.SugaredLogger
-	pollPeriod               time.Duration // poll period set by block production rate
-	skipEmptyBlocks          bool
-	useFinalityTag           bool  // indicates whether logPoller should use chain's finality or pick a fixed depth for finality
-	finalityDepth            int64 // finality depth is taken to mean that block (head - finality) is finalized. If `useFinalityTag` is set to true, this value is ignored, because finalityDepth is fetched from chain
-	keepFinalizedBlocksDepth int64 // the number of blocks behind the last finalized block we keep in database
-	backfillBatchSize        int64 // batch size to use when backfilling finalized logs
-	rpcBatchSize             int64 // batch size to use for fallback RPC calls made in GetBlocks
-	logPrunePageSize         int64
-	clientErrors             config.ClientErrors
-	backupPollerNextBlock    int64 // next block to be processed by Backup LogPoller
-	backupPollerBlockDelay   int64 // how far behind regular LogPoller should BackupLogPoller run. 0 = disabled
-	metrics                  Metrics
+	ec                             Client
+	orm                            ORM
+	headTracker                    HeadTracker
+	latencyMonitor                 LatencyMonitor
+	lggr                           logger.SugaredLogger
+	pollPeriod                     time.Duration // poll period set by block production rate
+	skipEmptyBlocks                bool
+	batchUnfinalizedBlocks         bool  // opt-in batched unfinalized-block walk
+	unfinalizedBatchChunkSize      int64 // number of headers fetched per batch when batchUnfinalizedBlocks is enabled
+	unfinalizedBatchLogConcurrency int64 // max concurrent single-block log queries in the batched walk
+	useFinalityTag                 bool  // indicates whether logPoller should use chain's finality or pick a fixed depth for finality
+	finalityDepth                  int64 // finality depth is taken to mean that block (head - finality) is finalized. If `useFinalityTag` is set to true, this value is ignored, because finalityDepth is fetched from chain
+	keepFinalizedBlocksDepth       int64 // the number of blocks behind the last finalized block we keep in database
+	backfillBatchSize              int64 // batch size to use when backfilling finalized logs
+	rpcBatchSize                   int64 // batch size to use for fallback RPC calls made in GetBlocks
+	logPrunePageSize               int64
+	clientErrors                   config.ClientErrors
+	backupPollerNextBlock          int64 // next block to be processed by Backup LogPoller
+	backupPollerBlockDelay         int64 // how far behind regular LogPoller should BackupLogPoller run. 0 = disabled
+	metrics                        Metrics
 
 	filterMu        sync.RWMutex
 	filters         map[string]Filter
@@ -164,17 +167,36 @@ type logPoller struct {
 }
 
 type Opts struct {
-	PollPeriod               time.Duration
-	UseFinalityTag           bool
-	FinalityDepth            int64
-	BackfillBatchSize        int64
-	RPCBatchSize             int64
-	KeepFinalizedBlocksDepth int64
-	BackupPollerBlockDelay   int64
-	LogPrunePageSize         int64
-	ClientErrors             config.ClientErrors
-	SkipEmptyBlocks          bool
-	Metrics                  Metrics // optional, if nil, no metrics will be recorded
+	PollPeriod                      time.Duration
+	UseFinalityTag                  bool
+	FinalityDepth                   int64
+	BackfillBatchSize               int64
+	RPCBatchSize                    int64
+	KeepFinalizedBlocksDepth        int64
+	BackupPollerBlockDelay          int64
+	LogPrunePageSize                int64
+	ClientErrors                    config.ClientErrors
+	SkipEmptyBlocks                 bool
+	BatchUnfinalizedBlocks          bool
+	BatchUnfinalizedBlocksChunkSize int64
+	Metrics                         Metrics // optional, if nil, no metrics will be recorded
+}
+
+const (
+	defaultUnfinalizedBatchChunkSize      = 16
+	maxUnfinalizedBatchChunkSize          = 50
+	defaultUnfinalizedBatchLogConcurrency = 4
+	maxUnfinalizedBlocksWalked            = 2000
+)
+
+func normalizeUnfinalizedBatchChunkSize(size int64) int64 {
+	if size <= 0 {
+		return defaultUnfinalizedBatchChunkSize
+	}
+	if size > maxUnfinalizedBatchChunkSize {
+		return maxUnfinalizedBatchChunkSize
+	}
+	return size
 }
 
 // NewLogPoller creates a log poller. Note there is an assumption
@@ -194,27 +216,30 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 		m = NoopMetrics
 	}
 	return &logPoller{
-		stopCh:                   make(chan struct{}),
-		ec:                       ec,
-		orm:                      orm,
-		headTracker:              headTracker,
-		latencyMonitor:           NewLatencyMonitor(ec, lggr, opts.PollPeriod),
-		lggr:                     lpLggr,
-		replayStart:              make(chan int64),
-		replayComplete:           make(chan error),
-		pollPeriod:               opts.PollPeriod,
-		skipEmptyBlocks:          opts.SkipEmptyBlocks,
-		backupPollerBlockDelay:   opts.BackupPollerBlockDelay,
-		finalityDepth:            opts.FinalityDepth,
-		useFinalityTag:           opts.UseFinalityTag,
-		backfillBatchSize:        opts.BackfillBatchSize,
-		rpcBatchSize:             opts.RPCBatchSize,
-		keepFinalizedBlocksDepth: opts.KeepFinalizedBlocksDepth,
-		logPrunePageSize:         opts.LogPrunePageSize,
-		clientErrors:             opts.ClientErrors,
-		filters:                  make(map[string]Filter),
-		filterDirty:              true, // Always build Filter on first call to cache an empty filter if nothing registered yet.
-		metrics:                  m,
+		stopCh:                         make(chan struct{}),
+		ec:                             ec,
+		orm:                            orm,
+		headTracker:                    headTracker,
+		latencyMonitor:                 NewLatencyMonitor(ec, lggr, opts.PollPeriod),
+		lggr:                           lpLggr,
+		replayStart:                    make(chan int64),
+		replayComplete:                 make(chan error),
+		pollPeriod:                     opts.PollPeriod,
+		skipEmptyBlocks:                opts.SkipEmptyBlocks,
+		batchUnfinalizedBlocks:         opts.BatchUnfinalizedBlocks,
+		unfinalizedBatchChunkSize:      normalizeUnfinalizedBatchChunkSize(opts.BatchUnfinalizedBlocksChunkSize),
+		unfinalizedBatchLogConcurrency: defaultUnfinalizedBatchLogConcurrency,
+		backupPollerBlockDelay:         opts.BackupPollerBlockDelay,
+		finalityDepth:                  opts.FinalityDepth,
+		useFinalityTag:                 opts.UseFinalityTag,
+		backfillBatchSize:              opts.BackfillBatchSize,
+		rpcBatchSize:                   opts.RPCBatchSize,
+		keepFinalizedBlocksDepth:       opts.KeepFinalizedBlocksDepth,
+		logPrunePageSize:               opts.LogPrunePageSize,
+		clientErrors:                   opts.ClientErrors,
+		filters:                        make(map[string]Filter),
+		filterDirty:                    true, // Always build Filter on first call to cache an empty filter if nothing registered yet.
+		metrics:                        m,
 	}
 }
 

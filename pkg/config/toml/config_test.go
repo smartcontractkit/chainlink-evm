@@ -62,6 +62,20 @@ func TestEVMConfig_ValidateInvalidConfig(t *testing.T) {
 			},
 			ExpectedError: "LogBackfillBatchSize: invalid value (0): must be greater than 0",
 		},
+		{
+			Name: "LogPollerBatchUnfinalizedBlocksChunkSize must be >= 1",
+			MakeInvalid: func(cfg *Chain) {
+				cfg.LogPollerBatchUnfinalizedBlocksChunkSize = new(uint32(0))
+			},
+			ExpectedError: "LogPollerBatchUnfinalizedBlocksChunkSize: invalid value (0): must be between 1 and 50",
+		},
+		{
+			Name: "LogPollerBatchUnfinalizedBlocksChunkSize must be <= 50",
+			MakeInvalid: func(cfg *Chain) {
+				cfg.LogPollerBatchUnfinalizedBlocksChunkSize = new(uint32(51))
+			},
+			ExpectedError: "LogPollerBatchUnfinalizedBlocksChunkSize: invalid value (51): must be between 1 and 50",
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
@@ -336,22 +350,24 @@ var fullConfig = EVMConfig{
 			},
 		},
 
-		LinkContractAddress:          new(types.MustEIP55Address("0x538aAaB4ea120b2bC2fe5D296852D948F07D849e")),
-		LogBackfillBatchSize:         new(uint32(17)),
-		LogPollInterval:              config.MustNewDuration(time.Minute),
-		LogPollerSkipEmptyBlocks:     new(false),
-		LogKeepBlocksDepth:           new(uint32(100000)),
-		LogPrunePageSize:             new(uint32(0)),
-		BackupLogPollerBlockDelay:    new(uint64(532)),
-		MinContractPayment:           commonassets.NewLinkFromJuels(math.MaxInt64),
-		MinIncomingConfirmations:     new(uint32(13)),
-		NonceAutoSync:                new(true),
-		NoNewHeadsThreshold:          config.MustNewDuration(time.Minute),
-		OperatorFactoryAddress:       new(types.MustEIP55Address("0xa5B85635Be42F21f94F28034B7DA440EeFF0F418")),
-		LogBroadcasterEnabled:        new(true),
-		RPCDefaultBatchSize:          new(uint32(17)),
-		RPCBlockQueryDelay:           new(uint16(10)),
-		NoNewFinalizedHeadsThreshold: config.MustNewDuration(time.Hour),
+		LinkContractAddress:                      new(types.MustEIP55Address("0x538aAaB4ea120b2bC2fe5D296852D948F07D849e")),
+		LogBackfillBatchSize:                     new(uint32(17)),
+		LogPollInterval:                          config.MustNewDuration(time.Minute),
+		LogPollerSkipEmptyBlocks:                 new(false),
+		LogPollerBatchUnfinalizedBlocks:          new(true),
+		LogPollerBatchUnfinalizedBlocksChunkSize: new(uint32(17)),
+		LogKeepBlocksDepth:                       new(uint32(100000)),
+		LogPrunePageSize:                         new(uint32(0)),
+		BackupLogPollerBlockDelay:                new(uint64(532)),
+		MinContractPayment:                       commonassets.NewLinkFromJuels(math.MaxInt64),
+		MinIncomingConfirmations:                 new(uint32(13)),
+		NonceAutoSync:                            new(true),
+		NoNewHeadsThreshold:                      config.MustNewDuration(time.Minute),
+		OperatorFactoryAddress:                   new(types.MustEIP55Address("0xa5B85635Be42F21f94F28034B7DA440EeFF0F418")),
+		LogBroadcasterEnabled:                    new(true),
+		RPCDefaultBatchSize:                      new(uint32(17)),
+		RPCBlockQueryDelay:                       new(uint16(10)),
+		NoNewFinalizedHeadsThreshold:             config.MustNewDuration(time.Hour),
 
 		Transactions: Transactions{
 			Enabled:                  new(true),
