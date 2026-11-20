@@ -17,6 +17,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/rollups"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
@@ -36,6 +37,8 @@ const (
 	// NoMempoolBaseFeeBufferPercentage covers potential cache staleness and delays from the time the prices are fetched until transmission.
 	// Chains without a mempool sequence transactions almost immediately, so the exposure is the CacheTimeout window
 	// (especially on super fast chains like Arbitrum) rather than the mempool wait.
+	// It is also used for Arbitrum regardless of BlockHistorySize: Arbitrum's base fee is priced by ArbOS based on the
+	// backlog rather than by EIP-1559, so it has no per-block cap and can increase sharply within the CacheTimeout window.
 	// We avoid using an even larger buffer because even though the excess fee is refunded, it still increases the pre-transactional cost
 	// and can cause the transaction to be rejected with an insufficient funds error.
 	NoMempoolBaseFeeBufferPercentage = 90
@@ -82,10 +85,11 @@ type feeHistoryEstimatorClient interface {
 type FeeHistoryEstimator struct {
 	services.StateMachine
 
-	client  feeHistoryEstimatorClient
-	logger  logger.Logger
-	config  FeeHistoryEstimatorConfig
-	chainID *big.Int
+	client    feeHistoryEstimatorClient
+	logger    logger.Logger
+	config    FeeHistoryEstimatorConfig
+	chainID   *big.Int
+	chainType chaintype.ChainType
 
 	gasPriceMu sync.RWMutex
 	gasPrice   *assets.Wei
@@ -102,13 +106,14 @@ type FeeHistoryEstimator struct {
 	refreshCh chan struct{}
 }
 
-func NewFeeHistoryEstimator(lggr logger.Logger, client feeHistoryEstimatorClient, cfg FeeHistoryEstimatorConfig, chainID *big.Int, l1Oracle rollups.L1Oracle) *FeeHistoryEstimator {
+func NewFeeHistoryEstimator(lggr logger.Logger, client feeHistoryEstimatorClient, cfg FeeHistoryEstimatorConfig, chainID *big.Int, chainType chaintype.ChainType, l1Oracle rollups.L1Oracle) *FeeHistoryEstimator {
 	l := logger.Sugared(logger.Named(lggr, "FeeHistoryEstimator"))
 	return &FeeHistoryEstimator{
 		client:    client,
 		logger:    l,
 		config:    cfg,
 		chainID:   chainID,
+		chainType: chainType,
 		l1Oracle:  l1Oracle,
 		metrics:   newFeeHistoryEstimatorMetrics(l, chainID),
 		wg:        new(sync.WaitGroup),
@@ -370,9 +375,10 @@ func calcPriorityFees(rewards [][]*big.Int) (avg *assets.Wei, threshold *assets.
 }
 
 // baseFeeBufferPercentage returns the safety buffer applied on top of the latest base fee. BlockHistorySize of 0 is used
-// as the signal for a chain without a mempool.
+// as the signal for a chain without a mempool. Arbitrum always gets the wider buffer, even when BlockHistorySize > 0 is
+// set to price priority fees, because its base fee has no per-block cap (see NoMempoolBaseFeeBufferPercentage).
 func (f *FeeHistoryEstimator) baseFeeBufferPercentage() uint16 {
-	if f.config.BlockHistorySize == 0 {
+	if f.config.BlockHistorySize == 0 || f.chainType == chaintype.ChainArbitrum {
 		return NoMempoolBaseFeeBufferPercentage
 	}
 	return BaseFeeBufferPercentage

@@ -32,7 +32,8 @@ const (
 
 // IsL2 returns true if this chain is a Layer 2 chain. Notably:
 //   - the block numbers used for log searching are different from calling block.number
-//   - gas bumping is not supported, since there is no tx mempool
+//   - L2-specific fee errors (fee too low, fee too high, sequencer queue full) are classified as
+//     FeeOutOfValidRange, so the transaction is re-estimated and resent instead of failing
 func (c ChainType) IsL2() bool {
 	switch c {
 	case ChainArbitrum, ChainMetis:

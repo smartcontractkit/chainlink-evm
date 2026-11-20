@@ -3,6 +3,7 @@ package gas
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"slices"
 	"sync"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
+	evmconfig "github.com/smartcontractkit/chainlink-evm/pkg/config"
 	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/rollups"
 )
@@ -23,14 +25,23 @@ type ArbConfig interface {
 	LimitMax() uint64
 	BumpPercent() uint16
 	BumpMin() *assets.Wei
+	EIP1559DynamicFees() bool
+	FeeHistory() evmconfig.FeeHistory
+	BlockHistory() evmconfig.BlockHistory
 }
 
-// arbitrumEstimator is an Estimator which extends SuggestedPriceEstimator to use getPricesInArbGas() for gas limit estimation.
+// arbitrumEstimator wraps a price estimator and uses getPricesInArbGas() to add the L1 calldata cost to the gas limit.
+// Prices are delegated to the wrapped estimator:
+//   - SuggestedPriceEstimator for legacy transactions, on chains that process transactions in FIFO order.
+//   - FeeHistoryEstimator for dynamic fee transactions, on chains that order transactions by priority fee.
+//
+// For legacy transactions the gas limit is adjusted in GetLegacyGas. For dynamic fee transactions GetDynamicFee doesn't
+// return a gas limit, so evmFeeEstimator applies gasLimitWithL1Cost directly.
 type arbitrumEstimator struct {
 	services.StateMachine
 	cfg ArbConfig
 
-	EvmEstimator // *SuggestedPriceEstimator
+	EvmEstimator // *SuggestedPriceEstimator or *FeeHistoryEstimator
 
 	pollPeriod time.Duration
 	logger     logger.Logger
@@ -49,12 +60,29 @@ type arbitrumEstimator struct {
 
 const arbitrumPollPeriod = 2 * time.Second
 
-func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient FeeEstimatorClient, l1Oracle rollups.ArbL1GasOracle) EvmEstimator {
+// NewArbitrumEstimator returns an estimator that adds the L1 calldata cost to the gas limit. Pricing is delegated to
+// FeeHistoryEstimator if EIP1559DynamicFees is enabled, or to SuggestedPriceEstimator otherwise. Both are created with
+// the Arbitrum chain type, as the Arbitrum estimator implies Arbitrum's pricing semantics.
+func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient FeeEstimatorClient, chainID *big.Int, l1Oracle rollups.ArbL1GasOracle) EvmEstimator {
 	lggr = logger.Named(lggr, "ArbitrumEstimator")
+
+	var priceEstimator EvmEstimator
+	if cfg.EIP1559DynamicFees() {
+		fhCfg := FeeHistoryEstimatorConfig{
+			BumpPercent:      cfg.BumpPercent(),
+			CacheTimeout:     cfg.FeeHistory().CacheTimeout(),
+			EIP1559:          cfg.EIP1559DynamicFees(),
+			BlockHistorySize: uint64(cfg.BlockHistory().BlockHistorySize()),
+			RewardPercentile: float64(cfg.BlockHistory().TransactionPercentile()),
+		}
+		priceEstimator = NewFeeHistoryEstimator(lggr, ethClient, fhCfg, chainID, chaintype.ChainArbitrum, l1Oracle)
+	} else {
+		priceEstimator = NewSuggestedPriceEstimator(lggr, ethClient, cfg, chaintype.ChainArbitrum, l1Oracle)
+	}
 
 	return &arbitrumEstimator{
 		cfg:            cfg,
-		EvmEstimator:   NewSuggestedPriceEstimator(lggr, ethClient, cfg, chaintype.ChainArbitrum, l1Oracle),
+		EvmEstimator:   priceEstimator,
 		pollPeriod:     arbitrumPollPeriod,
 		logger:         lggr,
 		chForceRefetch: make(chan (chan struct{})),
@@ -97,16 +125,23 @@ func (a *arbitrumEstimator) HealthReport() map[string]error {
 }
 
 // GetLegacyGas estimates both the gas price and the gas limit.
-//   - Price is delegated to the embedded SuggestedPriceEstimator.
-//   - Limit is computed from the dynamic values perL2Tx and perL1CalldataUnit, provided by the getPricesInArbGas() method
-//     of the precompile contract at ArbGasInfoAddress. perL2Tx is a constant amount of gas, and perL1CalldataUnit is
-//     multiplied by the length of the tx calldata. The sum of these two values plus the original l2GasLimit is returned.
+//   - Price is delegated to the wrapped estimator, with a buffer added on top (see gasPriceWithBuffer).
+//   - Limit is l2GasLimit plus the L1 calldata cost (see gasLimitWithL1Cost).
 func (a *arbitrumEstimator) GetLegacyGas(ctx context.Context, calldata []byte, l2GasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
 	gasPrice, _, err = a.EvmEstimator.GetLegacyGas(ctx, calldata, l2GasLimit, maxGasPriceWei, opts...)
 	if err != nil {
 		return
 	}
 	gasPrice = a.gasPriceWithBuffer(gasPrice, maxGasPriceWei)
+	chainSpecificGasLimit, err = a.gasLimitWithL1Cost(ctx, calldata, l2GasLimit, opts...)
+	return
+}
+
+// gasLimitWithL1Cost adds the dynamic values perL2Tx and perL1CalldataUnit, provided by the getPricesInArbGas() method
+// of the precompile contract at ArbGasInfoAddress, to l2GasLimit. perL2Tx is a constant amount of gas, and
+// perL1CalldataUnit is multiplied by the length of the tx calldata. It returns an error if the estimator is not started
+// or if the result exceeds LimitMax.
+func (a *arbitrumEstimator) gasLimitWithL1Cost(ctx context.Context, calldata []byte, l2GasLimit uint64, opts ...fees.Opt) (chainSpecificGasLimit uint64, err error) {
 	ok := a.IfStarted(func() {
 		if slices.Contains(opts, fees.OptForceRefetch) {
 			ch := make(chan struct{})
@@ -131,23 +166,23 @@ func (a *arbitrumEstimator) GetLegacyGas(ctx context.Context, calldata []byte, l
 		}
 		perL2Tx, perL1CalldataUnit := a.getPricesInArbGas()
 		chainSpecificGasLimit = l2GasLimit + uint64(perL2Tx) + uint64(len(calldata))*uint64(perL1CalldataUnit)
-		a.logger.Debugw("GetLegacyGas", "l2GasLimit", l2GasLimit, "calldataLen", len(calldata), "perL2Tx", perL2Tx,
+		a.logger.Debugw("gasLimitWithL1Cost", "l2GasLimit", l2GasLimit, "calldataLen", len(calldata), "perL2Tx", perL2Tx,
 			"perL1CalldataUnit", perL1CalldataUnit, "chainSpecificGasLimit", chainSpecificGasLimit)
 	})
 	if !ok {
-		return nil, 0, pkgerrors.New("estimator is not started")
-	} else if err != nil {
-		return
+		return 0, pkgerrors.New("estimator is not started")
 	}
-	if max := a.cfg.LimitMax(); chainSpecificGasLimit > max {
-		err = fmt.Errorf("estimated gas limit: %d is greater than the maximum gas limit configured: %d", chainSpecificGasLimit, max)
-		return
+	if err != nil {
+		return 0, err
 	}
-	return
+	if limitMax := a.cfg.LimitMax(); chainSpecificGasLimit > limitMax {
+		return 0, fmt.Errorf("estimated gas limit: %d is greater than the maximum gas limit configured: %d", chainSpecificGasLimit, limitMax)
+	}
+	return chainSpecificGasLimit, nil
 }
 
-// GetMaxLegacyGas returns the result of GetLegacyGas. Arbitrum doesn't have a mempool. That means transaction priority follows a FIFO model.
-// Fetching a standard gas estimation will have the same effect for transaction inclusion.
+// GetMaxLegacyGas returns the result of GetLegacyGas. Legacy pricing is used on chains that process transactions in
+// FIFO order, so a higher price doesn't improve inclusion and a standard gas estimation has the same effect.
 func (a *arbitrumEstimator) GetMaxLegacyGas(ctx context.Context, calldata []byte, gasLimit uint64, maxGasPriceWei *assets.Wei, opts ...fees.Opt) (gasPrice *assets.Wei, chainSpecificGasLimit uint64, err error) {
 	return a.GetLegacyGas(ctx, calldata, gasLimit, maxGasPriceWei, opts...)
 }
