@@ -215,7 +215,7 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 	if m == nil {
 		m = NoopMetrics
 	}
-	return &logPoller{
+	lp := &logPoller{
 		stopCh:                         make(chan struct{}),
 		ec:                             ec,
 		orm:                            orm,
@@ -241,6 +241,10 @@ func NewLogPoller(orm ORM, ec Client, lggr logger.Logger, headTracker HeadTracke
 		filterDirty:                    true, // Always build Filter on first call to cache an empty filter if nothing registered yet.
 		metrics:                        m,
 	}
+	if lp.batchUnfinalizedBlocks {
+		lp.lggr.Infow("Log poller unfinalized batching enabled", "chunkSize", lp.unfinalizedBatchChunkSize, "logConcurrency", lp.unfinalizedBatchLogConcurrency)
+	}
+	return lp
 }
 
 type Filter struct {
@@ -1287,7 +1291,7 @@ func (lp *logPoller) pollAndSaveLogs(ctx context.Context, currentBlockNumber int
 	}
 
 	for {
-		blocks, logs, err := lp.getUnfinalizedLogs(ctx, currentBlock, latestBlockNumber, safeBlockNumber, latestFinalizedBlockNumber, isReplay)
+		blocks, logs, err := lp.getUnfinalizedLogsForMode(ctx, currentBlock, latestBlockNumber, safeBlockNumber, latestFinalizedBlockNumber, isReplay)
 		// even if we have an error, we may have partial logs and blocks that can be saved, so we save what we have and then retry.
 		if len(logs) > 0 || len(blocks) > 0 {
 			lp.lggr.Debugw("Saving logs", "logs", len(logs), "blocks", len(blocks), "currentBlockNumber", currentBlockNumber)
@@ -1331,6 +1335,16 @@ func newReorgError(reorgedAt *evmtypes.Head) error {
 
 func (e *reorgError) Error() string {
 	return fmt.Sprintf("reorg detected at block %d", e.ReorgedAt.Number)
+}
+
+// getUnfinalizedLogsForMode selects the legacy per-block walk unless the opt-in
+// batched walk is explicitly enabled. The legacy path is intentionally left
+// untouched so the default behavior is unchanged.
+func (lp *logPoller) getUnfinalizedLogsForMode(ctx context.Context, currentBlock *evmtypes.Head, latest, safe, finalized int64, isReplay bool) (blocks []Block, logs []Log, err error) {
+	if lp.batchUnfinalizedBlocks {
+		return lp.getUnfinalizedLogsBatched(ctx, currentBlock, latest, safe, finalized, isReplay)
+	}
+	return lp.getUnfinalizedLogs(ctx, currentBlock, latest, safe, finalized, isReplay)
 }
 
 func (lp *logPoller) getUnfinalizedLogs(ctx context.Context, currentBlock *evmtypes.Head, latest, safe, finalized int64, isReplay bool) (blocks []Block, logs []Log, err error) {
