@@ -88,10 +88,9 @@ type feeHistoryEstimatorClient interface {
 type FeeHistoryEstimator struct {
 	services.StateMachine
 
-	client  feeHistoryEstimatorClient
-	logger  logger.Logger
-	config  FeeHistoryEstimatorConfig
-	chainID *big.Int
+	client feeHistoryEstimatorClient
+	logger logger.Logger
+	config FeeHistoryEstimatorConfig
 
 	gasPriceMu sync.RWMutex
 	gasPrice   *assets.Wei
@@ -117,7 +116,6 @@ func NewFeeHistoryEstimator(lggr logger.Logger, client feeHistoryEstimatorClient
 		client:    client,
 		logger:    l,
 		config:    cfg,
-		chainID:   chainID,
 		l1Oracle:  l1Oracle,
 		metrics:   newFeeHistoryEstimatorMetrics(l, chainID),
 		wg:        new(sync.WaitGroup),
