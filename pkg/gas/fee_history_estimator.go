@@ -48,9 +48,11 @@ type FeeHistoryEstimatorConfig struct {
 	BumpPercent  uint16
 	CacheTimeout time.Duration
 
-	EIP1559                bool
-	BlockHistorySize       uint64
-	RewardPercentile       float64
+	EIP1559          bool
+	BlockHistorySize uint64
+	RewardPercentile float64
+
+	// If you're not sure what to set, use the defaults.
 	ConnectivityPercentile float64
 	ChainType              chaintype.ChainType
 }

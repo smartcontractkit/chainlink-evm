@@ -38,13 +38,13 @@ func (a *arbFeeHistoryConfig) CacheTimeout() time.Duration {
 }
 
 type arbConfig struct {
-	v                uint64
-	bumpPercent      uint16
-	bumpMin          *assets.Wei
-	eip1559          bool
-	feeHistory       arbFeeHistoryConfig
-	blockHistory     gas.MockBlockHistoryConfig
-	limitMultiplier  float32
+	v               uint64
+	bumpPercent     uint16
+	bumpMin         *assets.Wei
+	eip1559         bool
+	feeHistory      arbFeeHistoryConfig
+	blockHistory    gas.MockBlockHistoryConfig
+	limitMultiplier float32
 }
 
 func (a *arbConfig) LimitMax() uint64 {
@@ -365,7 +365,7 @@ func TestArbitrumEstimator(t *testing.T) {
 		var fee gas.EvmFee
 		var estLimit uint64
 		require.Eventually(t, func() bool {
-			fee, estLimit, err = wrapped.GetFee(tests.Context(t), calldata, gasLimit, maxFeePrice, nil, nil)
+			fee, estLimit, err = wrapped.GetFee(t.Context(), calldata, gasLimit, maxFeePrice, nil, nil)
 			return err == nil
 		}, 5*time.Second, 20*time.Millisecond)
 
@@ -375,7 +375,7 @@ func TestArbitrumEstimator(t *testing.T) {
 		assert.Nil(t, fee.GasPrice)
 		assert.Equal(t, expLimit, estLimit)
 
-		maxFee, maxEstLimit, err := wrapped.GetMaxFee(tests.Context(t), calldata, gasLimit, maxFeePrice, nil, nil)
+		maxFee, maxEstLimit, err := wrapped.GetMaxFee(t.Context(), calldata, gasLimit, maxFeePrice, nil, nil)
 		require.NoError(t, err)
 		expectedMaxFeeCap := assets.NewWei(baseFee).AddPercentage(gas.NoMempoolBaseFeeBufferPercentage).Add(assets.NewWei(priorityThreshold))
 		assert.Equal(t, expectedMaxFeeCap, maxFee.GasFeeCap)
@@ -421,7 +421,7 @@ func TestArbitrumEstimator(t *testing.T) {
 
 		maxFeePrice := assets.NewWeiI(1000)
 		require.Eventually(t, func() bool {
-			_, _, err = wrapped.GetFee(tests.Context(t), calldata, gasLimit, maxFeePrice, nil, nil)
+			_, _, err = wrapped.GetFee(t.Context(), calldata, gasLimit, maxFeePrice, nil, nil)
 			return err != nil && err.Error() != "dynamic fee not set"
 		}, 5*time.Second, 20*time.Millisecond)
 		assert.ErrorContains(t, err, "is greater than the maximum gas limit configured")
@@ -475,12 +475,12 @@ func TestArbitrumEstimator(t *testing.T) {
 		maxFeePrice := assets.NewWeiI(1000)
 		var estLimit uint64
 		require.Eventually(t, func() bool {
-			_, estLimit, err = wrapped.GetFee(tests.Context(t), calldata, gasLimit, maxFeePrice, nil, nil)
+			_, estLimit, err = wrapped.GetFee(t.Context(), calldata, gasLimit, maxFeePrice, nil, nil)
 			return err == nil
 		}, 5*time.Second, 20*time.Millisecond)
 		assert.Equal(t, gasLimit+10_000+1_000*uint64(len(calldata)), estLimit)
 
-		_, estLimit, err = wrapped.GetFee(tests.Context(t), calldata, gasLimit, maxFeePrice, nil, nil, fees.OptForceRefetch)
+		_, estLimit, err = wrapped.GetFee(t.Context(), calldata, gasLimit, maxFeePrice, nil, nil, fees.OptForceRefetch)
 		require.NoError(t, err)
 		assert.Equal(t, gasLimit+20_000+2_000*uint64(len(calldata)), estLimit)
 	})
