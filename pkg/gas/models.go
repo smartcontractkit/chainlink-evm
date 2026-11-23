@@ -106,13 +106,15 @@ func NewEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chainType ch
 		newEstimator = NewSuggestedPriceEstimator(lggr, ethClient, geCfg, chainType, l1Oracle)
 	case "FeeHistory":
 		ccfg := FeeHistoryEstimatorConfig{
-			BumpPercent:      geCfg.BumpPercent(),
-			CacheTimeout:     geCfg.FeeHistory().CacheTimeout(),
-			EIP1559:          geCfg.EIP1559DynamicFees(),
-			BlockHistorySize: uint64(geCfg.BlockHistory().BlockHistorySize()),
-			RewardPercentile: float64(geCfg.BlockHistory().TransactionPercentile()),
+			BumpPercent:            geCfg.BumpPercent(),
+			CacheTimeout:           geCfg.FeeHistory().CacheTimeout(),
+			EIP1559:                geCfg.EIP1559DynamicFees(),
+			BlockHistorySize:       uint64(geCfg.BlockHistory().BlockHistorySize()),
+			RewardPercentile:       float64(geCfg.BlockHistory().TransactionPercentile()),
+			ConnectivityPercentile: float64(geCfg.BlockHistory().CheckInclusionPercentile()),
+			ChainType:              chainType,
 		}
-		newEstimator = NewFeeHistoryEstimator(lggr, ethClient, ccfg, chainID, chainType, l1Oracle)
+		newEstimator = NewFeeHistoryEstimator(lggr, ethClient, ccfg, chainID, l1Oracle)
 	default:
 		lggr.Warnf("GasEstimator: unrecognised mode '%s', falling back to FixedPriceEstimator", s)
 		newEstimator = NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)

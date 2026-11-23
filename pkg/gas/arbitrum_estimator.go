@@ -69,13 +69,15 @@ func NewArbitrumEstimator(lggr logger.Logger, cfg ArbConfig, ethClient FeeEstima
 	var priceEstimator EvmEstimator
 	if cfg.EIP1559DynamicFees() {
 		fhCfg := FeeHistoryEstimatorConfig{
-			BumpPercent:      cfg.BumpPercent(),
-			CacheTimeout:     cfg.FeeHistory().CacheTimeout(),
-			EIP1559:          cfg.EIP1559DynamicFees(),
-			BlockHistorySize: uint64(cfg.BlockHistory().BlockHistorySize()),
-			RewardPercentile: float64(cfg.BlockHistory().TransactionPercentile()),
+			BumpPercent:            cfg.BumpPercent(),
+			CacheTimeout:           cfg.FeeHistory().CacheTimeout(),
+			EIP1559:                cfg.EIP1559DynamicFees(),
+			BlockHistorySize:       uint64(cfg.BlockHistory().BlockHistorySize()),
+			RewardPercentile:       float64(cfg.BlockHistory().TransactionPercentile()),
+			ConnectivityPercentile: float64(cfg.BlockHistory().CheckInclusionPercentile()),
+			ChainType:              chaintype.ChainArbitrum,
 		}
-		priceEstimator = NewFeeHistoryEstimator(lggr, ethClient, fhCfg, chainID, chaintype.ChainArbitrum, l1Oracle)
+		priceEstimator = NewFeeHistoryEstimator(lggr, ethClient, fhCfg, chainID, l1Oracle)
 	} else {
 		priceEstimator = NewSuggestedPriceEstimator(lggr, ethClient, cfg, chaintype.ChainArbitrum, l1Oracle)
 	}
