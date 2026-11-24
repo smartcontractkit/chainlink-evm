@@ -112,20 +112,20 @@ func TestWrappedEvmEstimator(t *testing.T) {
 		dynamicFees := false
 		estimator := gas.NewEvmFeeEstimator(lggr, est, dynamicFees, geCfg, nil)
 
-		// expect legacy fee data
+		// expect legacy fee data without re-applying limitMultiplier
 		fee, max, err := estimator.BumpFee(ctx, gas.EvmFee{GasPrice: assets.NewWeiI(0)}, 0, nil, nil)
 		require.NoError(t, err)
-		assert.Equal(t, uint64(float32(gasLimit)*limitMultiplier), max)
+		assert.Equal(t, gasLimit, max)
 		assert.True(t, legacyFee.Equal(fee.GasPrice))
 		assert.Nil(t, fee.GasTipCap)
 		assert.Nil(t, fee.GasFeeCap)
 
-		// expect dynamic fee data
+		// expect dynamic fee data without re-applying limitMultiplier
 		fee, max, err = estimator.BumpFee(ctx, gas.EvmFee{
 			DynamicFee: gas.DynamicFee{GasFeeCap: assets.NewWeiI(0), GasTipCap: assets.NewWeiI(0)},
 		}, gasLimit, nil, nil)
 		require.NoError(t, err)
-		assert.Equal(t, uint64(float32(gasLimit)*limitMultiplier), max)
+		assert.Equal(t, gasLimit, max)
 		assert.True(t, dynamicFee.GasFeeCap.Equal(fee.GasFeeCap))
 		assert.True(t, dynamicFee.GasTipCap.Equal(fee.GasTipCap))
 		assert.Nil(t, fee.GasPrice)

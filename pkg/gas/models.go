@@ -35,6 +35,8 @@ type EvmFeeEstimator interface {
 	// L1Oracle returns the L1 gas price oracle only if the chain has one, e.g. OP stack L2s and Arbitrum.
 	L1Oracle() rollups.L1Oracle
 	GetFee(ctx context.Context, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress, toAddress *common.Address, opts ...fees.Opt) (fee EvmFee, estimatedFeeLimit uint64, err error)
+	// BumpFee bumps the fee of a previous attempt. feeLimit must be the previous attempt's limit, which already includes
+	// chain-specific adjustments and LimitMultiplier, so it is returned as is rather than multiplied again.
 	BumpFee(ctx context.Context, originalFee EvmFee, feeLimit uint64, maxFeePrice *assets.Wei, attempts []EvmPriorAttempt) (bumpedFee EvmFee, chainSpecificFeeLimit uint64, err error)
 
 	// GetMaxCost returns the total value = max price x fee units + transferred value
@@ -363,7 +365,8 @@ func (e *evmFeeEstimator) BumpFee(ctx context.Context, originalFee EvmFee, feeLi
 		if err != nil {
 			return
 		}
-		chainSpecificFeeLimit, err = fees.ApplyMultiplier(feeLimit, e.geCfg.LimitMultiplier())
+		// feeLimit is the previous attempt's limit, which already includes chain-specific adjustments and LimitMultiplier.
+		chainSpecificFeeLimit = feeLimit
 		bumpedFee.GasFeeCap = bumpedDynamic.GasFeeCap
 		bumpedFee.GasTipCap = bumpedDynamic.GasTipCap
 		return
@@ -371,10 +374,6 @@ func (e *evmFeeEstimator) BumpFee(ctx context.Context, originalFee EvmFee, feeLi
 
 	// bump legacy fee
 	bumpedFee.GasPrice, chainSpecificFeeLimit, err = e.EvmEstimator.BumpLegacyGas(ctx, originalFee.GasPrice, feeLimit, maxFeePrice, attempts)
-	if err != nil {
-		return
-	}
-	chainSpecificFeeLimit, err = fees.ApplyMultiplier(chainSpecificFeeLimit, e.geCfg.LimitMultiplier())
 	return
 }
 

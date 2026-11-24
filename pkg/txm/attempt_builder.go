@@ -107,7 +107,9 @@ func (a *attemptBuilder) NewAttempt(ctx context.Context, lggr logger.Logger, tx 
 }
 
 func (a *attemptBuilder) NewBumpAttempt(ctx context.Context, lggr logger.Logger, tx *types.Transaction, previousAttempt types.Attempt) (*types.Attempt, error) {
-	gasLimit := tx.SpecifiedGasLimit
+	// Use the previous attempt's gas limit to preserve chain-specific adjustments.
+	// Note: this assumes the previous gas estimation is still valid because NewAgnosticBumpAttempt calls NewAttempt right before this function.
+	gasLimit := previousAttempt.GasLimit
 	if tx.IsPurgeable {
 		gasLimit = a.config.EmptyTxLimitDefault
 	}
