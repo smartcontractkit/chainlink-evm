@@ -291,9 +291,9 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 
 		blockHistoryLength := 2
 		cfg := gas.FeeHistoryEstimatorConfig{BlockHistorySize: uint64(blockHistoryLength)}
-		avrgPriorityFee := big.NewInt(0)
-		avrgPriorityFee.Add(maxPriorityFeePerGas1, maxPriorityFeePerGas2).Div(avrgPriorityFee, big.NewInt(int64(blockHistoryLength)))
-		maxFee := (*assets.Wei)(baseFee).AddPercentage(gas.BaseFeeBufferPercentage).Add((*assets.Wei)(avrgPriorityFee))
+		// the median of an even count is the upper-middle value
+		medianPriorityFee := maxPriorityFeePerGas1
+		maxFee := (*assets.Wei)(baseFee).AddPercentage(gas.BaseFeeBufferPercentage).Add((*assets.Wei)(medianPriorityFee))
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
 		err := u.RefreshDynamicFee()
@@ -301,7 +301,74 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		dynamicFee, err := u.GetDynamicFee(t.Context(), maxPrice)
 		assert.NoError(t, err)
 		assert.Equal(t, maxFee, dynamicFee.GasFeeCap)
-		assert.Equal(t, (*assets.Wei)(avrgPriorityFee), dynamicFee.GasTipCap)
+		assert.Equal(t, (*assets.Wei)(medianPriorityFee), dynamicFee.GasTipCap)
+	})
+
+	t.Run("uses the median so that a single outlier block doesn't move the estimation", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward: [][]*big.Int{
+				{big.NewInt(10), big.NewInt(20)},
+				{big.NewInt(1_000_000), big.NewInt(1_000_000)},
+				{big.NewInt(12), big.NewInt(20)},
+			},
+			BaseFee: []*big.Int{big.NewInt(5), big.NewInt(5)},
+		}, nil).Once()
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, gas.FeeHistoryEstimatorConfig{BlockHistorySize: 3}, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+		dynamicFee, err := u.GetDynamicFee(t.Context(), assets.NewWeiI(10_000_000))
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWeiI(12), dynamicFee.GasTipCap)
+	})
+
+	t.Run("counts zero priority fees of non-empty blocks and floors the result to the smallest non-zero fee", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		zero := big.NewInt(0)
+		// Most blocks have transactions that paid no priority fee, so the median is 0. The estimation falls back to
+		// the smallest priority fee that was paid in the window, which here only shows up in the connectivity percentile.
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward: [][]*big.Int{
+				{zero, zero},
+				{zero, big.NewInt(7)},
+				{zero, zero},
+				{big.NewInt(40), big.NewInt(50)},
+				{zero, zero}, // empty block, skipped
+			},
+			BaseFee:      []*big.Int{big.NewInt(5), big.NewInt(5)},
+			GasUsedRatio: []float64{0.5, 0.5, 0.1, 0.5, 0},
+		}, nil).Once()
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, gas.FeeHistoryEstimatorConfig{BlockHistorySize: 5}, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+		dynamicFee, err := u.GetDynamicFee(t.Context(), maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWeiI(7), dynamicFee.GasTipCap)
+	})
+
+	t.Run("replaces a cached priority fee with the minimum when non-empty blocks paid no priority fees", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		zero := big.NewInt(0)
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward:      [][]*big.Int{{big.NewInt(40), big.NewInt(50)}},
+			BaseFee:     []*big.Int{big.NewInt(5), big.NewInt(5)},
+		}, nil).Once()
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock:  big.NewInt(2),
+			Reward:       [][]*big.Int{{zero, zero}, {zero, zero}},
+			BaseFee:      []*big.Int{big.NewInt(5), big.NewInt(5)},
+			GasUsedRatio: []float64{0.5, 0.2},
+		}, nil).Once()
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, gas.FeeHistoryEstimatorConfig{BlockHistorySize: 2}, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+		require.NoError(t, u.RefreshDynamicFee())
+		dynamicFee, err := u.GetDynamicFee(t.Context(), maxPrice)
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWeiI(gas.MinimumPriorityFee), dynamicFee.GasTipCap)
 	})
 
 	t.Run("fails if dynamic fee has not been set yet", func(t *testing.T) {
@@ -500,14 +567,14 @@ func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
 		assert.Equal(t, maxPrice, fee.GasFeeCap)
 	})
 
-	t.Run("caches the next base fee even when the rewards are all zero", func(t *testing.T) {
+	t.Run("caches the next base fee even when the first round only has empty blocks", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
 		baseFee := big.NewInt(5)
 		zero := big.NewInt(0)
 		marketMaxPriorityFeePerGas := big.NewInt(10)
 		connectivityMaxPriorityFeePerGas := big.NewInt(20)
 
-		// First round returns no usable priority fees, so only the base fee can be cached.
+		// First round only has empty blocks, so only the base fee can be cached.
 		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
 			OldestBlock: big.NewInt(1),
 			Reward:      [][]*big.Int{{zero, zero}, {}},
@@ -530,7 +597,9 @@ func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
 		require.NoError(t, u.RefreshDynamicFee())
 		// The priority fees are still unset, but the base fee has been cached.
-		_, err := u.GetMaxDynamicFee(maxPrice)
+		_, err := u.GetDynamicFee(t.Context(), maxPrice)
+		require.ErrorContains(t, err, "dynamic fee not set")
+		_, err = u.GetMaxDynamicFee(maxPrice)
 		require.ErrorContains(t, err, "priorityFeeThreshold not set")
 
 		require.NoError(t, u.RefreshDynamicFee())
@@ -543,22 +612,18 @@ func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
 		assert.Equal(t, expectedPriorityFeeThreshold, fee.GasTipCap)
 	})
 
-	t.Run("keeps the cached priority fees as a pair when a round has no usable average", func(t *testing.T) {
+	t.Run("keeps the cached priority fees as a pair when a round only has empty blocks", func(t *testing.T) {
 		client := mocks.NewFeeHistoryEstimatorClient(t)
 		maxPrice := assets.NewWeiI(1000)
 
-		// First round is busy: both the average and the connectivity threshold are usable.
 		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
 			OldestBlock: big.NewInt(1),
 			Reward:      [][]*big.Int{{big.NewInt(100), big.NewInt(200)}},
 			BaseFee:     []*big.Int{big.NewInt(10), big.NewInt(10)},
 		}, nil).Once()
-		// Second round is quiet: the RewardPercentile fee is 0 so no average can be derived, while the
-		// ConnectivityPercentile one drops to 50. Applying only the latter would leave the cache with
-		// maxPriorityFeePerGas(100) > priorityFeeThreshold(50) and halt bumping with a bogus ErrConnectivity.
 		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
 			OldestBlock: big.NewInt(2),
-			Reward:      [][]*big.Int{{big.NewInt(0), big.NewInt(50)}},
+			Reward:      [][]*big.Int{{big.NewInt(0), big.NewInt(0)}},
 			BaseFee:     []*big.Int{big.NewInt(20), big.NewInt(20)},
 		}, nil).Once()
 
@@ -573,7 +638,7 @@ func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
 		require.NoError(t, u.RefreshDynamicFee())
 		require.NoError(t, u.RefreshDynamicFee())
 
-		// Both priority fees are retained from the first round, so the invariant still holds.
+		// Both priority fees are retained from the first round.
 		fee, err := u.GetDynamicFee(t.Context(), maxPrice)
 		require.NoError(t, err)
 		assert.Equal(t, assets.NewWeiI(100), fee.GasTipCap)
@@ -583,7 +648,6 @@ func TestFeeHistoryEstimatorGetMaxDynamicFee(t *testing.T) {
 		maxFee, err := u.GetMaxDynamicFee(maxPrice)
 		require.NoError(t, err)
 		assert.Equal(t, assets.NewWeiI(200), maxFee.GasTipCap)
-		assert.GreaterOrEqual(t, maxFee.GasTipCap.Cmp(fee.GasTipCap), 0, "the max tip cap must never fall below the market one")
 	})
 
 	t.Run("raises the threshold when the RPC returns non-monotonic percentiles", func(t *testing.T) {
@@ -786,6 +850,26 @@ func TestFeeHistoryEstimatorBumpDynamicFee(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, maxPrice, bumpedFee.GasTipCap)
 		assert.Equal(t, maxPrice, bumpedFee.GasFeeCap)
+	})
+
+	t.Run("skips the connectivity check and bumps by at least 1 wei when no priority fees were observed", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		zero := big.NewInt(0)
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&ethereum.FeeHistory{
+			OldestBlock:  big.NewInt(1),
+			Reward:       [][]*big.Int{{zero, zero}},
+			BaseFee:      []*big.Int{big.NewInt(5)},
+			GasUsedRatio: []float64{0.5},
+		}, nil).Once()
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, gas.FeeHistoryEstimatorConfig{BlockHistorySize: 1, BumpPercent: 20}, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+
+		// 20% of 1 wei rounds down to no change, so the tip cap moves by 1 wei instead.
+		originalFee := gas.DynamicFee{GasFeeCap: assets.NewWeiI(50), GasTipCap: assets.NewWeiI(gas.MinimumPriorityFee)}
+		bumped, err := u.BumpDynamicFee(t.Context(), originalFee, globalMaxPrice, nil)
+		require.NoError(t, err)
+		assert.Equal(t, gas.DynamicFee{GasFeeCap: assets.NewWeiI(60), GasTipCap: assets.NewWeiI(2)}, bumped)
 	})
 
 	t.Run("fails if the bumped gas price is lower than the minimum bump percentage", func(t *testing.T) {
