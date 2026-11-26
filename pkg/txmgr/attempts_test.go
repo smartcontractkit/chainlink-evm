@@ -354,3 +354,64 @@ func TestTxm_EvmTxAttemptBuilder_RetryableEstimatorError(t *testing.T) {
 		assert.True(t, retryable)
 	})
 }
+
+type testLimitEstimationConfig struct {
+	limitMultiplier float32
+}
+
+func (c testLimitEstimationConfig) LimitMultiplier() float32              { return c.limitMultiplier }
+func (c testLimitEstimationConfig) EstimateLimit() bool                   { return false }
+func (c testLimitEstimationConfig) SenderAddress() *evmtypes.EIP55Address { return nil }
+
+func TestTxm_NewBumpTxAttempt_PreservesAdjustedFeeLimit(t *testing.T) {
+	addr := NewEvmAddress()
+	kst := keystest.TxSigner(nil)
+	lggr := logger.Test(t)
+	n := evmtypes.Nonce(1)
+
+	gc := newFeeConfig()
+	gc.eip1559DynamicFees = true
+	gc.priceMin = assets.GWei(1)
+	gc.priceMax = assets.GWei(100)
+	gc.tipCapMin = assets.GWei(1)
+
+	const adjustedLimit uint64 = 180_000
+
+	t.Run("dynamic bump preserves previous ChainSpecificFeeLimit without re-applying LimitMultiplier", func(t *testing.T) {
+		underlying := gasmocks.NewEvmEstimator(t)
+		initialFee := gas.DynamicFee{GasFeeCap: assets.GWei(10), GasTipCap: assets.GWei(2)}
+		bumpedFee := gas.DynamicFee{GasFeeCap: assets.GWei(12), GasTipCap: assets.GWei(3)}
+		underlying.On("BumpDynamicFee", mock.Anything, initialFee, gc.priceMax, mock.Anything).
+			Return(bumpedFee, nil).Once()
+
+		est := gas.NewEvmFeeEstimator(lggr, underlying, true, testLimitEstimationConfig{limitMultiplier: 1.5}, nil)
+		cks := txmgr.NewEvmTxAttemptBuilder(*big.NewInt(1), gc, kst, est)
+
+		etx := txmgr.Tx{Sequence: &n, FromAddress: addr, FeeLimit: 80_000}
+		prevAttempt, _, err := cks.NewCustomTxAttempt(t.Context(), etx, gas.EvmFee{DynamicFee: initialFee}, adjustedLimit, 0x2, lggr)
+		require.NoError(t, err)
+
+		bumped, _, bumpedLimit, _, err := cks.NewBumpTxAttempt(t.Context(), etx, prevAttempt, nil, lggr)
+		require.NoError(t, err)
+		assert.Equal(t, adjustedLimit, bumpedLimit)
+		assert.Equal(t, adjustedLimit, bumped.ChainSpecificFeeLimit)
+	})
+
+	t.Run("legacy bump preserves previous ChainSpecificFeeLimit without re-applying LimitMultiplier", func(t *testing.T) {
+		underlying := gasmocks.NewEvmEstimator(t)
+		underlying.On("BumpLegacyGas", mock.Anything, assets.GWei(10), adjustedLimit, gc.priceMax, mock.Anything).
+			Return(assets.GWei(12), adjustedLimit, nil).Once()
+
+		est := gas.NewEvmFeeEstimator(lggr, underlying, false, testLimitEstimationConfig{limitMultiplier: 1.5}, nil)
+		cks := txmgr.NewEvmTxAttemptBuilder(*big.NewInt(1), gc, kst, est)
+
+		etx := txmgr.Tx{Sequence: &n, FromAddress: addr, FeeLimit: 80_000}
+		prevAttempt, _, err := cks.NewCustomTxAttempt(t.Context(), etx, gas.EvmFee{GasPrice: assets.GWei(10)}, adjustedLimit, 0x0, lggr)
+		require.NoError(t, err)
+
+		bumped, _, bumpedLimit, _, err := cks.NewBumpTxAttempt(t.Context(), etx, prevAttempt, nil, lggr)
+		require.NoError(t, err)
+		assert.Equal(t, adjustedLimit, bumpedLimit)
+		assert.Equal(t, adjustedLimit, bumped.ChainSpecificFeeLimit)
+	})
+}

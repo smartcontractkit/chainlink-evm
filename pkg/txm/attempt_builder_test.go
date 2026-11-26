@@ -19,6 +19,7 @@ import (
 	"github.com/smartcontractkit/chainlink-evm/pkg/keys/keystest"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
 	"github.com/smartcontractkit/chainlink-evm/pkg/txm/types"
+	pkgtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
 )
 
@@ -502,5 +503,107 @@ func TestAttemptBuilder_NewAgnosticBumpAttempt(t *testing.T) {
 		assert.Equal(t, tx.ID, attempt.TxID)
 		assert.Equal(t, maxFee.GasPrice.String(), attempt.Fee.GasPrice.String())
 		mockEstimator.AssertExpectations(t)
+	})
+}
+
+type staticLimitConfig struct {
+	limitMultiplier float32
+}
+
+func (c staticLimitConfig) LimitMultiplier() float32              { return c.limitMultiplier }
+func (c staticLimitConfig) EstimateLimit() bool                   { return false }
+func (c staticLimitConfig) SenderAddress() *pkgtypes.EIP55Address { return nil }
+
+func TestAttemptBuilder_NewBumpAttempt_PreservesAdjustedGasLimit(t *testing.T) {
+	address := testutils.NewAddress()
+	lggr := logger.Test(t)
+	var nonce uint64 = 7
+	priceMaxKey := func(addr common.Address) *assets.Wei { return assets.GWei(100) }
+
+	t.Run("preserves L1-adjusted dynamic attempt limit without re-applying LimitMultiplier", func(t *testing.T) {
+		underlying := mocks.NewEvmEstimator(t)
+		initialFee := gas.DynamicFee{GasFeeCap: assets.GWei(10), GasTipCap: assets.GWei(1)}
+		bumpedFee := gas.DynamicFee{GasFeeCap: assets.GWei(12), GasTipCap: assets.GWei(2)}
+		underlying.On("BumpDynamicFee", mock.Anything, initialFee, assets.GWei(100), mock.Anything).
+			Return(bumpedFee, nil).Once()
+
+		feeEstimator := gas.NewEvmFeeEstimator(lggr, underlying, true, staticLimitConfig{limitMultiplier: 1.5}, nil)
+		ab := NewAttemptBuilder(priceMaxKey, feeEstimator, keystest.TxSigner(nil), 21000, false)
+
+		const specifiedLimit uint64 = 80_000
+		const adjustedPrevLimit uint64 = 180_000 // e.g. (specifiedLimit + L1 calldata cost) * LimitMultiplier
+		tx := &types.Transaction{
+			ID:                1,
+			FromAddress:       address,
+			Nonce:             &nonce,
+			SpecifiedGasLimit: specifiedLimit,
+		}
+		prevAttempt := types.Attempt{
+			Fee:      gas.EvmFee{DynamicFee: initialFee},
+			GasLimit: adjustedPrevLimit,
+			Type:     evmtypes.DynamicFeeTxType,
+		}
+
+		bumped, err := ab.NewBumpAttempt(t.Context(), lggr, tx, prevAttempt)
+		require.NoError(t, err)
+		assert.Equal(t, adjustedPrevLimit, bumped.GasLimit)
+		assert.Equal(t, adjustedPrevLimit, bumped.SignedTransaction.Gas())
+		assert.Equal(t, bumpedFee.GasFeeCap, bumped.Fee.GasFeeCap)
+		assert.Equal(t, bumpedFee.GasTipCap, bumped.Fee.GasTipCap)
+	})
+
+	t.Run("preserves adjusted legacy attempt limit without re-applying LimitMultiplier", func(t *testing.T) {
+		underlying := mocks.NewEvmEstimator(t)
+		const adjustedPrevLimit uint64 = 180_000
+		underlying.On("BumpLegacyGas", mock.Anything, assets.GWei(10), adjustedPrevLimit, assets.GWei(100), mock.Anything).
+			Return(assets.GWei(12), adjustedPrevLimit, nil).Once()
+
+		feeEstimator := gas.NewEvmFeeEstimator(lggr, underlying, false, staticLimitConfig{limitMultiplier: 1.5}, nil)
+		ab := NewAttemptBuilder(priceMaxKey, feeEstimator, keystest.TxSigner(nil), 21000, false)
+
+		tx := &types.Transaction{
+			ID:                2,
+			FromAddress:       address,
+			Nonce:             &nonce,
+			SpecifiedGasLimit: 80_000,
+		}
+		prevAttempt := types.Attempt{
+			Fee:      gas.EvmFee{GasPrice: assets.GWei(10)},
+			GasLimit: adjustedPrevLimit,
+			Type:     evmtypes.LegacyTxType,
+		}
+
+		bumped, err := ab.NewBumpAttempt(t.Context(), lggr, tx, prevAttempt)
+		require.NoError(t, err)
+		assert.Equal(t, adjustedPrevLimit, bumped.GasLimit)
+		assert.Equal(t, adjustedPrevLimit, bumped.SignedTransaction.Gas())
+	})
+
+	t.Run("uses EmptyTxLimitDefault for purgeable tx", func(t *testing.T) {
+		underlying := mocks.NewEvmEstimator(t)
+		initialFee := gas.DynamicFee{GasFeeCap: assets.GWei(10), GasTipCap: assets.GWei(1)}
+		bumpedFee := gas.DynamicFee{GasFeeCap: assets.GWei(12), GasTipCap: assets.GWei(2)}
+		underlying.On("BumpDynamicFee", mock.Anything, initialFee, assets.GWei(100), mock.Anything).
+			Return(bumpedFee, nil).Once()
+
+		feeEstimator := gas.NewEvmFeeEstimator(lggr, underlying, true, staticLimitConfig{limitMultiplier: 1.5}, nil)
+		ab := NewAttemptBuilder(priceMaxKey, feeEstimator, keystest.TxSigner(nil), 21000, false)
+
+		tx := &types.Transaction{
+			ID:                3,
+			FromAddress:       address,
+			Nonce:             &nonce,
+			IsPurgeable:       true,
+			SpecifiedGasLimit: 80_000,
+		}
+		prevAttempt := types.Attempt{
+			Fee:      gas.EvmFee{DynamicFee: initialFee},
+			GasLimit: 180_000,
+			Type:     evmtypes.DynamicFeeTxType,
+		}
+
+		bumped, err := ab.NewBumpAttempt(t.Context(), lggr, tx, prevAttempt)
+		require.NoError(t, err)
+		assert.Equal(t, uint64(21000), bumped.GasLimit)
 	})
 }

@@ -17,6 +17,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
 	"github.com/smartcontractkit/chainlink-evm/pkg/client"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/rollups"
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 	"github.com/smartcontractkit/chainlink-framework/chains/fees"
@@ -34,8 +35,9 @@ const (
 	// 12.5% * (gasUsed - target) / target per block. This value covers ~8 blocks at u = 0.67, which is a demand spike rather than regular traffic.
 	BaseFeeBufferPercentage = 40
 	// NoMempoolBaseFeeBufferPercentage covers potential cache staleness and delays from the time the prices are fetched until transmission.
-	// Chains without a mempool sequence transactions almost immediately, so the exposure is the CacheTimeout window
-	// (especially on super fast chains like Arbitrum) rather than the mempool wait.
+	// Chains without a mempool sequence transactions almost immediately, so the exposure is the CacheTimeout window rather than the mempool wait.
+	// It is also used for Arbitrum regardless of BlockHistorySize: Arbitrum's base fee is priced by ArbOS based on the
+	// backlog rather than by EIP-1559, so it has no per-block cap and can increase sharply within the CacheTimeout window.
 	// We avoid using an even larger buffer because even though the excess fee is refunded, it still increases the pre-transactional cost
 	// and can cause the transaction to be rejected with an insufficient funds error.
 	NoMempoolBaseFeeBufferPercentage = 90
@@ -49,6 +51,10 @@ type FeeHistoryEstimatorConfig struct {
 	EIP1559          bool
 	BlockHistorySize uint64
 	RewardPercentile float64
+
+	// If you're not sure what to set, use the defaults.
+	ConnectivityPercentile float64
+	ChainType              chaintype.ChainType
 }
 
 // dynamicFeeCache holds the cached results of a single RefreshDynamicFee round.
@@ -82,10 +88,9 @@ type feeHistoryEstimatorClient interface {
 type FeeHistoryEstimator struct {
 	services.StateMachine
 
-	client  feeHistoryEstimatorClient
-	logger  logger.Logger
-	config  FeeHistoryEstimatorConfig
-	chainID *big.Int
+	client feeHistoryEstimatorClient
+	logger logger.Logger
+	config FeeHistoryEstimatorConfig
 
 	gasPriceMu sync.RWMutex
 	gasPrice   *assets.Wei
@@ -103,12 +108,14 @@ type FeeHistoryEstimator struct {
 }
 
 func NewFeeHistoryEstimator(lggr logger.Logger, client feeHistoryEstimatorClient, cfg FeeHistoryEstimatorConfig, chainID *big.Int, l1Oracle rollups.L1Oracle) *FeeHistoryEstimator {
+	if cfg.ConnectivityPercentile == 0 {
+		cfg.ConnectivityPercentile = ConnectivityPercentile
+	}
 	l := logger.Sugared(logger.Named(lggr, "FeeHistoryEstimator"))
 	return &FeeHistoryEstimator{
 		client:    client,
 		logger:    l,
 		config:    cfg,
-		chainID:   chainID,
 		l1Oracle:  l1Oracle,
 		metrics:   newFeeHistoryEstimatorMetrics(l, chainID),
 		wg:        new(sync.WaitGroup),
@@ -123,9 +130,13 @@ func (f *FeeHistoryEstimator) Start(context.Context) error {
 			return fmt.Errorf("BumpPercent: %s is less than minimum allowed percentage: %s",
 				strconv.FormatUint(uint64(f.config.BumpPercent), 10), strconv.Itoa(MinimumBumpPercentage))
 		}
-		if f.config.EIP1559 && f.config.RewardPercentile > ConnectivityPercentile {
-			return fmt.Errorf("RewardPercentile: %s is greater than maximum allowed percentile: %s",
-				strconv.FormatUint(uint64(f.config.RewardPercentile), 10), strconv.Itoa(ConnectivityPercentile))
+		if f.config.EIP1559 && f.config.ConnectivityPercentile > 100 {
+			return fmt.Errorf("ConnectivityPercentile: %g is greater than maximum allowed percentile: 100",
+				f.config.ConnectivityPercentile)
+		}
+		if f.config.EIP1559 && f.config.RewardPercentile > f.config.ConnectivityPercentile {
+			return fmt.Errorf("RewardPercentile: %g is greater than maximum allowed percentile: %g",
+				f.config.RewardPercentile, f.config.ConnectivityPercentile)
 		}
 		if f.config.CacheTimeout < MinimumCacheTimeout {
 			return fmt.Errorf("CacheTimeout: %s must be at least %s", f.config.CacheTimeout, MinimumCacheTimeout)
@@ -265,8 +276,8 @@ func (f *FeeHistoryEstimator) RefreshDynamicFee() error {
 	ctx, cancel := f.stopCh.CtxWithTimeout(client.QueryTimeout)
 	defer cancel()
 
-	// RewardPercentile will be used for maxPriorityFeePerGas estimations and connectivityPercentile to set the highest threshold for bumping.
-	feeHistory, err := f.client.FeeHistory(ctx, max(f.config.BlockHistorySize, 1), nil, []float64{f.config.RewardPercentile, ConnectivityPercentile})
+	// RewardPercentile will be used for maxPriorityFeePerGas estimations and ConnectivityPercentile to set the highest threshold for bumping.
+	feeHistory, err := f.client.FeeHistory(ctx, max(f.config.BlockHistorySize, 1), nil, []float64{f.config.RewardPercentile, f.config.ConnectivityPercentile})
 	if err != nil {
 		return err
 	}
@@ -370,9 +381,10 @@ func calcPriorityFees(rewards [][]*big.Int) (avg *assets.Wei, threshold *assets.
 }
 
 // baseFeeBufferPercentage returns the safety buffer applied on top of the latest base fee. BlockHistorySize of 0 is used
-// as the signal for a chain without a mempool.
+// as the signal for a chain without a mempool. Arbitrum always gets the wider buffer, even when BlockHistorySize > 0 is
+// set to price priority fees, because its base fee has no per-block cap (see NoMempoolBaseFeeBufferPercentage).
 func (f *FeeHistoryEstimator) baseFeeBufferPercentage() uint16 {
-	if f.config.BlockHistorySize == 0 {
+	if f.config.BlockHistorySize == 0 || f.config.ChainType == chaintype.ChainArbitrum {
 		return NoMempoolBaseFeeBufferPercentage
 	}
 	return BaseFeeBufferPercentage
@@ -458,8 +470,8 @@ func (f *FeeHistoryEstimator) BumpDynamicFee(ctx context.Context, originalFee Dy
 	}
 
 	if bumpedMaxPriorityFeePerGas.Cmp(priorityFeeThreshold) > 0 {
-		return bumped, fmt.Errorf("%w: bumpedMaxPriorityFeePerGas: %s is above market's %sth percentile: %s, bumping is halted",
-			fees.ErrConnectivity, bumpedMaxPriorityFeePerGas, strconv.Itoa(ConnectivityPercentile), priorityFeeThreshold)
+		return bumped, fmt.Errorf("%w: bumpedMaxPriorityFeePerGas: %s is above market's %gth percentile: %s, bumping is halted",
+			fees.ErrConnectivity, bumpedMaxPriorityFeePerGas, f.config.ConnectivityPercentile, priorityFeeThreshold)
 	}
 
 	bumpedMaxFeePerGas, err = LimitBumpedFee(originalFee.GasFeeCap, currentDynamicFee.GasFeeCap, bumpedMaxFeePerGas, maxPrice)

@@ -35,6 +35,8 @@ type EvmFeeEstimator interface {
 	// L1Oracle returns the L1 gas price oracle only if the chain has one, e.g. OP stack L2s and Arbitrum.
 	L1Oracle() rollups.L1Oracle
 	GetFee(ctx context.Context, calldata []byte, feeLimit uint64, maxFeePrice *assets.Wei, fromAddress, toAddress *common.Address, opts ...fees.Opt) (fee EvmFee, estimatedFeeLimit uint64, err error)
+	// BumpFee bumps the fee of a previous attempt. feeLimit must be the previous attempt's limit, which already includes
+	// chain-specific adjustments and LimitMultiplier, so it is returned as is rather than multiplied again.
 	BumpFee(ctx context.Context, originalFee EvmFee, feeLimit uint64, maxFeePrice *assets.Wei, attempts []EvmPriorAttempt) (bumpedFee EvmFee, chainSpecificFeeLimit uint64, err error)
 
 	// GetMaxCost returns the total value = max price x fee units + transferred value
@@ -54,7 +56,7 @@ type FeeEstimatorClient interface {
 }
 
 // NewEstimator returns the estimator for a given config
-func NewEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype chaintype.ChainType, chainID *big.Int, geCfg evmconfig.GasEstimator, clientsByChainID map[string]rollups.DAClient) (EvmFeeEstimator, error) {
+func NewEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chainType chaintype.ChainType, chainID *big.Int, geCfg evmconfig.GasEstimator, clientsByChainID map[string]rollups.DAClient) (EvmFeeEstimator, error) {
 	bh := geCfg.BlockHistory()
 	s := geCfg.Mode()
 	lggr.Infow("Initializing EVM gas estimator in mode: "+s,
@@ -82,7 +84,7 @@ func NewEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype ch
 	df := geCfg.EIP1559DynamicFees()
 
 	// create l1Oracle only if it is supported for the chain
-	l1Oracle, err := rollups.NewL1GasOracle(lggr, ethClient, chaintype, geCfg.DAOracle(), clientsByChainID)
+	l1Oracle, err := rollups.NewL1GasOracle(lggr, ethClient, chainType, geCfg.DAOracle(), clientsByChainID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize L1 oracle: %w", err)
 	}
@@ -90,24 +92,29 @@ func NewEstimator(lggr logger.Logger, ethClient FeeEstimatorClient, chaintype ch
 	var newEstimator EvmEstimator
 	switch s {
 	case "Arbitrum":
-		arbOracle, err := rollups.NewArbitrumL1GasOracle(lggr, ethClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize Arbitrum L1 oracle: %w", err)
+		arbOracle, ok := l1Oracle.(rollups.ArbL1GasOracle)
+		if !ok {
+			arbOracle, err = rollups.NewArbitrumL1GasOracle(lggr, ethClient)
+			if err != nil {
+				return nil, fmt.Errorf("failed to initialize Arbitrum L1 oracle: %w", err)
+			}
 		}
-		newEstimator = NewArbitrumEstimator(lggr, geCfg, ethClient, arbOracle)
+		newEstimator = NewArbitrumEstimator(lggr, geCfg, ethClient, chainID, arbOracle)
 	case "BlockHistory":
-		newEstimator = NewBlockHistoryEstimator(lggr, ethClient, chaintype, geCfg, bh, chainID, l1Oracle)
+		newEstimator = NewBlockHistoryEstimator(lggr, ethClient, chainType, geCfg, bh, chainID, l1Oracle)
 	case "FixedPrice":
 		newEstimator = NewFixedPriceEstimator(geCfg, ethClient, bh.EIP1559FeeCapBufferBlocks(), lggr, l1Oracle)
 	case "L2Suggested", "SuggestedPrice":
-		newEstimator = NewSuggestedPriceEstimator(lggr, ethClient, geCfg, chaintype, l1Oracle)
+		newEstimator = NewSuggestedPriceEstimator(lggr, ethClient, geCfg, chainType, l1Oracle)
 	case "FeeHistory":
 		ccfg := FeeHistoryEstimatorConfig{
-			BumpPercent:      geCfg.BumpPercent(),
-			CacheTimeout:     geCfg.FeeHistory().CacheTimeout(),
-			EIP1559:          geCfg.EIP1559DynamicFees(),
-			BlockHistorySize: uint64(geCfg.BlockHistory().BlockHistorySize()),
-			RewardPercentile: float64(geCfg.BlockHistory().TransactionPercentile()),
+			BumpPercent:            geCfg.BumpPercent(),
+			CacheTimeout:           geCfg.FeeHistory().CacheTimeout(),
+			EIP1559:                geCfg.EIP1559DynamicFees(),
+			BlockHistorySize:       uint64(geCfg.BlockHistory().BlockHistorySize()),
+			RewardPercentile:       float64(geCfg.BlockHistory().TransactionPercentile()),
+			ConnectivityPercentile: float64(geCfg.BlockHistory().CheckInclusionPercentile()),
+			ChainType:              chainType,
 		}
 		newEstimator = NewFeeHistoryEstimator(lggr, ethClient, ccfg, chainID, l1Oracle)
 	default:
@@ -282,7 +289,9 @@ func (e *evmFeeEstimator) GetFee(ctx context.Context, calldata []byte, feeLimit 
 		}
 		fee.GasFeeCap = dynamicFee.GasFeeCap
 		fee.GasTipCap = dynamicFee.GasTipCap
-		chainSpecificFeeLimit = feeLimit
+		if chainSpecificFeeLimit, err = e.dynamicFeeLimit(ctx, calldata, feeLimit, opts...); err != nil {
+			return
+		}
 	} else {
 		// get legacy fee
 		fee.GasPrice, chainSpecificFeeLimit, err = e.EvmEstimator.GetLegacyGas(ctx, calldata, feeLimit, maxFeePrice, opts...)
@@ -323,7 +332,9 @@ func (e *evmFeeEstimator) GetMaxFee(ctx context.Context, calldata []byte, feeLim
 		}
 		fee.GasFeeCap = dynamicFee.GasFeeCap
 		fee.GasTipCap = dynamicFee.GasTipCap
-		chainSpecificFeeLimit = feeLimit
+		if chainSpecificFeeLimit, err = e.dynamicFeeLimit(ctx, calldata, feeLimit, opts...); err != nil {
+			return
+		}
 	} else {
 		fee.GasPrice, chainSpecificFeeLimit, err = e.EvmEstimator.GetMaxLegacyGas(ctx, calldata, feeLimit, maxFeePrice, opts...)
 		if err != nil {
@@ -354,7 +365,8 @@ func (e *evmFeeEstimator) BumpFee(ctx context.Context, originalFee EvmFee, feeLi
 		if err != nil {
 			return
 		}
-		chainSpecificFeeLimit, err = fees.ApplyMultiplier(feeLimit, e.geCfg.LimitMultiplier())
+		// feeLimit is the previous attempt's limit, which already includes chain-specific adjustments and LimitMultiplier.
+		chainSpecificFeeLimit = feeLimit
 		bumpedFee.GasFeeCap = bumpedDynamic.GasFeeCap
 		bumpedFee.GasTipCap = bumpedDynamic.GasTipCap
 		return
@@ -362,11 +374,16 @@ func (e *evmFeeEstimator) BumpFee(ctx context.Context, originalFee EvmFee, feeLi
 
 	// bump legacy fee
 	bumpedFee.GasPrice, chainSpecificFeeLimit, err = e.EvmEstimator.BumpLegacyGas(ctx, originalFee.GasPrice, feeLimit, maxFeePrice, attempts)
-	if err != nil {
-		return
-	}
-	chainSpecificFeeLimit, err = fees.ApplyMultiplier(chainSpecificFeeLimit, e.geCfg.LimitMultiplier())
 	return
+}
+
+// dynamicFeeLimit returns the gas limit for a dynamic fee transaction. GetDynamicFee doesn't return a gas limit, so the
+// Arbitrum L1 calldata cost is added here. Legacy transactions get the same adjustment from GetLegacyGas.
+func (e *evmFeeEstimator) dynamicFeeLimit(ctx context.Context, calldata []byte, feeLimit uint64, opts ...fees.Opt) (uint64, error) {
+	if arb, ok := e.EvmEstimator.(*arbitrumEstimator); ok {
+		return arb.gasLimitWithL1Cost(ctx, calldata, feeLimit, opts...)
+	}
+	return feeLimit, nil
 }
 
 func (e *evmFeeEstimator) estimateFeeLimit(ctx context.Context, feeLimit uint64, calldata []byte, fromAddress, toAddress *common.Address) (estimatedFeeLimit uint64, err error) {

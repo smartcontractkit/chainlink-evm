@@ -15,6 +15,7 @@ import (
 	"github.com/smartcontractkit/chainlink-common/pkg/services/servicetest"
 
 	"github.com/smartcontractkit/chainlink-evm/pkg/assets"
+	"github.com/smartcontractkit/chainlink-evm/pkg/config/chaintype"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas"
 	"github.com/smartcontractkit/chainlink-evm/pkg/gas/mocks"
 	"github.com/smartcontractkit/chainlink-evm/pkg/testutils"
@@ -55,6 +56,40 @@ func TestFeeHistoryEstimatorLifecycle(t *testing.T) {
 
 		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
 		assert.ErrorContains(t, u.Start(t.Context()), "RewardPercentile")
+	})
+
+	t.Run("fails to start if ConnectivityPercentile is greater than 100 in EIP-1559", func(t *testing.T) {
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BumpPercent:            20,
+			RewardPercentile:       60,
+			ConnectivityPercentile: 101,
+			EIP1559:                true,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), nil, cfg, chainID, nil)
+		assert.ErrorContains(t, u.Start(t.Context()), "ConnectivityPercentile")
+	})
+
+	t.Run("allows RewardPercentile up to custom ConnectivityPercentile", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		client.On("FeeHistory", mock.Anything, mock.Anything, mock.Anything, []float64{90, 95}).Return(&ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			BaseFee:     []*big.Int{big.NewInt(100)},
+			Reward:      [][]*big.Int{{big.NewInt(10), big.NewInt(20)}},
+		}, nil).Maybe()
+
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BumpPercent:            20,
+			RewardPercentile:       90,
+			ConnectivityPercentile: 95,
+			CacheTimeout:           10 * time.Second,
+			BlockHistorySize:       1,
+			EIP1559:                true,
+		}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		require.NoError(t, u.Start(t.Context()))
+		require.NoError(t, u.Close())
 	})
 
 	t.Run("fails to start if CacheTimeout is less than MinimumCacheTimeout", func(t *testing.T) {
@@ -332,6 +367,62 @@ func TestFeeHistoryEstimatorGetDynamicFee(t *testing.T) {
 		maxFee, err := u.GetMaxDynamicFee(maxPrice)
 		require.NoError(t, err)
 		assert.Equal(t, dynamicFee.GasFeeCap, maxFee.GasFeeCap)
+	})
+
+	t.Run("applies the NoMempoolBaseFeeBufferPercentage for Arbitrum even with BlockHistorySize > 0", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		baseFee := big.NewInt(100)
+		priorityFee := big.NewInt(10)
+		priorityThreshold := big.NewInt(25)
+		maxPrice := assets.NewWeiI(1000)
+
+		feeHistoryResult := &ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward:      [][]*big.Int{{priorityFee, priorityThreshold}},
+			BaseFee:     []*big.Int{baseFee},
+		}
+		client.On("FeeHistory", mock.Anything, uint64(5), (*big.Int)(nil), []float64{60, gas.ConnectivityPercentile}).Return(feeHistoryResult, nil).Once()
+
+		cfg := gas.FeeHistoryEstimatorConfig{BlockHistorySize: 5, RewardPercentile: 60, EIP1559: true, ChainType: chaintype.ChainArbitrum}
+
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+
+		dynamicFee, err := u.GetDynamicFee(t.Context(), maxPrice)
+		require.NoError(t, err)
+		expectedFeeCap := assets.NewWei(baseFee).AddPercentage(gas.NoMempoolBaseFeeBufferPercentage).Add(assets.NewWei(priorityFee))
+		assert.Equal(t, expectedFeeCap, dynamicFee.GasFeeCap)
+		assert.Equal(t, assets.NewWei(priorityFee), dynamicFee.GasTipCap)
+
+		maxFee, err := u.GetMaxDynamicFee(maxPrice)
+		require.NoError(t, err)
+		expectedMaxFeeCap := assets.NewWei(baseFee).AddPercentage(gas.NoMempoolBaseFeeBufferPercentage).Add(assets.NewWei(priorityThreshold))
+		assert.Equal(t, expectedMaxFeeCap, maxFee.GasFeeCap)
+		assert.Equal(t, assets.NewWei(priorityThreshold), maxFee.GasTipCap)
+	})
+
+	t.Run("uses custom ConnectivityPercentile when configured", func(t *testing.T) {
+		client := mocks.NewFeeHistoryEstimatorClient(t)
+		baseFee := big.NewInt(100)
+		feeHistoryResult := &ethereum.FeeHistory{
+			OldestBlock: big.NewInt(1),
+			Reward:      [][]*big.Int{{big.NewInt(10), big.NewInt(30)}},
+			BaseFee:     []*big.Int{baseFee},
+		}
+		client.On("FeeHistory", mock.Anything, uint64(3), (*big.Int)(nil), []float64{60, 90}).Return(feeHistoryResult, nil).Once()
+
+		cfg := gas.FeeHistoryEstimatorConfig{
+			BlockHistorySize:       3,
+			RewardPercentile:       60,
+			ConnectivityPercentile: 90,
+			EIP1559:                true,
+		}
+		u := gas.NewFeeHistoryEstimator(logger.Test(t), client, cfg, chainID, nil)
+		require.NoError(t, u.RefreshDynamicFee())
+
+		maxFee, err := u.GetMaxDynamicFee(assets.NewWeiI(1000))
+		require.NoError(t, err)
+		assert.Equal(t, assets.NewWeiI(30), maxFee.GasTipCap)
 	})
 }
 
