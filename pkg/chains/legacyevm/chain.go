@@ -253,17 +253,19 @@ func newChain(cfg *config.ChainScoped, nodes []*toml.Node, opts ChainRelayOpts, 
 			}
 
 			lpOpts := logpoller.Opts{
-				PollPeriod:               cfg.EVM().LogPollInterval(),
-				UseFinalityTag:           cfg.EVM().FinalityTagEnabled(),
-				FinalityDepth:            int64(cfg.EVM().FinalityDepth()),
-				BackfillBatchSize:        int64(cfg.EVM().LogBackfillBatchSize()),
-				RPCBatchSize:             int64(cfg.EVM().RPCDefaultBatchSize()),
-				KeepFinalizedBlocksDepth: int64(cfg.EVM().LogKeepBlocksDepth()),
-				LogPrunePageSize:         int64(cfg.EVM().LogPrunePageSize()),
-				BackupPollerBlockDelay:   int64(cfg.EVM().BackupLogPollerBlockDelay()),
-				ClientErrors:             cfg.EVM().NodePool().Errors(),
-				SkipEmptyBlocks:          cfg.EVM().LogPollerSkipEmptyBlocks(),
-				Metrics:                  metrics,
+				PollPeriod:                      cfg.EVM().LogPollInterval(),
+				UseFinalityTag:                  cfg.EVM().FinalityTagEnabled(),
+				FinalityDepth:                   int64(cfg.EVM().FinalityDepth()),
+				BackfillBatchSize:               int64(cfg.EVM().LogBackfillBatchSize()),
+				RPCBatchSize:                    int64(cfg.EVM().RPCDefaultBatchSize()),
+				KeepFinalizedBlocksDepth:        int64(cfg.EVM().LogKeepBlocksDepth()),
+				LogPrunePageSize:                int64(cfg.EVM().LogPrunePageSize()),
+				BackupPollerBlockDelay:          int64(cfg.EVM().BackupLogPollerBlockDelay()), //nolint:gosec // G115: bounded by config
+				ClientErrors:                    cfg.EVM().NodePool().Errors(),
+				SkipEmptyBlocks:                 cfg.EVM().LogPollerSkipEmptyBlocks(),
+				BatchUnfinalizedBlocks:          cfg.EVM().LogPollerBatchUnfinalizedBlocks(),
+				BatchUnfinalizedBlocksChunkSize: int64(cfg.EVM().LogPollerBatchUnfinalizedBlocksChunkSize()),
+				Metrics:                         metrics,
 			}
 
 			var lpORM *logpoller.ObservedORM

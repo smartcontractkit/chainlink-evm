@@ -74,6 +74,12 @@ LogPollInterval = '15s' # Default
 # LogPollerSkipEmptyBlocks works in conjunction with Feature.LogPoller. Controls whether the log poller skips blocks with no logs. Setting this to true can reduce DB load, however it can affect product performance. Consult with specific Chainlink product team before changing this setting.
 LogPollerSkipEmptyBlocks = false # Default
 # **ADVANCED**
+# LogPollerBatchUnfinalizedBlocks works in conjunction with Feature.LogPoller. When true, the log poller fetches unfinalized headers in chunks and queries their logs with bounded concurrency. This can improve throughput on high-latency RPC endpoints. Default false preserves the legacy per-block walk.
+LogPollerBatchUnfinalizedBlocks = false # Default
+# **ADVANCED**
+# LogPollerBatchUnfinalizedBlocksChunkSize is the number of unfinalized headers fetched per batch when LogPollerBatchUnfinalizedBlocks is true. Must be between 1 and 50. Values above 16 are not recommended.
+LogPollerBatchUnfinalizedBlocksChunkSize = 16 # Default
+# **ADVANCED**
 # LogKeepBlocksDepth works in conjunction with Feature.LogPoller. Controls how many blocks the poller will keep, must be greater than FinalityDepth+1.
 LogKeepBlocksDepth = 100000 # Default
 # **ADVANCED**

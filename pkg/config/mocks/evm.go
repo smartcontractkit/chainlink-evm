@@ -982,6 +982,96 @@ func (_c *EVM_LogPollInterval_Call) RunAndReturn(run func() time.Duration) *EVM_
 	return _c
 }
 
+// LogPollerBatchUnfinalizedBlocks provides a mock function with no fields
+func (_m *EVM) LogPollerBatchUnfinalizedBlocks() bool {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for LogPollerBatchUnfinalizedBlocks")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// EVM_LogPollerBatchUnfinalizedBlocks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LogPollerBatchUnfinalizedBlocks'
+type EVM_LogPollerBatchUnfinalizedBlocks_Call struct {
+	*mock.Call
+}
+
+// LogPollerBatchUnfinalizedBlocks is a helper method to define mock.On call
+func (_e *EVM_Expecter) LogPollerBatchUnfinalizedBlocks() *EVM_LogPollerBatchUnfinalizedBlocks_Call {
+	return &EVM_LogPollerBatchUnfinalizedBlocks_Call{Call: _e.mock.On("LogPollerBatchUnfinalizedBlocks")}
+}
+
+func (_c *EVM_LogPollerBatchUnfinalizedBlocks_Call) Run(run func()) *EVM_LogPollerBatchUnfinalizedBlocks_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *EVM_LogPollerBatchUnfinalizedBlocks_Call) Return(_a0 bool) *EVM_LogPollerBatchUnfinalizedBlocks_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *EVM_LogPollerBatchUnfinalizedBlocks_Call) RunAndReturn(run func() bool) *EVM_LogPollerBatchUnfinalizedBlocks_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// LogPollerBatchUnfinalizedBlocksChunkSize provides a mock function with no fields
+func (_m *EVM) LogPollerBatchUnfinalizedBlocksChunkSize() uint32 {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for LogPollerBatchUnfinalizedBlocksChunkSize")
+	}
+
+	var r0 uint32
+	if rf, ok := ret.Get(0).(func() uint32); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(uint32)
+	}
+
+	return r0
+}
+
+// EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LogPollerBatchUnfinalizedBlocksChunkSize'
+type EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call struct {
+	*mock.Call
+}
+
+// LogPollerBatchUnfinalizedBlocksChunkSize is a helper method to define mock.On call
+func (_e *EVM_Expecter) LogPollerBatchUnfinalizedBlocksChunkSize() *EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call {
+	return &EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call{Call: _e.mock.On("LogPollerBatchUnfinalizedBlocksChunkSize")}
+}
+
+func (_c *EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call) Run(run func()) *EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call) Return(_a0 uint32) *EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call) RunAndReturn(run func() uint32) *EVM_LogPollerBatchUnfinalizedBlocksChunkSize_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // LogPollerSkipEmptyBlocks provides a mock function with no fields
 func (_m *EVM) LogPollerSkipEmptyBlocks() bool {
 	ret := _m.Called()
