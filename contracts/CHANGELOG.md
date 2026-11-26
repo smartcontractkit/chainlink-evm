@@ -1,5 +1,43 @@
 # @chainlink/contracts
 
+## 2.0.0
+
+2.0.0 is a major release that removes Automation, Functions, VRF v1 and VRF v2 from the package, and moves the CRE contracts into their own package. 1.5.0 is the last release that contains the removed contracts.
+
+### Major Changes
+
+- [#292](https://github.com/smartcontractkit/chainlink-evm/pull/292) [`8eb761a`](https://github.com/smartcontractkit/chainlink-evm/commit/8eb761a) - Move the CRE contracts (Keystone and Workflow) into their own package.
+
+- [#532](https://github.com/smartcontractkit/chainlink-evm/pull/532) [`ce02b91`](https://github.com/smartcontractkit/chainlink-evm/commit/ce02b91) - Remove Automation contracts as Automation has moved to CRE.
+
+- [#524](https://github.com/smartcontractkit/chainlink-evm/pull/524) [`14d04fd`](https://github.com/smartcontractkit/chainlink-evm/commit/14d04fd) - Remove Functions contracts.
+
+- [#571](https://github.com/smartcontractkit/chainlink-evm/pull/571) [`77dc739`](https://github.com/smartcontractkit/chainlink-evm/commit/77dc739) - Remove VRF v1 contracts.
+
+- [#583](https://github.com/smartcontractkit/chainlink-evm/pull/583) [`982da1f`](https://github.com/smartcontractkit/chainlink-evm/commit/982da1f) - Remove VRF v2 contracts.
+
+- [#409](https://github.com/smartcontractkit/chainlink-evm/pull/409) [`e9ab7d2`](https://github.com/smartcontractkit/chainlink-evm/commit/e9ab7d2) - Move VRF v2.5 out of the `dev` folder.
+
+- [#404](https://github.com/smartcontractkit/chainlink-evm/pull/404) [`51b1fce`](https://github.com/smartcontractkit/chainlink-evm/commit/51b1fce) - Bump L2EP to OpenZeppelin v5.3.0 and remove the OpenZeppelin v4.7.3 dependency.
+
+- [#533](https://github.com/smartcontractkit/chainlink-evm/pull/533) [`928326b`](https://github.com/smartcontractkit/chainlink-evm/commit/928326b) - Remove the vendored forge-std.
+
+### Minor Changes
+
+- [#527](https://github.com/smartcontractkit/chainlink-evm/pull/527) [`93a2223`](https://github.com/smartcontractkit/chainlink-evm/commit/93a2223) - Bump shared contracts to OpenZeppelin v4.9.6 and add AuthorizedCallersOZ5.
+
+- [#255](https://github.com/smartcontractkit/chainlink-evm/pull/255) [`e0cc01e`](https://github.com/smartcontractkit/chainlink-evm/commit/e0cc01e) - Add Payments contracts.
+
+- [#319](https://github.com/smartcontractkit/chainlink-evm/pull/319) [`4b93f62`](https://github.com/smartcontractkit/chainlink-evm/commit/4b93f62) - Add Data Streams v0.5.1 contracts.
+
+- [#389](https://github.com/smartcontractkit/chainlink-evm/pull/389) [`0a9de1f`](https://github.com/smartcontractkit/chainlink-evm/commit/0a9de1f) - Re-introduce v0.6 AggregatorProxy and EACAggregatorProxy for Data Feeds.
+
+- [#489](https://github.com/smartcontractkit/chainlink-evm/pull/489) [`de07509`](https://github.com/smartcontractkit/chainlink-evm/commit/de07509) - Add AutomationReceiver for Automation on CRE.
+
+### Patch Changes
+
+- [#490](https://github.com/smartcontractkit/chainlink-evm/pull/490) [`3b5a6de`](https://github.com/smartcontractkit/chainlink-evm/commit/3b5a6de) - Reduce NPM dependencies.
+
 ## 1.5.0
 
 ### Contracts In This Release
