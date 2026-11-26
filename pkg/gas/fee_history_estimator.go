@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -42,6 +43,9 @@ const (
 	// and can cause the transaction to be rejected with an insufficient funds error.
 	NoMempoolBaseFeeBufferPercentage = 90
 	MinimumCacheTimeout              = 500 * time.Millisecond
+	// MinimumPriorityFee is the maxPriorityFeePerGas used when blocks have transactions but none paid a priority fee. It costs
+	// the same as 0 but is accepted by geth's default txpool price limit and keeps the fee bumpable.
+	MinimumPriorityFee = 1
 )
 
 type FeeHistoryEstimatorConfig struct {
@@ -59,7 +63,8 @@ type FeeHistoryEstimatorConfig struct {
 
 // dynamicFeeCache holds the cached results of a single RefreshDynamicFee round.
 type dynamicFeeCache struct {
-	dynamicFee           DynamicFee
+	dynamicFee DynamicFee
+	// priorityFeeThreshold is 0 when no priority fees were observed, which disables the connectivity check.
 	priorityFeeThreshold *assets.Wei
 	nextBaseFee          *assets.Wei
 }
@@ -263,13 +268,15 @@ func (f *FeeHistoryEstimator) GetMaxDynamicFee(maxPrice *assets.Wei) (fee Dynami
 	if cache.nextBaseFee == nil {
 		return fee, errors.New("nextBaseFee not set")
 	}
-	maxFeeCap := cache.nextBaseFee.AddPercentage(f.baseFeeBufferPercentage()).Add(priorityFeeThreshold)
-	return DynamicFee{GasFeeCap: assets.WeiMin(maxFeeCap, maxPrice), GasTipCap: assets.WeiMin(priorityFeeThreshold, maxPrice)}, nil
+	// A zero threshold sits below the current estimation.
+	maxTip := assets.WeiMax(priorityFeeThreshold, cache.dynamicFee.GasTipCap)
+	maxFeeCap := cache.nextBaseFee.AddPercentage(f.baseFeeBufferPercentage()).Add(maxTip)
+	return DynamicFee{GasFeeCap: assets.WeiMin(maxFeeCap, maxPrice), GasTipCap: assets.WeiMin(maxTip, maxPrice)}, nil
 }
 
 // RefreshDynamicFee uses eth_feeHistory to fetch the baseFee of the next block and the Nth maxPriorityFeePerGas percentiles
-// of the past X blocks. It also fetches the highest 85th maxPriorityFeePerGas percentile of the past X blocks, which represents
-// the highest percentile we're willing to pay. A buffer is added on top of the latest baseFee to catch fluctuations in the next
+// of the past X blocks, of which the median is used. It also fetches the highest 85th maxPriorityFeePerGas percentile of the
+// past X blocks, which represents the highest percentile we're willing to pay. A buffer is added on top of the latest baseFee to catch fluctuations in the next
 // blocks. On Ethereum the increase is baseFee * 1.125 per block, however in some chains that may vary. See
 // baseFeeBufferPercentage for how the buffer is picked.
 func (f *FeeHistoryEstimator) RefreshDynamicFee() error {
@@ -306,14 +313,15 @@ func (f *FeeHistoryEstimator) RefreshDynamicFee() error {
 	if f.config.BlockHistorySize == 0 {
 		maxPriorityFeePerGas, priorityFeeThreshold = assets.NewWeiI(0), assets.NewWeiI(0)
 	} else {
-		maxPriorityFeePerGas, priorityFeeThreshold = calcPriorityFees(feeHistory.Reward)
+		maxPriorityFeePerGas, priorityFeeThreshold = calcPriorityFees(feeHistory.Reward, feeHistory.GasUsedRatio)
 	}
 
 	// The two priority fees are always cached as a pair. priorityFeeThreshold is a higher percentile of the very same
-	// sample as maxPriorityFeePerGas, so within a response maxPriorityFeePerGas <= priorityFeeThreshold always holds.
+	// sample as maxPriorityFeePerGas, so within a response maxPriorityFeePerGas <= priorityFeeThreshold holds unless the
+	// threshold is 0.
 	// Mixing values from different rounds could invert that and make BumpDynamicFee report a false positive connectivity issue.
 	if maxPriorityFeePerGas != nil && priorityFeeThreshold != nil {
-		if maxPriorityFeePerGas.Cmp(priorityFeeThreshold) > 0 {
+		if !priorityFeeThreshold.IsZero() && maxPriorityFeePerGas.Cmp(priorityFeeThreshold) > 0 {
 			// Only reachable if the RPC returns non-monotonic percentiles. Raise the threshold to keep bumping possible.
 			f.logger.Warnw("eth_feeHistory returned a maxPriorityFeePerGas above its ConnectivityPercentile, raising the threshold to match",
 				"maxPriorityFeePerGas", maxPriorityFeePerGas, "priorityFeeThreshold", priorityFeeThreshold)
@@ -344,40 +352,45 @@ func (f *FeeHistoryEstimator) RefreshDynamicFee() error {
 	return nil
 }
 
-// calcPriorityFees returns the average of the non-zero RewardPercentile priority fees and the maximum
-// ConnectivityPercentile priority fee of the given eth_feeHistory rewards. Either value is nil when the
-// response carries no usable data for it.
+// calcPriorityFees returns the median RewardPercentile priority fee and the maximum ConnectivityPercentile priority
+// fee of the non-empty blocks of the given eth_feeHistory response. Both are nil when every block is empty. Threshold
+// is 0 when no priority fees were paid.
 //
-// Zero priced priority fees are excluded, even though some networks allow them, because eth_feeHistory returns
-// 0 values for empty blocks and discarding them yields a more representative sample.
-func calcPriorityFees(rewards [][]*big.Int) (avg *assets.Wei, threshold *assets.Wei) {
-	var nonZeroRewardsLen int64
-	priorityFeeSum := big.NewInt(0)
-	priorityFeeThreshold := big.NewInt(0)
-	for _, reward := range rewards {
+// A zero median is replaced with the smallest non-zero priority fee of the window, which is proven to be accepted by
+// the chain, or with MinimumPriorityFee if there is none.
+func calcPriorityFees(rewards [][]*big.Int, gasUsedRatio []float64) (tip *assets.Wei, threshold *assets.Wei) {
+	var tips []*big.Int
+	var floor *big.Int
+	maxThreshold := big.NewInt(0)
+	for i, reward := range rewards {
 		// reward needs to have values for two percentiles. Some chains may return an empty slice instead of 0x0 values, so we
 		// skip it instead of throwing an error.
 		if len(reward) < 2 || reward[0] == nil || reward[1] == nil {
 			continue
 		}
-		// We'll calculate the average of non-zero priority fees
-		if reward[0].Sign() > 0 {
-			priorityFeeSum.Add(priorityFeeSum, reward[0])
-			nonZeroRewardsLen++
+		// eth_feeHistory returns 0 for empty blocks. A block without fees only counts if gasUsedRatio shows it had transactions.
+		if reward[1].Sign() <= 0 && (i >= len(gasUsedRatio) || gasUsedRatio[i] == 0) {
+			continue
 		}
-		// We take the max value for the bumping threshold
-		if reward[1].Sign() > 0 {
-			priorityFeeThreshold = bigmath.Max(priorityFeeThreshold, reward[1])
+		tips = append(tips, reward[0])
+		maxThreshold = bigmath.Max(maxThreshold, reward[1])
+		// Track the smallest non-zero priority fee of either percentile across all the counted blocks. It replaces a zero
+		// median, because a zero priority fee may be rejected by the chain and can't be bumped.
+		for _, r := range reward[:2] {
+			if r.Sign() > 0 && (floor == nil || r.Cmp(floor) < 0) {
+				floor = r
+			}
 		}
 	}
-
-	if nonZeroRewardsLen > 0 {
-		avg = assets.NewWei(priorityFeeSum.Div(priorityFeeSum, big.NewInt(nonZeroRewardsLen)))
+	if len(tips) == 0 {
+		return nil, nil
 	}
-	if priorityFeeThreshold.Sign() > 0 {
-		threshold = assets.NewWei(priorityFeeThreshold)
+	if floor == nil {
+		floor = big.NewInt(MinimumPriorityFee)
 	}
-	return avg, threshold
+	slices.SortFunc(tips, (*big.Int).Cmp)
+	// On even counts this picks the upper-middle value.
+	return assets.NewWei(bigmath.Max(tips[len(tips)/2], floor)), assets.NewWei(maxThreshold)
 }
 
 // baseFeeBufferPercentage returns the safety buffer applied on top of the latest base fee. BlockHistorySize of 0 is used
@@ -469,7 +482,8 @@ func (f *FeeHistoryEstimator) BumpDynamicFee(ctx context.Context, originalFee Dy
 		return bumped, err
 	}
 
-	if bumpedMaxPriorityFeePerGas.Cmp(priorityFeeThreshold) > 0 {
+	// With a zero threshold there is no market to compare against.
+	if !priorityFeeThreshold.IsZero() && bumpedMaxPriorityFeePerGas.Cmp(priorityFeeThreshold) > 0 {
 		return bumped, fmt.Errorf("%w: bumpedMaxPriorityFeePerGas: %s is above market's %gth percentile: %s, bumping is halted",
 			fees.ErrConnectivity, bumpedMaxPriorityFeePerGas, f.config.ConnectivityPercentile, priorityFeeThreshold)
 	}
@@ -486,24 +500,23 @@ func (f *FeeHistoryEstimator) BumpDynamicFee(ctx context.Context, originalFee Dy
 }
 
 // LimitBumpedFee selects the maximum value between the bumped attempt and the current fee, if there is one. If the result is higher than the max price it gets capped.
-// Geth's implementation has a hard 10% minimum limit for the bumped values, otherwise it rejects the transaction with an error.
+// Geth's implementation only accepts a replacement that is at least 10% and strictly higher than the original, otherwise it rejects the transaction with an error.
+// The bumped value is raised to meet that minimum, so an error is only returned when the max price leaves no room for it.
 // See: https://github.com/ethereum/go-ethereum/blob/bff330335b94af3643ac2fb809793f77de3069d4/core/tx_list.go#L298
 //
 // Note: for chains that support EIP-1559 but we still choose to send Legacy transactions to them, the limit is still enforcable due to the fact that Legacy transactions
 // are treated the same way as Dynamic transactions under the hood. For chains that don't support EIP-1559 at all, the limit isn't enforcable but a 10% minimum bump percentage
 // makes sense anyway.
 func LimitBumpedFee(originalFee *assets.Wei, currentFee *assets.Wei, bumpedFee *assets.Wei, maxPrice *assets.Wei) (*assets.Wei, error) {
+	// The extra wei covers fees below 10 wei, where the percentage rounds down to no change.
+	minBump := assets.WeiMax(originalFee.AddPercentage(MinimumBumpPercentage), originalFee.Add(assets.NewWeiI(1)))
+	bumpedFee = assets.WeiMax(bumpedFee, minBump)
 	if currentFee != nil {
 		bumpedFee = assets.WeiMax(currentFee, bumpedFee)
 	}
 	bumpedFee = assets.WeiMin(bumpedFee, maxPrice)
 
-	// The first check is added for the following edge case:
-	// If originalFee is below 10 wei, then adding the minimum bump percentage won't have any effect on the final value because of rounding down.
-	// Similarly for bumpedFee, it can have the exact same value as the originalFee, even if we bumped, given an originalFee of less than 10 wei
-	// and a small enough BumpPercent.
-	if bumpedFee.Cmp(originalFee) == 0 ||
-		bumpedFee.Cmp(originalFee.AddPercentage(MinimumBumpPercentage)) < 0 {
+	if bumpedFee.Cmp(minBump) < 0 {
 		return nil, fmt.Errorf("%w: %s is bumped less than minimum allowed percentage(%s) from originalFee: %s - maxPrice: %s",
 			fees.ErrBump, bumpedFee, strconv.Itoa(MinimumBumpPercentage), originalFee, maxPrice)
 	}
