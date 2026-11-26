@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -15,6 +16,13 @@ import (
 
 	evmtypes "github.com/smartcontractkit/chainlink-evm/pkg/types"
 )
+
+func (lp *logPoller) recordUnfinalizedBatchChunk(outcome string, headers int, start time.Time) {
+	chainID := lp.ec.ConfiguredChainID().String()
+	promLpUnfinalizedBatchChunks.WithLabelValues(chainID, outcome).Inc()
+	promLpUnfinalizedBatchChunkDuration.WithLabelValues(chainID).Observe(time.Since(start).Seconds())
+	promLpUnfinalizedBatchHeaders.WithLabelValues(chainID).Add(float64(headers))
+}
 
 func (lp *logPoller) unfinalizedBlock(head *evmtypes.Head, safe, finalized int64) Block {
 	return Block{
@@ -46,7 +54,7 @@ func (lp *logPoller) batchFetchHeaders(ctx context.Context, from, to int64) ([]*
 		return nil, nil
 	}
 
-	reqs := make([]rpc.BatchElem, 0, int(to-from+1))
+	reqs := make([]rpc.BatchElem, 0, int(to-from+1)) //nolint:gosec // G115: bounded by unfinalizedBatchChunkSize (<=50)
 	for n := from; n <= to; n++ {
 		reqs = append(reqs, newBlockReq(hexutil.EncodeBig(big.NewInt(n))))
 	}
@@ -57,7 +65,7 @@ func (lp *logPoller) batchFetchHeaders(ctx context.Context, from, to int64) ([]*
 
 	headers := make([]*evmtypes.Head, 0, len(reqs))
 	for i, req := range reqs {
-		expected := from + int64(i)
+		expected := from + int64(i) //nolint:gosec // G115: batch index is bounded by the chunk size
 		if req.Error != nil {
 			return headers, fmt.Errorf("failed to fetch unfinalized header %d: %w", expected, req.Error)
 		}
@@ -99,7 +107,7 @@ func (lp *logPoller) batchFilterLogsByHash(ctx context.Context, headers []*evmty
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
-	concurrency := int(lp.unfinalizedBatchLogConcurrency)
+	concurrency := int(lp.unfinalizedBatchLogConcurrency) //nolint:gosec // G115: bounded by the number of headers in the chunk
 	if concurrency < 1 {
 		concurrency = 1
 	}
@@ -207,8 +215,14 @@ func (lp *logPoller) getUnfinalizedLogsBatched(ctx context.Context, currentBlock
 		}
 		to := min(latest, currentBlock.Number+chunkSize)
 
+		chunkStart := time.Now()
 		headers, headerErr := lp.batchFetchHeaders(ctx, currentBlock.Number+1, to)
 		if len(headers) == 0 {
+			outcome := "partial"
+			if headerErr != nil {
+				outcome = "error"
+			}
+			lp.recordUnfinalizedBatchChunk(outcome, 0, chunkStart)
 			return blocks, logs, headerErr
 		}
 
@@ -218,15 +232,18 @@ func (lp *logPoller) getUnfinalizedLogsBatched(ctx context.Context, currentBlock
 		prev := currentBlock
 		for _, header := range headers {
 			if header.ParentHash != prev.Hash {
+				lp.recordUnfinalizedBatchChunk("reorg", 0, chunkStart)
 				return blocks, logs, newReorgError(header)
 			}
 			if isReplay {
 				dbBlock, dbErr := lp.orm.SelectBlockByNumber(ctx, header.Number)
 				if dbErr != nil && !errors.Is(dbErr, sql.ErrNoRows) {
 					lp.lggr.Warnw("Unable to get next block from DB during replay, retrying on next poll", "err", dbErr, "block", header.Number)
+					lp.recordUnfinalizedBatchChunk("error", 0, chunkStart)
 					return blocks, logs, fmt.Errorf("failed to get next block from DB during replay: %w", dbErr)
 				}
 				if dbBlock != nil && header.Hash != dbBlock.BlockHash {
+					lp.recordUnfinalizedBatchChunk("reorg", 0, chunkStart)
 					return blocks, logs, newReorgError(header)
 				}
 			}
@@ -242,6 +259,7 @@ func (lp *logPoller) getUnfinalizedLogsBatched(ctx context.Context, currentBlock
 			walked++
 		}
 		if logErr != nil {
+			lp.recordUnfinalizedBatchChunk("error", completed, chunkStart)
 			return blocks, logs, logErr
 		}
 
@@ -249,8 +267,14 @@ func (lp *logPoller) getUnfinalizedLogsBatched(ctx context.Context, currentBlock
 		if currentBlock.Number < to {
 			// The endpoint was behind or a header failed. Persist the prefix and
 			// retry the missing height on the next poll.
+			outcome := "partial"
+			if headerErr != nil {
+				outcome = "error"
+			}
+			lp.recordUnfinalizedBatchChunk(outcome, completed, chunkStart)
 			return blocks, logs, headerErr
 		}
+		lp.recordUnfinalizedBatchChunk("success", len(headers), chunkStart)
 	}
 
 	return blocks, logs, nil

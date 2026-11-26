@@ -677,8 +677,9 @@ func TestLogPoller_BlockTimestamps(t *testing.T) {
 func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
-		name            string
-		skipEmptyBlocks bool
+		name                   string
+		skipEmptyBlocks        bool
+		batchUnfinalizedBlocks bool
 	}{
 		{
 			name:            "with empty blocks",
@@ -688,6 +689,16 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 			name:            "without empty blocks",
 			skipEmptyBlocks: true,
 		},
+		{
+			name:                   "with empty blocks and batched unfinalized walk",
+			skipEmptyBlocks:        false,
+			batchUnfinalizedBlocks: true,
+		},
+		{
+			name:                   "without empty blocks and batched unfinalized walk",
+			skipEmptyBlocks:        true,
+			batchUnfinalizedBlocks: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -696,6 +707,10 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 			// with the canonical chain of geth's despite arbitrary mixes of mining and reorgs.
 			testParams := gopter.DefaultTestParameters()
 			testParams.MinSuccessfulTests = 100
+			if tc.batchUnfinalizedBlocks {
+				// The batch path doubles the property matrix; keep CI time bounded.
+				testParams.MinSuccessfulTests = 25
+			}
 			p := gopter.NewProperties(testParams)
 			numChainInserts := 3
 			finalityDepth := 5
@@ -723,12 +738,14 @@ func TestLogPoller_SynchronizedWithGeth(t *testing.T) {
 				require.NoError(t, err)
 
 				lpOpts := logpoller.Opts{
-					PollPeriod:               15 * time.Second,
-					FinalityDepth:            int64(finalityDepth),
-					BackfillBatchSize:        3,
-					RPCBatchSize:             2,
-					KeepFinalizedBlocksDepth: 1000,
-					SkipEmptyBlocks:          tc.skipEmptyBlocks,
+					PollPeriod:                      15 * time.Second,
+					FinalityDepth:                   int64(finalityDepth),
+					BackfillBatchSize:               3,
+					RPCBatchSize:                    2,
+					KeepFinalizedBlocksDepth:        1000,
+					SkipEmptyBlocks:                 tc.skipEmptyBlocks,
+					BatchUnfinalizedBlocks:          tc.batchUnfinalizedBlocks,
+					BatchUnfinalizedBlocksChunkSize: 3,
 				}
 				simulatedClient := client.NewSimulatedBackendClient(t, backend, chainID)
 				ht := headstest.NewSimulatedHeadTracker(simulatedClient, lpOpts.UseFinalityTag, lpOpts.FinalityDepth)

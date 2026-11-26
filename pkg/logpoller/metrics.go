@@ -17,6 +17,21 @@ var (
 		Name: "evm_log_poller_last_processed_block",
 		Help: "The last block that the log poller has processed. Main purpose is to signal if the log poller is stuck and not processing new blocks. May be reported with a delay.",
 	}, []string{"chainFamily", "chainID"})
+
+	promLpUnfinalizedBatchChunks = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "evm_log_poller_unfinalized_batch_chunks_total",
+		Help: "The number of opt-in batched unfinalized-block chunks processed by the log poller, by outcome.",
+	}, []string{"chainID", "outcome"})
+
+	promLpUnfinalizedBatchChunkDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "evm_log_poller_unfinalized_batch_duration_seconds",
+		Help: "The duration of an opt-in batched unfinalized-block chunk, including header fetch and log queries.",
+	}, []string{"chainID"})
+
+	promLpUnfinalizedBatchHeaders = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "evm_log_poller_unfinalized_batch_headers_total",
+		Help: "The number of unfinalized headers walked by the opt-in batched log poller path.",
+	}, []string{"chainID"})
 )
 
 type Metrics interface {
